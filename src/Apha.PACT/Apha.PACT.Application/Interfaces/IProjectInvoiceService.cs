@@ -6,6 +6,7 @@ namespace Apha.PACT.Application.Interfaces
     public interface IProjectInvoiceService
     {
         Task<PaginatedResult<ProjectInvoiceDto>> GetPagedProjectInvoicesAsync(QueryParameters<string> query, string? parentProject);
+        Task<PaginatedResult<ProjectInvoiceDto>> GetPagedProjectInvoicesByMonthAsync(QueryParameters<string> query, int? month);
         Task<decimal> GetTotalAmountAsync(string? parentProject);
         Task<ProjectInvoiceDto?> GetByIdAsync(int invoiceCounter);
         Task<ProjectInvoiceDto> CreateAsync(ProjectInvoiceDto dto);

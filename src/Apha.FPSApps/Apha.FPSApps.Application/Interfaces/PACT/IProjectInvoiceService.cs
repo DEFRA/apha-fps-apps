@@ -8,12 +8,13 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
     {
         Task<ApiResponseDto<List<ProjectInvoiceDto>>> GetPagedProjectInvoicesAsync(QueryParameters<string> query, string? parentProject);
         Task<ApiResponseDto<List<ProjectInvoiceDto>>> GetPagedProjectInvoiceManualAsync(QueryParameters<string> query, string? parentProject);
+        Task<ApiResponseDto<List<ProjectInvoiceDto>>> GetPagedProjectInvoicesByMonthAsync(QueryParameters<string> query, int? month);
         Task<ApiResponseDto<decimal>> GetTotalAmountAsync(string? parentProject);
         Task<ApiResponseDto<ProjectInvoiceDto>> GetByIdAsync(int invoiceCounter);
         Task<ApiResponseDto<ProjectInvoiceDto>> CreateAsync(ProjectInvoiceDto dto);
         Task<ApiResponseDto<ProjectInvoiceDto>> UpdateAsync(int invoiceCounter, ProjectInvoiceDto dto);
         Task<ApiResponseDto<bool>> DeleteAsync(int invoiceCounter);
         Task<ApiResponseDto<MonthlyInvoicesPivotDto>> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query);
-        Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(int sourceMonth, int destinationMonth);
+        Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(int sourceMonth, int destinationMonth, List<ProjectInvoiceDto>? invoiceRecords = null);
     }
 }

@@ -58,6 +58,26 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<List<ProjectInvoiceDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<ProjectInvoiceDto>>> GetPagedProjectInvoicesByMonthAsync(QueryParameters<string> query, int? month)
+        {
+            string baseUrl = PactApiEndpoints.GetPagedProjectInvoicesByMonth;
+
+            // Add month as query parameter if provided
+            if (month.HasValue)
+            {
+                baseUrl += $"?month={month.Value}";
+            }
+
+            string url = QueryStringHelper.AddQueryString(baseUrl, query);
+
+            var response = await _http.GetAsync<List<ProjectInvoiceRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectInvoiceDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectInvoiceDto>>>(response);
+            return ApiResponseDto<List<ProjectInvoiceDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<ProjectInvoiceDto>> GetByIdAsync(int invoiceCounter)
         {
             var response = await _http.GetAsync<ProjectInvoiceRes>(
@@ -136,9 +156,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<MonthlyInvoicesPivotDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(int sourceMonth, int destinationMonth)
+        public async Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(int sourceMonth, int destinationMonth, List<ProjectInvoiceDto>? invoiceRecords = null)
         {
-            var request = new CopyInvoicesReq(); 
+            // Map DTOs to request objects if provided
+            List<ProjectInvoiceReq>? invoiceRequests = null;
+            if (invoiceRecords != null && invoiceRecords.Count > 0)
+            {
+                invoiceRequests = invoiceRecords.Select(dto => _mapper.Map<ProjectInvoiceReq>(dto)).ToList();
+            }
+
+            var request = new CopyInvoicesReq
+            {
+                InvoiceRecords = invoiceRequests
+            };
 
             // Convert int months to strings for API endpoint
             string url = $"{PactApiEndpoints.CopyProjectInvoices}?sourceMonth={sourceMonth.ToString()}&destinationMonth={destinationMonth.ToString()}";

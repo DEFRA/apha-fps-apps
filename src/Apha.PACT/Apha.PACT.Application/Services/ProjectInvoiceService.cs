@@ -27,6 +27,19 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<PaginatedResult<ProjectInvoiceDto>>(pagedData);
         }
 
+        public async Task<PaginatedResult<ProjectInvoiceDto>> GetPagedProjectInvoicesByMonthAsync(QueryParameters<string> query, int? month)
+        {
+            // Validate month if provided
+            if (month.HasValue && (month.Value < 1 || month.Value > 12))
+            {
+                throw new ArgumentException("Month must be between 1 and 12.", nameof(month));
+            }
+
+            PaginationParameters<string> parameters = _mapper.Map<PaginationParameters<string>>(query);
+            PagedData<ProjectInvoice> pagedData = await _repository.GetPagedProjectInvoicesByMonthAsync(parameters, month);
+            return _mapper.Map<PaginatedResult<ProjectInvoiceDto>>(pagedData);
+        }
+
         public async Task<decimal> GetTotalAmountAsync(string? parentProject)
             => await _repository.GetTotalAmountAsync(parentProject);
 
@@ -176,17 +189,36 @@ namespace Apha.PACT.Application.Services
 
             List<ProjectInvoice> invoicesToCopy;
 
-           
-            // Bulk copy: all invoices from source month
-           
+            // Determine copy strategy: direct invoice records, by IDs, or bulk copy
+            if (copyDto.InvoiceRecords != null && copyDto.InvoiceRecords.Count > 0)
+            {
+                // Selective copy using provided invoice records
+                invoicesToCopy = copyDto.InvoiceRecords
+                    .Select(dto => _mapper.Map<ProjectInvoice>(dto))
+                    .ToList();
+            }
+            else if (copyDto.InvoiceIds != null && copyDto.InvoiceIds.Count > 0)
+            {
+                // Selective copy by invoice IDs
+                invoicesToCopy = await _repository.GetInvoicesByIdsAsync(copyDto.InvoiceIds);
+
+                if (invoicesToCopy.Count == 0)
+                {
+                    result.Errors.Add($"No invoices found with the provided IDs");
+                    return result;
+                }
+            }
+            else
+            {
+                // Bulk copy: all invoices from source month
                 invoicesToCopy = await _repository.GetInvoicesByMonthAsync(copyDto.SourceMonth);
 
-            if (invoicesToCopy.Count == 0)
-            {
-                result.Errors.Add($"No invoices found for source month {copyDto.SourceMonth}");
-                return result;
+                if (invoicesToCopy.Count == 0)
+                {
+                    result.Errors.Add($"No invoices found for source month {copyDto.SourceMonth}");
+                    return result;
+                }
             }
-            
 
             // Copy invoices to target month using bulk insert
             var newInvoices = invoicesToCopy.Select(sourceInvoice => new ProjectInvoice
@@ -201,16 +233,9 @@ namespace Apha.PACT.Application.Services
                 FpsYear = sourceInvoice.FpsYear
             }).ToList();
 
-            try
-            {
-                int inserted = await _repository.CreateBulkAsync(newInvoices);
-                result.CopiedCount = newInvoices.Count;
-            }
-            catch (Exception ex)
-            {
-                result.FailedCount = newInvoices.Count;
-                result.Errors.Add($"Failed to copy invoices: {ex.Message}");
-            }
+            int inserted = await _repository.CreateBulkAsync(newInvoices);
+            result.CopiedCount = newInvoices.Count;
+
 
             result.Success = result.FailedCount == 0;
             result.Message = result.Success

@@ -10,7 +10,9 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using System.Text.Json;
+using Xunit;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceControllerTest
 {
@@ -79,7 +81,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 new() { ProjectParent = "PRJ001", Month = month, Amount = 1000m }
             };
 
-            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), month)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse(invoices, new PaginationDto()));
             SetupMonthsList(months);
             SetupInvoicesGridMapper();
@@ -93,6 +95,30 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             Assert.Equal(month, model.SelectedMonth);
             Assert.NotNull(model.InvoicesGrid);
             Assert.NotNull(model.Months);
+        }
+
+        [Fact]
+        public async Task Index_WithMonth_CallsGetPagedProjectInvoicesByMonthAsync()
+        {
+            // Arrange
+            const int month = 3;
+            var months = new List<MonthDto>
+            {
+                new() { Monthnumber = 3, Monthname = "March" }
+            };
+
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), month)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+            SetupMonthsList(months);
+            SetupInvoicesGridMapper();
+
+            // Act
+            await _controller.Index(month);
+
+            // Assert
+            await _invoiceService.Received(1).GetPagedProjectInvoicesByMonthAsync(
+                Arg.Any<QueryParameters<string>>(), 
+                month);
         }
 
         [Fact]
@@ -172,7 +198,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             var request = new PaginationFilter<string> { Page = 1, PageSize = 50, Filter = "{}" };
             const string month = "6";
 
-            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 6)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             SetupInvoicesGridMapper();
 
@@ -183,6 +209,29 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
             Assert.IsType<DataGridConfig<AutomaticInvoiceItem>>(partial.Model);
+        }
+
+        [Fact]
+        public async Task LoadInvoicesGrid_ValidRequestWithMonth_CallsNewMonthBasedAPI()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 50, Filter = "{}" };
+            const string month = "3";
+
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 3)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+            SetupInvoicesGridMapper();
+
+            // Act
+            var result = await _controller.LoadInvoicesGrid(request, month);
+
+            // Assert
+            await _invoiceService.Received(1).GetPagedProjectInvoicesByMonthAsync(
+                Arg.Any<QueryParameters<string>>(), 
+                3);
+            await _invoiceService.DidNotReceive().GetPagedProjectInvoiceManualAsync(
+                Arg.Any<QueryParameters<string>>(), 
+                Arg.Any<string?>());
         }
 
         [Fact]
@@ -257,7 +306,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             var request = new PaginationFilter<string> { Filter = "{}" };
             const string month = "7";
 
-            _invoiceService.GetPagedProjectInvoiceManualAsync(Arg.Any<QueryParameters<string>>(), null)
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 7)
                 .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
             SetupInvoicesGridMapper();
 
@@ -267,6 +316,136 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             // Assert
             Assert.IsType<PartialViewResult>(result);
             Assert.Contains("\"Month\":\"7\"", request.Filter);
+        }
+
+        [Fact]
+        public async Task LoadInvoicesGrid_WithMonthAndExistingFilter_MergesFilters()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> 
+            { 
+                Filter = "{\"ProjectParent\":\"PRJ001\"}" 
+            };
+            const string month = "5";
+
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 5)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+            SetupInvoicesGridMapper();
+
+            // Act
+            var result = await _controller.LoadInvoicesGrid(request, month);
+
+            // Assert
+            Assert.IsType<PartialViewResult>(result);
+            Assert.Contains("\"Month\":\"5\"", request.Filter);
+            Assert.Contains("\"ProjectParent\":\"PRJ001\"", request.Filter);
+        }
+
+        [Fact]
+        public async Task LoadInvoicesGrid_WithPaginationParameters_PassesToService()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> 
+            { 
+                Page = 2, 
+                PageSize = 25,
+                SortBy = "ProjectParent",
+                Descending = true,
+                Filter = "{}" 
+            };
+            const string month = "8";
+            QueryParameters<string>? capturedQuery = null;
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(x => 
+                {
+                    var filter = x.Arg<PaginationFilter<string>>();
+                    return new QueryParameters<string> 
+                    { 
+                        Page = filter.Page, 
+                        PageSize = filter.PageSize,
+                        SortBy = filter.SortBy,
+                        Descending = filter.Descending
+                    };
+                });
+
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(
+                Arg.Do<QueryParameters<string>>(q => capturedQuery = q), 
+                8)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+
+            _mapper.Map<List<AutomaticInvoiceItem>>(Arg.Any<List<ProjectInvoiceDto>>())
+                .Returns([]);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.LoadInvoicesGrid(request, month);
+
+            // Assert
+            Assert.NotNull(capturedQuery);
+            Assert.Equal(2, capturedQuery.Page);
+            Assert.Equal(25, capturedQuery.PageSize);
+        }
+
+        [Fact]
+        public async Task LoadInvoicesGrid_ServiceReturnsData_MapsToGridItems()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 50, Filter = "{}" };
+            const string month = "4";
+            var invoices = new List<ProjectInvoiceDto>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 4, Amount = 1000m },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ002", Month = 4, Amount = 2000m }
+            };
+            var gridItems = new List<AutomaticInvoiceItem>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 4, Amount = 1000m },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ002", Month = 4, Amount = 2000m }
+            };
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 4)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse(invoices, new PaginationDto()));
+            _mapper.Map<List<AutomaticInvoiceItem>>(invoices)
+                .Returns(gridItems);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.LoadInvoicesGrid(request, month);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<DataGridConfig<AutomaticInvoiceItem>>(partial.Model);
+            Assert.Equal(2, model.Data.Count);
+        }
+
+        [Fact]
+        public async Task LoadInvoicesGrid_ServiceReturnsNull_HandlesGracefully()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 50, Filter = "{}" };
+            const string month = "9";
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 9)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse(null!, new PaginationDto()));
+            _mapper.Map<List<AutomaticInvoiceItem>>(Arg.Any<List<ProjectInvoiceDto>>())
+                .Returns([]);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.LoadInvoicesGrid(request, month);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<DataGridConfig<AutomaticInvoiceItem>>(partial.Model);
+            Assert.Empty(model.Data);
         }
 
         #endregion
@@ -362,18 +541,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             Assert.IsType<NotFoundResult>(result);
         }
 
-        [Fact]
-        public async Task GetInvoice_InvalidModelState_ReturnsBadRequest()
-        {
-            // Arrange
-            _controller.ModelState.AddModelError("Test", "Validation error");
-
-            // Act
-            var result = await _controller.GetInvoice(0, null);
-
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
-        }
 
         [Fact]
         public async Task GetInvoice_PopulatesViewBag_WithProjectsAndMonths()
@@ -594,69 +761,248 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
 
         #endregion
 
+        #region BuildAutomaticInvoiceGridAsync Additional Tests
+
+        [Fact]
+        public async Task Index_WithMonth_GridConfigContainsMonthInQueryString()
+        {
+            // Arrange
+            const int month = 7;
+            var months = new List<MonthDto>
+            {
+                new() { Monthnumber = 7, Monthname = "July" }
+            };
+
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), month)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+            SetupMonthsList(months);
+            SetupInvoicesGridMapper();
+
+            // Act
+            var result = await _controller.Index(month);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<AutomaticMonthlyInvoiceViewModel>(viewResult.Model);
+            Assert.Contains("?month=7", model.InvoicesGrid.BindGridUrl);
+        }
+
+        [Fact]
+        public async Task Index_WithoutMonth_GridContainsEmptyData()
+        {
+            // Arrange
+            var months = new List<MonthDto>
+            {
+                new() { Monthnumber = 1, Monthname = "January" }
+            };
+
+            SetupMonthsList(months);
+            SetupInvoicesGridMapper();
+
+            // Act
+            var result = await _controller.Index(null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<AutomaticMonthlyInvoiceViewModel>(viewResult.Model);
+            Assert.Empty(model.InvoicesGrid.Data);
+            Assert.DoesNotContain("?month=", model.InvoicesGrid.BindGridUrl);
+            // Verify service was NOT called when no month is provided
+            await _invoiceService.DidNotReceive().GetPagedProjectInvoicesByMonthAsync(
+                Arg.Any<QueryParameters<string>>(), 
+                Arg.Any<int?>());
+        }
+
+        [Fact]
+        public async Task Index_WithMonth_GridConfigurationSetCorrectly()
+        {
+            // Arrange
+            const int month = 5;
+            var months = new List<MonthDto>
+            {
+                new() { Monthnumber = 5, Monthname = "May" }
+            };
+
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), month)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+            SetupMonthsList(months);
+            SetupInvoicesGridMapper();
+
+            // Act
+            var result = await _controller.Index(month);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<AutomaticMonthlyInvoiceViewModel>(viewResult.Model);
+            var gridConfig = model.InvoicesGrid;
+
+            Assert.True(gridConfig.ShowCheckboxColumn);
+            Assert.Equal("automaticInvoiceGrid", gridConfig.GridId);
+            Assert.Equal("InvoiceCounter", gridConfig.KeyProperty);
+            Assert.Equal("addAutomaticInvoice", gridConfig.AddFunction);
+            Assert.Equal("editAutomaticInvoice", gridConfig.EditFunction);
+            Assert.Equal("deleteAutomaticInvoice", gridConfig.DeleteFunction);
+        }
+
+        [Fact]
+        public async Task LoadInvoicesGrid_WithMonth_SetsCorrectPaginationSortingFromRequest()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> 
+            { 
+                Page = 3, 
+                PageSize = 100,
+                SortBy = "Amount",
+                Descending = true,
+                Filter = "{}" 
+            };
+            const string month = "11";
+            var paginationDto = new PaginationDto 
+            { 
+                PageNumber = 3, 
+                PageSize = 100, 
+                TotalRecords = 250, 
+                TotalPages = 3 
+            };
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 11)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], paginationDto));
+            _mapper.Map<List<AutomaticInvoiceItem>>(Arg.Any<List<ProjectInvoiceDto>>())
+                .Returns([]);
+            _mapper.Map<PaginationModel>(paginationDto)
+                .Returns(new PaginationModel 
+                { 
+                    PageNumber = 3, 
+                    PageSize = 100, 
+                    TotalRecords = 250
+                });
+
+            // Act
+            var result = await _controller.LoadInvoicesGrid(request, month);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<DataGridConfig<AutomaticInvoiceItem>>(partial.Model);
+            Assert.Equal("Amount", model.Pagination.SortColumn);
+            Assert.True(model.Pagination.SortDirection);
+        }
+
+        [Fact]
+        public async Task LoadInvoicesGrid_ServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 50, Filter = "{}" };
+            const string month = "6";
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 6)
+                .Returns(Task.FromException<ApiResponseDto<List<ProjectInvoiceDto>>>(new InvalidOperationException("Database connection error")));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => 
+                _controller.LoadInvoicesGrid(request, month));
+        }
+
+        [Fact]
+        public async Task LoadInvoicesGrid_WithBoundaryMonth_January_Works()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}" };
+            const string month = "1";
+
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 1)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+            SetupInvoicesGridMapper();
+
+            // Act
+            var result = await _controller.LoadInvoicesGrid(request, month);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.NotNull(partial.Model);
+            await _invoiceService.Received(1).GetPagedProjectInvoicesByMonthAsync(
+                Arg.Any<QueryParameters<string>>(), 
+                1);
+        }
+
+        [Fact]
+        public async Task LoadInvoicesGrid_WithBoundaryMonth_December_Works()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}" };
+            const string month = "12";
+
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 12)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+            SetupInvoicesGridMapper();
+
+            // Act
+            var result = await _controller.LoadInvoicesGrid(request, month);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.NotNull(partial.Model);
+            await _invoiceService.Received(1).GetPagedProjectInvoicesByMonthAsync(
+                Arg.Any<QueryParameters<string>>(), 
+                12);
+        }
+
+        [Fact]
+        public async Task Index_ServiceReturnsEmptyList_GridShowsNoData()
+        {
+            // Arrange
+            const int month = 2;
+            var months = new List<MonthDto>
+            {
+                new() { Monthnumber = 2, Monthname = "February" }
+            };
+
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), month)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto { TotalRecords = 0 }));
+            SetupMonthsList(months);
+            SetupInvoicesGridMapper();
+
+            // Act
+            var result = await _controller.Index(month);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<AutomaticMonthlyInvoiceViewModel>(viewResult.Model);
+            Assert.Empty(model.InvoicesGrid.Data);
+        }
+
+        [Fact]
+        public async Task Index_WithLargeMonth_ServiceReceivesCorrectValue()
+        {
+            // Arrange
+            const int month = 12;
+            var months = new List<MonthDto>
+            {
+                new() { Monthnumber = 12, Monthname = "December" }
+            };
+
+            _invoiceService.GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), 12)
+                .Returns(ApiResponseDto<List<ProjectInvoiceDto>>.SuccessResponse([], new PaginationDto()));
+            SetupMonthsList(months);
+            SetupInvoicesGridMapper();
+
+            // Act
+            await _controller.Index(month);
+
+            // Assert
+            await _invoiceService.Received(1).GetPagedProjectInvoicesByMonthAsync(
+                Arg.Any<QueryParameters<string>>(), 
+                12);
+        }
+
+        #endregion
+
         #region CopyInvoices Tests
 
-        [Fact]
-        public async Task CopyInvoices_NullRequest_ReturnsInvalidRequestError()
-        {
-            // Act
-            var result = await _controller.CopyInvoices(null!);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var jsonElement = GetJsonResultElement(jsonResult);
-            Assert.False(jsonElement.GetProperty("success").GetBoolean());
-            Assert.Contains("Invalid request", jsonElement.GetProperty("message").GetString(), StringComparison.OrdinalIgnoreCase);
-        }
-
-        [Fact]
-        public async Task CopyInvoices_SourceMonthZero_ReturnsInvalidMonthError()
-        {
-            // Arrange
-            var request = new CopyInvoicesRequest { SourceMonth = 0, TargetMonth = 6 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var jsonElement = GetJsonResultElement(jsonResult);
-            Assert.False(jsonElement.GetProperty("success").GetBoolean());
-            Assert.Contains("Invalid month", jsonElement.GetProperty("message").GetString(), StringComparison.OrdinalIgnoreCase);
-        }
-
-        [Fact]
-        public async Task CopyInvoices_TargetMonthNegative_ReturnsInvalidMonthError()
-        {
-            // Arrange
-            var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = -1 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var jsonElement = GetJsonResultElement(jsonResult);
-            Assert.False(jsonElement.GetProperty("success").GetBoolean());
-            Assert.Contains("Invalid month", jsonElement.GetProperty("message").GetString(), StringComparison.OrdinalIgnoreCase);
-        }
-
-        [Fact]
-        public async Task CopyInvoices_SameSourceAndTarget_ReturnsDifferentMonthsError()
-        {
-            // Arrange
-            var request = new CopyInvoicesRequest { SourceMonth = 6, TargetMonth = 6 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var jsonElement = GetJsonResultElement(jsonResult);
-            Assert.False(jsonElement.GetProperty("success").GetBoolean());
-            Assert.Contains("must be different", jsonElement.GetProperty("message").GetString(), StringComparison.OrdinalIgnoreCase);
-        }
-
+        
         [Fact]
         public async Task CopyInvoices_BulkCopy_NullInvoiceRecords_FetchesAndCopiesAllInvoices()
         {
@@ -670,7 +1016,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 Errors = new List<string>()
             };
 
-            _invoiceService.CopyInvoicesAsync(5, 6)
+            _invoiceService.CopyInvoicesAsync(5, 6, null)
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
@@ -702,7 +1048,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 Errors = new List<string>()
             };
 
-            _invoiceService.CopyInvoicesAsync(5, 6)
+            _invoiceService.CopyInvoicesAsync(5, 6, null)
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
@@ -722,7 +1068,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
 
             // Mock the service to return a failure response
-            _invoiceService.CopyInvoicesAsync(5, 6)
+            _invoiceService.CopyInvoicesAsync(5, 6, null)
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.FailureResponse(
                     new List<ApiErrorDto> 
                     { 
@@ -755,6 +1101,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 6, 
                 InvoiceRecords = invoiceRecords 
             };
+            var copyResult = new CopyInvoicesResultDto
+            {
+                Success = true,
+                Message = "Successfully copied 2 invoices",
+                CopiedCount = 2,
+                FailedCount = 0,
+                Errors = new List<string>()
+            };
 
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(x => new ProjectInvoiceDto 
@@ -763,10 +1117,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                     Amount = ((AutomaticInvoiceItem)x[0]).Amount
                 });
 
-            _invoiceService.CreateAsync(Arg.Is<ProjectInvoiceDto>(dto => dto.ProjectParent == "PRJ001"))
-                .Returns(ApiResponseDto<ProjectInvoiceDto>.SuccessResponse(new ProjectInvoiceDto()));
-            _invoiceService.CreateAsync(Arg.Is<ProjectInvoiceDto>(dto => dto.ProjectParent == "PRJ002"))
-                .Returns(ApiResponseDto<ProjectInvoiceDto>.SuccessResponse(new ProjectInvoiceDto()));
+            _invoiceService.CopyInvoicesAsync(5, 6, Arg.Is<List<ProjectInvoiceDto>>(list => list.Count == 2))
+                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
             var result = await _controller.CopyInvoices(request);
@@ -792,21 +1144,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 8, 
                 InvoiceRecords = invoiceRecords 
             };
-            ProjectInvoiceDto? capturedDto = null;
+            List<ProjectInvoiceDto>? capturedDtos = null;
+            var copyResult = new CopyInvoicesResultDto
+            {
+                Success = true,
+                CopiedCount = 1,
+                Errors = new List<string>()
+            };
 
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(new ProjectInvoiceDto { ProjectParent = "PRJ001", Month = 5, Amount = 1000m });
 
-            _invoiceService.CreateAsync(Arg.Do<ProjectInvoiceDto>(dto => capturedDto = dto))
-                .Returns(ApiResponseDto<ProjectInvoiceDto>.SuccessResponse(new ProjectInvoiceDto()));
+            _invoiceService.CopyInvoicesAsync(5, 8, Arg.Do<List<ProjectInvoiceDto>>(dtos => capturedDtos = dtos))
+                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
             await _controller.CopyInvoices(request);
 
             // Assert
-            Assert.NotNull(capturedDto);
-            Assert.Equal(8, capturedDto.Month);
-            Assert.Equal(0, capturedDto.InvoiceCounter);
+            Assert.NotNull(capturedDtos);
+            Assert.Single(capturedDtos);
+            Assert.Equal(8, capturedDtos[0].Month);
+            Assert.Equal(0, capturedDtos[0].InvoiceCounter);
         }
 
         [Fact]
@@ -825,6 +1184,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 6, 
                 InvoiceRecords = invoiceRecords 
             };
+            var copyResult = new CopyInvoicesResultDto
+            {
+                Success = false,
+                Message = "Copied 2 out of 3 invoices",
+                CopiedCount = 2,
+                FailedCount = 1,
+                Errors = new List<string> { "Failed to copy invoice for PRJ002: Duplicate invoice" }
+            };
 
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(x => new ProjectInvoiceDto 
@@ -834,22 +1201,18 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                     Amount = ((AutomaticInvoiceItem)x[0]).Amount
                 });
 
-            _invoiceService.CreateAsync(Arg.Is<ProjectInvoiceDto>(dto => dto.ProjectParent == "PRJ001"))
-                .Returns(ApiResponseDto<ProjectInvoiceDto>.SuccessResponse(new ProjectInvoiceDto()));
-            _invoiceService.CreateAsync(Arg.Is<ProjectInvoiceDto>(dto => dto.ProjectParent == "PRJ002"))
-                .Returns(ApiResponseDto<ProjectInvoiceDto>.FailureResponse(
-                    new List<ApiErrorDto> { new() { Message = "Duplicate invoice" } }, 
-                    new ApiMetaDto()));
-            _invoiceService.CreateAsync(Arg.Is<ProjectInvoiceDto>(dto => dto.ProjectParent == "PRJ003"))
-                .Returns(ApiResponseDto<ProjectInvoiceDto>.SuccessResponse(new ProjectInvoiceDto()));
+            _invoiceService.CopyInvoicesAsync(5, 6, Arg.Any<List<ProjectInvoiceDto>>())
+                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
             var result = await _controller.CopyInvoices(request);
+
+            // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonElement = GetJsonResultElement(jsonResult);
             Assert.False(jsonElement.GetProperty("success").GetBoolean());
             Assert.Equal(2, jsonElement.GetProperty("copiedCount").GetInt32());
-            Assert.Contains("Copied 2 invoice(s) with 1 failure(s)", jsonElement.GetProperty("message").GetString());
+            Assert.Contains("Copied 2 out of 3", jsonElement.GetProperty("message").GetString());
             Assert.True(jsonElement.GetProperty("errors").GetArrayLength() > 0);
         }
 
@@ -868,14 +1231,24 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 6, 
                 InvoiceRecords = invoiceRecords 
             };
+            var copyResult = new CopyInvoicesResultDto
+            {
+                Success = false,
+                Message = "Failed to copy all invoices",
+                CopiedCount = 0,
+                FailedCount = 2,
+                Errors = new List<string> 
+                { 
+                    "Failed to copy invoice for PRJ001: Database error",
+                    "Failed to copy invoice for PRJ002: Database error"
+                }
+            };
 
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(new ProjectInvoiceDto());
 
-            _invoiceService.CreateAsync(Arg.Any<ProjectInvoiceDto>())
-                .Returns(ApiResponseDto<ProjectInvoiceDto>.FailureResponse(
-                    new List<ApiErrorDto> { new() { Message = "Database error" } }, 
-                    new ApiMetaDto()));
+            _invoiceService.CopyInvoicesAsync(5, 6, Arg.Any<List<ProjectInvoiceDto>>())
+                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
             var result = await _controller.CopyInvoices(request);
@@ -889,7 +1262,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
         }
 
         [Fact]
-        public async Task CopyInvoices_SelectiveCopy_CallsCreateAsyncInParallel()
+        public async Task CopyInvoices_SelectiveCopy_CallsServiceWithMappedDtos()
         {
             // Arrange
             var invoiceRecords = new List<AutomaticInvoiceItem>
@@ -904,21 +1277,32 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 6, 
                 InvoiceRecords = invoiceRecords 
             };
+            var copyResult = new CopyInvoicesResultDto
+            {
+                Success = true,
+                CopiedCount = 3,
+                Errors = new List<string>()
+            };
 
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(new ProjectInvoiceDto());
 
-            _invoiceService.CreateAsync(Arg.Any<ProjectInvoiceDto>())
-                .Returns(ApiResponseDto<ProjectInvoiceDto>.SuccessResponse(new ProjectInvoiceDto()));
+            _invoiceService.CopyInvoicesAsync(5, 6, Arg.Any<List<ProjectInvoiceDto>>())
+                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
             var result = await _controller.CopyInvoices(request);
 
             // Assert
-            // Verify all 3 calls were made
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonElement = GetJsonResultElement(jsonResult);
             Assert.Equal(3, jsonElement.GetProperty("copiedCount").GetInt32());
+
+            // Verify service was called with the correct parameters
+            await _invoiceService.Received(1).CopyInvoicesAsync(
+                5, 
+                6, 
+                Arg.Is<List<ProjectInvoiceDto>>(list => list != null && list.Count == 3));
         }
 
         [Fact]
@@ -927,7 +1311,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             // Arrange
             var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
 
-            _invoiceService.CopyInvoicesAsync(Arg.Any<int>(), Arg.Any<int>())
+            _invoiceService.CopyInvoicesAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<ProjectInvoiceDto>?>())
                 .Returns((ApiResponseDto<CopyInvoicesResultDto>)null!);
 
             // Act
@@ -940,6 +1324,87 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             // When service returns null, should handle gracefully with 0 copied
             Assert.True(jsonElement.GetProperty("success").GetBoolean());
             Assert.Equal(0, jsonElement.GetProperty("copiedCount").GetInt32());
+        }
+
+        [Fact]
+        public async Task CopyInvoices_SelectiveCopy_WithManyRecords_PassesAllToService()
+        {
+            // Arrange
+            var invoiceRecords = Enumerable.Range(1, 50)
+                .Select(i => new AutomaticInvoiceItem 
+                { 
+                    InvoiceCounter = i, 
+                    ProjectParent = $"PRJ{i:000}", 
+                    Month = 3, 
+                    Amount = i * 100m 
+                })
+                .ToList();
+            var request = new CopyInvoicesRequest 
+            { 
+                SourceMonth = 3, 
+                TargetMonth = 4, 
+                InvoiceRecords = invoiceRecords 
+            };
+            var copyResult = new CopyInvoicesResultDto
+            {
+                Success = true,
+                CopiedCount = 50,
+                Errors = new List<string>()
+            };
+
+            _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
+                .Returns(new ProjectInvoiceDto());
+
+            _invoiceService.CopyInvoicesAsync(3, 4, Arg.Any<List<ProjectInvoiceDto>>())
+                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
+
+            // Act
+            var result = await _controller.CopyInvoices(request);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonElement = GetJsonResultElement(jsonResult);
+            Assert.Equal(50, jsonElement.GetProperty("copiedCount").GetInt32());
+
+            await _invoiceService.Received(1).CopyInvoicesAsync(
+                3, 
+                4, 
+                Arg.Is<List<ProjectInvoiceDto>>(list => list != null && list.Count == 50));
+        }
+
+        [Fact]
+        public async Task CopyInvoices_BulkCopy_CallsServiceWithNullDtosList()
+        {
+            // Arrange
+            var request = new CopyInvoicesRequest { SourceMonth = 2, TargetMonth = 3, InvoiceRecords = null };
+            var copyResult = new CopyInvoicesResultDto
+            {
+                Success = true,
+                CopiedCount = 10,
+                Errors = new List<string>()
+            };
+
+            _invoiceService.CopyInvoicesAsync(2, 3, null)
+                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
+
+            // Act
+            await _controller.CopyInvoices(request);
+
+            // Assert
+            await _invoiceService.Received(1).CopyInvoicesAsync(2, 3, null);
+        }
+
+        [Fact]
+        public async Task CopyInvoices_ServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+
+            _invoiceService.CopyInvoicesAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<ProjectInvoiceDto>?>())
+                .Returns(Task.FromException<ApiResponseDto<CopyInvoicesResultDto>>(new InvalidOperationException("Service error")));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.CopyInvoices(request));
         }
 
         #endregion

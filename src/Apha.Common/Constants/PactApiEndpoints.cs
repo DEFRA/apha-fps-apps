@@ -51,6 +51,7 @@ namespace Apha.Common.Constants
         // Project Invoice
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
         public const string GetPagedProjectInvoiceManual = "api/v1/projectinvoice";
+        public const string GetPagedProjectInvoicesByMonth = "api/v1/projectinvoice/by-month";
         public const string GetProjectInvoiceTotalAmount = "api/v1/projectinvoice/total";
         public const string GetProjectInvoiceById = "api/v1/projectinvoice/{0}";
         public const string CreateProjectInvoice = "api/v1/projectinvoice";

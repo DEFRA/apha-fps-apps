@@ -8,6 +8,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using Xunit;
 
 namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
 {
@@ -533,6 +534,450 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
 
         #endregion
 
+        #region GetPagedProjectInvoicesByMonth
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonth_ValidMonthAndQuery_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var month = 3;
+            var dtos = new List<ProjectInvoiceDto>
+            {
+                new ProjectInvoiceDto { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3 },
+                new ProjectInvoiceDto { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 3 }
+            };
+            var paginationData = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2, TotalPages = 1 };
+            var serviceResult = new PaginatedResult<ProjectInvoiceDto>(dtos, paginationData);
+            var expectedResponse = new PaginationRes<ProjectInvoiceRes>
+            {
+                Data = new List<ProjectInvoiceRes>
+                {
+                    new ProjectInvoiceRes { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3 },
+                    new ProjectInvoiceRes { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 3 }
+                },
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 2, TotalPages = 1 }
+            };
+
+            _serviceMock.GetPagedProjectInvoicesByMonthAsync(query, month).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectInvoiceRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<PaginationRes<ProjectInvoiceRes>>(okResult.Value);
+            Assert.Equal(2, response.Data.Count());
+            Assert.All(response.Data, item => Assert.Equal(3, item.Month));
+            await _serviceMock.Received(1).GetPagedProjectInvoicesByMonthAsync(query, month);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonth_NullMonth_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            int? month = null;
+            var serviceResult = new PaginatedResult<ProjectInvoiceDto>(Enumerable.Empty<ProjectInvoiceDto>(), new PaginationDto());
+            var expectedResponse = new PaginationRes<ProjectInvoiceRes>();
+
+            _serviceMock.GetPagedProjectInvoicesByMonthAsync(query, null).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectInvoiceRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            await _serviceMock.Received(1).GetPagedProjectInvoicesByMonthAsync(query, null);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonth_MonthLessThan1_ReturnsBadRequest()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var month = 0;
+
+            // Act
+            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Contains("Month must be between 1 and 12", badRequestResult.Value?.ToString());
+            await _serviceMock.DidNotReceive().GetPagedProjectInvoicesByMonthAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<int?>());
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonth_MonthGreaterThan12_ReturnsBadRequest()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var month = 13;
+
+            // Act
+            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Contains("Month must be between 1 and 12", badRequestResult.Value?.ToString());
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(6)]
+        [InlineData(12)]
+        public async Task GetPagedProjectInvoicesByMonth_ValidMonthBoundaries_ReturnsOk(int month)
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<ProjectInvoiceDto>(Enumerable.Empty<ProjectInvoiceDto>(), new PaginationDto());
+            var expectedResponse = new PaginationRes<ProjectInvoiceRes>();
+
+            _serviceMock.GetPagedProjectInvoicesByMonthAsync(query, month).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectInvoiceRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _serviceMock.Received(1).GetPagedProjectInvoicesByMonthAsync(query, month);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonth_EmptyResult_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var month = 12;
+            var emptyDtos = new List<ProjectInvoiceDto>();
+            var paginationData = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 };
+            var serviceResult = new PaginatedResult<ProjectInvoiceDto>(emptyDtos, paginationData);
+            var expectedResponse = new PaginationRes<ProjectInvoiceRes>
+            {
+                Data = new List<ProjectInvoiceRes>(),
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 }
+            };
+
+            _serviceMock.GetPagedProjectInvoicesByMonthAsync(query, month).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectInvoiceRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<PaginationRes<ProjectInvoiceRes>>(okResult.Value);
+            Assert.Empty(response.Data);
+            Assert.Equal(0, response.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonth_ServiceThrowsArgumentException_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var month = 3;
+
+            _serviceMock.GetPagedProjectInvoicesByMonthAsync(query, month)
+                .ThrowsAsync(new ArgumentException("Invalid month parameter"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetPagedProjectInvoicesByMonth(query, month));
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonth_NegativeMonth_ReturnsBadRequest()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var month = -1;
+
+            // Act
+            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Contains("Month must be between 1 and 12", badRequestResult.Value?.ToString());
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonth_WithPagination_ReturnsCorrectPage()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5 };
+            var month = 6;
+            var dtos = Enumerable.Range(6, 5).Select(i => new ProjectInvoiceDto
+            {
+                InvoiceCounter = i,
+                ProjectParent = $"PRJ{i}",
+                Month = 6
+            }).ToList();
+            var paginationData = new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 15, TotalPages = 3 };
+            var serviceResult = new PaginatedResult<ProjectInvoiceDto>(dtos, paginationData);
+            var expectedResponse = new PaginationRes<ProjectInvoiceRes>();
+
+            _serviceMock.GetPagedProjectInvoicesByMonthAsync(query, month).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectInvoiceRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProjectInvoicesByMonth(query, month);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _serviceMock.Received(1).GetPagedProjectInvoicesByMonthAsync(
+                Arg.Is<QueryParameters<string>>(q => q.Page == 2 && q.PageSize == 5),
+                month);
+        }
+
+        #endregion
+
+        #region GetMonthlyInvoicesSummary
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummary_ValidQuery_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new MonthlyInvoicesPivotDto
+            {
+                Months = new List<int> { 1, 2, 3 },
+                Rows = new List<MonthlyInvoicesSummaryDto>
+                {
+                    new MonthlyInvoicesSummaryDto
+                    {
+                        Program = "ADMIN",
+                        ParentProject = "PRJ1",
+                        MonthlyAmounts = new Dictionary<int, decimal>
+                        {
+                            { 1, 1000m },
+                            { 2, 1500m },
+                            { 3, 2000m }
+                        }
+                    }
+                },
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
+            };
+            var expectedResponse = new MonthlyInvoicesPivotRes
+            {
+                Months = new List<int> { 1, 2, 3 },
+                Rows = new List<MonthlyInvoicesSummaryItemRes>
+                {
+                    new MonthlyInvoicesSummaryItemRes
+                    {
+                        Program = "ADMIN",
+                        ParentProject = "PRJ1",
+                        MonthlyAmounts = new Dictionary<int, decimal>
+                        {
+                            { 1, 1000m },
+                            { 2, 1500m },
+                            { 3, 2000m }
+                        }
+                    }
+                },
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
+            };
+
+            _serviceMock.GetMonthlyInvoicesSummaryAsync(query).Returns(serviceResult);
+            _mapperMock.Map<MonthlyInvoicesPivotRes>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetMonthlyInvoicesSummary(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<MonthlyInvoicesPivotRes>(okResult.Value);
+            Assert.Equal(3, response.Months.Count());
+            Assert.Single(response.Rows);
+            Assert.Equal("ADMIN", response.Rows.First().Program);
+            await _serviceMock.Received(1).GetMonthlyInvoicesSummaryAsync(query);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummary_EmptyResult_ReturnsOkWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new MonthlyInvoicesPivotDto
+            {
+                Months = new List<int>(),
+                Rows = new List<MonthlyInvoicesSummaryDto>(),
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 }
+            };
+            var expectedResponse = new MonthlyInvoicesPivotRes
+            {
+                Months = new List<int>(),
+                Rows = new List<MonthlyInvoicesSummaryItemRes>(),
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 }
+            };
+
+            _serviceMock.GetMonthlyInvoicesSummaryAsync(query).Returns(serviceResult);
+            _mapperMock.Map<MonthlyInvoicesPivotRes>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetMonthlyInvoicesSummary(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<MonthlyInvoicesPivotRes>(okResult.Value);
+            Assert.Empty(response.Months);
+            Assert.Empty(response.Rows);
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummary_MultipleProjects_ReturnsAllRows()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new MonthlyInvoicesPivotDto
+            {
+                Months = new List<int> { 1, 2 },
+                Rows = new List<MonthlyInvoicesSummaryDto>
+                {
+                    new MonthlyInvoicesSummaryDto { Program = "ADMIN", ParentProject = "PRJ1" },
+                    new MonthlyInvoicesSummaryDto { Program = "CORE", ParentProject = "PRJ2" },
+                    new MonthlyInvoicesSummaryDto { Program = "TEST", ParentProject = "PRJ3" }
+                },
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 3, TotalPages = 1 }
+            };
+            var expectedResponse = new MonthlyInvoicesPivotRes
+            {
+                Months = new List<int> { 1, 2 },
+                Rows = new List<MonthlyInvoicesSummaryItemRes>
+                {
+                    new MonthlyInvoicesSummaryItemRes { Program = "ADMIN", ParentProject = "PRJ1" },
+                    new MonthlyInvoicesSummaryItemRes { Program = "CORE", ParentProject = "PRJ2" },
+                    new MonthlyInvoicesSummaryItemRes { Program = "TEST", ParentProject = "PRJ3" }
+                }
+            };
+
+            _serviceMock.GetMonthlyInvoicesSummaryAsync(query).Returns(serviceResult);
+            _mapperMock.Map<MonthlyInvoicesPivotRes>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetMonthlyInvoicesSummary(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<MonthlyInvoicesPivotRes>(okResult.Value);
+            Assert.Equal(3, response.Rows.Count());
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummary_WithPagination_ReturnsCorrectPage()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5 };
+            var serviceResult = new MonthlyInvoicesPivotDto
+            {
+                Months = new List<int> { 1 },
+                Rows = Enumerable.Range(6, 5).Select(i => new MonthlyInvoicesSummaryDto
+                {
+                    Program = "ADMIN",
+                    ParentProject = $"PRJ{i}"
+                }).ToList(),
+                Pagination = new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 15, TotalPages = 3 }
+            };
+            var expectedResponse = new MonthlyInvoicesPivotRes();
+
+            _serviceMock.GetMonthlyInvoicesSummaryAsync(query).Returns(serviceResult);
+            _mapperMock.Map<MonthlyInvoicesPivotRes>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetMonthlyInvoicesSummary(query);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _serviceMock.Received(1).GetMonthlyInvoicesSummaryAsync(
+                Arg.Is<QueryParameters<string>>(q => q.Page == 2 && q.PageSize == 5));
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummary_ServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _serviceMock.GetMonthlyInvoicesSummaryAsync(query)
+                .ThrowsAsync(new InvalidOperationException("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetMonthlyInvoicesSummary(query));
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummary_WithSortingAndFiltering_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "Program",
+                Descending = true,
+                Filter = "{\"Program\":\"ADMIN\"}"
+            };
+            var serviceResult = new MonthlyInvoicesPivotDto
+            {
+                Months = new List<int> { 1, 2, 3 },
+                Rows = new List<MonthlyInvoicesSummaryDto>
+                {
+                    new MonthlyInvoicesSummaryDto { Program = "ADMIN", ParentProject = "PRJ1" }
+                },
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }
+            };
+            var expectedResponse = new MonthlyInvoicesPivotRes();
+
+            _serviceMock.GetMonthlyInvoicesSummaryAsync(query).Returns(serviceResult);
+            _mapperMock.Map<MonthlyInvoicesPivotRes>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetMonthlyInvoicesSummary(query);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _serviceMock.Received(1).GetMonthlyInvoicesSummaryAsync(Arg.Is<QueryParameters<string>>(q =>
+                q.SortBy == "Program" &&
+                q.Descending == true &&
+                q.Filter == "{\"Program\":\"ADMIN\"}"));
+        }
+
+        [Fact]
+        public async Task GetMonthlyInvoicesSummary_WithAll12Months_ReturnsCompleteData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new MonthlyInvoicesPivotDto
+            {
+                Months = Enumerable.Range(1, 12).ToList(),
+                Rows = new List<MonthlyInvoicesSummaryDto>
+                {
+                    new MonthlyInvoicesSummaryDto
+                    {
+                        Program = "ADMIN",
+                        ParentProject = "PRJ1",
+                        MonthlyAmounts = Enumerable.Range(1, 12).ToDictionary(m => m, m => m * 1000m)
+                    }
+                },
+                Pagination = new PaginationDto()
+            };
+            var expectedResponse = new MonthlyInvoicesPivotRes { Months = Enumerable.Range(1, 12).ToList() };
+
+            _serviceMock.GetMonthlyInvoicesSummaryAsync(query).Returns(serviceResult);
+            _mapperMock.Map<MonthlyInvoicesPivotRes>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetMonthlyInvoicesSummary(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<MonthlyInvoicesPivotRes>(okResult.Value);
+            Assert.Equal(12, response.Months.Count());
+        }
+
+        #endregion
+
         #region CopyInvoices Tests
 
         [Fact]
@@ -615,63 +1060,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             await _serviceMock.Received(1).CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => d.InvoiceIds != null && d.InvoiceIds.Count == 3));
         }
 
-        [Fact]
-        public async Task CopyInvoices_InvalidSourceMonth_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
 
-            // Act
-            var result = await _controller.CopyInvoices(request, "invalid", "2");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.NotNull(badRequestResult.Value);
-            Assert.Contains("Invalid", badRequestResult.Value.ToString()!);
-        }
-
-        [Fact]
-        public async Task CopyInvoices_InvalidDestinationMonth_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "1", "invalid");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.NotNull(badRequestResult.Value);
-            Assert.Contains("Invalid", badRequestResult.Value.ToString()!);
-        }
-
-        [Fact]
-        public async Task CopyInvoices_SourceMonthOutOfRange_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "13", "2");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Contains("must be between 1 and 12", badRequestResult.Value?.ToString());
-        }
-
-        [Fact]
-        public async Task CopyInvoices_DestinationMonthOutOfRange_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "1", "0");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Contains("must be between 1 and 12", badRequestResult.Value?.ToString());
-        }
 
         [Fact]
         public async Task CopyInvoices_BulkTrue_ClearsInvoiceIds()
@@ -900,78 +1289,6 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
         }
 
         [Fact]
-        public async Task CopyInvoices_NullSourceMonth_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request, null!, "2");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.NotNull(badRequestResult.Value);
-            Assert.Contains("Invalid", badRequestResult.Value.ToString()!);
-        }
-
-        [Fact]
-        public async Task CopyInvoices_NullDestinationMonth_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "1", null!);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.NotNull(badRequestResult.Value);
-            Assert.Contains("Invalid", badRequestResult.Value.ToString()!);
-        }
-
-        [Fact]
-        public async Task CopyInvoices_WithErrorsAndMessage_ReturnsAllFieldsCorrectly()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 3, TargetMonth = 4, InvoiceIds = new List<int> { 1, 2 } };
-            var dto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4, InvoiceIds = new List<int> { 1, 2 } };
-            var errorMessages = new List<string> { "Error copying invoice 1", "Error copying invoice 2" };
-            var resultDto = new CopyInvoicesResultDto
-            {
-                Success = false,
-                CopiedCount = 0,
-                FailedCount = 2,
-                Errors = errorMessages,
-                Message = "All copy operations failed"
-            };
-            var response = new CopyInvoicesRes
-            {
-                Success = false,
-                CopiedCount = 0,
-                FailedCount = 2,
-                Errors = errorMessages,
-                Message = "All copy operations failed"
-            };
-
-            _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(dto).Returns(resultDto);
-            _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "3", "4");
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var resultValue = Assert.IsType<CopyInvoicesRes>(okResult.Value);
-            Assert.False(resultValue.Success);
-            Assert.Equal(0, resultValue.CopiedCount);
-            Assert.Equal(2, resultValue.FailedCount);
-            Assert.NotNull(resultValue.Errors);
-            Assert.Equal(2, resultValue.Errors.Count);
-            Assert.Equal("All copy operations failed", resultValue.Message);
-        }
-
-        [Fact]
         public async Task CopyInvoices_BulkModeWithNullInvoiceIdsInRequest_ProcessesCorrectly()
         {
             // Arrange
@@ -1095,98 +1412,6 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
         }
 
         #region CopyInvoices_ValidationTests
-
-        [Fact]
-        public async Task CopyInvoices_WhitespaceInMonthParams_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "  ", "2");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.NotNull(badRequestResult.Value);
-            Assert.Contains("Invalid", badRequestResult.Value.ToString()!);
-        }
-
-        [Fact]
-        public async Task CopyInvoices_EmptyStringMonthParams_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "", "2");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.NotNull(badRequestResult.Value);
-            Assert.Contains("Invalid", badRequestResult.Value.ToString()!);
-        }
-
-        [Fact]
-        public async Task CopyInvoices_NegativeMonth_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "-1", "2");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Contains("must be between 1 and 12", badRequestResult.Value?.ToString());
-        }
-
-        [Fact]
-        public async Task CopyInvoices_AlphanumericMonthParams_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "Jan", "Feb");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Contains("Invalid", badRequestResult.Value?.ToString());
-        }
-
-        [Fact]
-        public async Task CopyInvoices_DecimalMonthParams_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-            var dto = new CopyInvoicesDto { SourceMonth = 1, TargetMonth = 2 };
-            
-            _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "1.5", "2");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Contains("Invalid source month", badRequestResult.Value?.ToString());
-        }
-
-        [Fact]
-        public async Task CopyInvoices_VeryLargeMonth_ReturnsBadRequest()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-            var dto = new CopyInvoicesDto { SourceMonth = 1, TargetMonth = 2 };
-            
-            _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "1", "999999");
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Contains("must be between 1 and 12", badRequestResult.Value?.ToString());
-        }
 
         [Fact]
         public async Task CopyInvoices_CancellationRequested_PropagatesCancellation()

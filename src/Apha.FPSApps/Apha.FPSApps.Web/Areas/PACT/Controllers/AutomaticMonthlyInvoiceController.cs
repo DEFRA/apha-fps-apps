@@ -6,6 +6,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -48,19 +49,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <returns>The AutomaticMonthlyInvoice Index view populated with grid configuration and month options.</returns>
         public async Task<IActionResult> Index(int? month)
         {
-            var defaultRequest = new PaginationFilter<string>
-            {
-                Page = 1,
-                PageSize = 50,
-                SortBy = "ProjectParent",
-                Descending = false
-            };
-
-            // Apply month filter
-            if (month.HasValue)
-            {
-                defaultRequest.Filter = $"{{\"Month\":\"{month.Value}\"}}";
-            }
+            var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
 
             var gridConfig = await BuildAutomaticInvoiceGridAsync(defaultRequest, month);
 
@@ -118,9 +107,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> GetInvoice(int id, int? selectedMonth)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             // Populate dropdowns for the modal
             await PopulateProjectsAndMonthsViewBagAsync();
 
@@ -220,103 +206,62 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> CopyInvoices([FromBody] CopyInvoicesRequest request)
         {
-            if (request == null)
-            {
-                return Json(new { success = false, message = "Invalid request data." });
-            }
-
-            if (request.SourceMonth <= 0 || request.TargetMonth <= 0)
-            {
-                return Json(new { success = false, message = "Invalid month selection." });
-            }
-
-            if (request.SourceMonth == request.TargetMonth)
-            {
-                return Json(new { success = false, message = "Source and target months must be different." });
-            }
 
             // Determine if this is a bulk copy (no records or empty list) or selective copy
             bool isBulkCopy = request.InvoiceRecords == null || request.InvoiceRecords.Count == 0;
 
-            ApiResponseDto<CopyInvoicesResultDto> response;
-
-            if (isBulkCopy)
+            // Map invoice records to DTOs if selective copy
+            List<ProjectInvoiceDto>? invoiceDtos = null;
+            if (!isBulkCopy)
             {
-                // Bulk copy - call the API with null invoice IDs
-                response = await _invoiceService.CopyInvoicesAsync(
-                    request.SourceMonth, 
-                    request.TargetMonth);
-
-                if (response == null)
-                {
-                    // Handle null response gracefully - no invoices copied
-                    return Json(new 
-                    { 
-                        success = true, 
-                        message = "No invoices to copy",
-                        copiedCount = 0,
-                        errors = new List<string>(),
-                        isBulkCopy = true
-                    });
-                }
-
-                if (!response.Success || response.Data == null)
-                {
-                    var errorMessages = response?.Errors?.Select(e => e.Message ?? e.Code ?? "Unknown error").ToList() ?? new List<string>();
-                    return Json(new 
-                    { 
-                        success = false, 
-                        message = errorMessages.Count > 0 ? string.Join(", ", errorMessages) : "Failed to copy invoices",
-                        errors = errorMessages
-                    });
-                }
-
-                var bulkResult = response.Data;
-                return Json(new 
-                { 
-                    success = bulkResult.Success, 
-                    message = bulkResult.Message,
-                    copiedCount = bulkResult.CopiedCount,
-                    errors = bulkResult.Errors,
-                    isBulkCopy = true
-                });
-            }
-            else
-            {
-                // Selective copy - batch create invoices in parallel
-                var invoiceDtos = request.InvoiceRecords!.Select(item =>
+                invoiceDtos = request.InvoiceRecords!.Select(item =>
                 {
                     var dto = _mapper.Map<ProjectInvoiceDto>(item);
                     dto.Month = request.TargetMonth;
-                    dto.InvoiceCounter = 0;
+                    dto.InvoiceCounter = 0; // Reset counter for new invoices
                     return dto;
                 }).ToList();
+            }
 
-                var createTasks = invoiceDtos.Select(dto => _invoiceService.CreateAsync(dto)).ToArray();
-                var createResponses = await Task.WhenAll(createTasks);
+            // Call unified API method for both bulk and selective copy
+            ApiResponseDto<CopyInvoicesResultDto> response = await _invoiceService.CopyInvoicesAsync(
+                request.SourceMonth,
+                request.TargetMonth,
+                invoiceDtos);
 
-                var successCount = createResponses.Count(r => r.Success);
-                var failCount = createResponses.Length - successCount;
-                var errors = createResponses
-                    .Where(r => !r.Success)
-                    .SelectMany(r => r.Errors ?? new List<ApiErrorDto>())
-                    .Select(e => e.Message ?? "Unknown error")
-                    .ToList();
-
-                var isSuccess = failCount == 0;
-                var message = isSuccess
-                    ? $"Successfully copied {successCount} invoice(s) from month {request.SourceMonth} to month {request.TargetMonth}"
-                    : $"Copied {successCount} invoice(s) with {failCount} failure(s)";
-
-                return Json(new 
-                { 
-                    success = isSuccess, 
-                    message = message,
-                    copiedCount = successCount,
-                    errors = errors,
-                    isBulkCopy = false
+            if (response == null)
+            {
+                // Handle null response gracefully - no invoices copied
+                return Json(new
+                {
+                    success = true,
+                    message = "No invoices to copy",
+                    copiedCount = 0,
+                    errors = new List<string>(),
+                    isBulkCopy = isBulkCopy
                 });
             }
+
+            if (!response.Success || response.Data == null)
+            {
+                var errorMessages = response?.Errors?.Select(e => e.Message ?? e.Code ?? "Unknown error").ToList() ?? new List<string>();
+                return Json(new
+                {
+                    success = false,
+                    message = errorMessages.Count > 0 ? string.Join(", ", errorMessages) : "Failed to copy invoices",
+                    errors = errorMessages
+                });
+            }
+
+            var result = response.Data;
+            return Json(new
+            {
+                success = result.Success,
+                message = result.Message,
+                copiedCount = result.CopiedCount,
+                errors = result.Errors,
+                isBulkCopy = isBulkCopy
+            });
         }
 
         /// <summary>
@@ -332,23 +277,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             // Only fetch data if a month is selected
             if (month.HasValue)
             {
-                filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
-                                 ?? new Dictionary<string, string>();
-
-                // Clean up any empty Month values from the filter
-                if (filterDict.ContainsKey("Month") && string.IsNullOrEmpty(filterDict["Month"]))
-                {
-                    filterDict.Remove("Month");
-                }
-
-                // Add Month filter if not already present (avoids double lookup)
-                if (filterDict.TryAdd("Month", month.Value.ToString()))
-                {
-                    request.Filter = JsonConvert.SerializeObject(filterDict);
-                }
-
+                // Map pagination filter to query parameters
                 var query = _mapper.Map<QueryParameters<string>>(request);
-                var response = await _invoiceService.GetPagedProjectInvoiceManualAsync(query, null);
+
+                // Call the new API method that handles month filtering
+                var response = await _invoiceService.GetPagedProjectInvoicesByMonthAsync(query, month);
 
                 items = response.Data != null
                     ? _mapper.Map<List<AutomaticInvoiceItem>>(response.Data)
@@ -359,6 +292,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     : new PaginationModel();
                 pagination.SortColumn = request.SortBy;
                 pagination.SortDirection = request.Descending;
+
+                // Parse existing filters from request if present
+                if (!string.IsNullOrEmpty(request.Filter))
+                {
+                    filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                                     ?? new Dictionary<string, string>();
+                }
             }
             else
             {
@@ -382,6 +322,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 AddFunction = "addAutomaticInvoice",
                 EditFunction = "editAutomaticInvoice",
                 DeleteFunction = "deleteAutomaticInvoice",
+                ExtraFilterMethod = "getAutomaticInvoiceFilters",
                 BindGridUrl = $"/PACT/AutomaticMonthlyInvoice/LoadInvoicesGrid{queryString}",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<AutomaticInvoiceItem>(),

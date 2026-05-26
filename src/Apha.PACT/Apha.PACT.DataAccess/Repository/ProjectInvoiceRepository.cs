@@ -34,6 +34,30 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        public async Task<PagedData<ProjectInvoice>> GetPagedProjectInvoicesByMonthAsync(PaginationParameters<string> query, int? month)
+        {
+            IQueryable<ProjectInvoice> queryInvoices = _context.ProjectInvoices.AsNoTracking().AsQueryable();
+
+            // Apply month filter if provided
+            if (month.HasValue)
+            {
+                queryInvoices = queryInvoices.Where(i => i.Month == month.Value);
+            }
+
+            // Apply additional filters from query string if present
+            if (!string.IsNullOrEmpty(query.Filter))
+            {
+                queryInvoices = ApplyInvoiceFilterExcludingMonth(queryInvoices, query.Filter);
+            }
+
+            // Apply sorting
+            queryInvoices = (IQueryable<ProjectInvoice>)ApplySorting(queryInvoices, query.SortBy, query.Descending);
+
+            // Execute query and apply pagination
+            List<ProjectInvoice> result = await queryInvoices.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
         public async Task<decimal> GetTotalAmountAsync(string? parentProject)
         {
             IQueryable<ProjectInvoice> query = _context.ProjectInvoices.AsNoTracking();
@@ -90,6 +114,29 @@ namespace Apha.PACT.DataAccess.Repository
 
             if (dict.TryGetValue("Month", out object? month) && month != null && int.TryParse(month.ToString(), out int monthVal))
                 query = query.Where(x => x.Month == monthVal);
+
+            if (dict.TryGetValue("Detail", out object? detail) && detail != null)
+                query = query.Where(x => x.Detail != null && EF.Functions.ILike(x.Detail, $"%{detail}%"));
+
+            return query;
+        }
+
+        /// <summary>
+        /// Applies invoice filters excluding the Month filter (since month is applied separately in GetPagedProjectInvoicesByMonthAsync).
+        /// </summary>
+        private static IQueryable<ProjectInvoice> ApplyInvoiceFilterExcludingMonth(IQueryable<ProjectInvoice> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter)) return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null) return query;
+
+            IDictionary<string, object> dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("ProjectParent", out object? projectParent) && projectParent != null)
+                query = query.Where(x => EF.Functions.ILike(x.ProjectParent, $"%{projectParent}%"));
+
+            // Note: Explicitly excluding Month filter here as it's applied directly in GetPagedProjectInvoicesByMonthAsync
 
             if (dict.TryGetValue("Detail", out object? detail) && detail != null)
                 query = query.Where(x => x.Detail != null && EF.Functions.ILike(x.Detail, $"%{detail}%"));
@@ -158,7 +205,7 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.ProjectInvoices
                 .AsNoTracking()
-                .Where(i => i.Month == month && i.FpsYear == _fpsRequestContext.FpsYear)
+                .Where(i => i.Month == month)
                 .OrderBy(i => i.ProjectParent)
                 .ToListAsync();
         }
@@ -180,13 +227,12 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<int> CreateBulkAsync(IEnumerable<ProjectInvoice> entities)
         {
-            var invoicesList = entities.ToList();
-
-            // Set FpsYear for all entities
-            foreach (var entity in invoicesList)
+            // Set FpsYear for all entities using LINQ projection
+            var invoicesList = entities.Select(entity =>
             {
                 entity.FpsYear = _fpsRequestContext.FpsYear;
-            }
+                return entity;
+            }).ToList();
 
             await _context.ProjectInvoices.AddRangeAsync(invoicesList);
             return await _context.SaveChangesAsync();
