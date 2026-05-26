@@ -178,12 +178,6 @@
     padding: 2px 4px; 
 }
 
-.grid-data-right-align {
-    display: block;
-    padding: 2px 4px;
-    text-align:right;
-}
-
     .grid-footer {
         /* background-color: #e0e0e0;
     border-top: 1px solid #999;*/
