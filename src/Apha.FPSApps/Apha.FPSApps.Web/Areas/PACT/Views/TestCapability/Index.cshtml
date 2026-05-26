@@ -130,6 +130,28 @@
             return window['gridManager_' + testReqmtGridId];
         }
 
+        // ── URL Parameter Helper ──────────────────────────────────────────────
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // ── Page Initialization ───────────────────────────────────────────────
+        $(document).ready(function() {
+            // Check if workgroup is passed as query parameter
+            var workgroupParam = getUrlParameter('workgroup');
+            if (workgroupParam) {
+                // Set the dropdown value
+                $('#workGroupPick').val(workgroupParam);
+                currentViewBy = 1;
+                currentFilterValue = workgroupParam;
+                // Load the grid with the workgroup
+                reloadTestCapabilityGrid(workgroupParam);
+            }
+        });
+
         // ── WorkGroup dropdown change ──────────────────────────────────────────
         function onWorkGroupPickChange(value) {
             document.getElementById('mainTestPick').value = '';

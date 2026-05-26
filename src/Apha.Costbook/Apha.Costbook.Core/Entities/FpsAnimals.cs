@@ -16,7 +16,8 @@ public partial class FpsAnimals
     public bool PlanByWeek { get; set; }
 
     public decimal? DefraDailyRate { get; set; }
-    public int FpsYear { get; set; }
 
-    
+    public int? FpsYear { get; set; }
+
+
 }

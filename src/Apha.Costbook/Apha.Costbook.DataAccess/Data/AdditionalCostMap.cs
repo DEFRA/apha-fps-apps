@@ -8,13 +8,13 @@ namespace Apha.Costbook.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<AdditionalCost> entity)
         {
-            entity.HasKey(e => e.AcIdentity).HasName("aaaaatbladditionalcosts_pk");
+            entity.HasKey(e => e.AcIdentity).HasName("pk_tbladditionalcosts");
 
             entity.ToTable("tbladditionalcosts", DbConstants.MabArchiveSchemaName);
 
-            entity.HasIndex(e => e.Project, "tbladditionalcosts_tbladditionalcostsproject");
+            entity.HasIndex(e => e.Project, "idx_tbladditionalcosts_project");
 
-            entity.HasIndex(e => new { e.Project, e.Year }, "tblprojectyeartbladditionalcosts");
+            entity.HasIndex(e => new { e.Project, e.Year }, "idx_tbladditionalcosts_project_year");
 
             entity.Property(e => e.AcIdentity).HasColumnName("ac_identity");
             entity.Property(e => e.AccountCat)

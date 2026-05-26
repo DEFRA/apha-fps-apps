@@ -10,11 +10,11 @@ namespace Apha.Costbook.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<Program> entity)
         {
-            entity.HasKey(e => e.ProgramNo).HasName("tlkpprogram_pk__tlkpprogram__2180fb33");
+            entity.HasKey(e => new { e.ProgramNo, e.FpScalYear }).HasName("pk_tlkpprogram");
 
             entity.ToTable("tlkpprogram", DbConstants.FpsSchemaName);
 
-            entity.HasIndex(e => e.Minim, "dbo_tlkpprogram_tlkpprogram_minim");
+            entity.HasIndex(e => e.Minim, "tlkpprogram_minim");
 
             entity.Property(e => e.ProgramNo)
                 .HasMaxLength(10)
@@ -25,7 +25,7 @@ namespace Apha.Costbook.DataAccess.Data
             entity.Property(e => e.Directorate)
                 .HasMaxLength(15)
                 .HasColumnName("directorate");
-            entity.Property(e => e.FpScalYear).HasColumnName(DbConstants.FpsYearColumnName);
+            entity.Property(e => e.FpScalYear).HasColumnName("fpsyear");
             entity.Property(e => e.Manager)
                 .HasMaxLength(50)
                 .HasColumnName("manager");

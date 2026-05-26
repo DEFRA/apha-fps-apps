@@ -56,6 +56,39 @@ $(document).ready(function () {
         }
     });
 
+    // ── Check for portfolio parameter and auto-select ─────────────────────
+    var urlParams = new URLSearchParams(window.location.search);
+    var portfolioParam = urlParams.get('portfolio');
+
+    if (portfolioParam) {
+        // Use a slight delay to ensure all event handlers are fully bound
+        setTimeout(function() {
+            // Find the matching row in the dropdown
+            var $matchingRow = $rows.filter(function() {
+                return $(this).data('value') === portfolioParam;
+            });
+
+            if ($matchingRow.length > 0) {
+                // Manually simulate the row click behavior
+                var value = $matchingRow.data('value');
+                var label = $matchingRow.data('label');
+
+                // Update the input display value
+                $input.val(label || value);
+
+                // Close the panel
+                $panel.removeClass('open');
+
+                // Clear search
+                $('#portfolioDropdownPanel .select-search-box').val('');
+                $rows.show();
+
+                // Load the portfolio data
+                loadPortfolioData(value);
+            }
+        }, 100);
+    }
+
     // ── Save portfolio form ───────────────────────────────────────────────────
     $('#btnSavePortfolio').on('click', function () {
         clearValidationErrors('#portfolioDetailForm');

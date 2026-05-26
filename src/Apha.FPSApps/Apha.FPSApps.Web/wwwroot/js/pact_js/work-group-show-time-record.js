@@ -187,6 +187,9 @@ function initWorkGroupShowTimeRecordPage() {
             updateTotalHours();
         }
     });
+
+    // ── Update Total Hours for the initial server-rendered grid ───────────
+    updateTotalHours();
 }
 
 $(document).ready(function () {

@@ -54,7 +54,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
 
-            var pagedData = await _projectSubContractService.GetFpsProjectSubContractsAsync(queryParameters, projectCode);
+            var pagedData = await _projectSubContractService.GetFpsProjectSubContractsAsync(queryParameters, projectCode, filterByAnimalAcctCodes: true);
 
             List<ActualProjectCostItem> items = pagedData.Data != null
                 ? _mapper.Map<List<ActualProjectCostItem>>(pagedData.Data)
@@ -123,7 +123,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(projectCode))
                 return Json(new { success = false, message = "Project code is required.", totalActualCost = 0 });
 
-            ApiResponseDto<decimal> result = await _projectSubContractService.GetFpsProjectSubContractTotalAmountAsync(projectCode);
+            ApiResponseDto<decimal> result = await _projectSubContractService.GetFpsProjectSubContractTotalAmountAsync(projectCode, filterByAnimalAcctCodes: true);
             if (result.Success)
                 return Json(new { success = true, totalActualCost = result.Data });
 

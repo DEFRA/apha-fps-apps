@@ -1,7 +1,7 @@
-﻿
+
 namespace Apha.FPS.Core.Entities
 {
-    public partial class WgEmployee
+    public partial class WorkGroupEmployee
     {
         public string PactId { get; set; } = null!;
 

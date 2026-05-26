@@ -19,7 +19,7 @@ namespace Apha.Costbook.Application.Dtos
         public string? ProjectWorkgroup { get; set; }   
         public double? Contractprice { get; set; }
 
-        public DateOnly? Startdate { get; set; }
+        public DateTime? Startdate { get; set; }
 
         public string? Disease { get; set; }
 
@@ -32,7 +32,7 @@ namespace Apha.Costbook.Application.Dtos
         public string? SubmittedByFName { get; set; }
 
         public string? SubmittedByLName { get; set; }
-        public DateOnly? DateOfSubmission { get; set; }
+        public DateTime? DateOfSubmission { get; set; }
 
         public string? PreparedBy { get; set; }
 

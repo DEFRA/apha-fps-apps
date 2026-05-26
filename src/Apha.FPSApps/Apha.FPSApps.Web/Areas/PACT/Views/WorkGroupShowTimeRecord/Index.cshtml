@@ -3,7 +3,15 @@
 @{
     ViewData["Title"] = "PACT : Work Group Show Time Records";
 }
-
+<div class="govuk-grid-column-full sup_border-bottom">
+    <h1 class="sup_margin_top_10 sup_padding_bottom_10">
+        Verify Time Record by... 
+        <a asp-area="PACT"
+        asp-controller="WorkGroupPeople"
+        asp-action="Index"
+        asp-route-workGroup="@Model.SelectedWorkGroup"
+        class="govuk-back-link sup_align_right">Back</a></h1>
+</div>
 @* Filter Header *@
 <div class="govuk-grid-row sup_margin_left_right_0 sup_flex_left_center sup_padding_bottom_10 sup_border-bottom" style="margin-top:10px;">
 

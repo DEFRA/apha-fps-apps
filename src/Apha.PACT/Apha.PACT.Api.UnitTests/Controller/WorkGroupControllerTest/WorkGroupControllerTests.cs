@@ -160,5 +160,84 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
         }
 
         #endregion
+
+        #region GetPagedWorkGroupValidTimeCodes
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodes_WithData_ReturnsOkWithMappedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<WorkGroupValidTimeCodeDto>
+            {
+                Data = [new() { TimeCode = "TC1", ParentProject = "P001", WorkGroup = "WG1" }]
+            };
+            var mapped = new PaginationRes<WorkGroupValidTimeCodeRes>
+            {
+                Data = [new() { TimeCode = "TC1", ParentProject = "P001", WorkGroup = "WG1" }]
+            };
+
+            _serviceMock.GetWorkGroupValidTimeCodeAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<WorkGroupValidTimeCodeRes>>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetPagedWorkGroupValidTimeCodes(query, "WG1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+            await _serviceMock.Received(1).GetWorkGroupValidTimeCodeAsync(query, "WG1");
+            _mapperMock.Received(1).Map<PaginationRes<WorkGroupValidTimeCodeRes>>(serviceResult);
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodes_EmptyResult_ReturnsOkWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<WorkGroupValidTimeCodeDto> { Data = [] };
+            var mapped = new PaginationRes<WorkGroupValidTimeCodeRes> { Data = [] };
+
+            _serviceMock.GetWorkGroupValidTimeCodeAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<WorkGroupValidTimeCodeRes>>(serviceResult).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetPagedWorkGroupValidTimeCodes(query, "WG1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsType<PaginationRes<WorkGroupValidTimeCodeRes>>(okResult.Value);
+            Assert.Empty(returnValue.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodes_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _serviceMock.GetWorkGroupValidTimeCodeAsync(query, Arg.Any<string>())
+                        .ThrowsAsync(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPagedWorkGroupValidTimeCodes(query, "WG1"));
+        }
+
+        [Fact]
+        public async Task GetPagedWorkGroupValidTimeCodes_MapperThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<WorkGroupValidTimeCodeDto> { Data = [] };
+
+            _serviceMock.GetWorkGroupValidTimeCodeAsync(query, "WG1").Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<WorkGroupValidTimeCodeRes>>(serviceResult)
+                       .Throws(new AutoMapperMappingException("Mapping error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _controller.GetPagedWorkGroupValidTimeCodes(query, "WG1"));
+        }
+
+        #endregion
     }
 }

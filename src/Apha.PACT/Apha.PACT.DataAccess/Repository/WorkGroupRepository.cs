@@ -78,6 +78,72 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        public async Task<PagedData<WorkGroupValidTimeCode>> GetWorkGroupValidTimeCodeAsync(
+            PaginationParameters<string> query, string workGroup)
+        {
+            var baseQuery = _context.TimeCodeValids
+                .AsNoTracking()
+                .Join(_context.Projects.AsNoTracking(),
+                    timeCodeValid => timeCodeValid.ParentProject,
+                    project       => project.ParentProject,
+                    (timeCodeValid, project) => new WorkGroupValidTimeCode
+                    {
+                        WorkGroup     = timeCodeValid.WorkGroup,
+                        TimeCode      = timeCodeValid.TimeCode,
+                        ParentProject = timeCodeValid.ParentProject,
+                        Manager       = project.Manager,
+                        Active        = timeCodeValid.Active
+                    });
+
+            if (!string.IsNullOrWhiteSpace(workGroup))
+                baseQuery = baseQuery.Where(e => e.WorkGroup == workGroup);
+
+            baseQuery = ApplyWorkGroupValidTimeCodeFilter(baseQuery, query.Filter);
+
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
+                baseQuery = (query.SortBy, query.Descending) switch
+                {
+                    ("WorkGroup",     true)  => baseQuery.OrderByDescending(e => e.WorkGroup),
+                    ("WorkGroup",     false) => baseQuery.OrderBy(e => e.WorkGroup),
+                    ("TimeCode",      true)  => baseQuery.OrderByDescending(e => e.TimeCode),
+                    ("TimeCode",      false) => baseQuery.OrderBy(e => e.TimeCode),
+                    ("ParentProject", true)  => baseQuery.OrderByDescending(e => e.ParentProject),
+                    ("ParentProject", false) => baseQuery.OrderBy(e => e.ParentProject),
+                    ("Manager",       true)  => baseQuery.OrderByDescending(e => e.Manager),
+                    ("Manager",       false) => baseQuery.OrderBy(e => e.Manager),
+                    (_,               true)  => baseQuery.OrderByDescending(e => e.ParentProject),
+                    _                        => baseQuery.OrderBy(e => e.ParentProject),
+                };
+            else
+                baseQuery = baseQuery.OrderBy(e => e.ParentProject);
+
+            var result = await baseQuery.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        private static IQueryable<WorkGroupValidTimeCode> ApplyWorkGroupValidTimeCodeFilter(
+            IQueryable<WorkGroupValidTimeCode> query, string? filterJson)
+        {
+            if (string.IsNullOrWhiteSpace(filterJson)) return query;
+
+            var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
+            if (filters is null) return query;
+
+            if (filters.TryGetValue("WorkGroup", out var workGroup) && !string.IsNullOrWhiteSpace(workGroup))
+                query = query.Where(e => EF.Functions.ILike(e.WorkGroup, $"%{workGroup}%"));
+
+            if (filters.TryGetValue("TimeCode", out var timeCode) && !string.IsNullOrWhiteSpace(timeCode))
+                query = query.Where(e => EF.Functions.ILike(e.TimeCode, $"%{timeCode}%"));
+
+            if (filters.TryGetValue("ParentProject", out var parentProject) && !string.IsNullOrWhiteSpace(parentProject))
+                query = query.Where(e => EF.Functions.ILike(e.ParentProject, $"%{parentProject}%"));
+
+            if (filters.TryGetValue("Manager", out var manager) && !string.IsNullOrWhiteSpace(manager))
+                query = query.Where(e => EF.Functions.ILike(e.Manager!, $"%{manager}%"));
+
+            return query;
+        }
+
         private static IQueryable<WorkGroupTimeCode> ApplyWorkGroupTimeCodeFilter(
             IQueryable<WorkGroupTimeCode> query, string? filterJson)
         {

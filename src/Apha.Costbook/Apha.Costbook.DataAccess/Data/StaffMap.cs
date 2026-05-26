@@ -11,7 +11,7 @@ namespace Apha.Costbook.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<Staff> entity)
         {
-            entity.HasKey(e => e.Mnumber).HasName("tblcapsstaff_pk_tblcapsstaff");
+            entity.HasKey(e => e.Mnumber).HasName("pk_tblcapsstaff");
 
             entity.ToTable("tblcapsstaff", DbConstants.MabArchiveSchemaName);
 

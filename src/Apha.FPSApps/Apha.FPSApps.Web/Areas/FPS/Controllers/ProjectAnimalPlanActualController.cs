@@ -2,7 +2,9 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.Common.Utilities.StateManagement;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -17,19 +19,26 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     {
         private readonly IAnimalPlanService _animalPlanService;
         private readonly IProjectService _projectService;
+        private readonly IAppStateService _appStateService;
 
         public ProjectAnimalPlanActualController(
             IAnimalPlanService animalPlanService,
-            IProjectService projectService)
+            IProjectService projectService,
+            IAppStateService appStateService)
         {
             _animalPlanService = animalPlanService;
             _projectService = projectService;
+            _appStateService = appStateService;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? projectCode = null)
         {
             List<SelectListItem> projectList = await GetProjectListAsync();
+
+            if (string.IsNullOrWhiteSpace(projectCode))
+                projectCode = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProjectCode);
+
             string selectedProjectCode = !string.IsNullOrWhiteSpace(projectCode)
                 && projectList.Any(p => p.Value == projectCode)
                 ? projectCode

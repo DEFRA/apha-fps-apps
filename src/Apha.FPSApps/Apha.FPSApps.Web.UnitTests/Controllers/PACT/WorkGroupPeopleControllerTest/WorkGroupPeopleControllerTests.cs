@@ -411,5 +411,200 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         }
 
         #endregion
+
+        #region Index - workGroup parameter
+
+        [Fact]
+        public async Task Index_WithNonEmptyWorkGroup_SetsSelectedWorkGroupOnViewModel()
+        {
+            // Arrange
+            var workGroup = "WG1";
+            SetupDefaultPeopleResponse();
+            SetupDefaultWorkGroupOptions();
+            SetupDefaultPersonOptions();
+            SetupPeopleGridMapper();
+
+            // Act
+            var result = await _controller.Index(workGroup);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<WorkGroupPeopleViewModel>(viewResult.Model);
+            Assert.Equal(workGroup, model.SelectedWorkGroup);
+        }
+
+        [Fact]
+        public async Task Index_WithNonEmptyWorkGroup_PassesWorkGroupToGrid()
+        {
+            // Arrange
+            var workGroup = "WG1";
+            SetupDefaultPeopleResponse();
+            SetupDefaultWorkGroupOptions();
+            SetupDefaultPersonOptions();
+            SetupPeopleGridMapper();
+
+            // Act
+            await _controller.Index(workGroup);
+
+            // Assert: FetchByWorkGroupAsync path is taken (workGroup is non-null/non-empty)
+            await _employeeService.Received(1).GetWorkGroupStaffAsync(
+                Arg.Any<QueryParameters<string>>(), workGroup);
+        }
+
+        [Fact]
+        public async Task Index_WithEmptyWorkGroup_SetsSelectedWorkGroupToEmpty()
+        {
+            // Arrange
+            SetupDefaultPeopleResponse();
+            SetupDefaultWorkGroupOptions();
+            SetupDefaultPersonOptions();
+            SetupPeopleGridMapper();
+
+            // Act
+            var result = await _controller.Index("");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<WorkGroupPeopleViewModel>(viewResult.Model);
+            Assert.Equal("", model.SelectedWorkGroup);
+        }
+
+        [Fact]
+        public async Task Index_WithWhitespaceWorkGroup_TreatsAsEmpty()
+        {
+            // Arrange
+            SetupDefaultPeopleResponse();
+            SetupDefaultWorkGroupOptions();
+            SetupDefaultPersonOptions();
+            SetupPeopleGridMapper();
+
+            // Act
+            var result = await _controller.Index("   ");
+
+            // Assert: whitespace is treated as empty — FetchAllWorkGroupPeoplesAsync path taken
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<WorkGroupPeopleViewModel>(viewResult.Model);
+            Assert.Equal("   ", model.SelectedWorkGroup);
+            await _employeeService.Received(1).GetWorkGroupStaffAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Is<string?>(x => x == null));
+        }
+
+        #endregion
+
+        #region FetchByWorkGroupAsync failure paths
+
+        [Fact]
+        public async Task LoadPeopleGrid_WithWorkGroup_ServiceFails_ReturnsPartialWithEmptyGrid()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            _employeeService.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), "WG1")
+                .Returns(ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.FailureResponse([], new ApiMetaDto()));
+            SetupPeopleGridMapper();
+
+            // Act
+            var result = await _controller.LoadPeopleGrid(request, "WG1", null);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+            var grid = Assert.IsType<DataGridConfig<WorkGroupPeopleItem>>(partial.Model);
+            Assert.Empty(grid.Data);
+        }
+
+        [Fact]
+        public async Task LoadPeopleGrid_WithWorkGroup_ServiceReturnsNull_ReturnsPartialWithEmptyGrid()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            _employeeService.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), "WG1")
+                .Returns(ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.SuccessResponse(null!));
+            SetupPeopleGridMapper();
+
+            // Act
+            var result = await _controller.LoadPeopleGrid(request, "WG1", null);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+            var grid = Assert.IsType<DataGridConfig<WorkGroupPeopleItem>>(partial.Model);
+            Assert.Empty(grid.Data);
+        }
+
+        #endregion
+
+        #region FetchByPersonNameAsync failure paths
+
+        [Fact]
+        public async Task LoadPeopleGrid_WithPersonName_ServiceFails_ReturnsPartialWithEmptyGrid()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            _employeeService.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), Arg.Is<string?>(x => x == null))
+                .Returns(ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.FailureResponse([], new ApiMetaDto()));
+            SetupPeopleGridMapper();
+
+            // Act
+            var result = await _controller.LoadPeopleGrid(request, null, "Alice");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+            var grid = Assert.IsType<DataGridConfig<WorkGroupPeopleItem>>(partial.Model);
+            Assert.Empty(grid.Data);
+        }
+
+        [Fact]
+        public async Task LoadPeopleGrid_WithPersonName_ServiceReturnsNull_ReturnsPartialWithEmptyGrid()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            _employeeService.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), Arg.Is<string?>(x => x == null))
+                .Returns(ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.SuccessResponse(null!));
+            SetupPeopleGridMapper();
+
+            // Act
+            var result = await _controller.LoadPeopleGrid(request, null, "Alice");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+            var grid = Assert.IsType<DataGridConfig<WorkGroupPeopleItem>>(partial.Model);
+            Assert.Empty(grid.Data);
+        }
+
+        [Fact]
+        public async Task LoadPeopleGrid_WithPersonName_FilterExcludesNonMatchingNames()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            var people = new List<WorkGroupStaffDto>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1" },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2" }
+            };
+            _employeeService.GetWorkGroupStaffAsync(Arg.Any<QueryParameters<string>>(), Arg.Is<string?>(x => x == null))
+                .Returns(ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.SuccessResponse(
+                    new PaginatedResult<WorkGroupStaffDto>(people, 2, 1, 10)));
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _mapper.Map<List<WorkGroupPeopleItem>>(Arg.Any<List<WorkGroupStaffDto>>())
+                .Returns(callInfo =>
+                {
+                    var input = callInfo.Arg<List<WorkGroupStaffDto>>();
+                    return input.Select(s => new WorkGroupPeopleItem { Name = s.Name }).ToList();
+                });
+
+            // Act
+            var result = await _controller.LoadPeopleGrid(request, null, "Alice");
+
+            // Assert: mapper called with only the Alice entry (Bob filtered out)
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+            _mapper.Received(1).Map<List<WorkGroupPeopleItem>>(
+                Arg.Is<List<WorkGroupStaffDto>>(l => l.Count == 1 && l[0].Name == "Alice"));
+        }
+
+        #endregion
     }
 }

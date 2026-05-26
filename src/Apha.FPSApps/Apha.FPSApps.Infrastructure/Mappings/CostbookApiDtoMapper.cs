@@ -38,6 +38,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<AccountCategoryRes, AccountCategoryDto>().ReverseMap();
             CreateMap<TestCodeLookupRes, TestCodeLookupDto>().ReverseMap();
             CreateMap<AnimalLookupRes, AnimalLookupDto>().ReverseMap();
+
+            CreateMap<StaffYearsRowRes, StaffYearsRowDto>().ReverseMap();
+            CreateMap<StaffYearsPivotRes, StaffYearsPivotDto>().ReverseMap();
+            CreateMap<StaffEffortRowRes, StaffEffortRowDto>().ReverseMap();
+            CreateMap<StaffEffortPivotRes, StaffEffortPivotDto>().ReverseMap();
+            CreateMap<ProjectCostsRowRes, ProjectCostsRowDto>().ReverseMap();
+            CreateMap<ProjectCostsPivotRes, ProjectCostsPivotDto>().ReverseMap();
         }
     }
 }

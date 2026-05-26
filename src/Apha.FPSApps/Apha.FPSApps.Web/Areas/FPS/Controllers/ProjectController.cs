@@ -155,8 +155,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
-        // POST: ProgrammeNewProject/ChangeCode
+        // POST: ProgrammeNewProject/ChangeCode — FPSAdmin only
         [HttpPost]
+        [Authorize(Roles = "FPSAdmin")]
         public async Task<IActionResult> ChangeCode(string oldCode, string newCode)
         {
             if (string.IsNullOrWhiteSpace(oldCode) || string.IsNullOrWhiteSpace(newCode))
