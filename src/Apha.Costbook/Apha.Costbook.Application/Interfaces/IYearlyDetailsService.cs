@@ -17,17 +17,17 @@ public interface IYearlyDetailsService
     Task<StaffRequirementDto> UpdateStaffRequirementAsync(StaffRequirementDto dto);
     Task<bool> DeleteStaffRequirementAsync(int srIdentity);
 
-    Task<IEnumerable<TestRequirementDto>> GetTestRequirementsAsync(string projectId, int year);
+    Task<PaginatedResult<TestRequirementDto>> GetTestRequirementsAsync(string projectId, int year, QueryParameters<string> query);
     Task<TestRequirementDto> AddTestRequirementAsync(TestRequirementDto dto);
     Task<TestRequirementDto> UpdateTestRequirementAsync(TestRequirementDto dto);
     Task<bool> DeleteTestRequirementAsync(string projectId, int year, string testCode);
 
-    Task<IEnumerable<AnimalRequirementDto>> GetAnimalRequirementsAsync(string projectId, int year);
+    Task<PaginatedResult<AnimalRequirementDto>> GetAnimalRequirementsAsync(string projectId, int year, QueryParameters<string> query);
     Task<AnimalRequirementDto> AddAnimalRequirementAsync(AnimalRequirementDto dto);
     Task<AnimalRequirementDto> UpdateAnimalRequirementAsync(AnimalRequirementDto dto);
     Task<bool> DeleteAnimalRequirementAsync(int arIdentity);
 
-    Task<IEnumerable<AdditionalCostDto>> GetAdditionalCostsAsync(string projectId, int year);
+    Task<PaginatedResult<AdditionalCostDto>> GetAdditionalCostsAsync(string projectId, int year, QueryParameters<string> query);
     Task<AdditionalCostDto> AddAdditionalCostAsync(AdditionalCostDto dto);
     Task<AdditionalCostDto> UpdateAdditionalCostAsync(AdditionalCostDto dto);
     Task<bool> DeleteAdditionalCostAsync(int acIdentity);

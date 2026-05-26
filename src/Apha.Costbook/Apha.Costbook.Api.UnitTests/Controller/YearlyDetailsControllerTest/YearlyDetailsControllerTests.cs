@@ -234,19 +234,22 @@ public class YearlyDetailsControllerTests
     #region GetTestRequirements
 
     [Fact]
-    public async Task GetTestRequirements_ReturnsOk_WithMappedList()
+    public async Task GetTestRequirements_ReturnsOk_WithPaginatedResult()
     {
-        var dtos = new List<TestRequirementDto> { new() { TestCode = "TC001" } };
-        var resList = new List<TestRequirementRes> { new() { TestCode = "TC001" } };
+        var queryReq = new PaginationReq<string> { Page = 1 };
+        var filter = new QueryParameters<string> { Page = 1 };
+        var serviceResult = new PaginatedResult<TestRequirementDto>();
+        var mappedResult = new PaginationRes<TestRequirementRes>();
 
-        _service.GetTestRequirementsAsync("2024/001", 2024).Returns(dtos);
-        _mapper.Map<List<TestRequirementRes>>(dtos).Returns(resList);
+        _mapper.Map<QueryParameters<string>>(queryReq).Returns(filter);
+        _service.GetTestRequirementsAsync("2024/001", 2024, filter).Returns(serviceResult);
+        _mapper.Map<PaginationRes<TestRequirementRes>>(serviceResult).Returns(mappedResult);
 
-        var result = await _controller.GetTestRequirements("2024/001", 2024);
+        var result = await _controller.GetTestRequirements("2024/001", 2024, queryReq);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var apiResponse = Assert.IsType<ApiResponse<List<TestRequirementRes>>>(okResult.Value);
-        Assert.Single(apiResponse.Data!);
+        Assert.NotNull(okResult.Value);
+        await _service.Received(1).GetTestRequirementsAsync("2024/001", 2024, filter);
     }
 
     #endregion
@@ -317,18 +320,22 @@ public class YearlyDetailsControllerTests
     #region GetAnimalRequirements
 
     [Fact]
-    public async Task GetAnimalRequirements_ReturnsOk_WithMappedList()
+    public async Task GetAnimalRequirements_ReturnsOk_WithPaginatedResult()
     {
-        var dtos = new List<AnimalRequirementDto> { new() { AnimalType = "CAT" } };
-        var resList = new List<AnimalRequirementRes> { new() { AnimalType = "CAT" } };
+        var queryReq = new PaginationReq<string> { Page = 1 };
+        var filter = new QueryParameters<string> { Page = 1 };
+        var serviceResult = new PaginatedResult<AnimalRequirementDto>();
+        var mappedResult = new PaginationRes<AnimalRequirementRes>();
 
-        _service.GetAnimalRequirementsAsync("2024/001", 2024).Returns(dtos);
-        _mapper.Map<List<AnimalRequirementRes>>(dtos).Returns(resList);
+        _mapper.Map<QueryParameters<string>>(queryReq).Returns(filter);
+        _service.GetAnimalRequirementsAsync("2024/001", 2024, filter).Returns(serviceResult);
+        _mapper.Map<PaginationRes<AnimalRequirementRes>>(serviceResult).Returns(mappedResult);
 
-        var result = await _controller.GetAnimalRequirements("2024/001", 2024);
+        var result = await _controller.GetAnimalRequirements("2024/001", 2024, queryReq);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.NotNull(okResult.Value);
+        await _service.Received(1).GetAnimalRequirementsAsync("2024/001", 2024, filter);
     }
 
     #endregion
@@ -397,18 +404,22 @@ public class YearlyDetailsControllerTests
     #region GetAdditionalCosts
 
     [Fact]
-    public async Task GetAdditionalCosts_ReturnsOk_WithMappedList()
+    public async Task GetAdditionalCosts_ReturnsOk_WithPaginatedResult()
     {
-        var dtos = new List<AdditionalCostDto> { new() { Description = "Travel" } };
-        var resList = new List<AdditionalCostRes> { new() { Description = "Travel" } };
+        var queryReq = new PaginationReq<string> { Page = 1 };
+        var filter = new QueryParameters<string> { Page = 1 };
+        var serviceResult = new PaginatedResult<AdditionalCostDto>();
+        var mappedResult = new PaginationRes<AdditionalCostRes>();
 
-        _service.GetAdditionalCostsAsync("2024/001", 2024).Returns(dtos);
-        _mapper.Map<List<AdditionalCostRes>>(dtos).Returns(resList);
+        _mapper.Map<QueryParameters<string>>(queryReq).Returns(filter);
+        _service.GetAdditionalCostsAsync("2024/001", 2024, filter).Returns(serviceResult);
+        _mapper.Map<PaginationRes<AdditionalCostRes>>(serviceResult).Returns(mappedResult);
 
-        var result = await _controller.GetAdditionalCosts("2024/001", 2024);
+        var result = await _controller.GetAdditionalCosts("2024/001", 2024, queryReq);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.NotNull(okResult.Value);
+        await _service.Received(1).GetAdditionalCostsAsync("2024/001", 2024, filter);
     }
 
     #endregion

@@ -49,6 +49,25 @@ public class YearlyDetailsController : Controller
         if (selectedYear == 0)
             selectedYear = projectYears.FirstOrDefault();
 
+        if (projectYears.Count == 0)
+        {
+            var startYear = (int)(header.StartFYear ?? 0);
+            if (startYear > 0)
+            {
+                var dto = new ProjectYearDto
+                {
+                    Project = decodedProjectId,
+                    YearValue = startYear
+                };
+                var addYearResponse = await _service.AddProjectYearAsync(decodedProjectId, startYear, dto);
+                if (addYearResponse.Success && addYearResponse.Data != null)
+                {
+                    projectYears.Add(startYear);
+                    selectedYear = startYear;
+                }
+            }
+        }
+
         var viewModel = new YearlyDetailsViewModel
         {
             ProjectHeaderDto = header,
@@ -83,11 +102,14 @@ public class YearlyDetailsController : Controller
         var viewModel = new YearlyDetailsViewModel();
 
         // Fetch all staff rows (not just one page) so the total is correct
-        var allStaffQuery = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
+        var allStaffQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
         viewModel.StaffGrid = await BuildStaffGridAsync(decodedProjectId, year, allStaffQuery);
-        viewModel.TestGrid = await BuildTestGridAsync(decodedProjectId, year);
-        viewModel.AnimalGrid = await BuildAnimalGridAsync(decodedProjectId, year);
-        viewModel.AdditionalCostGrid = await BuildAdditionalCostGridAsync(decodedProjectId, year);
+        var allTestQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
+        viewModel.TestGrid = await BuildTestGridAsync(decodedProjectId, year, allTestQuery);
+        var allAnimalQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
+        viewModel.AnimalGrid = await BuildAnimalGridAsync(decodedProjectId, year, allAnimalQuery);
+        var allAdditionalCostQuery = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
+        viewModel.AdditionalCostGrid = await BuildAdditionalCostGridAsync(decodedProjectId, year, allAdditionalCostQuery);
 
         CalculateYearTotals(viewModel);
 
@@ -113,21 +135,24 @@ public class YearlyDetailsController : Controller
     [HttpPost]
     public async Task<IActionResult> LoadTestGrid(PaginationFilter<string> request, string projectId, int year)
     {
-        var gridConfig = await BuildTestGridAsync(HttpUtility.UrlDecode(projectId), year);
+        var query = _mapper.Map<QueryParameters<string>>(request);
+        var gridConfig = await BuildTestGridAsync(HttpUtility.UrlDecode(projectId), year, query);
         return PartialView("_DataGrid", gridConfig);
     }
 
     [HttpPost]
     public async Task<IActionResult> LoadAnimalGrid(PaginationFilter<string> request, string projectId, int year)
     {
-        var gridConfig = await BuildAnimalGridAsync(HttpUtility.UrlDecode(projectId), year);
+        var query = _mapper.Map<QueryParameters<string>>(request);
+        var gridConfig = await BuildAnimalGridAsync(HttpUtility.UrlDecode(projectId), year, query);
         return PartialView("_DataGrid", gridConfig);
     }
 
     [HttpPost]
     public async Task<IActionResult> LoadAdditionalCostGrid(PaginationFilter<string> request, string projectId, int year)
     {
-        var gridConfig = await BuildAdditionalCostGridAsync(HttpUtility.UrlDecode(projectId), year);
+        var query = _mapper.Map<QueryParameters<string>>(request);
+        var gridConfig = await BuildAdditionalCostGridAsync(HttpUtility.UrlDecode(projectId), year, query);
         return PartialView("_DataGrid", gridConfig);
     }
 
@@ -211,7 +236,7 @@ public class YearlyDetailsController : Controller
     {
         await GetPayRateOptionsAsync(isDefra);
 
-        var query = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
+        var query = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
         var listResponse = await _service.GetStaffRequirementsAsync(
                                HttpUtility.UrlDecode(projectId), year, query);
 
@@ -272,8 +297,9 @@ public class YearlyDetailsController : Controller
     public async Task<IActionResult> EditTest(string projectId, int year, string testCode, bool isDefra)
     {
         await GetTestCodeOptionsAsync(isDefra);
-        var listResponse = await _service.GetTestRequirementsAsync(HttpUtility.UrlDecode(projectId), year);
-        var row = listResponse.Data?.FirstOrDefault(t => t.TestCode == testCode);
+        var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
+        var listResponse = await _service.GetTestRequirementsAsync(HttpUtility.UrlDecode(projectId), year, allQuery);
+        var row = listResponse.Data?.data?.FirstOrDefault(t => t.TestCode == testCode);
         if (row is null) return NotFound();
         return PartialView("_AddEditTestRequirement", _mapper.Map<TestRequirementItem>(row));
     }
@@ -329,8 +355,9 @@ public class YearlyDetailsController : Controller
     public async Task<IActionResult> EditAnimal(string projectId, int year, int arIdentity, bool isDefra)
     {
         await GetAnimalTypeOptionsAsync();
-        var listResponse = await _service.GetAnimalRequirementsAsync(HttpUtility.UrlDecode(projectId), year);
-        var row = listResponse.Data?.FirstOrDefault(a => a.ArIdentity == arIdentity);
+        var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
+        var listResponse = await _service.GetAnimalRequirementsAsync(HttpUtility.UrlDecode(projectId), year, allQuery);
+        var row = listResponse.Data?.data?.FirstOrDefault(a => a.ArIdentity == arIdentity);
         if (row is null) return NotFound();
         return PartialView("_AddEditAnimalRequirement", _mapper.Map<AnimalRequirementItem>(row));
     }
@@ -387,8 +414,9 @@ public class YearlyDetailsController : Controller
     public async Task<IActionResult> EditAdditionalCost(string projectId, int year, int acIdentity)
     {
         await GetAccountCatOptionsAsync();
-        var listResponse = await _service.GetAdditionalCostsAsync(HttpUtility.UrlDecode(projectId), year);
-        var row = listResponse.Data?.FirstOrDefault(ac => ac.AcIdentity == acIdentity);
+        var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
+        var listResponse = await _service.GetAdditionalCostsAsync(HttpUtility.UrlDecode(projectId), year, allQuery);
+        var row = listResponse.Data?.data?.FirstOrDefault(ac => ac.AcIdentity == acIdentity);
         if (row is null) return NotFound();
         return PartialView("_AddEditAdditionalCost", _mapper.Map<AdditionalCostItem>(row));
     }
@@ -518,17 +546,21 @@ public class YearlyDetailsController : Controller
             AddFunction = "gridAddStaff",
             EditFunction = "gridEditStaff",
             DeleteFunction = "gridDeleteStaff",
-            ExtraFilterMethod= "staffGridExtraFilters",
+            ExtraFilterMethod= "allGridExtraFilters",
             BindGridUrl = Url.Action("LoadStaffGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<StaffRequirementItem>(null)
         };
     }
 
-    private async Task<DataGridConfig<TestRequirementItem>> BuildTestGridAsync(string projectId, int year)
+    private async Task<DataGridConfig<TestRequirementItem>> BuildTestGridAsync(string projectId, int year, QueryParameters<string>? query = null)
     {
-        var response = await _service.GetTestRequirementsAsync(projectId, year);
-        var data = response.Success && response.Data != null
-            ? _mapper.Map<List<TestRequirementItem>>(response.Data)
+        query ??= new QueryParameters<string>();
+        query.Page = -1;
+        var response = await _service.GetTestRequirementsAsync(projectId, year, query);
+        var pagedResult = response.Success ? response.Data : null;
+
+        var data = pagedResult?.data != null
+            ? _mapper.Map<List<TestRequirementItem>>(pagedResult.data)
             : new List<TestRequirementItem>();
 
         return new DataGridConfig<TestRequirementItem>
@@ -544,23 +576,32 @@ public class YearlyDetailsController : Controller
             ShowPagination = false,
             Pagination = new PaginationModel
             {
-                TotalRecords = data.Count,
-                PageNumber = 1,
-                //PageSize = data.Count > 0 ? data.Count : 10
+                TotalRecords = pagedResult?.TotalCount ?? data.Count,
+                PageNumber = query.Page,
+                PageSize = query.PageSize,
+                SortColumn = query.SortBy,
+                SortDirection = query.Descending
             },
             AddFunction = "gridAddTest",
             EditFunction = "gridEditTest",
             DeleteFunction = "gridDeleteTest",
+            ExtraFilterMethod = "allGridExtraFilters",
             BindGridUrl = Url.Action("LoadTestGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<TestRequirementItem>(null)
         };
     }
 
-    private async Task<DataGridConfig<AnimalRequirementItem>> BuildAnimalGridAsync(string projectId, int year)
+    private async Task<DataGridConfig<AnimalRequirementItem>> BuildAnimalGridAsync(
+        string projectId, int year, QueryParameters<string>? query = null)
     {
-        var response = await _service.GetAnimalRequirementsAsync(projectId, year);
-        var data = response.Success && response.Data != null
-            ? _mapper.Map<List<AnimalRequirementItem>>(response.Data)
+        query ??= new QueryParameters<string>();
+        query.Page = -1;
+
+        var response = await _service.GetAnimalRequirementsAsync(projectId, year, query);
+        var pagedResult = response.Success ? response.Data : null;
+
+        var data = pagedResult?.data != null
+            ? _mapper.Map<List<AnimalRequirementItem>>(pagedResult.data)
             : new List<AnimalRequirementItem>();
 
         return new DataGridConfig<AnimalRequirementItem>
@@ -576,23 +617,32 @@ public class YearlyDetailsController : Controller
             ShowPagination = false,
             Pagination = new PaginationModel
             {
-                TotalRecords = data.Count,
-                PageNumber = 1,
-                //PageSize = data.Count > 0 ? data.Count : 10
+                TotalRecords = pagedResult?.TotalCount ?? 0,
+                PageNumber = query.Page,
+                PageSize = query.PageSize,
+                SortColumn = query.SortBy,
+                SortDirection = query.Descending
             },
             AddFunction = "gridAddAnimal",
             EditFunction = "gridEditAnimal",
             DeleteFunction = "gridDeleteAnimal",
+            ExtraFilterMethod = "allGridExtraFilters",
             BindGridUrl = Url.Action("LoadAnimalGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<AnimalRequirementItem>(null)
         };
     }
 
-    private async Task<DataGridConfig<AdditionalCostItem>> BuildAdditionalCostGridAsync(string projectId, int year)
+    private async Task<DataGridConfig<AdditionalCostItem>> BuildAdditionalCostGridAsync(
+        string projectId, int year, QueryParameters<string>? query = null)
     {
-        var response = await _service.GetAdditionalCostsAsync(projectId, year);
-        var data = response.Success && response.Data != null
-            ? _mapper.Map<List<AdditionalCostItem>>(response.Data)
+        query ??= new QueryParameters<string>();
+        query.Page = -1;
+
+        var response = await _service.GetAdditionalCostsAsync(projectId, year, query);
+        var pagedResult = response.Success ? response.Data : null;
+
+        var data = pagedResult?.data != null
+            ? _mapper.Map<List<AdditionalCostItem>>(pagedResult.data)
             : new List<AdditionalCostItem>();
 
         return new DataGridConfig<AdditionalCostItem>
@@ -608,13 +658,16 @@ public class YearlyDetailsController : Controller
             ShowPagination = false,
             Pagination = new PaginationModel
             {
-                TotalRecords = data.Count,
-                PageNumber = 1,
-                //PageSize = data.Count > 0 ? data.Count : 10
+                TotalRecords = pagedResult?.TotalCount ?? 0,
+                PageNumber = query.Page,
+                PageSize = query.PageSize,
+                SortColumn = query.SortBy,
+                SortDirection = query.Descending
             },
             AddFunction = "gridAddAdditionalCost",
             EditFunction = "gridEditAdditionalCost",
             DeleteFunction = "gridDeleteAdditionalCost",
+            ExtraFilterMethod = "allGridExtraFilters",
             BindGridUrl = Url.Action("LoadAdditionalCostGrid", new { projectId, year }) ?? string.Empty,
             Columns = GridDataProvider.GetColumnsDefination<AdditionalCostItem>(null)
         };

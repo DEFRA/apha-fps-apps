@@ -116,10 +116,12 @@ public class YearlyDetailsController : ControllerBase
     // ── Test requirements ─────────────────────────────────────────────────────
 
     [HttpGet("{projectId}/years/{year}/tests")]
-    public async Task<IActionResult> GetTestRequirements(string projectId, int year)
+    public async Task<IActionResult> GetTestRequirements(
+        string projectId, int year, [FromQuery] PaginationReq<string> query)
     {
-        var dtos = await _service.GetTestRequirementsAsync(projectId, year);
-        return Ok(BuildOk(_mapper.Map<List<TestRequirementRes>>(dtos)));
+        QueryParameters<string> filter = _mapper.Map<QueryParameters<string>>(query);
+        PaginatedResult<TestRequirementDto> result = await _service.GetTestRequirementsAsync(projectId, year, filter);
+        return Ok(BuildOk(_mapper.Map<PaginationRes<TestRequirementRes>>(result)));
     }
 
     [HttpPost("{projectId}/years/{year}/tests")]
@@ -153,10 +155,12 @@ public class YearlyDetailsController : ControllerBase
     // ── Animal requirements ───────────────────────────────────────────────────
 
     [HttpGet("{projectId}/years/{year}/animals")]
-    public async Task<IActionResult> GetAnimalRequirements(string projectId, int year)
+    public async Task<IActionResult> GetAnimalRequirements(
+        string projectId, int year, [FromQuery] PaginationReq<string> query)
     {
-        var dtos = await _service.GetAnimalRequirementsAsync(projectId, year);
-        return Ok(BuildOk(_mapper.Map<List<AnimalRequirementRes>>(dtos)));
+        QueryParameters<string> filter = _mapper.Map<QueryParameters<string>>(query);
+        PaginatedResult<AnimalRequirementDto> result = await _service.GetAnimalRequirementsAsync(projectId, year, filter);
+        return Ok(BuildOk(_mapper.Map<PaginationRes<AnimalRequirementRes>>(result)));
     }
 
     [HttpPost("{projectId}/years/{year}/animals")]
@@ -190,10 +194,12 @@ public class YearlyDetailsController : ControllerBase
     // ── Additional costs ──────────────────────────────────────────────────────
 
     [HttpGet("{projectId}/years/{year}/additionalcosts")]
-    public async Task<IActionResult> GetAdditionalCosts(string projectId, int year)
+    public async Task<IActionResult> GetAdditionalCosts(
+        string projectId, int year, [FromQuery] PaginationReq<string> query)
     {
-        var dtos = await _service.GetAdditionalCostsAsync(projectId, year);
-        return Ok(BuildOk(_mapper.Map<List<AdditionalCostRes>>(dtos)));
+        QueryParameters<string> filter = _mapper.Map<QueryParameters<string>>(query);
+        PaginatedResult<AdditionalCostDto> result = await _service.GetAdditionalCostsAsync(projectId, year, filter);
+        return Ok(BuildOk(_mapper.Map<PaginationRes<AdditionalCostRes>>(result)));
     }
 
     [HttpPost("{projectId}/years/{year}/additionalcosts")]

@@ -1,10 +1,11 @@
 using Apha.Costbook.Core.Entities;
+using Apha.Costbook.Core.Pagination;
 
 namespace Apha.Costbook.Core.Interfaces;
 
 public interface IAnimalRequirementRepository
 {
-    Task<IEnumerable<AnimalRequirementDetailView>> GetAnimalRequirementsByProjectYearAsync(string project, int year);
+    Task<PagedData<AnimalRequirementDetailView>> GetAnimalRequirementsByProjectYearAsync(string project, int year, PaginationParameters<string> query);
     Task<AnimalRequirement> AddAnimalRequirementAsync(AnimalRequirement animalRequirement);
     Task<AnimalRequirement> UpdateAnimalRequirementAsync(AnimalRequirement animalRequirement);
     Task<bool> DeleteAnimalRequirementAsync(int arIdentity);

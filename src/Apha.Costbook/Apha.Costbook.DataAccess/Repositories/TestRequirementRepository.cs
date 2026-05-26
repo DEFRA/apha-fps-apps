@@ -1,28 +1,29 @@
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess.Data;
 using Apha.Costbook.Core.Entities;
+using Apha.Costbook.Core.Pagination;
 using Microsoft.EntityFrameworkCore;
 using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
-public class TestRequirementRepository : ITestRequirementRepository
+public class TestRequirementRepository : RepositoryBase<TestRequirement>, ITestRequirementRepository
 {
-    private readonly CostbookDbContext _context;
     private readonly IFPSYearContext _fpsYearContext;
 
     public TestRequirementRepository(CostbookDbContext context, IFPSYearContext fpsYearContext)
+        : base(context)
     {
-        _context = context;
         _fpsYearContext = fpsYearContext;
     }
 
-    public async Task<IEnumerable<TestRequirementDetailView>> GetTestRequirementsByProjectYearAsync(string project, int year)
+    public async Task<PagedData<TestRequirementDetailView>> GetTestRequirementsByProjectYearAsync(
+        string project, int year, PaginationParameters<string> query)
     {
         var decodedProject = HttpUtility.UrlDecode(project);
         var fpsYear = _fpsYearContext.FPSYear;
 
-        var query =
+        var baseQuery =
             from tr in _context.TestRequirements.AsNoTracking()
 
             join test in _context.FpsTestorProducts.AsNoTracking().IgnoreQueryFilters()
@@ -37,18 +38,21 @@ public class TestRequirementRepository : ITestRequirementRepository
             where tr.Project == decodedProject && tr.Year == year
             select new TestRequirementDetailView
             {
-                Project       = tr.Project,
-                Year          = tr.Year,
-                TestCode      = tr.TestCode,
-                UnitPrice     = tr.UnitPrice,
-                NumberOfTests = tr.NumberOfTests,
-                TestCost      = tr.UnitPrice * tr.NumberOfTests,
+                Project         = tr.Project,
+                Year            = tr.Year,
+                TestCode        = tr.TestCode,
+                UnitPrice       = tr.UnitPrice,
+                NumberOfTests   = tr.NumberOfTests,
+                TestCost        = tr.UnitPrice * tr.NumberOfTests,
                 TestDescription = test != null ? test.ItemDescription : null,
-                Programme     = proj != null ? proj.Programme : null,
-                EuroConvRate  = proj != null ? proj.Euroconvrate : null
+                Programme       = proj != null ? proj.Programme : null,
+                EuroConvRate    = proj != null ? proj.Euroconvrate : null
             };
 
-        return await query.OrderBy(t => t.TestCode).ToListAsync();
+        baseQuery = ApplySorting(baseQuery, query.SortBy, query.Descending);
+
+        List<TestRequirementDetailView> result = await baseQuery.ToListAsync();
+        return ApplyPaging(result, query.Page, query.PageSize);
     }
 
     public async Task<TestRequirement> AddTestRequirementAsync(TestRequirement testRequirement)
@@ -81,6 +85,33 @@ public class TestRequirementRepository : ITestRequirementRepository
             .ExecuteDeleteAsync();
 
         return deleted > 0;
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private static IQueryable<TestRequirementDetailView> ApplySorting(
+        IQueryable<TestRequirementDetailView> query, string? sortBy, bool descending)
+    {
+        if (string.IsNullOrEmpty(sortBy))
+            return query.OrderBy(t => t.TestCode);
+
+        return sortBy.ToLower() switch
+        {
+            "testcode"      => ApplyOrder(query, t => t.TestCode, descending),
+            "testdescription" => ApplyOrder(query, t => t.TestDescription, descending),
+            "numberoftests" => ApplyOrder(query, t => t.NumberOfTests, descending),
+            "unitprice"     => ApplyOrder(query, t => t.UnitPrice, descending),
+            "testcost"      => ApplyOrder(query, t => t.TestCost, descending),
+            _               => query.OrderBy(t => t.TestCode)
+        };
+    }
+
+    private static IQueryable<TestRequirementDetailView> ApplyOrder<TKey>(
+        IQueryable<TestRequirementDetailView> query,
+        System.Linq.Expressions.Expression<Func<TestRequirementDetailView, TKey>> keySelector,
+        bool descending)
+    {
+        return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 
     public async Task<IEnumerable<TestCodeLookup>> GetTestCodeLookupsAsync(bool isDefra)

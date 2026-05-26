@@ -101,6 +101,7 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         // so the filter leaves it intact — $.data is the PaginationRes object, not a flat list.
         var response = await _http.GetAsync<PaginationRes<StaffRequirementRes>>(url);
 
+
         if (response.Success && response.Data != null)
         {
             var items      = _mapper.Map<List<StaffRequirementDto>>(response.Data.Data);
@@ -153,14 +154,31 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
 
     // ── Tests ─────────────────────────────────────────────────────────────────
 
-    public async Task<ApiResponseDto<List<TestRequirementDto>>> GetTestRequirementsAsync(string projectId, int year)
+    public async Task<ApiResponseDto<PaginatedResult<TestRequirementDto>>> GetTestRequirementsAsync(
+        string projectId, int year, QueryParameters<string> query)
     {
-        var response = await _http.GetAsync<List<TestRequirementRes>>(
-            string.Format(CostBookApiEndpoints.GetTestRequirements, HttpUtility.UrlEncode(projectId), year));
+        var endpoint = string.Format(CostBookApiEndpoints.GetTestRequirements,
+                                     HttpUtility.UrlEncode(projectId), year);
+        var url = QueryStringHelper.AddQueryString(endpoint, query);
+
+        var response = await _http.GetAsync<PaginationRes<TestRequirementRes>>(url);
+
         if (response.Success && response.Data != null)
-            return ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(_mapper.Map<List<TestRequirementDto>>(response.Data));
-        var err = _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(response);
-        return ApiResponseDto<List<TestRequirementDto>>.FailureResponse(err.Errors, err.Meta);
+        {
+            var items      = _mapper.Map<List<TestRequirementDto>>(response.Data.Data);
+            var pagination = response.Data.PaginationData;
+
+            var result = new PaginatedResult<TestRequirementDto>(
+                items,
+                pagination?.TotalRecords ?? items.Count,
+                pagination?.PageNumber   ?? query.Page,
+                pagination?.PageSize     ?? query.PageSize);
+
+            return ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(result);
+        }
+
+        var err = _mapper.Map<ApiResponseDto<PaginatedResult<TestRequirementDto>>>(response);
+        return ApiResponseDto<PaginatedResult<TestRequirementDto>>.FailureResponse(err.Errors, err.Meta);
     }
 
     public async Task<ApiResponseDto<TestRequirementDto>> AddTestRequirementAsync(string projectId, int year, TestRequirementDto dto)
@@ -197,14 +215,31 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
 
     // ── Animals ───────────────────────────────────────────────────────────────
 
-    public async Task<ApiResponseDto<List<AnimalRequirementDto>>> GetAnimalRequirementsAsync(string projectId, int year)
+    public async Task<ApiResponseDto<PaginatedResult<AnimalRequirementDto>>> GetAnimalRequirementsAsync(
+        string projectId, int year, QueryParameters<string> query)
     {
-        var response = await _http.GetAsync<List<AnimalRequirementRes>>(
-            string.Format(CostBookApiEndpoints.GetAnimalRequirements, HttpUtility.UrlEncode(projectId), year));
+        var endpoint = string.Format(CostBookApiEndpoints.GetAnimalRequirements,
+                                     HttpUtility.UrlEncode(projectId), year);
+        var url = QueryStringHelper.AddQueryString(endpoint, query);
+
+        var response = await _http.GetAsync<PaginationRes<AnimalRequirementRes>>(url);
+
         if (response.Success && response.Data != null)
-            return ApiResponseDto<List<AnimalRequirementDto>>.SuccessResponse(_mapper.Map<List<AnimalRequirementDto>>(response.Data));
-        var err = _mapper.Map<ApiResponseDto<List<AnimalRequirementDto>>>(response);
-        return ApiResponseDto<List<AnimalRequirementDto>>.FailureResponse(err.Errors, err.Meta);
+        {
+            var items      = _mapper.Map<List<AnimalRequirementDto>>(response.Data.Data);
+            var pagination = response.Data.PaginationData;
+
+            var result = new PaginatedResult<AnimalRequirementDto>(
+                items,
+                pagination?.TotalRecords ?? items.Count,
+                pagination?.PageNumber   ?? query.Page,
+                pagination?.PageSize     ?? query.PageSize);
+
+            return ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(result);
+        }
+
+        var err = _mapper.Map<ApiResponseDto<PaginatedResult<AnimalRequirementDto>>>(response);
+        return ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.FailureResponse(err.Errors, err.Meta);
     }
 
     public async Task<ApiResponseDto<AnimalRequirementDto>> AddAnimalRequirementAsync(string projectId, int year, AnimalRequirementDto dto)
@@ -241,14 +276,31 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
 
     // ── Additional Costs ──────────────────────────────────────────────────────
 
-    public async Task<ApiResponseDto<List<AdditionalCostDto>>> GetAdditionalCostsAsync(string projectId, int year)
+    public async Task<ApiResponseDto<PaginatedResult<AdditionalCostDto>>> GetAdditionalCostsAsync(
+        string projectId, int year, QueryParameters<string> query)
     {
-        var response = await _http.GetAsync<List<AdditionalCostRes>>(
-            string.Format(CostBookApiEndpoints.GetAdditionalCosts, HttpUtility.UrlEncode(projectId), year));
+        var endpoint = string.Format(CostBookApiEndpoints.GetAdditionalCosts,
+                                     HttpUtility.UrlEncode(projectId), year);
+        var url = QueryStringHelper.AddQueryString(endpoint, query);
+
+        var response = await _http.GetAsync<PaginationRes<AdditionalCostRes>>(url);
+
         if (response.Success && response.Data != null)
-            return ApiResponseDto<List<AdditionalCostDto>>.SuccessResponse(_mapper.Map<List<AdditionalCostDto>>(response.Data));
-        var err = _mapper.Map<ApiResponseDto<List<AdditionalCostDto>>>(response);
-        return ApiResponseDto<List<AdditionalCostDto>>.FailureResponse(err.Errors, err.Meta);
+        {
+            var items      = _mapper.Map<List<AdditionalCostDto>>(response.Data.Data);
+            var pagination = response.Data.PaginationData;
+
+            var result = new PaginatedResult<AdditionalCostDto>(
+                items,
+                pagination?.TotalRecords ?? items.Count,
+                pagination?.PageNumber   ?? query.Page,
+                pagination?.PageSize     ?? query.PageSize);
+
+            return ApiResponseDto<PaginatedResult<AdditionalCostDto>>.SuccessResponse(result);
+        }
+
+        var err = _mapper.Map<ApiResponseDto<PaginatedResult<AdditionalCostDto>>>(response);
+        return ApiResponseDto<PaginatedResult<AdditionalCostDto>>.FailureResponse(err.Errors, err.Meta);
     }
 
     public async Task<ApiResponseDto<AdditionalCostDto>> AddAdditionalCostAsync(string projectId, int year, AdditionalCostDto dto)

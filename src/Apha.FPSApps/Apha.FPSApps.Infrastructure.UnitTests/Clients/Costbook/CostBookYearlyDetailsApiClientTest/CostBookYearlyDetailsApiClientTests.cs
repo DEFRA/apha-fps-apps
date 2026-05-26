@@ -298,19 +298,27 @@ public class CostBookYearlyDetailsApiClientTests
     #region Test Requirements
 
     [Fact]
-    public async Task GetTestRequirementsAsync_WithSuccessResponse_ReturnsMappedList()
+    public async Task GetTestRequirementsAsync_WithSuccessResponse_ReturnsPaginatedResult()
     {
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
         var resList = new List<TestRequirementRes> { new() { TestCode = "TC001" } };
-        var apiResponse = new ApiResponse<List<TestRequirementRes>> { Success = true, Data = resList };
+        var paginationData = new Pagination { TotalRecords = 1, PageNumber = 1, PageSize = 10, TotalPages = 1 };
+        var paginationRes = new PaginationRes<TestRequirementRes>
+        {
+            Data = resList,
+            PaginationData = paginationData
+        };
+        var apiResponse = new ApiResponse<PaginationRes<TestRequirementRes>> { Success = true, Data = paginationRes };
         var mappedDtos = new List<TestRequirementDto> { new() { TestCode = "TC001" } };
 
-        _http.GetAsync<List<TestRequirementRes>>(Arg.Any<string>()).Returns(apiResponse);
+        _http.GetAsync<PaginationRes<TestRequirementRes>>(Arg.Any<string>()).Returns(apiResponse);
         _mapper.Map<List<TestRequirementDto>>(resList).Returns(mappedDtos);
 
-        var result = await _client.GetTestRequirementsAsync("2024/001", 2024);
+        var result = await _client.GetTestRequirementsAsync("2024/001", 2024, query);
 
         Assert.True(result.Success);
-        Assert.Single(result.Data!);
+        Assert.Single(result.Data!.data);
+        Assert.Equal(1, result.Data.TotalCount);
     }
 
     [Fact]
@@ -367,19 +375,23 @@ public class CostBookYearlyDetailsApiClientTests
     #region Animal Requirements
 
     [Fact]
-    public async Task GetAnimalRequirementsAsync_WithSuccessResponse_ReturnsMappedList()
+    public async Task GetAnimalRequirementsAsync_WithSuccessResponse_ReturnsPaginatedResult()
     {
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
         var resList = new List<AnimalRequirementRes> { new() { ArIdentity = 1 } };
-        var apiResponse = new ApiResponse<List<AnimalRequirementRes>> { Success = true, Data = resList };
+        var paginationData = new Pagination { TotalRecords = 1, PageNumber = 1, PageSize = 10, TotalPages = 1 };
+        var paginationRes = new PaginationRes<AnimalRequirementRes> { Data = resList, PaginationData = paginationData };
+        var apiResponse = new ApiResponse<PaginationRes<AnimalRequirementRes>> { Success = true, Data = paginationRes };
         var mappedDtos = new List<AnimalRequirementDto> { new() { ArIdentity = 1 } };
 
-        _http.GetAsync<List<AnimalRequirementRes>>(Arg.Any<string>()).Returns(apiResponse);
+        _http.GetAsync<PaginationRes<AnimalRequirementRes>>(Arg.Any<string>()).Returns(apiResponse);
         _mapper.Map<List<AnimalRequirementDto>>(resList).Returns(mappedDtos);
 
-        var result = await _client.GetAnimalRequirementsAsync("2024/001", 2024);
+        var result = await _client.GetAnimalRequirementsAsync("2024/001", 2024, query);
 
         Assert.True(result.Success);
-        Assert.Single(result.Data!);
+        Assert.Single(result.Data!.data);
+        Assert.Equal(1, result.Data.TotalCount);
     }
 
     [Fact]
@@ -435,19 +447,23 @@ public class CostBookYearlyDetailsApiClientTests
     #region Additional Costs
 
     [Fact]
-    public async Task GetAdditionalCostsAsync_WithSuccessResponse_ReturnsMappedList()
+    public async Task GetAdditionalCostsAsync_WithSuccessResponse_ReturnsPaginatedResult()
     {
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
         var resList = new List<AdditionalCostRes> { new() { AcIdentity = 1 } };
-        var apiResponse = new ApiResponse<List<AdditionalCostRes>> { Success = true, Data = resList };
+        var paginationData = new Pagination { TotalRecords = 1, PageNumber = 1, PageSize = 10, TotalPages = 1 };
+        var paginationRes = new PaginationRes<AdditionalCostRes> { Data = resList, PaginationData = paginationData };
+        var apiResponse = new ApiResponse<PaginationRes<AdditionalCostRes>> { Success = true, Data = paginationRes };
         var mappedDtos = new List<AdditionalCostDto> { new() { AcIdentity = 1 } };
 
-        _http.GetAsync<List<AdditionalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+        _http.GetAsync<PaginationRes<AdditionalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
         _mapper.Map<List<AdditionalCostDto>>(resList).Returns(mappedDtos);
 
-        var result = await _client.GetAdditionalCostsAsync("2024/001", 2024);
+        var result = await _client.GetAdditionalCostsAsync("2024/001", 2024, query);
 
         Assert.True(result.Success);
-        Assert.Single(result.Data!);
+        Assert.Single(result.Data!.data);
+        Assert.Equal(1, result.Data.TotalCount);
     }
 
     [Fact]
@@ -721,14 +737,35 @@ public class CostBookYearlyDetailsApiClientTests
     [Fact]
     public async Task GetTestRequirementsAsync_WhenApiFails_ReturnsFailureResponse()
     {
-        var apiResponse = new ApiResponse<List<TestRequirementRes>> { Success = false, Data = null };
-        _http.GetAsync<List<TestRequirementRes>>(Arg.Any<string>()).Returns(apiResponse);
-        _mapper.Map<ApiResponseDto<List<TestRequirementDto>>>(apiResponse)
-            .Returns(new ApiResponseDto<List<TestRequirementDto>> { Success = false, Errors = new(), Meta = new() });
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var apiResponse = new ApiResponse<PaginationRes<TestRequirementRes>> { Success = false, Data = null };
+        _http.GetAsync<PaginationRes<TestRequirementRes>>(Arg.Any<string>()).Returns(apiResponse);
+        _mapper.Map<ApiResponseDto<PaginatedResult<TestRequirementDto>>>(apiResponse)
+            .Returns(new ApiResponseDto<PaginatedResult<TestRequirementDto>> { Success = false, Errors = new(), Meta = new() });
 
-        var result = await _client.GetTestRequirementsAsync("2024/001", 2024);
+        var result = await _client.GetTestRequirementsAsync("2024/001", 2024, query);
 
         Assert.False(result.Success);
+    }
+
+    [Fact]
+    public async Task GetTestRequirementsAsync_WithNullPaginationData_UsesFallbackCounts()
+    {
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var resList = new List<TestRequirementRes> { new() { TestCode = "TC001" } };
+        var paginationRes = new PaginationRes<TestRequirementRes> { Data = resList, PaginationData = null! };
+        var apiResponse = new ApiResponse<PaginationRes<TestRequirementRes>> { Success = true, Data = paginationRes };
+        var mappedDtos = new List<TestRequirementDto> { new() { TestCode = "TC001" } };
+
+        _http.GetAsync<PaginationRes<TestRequirementRes>>(Arg.Any<string>()).Returns(apiResponse);
+        _mapper.Map<List<TestRequirementDto>>(resList).Returns(mappedDtos);
+
+        var result = await _client.GetTestRequirementsAsync("2024/001", 2024, query);
+
+        Assert.True(result.Success);
+        Assert.Equal(1, result.Data!.TotalCount);
+        Assert.Equal(1, result.Data.PageNumber);
+        Assert.Equal(10, result.Data.PageSize);
     }
 
     [Fact]
@@ -783,14 +820,35 @@ public class CostBookYearlyDetailsApiClientTests
     [Fact]
     public async Task GetAnimalRequirementsAsync_WhenApiFails_ReturnsFailureResponse()
     {
-        var apiResponse = new ApiResponse<List<AnimalRequirementRes>> { Success = false, Data = null };
-        _http.GetAsync<List<AnimalRequirementRes>>(Arg.Any<string>()).Returns(apiResponse);
-        _mapper.Map<ApiResponseDto<List<AnimalRequirementDto>>>(apiResponse)
-            .Returns(new ApiResponseDto<List<AnimalRequirementDto>> { Success = false, Errors = new(), Meta = new() });
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var apiResponse = new ApiResponse<PaginationRes<AnimalRequirementRes>> { Success = false, Data = null };
+        _http.GetAsync<PaginationRes<AnimalRequirementRes>>(Arg.Any<string>()).Returns(apiResponse);
+        _mapper.Map<ApiResponseDto<PaginatedResult<AnimalRequirementDto>>>(apiResponse)
+            .Returns(new ApiResponseDto<PaginatedResult<AnimalRequirementDto>> { Success = false, Errors = new(), Meta = new() });
 
-        var result = await _client.GetAnimalRequirementsAsync("2024/001", 2024);
+        var result = await _client.GetAnimalRequirementsAsync("2024/001", 2024, query);
 
         Assert.False(result.Success);
+    }
+
+    [Fact]
+    public async Task GetAnimalRequirementsAsync_WithNullPaginationData_UsesFallbackCounts()
+    {
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var resList = new List<AnimalRequirementRes> { new() { ArIdentity = 1 } };
+        var paginationRes = new PaginationRes<AnimalRequirementRes> { Data = resList, PaginationData = null! };
+        var apiResponse = new ApiResponse<PaginationRes<AnimalRequirementRes>> { Success = true, Data = paginationRes };
+        var mappedDtos = new List<AnimalRequirementDto> { new() { ArIdentity = 1 } };
+
+        _http.GetAsync<PaginationRes<AnimalRequirementRes>>(Arg.Any<string>()).Returns(apiResponse);
+        _mapper.Map<List<AnimalRequirementDto>>(resList).Returns(mappedDtos);
+
+        var result = await _client.GetAnimalRequirementsAsync("2024/001", 2024, query);
+
+        Assert.True(result.Success);
+        Assert.Equal(1, result.Data!.TotalCount);
+        Assert.Equal(1, result.Data.PageNumber);
+        Assert.Equal(10, result.Data.PageSize);
     }
 
     [Fact]
@@ -845,14 +903,35 @@ public class CostBookYearlyDetailsApiClientTests
     [Fact]
     public async Task GetAdditionalCostsAsync_WhenApiFails_ReturnsFailureResponse()
     {
-        var apiResponse = new ApiResponse<List<AdditionalCostRes>> { Success = false, Data = null };
-        _http.GetAsync<List<AdditionalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
-        _mapper.Map<ApiResponseDto<List<AdditionalCostDto>>>(apiResponse)
-            .Returns(new ApiResponseDto<List<AdditionalCostDto>> { Success = false, Errors = new(), Meta = new() });
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var apiResponse = new ApiResponse<PaginationRes<AdditionalCostRes>> { Success = false, Data = null };
+        _http.GetAsync<PaginationRes<AdditionalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+        _mapper.Map<ApiResponseDto<PaginatedResult<AdditionalCostDto>>>(apiResponse)
+            .Returns(new ApiResponseDto<PaginatedResult<AdditionalCostDto>> { Success = false, Errors = new(), Meta = new() });
 
-        var result = await _client.GetAdditionalCostsAsync("2024/001", 2024);
+        var result = await _client.GetAdditionalCostsAsync("2024/001", 2024, query);
 
         Assert.False(result.Success);
+    }
+
+    [Fact]
+    public async Task GetAdditionalCostsAsync_WithNullPaginationData_UsesFallbackCounts()
+    {
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var resList = new List<AdditionalCostRes> { new() { AcIdentity = 1 } };
+        var paginationRes = new PaginationRes<AdditionalCostRes> { Data = resList, PaginationData = null! };
+        var apiResponse = new ApiResponse<PaginationRes<AdditionalCostRes>> { Success = true, Data = paginationRes };
+        var mappedDtos = new List<AdditionalCostDto> { new() { AcIdentity = 1 } };
+
+        _http.GetAsync<PaginationRes<AdditionalCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+        _mapper.Map<List<AdditionalCostDto>>(resList).Returns(mappedDtos);
+
+        var result = await _client.GetAdditionalCostsAsync("2024/001", 2024, query);
+
+        Assert.True(result.Success);
+        Assert.Equal(1, result.Data!.TotalCount);
+        Assert.Equal(1, result.Data.PageNumber);
+        Assert.Equal(10, result.Data.PageSize);
     }
 
     [Fact]

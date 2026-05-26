@@ -47,17 +47,20 @@ public class ProjectSummaryControllerTests
             new PaginatedResult<StaffRequirementDto>(
                 [new StaffRequirementDto { StaffCost = cost }], 1));
 
-    private static ApiResponseDto<List<TestRequirementDto>> TestSuccess(double cost) =>
-        ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(
-            [new TestRequirementDto { Project = "P001", TestCode = "T1", TestCost = cost }]);
+    private static ApiResponseDto<PaginatedResult<TestRequirementDto>> TestSuccess(double cost) =>
+        ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(
+            new PaginatedResult<TestRequirementDto>(
+                [new TestRequirementDto { Project = "P001", TestCode = "T1", TestCost = cost }], 1));
 
-    private static ApiResponseDto<List<AnimalRequirementDto>> AnimalSuccess(double cost) =>
-        ApiResponseDto<List<AnimalRequirementDto>>.SuccessResponse(
-            [new AnimalRequirementDto { AnimalType = "Sheep", AnimalCost = cost }]);
+    private static ApiResponseDto<PaginatedResult<AnimalRequirementDto>> AnimalSuccess(double cost) =>
+        ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(
+            new PaginatedResult<AnimalRequirementDto>(
+                [new AnimalRequirementDto { AnimalType = "Sheep", AnimalCost = cost }], 1));
 
-    private static ApiResponseDto<List<AdditionalCostDto>> AdditionalSuccess(double cost) =>
-        ApiResponseDto<List<AdditionalCostDto>>.SuccessResponse(
-            [new AdditionalCostDto { AccountCat = "AC1", Description = "Misc", CostEntered = cost }]);
+    private static ApiResponseDto<PaginatedResult<AdditionalCostDto>> AdditionalSuccess(double cost) =>
+        ApiResponseDto<PaginatedResult<AdditionalCostDto>>.SuccessResponse(
+            new PaginatedResult<AdditionalCostDto>(
+                [new AdditionalCostDto { AccountCat = "AC1", Description = "Misc", CostEntered = cost }], 1));
 
     private static ApiResponseDto<double> ProfitSuccess(double profit) =>
         ApiResponseDto<double>.SuccessResponse(profit);
@@ -70,13 +73,13 @@ public class ProjectSummaryControllerTests
             .GetStaffRequirementsAsync(projectId, year, Arg.Any<QueryParameters<string>>())
             .Returns(StaffSuccess(staffCost));
         _yearlyDetailsService
-            .GetTestRequirementsAsync(projectId, year)
+            .GetTestRequirementsAsync(projectId, year, Arg.Any<QueryParameters<string>>())
             .Returns(TestSuccess(testCost));
         _yearlyDetailsService
-            .GetAnimalRequirementsAsync(projectId, year)
+            .GetAnimalRequirementsAsync(projectId, year, Arg.Any<QueryParameters<string>>())
             .Returns(AnimalSuccess(animalCost));
         _yearlyDetailsService
-            .GetAdditionalCostsAsync(projectId, year)
+            .GetAdditionalCostsAsync(projectId, year, Arg.Any<QueryParameters<string>>())
             .Returns(AdditionalSuccess(additionalCost));
         _projectSummaryService
             .GetProfitIncludedTotalAsync(projectId, year)
@@ -312,9 +315,9 @@ public class ProjectSummaryControllerTests
         _yearlyDetailsService
             .GetStaffRequirementsAsync(projectId, 2024, Arg.Any<QueryParameters<string>>())
             .Returns(StaffSuccess(0));
-        _yearlyDetailsService.GetTestRequirementsAsync(projectId, 2024).Returns(TestSuccess(0));
-        _yearlyDetailsService.GetAnimalRequirementsAsync(projectId, 2024).Returns(AnimalSuccess(0));
-        _yearlyDetailsService.GetAdditionalCostsAsync(projectId, 2024).Returns(AdditionalSuccess(0));
+        _yearlyDetailsService.GetTestRequirementsAsync(projectId, 2024, Arg.Any<QueryParameters<string>>()).Returns(TestSuccess(0));
+        _yearlyDetailsService.GetAnimalRequirementsAsync(projectId, 2024, Arg.Any<QueryParameters<string>>()).Returns(AnimalSuccess(0));
+        _yearlyDetailsService.GetAdditionalCostsAsync(projectId, 2024, Arg.Any<QueryParameters<string>>()).Returns(AdditionalSuccess(0));
         _projectSummaryService.GetProfitIncludedTotalAsync(projectId, 2024).Returns(profitFailure);
 
         // Act
