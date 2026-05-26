@@ -197,17 +197,6 @@ namespace Apha.PACT.Application.Services
                     .Select(dto => _mapper.Map<ProjectInvoice>(dto))
                     .ToList();
             }
-            else if (copyDto.InvoiceIds != null && copyDto.InvoiceIds.Count > 0)
-            {
-                // Selective copy by invoice IDs
-                invoicesToCopy = await _repository.GetInvoicesByIdsAsync(copyDto.InvoiceIds);
-
-                if (invoicesToCopy.Count == 0)
-                {
-                    result.Errors.Add($"No invoices found with the provided IDs");
-                    return result;
-                }
-            }
             else
             {
                 // Bulk copy: all invoices from source month

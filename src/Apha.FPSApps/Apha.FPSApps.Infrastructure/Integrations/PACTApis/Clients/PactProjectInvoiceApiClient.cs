@@ -156,22 +156,24 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<MonthlyInvoicesPivotDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(int sourceMonth, int destinationMonth, List<ProjectInvoiceDto>? invoiceRecords = null)
+        public async Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(CopyInvoicesDto copyDto)
         {
             // Map DTOs to request objects if provided
             List<ProjectInvoiceReq>? invoiceRequests = null;
-            if (invoiceRecords != null && invoiceRecords.Count > 0)
+            if (copyDto.InvoiceRecords != null && copyDto.InvoiceRecords.Count > 0)
             {
-                invoiceRequests = invoiceRecords.Select(dto => _mapper.Map<ProjectInvoiceReq>(dto)).ToList();
+                invoiceRequests = copyDto.InvoiceRecords.Select(dto => _mapper.Map<ProjectInvoiceReq>(dto)).ToList();
             }
 
             var request = new CopyInvoicesReq
             {
-                InvoiceRecords = invoiceRequests
+                InvoiceRecords = invoiceRequests,
+                SourceMonth= copyDto.SourceMonth,
+                TargetMonth=copyDto.TargetMonth
             };
 
             // Convert int months to strings for API endpoint
-            string url = $"{PactApiEndpoints.CopyProjectInvoices}?sourceMonth={sourceMonth.ToString()}&destinationMonth={destinationMonth.ToString()}";
+            string url = $"{PactApiEndpoints.CopyProjectInvoices}?sourceMonth={copyDto.SourceMonth}&destinationMonth={copyDto.TargetMonth}";
 
             var response = await _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(url, request);
 

@@ -43,10 +43,6 @@ namespace Apha.PACT.Api.Controllers
         [HttpGet("by-month")]
         public async Task<IActionResult> GetPagedProjectInvoicesByMonth([FromQuery] QueryParameters<string> query, [FromQuery] int? month)
         {
-            if (month.HasValue && (month.Value < 1 || month.Value > 12))
-            {
-                return BadRequest("Month must be between 1 and 12");
-            }
 
             PaginatedResult<ProjectInvoiceDto> pagedResult = await _service.GetPagedProjectInvoicesByMonthAsync(query, month);
             return Ok(_mapper.Map<PaginationRes<ProjectInvoiceRes>>(pagedResult));
@@ -107,15 +103,11 @@ namespace Apha.PACT.Api.Controllers
 
         /// <summary>Copies project invoices from source month to target month. Supports bulk copy (all invoices), selective copy by IDs, or selective copy by providing invoice records.</summary>
         [HttpPost("copy")]
-        public async Task<IActionResult> CopyInvoices([FromBody] CopyInvoicesReq request, [FromQuery] string sourceMonth, [FromQuery] string destinationMonth)
+        public async Task<IActionResult> CopyInvoices([FromBody] CopyInvoicesReq request)
         {
             // Map request to DTO
             CopyInvoicesDto dto = _mapper.Map<CopyInvoicesDto>(request);
-
-            // Override DTO values with validated query parameters
-            dto.SourceMonth = int.Parse(sourceMonth);
-            dto.TargetMonth = int.Parse(destinationMonth);
-
+           
             // Call service
             CopyInvoicesResultDto result = await _service.CopyInvoicesAsync(dto);
 

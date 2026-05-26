@@ -1,5 +1,6 @@
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Dtos.PACT;using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Web.Areas.PACT.Models;
 using AutoMapper;
 
 namespace Apha.FPSApps.Web.Mappings
@@ -55,6 +56,10 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<CalenderMonthDto, CalenderMonth>().ReverseMap();
             CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeItem>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeItem>().ReverseMap();
+
+            // Mapping for CopyInvoicesRequest to CopyInvoicesDto
+            CreateMap<CopyInvoicesRequest, CopyInvoicesDto>()
+                .ForMember(dest => dest.InvoiceRecords, opt => opt.Ignore());
         }
     }
 }

@@ -45,25 +45,65 @@ function getAutomaticInvoiceFilters() {
 
 // ── CRUD Functions ─────────────────────────────────────────────────
 function addAutomaticInvoice() {
-    $.get('/PACT/AutomaticMonthlyInvoice/GetInvoice',
-        { id: 0, selectedMonth: currentMonth || '' },
-        function (html) {
-            $('#modaPopupBody').html(html);
-            $('#modalPopup').addClass('show');
-        })
-        .fail(function(xhr, status, error) {
-            alert('Error loading form: ' + error);
-        });
+    $.ajax({
+        url: '/PACT/AutomaticMonthlyInvoice/GetInvoice',
+        type: 'GET',
+        data: { invoiceId: 0, selectedMonth: currentMonth || '' },
+        success: function (response) {
+            // Check if response is JSON (error) or HTML (success)
+            if (typeof response === 'object' && response.success === false) {
+                // Handle JSON error response
+                showGovukAlert(response.message || 'Failed to load form');
+            } else {
+                // Handle HTML response (partial view)
+                $('#modaPopupBody').html(response);
+                $('#modalPopup').addClass('show');
+            }
+        },
+        error: function(xhr, status, error) {
+            var errorMessage = 'Error loading form: ' + error;
+            try {
+                var response = JSON.parse(xhr.responseText);
+                if (response.message) {
+                    errorMessage = response.message;
+                }
+            } catch (e) {
+                // Not JSON, use default error message
+            }
+            showGovukAlert(errorMessage);
+        }
+    });
 }
 
 function editAutomaticInvoice(btn) {
     var id = $(btn).data('id');
-    $.get('/PACT/AutomaticMonthlyInvoice/GetInvoice', { id: id }, function (html) {
-        $('#modaPopupBody').html(html);
-        $('#modalPopup').addClass('show');
-    })
-    .fail(function(xhr, status, error) {
-        alert('Error loading form: ' + error);
+    $.ajax({
+        url: '/PACT/AutomaticMonthlyInvoice/GetInvoice',
+        type: 'GET',
+        data: { invoiceId: id },
+        success: function (response) {
+            // Check if response is JSON (error) or HTML (success)
+            if (typeof response === 'object' && response.success === false) {
+                // Handle JSON error response
+                showGovukAlert(response.message || 'Failed to load invoice');
+            } else {
+                // Handle HTML response (partial view)
+                $('#modaPopupBody').html(response);
+                $('#modalPopup').addClass('show');
+            }
+        },
+        error: function(xhr, status, error) {
+            var errorMessage = 'Error loading form: ' + error;
+            try {
+                var response = JSON.parse(xhr.responseText);
+                if (response.message) {
+                    errorMessage = response.message;
+                }
+            } catch (e) {
+                // Not JSON, use default error message
+            }
+            showGovukAlert(errorMessage);
+        }
     });
 }
 

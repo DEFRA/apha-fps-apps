@@ -105,12 +105,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <param name="selectedMonth">Optional month number to pre-populate on the new invoice form.</param>
         /// <returns>A partial view pre-populated with the invoice data, or NotFound if the invoice does not exist.</returns>
         [HttpGet]
-        public async Task<IActionResult> GetInvoice(int id, int? selectedMonth)
+        public async Task<IActionResult> GetInvoice(int invoiceId, int? selectedMonth)
         {
             // Populate dropdowns for the modal
             await PopulateProjectsAndMonthsViewBagAsync();
 
-            if (id == 0)
+            if (invoiceId == 0)
             {
                 return PartialView("_AddEditAutomaticInvoice", new AutomaticInvoiceItem
                 {
@@ -118,7 +118,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 });
             }
 
-            var result = await _invoiceService.GetByIdAsync(id);
+            var result = await _invoiceService.GetByIdAsync(invoiceId);
             if (!result.Success || result.Data == null) return NotFound();
 
             var item = _mapper.Map<AutomaticInvoiceItem>(result.Data);
@@ -206,15 +206,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> CopyInvoices([FromBody] CopyInvoicesRequest request)
         {
+            // Map the request to DTO
+            var copyDto = _mapper.Map<CopyInvoicesDto>(request);
 
             // Determine if this is a bulk copy (no records or empty list) or selective copy
             bool isBulkCopy = request.InvoiceRecords == null || request.InvoiceRecords.Count == 0;
 
-            // Map invoice records to DTOs if selective copy
-            List<ProjectInvoiceDto>? invoiceDtos = null;
+            // Map invoice records to DTOs collection if selective copy
             if (!isBulkCopy)
             {
-                invoiceDtos = request.InvoiceRecords!.Select(item =>
+                copyDto.InvoiceRecords = request.InvoiceRecords!.Select(item =>
                 {
                     var dto = _mapper.Map<ProjectInvoiceDto>(item);
                     dto.Month = request.TargetMonth;
@@ -222,12 +223,14 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     return dto;
                 }).ToList();
             }
+            else
+            {
+                // For bulk copy, ensure InvoiceRecords is null
+                copyDto.InvoiceRecords = null;
+            }
 
             // Call unified API method for both bulk and selective copy
-            ApiResponseDto<CopyInvoicesResultDto> response = await _invoiceService.CopyInvoicesAsync(
-                request.SourceMonth,
-                request.TargetMonth,
-                invoiceDtos);
+            ApiResponseDto<CopyInvoicesResultDto> response = await _invoiceService.CopyInvoicesAsync(copyDto);
 
             if (response == null)
             {

@@ -15,6 +15,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
         Task<ApiResponseDto<ProjectInvoiceDto>> UpdateAsync(int invoiceCounter, ProjectInvoiceDto dto);
         Task<ApiResponseDto<bool>> DeleteAsync(int invoiceCounter);
         Task<ApiResponseDto<MonthlyInvoicesPivotDto>> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query);
-        Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(int sourceMonth, int destinationMonth, List<ProjectInvoiceDto>? invoiceRecords = null);
+        Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(CopyInvoicesDto request);
     }
 }

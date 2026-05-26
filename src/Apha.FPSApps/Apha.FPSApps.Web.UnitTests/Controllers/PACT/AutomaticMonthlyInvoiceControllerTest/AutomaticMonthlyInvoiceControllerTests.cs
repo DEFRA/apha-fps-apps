@@ -1002,12 +1002,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
 
         #region CopyInvoices Tests
 
-        
+
         [Fact]
         public async Task CopyInvoices_BulkCopy_NullInvoiceRecords_FetchesAndCopiesAllInvoices()
         {
             // Arrange
             var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
             var copyResult = new CopyInvoicesResultDto
             {
                 Success = true,
@@ -1016,7 +1017,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 Errors = new List<string>()
             };
 
-            _invoiceService.CopyInvoicesAsync(5, 6, null)
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
+            _invoiceService.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(dto => 
+                dto.SourceMonth == 5 && dto.TargetMonth == 6 && dto.InvoiceRecords == null))
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
@@ -1040,6 +1043,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 6, 
                 InvoiceRecords = new List<AutomaticInvoiceItem>() 
             };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
             var copyResult = new CopyInvoicesResultDto
             {
                 Success = true,
@@ -1048,7 +1052,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 Errors = new List<string>()
             };
 
-            _invoiceService.CopyInvoicesAsync(5, 6, null)
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
+            _invoiceService.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(dto => 
+                dto.SourceMonth == 5 && dto.TargetMonth == 6 && dto.InvoiceRecords == null))
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
@@ -1066,9 +1072,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
         {
             // Arrange
             var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
 
-            // Mock the service to return a failure response
-            _invoiceService.CopyInvoicesAsync(5, 6, null)
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
+            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.FailureResponse(
                     new List<ApiErrorDto> 
                     { 
@@ -1101,6 +1108,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 6, 
                 InvoiceRecords = invoiceRecords 
             };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceDto>() };
             var copyResult = new CopyInvoicesResultDto
             {
                 Success = true,
@@ -1110,6 +1118,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 Errors = new List<string>()
             };
 
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(x => new ProjectInvoiceDto 
                 { 
@@ -1117,7 +1126,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                     Amount = ((AutomaticInvoiceItem)x[0]).Amount
                 });
 
-            _invoiceService.CopyInvoicesAsync(5, 6, Arg.Is<List<ProjectInvoiceDto>>(list => list.Count == 2))
+            _invoiceService.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(dto => 
+                dto.SourceMonth == 5 && dto.TargetMonth == 6 && dto.InvoiceRecords != null && dto.InvoiceRecords.Count == 2))
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
@@ -1144,7 +1154,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 8, 
                 InvoiceRecords = invoiceRecords 
             };
-            List<ProjectInvoiceDto>? capturedDtos = null;
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 8, InvoiceRecords = new List<ProjectInvoiceDto>() };
+            CopyInvoicesDto? capturedDto = null;
             var copyResult = new CopyInvoicesResultDto
             {
                 Success = true,
@@ -1152,20 +1163,22 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 Errors = new List<string>()
             };
 
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(new ProjectInvoiceDto { ProjectParent = "PRJ001", Month = 5, Amount = 1000m });
 
-            _invoiceService.CopyInvoicesAsync(5, 8, Arg.Do<List<ProjectInvoiceDto>>(dtos => capturedDtos = dtos))
+            _invoiceService.CopyInvoicesAsync(Arg.Do<CopyInvoicesDto>(dto => capturedDto = dto))
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
             await _controller.CopyInvoices(request);
 
             // Assert
-            Assert.NotNull(capturedDtos);
-            Assert.Single(capturedDtos);
-            Assert.Equal(8, capturedDtos[0].Month);
-            Assert.Equal(0, capturedDtos[0].InvoiceCounter);
+            Assert.NotNull(capturedDto);
+            Assert.NotNull(capturedDto.InvoiceRecords);
+            Assert.Single(capturedDto.InvoiceRecords);
+            Assert.Equal(8, capturedDto.InvoiceRecords[0].Month);
+            Assert.Equal(0, capturedDto.InvoiceRecords[0].InvoiceCounter);
         }
 
         [Fact]
@@ -1184,6 +1197,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 6, 
                 InvoiceRecords = invoiceRecords 
             };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceDto>() };
             var copyResult = new CopyInvoicesResultDto
             {
                 Success = false,
@@ -1193,6 +1207,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 Errors = new List<string> { "Failed to copy invoice for PRJ002: Duplicate invoice" }
             };
 
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(x => new ProjectInvoiceDto 
                 { 
@@ -1201,7 +1216,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                     Amount = ((AutomaticInvoiceItem)x[0]).Amount
                 });
 
-            _invoiceService.CopyInvoicesAsync(5, 6, Arg.Any<List<ProjectInvoiceDto>>())
+            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
@@ -1231,6 +1246,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 6, 
                 InvoiceRecords = invoiceRecords 
             };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceDto>() };
             var copyResult = new CopyInvoicesResultDto
             {
                 Success = false,
@@ -1244,10 +1260,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 }
             };
 
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(new ProjectInvoiceDto());
 
-            _invoiceService.CopyInvoicesAsync(5, 6, Arg.Any<List<ProjectInvoiceDto>>())
+            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
@@ -1277,6 +1294,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 6, 
                 InvoiceRecords = invoiceRecords 
             };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceDto>() };
             var copyResult = new CopyInvoicesResultDto
             {
                 Success = true,
@@ -1284,10 +1302,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 Errors = new List<string>()
             };
 
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(new ProjectInvoiceDto());
 
-            _invoiceService.CopyInvoicesAsync(5, 6, Arg.Any<List<ProjectInvoiceDto>>())
+            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
@@ -1298,11 +1317,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             var jsonElement = GetJsonResultElement(jsonResult);
             Assert.Equal(3, jsonElement.GetProperty("copiedCount").GetInt32());
 
-            // Verify service was called with the correct parameters
+            // Verify service was called with the correct DTO
             await _invoiceService.Received(1).CopyInvoicesAsync(
-                5, 
-                6, 
-                Arg.Is<List<ProjectInvoiceDto>>(list => list != null && list.Count == 3));
+                Arg.Is<CopyInvoicesDto>(dto => 
+                    dto.SourceMonth == 5 && 
+                    dto.TargetMonth == 6 && 
+                    dto.InvoiceRecords != null && 
+                    dto.InvoiceRecords.Count == 3));
         }
 
         [Fact]
@@ -1310,13 +1331,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
         {
             // Arrange
             var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
 
-            _invoiceService.CopyInvoicesAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<ProjectInvoiceDto>?>())
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
+            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
                 .Returns((ApiResponseDto<CopyInvoicesResultDto>)null!);
 
             // Act
             var result = await _controller.CopyInvoices(request);
-
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -1345,6 +1367,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 TargetMonth = 4, 
                 InvoiceRecords = invoiceRecords 
             };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4, InvoiceRecords = new List<ProjectInvoiceDto>() };
             var copyResult = new CopyInvoicesResultDto
             {
                 Success = true,
@@ -1352,10 +1375,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 Errors = new List<string>()
             };
 
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
             _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
                 .Returns(new ProjectInvoiceDto());
 
-            _invoiceService.CopyInvoicesAsync(3, 4, Arg.Any<List<ProjectInvoiceDto>>())
+            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
@@ -1367,9 +1391,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             Assert.Equal(50, jsonElement.GetProperty("copiedCount").GetInt32());
 
             await _invoiceService.Received(1).CopyInvoicesAsync(
-                3, 
-                4, 
-                Arg.Is<List<ProjectInvoiceDto>>(list => list != null && list.Count == 50));
+                Arg.Is<CopyInvoicesDto>(dto => 
+                    dto.SourceMonth == 3 && 
+                    dto.TargetMonth == 4 && 
+                    dto.InvoiceRecords != null && 
+                    dto.InvoiceRecords.Count == 50));
         }
 
         [Fact]
@@ -1377,6 +1403,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
         {
             // Arrange
             var request = new CopyInvoicesRequest { SourceMonth = 2, TargetMonth = 3, InvoiceRecords = null };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 2, TargetMonth = 3, InvoiceRecords = null };
             var copyResult = new CopyInvoicesResultDto
             {
                 Success = true,
@@ -1384,14 +1411,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
                 Errors = new List<string>()
             };
 
-            _invoiceService.CopyInvoicesAsync(2, 3, null)
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
+            _invoiceService.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(dto => 
+                dto.SourceMonth == 2 && dto.TargetMonth == 3 && dto.InvoiceRecords == null))
                 .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
 
             // Act
             await _controller.CopyInvoices(request);
 
             // Assert
-            await _invoiceService.Received(1).CopyInvoicesAsync(2, 3, null);
+            await _invoiceService.Received(1).CopyInvoicesAsync(
+                Arg.Is<CopyInvoicesDto>(dto => 
+                    dto.SourceMonth == 2 && 
+                    dto.TargetMonth == 3 && 
+                    dto.InvoiceRecords == null));
         }
 
         [Fact]
@@ -1399,8 +1432,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
         {
             // Arrange
             var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
 
-            _invoiceService.CopyInvoicesAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<ProjectInvoiceDto>?>())
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
+            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
                 .Returns(Task.FromException<ApiResponseDto<CopyInvoicesResultDto>>(new InvalidOperationException("Service error")));
 
             // Act & Assert

@@ -984,8 +984,8 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
         public async Task CopyInvoices_BulkCopy_ValidRequest_ReturnsOk()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6 };
-            var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceIds = null };
+            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+            var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
             var resultDto = new CopyInvoicesResultDto
             {
                 Success = true,
@@ -1004,12 +1004,13 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => d.SourceMonth == 5 && d.TargetMonth == 6 && d.InvoiceIds == null))
+            _serviceMock.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => 
+                d.SourceMonth == 5 && d.TargetMonth == 6 && d.InvoiceRecords == null))
                 .Returns(resultDto);
             _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
 
             // Act
-            var result = await _controller.CopyInvoices(request, "5", "6");
+            var result = await _controller.CopyInvoices(request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -1017,77 +1018,89 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             Assert.True(resultValue.Success);
             Assert.Equal(10, resultValue.CopiedCount);
             Assert.Equal(0, resultValue.FailedCount);
-            await _serviceMock.Received(1).CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => d.InvoiceIds == null));
+            await _serviceMock.Received(1).CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => 
+                d.SourceMonth == 5 && d.TargetMonth == 6 && d.InvoiceRecords == null));
         }
 
         [Fact]
-        public async Task CopyInvoices_SelectiveCopy_WithInvoiceIds_ReturnsOk()
+        public async Task CopyInvoices_SelectiveCopy_WithInvoiceRecords_ReturnsOk()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 3, TargetMonth = 4, InvoiceIds = new List<int> { 1, 2, 3 } };
-            var dto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4, InvoiceIds = new List<int> { 1, 2, 3 } };
+            var invoiceRecords = new List<ProjectInvoiceReq>
+            {
+                new ProjectInvoiceReq { ProjectParent = "PRJ001", Month = 3, Amount = 1000m },
+                new ProjectInvoiceReq { ProjectParent = "PRJ002", Month = 3, Amount = 2000m }
+            };
+            var request = new CopyInvoicesReq { SourceMonth = 3, TargetMonth = 4, InvoiceRecords = invoiceRecords };
+            var mappedInvoiceRecords = new List<ProjectInvoiceDto>
+            {
+                new ProjectInvoiceDto { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 3, Amount = 1000m },
+                new ProjectInvoiceDto { InvoiceCounter = 2, ProjectParent = "PRJ002", Month = 3, Amount = 2000m }
+            };
+            var dto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4, InvoiceRecords = mappedInvoiceRecords };
             var resultDto = new CopyInvoicesResultDto
             {
                 Success = true,
-                CopiedCount = 3,
+                CopiedCount = 2,
                 FailedCount = 0,
                 Errors = new List<string>(),
-                Message = "Successfully copied 3 invoices"
+                Message = "Successfully copied 2 invoices"
             };
             var response = new CopyInvoicesRes
             {
                 Success = true,
-                CopiedCount = 3,
+                CopiedCount = 2,
                 FailedCount = 0,
                 Errors = new List<string>(),
-                Message = "Successfully copied 3 invoices"
+                Message = "Successfully copied 2 invoices"
             };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => d.InvoiceIds != null && d.InvoiceIds.Count == 3))
+            _serviceMock.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => 
+                d.SourceMonth == 3 && d.TargetMonth == 4 && d.InvoiceRecords != null && d.InvoiceRecords.Count == 2))
                 .Returns(resultDto);
             _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
 
             // Act
-            var result = await _controller.CopyInvoices(request, "3", "4");
+            var result = await _controller.CopyInvoices(request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var resultValue = Assert.IsType<CopyInvoicesRes>(okResult.Value);
             Assert.True(resultValue.Success);
-            Assert.Equal(3, resultValue.CopiedCount);
+            Assert.Equal(2, resultValue.CopiedCount);
             Assert.Equal(0, resultValue.FailedCount);
-            await _serviceMock.Received(1).CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => d.InvoiceIds != null && d.InvoiceIds.Count == 3));
         }
 
-
-
         [Fact]
-        public async Task CopyInvoices_BulkTrue_ClearsInvoiceIds()
+        public async Task CopyInvoices_RequestBodyMonths_UsesRequestBody()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceIds = new List<int> { 1, 2, 3 } };
-            var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceIds = null };
-            var resultDto = new CopyInvoicesResultDto { Success = true, CopiedCount = 10 };
-            var response = new CopyInvoicesRes { Success = true, CopiedCount = 10 };
+            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+            var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
+            var resultDto = new CopyInvoicesResultDto { Success = true, CopiedCount = 5 };
+            var response = new CopyInvoicesRes { Success = true, CopiedCount = 5 };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => d.InvoiceIds == null)).Returns(resultDto);
+            _serviceMock.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => 
+                d.SourceMonth == 5 && d.TargetMonth == 6))
+                .Returns(resultDto);
             _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
 
             // Act
-            var result = await _controller.CopyInvoices(request, "5", "6");
+            var result = await _controller.CopyInvoices(request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            await _serviceMock.Received(1).CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => d.InvoiceIds == null));
+            await _serviceMock.Received(1).CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => 
+                d.SourceMonth == 5 && d.TargetMonth == 6));
         }
 
         [Fact]
         public async Task CopyInvoices_NoInvoicesFound_ReturnsOkWithErrors()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6 };
+            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
             var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
             var resultDto = new CopyInvoicesResultDto
             {
@@ -1107,11 +1120,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(dto).Returns(resultDto);
+            _serviceMock.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>()).Returns(resultDto);
             _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
 
             // Act
-            var result = await _controller.CopyInvoices(request, "5", "6");
+            var result = await _controller.CopyInvoices(request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -1124,8 +1137,8 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
         public async Task CopyInvoices_PartialSuccess_ReturnsOkWithFailures()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 3, TargetMonth = 4, InvoiceIds = new List<int> { 1, 2, 3 } };
-            var dto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4, InvoiceIds = new List<int> { 1, 2, 3 } };
+            var request = new CopyInvoicesReq { SourceMonth = 3, TargetMonth = 4, InvoiceRecords = new List<ProjectInvoiceReq>() };
+            var dto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4 };
             var resultDto = new CopyInvoicesResultDto
             {
                 Success = false,
@@ -1144,11 +1157,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(dto).Returns(resultDto);
+            _serviceMock.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>()).Returns(resultDto);
             _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
 
             // Act
-            var result = await _controller.CopyInvoices(request, "3", "4");
+            var result = await _controller.CopyInvoices(request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -1159,45 +1172,20 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
         }
 
         [Fact]
-        public async Task CopyInvoices_OverridesMonthsFromQueryParams()
+        public async Task CopyInvoices_EmptyInvoiceRecordsList_TreatsAsBulk()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 1, TargetMonth = 2 };
-            var dto = new CopyInvoicesDto { SourceMonth = 1, TargetMonth = 2 };
-            var resultDto = new CopyInvoicesResultDto { Success = true, CopiedCount = 5, FailedCount = 0 };
-            var response = new CopyInvoicesRes { Success = true, CopiedCount = 5, FailedCount = 0 };
-
-            _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => d.SourceMonth == 5 && d.TargetMonth == 6))
-                .Returns(resultDto);
-            _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
-
-            // Act
-            var result = await _controller.CopyInvoices(request, "5", "6");
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            // Verify that query params (5, 6) override the request body months (1, 2)
-            await _serviceMock.Received(1).CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => 
-                d.SourceMonth == 5 && 
-                d.TargetMonth == 6));
-        }
-
-        [Fact]
-        public async Task CopyInvoices_EmptyInvoiceIdsList_TreatsAsBulk()
-        {
-            // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceIds = new List<int>() };
-            var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceIds = new List<int>() };
+            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceReq>() };
+            var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceDto>() };
             var resultDto = new CopyInvoicesResultDto { Success = true, CopiedCount = 10 };
             var response = new CopyInvoicesRes { Success = true, CopiedCount = 10 };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(dto).Returns(resultDto);
+            _serviceMock.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>()).Returns(resultDto);
             _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
 
             // Act
-            var result = await _controller.CopyInvoices(request, "5", "6");
+            var result = await _controller.CopyInvoices(request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -1209,14 +1197,14 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
         public async Task CopyInvoices_ServiceThrowsException_PropagatesException()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6 };
+            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
             var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(dto).ThrowsAsync(new InvalidOperationException("Database error"));
+            _serviceMock.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>()).ThrowsAsync(new InvalidOperationException("Database error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.CopyInvoices(request, "5", "6"));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.CopyInvoices(request));
         }
 
         [Fact]
@@ -1226,14 +1214,14 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             CopyInvoicesReq? request = null;
 
             // Act & Assert
-            await Assert.ThrowsAsync<NullReferenceException>(() => _controller.CopyInvoices(request!, "5", "6"));
+            await Assert.ThrowsAsync<NullReferenceException>(() => _controller.CopyInvoices(request!));
         }
 
         [Fact]
         public async Task CopyInvoices_SameSourceAndDestination_ServiceHandlesValidation()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 5 };
+            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 5, InvoiceRecords = null };
             var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 5 };
             var resultDto = new CopyInvoicesResultDto
             {
@@ -1253,11 +1241,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(dto).Returns(resultDto);
+            _serviceMock.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>()).Returns(resultDto);
             _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
 
             // Act
-            var result = await _controller.CopyInvoices(request, "5", "5");
+            var result = await _controller.CopyInvoices(request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -1266,43 +1254,45 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
         }
 
         [Fact]
-        public async Task CopyInvoices_VeryLargeInvoiceIdList_ProcessesCorrectly()
+        public async Task CopyInvoices_VeryLargeInvoiceRecordsList_ProcessesCorrectly()
         {
             // Arrange
-            var largeIdList = Enumerable.Range(1, 10000).ToList();
-            var request = new CopyInvoicesReq { SourceMonth = 3, TargetMonth = 4, InvoiceIds = largeIdList };
-            var dto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4, InvoiceIds = largeIdList };
-            var resultDto = new CopyInvoicesResultDto { Success = true, CopiedCount = 10000, FailedCount = 0 };
-            var response = new CopyInvoicesRes { Success = true, CopiedCount = 10000, FailedCount = 0 };
+            var largeRecordsList = Enumerable.Range(1, 1000).Select(i => 
+                new ProjectInvoiceReq { ProjectParent = $"PRJ{i}", Month = 3, Amount = i * 100m }
+            ).ToList();
+            var request = new CopyInvoicesReq { SourceMonth = 3, TargetMonth = 4, InvoiceRecords = largeRecordsList };
+            var dto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4, InvoiceRecords = new List<ProjectInvoiceDto>() };
+            var resultDto = new CopyInvoicesResultDto { Success = true, CopiedCount = 1000, FailedCount = 0 };
+            var response = new CopyInvoicesRes { Success = true, CopiedCount = 1000, FailedCount = 0 };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(dto).Returns(resultDto);
+            _serviceMock.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>()).Returns(resultDto);
             _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
 
             // Act
-            var result = await _controller.CopyInvoices(request, "3", "4");
+            var result = await _controller.CopyInvoices(request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var resultValue = Assert.IsType<CopyInvoicesRes>(okResult.Value);
-            Assert.Equal(10000, resultValue.CopiedCount);
+            Assert.Equal(1000, resultValue.CopiedCount);
         }
 
         [Fact]
-        public async Task CopyInvoices_BulkModeWithNullInvoiceIdsInRequest_ProcessesCorrectly()
+        public async Task CopyInvoices_BulkModeWithNullInvoiceRecordsInRequest_ProcessesCorrectly()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceIds = null };
-            var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceIds = null };
+            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+            var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
             var resultDto = new CopyInvoicesResultDto { Success = true, CopiedCount = 15, FailedCount = 0 };
             var response = new CopyInvoicesRes { Success = true, CopiedCount = 15, FailedCount = 0 };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => d.InvoiceIds == null)).Returns(resultDto);
+            _serviceMock.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => d.InvoiceRecords == null)).Returns(resultDto);
             _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
 
             // Act
-            var result = await _controller.CopyInvoices(request, "5", "6");
+            var result = await _controller.CopyInvoices(request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -1311,11 +1301,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
         }
 
         [Fact]
-        public async Task CopyInvoices_MixedValidAndInvalidIds_ReturnsPartialSuccess()
+        public async Task CopyInvoices_MixedValidAndInvalidRecords_ReturnsPartialSuccess()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 3, TargetMonth = 4, InvoiceIds = new List<int> { 1, 2, 999, 1000 } };
-            var dto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4, InvoiceIds = new List<int> { 1, 2, 999, 1000 } };
+            var request = new CopyInvoicesReq { SourceMonth = 3, TargetMonth = 4, InvoiceRecords = new List<ProjectInvoiceReq>() };
+            var dto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4 };
             var resultDto = new CopyInvoicesResultDto
             {
                 Success = false,
@@ -1334,11 +1324,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(dto).Returns(resultDto);
+            _serviceMock.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>()).Returns(resultDto);
             _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
 
             // Act
-            var result = await _controller.CopyInvoices(request, "3", "4");
+            var result = await _controller.CopyInvoices(request);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -1417,14 +1407,38 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
         public async Task CopyInvoices_CancellationRequested_PropagatesCancellation()
         {
             // Arrange
-            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6 };
+            var request = new CopyInvoicesReq { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
             var dto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
 
             _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
-            _serviceMock.CopyInvoicesAsync(dto).ThrowsAsync(new OperationCanceledException("Operation was cancelled"));
+            _serviceMock.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>()).ThrowsAsync(new OperationCanceledException("Operation was cancelled"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<OperationCanceledException>(() => _controller.CopyInvoices(request, "5", "6"));
+            await Assert.ThrowsAsync<OperationCanceledException>(() => _controller.CopyInvoices(request));
+        }
+
+        [Fact]
+        public async Task CopyInvoices_ValidMonthsInRequest_UsesRequestValues()
+        {
+            // Arrange
+            var request = new CopyInvoicesReq { SourceMonth = 11, TargetMonth = 12, InvoiceRecords = null };
+            var dto = new CopyInvoicesDto { SourceMonth = 11, TargetMonth = 12 };
+            var resultDto = new CopyInvoicesResultDto { Success = true, CopiedCount = 5 };
+            var response = new CopyInvoicesRes { Success = true, CopiedCount = 5 };
+
+            _mapperMock.Map<CopyInvoicesDto>(request).Returns(dto);
+            _serviceMock.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => 
+                d.SourceMonth == 11 && d.TargetMonth == 12))
+                .Returns(resultDto);
+            _mapperMock.Map<CopyInvoicesRes>(resultDto).Returns(response);
+
+            // Act
+            var result = await _controller.CopyInvoices(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            await _serviceMock.Received(1).CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(d => 
+                d.SourceMonth == 11 && d.TargetMonth == 12));
         }
 
         #endregion
