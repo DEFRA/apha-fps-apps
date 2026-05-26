@@ -1126,7 +1126,9 @@ namespace Apha.FPS.DataAccess.Repositories
                     on sj.JobCode equals p.ParentProject
                 join pg in _dbContext.Programs
                     on p.Program equals pg.ProgramNo                                      
-                where projectCodes.Contains(sj.JobCode)                  
+                where projectCodes.Contains(sj.JobCode)
+                    && pg != null
+                    && EF.Functions.ILike(pg.SectorName!, "%charge%")
                 select new
                 {
                     ProgramNo = pg.ProgramNo,
