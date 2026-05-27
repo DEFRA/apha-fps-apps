@@ -444,7 +444,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
                 TotalCost     = totalCost
             };
 
-        private QueryParameters<string> DefaultQuery(int page = 1, int pageSize = 10) =>
+        private static QueryParameters<string> DefaultQuery(int page = 1, int pageSize = 10) =>
             new() { Page = page, PageSize = pageSize };
 
         #region GetWgSummarisedStaffTimeUsageAsync — validation

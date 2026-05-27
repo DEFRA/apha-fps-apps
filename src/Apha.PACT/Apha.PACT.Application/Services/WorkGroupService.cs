@@ -104,7 +104,7 @@ namespace Apha.PACT.Application.Services
                 .Select(g =>
                 {
                     double HoursForMonth(string monthName) =>
-                        g.Where(e => e.MonthName!.ToLower() == monthName.ToLower()).Sum(e => e.TotalTime ?? 0);
+                        g.Where(e => e.MonthName!.Equals(monthName, StringComparison.CurrentCultureIgnoreCase)).Sum(e => e.TotalTime ?? 0);
 
                     return new WgSummarisedStaffTimeUsageRowDto
                     {
