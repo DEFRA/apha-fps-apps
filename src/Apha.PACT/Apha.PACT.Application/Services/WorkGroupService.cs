@@ -49,9 +49,10 @@ namespace Apha.PACT.Application.Services
             ValidateWorkGroup(workGroup);
 
             var rawEntries = await _repository.GetWgSummarisedStaffTimeUsageAsync(workGroup);
+            var entries = _mapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(rawEntries);
 
             // Derive HrsPaid: sum across all distinct people in the work group (mirrors Access FormHeader HrsPaid)
-            var hrsPaid = rawEntries
+            var hrsPaid = entries
                 .GroupBy(e => e.Name)
                 .Select(g => g.First())
                 .Sum(e => e.HrsPaid ?? 0);
@@ -59,7 +60,7 @@ namespace Apha.PACT.Application.Services
             var standardHoursPerMonth = hrsPaid > 0 ? hrsPaid / 12.0 : 0;
 
             // Build ALL rows first — summary must reflect the full dataset, not just the current page
-            var allRows = BuildRows(rawEntries);
+            var allRows = BuildRows(entries);
             var summary = BuildSummary(allRows, standardHoursPerMonth);
 
             // Paginate rows after summary is computed
@@ -77,7 +78,7 @@ namespace Apha.PACT.Application.Services
                 Rows    = pagedRows,
                 Summary = summary,
                 HrsPaid = hrsPaid,
-                JobTitleLookup = rawEntries
+                JobTitleLookup = entries
                     .Where(r => !string.IsNullOrWhiteSpace(r.JobCode))
                     .DistinctBy(r => r.JobCode)
                     .Select(r => new JobTitleLookupItem
@@ -97,7 +98,7 @@ namespace Apha.PACT.Application.Services
         }
 
         private static List<WgSummarisedStaffTimeUsageRowDto> BuildRows(
-            IEnumerable<WgSummarisedStaffTimeUsageView> staffTimeUsageEntries)
+            IEnumerable<WgSummarisedStaffTimeUsageEntryDto> staffTimeUsageEntries)
         {
             return staffTimeUsageEntries
                 .GroupBy(e => new { e.ParentProject, e.JobCode })
