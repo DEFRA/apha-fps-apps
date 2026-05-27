@@ -1,0 +1,168 @@
+@model Apha.FPSApps.Web.Areas.PIMS.Models.ProposedProjectViewModel
+
+@{
+    ViewData["Title"] = "PIMS : Proposed New Project";
+}
+
+<!-- Page heading bar -->
+<div class="govuk-grid-row sup_border-bottom govuk-!-padding-left-1 govuk-!-padding-right-1">
+    <div class="govuk-grid-column-full sup_flex_between_center">
+        <h5 class="govuk-heading-s sup_margin_0 govuk-!-padding-top-2 govuk-!-padding-bottom-2">
+            Proposed New Project
+        </h5>
+        <a href="@Url.Action("Index", "ProjectList", new { area = "PIMS" })"
+           class="govuk-back-link govuk-!-margin-top-0 govuk-!-margin-bottom-0 govuk-!-margin-left-3 govuk-!-margin-right-3">Back</a>
+    </div>
+</div>
+
+<div class="sup_flex_column_center">
+
+    <!-- DB / server error banner -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="govuk-error-summary" tabindex="-1" role="alert"
+             aria-labelledby="npDbErrorTitle" style="margin-top: 20px; max-width: 640px; width: 100%;">
+            <div role="alert">
+                <h2 class="govuk-error-summary__title" id="npDbErrorTitle">
+                    There was a problem saving the project
+                </h2>
+                <div class="govuk-error-summary__body">
+                    <ul class="govuk-list govuk-error-summary__list">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Instruction note -->
+    <p class="pnp-app-note" role="note" style="max-width: 640px; width: 100%; margin-top: 16px;">
+        Only use this form to add details of projects <strong>NOT</strong> on FPS.
+    </p>
+
+    <!-- Form -->
+    <form asp-action="Create"
+          asp-controller="ProposedProject"
+          asp-area="PIMS"
+          method="post"
+          id="pimsformNewProject"
+          class="app-form"
+          style="max-width: 640px; width: 100%;"
+          novalidate>
+        @Html.AntiForgeryToken()
+
+        <p class="govuk-body govuk-!-font-size-16" style="margin-bottom: 8px;">
+            * &nbsp; Mandatory Fields
+        </p>
+
+        <!-- Project (required) -->
+        <div class="govuk-form-group @(ViewData.ModelState["Parentproject"]?.Errors.Count > 0 ? "govuk-form-group--error" : "")">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Parentproject">
+                Project <span class="app-required" aria-hidden="true">*</span>
+            </label>
+            <span asp-validation-for="Parentproject" class="govuk-error-message"></span>
+            <input class="govuk-input govuk-!-font-size-16 @(ViewData.ModelState["Parentproject"]?.Errors.Count > 0 ? "govuk-input--error" : "")"
+                   asp-for="Parentproject"
+                   type="text"
+                   autocomplete="off"
+                   maxlength="20" />
+        </div>
+
+        <!-- Title -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Projecttitle">Title</label>
+            <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
+                      asp-for="Projecttitle"
+                      rows="2"
+                      autocomplete="off"></textarea>
+        </div>
+
+        <!-- Status -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Projectstatus">Status</label>
+            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                    asp-for="Projectstatus"
+                    asp-items="Model.StatusOptions">
+            </select>
+        </div>
+
+        <!-- Costbook No -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Costbookno">Costbook No</label>
+            <input class="govuk-input govuk-!-font-size-16"
+                   asp-for="Costbookno"
+                   type="text"
+                   autocomplete="off" />
+        </div>
+
+        <!-- Disease -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Disease">Disease</label>
+            <input class="govuk-input govuk-!-font-size-16"
+                   asp-for="Disease"
+                   type="text"
+                   autocomplete="off" />
+        </div>
+
+        <!-- Program -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Program">Program</label>
+            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                    asp-for="Program"
+                    asp-items="Model.ProgramOptions">
+            </select>
+        </div>
+
+        <!-- Customer -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Customer">Customer</label>
+            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                    asp-for="Customer"
+                    asp-items="Model.CustomerOptions">
+            </select>
+        </div>
+
+        <!-- Manager -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Manager">Manager</label>
+            <input class="govuk-input govuk-!-font-size-16"
+                   asp-for="Manager"
+                   type="text"
+                   autocomplete="off" />
+        </div>
+
+        <!-- Reason for new proposal -->
+        <div class="govuk-form-group">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Reason">Reason for new proposal</label>
+            <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
+                      asp-for="Reason"
+                      rows="3"></textarea>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="sup_flex_end sup_gap_16 govuk-!-margin-top-3">
+            <a href="@Url.Action("Index", "ProjectList", new { area = "PIMS" })"
+               class="govuk-button govuk-button--secondary govuk-!-font-size-16 sup_margin_0">Cancel</a>
+            <button type="submit" class="govuk-button govuk-!-font-size-16 sup_margin_0">OK</button>
+        </div>
+
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>showGovukAlert('@Html.Raw(TempData["SuccessMessage"])');</text>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
+            }
+        });
+    </script>
+}
