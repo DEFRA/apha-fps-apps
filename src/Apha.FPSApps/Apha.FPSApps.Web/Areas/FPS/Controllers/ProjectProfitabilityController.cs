@@ -70,17 +70,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var filterDict = !string.IsNullOrEmpty(request.Filter)
                 ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
                 : null;
-
-            //var query = new QueryParameters<string>
-            //{
-            //    Page = request.Page,
-            //    PageSize = request.PageSize,
-            //    Search = request.Search,
-            //    SortBy = request.SortBy,
-            //    Descending = request.Descending,
-            //    Filter = request.Filter
-            //};
-
+           
             var query = _mapper.Map<QueryParameters<string>>(request);
 
             var response = await _projectService.GetProjectProfitabilityAsync(
