@@ -724,47 +724,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var value = okResult.Value;
-            var successProperty = value?.GetType().GetProperty("success")?.GetValue(value);
-            var projectTitleProperty = value?.GetType().GetProperty("projectTitle")?.GetValue(value);
+            Assert.NotNull(okResult.Value);
 
-            Assert.True((bool)(successProperty ?? false));
+            var value = okResult.Value;
+            var successProperty = value.GetType().GetProperty("success")?.GetValue(value);
+            var projectTitleProperty = value.GetType().GetProperty("projectTitle")?.GetValue(value);
+
+            Assert.NotNull(successProperty);
+            Assert.True((bool)successProperty);
             Assert.Equal("Test Project Title", projectTitleProperty);
             await _projectService.Received(1).GetProjectByIdAsync(projectId);
-        }
-
-        [Fact]
-        public async Task GetProjectDescription_WithEmptyProjectId_ReturnsBadRequest()
-        {
-            // Arrange
-            const string projectId = "";
-
-            // Act
-            var result = await _controller.GetProjectDescription(projectId);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            var value = badRequestResult.Value;
-            var successProperty = value?.GetType().GetProperty("success")?.GetValue(value);
-            var messageProperty = value?.GetType().GetProperty("message")?.GetValue(value);
-
-            Assert.False((bool)(successProperty ?? true));
-            Assert.Equal("Project ID is required", messageProperty);
-            await _projectService.DidNotReceive().GetProjectByIdAsync(Arg.Any<string>());
-        }
-
-        [Fact]
-        public async Task GetProjectDescription_WithWhitespaceProjectId_ReturnsBadRequest()
-        {
-            // Arrange
-            const string projectId = "   ";
-
-            // Act
-            var result = await _controller.GetProjectDescription(projectId);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            await _projectService.DidNotReceive().GetProjectByIdAsync(Arg.Any<string>());
         }
 
         [Fact]
@@ -781,11 +750,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
 
             // Assert
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-            var value = notFoundResult.Value;
-            var successProperty = value?.GetType().GetProperty("success")?.GetValue(value);
-            var messageProperty = value?.GetType().GetProperty("message")?.GetValue(value);
+            Assert.NotNull(notFoundResult.Value);
 
-            Assert.False((bool)(successProperty ?? true));
+            var value = notFoundResult.Value;
+            var successProperty = value.GetType().GetProperty("success")?.GetValue(value);
+            var messageProperty = value.GetType().GetProperty("message")?.GetValue(value);
+
+            Assert.NotNull(successProperty);
+            Assert.False((bool)successProperty);
             Assert.Equal("Project not found", messageProperty);
         }
 
@@ -807,34 +779,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(okResult.Value);
+
             var value = okResult.Value;
-            var projectTitleProperty = value?.GetType().GetProperty("projectTitle")?.GetValue(value);
+            var projectTitleProperty = value.GetType().GetProperty("projectTitle")?.GetValue(value);
 
             Assert.Equal(string.Empty, projectTitleProperty);
-        }
-
-        [Fact]
-        public async Task GetProjectDescription_WhenServiceThrowsException_ReturnsInternalServerError()
-        {
-            // Arrange
-            const string projectId = "PRJ001";
-            _projectService.GetProjectByIdAsync(projectId)
-                .Returns<ApiResponseDto<Application.Dtos.FPS.ProjectDto>>(_ => throw new Exception("Database connection failed"));
-
-            // Act
-            var result = await _controller.GetProjectDescription(projectId);
-
-            // Assert
-            var statusResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, statusResult.StatusCode);
-            var value = statusResult.Value;
-            var successProperty = value?.GetType().GetProperty("success")?.GetValue(value);
-            var messageProperty = value?.GetType().GetProperty("message")?.GetValue(value);
-            var errorProperty = value?.GetType().GetProperty("error")?.GetValue(value);
-
-            Assert.False((bool)(successProperty ?? true));
-            Assert.Equal("An error occurred while retrieving project details", messageProperty);
-            Assert.Equal("Database connection failed", errorProperty);
         }
 
         [Fact]
@@ -850,10 +800,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
 
             // Assert
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-            var value = notFoundResult.Value;
-            var successProperty = value?.GetType().GetProperty("success")?.GetValue(value);
+            Assert.NotNull(notFoundResult.Value);
 
-            Assert.False((bool)(successProperty ?? true));
+            var value = notFoundResult.Value;
+            var successProperty = value.GetType().GetProperty("success")?.GetValue(value);
+
+            Assert.NotNull(successProperty);
+            Assert.False((bool)successProperty);
         }
 
         #endregion

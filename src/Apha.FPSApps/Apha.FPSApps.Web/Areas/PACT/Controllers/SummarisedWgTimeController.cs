@@ -54,37 +54,22 @@ public class SummarisedWgTimeController : Controller
     [HttpGet]
     public async Task<IActionResult> GetProjectDescription(string projectId)
     {
-        if (string.IsNullOrWhiteSpace(projectId))
-            return BadRequest(new { success = false, message = "Project ID is required" });
+        var response = await _projectService.GetProjectByIdAsync(projectId);
 
-        try
+        if (response.Success && response.Data != null)
         {
-            var response = await _projectService.GetProjectByIdAsync(projectId);
-
-            if (response.Success && response.Data != null)
-            {
-                return Ok(new 
-                { 
-                    success = true, 
-                    projectTitle = response.Data.ProjectTitle ?? string.Empty 
-                });
-            }
-
-            return NotFound(new 
+            return Ok(new 
             { 
-                success = false, 
-                message = "Project not found" 
+                success = true, 
+                projectTitle = response.Data.ProjectTitle ?? string.Empty 
             });
         }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new 
-            { 
-                success = false, 
-                message = "An error occurred while retrieving project details",
-                error = ex.Message 
-            });
-        }
+
+        return NotFound(new 
+        { 
+            success = false, 
+            message = "Project not found" 
+        });
     }
 
     private async Task<DataGridConfig<SummarisedWgTimePivotRow>> BuildGridAsync(
