@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Dynamic;
 using System.Linq.Expressions;
+using System.Xml.Linq;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Apha.FPS.DataAccess.Repositories
@@ -109,6 +110,13 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var queryStaffJob = await BuildJobStaffCostQueryAsync(jobCode);
             var record = await queryStaffJob.Where(e => e.StaffID == staffId).FirstOrDefaultAsync();
+
+            var lookupStaffList = await GetStaffWorkgroupLookup();
+            var staffName = lookupStaffList
+                .Where(p=> p.StaffID == staffId).Select(s => new { s.StaffID, s.Name }).FirstOrDefault();
+
+            record?.Name = staffName?.Name;
+           
             return record != null ? ComputeStaffCost(record) : null;
         }
 

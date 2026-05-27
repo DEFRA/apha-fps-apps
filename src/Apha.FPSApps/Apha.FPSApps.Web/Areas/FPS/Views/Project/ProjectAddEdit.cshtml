@@ -1,4 +1,4 @@
-ï»¿@* Single unified view for both Add and Edit operations *@
+@* Single unified view for both Add and Edit operations *@
 @model Apha.FPSApps.Web.Areas.FPS.Models.ProgrammeNewProjectViewModel
 @{
     var isEditMode = ViewBag.IsEditMode ?? !string.IsNullOrEmpty(Model.ParentProject);
@@ -16,11 +16,7 @@
                 <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
                     <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
                         <div class="col-md-6">
-                            <nav aria-label="Breadcrumb">
-                                <a href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt;
-                                <a href="@Url.Action("Index", "Project", new { area = "FPS" })">Programme Management</a> &gt;
-                                Plan Projects &gt; @(isEditMode ? "Edit Project" : "Set Up A New Project")
-                            </nav>
+                            
                         </div>
                         @if (!isEditMode)
                         {
@@ -174,7 +170,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="CustIncome">Customer Income:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="CustIncome" class="govuk-input" required />
                                     </div>
                                     <span asp-validation-for="CustIncome" class="govuk-error-message" style="display:none;"></span>
@@ -183,7 +179,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="TransferIncome">Transfer Income:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="TransferIncome" class="govuk-input" required />
                                     </div>
                                     <span asp-validation-for="TransferIncome" class="govuk-error-message" style="display:none;"></span>
@@ -192,7 +188,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="Profit">Target Profit:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="Profit" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="Profit" class="govuk-error-message" style="display:none;"></span>
@@ -258,7 +254,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="BudgetCvl">Budget:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="BudgetCvl" class="govuk-input" required />
                                     </div>
                                     <span asp-validation-for="BudgetCvl" class="govuk-error-message" style="display:none;"></span>
@@ -267,7 +263,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="PvsIncome">PVS Income: (Surv Only)</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="PvsIncome" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="PvsIncome" class="govuk-error-message" style="display:none;"></span>
@@ -276,7 +272,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="PlanCaseWorkDebit">Plan CW Debit: (Surv Only)</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="PlanCaseWorkDebit" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="PlanCaseWorkDebit" class="govuk-error-message" style="display:none;"></span>
@@ -285,7 +281,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="CarryOver">CarryOver:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="CarryOver" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="CarryOver" class="govuk-error-message" style="display:none;"></span>
@@ -294,7 +290,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="CarryOverSeed">CarryOverSeed:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="CarryOverSeed" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="CarryOverSeed" class="govuk-error-message" style="display:none;"></span>
@@ -344,7 +340,7 @@
         }
 
         function parseCurrencyValue(val) {
-            return (val || '').toString().replace(/[Â£,\s]/g, '').trim();
+            return (val || '').toString().replace(/[£,\s]/g, '').trim();
         }
 
         var currencyFieldNames = ['CustIncome', 'TransferIncome', 'Profit', 'BudgetCvl', 'PvsIncome', 'PlanCaseWorkDebit', 'CarryOver', 'CarryOverSeed'];
@@ -441,7 +437,7 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData);
 
-            // Strip Â£ signs, commas, and spaces from currency/numeric fields before parsing
+            // Strip £ signs, commas, and spaces from currency/numeric fields before parsing
             const numericFields = ['CustIncome', 'TransferIncome', 'Profit', 'BudgetCvl', 'PvsIncome',
                                    'PlanCaseWorkDebit', 'CarryOver', 'CarryOverSeed', 'CostCentre', 'IsDefraProject'];
             numericFields.forEach(field => {
@@ -457,7 +453,7 @@
             ['TransferIncome', 'CustIncome', 'IsDefraProject'].forEach(field => {
                 if (data[field] === null || data[field] === undefined) data[field] = 0;
             });
-            // ProjectGroup is optional â€” send null when blank to avoid FK constraint violation
+            // ProjectGroup is optional — send null when blank to avoid FK constraint violation
             if (data['ProjectGroup'] === '' || data['ProjectGroup'] === undefined) data['ProjectGroup'] = null;
 
             const url = isEdit
