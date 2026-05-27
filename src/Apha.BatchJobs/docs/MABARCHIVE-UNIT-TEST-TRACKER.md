@@ -130,3 +130,65 @@ All must be true:
 - No failing tests in BatchJobs.UnitTests for MABArchive scope
 - Coverage target met for MABArchive-related files
 - No parity-critical behavior drift versus SQL baseline evidence
+
+## 10) Verification Snapshot (2026-05-27)
+
+Command run (status only):
+- `dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-restore --filter FullyQualifiedName~Apha.BatchJobs.UnitTests.MabArchiveLoadOrchestratorParityTests -v minimal`
+- Result: 5 total, 5 passed, 0 failed, 0 skipped.
+
+Command run (status + coverage):
+- `dotnet test Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-restore --filter 'FullyQualifiedName~MabArchive|FullyQualifiedName~ServiceCollectionSetupTests.ConfigureBatchJobServices_DefaultMabArchiveMode_ShouldRegisterMabArchiveLoadersOnly|FullyQualifiedName~ServiceCollectionSetupTests.ConfigureBatchJobServices_WhenMabArchiveModeIsConfigured_ShouldStillRegisterMabArchiveLoadersOnly' --collect:"Code Coverage" -v minimal`
+- Result: 8 total, 8 passed, 0 failed, 0 skipped.
+
+Coverage artifact:
+- `src/Apha.BatchJobs/TestResults/MabArchiveCoverage/mabarchive-coverage.cobertura.xml`
+- Report summary: `src/Apha.BatchJobs/TestResults/MabArchiveCoverage/report/Summary.txt`
+
+Observed coverage (selected, line coverage):
+- Overall (report scope): 5.6%
+- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveExecutionContext`: 75%
+- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveLoadOrchestrator`: 73.3%
+- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveJobHandler`: 0%
+- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService`: 0%
+- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.ReloadFpsTotalsService`: 0%
+
+Observed unit test class coverage (selected):
+- `Apha.BatchJobs.UnitTests.MabArchiveLoadOrchestratorParityTests`: 100%
+- `Apha.BatchJobs.UnitTests.MabArchiveLoaderMetadataTests`: 90.3%
+- `Apha.BatchJobs.UnitTests.ServiceCollectionSetupTests`: 49.5%
+
+Reality check against targets in section 7:
+- Target not yet met for orchestrator + handler + context (>= 90%).
+- Target not yet met for services (>= 80%).
+- Tracker rows marked Done indicate intended coverage completion, but measured coverage on 2026-05-27 does not yet support sign-off.
+
+## 11) Wave Progress Snapshot (2026-05-27)
+
+Wave 1 + Wave 2 test additions (new files):
+- `src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/ExecutionYearContextTests.cs`
+- `src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/EmailNotificationServiceTests.cs`
+- `src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/MabArchiveExecutionContextTests.cs`
+- `src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/MabArchiveJobHandlerTests.cs`
+- `src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/MyFpsYearlyDataServiceTests.cs`
+- `src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/ReloadFpsTotalsServiceTests.cs`
+
+Latest comparable scoped run (localhost integration enabled, RecreateSummaries excluded):
+- `dotnet test BatchJobs.sln --no-restore --filter "FullyQualifiedName!~RecreateSummaries" --collect:"Code Coverage"`
+- Result: 86 total, 86 passed, 0 failed, 0 skipped.
+
+Coverage trend (BatchJobs assembly only, RecreateSummaries excluded):
+- Baseline before Wave 1: 51.0%
+- After Wave 1: 58.1%
+- After Wave 2: 62.2%
+
+Current MABArchive-focused line coverage (selected):
+- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveExecutionContext`: 100%
+- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveJobHandler`: 94.2%
+- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveLoadOrchestrator`: 92.5%
+- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.EmailNotificationService`: 91.3%
+- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService`: 88.3%
+- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.ReloadFpsTotalsService`: 92.7%
+
+Wave 2 testing note:
+- New test coverage is EF/LINQ-first and localhost-backed; direct SQL usage in newly added tests was removed.
