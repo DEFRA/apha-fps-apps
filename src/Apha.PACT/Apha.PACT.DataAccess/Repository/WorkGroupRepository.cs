@@ -1,6 +1,7 @@
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
+using Apha.PACT.DataAccess.Context;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -9,8 +10,10 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class WorkGroupRepository : BaseRepository, IWorkGroupRepository
     {
+
         public WorkGroupRepository(FpsDbContext context) : base(context)
         {
+
         }
 
         public async Task<IEnumerable<WorkGroup>> GetAllWorkGroupsAsync()
@@ -19,6 +22,23 @@ namespace Apha.PACT.DataAccess.Repository
                 .AsNoTracking()
                 .OrderBy(w => w.WorkGroupName)
                 .ToListAsync();
+        }
+
+        public async Task<IEnumerable<SummarisedWgTimeView>> GetSummarisedWorkgroupTimeAsync(
+            string? workGroup)
+        {
+
+            // Query the SummarisedWgTimeView DbSet directly (assumes the view is already created in the database)
+            var query = _context.SummarisedWgTimeViews
+                .AsNoTracking();
+
+            if (!string.IsNullOrEmpty(workGroup))
+            {
+                query = query.Where(v => v.WorkGroup == workGroup);
+            }
+
+            var result = await query.ToListAsync();
+            return result;
         }
 
         public async Task<PagedData<WorkGroupTimeCode>> GetWorkGroupTimeCodeAsync(

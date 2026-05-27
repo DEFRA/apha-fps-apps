@@ -32,6 +32,7 @@ namespace Apha.Common.Constants
         public const string GetAllWorkGroups = "api/v1/workgroup";
         public const string GetPagedWorkGroupTimeCodes = "api/v1/workgroup/paged/timecodes";
         public const string GetPagedWorkGroupValidTimeCodes = "api/v1/workgroup/paged/validtimecodes";
+        public const string GetPagedSummarisedWorkgroupTime = "api/v1/workgroup/paged/summarisedtime";
 
         // Month
         public const string GetAllMonths = "api/v1/months";
@@ -104,8 +105,5 @@ namespace Apha.Common.Constants
 
         // Monthly Output Log
         public const string SearchMonthlyOutputLog = "api/v1/monthlyoutput/log/search";
-
-        // Summarised Workgroup Time
-        public const string GetPagedSummarisedWorkgroupTime = "api/v1/summarisedworkgrouptime";
     }
 }

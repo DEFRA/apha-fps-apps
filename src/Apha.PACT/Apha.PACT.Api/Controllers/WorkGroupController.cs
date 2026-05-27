@@ -84,5 +84,25 @@ namespace Apha.PACT.Api.Controllers
             var result = await _service.GetWorkGroupValidTimeCodeAsync(query, workGroup);
             return Ok(_mapper.Map<PaginationRes<WorkGroupValidTimeCodeRes>>(result));
         }
+
+        /// <summary>
+        /// Retrieves a paged and sorted list of summarised workgroup time data,
+        /// optionally filtered by work group name. Returns pivoted monthly time allocations
+        /// along with computed totals and budget information.
+        /// </summary>
+        /// <param name="query">Pagination, sorting, and column filter parameters for the request.</param>
+        /// <param name="workGroup">Optional work group name to restrict results to a specific work group.</param>
+        /// <returns>
+        /// <c>200 OK</c> with a <see cref="SummarisedWgTimePivotRes"/> containing the summarised workgroup time data
+        /// with dynamic month columns and pagination metadata.
+        /// </returns>
+        [HttpGet("paged/summarisedtime")]
+        public async Task<IActionResult> GetPagedSummarisedWorkgroupTime(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string? workGroup)
+        {
+            SummarisedWgTimePivotDto result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
+            return Ok(_mapper.Map<SummarisedWgTimePivotRes>(result));
+        }
     }
 }
