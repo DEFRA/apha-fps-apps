@@ -24,6 +24,11 @@
     </PackageReference>
   </ItemGroup>
 
+    <Compile Include="Unit\BatchJobFactoryTests.cs" />
+    <Compile Include="Unit\EfCoreMappingTests.cs" />
+    <Compile Include="Unit\RepositoryIntegrationTests.cs" />
+    <Compile Include="Unit\JobOrchestratorTests.cs" />
+    <Compile Include="Unit\ServiceCollectionSetupTests.cs" />
   <ItemGroup>
     <ProjectReference Include="..\BatchJobs.csproj" />
     <ProjectReference Include="..\Apha.BatchJobs.Api\Apha.BatchJobs.Api.csproj" />
@@ -31,6 +36,15 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="Unit\MabArchiveExecutionContextTests.cs" />
+    <Compile Include="Unit\MabArchiveJobHandlerTests.cs" />
+    <Compile Include="Unit\MyFpsYearlyDataServiceTests.cs" />
+    <Compile Include="Unit\ReloadFpsTotalsServiceTests.cs" />
+    <Compile Include="Unit\EmailNotificationServiceTests.cs" />
+    <Compile Include="Unit\MabArchiveLoadOrchestratorParityTests.cs" />
+    <Compile Include="Unit\MabArchiveLoaderMetadataTests.cs" />
+    <Compile Include="Unit\MabArchivePostgresIntegrationTests.cs" />
+    <Compile Include="Unit\ExecutionYearContextTests.cs" />
   </ItemGroup>
 
 </Project>

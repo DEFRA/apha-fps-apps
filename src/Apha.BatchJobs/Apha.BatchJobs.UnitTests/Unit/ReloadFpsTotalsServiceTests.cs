@@ -12,6 +12,19 @@ public sealed class ReloadFpsTotalsServiceTests
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123;Timeout=30";
 
     [Fact]
+    public void Constructor_WhenSettingsIsNull_ShouldUseDefaults()
+    {
+        using var context = CreateDbContext(GetConnectionString());
+
+        var service = new ReloadFpsTotalsService(
+            context,
+            NullLogger<ReloadFpsTotalsService>.Instance,
+            settings: null!);
+
+        Assert.NotNull(service);
+    }
+
+    [Fact]
     public void Constructor_WhenContextIsNull_ShouldThrowArgumentNullException()
     {
         var ex = Assert.Throws<ArgumentNullException>(() =>
@@ -89,6 +102,19 @@ public sealed class ReloadFpsTotalsServiceTests
         Assert.True(rows >= 0, $"Expected non-negative row count for year {targetYear}, but got {rows}.");
     }
 
+    [Fact]
+    public async Task RebuildSourceTotalsAsync_WhenProviderDoesNotSupportExecuteDelete_ShouldRethrow()
+    {
+        await using var context = CreateInMemoryDbContext();
+
+        var service = new ReloadFpsTotalsService(
+            context,
+            NullLogger<ReloadFpsTotalsService>.Instance,
+            Options.Create(new MabArchiveSettings { StrictYearIsolation = false }));
+
+        await Assert.ThrowsAnyAsync<Exception>(() => service.RebuildSourceTotalsAsync(2026, CancellationToken.None));
+    }
+
     private static string GetConnectionString()
     {
         return Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
@@ -99,6 +125,15 @@ public sealed class ReloadFpsTotalsServiceTests
     {
         var options = new DbContextOptionsBuilder<BatchJobsDbContext>()
             .UseNpgsql(connectionString)
+            .Options;
+
+        return new BatchJobsDbContext(options);
+    }
+
+    private static BatchJobsDbContext CreateInMemoryDbContext()
+    {
+        var options = new DbContextOptionsBuilder<BatchJobsDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
             .Options;
 
         return new BatchJobsDbContext(options);

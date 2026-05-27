@@ -1,6 +1,6 @@
 # MABArchive Unit Test Tracker
 
-Last updated: 2026-05-26
+Last updated: 2026-05-27
 Owner: BatchJobs team
 Scope: MABArchive process (LINQ implementation)
 
@@ -192,3 +192,46 @@ Current MABArchive-focused line coverage (selected):
 
 Wave 2 testing note:
 - New test coverage is EF/LINQ-first and localhost-backed; direct SQL usage in newly added tests was removed.
+
+Wave 2 continuation snapshot (2026-05-27):
+- Command run (Wave 2 suite with focused coverage): `dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-restore --filter "FullyQualifiedName~MabArchiveExecutionContextTests|FullyQualifiedName~MabArchiveJobHandlerTests|FullyQualifiedName~ExecutionYearContextTests|FullyQualifiedName~MyFpsYearlyDataServiceTests|FullyQualifiedName~ReloadFpsTotalsServiceTests|FullyQualifiedName~EmailNotificationServiceTests" --collect:"Code Coverage" -v minimal`
+- Result: 42 total, 42 passed, 0 failed, 0 skipped.
+- Updated focused line coverage:
+	- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveExecutionContext`: 100%
+	- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveJobHandler`: 100%
+	- `Apha.BatchJobs.Infrastructure.Context.ExecutionYearContext`: 100%
+	- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService`: 98.1%
+	- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.ReloadFpsTotalsService`: 95.4%
+	- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.EmailNotificationService`: 100%
+- Remaining uncovered branches in focused run:
+	- `MyFpsYearlyDataService`: slow-loader warning path (`sw.ElapsedMilliseconds > 30000`).
+	- `ReloadFpsTotalsService`: strict view-missing error branch and source-row projection branch requiring populated/local DB source views.
+
+Wave 3 snapshot (2026-05-27):
+- New integration test file added:
+	- `src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/MabArchivePostgresIntegrationTests.cs`
+- Added tests:
+	- `RebuildSourceTotalsAsync_WhenStrictIsolationAndViewMissingFpsYear_ShouldThrowInvalidOperationException`
+	- `RebuildSourceTotalsAsync_WhenSourceProjectExists_ShouldInsertRows_AndRollback`
+- Command run (with explicit localhost credential env): `ConnectionStrings__BatchJobsConnectionString=Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=***;Timeout=30 dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-restore --filter FullyQualifiedName~MabArchivePostgresIntegrationTests -v minimal`
+- Result: 2 total, 2 passed, 0 failed, 0 skipped.
+- Notes:
+	- Tests are transaction/rollback safe and designed for local postgres when credentials and object permissions are available.
+	- These tests target ReloadFpsTotalsService strict-view-missing and non-empty-source execution branches that were previously not executable in unit-only runs.
+
+Wave 4 snapshot (2026-05-27):
+- New test added:
+	- `MyFpsYearlyDataServiceTests.LoadYearDataAsync_WhenLoaderIsSlow_ShouldCompleteAndAggregateRows`
+- Command run (MABArchive-focused suite with localhost credentials): `ConnectionStrings__BatchJobsConnectionString=Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=***;Timeout=30 dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-restore --filter "FullyQualifiedName~MabArchiveExecutionContextTests|FullyQualifiedName~MabArchiveJobHandlerTests|FullyQualifiedName~ExecutionYearContextTests|FullyQualifiedName~MyFpsYearlyDataServiceTests|FullyQualifiedName~ReloadFpsTotalsServiceTests|FullyQualifiedName~EmailNotificationServiceTests|FullyQualifiedName~MabArchivePostgresIntegrationTests|FullyQualifiedName~MabArchiveLoadOrchestratorParityTests|FullyQualifiedName~MabArchiveLoaderMetadataTests" --collect:"Code Coverage" -v minimal`
+- Result: 50 total, 50 passed, 0 failed, 0 skipped.
+- Updated focused coverage snapshot (tool-reported):
+	- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveExecutionContext`: 100%
+	- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveJobHandler`: 100%
+	- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveLoadOrchestrator`: 95.8%
+	- `Apha.BatchJobs.Infrastructure.Context.ExecutionYearContext`: 100%
+	- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService`: 100%
+	- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.ReloadFpsTotalsService`: 95.4%
+	- `Apha.BatchJobs.Infrastructure.Repositories.MabArchive.EmailNotificationService`: 100%
+- Remaining high-value gaps:
+	- `ReloadFpsTotalsService`: strict-view missing aggregation for multiple views and populated projection branch details.
+	- `MabArchiveLoadOrchestrator`: constructor null-guard branches and ExecuteFullYearCycle unavailable-year/logging branches.

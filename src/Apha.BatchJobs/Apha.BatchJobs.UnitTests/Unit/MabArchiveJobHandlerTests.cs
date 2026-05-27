@@ -17,6 +17,88 @@ public sealed class MabArchiveJobHandlerTests
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123;Timeout=30";
 
     [Fact]
+    public void Constructor_WhenDbContextFactoryIsNull_ShouldThrowArgumentNullException()
+    {
+        var correlationService = Substitute.For<ICorrelationService>();
+        var serviceProvider = new ServiceCollection().BuildServiceProvider();
+
+        var ex = Assert.Throws<ArgumentNullException>(() => new MabArchiveJobHandler(
+            null!,
+            serviceProvider,
+            correlationService,
+            NullLogger<MabArchiveJobHandler>.Instance,
+            Options.Create(new MabArchiveSettings())));
+
+        Assert.Equal("dbContextFactory", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WhenServiceProviderIsNull_ShouldThrowArgumentNullException()
+    {
+        var dbContextFactory = Substitute.For<IDbContextFactory<BatchJobsDbContext>>();
+        var correlationService = Substitute.For<ICorrelationService>();
+
+        var ex = Assert.Throws<ArgumentNullException>(() => new MabArchiveJobHandler(
+            dbContextFactory,
+            null!,
+            correlationService,
+            NullLogger<MabArchiveJobHandler>.Instance,
+            Options.Create(new MabArchiveSettings())));
+
+        Assert.Equal("serviceProvider", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WhenCorrelationServiceIsNull_ShouldThrowArgumentNullException()
+    {
+        var dbContextFactory = Substitute.For<IDbContextFactory<BatchJobsDbContext>>();
+        var serviceProvider = new ServiceCollection().BuildServiceProvider();
+
+        var ex = Assert.Throws<ArgumentNullException>(() => new MabArchiveJobHandler(
+            dbContextFactory,
+            serviceProvider,
+            null!,
+            NullLogger<MabArchiveJobHandler>.Instance,
+            Options.Create(new MabArchiveSettings())));
+
+        Assert.Equal("correlationService", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WhenLoggerIsNull_ShouldThrowArgumentNullException()
+    {
+        var dbContextFactory = Substitute.For<IDbContextFactory<BatchJobsDbContext>>();
+        var serviceProvider = new ServiceCollection().BuildServiceProvider();
+        var correlationService = Substitute.For<ICorrelationService>();
+
+        var ex = Assert.Throws<ArgumentNullException>(() => new MabArchiveJobHandler(
+            dbContextFactory,
+            serviceProvider,
+            correlationService,
+            null!,
+            Options.Create(new MabArchiveSettings())));
+
+        Assert.Equal("logger", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WhenSettingsIsNull_ShouldUseDefaults()
+    {
+        var dbContextFactory = Substitute.For<IDbContextFactory<BatchJobsDbContext>>();
+        var correlationService = Substitute.For<ICorrelationService>();
+        var serviceProvider = new ServiceCollection().BuildServiceProvider();
+
+        var subject = new MabArchiveJobHandler(
+            dbContextFactory,
+            serviceProvider,
+            correlationService,
+            NullLogger<MabArchiveJobHandler>.Instance,
+            settings: null!);
+
+        Assert.Equal("MABArchive", subject.Name);
+    }
+
+    [Fact]
     public void Metadata_ShouldMatchExpectedContract()
     {
         var dbContextFactory = Substitute.For<IDbContextFactory<BatchJobsDbContext>>();
@@ -149,6 +231,58 @@ public sealed class MabArchiveJobHandlerTests
                     "boom",
                     Arg.Any<DateTime>(),
                     CancellationToken.None);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("MABARCHIVE_TEST_UTCNOW", originalOverride);
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenCancellationRequested_ShouldRethrowOperationCanceledException()
+    {
+        var originalOverride = Environment.GetEnvironmentVariable("MABARCHIVE_TEST_UTCNOW");
+        Environment.SetEnvironmentVariable("MABARCHIVE_TEST_UTCNOW", "2026-05-20T00:00:00Z");
+
+        try
+        {
+            var dataService = Substitute.For<IMyFpsYearlyDataService>();
+            dataService
+                .IsYearAvailableAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo => Task.FromCanceled<bool>((CancellationToken)callInfo[1]));
+
+            var totalsService = Substitute.For<IReloadFpsTotalsService>();
+            var notificationService = Substitute.For<IEmailNotificationService>();
+            var executionYearContext = new ExecutionYearContext();
+
+            var orchestrator = new MabArchiveLoadOrchestrator(
+                totalsService,
+                dataService,
+                executionYearContext,
+                notificationService,
+                NullLogger<MabArchiveLoadOrchestrator>.Instance);
+
+            var serviceProvider = new ServiceCollection()
+                .AddSingleton(orchestrator)
+                .BuildServiceProvider();
+
+            var correlationService = Substitute.For<ICorrelationService>();
+            correlationService.GetCorrelationId().Returns("cid-wave2-cancel");
+
+            var dbContextFactory = CreateDbContextFactory(GetConnectionString());
+            await AssertCanConnectAsync(dbContextFactory);
+
+            var subject = new MabArchiveJobHandler(
+                dbContextFactory,
+                serviceProvider,
+                correlationService,
+                NullLogger<MabArchiveJobHandler>.Instance,
+                Options.Create(new MabArchiveSettings()));
+
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            await Assert.ThrowsAsync<OperationCanceledException>(() => subject.ExecuteAsync(cts.Token));
         }
         finally
         {

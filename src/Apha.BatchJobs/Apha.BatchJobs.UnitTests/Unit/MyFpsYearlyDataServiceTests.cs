@@ -11,6 +11,37 @@ public sealed class MyFpsYearlyDataServiceTests
     private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123;Timeout=30";
 
     [Fact]
+    public void Constructor_WhenContextIsNull_ShouldThrowArgumentNullException()
+    {
+        var ex = Assert.Throws<ArgumentNullException>(
+            () => new MyFpsYearlyDataService(null!, NullLogger<MyFpsYearlyDataService>.Instance, CreateSequentialLoaders(1, 24)));
+
+        Assert.Equal("context", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WhenLoggerIsNull_ShouldThrowArgumentNullException()
+    {
+        using var context = CreateContext();
+
+        var ex = Assert.Throws<ArgumentNullException>(
+            () => new MyFpsYearlyDataService(context, null!, CreateSequentialLoaders(1, 24)));
+
+        Assert.Equal("logger", ex.ParamName);
+    }
+
+    [Fact]
+    public void Constructor_WhenLoadersIsNull_ShouldThrowArgumentNullException()
+    {
+        using var context = CreateContext();
+
+        var ex = Assert.Throws<ArgumentNullException>(
+            () => new MyFpsYearlyDataService(context, NullLogger<MyFpsYearlyDataService>.Instance, null!));
+
+        Assert.Equal("loaders", ex.ParamName);
+    }
+
+    [Fact]
     public void Constructor_WhenLoaderCountMismatch_ShouldThrowInvalidOperationException()
     {
         using var context = CreateContext();
@@ -118,6 +149,19 @@ public sealed class MyFpsYearlyDataServiceTests
     }
 
     [Fact]
+    public async Task IsYearAvailableAsync_WhenProviderDoesNotSupportSqlQuery_ShouldRethrow()
+    {
+        await using var context = CreateContext();
+
+        var subject = new MyFpsYearlyDataService(
+            context,
+            NullLogger<MyFpsYearlyDataService>.Instance,
+            CreateSequentialLoaders(1, 24));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => subject.IsYearAvailableAsync(2026, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task DeleteYearDataAsync_WhenYearHasNoRows_ShouldReturnZero_AndRollback()
     {
         await using var context = CreatePostgresContext(GetConnectionString());
@@ -133,6 +177,19 @@ public sealed class MyFpsYearlyDataServiceTests
         await transaction.RollbackAsync();
 
         Assert.Equal(0, deletedRows);
+    }
+
+    [Fact]
+    public async Task DeleteYearDataAsync_WhenProviderDoesNotSupportExecuteDelete_ShouldRethrow()
+    {
+        await using var context = CreateContext();
+
+        var subject = new MyFpsYearlyDataService(
+            context,
+            NullLogger<MyFpsYearlyDataService>.Instance,
+            CreateSequentialLoaders(1, 24));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => subject.DeleteYearDataAsync(2026, CancellationToken.None));
     }
 
     [Fact]
@@ -167,6 +224,59 @@ public sealed class MyFpsYearlyDataServiceTests
 
         Assert.Equal(7, rows);
         Assert.Equal(new[] { 1900 }, invokedYears);
+    }
+
+    [Fact]
+    public async Task RefreshProjectAllOnlyAsync_WhenProviderDoesNotSupportExecuteDelete_ShouldRethrow()
+    {
+        await using var context = CreateContext();
+
+        var subject = new MyFpsYearlyDataService(
+            context,
+            NullLogger<MyFpsYearlyDataService>.Instance,
+            CreateSequentialLoaders(1, 24));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => subject.RefreshProjectAllOnlyAsync(2026, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task LoadYearDataAsync_WhenLoaderReturnsNegativeRows_ShouldAggregateNegativeValue()
+    {
+        await using var context = CreateContext();
+
+        var loaders = Enumerable.Range(1, 24)
+            .Select(i => CreateLoader(i, $"Loader-{i}", (_, _, _) => Task.FromResult(i == 2 ? -1 : 0)))
+            .ToList();
+
+        var subject = new MyFpsYearlyDataService(context, NullLogger<MyFpsYearlyDataService>.Instance, loaders);
+
+        var totalRows = await subject.LoadYearDataAsync(2026, CancellationToken.None);
+
+        Assert.Equal(-1, totalRows);
+    }
+
+    [Fact]
+    public async Task LoadYearDataAsync_WhenLoaderIsSlow_ShouldCompleteAndAggregateRows()
+    {
+        await using var context = CreateContext();
+
+        var loaders = Enumerable.Range(1, 24)
+            .Select(i => CreateLoader(i, $"Loader-{i}", async (_, _, _) =>
+            {
+                if (i == 2)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(31));
+                }
+
+                return 1;
+            }))
+            .ToList();
+
+        var subject = new MyFpsYearlyDataService(context, NullLogger<MyFpsYearlyDataService>.Instance, loaders);
+
+        var totalRows = await subject.LoadYearDataAsync(2026, CancellationToken.None);
+
+        Assert.Equal(24, totalRows);
     }
 
     private static BatchJobsDbContext CreateContext()
