@@ -27,6 +27,8 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<Risk> Risks { get; set; }
         public virtual DbSet<ProjectStatus> ProjectStatuses { get; set; }
         public virtual DbSet<Year> Years { get; set; }
+        public virtual DbSet<MyProjSubContract> MyProjSubcontracts { get; set; }
+        public virtual DbSet<MyTblAdditionalCosts> MyTblAdditionalCosts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -43,7 +45,9 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectRadTrackDataMap());
             modelBuilder.ApplyConfiguration(new RiskMap());
             modelBuilder.ApplyConfiguration(new ProjectStatusMap());
-            modelBuilder.ApplyConfiguration(new YearMap());           
+            modelBuilder.ApplyConfiguration(new YearMap());
+            modelBuilder.ApplyConfiguration(new MyProjSubContractMap());
+            modelBuilder.ApplyConfiguration(new MyTblAdditionalCostsMap());
 
         }        
     }

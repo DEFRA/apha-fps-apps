@@ -20,6 +20,11 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ProjectDetailsViewModel, ProjectDetailDto>().ReverseMap();
             CreateMap<ProjectDetailsViewModel, ProposedProjectDto>().ReverseMap();
             CreateMap<ProjectCommentItem, CommentDto>().ReverseMap();
+            // Plan grid item — maps from plan fields on the shared DTO
+            CreateMap<AdditionalCostDto, AdditionalCostPlanItem>().ReverseMap();
+
+            // Actuals grid item — maps from actuals fields on the shared DTO
+            CreateMap<AdditionalCostDto, AdditionalCostActualItem>().ReverseMap();
         }
     }
 }

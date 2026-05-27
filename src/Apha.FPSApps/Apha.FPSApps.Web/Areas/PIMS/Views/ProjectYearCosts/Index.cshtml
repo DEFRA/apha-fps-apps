@@ -1,0 +1,227 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PIMS.Models.ProjectYearCostsViewModel
+
+@{
+    ViewData["Title"] = "PIMS : Yearly Finances";
+}
+
+<div class="govuk-grid-row sup_border-bottom" style="padding: 0">
+    <h5 class="govuk-heading-s sup_margin_0"
+        style="padding: 10px 0 5px 24px; border-bottom: 2px solid #1d70b8">
+        Yearly Finances
+    </h5>
+</div>
+
+<div class="d-flex govuk-!-padding-top-2">
+
+    <!-- ── Side Navigation ──────────────────────────────────── -->
+    @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
+    {
+        Parentproject = Model.Parentproject
+    })
+
+    <!-- ── Main Content ─────────────────────────────────────── -->
+    <main class="main-content" style="padding-top: 0">
+
+        <!-- ── Filters row ─────────────────────────────────── -->
+        <div class="govuk-grid-row govuk-!-margin-bottom-3" id="search-grid">
+            <div class="sup_search_panel sup_p_0 sup_border_b_0"
+                 style="overflow: visible; border: 0; padding: 0">
+                <div class="govuk-grid-column-full sup_flex_between_center"
+                     style="align-items: flex-end">
+                    <div class="govuk-grid-row"
+                         style="margin: 8px; display: flex; align-items: flex-end;">
+
+                        <div style="margin: 0 7px; flex: 1;">
+                            <label for="dpprojectSelect" class="govuk-label tab-font-size">
+                                Select a Project
+                            </label>
+                            <select id="dpprojectSelect"
+                                    class="govuk-select project-dropdown tab-font-size"
+                                    style="width: 100%;">
+                                <option value="">Select a Project</option>
+                                @foreach (var item in Model.ProjectOptions)
+                                {
+                                    if (item.Value == Model.Parentproject)
+                                    {
+                                        <option value="@item.Value" selected="selected">@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div style="margin: 0 5px; flex: 1;">
+                            <label for="dpyear" class="govuk-label tab-font-size">Year</label>
+                            <select id="dpyear"
+                                    class="govuk-select project-dropdown tab-font-size"
+                                    style="width: 100%;">
+                                <option value="">Year</option>
+                                @foreach (var item in Model.YearOptions)
+                                {
+                                    if (item.Value == Model.SelectedYear.ToString())
+                                    {
+                                        <option value="@item.Value" selected="selected">@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tabs ─────────────────────────────────────────── -->
+        <div class="govuk-template__body js-enabled govuk-frontend-supported">
+            <div class="govuk-tabs" data-module="govuk-tabs">
+                <ul class="govuk-tabs__list">
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-monthlyPact" role="presentation">
+                        <a class="govuk-tabs__tab" href="#nav-monthlyPact" role="tab"
+                           aria-controls="nav-monthlyPact" style="font-size: 14px; text-decoration: none">
+                            Monthly Pact Data
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-pact-pay" role="presentation">
+                        <a class="govuk-tabs__tab" href="#nav-pact-pay" role="tab"
+                           aria-controls="nav-pact-pay" style="font-size: 14px; text-decoration: none">
+                            Pact Pay
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-project-details" role="presentation">
+                        <a class="govuk-tabs__tab" href="#nav-project-details" role="tab"
+                           aria-controls="nav-project-details" style="font-size: 14px; text-decoration: none">
+                            Project Details
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-plan" role="presentation">
+                        <a class="govuk-tabs__tab" href="#nav-plan" role="tab"
+                           aria-controls="nav-plan" style="font-size: 14px; text-decoration: none">
+                            Plan
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-staff-plan" role="presentation">
+                        <a class="govuk-tabs__tab" href="#nav-staff-plan" role="tab"
+                           aria-controls="nav-staff-plan" style="font-size: 14px; text-decoration: none">
+                            Staff Plan vs Actuals
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-test-plan" role="presentation">
+                        <a class="govuk-tabs__tab" href="#nav-test-plan" role="tab"
+                           aria-controls="nav-test-plan" style="font-size: 14px; text-decoration: none">
+                            Test Plan vs Actuals
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-animal-plan" role="presentation">
+                        <a class="govuk-tabs__tab" href="#nav-animal-plan" role="tab"
+                           aria-controls="nav-animal-plan" style="font-size: 14px; text-decoration: none">
+                            Animal Plan vs Actuals
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item govuk-tabs__list-item--selected tab-3-side-border"
+                        id="tab_nav-additional-cost" role="presentation">
+                        <a class="govuk-tabs__tab" href="#nav-additional-cost" role="tab"
+                           aria-controls="nav-additional-cost" style="font-size: 14px; text-decoration: none">
+                            Additional Cost Plan vs Actuals
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Placeholder panels for other tabs -->
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
+                     id="nav-monthlyPact" role="tabpanel" aria-labelledby="tab_nav-monthlyPact">
+                    <p class="govuk-body govuk-hint">Monthly Pact Data — coming soon.</p>
+                </div>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
+                     id="nav-pact-pay" role="tabpanel" aria-labelledby="tab_nav-pact-pay">
+                    <p class="govuk-body govuk-hint">Pact Pay — coming soon.</p>
+                </div>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
+                     id="nav-project-details" role="tabpanel" aria-labelledby="tab_nav-project-details">
+                    <p class="govuk-body govuk-hint">Project Details — coming soon.</p>
+                </div>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
+                     id="nav-plan" role="tabpanel" aria-labelledby="tab_nav-plan">
+                    <p class="govuk-body govuk-hint">Plan — coming soon.</p>
+                </div>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
+                     id="nav-staff-plan" role="tabpanel" aria-labelledby="tab_nav-staff-plan">
+                    <p class="govuk-body govuk-hint">Staff Plan vs Actuals — coming soon.</p>
+                </div>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
+                     id="nav-test-plan" role="tabpanel" aria-labelledby="tab_nav-test-plan">
+                    <p class="govuk-body govuk-hint">Test Plan vs Actuals — coming soon.</p>
+                </div>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
+                     id="nav-animal-plan" role="tabpanel" aria-labelledby="tab_nav-animal-plan">
+                    <p class="govuk-body govuk-hint">Animal Plan vs Actuals — coming soon.</p>
+                </div>
+
+                <!-- ── Additional Cost Plan vs Actuals tab ─── -->
+                <div class="govuk-tabs__panel govuk-!-padding-2"
+                     id="nav-additional-cost" role="tabpanel"
+                     aria-labelledby="tab_nav-additional-cost">
+
+                    <div class="govuk-grid-row">
+
+                        <!-- Additional Cost Plan (left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div id="@($"gridContainer_{Model.AdditionalPlansGrid.GridId}")">
+                                @await Html.PartialAsync("_DataGrid", Model.AdditionalPlansGrid)
+                            </div>
+                        </div>
+
+                        <!-- Additional Actuals (right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div id="@($"gridContainer_{Model.AdditionalActualsGrid.GridId}")">
+                                @await Html.PartialAsync("_DataGrid", Model.AdditionalActualsGrid)
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div><!-- /govuk-tabs -->
+        </div>
+
+    </main>
+</div>
+
+@section Scripts {
+<script>
+    var plansGridId   = '@Model.AdditionalPlansGrid.GridId';
+    var actualsGridId = '@Model.AdditionalActualsGrid.GridId';
+
+    // Extra filters injected into both grid reload requests
+    function getYearCostsExtraFilters() {
+        return {
+            project: document.getElementById('dpprojectSelect').value,
+            year:    document.getElementById('dpyear').value
+        };
+    }
+
+    function getPlansGridManager()   { return window['gridManager_' + plansGridId]; }
+    function getActualsGridManager() { return window['gridManager_' + actualsGridId]; }
+
+    function refreshBothGrids() {
+        const project = document.getElementById('dpprojectSelect').value;
+        const year    = document.getElementById('dpyear').value;
+        if (!project || !year) return;
+
+        const plansGm   = getPlansGridManager();
+        const actualsGm = getActualsGridManager();
+        if (plansGm)   plansGm.reloadGrid({ page: 1 });
+        if (actualsGm) actualsGm.reloadGrid({ page: 1 });
+    }
+
+    document.getElementById('dpprojectSelect').addEventListener('change', refreshBothGrids);
+    document.getElementById('dpyear').addEventListener('change', refreshBothGrids);
+</script>
+}

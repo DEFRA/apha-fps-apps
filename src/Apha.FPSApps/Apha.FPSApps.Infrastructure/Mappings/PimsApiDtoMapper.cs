@@ -46,6 +46,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Year
             CreateMap<YearRes, YearDto>().ReverseMap();
+
+            // Additional Cost
+            CreateMap<AdditionalCostRes, AdditionalCostDto>().ReverseMap();
         }
     }
 }
