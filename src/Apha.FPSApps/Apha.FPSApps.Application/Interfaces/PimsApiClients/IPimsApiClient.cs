@@ -2,9 +2,9 @@
 {
     public interface IPimsApiClient
     {
-
         IPimsProjectListApiClient PimsProjectList { get; }
         IPimsProjectDetailsApiClient PimsProjectDetails { get; }
         IPimsProjectCommentApiClient PimsProjectComment { get; }
+        IPimsProposedProjectApiClient PimsProposedProject { get; }
     }
 }

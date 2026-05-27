@@ -42,6 +42,8 @@
     --black-tint-95: #f3f3f3;
     --black-tint-80: #cecece;
     --black-tint-95: #f3f3f3;
+    --blue-tint-80: #d2e2f1;
+    --blue-tint-50: #8eb8dc;
 
 }
 
@@ -88,6 +90,10 @@ a {
     width: 50% !important;
 }
 
+.sup_width_15 {
+    width: 15% !important;
+}
+
 .sup_margin_0 {
     margin: 0 !important;
 }
@@ -106,6 +112,10 @@ a {
 
 .sup_margin_top_10 {
     margin-top: 10px;
+}
+
+.sup_margin_top_neg_10{
+    margin-top: -10px;
 }
 
 .sup_margin_tb_5 {
@@ -133,7 +143,7 @@ a {
 }
 
 .sup_margin_bottom_0 {
-    margin-bottom: 0px;
+    margin-bottom: 0px !important;
 }
 
 
@@ -171,6 +181,10 @@ a {
     float: right;
 }
 
+.sup_margin_right_0 {
+    margin-right: 0 !important;
+}
+
 .sup_text_align_right {
     text-align: right;
 }
@@ -182,6 +196,14 @@ a {
 
 .sup_justify_content {
     justify-content: space-between !important;
+}
+
+.sup_justify_space_evenly {
+    justify-content: space-evenly !important;
+}
+
+.sup_width_280 {
+    width: 280px;
 }
 
 .sup_border {
@@ -303,12 +325,24 @@ a {
     padding-left: 6px;
 }
 
+.sup_padding_right_7 {
+    padding-right: 7px;
+}
+
 .sup_padding_left_0 {
     padding-left: 0px !important;
 }
 
-.sup_padding_left_6 {
-    padding-left: 6px;
+.sup_padding_left_10 {
+    padding-left: 10px;
+}
+
+.sup_padding_right_22 {
+    padding-right: 22px;
+}
+
+.sup_padding_right_20 {
+    padding-right: 20px;
 }
 
 .sup_business_area_wrapper {
@@ -394,6 +428,11 @@ a {
     flex-direction: row;
 }
 
+.sup_flex_gap_10 {
+    display: flex;
+    gap: 10px;
+}
+
 .sup_padding_bottom_10 {
     padding-bottom: 10px;
 }
@@ -457,15 +496,8 @@ a {
     display: flex;
 }
 
-.sup_flex_end_center {
+.sup_flex_align_center {
     display: flex;
-    justify-content: flex-end;
-    align-items: center;
-}
-
-.sup_flex_end_center {
-    display: flex;
-    justify-content: flex-end;
     align-items: center;
 }
 
@@ -568,6 +600,10 @@ a {
     margin-bottom: 12px;
 }
 
+.sup_margin_bottom_15 {
+    margin-bottom: 15px;
+}
+
 .sup_search_panel {
     border: 1px solid var(--govuk-border-colour);
     margin: 0;
@@ -580,8 +616,17 @@ a {
 }
 
 
+.sup_bold_100 {
+    width: 100%;
+    font-weight: bold;
+}
+
 .sup_gap_8 {
     gap: 8px;
+}
+
+.sup_gap_16 {
+    gap: 16px;
 }
 
 .sup_pagination_footer {
@@ -611,6 +656,14 @@ a {
 
 .sup_height_250 {
     height: 250px !important;
+}
+
+.sup_height_300 {
+    height: 300px !important;
+}
+
+.sup_max_height_100 {
+    max-height: 100% !important;
 }
 
 .sup_min_height_460 {
@@ -764,49 +817,6 @@ a {
     text-align: center !important;
 }
 
-.govuk-tabs__list {
-    display: flex;
-    padding-left: 0;
-    list-style: none;
-}
-
-.govuk-tabs__list-item {
-    border: 1px solid var(--govuk-border-colour);
-    margin-right: 5px;
-    border-bottom: 1px solid #ffffff;
-}
-
-.govuk-tabs__tab {
-    display: block;
-    text-decoration: none;
-    border: 0;
-    border-bottom: none;
-    color: #0b0c0c;
-}
-
-.govuk-tabs__list-item--selected .govuk-tabs__tab {
-    font-weight: normal;
-    background-color: var(--govuk-focus-colour, #fd0);
-}
-
-.govuk-tabs__panel {
-    border: 1px solid var(--govuk-border-colour);
-    padding: 15px;
-}
-
-.govuk-tabs__panel--hidden {
-    display: none;
-}
-
-.govuk-tabs__list-item--selected,
-.govuk-tabs__list-item {
-    padding: 5px !important;
-}
-
-.govuk-tabs__list-item:before {
-    display: none;
-}
-
 .sup_gov_yellow_bg {
     background-color: var(--primary-yellow, #ffdd00);
 }
@@ -843,6 +853,10 @@ a {
 
 .sup_padding_bottom_10 {
     padding-bottom: 10px;
+}
+
+.sup_padding_bottom_5 {
+    padding-bottom: 5px;
 }
 
 .sup_padding_right_10 {
@@ -889,8 +903,16 @@ a {
     padding-top: 1em !important;
 }
 
+.sup_padding_top_5 {
+    padding-top: 5px !important;
+}
+
 .sup_padding_top_0 {
     padding-top: 0 !important;
+}
+
+.sup_padding_top_10 {
+    padding-top: 10px !important;
 }
 
 .sup-pad-left-10px {
@@ -1017,6 +1039,7 @@ a {
 .sup_width_0 {
     width: 0px !important;
 }
+
 
 .tableselectdropdown {
     position: relative;
@@ -1161,8 +1184,9 @@ table#tblMonthPeriod>tbody>tr>td {
     padding: 16px;
 }
 
-.sup_overflow_hidden {
-    overflow: hidden;
+.sup_overflow_y_400 {
+    overflow-y: auto;
+    max-height: 400px;
 }
 
 .sup_flex_row_gap_10 {
@@ -1386,11 +1410,12 @@ table#tblMonthPeriod>tbody>tr>td {
     top: 3px;
     right: 3px;
     border: 1px solid var(--govuk-border-colour);
-    height: 28px;
+    height: 24px;
     margin: 0;
+    padding: 8px;
     text-align: center;
     display: flex;
-    width: 32px;
+    width: 28px;
     text-align: center;
     z-index: 1;
 }
@@ -1528,7 +1553,16 @@ table#tblMonthPeriod>tbody>tr>td {
 }
 
 .sup_overflow_visible {
-    overflow: visible;
+    overflow: visible !important;
+}
+
+.sup_z-index_1 {
+    z-index: 1;
+}
+
+/* Row selection styling */
+.sup_row-selected-blue {
+    background-color: var(--blue-tint-80, #d2e2f1) !important;
 }
 
 /* ---------------------------------------------------------------
@@ -1557,6 +1591,14 @@ table#tblMonthPeriod>tbody>tr>td {
     padding: 10px;
 }
 
+/* Centred column layout for standalone form pages */
+.sup_flex_column_center {
+    padding: 8px 16px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 /* =====================================================
    Generic Form Validation — app-form / app-required /
    app-mandatory-note / app-note / app-db-error / app-error-inline
@@ -1568,6 +1610,7 @@ table#tblMonthPeriod>tbody>tr>td {
     color: #d4351c;
     font-weight: 700;
     margin-left: 2px;
+    text-decoration: none;
 }
 
 /* "* Mandatory Fields" note — right-aligned above form fields */

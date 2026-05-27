@@ -17,7 +17,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
         public IFpsMonthlyOutputApiClient FpsMonthlyOutput { get; }
         public IFpsDivisionApiClient FpsDivision { get; }
-
         public IFpsAgencyApiClient FpsAgency { get; }
         public IFpsAdditionalCostApiClient FpsAdditionalCost { get; }
         public IFpsDivisionGradeApiClient FpsMaintDG { get; }

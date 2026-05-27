@@ -9,6 +9,15 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Services\FPS\ProjectStaffPlanActualServiceTest\**" />
+    <Compile Remove="Services\FPS\ProjectTestPlanActualServiceTest\**" />
+    <EmbeddedResource Remove="Services\FPS\ProjectStaffPlanActualServiceTest\**" />
+    <EmbeddedResource Remove="Services\FPS\ProjectTestPlanActualServiceTest\**" />
+    <None Remove="Services\FPS\ProjectStaffPlanActualServiceTest\**" />
+    <None Remove="Services\FPS\ProjectTestPlanActualServiceTest\**" />
+  </ItemGroup>
+
   <ItemGroup>    
     <PackageReference Include="coverlet.collector" Version="6.0.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -33,11 +42,6 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Services\FPS\ProjectStaffPlanActualServiceTest\" />
-    <Folder Include="Services\FPS\ProjectTestPlanActualServiceTest\" />
   </ItemGroup>
 
 </Project>

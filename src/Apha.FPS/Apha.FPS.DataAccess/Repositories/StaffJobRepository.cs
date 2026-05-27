@@ -33,6 +33,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Select(ComputeStaffCost)
                 .ToList();
 
+            var lookupStaffList = await GetStaffWorkgroupLookup();
+            var staffNameMap = lookupStaffList
+                .GroupBy(s => s.StaffID)
+                .ToDictionary(g => g.Key, g => g.First().Name);
+
+            foreach (var item in result)
+            {
+                if (item.StaffID != null && staffNameMap.TryGetValue(item.StaffID, out var name))
+                    item.Name = name;
+            }
+
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
@@ -266,7 +277,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         StaffID = sj.StaffId,
                         JobCode = sj.JobCode,
                         PlannedHours = sj.PlannedHours ?? 0,
-                        Name = s.Name,
+                        Name = "",
                         WorkGroupGrade = s.WorkGroupGrade,
                         ChargeRate = dailyRate,
                         StaffCost = 0m,

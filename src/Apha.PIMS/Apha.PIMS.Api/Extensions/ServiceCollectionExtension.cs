@@ -5,7 +5,6 @@ using Apha.PIMS.Application.Services;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.DataAccess.Context;
 using Apha.PIMS.DataAccess.Repository;
-
 namespace Apha.PIMS.Api.Extensions
 {
     public static class ServiceCollectionExtension
@@ -22,6 +21,7 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IProjectListService, ProjectListService>();
+            services.AddScoped<IProposedProjectService, ProposedProjectService>();
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
             services.AddScoped<ICommentService, CommentService>();
             return services;
@@ -31,6 +31,7 @@ namespace Apha.PIMS.Api.Extensions
             // Add your data access services here
             services.AddScoped<IFPSYearContext, FPSYearContext>();
             services.AddScoped<IProjectListRepository, ProjectListRepository>();
+            services.AddScoped<IProposedProjectRepository, ProposedProjectRepository>();
             services.AddScoped<IProjectDetailsRepository, ProjectDetailsRepository>();
             services.AddScoped<ICommentRepository, CommentRepository>();
             return services;
