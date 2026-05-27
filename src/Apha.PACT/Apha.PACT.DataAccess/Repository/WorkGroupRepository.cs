@@ -53,7 +53,7 @@ namespace Apha.PACT.DataAccess.Repository
                 baseQuery = baseQuery.Where(e => e.WorkGroup == workGroup);
 
             if (monthNumber.HasValue)
-                baseQuery = baseQuery.Where(e => e.Month == monthNumber.Value);
+                baseQuery = baseQuery.Where(e => (int)e.Month == monthNumber.Value);
 
             baseQuery = ApplyWorkGroupTimeCodeFilter(baseQuery, query.Filter);
 
