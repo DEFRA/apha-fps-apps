@@ -1198,17 +1198,17 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var results = projects.Select(p =>
             {
-                var staff = staffMap.TryGetValue(p.ParentProject, out var s) ? s : 0m;
-                var additional = additionalMap.TryGetValue(p.ParentProject, out var a) ? a : 0m;
-                var test = testMap.TryGetValue(p.ParentProject, out var t) ? t : 0m;
-                var animal = animalCostByJob.TryGetValue(p.ParentProject, out var an) ? an : 0m;
+                var staff = staffMap.TryGetValue(p.ParentProject!, out var s) ? s : 0m;
+                var additional = additionalMap.TryGetValue(p.ParentProject!, out var a) ? a : 0m;
+                var test = testMap.TryGetValue(p.ParentProject!, out var t) ? t : 0m;
+                var animal = animalCostByJob.TryGetValue(p.ParentProject!, out var an) ? an : 0m;
                 var total = staff + additional + test + animal;
                 var budget = p.BudgetCvl ?? 0m;
                 var profit = p.Profit ?? 0m;
                 var jcProfit = budget - total;
                 return new ProjectProfitabilityView
                 {
-                    JobCode = p.ParentProject,
+                    JobCode = p.ParentProject!,
                     JcTotalStaffCosts = staff,
                     JcTotalTestCosts = test,
                     JcTotalAnimalCosts = animal,
