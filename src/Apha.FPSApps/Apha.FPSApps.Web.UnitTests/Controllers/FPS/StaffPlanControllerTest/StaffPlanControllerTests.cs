@@ -343,8 +343,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.StaffPlanControllerTest
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var model   = Assert.IsType<DataGridConfig<StaffPlanViewItem>>(partial.Model);
-            Assert.Empty(model.CurrentFilters);
+            var model   = Assert.IsType<DataGridConfig<StaffPlanViewItem>>(partial.Model!);
+            Assert.Empty(model.CurrentFilters ?? []);
         }
 
         [Fact]
