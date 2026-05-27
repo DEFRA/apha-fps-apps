@@ -330,7 +330,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return query;
         }
 
-        private static IQueryable<Project> ApplyProfitabilityFilter(IQueryable<Project> query, string? filter)
+        private static IQueryable<ProjectView> ApplyProfitabilityFilter(IQueryable<ProjectView> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return query;
@@ -342,7 +342,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{jobCode}%"));
+                query = query.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{jobCode}%"));
 
             if (dict.TryGetValue("ProjectStatus", out var projectStatus) && projectStatus != null)
                 query = query.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
@@ -1080,9 +1080,9 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<ProjectProfitabilityView>> GetProjectProfitabilityAsync(
             PaginationParameters<string> query, string programNo, string workTypeFilter)
         {
-            var projectQuery = _dbContext.Projects
+            var projectQuery = _dbContext.ProjectViews
                 .AsNoTracking()
-                .Where(p => p.Program == programNo);
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.Program == programNo);
 
             if (workTypeFilter == "approved")
                 projectQuery = projectQuery.Where(p => p.ProjectStatus == "Approved");
@@ -1126,10 +1126,12 @@ namespace Apha.FPS.DataAccess.Repositories
                     on sj.JobCode equals p.ParentProject
                 join pg in _dbContext.Programs
                     on p.Program equals pg.ProgramNo                                      
-                where projectCodes.Contains(sj.JobCode)                  
+                where projectCodes.Contains(sj.JobCode)
+                    && pg != null
+                    && EF.Functions.ILike(pg.SectorName!, "%charge%")
                 select new
-                {
-                    ProgramNo = pg.ProgramNo,
+                {                    
+                    sectorCharge = (pg.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m,
                     JobCode = sj.JobCode,                    
                     PlannedHours = sj.PlannedHours,
                     ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate
@@ -1185,27 +1187,28 @@ namespace Apha.FPS.DataAccess.Repositories
                     g => g.Sum(x => (decimal)(x.NumberOfAnimals * x.NumberOfDays) * (x.Cost ?? 0m)));
 
             var staffMap = staffCosts
+                .Where(e=>e.sectorCharge == 1m)
                 .GroupBy(x => x.JobCode)
                 .ToDictionary(
                     g => g.Key,
-                    g => g.Sum(x => (decimal)x.PlannedHours * (x.ChargeRate ?? 0m)));
+                    g => g.Sum(x => (decimal)x.PlannedHours * (x.ChargeRate ?? 0m) * x.sectorCharge));
             var additionalMap = additionalCosts.ToDictionary(x => x.JobCode, x => x.TotalAdditional);
             var testMap = testCosts.ToDictionary(x => x.JobCode, x => x.TotalTest);
 
 
             var results = projects.Select(p =>
             {
-                var staff = staffMap.TryGetValue(p.ParentProject, out var s) ? s : 0m;
-                var additional = additionalMap.TryGetValue(p.ParentProject, out var a) ? a : 0m;
-                var test = testMap.TryGetValue(p.ParentProject, out var t) ? t : 0m;
-                var animal = animalCostByJob.TryGetValue(p.ParentProject, out var an) ? an : 0m;
+                var staff = staffMap.TryGetValue(p.ParentProject!, out var s) ? s : 0m;
+                var additional = additionalMap.TryGetValue(p.ParentProject!, out var a) ? a : 0m;
+                var test = testMap.TryGetValue(p.ParentProject!, out var t) ? t : 0m;
+                var animal = animalCostByJob.TryGetValue(p.ParentProject!, out var an) ? an : 0m;
                 var total = staff + additional + test + animal;
                 var budget = p.BudgetCvl ?? 0m;
                 var profit = p.Profit ?? 0m;
                 var jcProfit = budget - total;
                 return new ProjectProfitabilityView
                 {
-                    JobCode = p.ParentProject,
+                    JobCode = p.ParentProject!,
                     JcTotalStaffCosts = staff,
                     JcTotalTestCosts = test,
                     JcTotalAnimalCosts = animal,

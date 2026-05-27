@@ -5,5 +5,7 @@
         byte[] ExportToExcel<T>(
         IEnumerable<T> data,
         string sheetName = "Sheet1");
+
+        byte[] ExportToExcelMultiSheet(IEnumerable<ExcelSheetDefinition> sheets);
     }
 }
