@@ -1470,7 +1470,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             // Arrange
             var invoiceDtos = new List<ProjectInvoiceDto>
             {
-                new() { InvoiceCounter = 1, ProjectParent = null, Amount = 1000m },
+                new() { InvoiceCounter = 1, ProjectParent = "", Amount = 1000m },
                 new() { InvoiceCounter = 2, ProjectParent = "", Amount = 2000m }
             };
             var copyDto = new CopyInvoicesDto
