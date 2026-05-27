@@ -33,6 +33,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Select(ComputeStaffCost)
                 .ToList();
 
+            var lookupStaffList = await GetStaffWorkgroupLookup();
+            var staffNameMap = lookupStaffList
+                .GroupBy(s => s.StaffID)
+                .ToDictionary(g => g.Key, g => g.First().Name);
+
+            foreach (var item in result)
+            {
+                if (item.StaffID != null && staffNameMap.TryGetValue(item.StaffID, out var name))
+                    item.Name = name;
+            }
+
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
@@ -62,12 +73,12 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<decimal?> GetStaffChargeRate(string staffId, string jobcode)
         {
             var result =
-                    from wg in _dbContext.WgEmployees
+                    from wg in _dbContext.WorkGroupEmployees
                     join e in _dbContext.Employees
                         on wg.SpNumber equals e.SPNumber
                     join w in _dbContext.WorkgroupGrades
                         on wg.WorkGroupGrade equals w.WgGrade
-                    join p in _dbContext.ProfitcentreGrades
+                    join p in _dbContext.ProfitCentreGrades
                         on w.ProfitCentreGrade equals p.PcGrade
                     join s in _dbContext.StaffJobs
                         on wg.PactId equals s.StaffId
@@ -256,7 +267,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return (from sj in _dbContext.StaffJobTblViews
                     join s in _dbContext.StaffGeneralViews on sj.StaffId equals s.StaffId
                     join wg in _dbContext.WorkgroupGrades on s.WorkGroupGrade equals wg.WgGrade
-                    join pc in _dbContext.ProfitcentreGrades on wg.ProfitCentreGrade equals pc.PcGrade
+                    join pc in _dbContext.ProfitCentreGrades on wg.ProfitCentreGrade equals pc.PcGrade
                     join pp in projProgram on
                         new { sj.JobCode, sj.UserId } equals new { JobCode = pp.ParentProject, pp.UserId }
                     let dailyRate = (pp.IsDefraProject == -1 ? pc.DefraChargeRate : pc.ChargeRate)
@@ -266,7 +277,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         StaffID = sj.StaffId,
                         JobCode = sj.JobCode,
                         PlannedHours = sj.PlannedHours ?? 0,
-                        Name = s.Name,
+                        Name = "",
                         WorkGroupGrade = s.WorkGroupGrade,
                         ChargeRate = dailyRate,
                         StaffCost = 0m,

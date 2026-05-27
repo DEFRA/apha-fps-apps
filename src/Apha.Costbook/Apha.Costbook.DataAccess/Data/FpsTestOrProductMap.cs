@@ -16,13 +16,14 @@ namespace Apha.Costbook.DataAccess.Data
             entity.ToTable("testorproduct", DbConstants.FpsSchemaName);
 
             entity.Property(e => e.ItemCode)
-                .HasColumnType(DbConstants.CitextColumnType)
+                .HasMaxLength(20)
                 .HasColumnName("itemcode");
-            entity.Property(e => e.FpsYear).HasColumnName(DbConstants.FpsYearColumnName);
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ChargeMethod)
                 .HasMaxLength(5)
                 .HasColumnName("chargemethod");
             entity.Property(e => e.DefraUnitPrice)
+                .HasDefaultValueSql("0")
                 .HasColumnType(DbConstants.MoneyColumnType)
                 .HasColumnName("defraunitprice");
             entity.Property(e => e.ItemDescription)

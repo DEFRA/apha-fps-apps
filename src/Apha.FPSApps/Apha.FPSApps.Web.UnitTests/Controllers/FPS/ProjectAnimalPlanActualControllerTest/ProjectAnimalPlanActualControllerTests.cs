@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -13,13 +14,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectAnimalPlanActualCont
     {
         private readonly IAnimalPlanService _animalPlanService;
         private readonly IProjectService _projectService;
+        private readonly IAppStateService _appStateService;
         private readonly ProjectAnimalPlanActualController _controller;
 
         public ProjectAnimalPlanActualControllerTests()
         {
             _animalPlanService = Substitute.For<IAnimalPlanService>();
             _projectService = Substitute.For<IProjectService>();
-            _controller = new ProjectAnimalPlanActualController(_animalPlanService, _projectService);
+            _appStateService = Substitute.For<IAppStateService>();
+            _controller = new ProjectAnimalPlanActualController(_animalPlanService, _projectService, _appStateService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)

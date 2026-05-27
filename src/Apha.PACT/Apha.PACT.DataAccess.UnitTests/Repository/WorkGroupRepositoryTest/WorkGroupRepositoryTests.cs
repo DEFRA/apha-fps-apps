@@ -737,5 +737,695 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         }
 
         #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // GetWorkGroupValidTimeCodeAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        // ── Factory helpers ──────────────────────────────────────────────────
+
+        private static TimeCodeValid ValidTimeCode(
+            string workGroup     = "WG1",
+            string timeCode      = "TC1",
+            string parentProject = "PP1",
+            bool   active        = true) =>
+            new()
+            {
+                WorkGroup     = workGroup,
+                TimeCode      = timeCode,
+                ParentProject = parentProject,
+                Active        = active
+            };
+
+        private static Project ProjectRecord(
+            string parentProject = "PP1",
+            string manager       = "MGR1") =>
+            new()
+            {
+                ParentProject = parentProject,
+                Manager       = manager,
+                ProjectTitle  = "Title",
+                Program       = "Prog",
+                Customer      = "Cust",
+                ProjectStatus = "Open",
+                Disease       = "D",
+                Contract      = "C",
+                IsDefraProject = 0
+            };
+
+        private static WorkGroupRepository CreateValidTimeCodeRepository(
+            IEnumerable<TimeCodeValid> timeCodeValids,
+            IEnumerable<Project>       projects)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            var mockContext       = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            var timeCodeSet  = RepositoryTestHelper.CreateMockDbSet(timeCodeValids);
+            var projectSet   = RepositoryTestHelper.CreateMockDbSet(projects);
+            var workGroupSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroup>());
+
+            mockContext.Setup(x => x.TimeCodeValids).Returns(timeCodeSet.Object);
+            mockContext.Setup(x => x.Projects).Returns(projectSet.Object);
+            mockContext.Setup(x => x.WorkGroups).Returns(workGroupSet.Object);
+
+            return new WorkGroupRepository(mockContext.Object);
+        }
+
+        private static WorkGroupRepository CreateDefaultValidTimeCodeRepository(
+            string workGroup     = "WG1",
+            string timeCode      = "TC1",
+            string parentProject = "PP1",
+            bool   active        = true,
+            string manager       = "MGR1") =>
+            CreateValidTimeCodeRepository(
+                [ValidTimeCode(workGroup, timeCode, parentProject, active)],
+                [ProjectRecord(parentProject, manager)]);
+
+        // ────────────────────────────────────────────────────────────────────
+        #region GetWorkGroupValidTimeCodeAsync — join / projection
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_MatchingJoin_ReturnsProjectedRow()
+        {
+            var repo  = CreateDefaultValidTimeCodeRepository();
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Single(result.Data);
+            var row = result.Data.First();
+            Assert.Equal("WG1",  row.WorkGroup);
+            Assert.Equal("TC1",  row.TimeCode);
+            Assert.Equal("PP1",  row.ParentProject);
+            Assert.Equal("MGR1", row.Manager);
+            Assert.True(row.Active);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_ActiveFalse_ProjectedCorrectly()
+        {
+            var repo  = CreateDefaultValidTimeCodeRepository(active: false);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Single(result.Data);
+            Assert.False(result.Data.First().Active);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_ManagerIsNull_ProjectedAsNull()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "PP1")],
+                [ProjectRecord("PP1", null!)]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Single(result.Data);
+            Assert.Null(result.Data.First().Manager);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_ParentProjectMismatch_ReturnsEmpty()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "PP1")],
+                [ProjectRecord("PP_DIFFERENT", "MGR1")]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_EmptyTimeCodeValids_ReturnsEmpty()
+        {
+            var repo  = CreateValidTimeCodeRepository([], [ProjectRecord()]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_EmptyProjects_ReturnsEmpty()
+        {
+            var repo  = CreateValidTimeCodeRepository([ValidTimeCode()], []);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_MultipleMatchingRows_ReturnsAll()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "PP1"), ValidTimeCode("WG1", "TC2", "PP1")],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        #endregion
+
+        // ────────────────────────────────────────────────────────────────────
+        #region GetWorkGroupValidTimeCodeAsync — workGroup filter
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_WorkGroupFilter_ReturnsOnlyMatchingRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "PP1"), ValidTimeCode("WG2", "TC2", "PP1")],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("WG1", result.Data.First().WorkGroup);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_WorkGroupFilter_NoMatch_ReturnsEmpty()
+        {
+            var repo  = CreateDefaultValidTimeCodeRepository(workGroup: "WG1");
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG_MISSING");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_EmptyWorkGroupFilter_ReturnsAllRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "PP1"), ValidTimeCode("WG2", "TC2", "PP2")],
+                [ProjectRecord("PP1", "M1"), ProjectRecord("PP2", "M2")]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_WhitespaceWorkGroupFilter_ReturnsAllRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "PP1"), ValidTimeCode("WG2", "TC2", "PP2")],
+                [ProjectRecord("PP1", "M1"), ProjectRecord("PP2", "M2")]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "   ");
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        #endregion
+
+        // ────────────────────────────────────────────────────────────────────
+        #region GetWorkGroupValidTimeCodeAsync — column filter (ApplyWorkGroupValidTimeCodeFilter)
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_NullFilter_ReturnsAllRows()
+        {
+            var repo  = CreateDefaultValidTimeCodeRepository();
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_EmptyJsonFilter_ReturnsAllRows()
+        {
+            var repo  = CreateDefaultValidTimeCodeRepository();
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{}" };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_FilterByWorkGroup_PartialMatch_ReturnsRow()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG_ALPHA", "TC1", "PP1"), ValidTimeCode("WG_BETA", "TC2", "PP1")],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"WorkGroup\":\"ALPHA\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Single(result.Data);
+            Assert.Equal("WG_ALPHA", result.Data.First().WorkGroup);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_FilterByWorkGroup_NoMatch_ReturnsEmpty()
+        {
+            var repo  = CreateDefaultValidTimeCodeRepository(workGroup: "WG1");
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"WorkGroup\":\"NOMATCH\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_FilterByTimeCode_PartialMatch_ReturnsRow()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TIME_ALPHA", "PP1"), ValidTimeCode("WG1", "TIME_BETA", "PP1")],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"TimeCode\":\"ALPHA\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Single(result.Data);
+            Assert.Equal("TIME_ALPHA", result.Data.First().TimeCode);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_FilterByTimeCode_NoMatch_ReturnsEmpty()
+        {
+            var repo  = CreateDefaultValidTimeCodeRepository(timeCode: "TC1");
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"TimeCode\":\"NOMATCH\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_FilterByParentProject_PartialMatch_ReturnsRow()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "PROJECT_ALPHA"), ValidTimeCode("WG1", "TC2", "PROJECT_BETA")],
+                [ProjectRecord("PROJECT_ALPHA", "MGR1"), ProjectRecord("PROJECT_BETA", "MGR2")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ParentProject\":\"ALPHA\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Single(result.Data);
+            Assert.Equal("PROJECT_ALPHA", result.Data.First().ParentProject);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_FilterByParentProject_NoMatch_ReturnsEmpty()
+        {
+            var repo  = CreateDefaultValidTimeCodeRepository(parentProject: "PP1");
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ParentProject\":\"NOMATCH\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_FilterByManager_PartialMatch_ReturnsRow()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "PP1"), ValidTimeCode("WG1", "TC2", "PP2")],
+                [ProjectRecord("PP1", "MANAGER_JONES"), ProjectRecord("PP2", "MANAGER_SMITH")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"Manager\":\"JONES\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Single(result.Data);
+            Assert.Equal("MANAGER_JONES", result.Data.First().Manager);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_FilterByManager_NoMatch_ReturnsEmpty()
+        {
+            var repo  = CreateDefaultValidTimeCodeRepository(manager: "MGR1");
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"Manager\":\"NOMATCH\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_MultipleColumnFilters_AllApplied()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC_X", "PROJ_A"), ValidTimeCode("WG1", "TC_Y", "PROJ_B")],
+                [ProjectRecord("PROJ_A", "MANAGER_A"), ProjectRecord("PROJ_B", "MANAGER_B")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"TimeCode\":\"TC_X\",\"Manager\":\"MANAGER_A\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Single(result.Data);
+            Assert.Equal("TC_X",      result.Data.First().TimeCode);
+            Assert.Equal("MANAGER_A", result.Data.First().Manager);
+        }
+
+        #endregion
+
+        // ────────────────────────────────────────────────────────────────────
+        #region GetWorkGroupValidTimeCodeAsync — sorting
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_NoSortBy_DefaultsToOrderByParentProject()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "ZZ_PROJ"), ValidTimeCode("WG1", "TC2", "AA_PROJ")],
+                [ProjectRecord("ZZ_PROJ", "M1"), ProjectRecord("AA_PROJ", "M2")]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("AA_PROJ", result.Data.ElementAt(0).ParentProject);
+            Assert.Equal("ZZ_PROJ", result.Data.ElementAt(1).ParentProject);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_SortByWorkGroupAscending_ReturnsSortedRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG_Z", "TC1", "PP1"), ValidTimeCode("WG_A", "TC2", "PP1")],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "WorkGroup", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("WG_A", result.Data.ElementAt(0).WorkGroup);
+            Assert.Equal("WG_Z", result.Data.ElementAt(1).WorkGroup);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_SortByWorkGroupDescending_ReturnsSortedRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG_Z", "TC1", "PP1"), ValidTimeCode("WG_A", "TC2", "PP1")],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "WorkGroup", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("WG_Z", result.Data.ElementAt(0).WorkGroup);
+            Assert.Equal("WG_A", result.Data.ElementAt(1).WorkGroup);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_SortByTimeCodeAscending_ReturnsSortedRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC_Z", "PP1"), ValidTimeCode("WG1", "TC_A", "PP1")],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "TimeCode", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("TC_A", result.Data.ElementAt(0).TimeCode);
+            Assert.Equal("TC_Z", result.Data.ElementAt(1).TimeCode);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_SortByTimeCodeDescending_ReturnsSortedRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC_Z", "PP1"), ValidTimeCode("WG1", "TC_A", "PP1")],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "TimeCode", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("TC_Z", result.Data.ElementAt(0).TimeCode);
+            Assert.Equal("TC_A", result.Data.ElementAt(1).TimeCode);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_SortByParentProjectAscending_ReturnsSortedRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "ZZ_PROJ"), ValidTimeCode("WG1", "TC2", "AA_PROJ")],
+                [ProjectRecord("ZZ_PROJ", "M1"), ProjectRecord("AA_PROJ", "M2")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "ParentProject", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("AA_PROJ", result.Data.ElementAt(0).ParentProject);
+            Assert.Equal("ZZ_PROJ", result.Data.ElementAt(1).ParentProject);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_SortByParentProjectDescending_ReturnsSortedRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "ZZ_PROJ"), ValidTimeCode("WG1", "TC2", "AA_PROJ")],
+                [ProjectRecord("ZZ_PROJ", "M1"), ProjectRecord("AA_PROJ", "M2")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "ParentProject", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("ZZ_PROJ", result.Data.ElementAt(0).ParentProject);
+            Assert.Equal("AA_PROJ", result.Data.ElementAt(1).ParentProject);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_SortByManagerAscending_ReturnsSortedRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "PP1"), ValidTimeCode("WG1", "TC2", "PP2")],
+                [ProjectRecord("PP1", "MGR_Z"), ProjectRecord("PP2", "MGR_A")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "Manager", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("MGR_A", result.Data.ElementAt(0).Manager);
+            Assert.Equal("MGR_Z", result.Data.ElementAt(1).Manager);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_SortByManagerDescending_ReturnsSortedRows()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "PP1"), ValidTimeCode("WG1", "TC2", "PP2")],
+                [ProjectRecord("PP1", "MGR_Z"), ProjectRecord("PP2", "MGR_A")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "Manager", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("MGR_Z", result.Data.ElementAt(0).Manager);
+            Assert.Equal("MGR_A", result.Data.ElementAt(1).Manager);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_UnknownSortByAscending_DefaultsToParentProjectAsc()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "ZZ_PROJ"), ValidTimeCode("WG1", "TC2", "AA_PROJ")],
+                [ProjectRecord("ZZ_PROJ", "M1"), ProjectRecord("AA_PROJ", "M2")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "UnknownColumn", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("AA_PROJ", result.Data.ElementAt(0).ParentProject);
+            Assert.Equal("ZZ_PROJ", result.Data.ElementAt(1).ParentProject);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_UnknownSortByDescending_DefaultsToParentProjectDesc()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC1", "ZZ_PROJ"), ValidTimeCode("WG1", "TC2", "AA_PROJ")],
+                [ProjectRecord("ZZ_PROJ", "M1"), ProjectRecord("AA_PROJ", "M2")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "UnknownColumn", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal("ZZ_PROJ", result.Data.ElementAt(0).ParentProject);
+            Assert.Equal("AA_PROJ", result.Data.ElementAt(1).ParentProject);
+        }
+
+        #endregion
+
+        // ────────────────────────────────────────────────────────────────────
+        #region GetWorkGroupValidTimeCodeAsync — paging
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_PaginationFirstPage_ReturnsCorrectSlice()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [
+                    ValidTimeCode("WG1", "TC1", "PP1"),
+                    ValidTimeCode("WG1", "TC2", "PP1"),
+                    ValidTimeCode("WG1", "TC3", "PP1")
+                ],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 2 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal(3, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_PaginationSecondPage_ReturnsRemainingItems()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [
+                    ValidTimeCode("WG1", "TC1", "PP1"),
+                    ValidTimeCode("WG1", "TC2", "PP1"),
+                    ValidTimeCode("WG1", "TC3", "PP1")
+                ],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string> { Page = 2, PageSize = 2 };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "");
+
+            Assert.Single(result.Data);
+            Assert.Equal(3, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        // ────────────────────────────────────────────────────────────────────
+        #region GetWorkGroupValidTimeCodeAsync — combined filters
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_WorkGroupAndColumnFilter_NarrowsResults()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [ValidTimeCode("WG1", "TC_X", "PP1"), ValidTimeCode("WG1", "TC_Y", "PP1"), ValidTimeCode("WG2", "TC_X", "PP1")],
+                [ProjectRecord("PP1", "MGR1")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"TimeCode\":\"TC_X\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("WG1",  result.Data.First().WorkGroup);
+            Assert.Equal("TC_X", result.Data.First().TimeCode);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupValidTimeCodeAsync_AllFiltersApplied_ReturnsCorrectRow()
+        {
+            var repo = CreateValidTimeCodeRepository(
+                [
+                    ValidTimeCode("WG_ALPHA", "TC_X", "PROJ_A", true),
+                    ValidTimeCode("WG_BETA",  "TC_Y", "PROJ_B", false)
+                ],
+                [ProjectRecord("PROJ_A", "MANAGER_JONES"), ProjectRecord("PROJ_B", "MANAGER_SMITH")]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"TimeCode\":\"TC_X\",\"ParentProject\":\"PROJ_A\",\"Manager\":\"JONES\"}"
+            };
+
+            var result = await repo.GetWorkGroupValidTimeCodeAsync(query, "WG_ALPHA");
+
+            Assert.Single(result.Data);
+            var row = result.Data.First();
+            Assert.Equal("WG_ALPHA",       row.WorkGroup);
+            Assert.Equal("TC_X",           row.TimeCode);
+            Assert.Equal("PROJ_A",         row.ParentProject);
+            Assert.Equal("MANAGER_JONES",  row.Manager);
+            Assert.True(row.Active);
+        }
+
+        #endregion
     }
 }

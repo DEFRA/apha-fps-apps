@@ -46,11 +46,14 @@
                 Maintain Total Buisness Overheads
             </a>
         </li>
+        
         <li>
-            <a class="dropdown-item" href="#">
-                Maintain Divison Grades
+            <a class="dropdown-item@(Model == "DivisionGradeMaintenance" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="DivisionGradeMaintenance" asp-action="Index">
+                Maintain Division Grades
             </a>
         </li>
+      
         <li>
             <a class="dropdown-item" href="#">
                 Maintain RC Grades (Defra)

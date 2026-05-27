@@ -38,10 +38,10 @@ namespace Apha.Costbook.DataAccess.Repositories
             var list = source.ToList();
             var totalRecords = list.Count;
 
-            var result = list
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            var result = page == -1
+            ? list : list.Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
 
             var pagination = new PaginationData
             {

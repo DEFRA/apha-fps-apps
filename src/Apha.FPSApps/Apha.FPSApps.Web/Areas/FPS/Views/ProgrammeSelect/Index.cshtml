@@ -1,0 +1,141 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProgrammeSelectViewModel
+@{
+    ViewData["Title"] = "Programme Management";
+}
+
+<main id="main-content">
+    <div class="container-fluid">
+        <!-- Breadcrumb -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="row fps-sr-breadcrumb-row">
+                    <div class="fps-sr-breadcrumb-flex">
+                        <div class="col-md-8">
+                            <nav class="govuk-breadcrumbs" aria-label="Breadcrumb">
+                                <ol class="govuk-breadcrumbs__list">
+                                    <li class="govuk-breadcrumbs__list-item">
+                                        <a class="govuk-breadcrumbs__link" asp-area="FPS" asp-controller="Home" asp-action="Index">Home</a>
+                                    </li>
+                                    <li class="govuk-breadcrumbs__list-item">Programme Management</li>
+                                    <li class="govuk-breadcrumbs__list-item" aria-current="page">Select Program</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-column-full">
+                <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+                    Programme Management
+                </h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12 govuk-!-padding-0">
+                <div class="col-lg-12">
+                    <div class="main-content pmg-main-content">
+                        <div class="align-items-start m-10" id="search-grid">
+                            <div id="divprojectcode" class="pmg-projectcode-wrap govuk-!-padding-bottom-5">
+
+                                <!-- Toolbar: programme dropdown + project search -->
+                                <div style="display:flex; align-items:center; gap:12px; padding:6px 8px; border:1px solid #b1b4b6; border-bottom:0; background:#f3f2f1;">
+                                    <label class="govuk-label govuk-!-margin-bottom-0" for="programmeDropdown" style="white-space:nowrap; font-weight:bold;">Select a Programme</label>
+                                    <select id="programmeDropdown"
+                                            asp-items="Model.ProgrammeList"
+                                            asp-for="SelectedProgramNo"
+                                            onchange="filterProgramme()"
+                                            class="govuk-select"
+                                            style="width:auto; min-width:160px;"
+                                            aria-label="Select a Programme">
+                                        <option value="">-- Select Programme --</option>
+                                    </select>
+                                    <label class="govuk-label govuk-!-margin-bottom-0" for="projectSearchInput" style="white-space:nowrap; font-weight:bold;">Project</label>
+                                    <input type="text" id="projectSearchInput"
+                                           class="govuk-input"
+                                           style="width:220px;"
+                                           placeholder="Filter project..."
+                                           aria-label="Filter project"
+                                           oninput="reloadProjectsGrid()" />
+                                </div>
+
+                                <div id="@($"gridContainer_{Model.ProjectsGrid!.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.ProjectsGrid)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        function filterProgramme() {
+            var programNo = document.getElementById('programmeDropdown').value;
+            if (programNo) {
+                fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo=' + encodeURIComponent(programNo));
+            }
+        }
+
+        function getProjectsExtraFilters() {
+            return {
+                projectSearch: document.getElementById('projectSearchInput')?.value ?? ''
+            };
+        }
+
+        var reloadDebounce;
+        function reloadProjectsGrid() {
+            clearTimeout(reloadDebounce);
+            reloadDebounce = setTimeout(function () {
+                if (window['gridManager_projectsGrid']) {
+                    window['gridManager_projectsGrid'].reloadGrid({ page: 1 });
+                }
+            }, 300);
+        }
+
+        function planProject(btn) {
+            var projectCode = $(btn).data('id');
+            fpsNavigateTo('@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })' + '?projectCode=' + encodeURIComponent(projectCode));
+        }
+
+        function editProject(btn) {
+            var parentProject = $(btn).data('id');
+            fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(parentProject));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            function applyButtonTitles() {
+                document.querySelectorAll('#gridContainer_projectsGrid .edit-row-btn:not([data-titled])').forEach(function (btn) {
+                    btn.title = 'Edit';
+                    var img = btn.querySelector('img');
+                    if (img) img.title = 'Edit';
+                    btn.setAttribute('data-titled', '1');
+                });
+                document.querySelectorAll('#gridContainer_projectsGrid .delete-row-btn[data-delete-function="planProject"]:not([data-titled])').forEach(function (btn) {
+                    btn.title = 'Plan';
+                    var img = btn.querySelector('img');
+                    if (img) img.title = 'Plan';
+                    btn.setAttribute('data-titled', '1');
+                });
+            }
+
+            applyButtonTitles();
+
+            var observer = new MutationObserver(function (mutations) {
+                var hasNewNodes = mutations.some(function (m) {
+                    return Array.from(m.addedNodes).some(function (n) { return n.nodeType === 1; });
+                });
+                if (hasNewNodes) applyButtonTitles();
+            });
+
+            var container = document.getElementById('gridContainer_projectsGrid');
+            if (container) {
+                observer.observe(container, { childList: true, subtree: true });
+            }
+        });
+    </script>
+}

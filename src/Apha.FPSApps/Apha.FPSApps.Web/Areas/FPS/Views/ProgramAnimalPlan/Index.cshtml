@@ -136,7 +136,16 @@
         });
 
         $('#programmeSelect').on('change', function () {
-            currentProgramNo = $(this).val();
+            const val = $(this).val();
+            if (!val) return;
+            currentProgramNo = val;
+            // Persist selection to session for other pages
+            $.ajax({
+                url: '@Url.Action("SaveProgrammeSession", "ProgrammeSelect", new { area = "FPS" })',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(val)
+            });
             currentJobCode = '';
             $('#hdnJobCode').val('');
             $('#txtSelectedProject').val('');

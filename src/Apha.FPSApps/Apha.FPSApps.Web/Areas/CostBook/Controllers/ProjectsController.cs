@@ -365,7 +365,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         private async Task<bool> ValidateProjectBusinessRules(ProjectDto project)
         {
             if (project.EndDate.HasValue && project.StartDate.HasValue &&
-                DateOnly.FromDateTime(project.EndDate.Value) < project.StartDate.Value)
+                project.EndDate.Value < project.StartDate.Value)
             {
                 ModelState.AddModelError("EndDate", "End date cannot be earlier than start date.");
                 return false;

@@ -5,13 +5,15 @@ namespace Apha.Common.Constants
         // Project List
         public const string GetAllProjects = "api/v1/projectlist";
         public const string GetAllProjectsList = "api/v1/projectlist/AllProjectsList";
-        public const string GetProjectStatuses = "api/v1/projectlist/statuses";
-        public const string GetProjectPrograms = "api/v1/projectlist/programs";
-        public const string GetProjectCustomers = "api/v1/projectlist/customers";
         public const string GetFpsProjectById = "api/v1/projectlist/{0}/fps";
         public const string GetProposedProjectById = "api/v1/projectlist/{0}/proposed";
         public const string GetYearlyDetailsByProject = "api/v1/projectlist/{0}/yearly";
-        public const string CreateProject = "api/v1/projectlist";
+
+        // Proposed Project
+        public const string CreateProject = "api/v1/proposedproject";
+        public const string GetProjectStatuses = "api/v1/proposedproject/statuses";
+        public const string GetProjectPrograms = "api/v1/proposedproject/programs";
+        public const string GetProjectCustomers = "api/v1/proposedproject/customers";
 
         // Project Details
         public const string GetAllRisks = "api/v1/projectdetails/risks";

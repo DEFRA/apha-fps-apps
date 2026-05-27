@@ -1,0 +1,323 @@
+@using Apha.FPSApps.Web.Areas.FPS.Models
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProjectProfitabilityViewModel
+@{
+    ViewData["Title"] = "Project Profitability";
+}
+
+<!-- Breadcrumb + Programme selector -->
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+            <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
+                <div class="col-md-6">
+                    <nav aria-label="Breadcrumb">
+                        <a href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; Programme Management &gt; Project Profitability
+                    </nav>
+                </div>
+                <div style="display: flex; justify-content: flex-end;" class="col-md-6">
+                    <label class="fw-bold mt-2" for="programNo">Programme:</label>
+                    <select id="programNo" name="programNo"
+                            class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
+                        @foreach (var item in Model.ProgrammeList)
+                        {
+                            if (item.Value == Model.SelectedProgramNo)
+                            {
+                                <option value="@item.Value" selected>@item.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Title -->
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+            Project Profitability
+        </h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <div class="sup_margin_left_right_10 ppf-filter-panel">
+            <div class="govuk-grid-row ppf-filter-row">
+                <div class="govuk-grid-column-two-thirds">
+                    <fieldset class="govuk-fieldset sup_margin_0">
+                        <legend class="govuk-fieldset__legend govuk-fieldset__legend--s govuk-!-margin-bottom-1">
+                            Choose Work Type
+                        </legend>
+                        <div class="govuk-radios govuk-radios--small govuk-radios--inline ppf-worktype-radios-row"
+                             data-module="govuk-radios">
+                            <div class="govuk-radios__item">
+                                <input class="govuk-radios__input" id="project-filter-all"
+                                       name="projectWorkType" type="radio" value="all" checked
+                                       onchange="applyWorkTypeFilter(this.value)">
+                                <label class="govuk-label govuk-radios__label" for="project-filter-all">All Projects</label>
+                            </div>
+                            <div class="govuk-radios__item">
+                                <input class="govuk-radios__input" id="project-filter-assured"
+                                       name="projectWorkType" type="radio" value="approved"
+                                       onchange="applyWorkTypeFilter(this.value)">
+                                <label class="govuk-label govuk-radios__label" for="project-filter-assured">Assured Work Only</label>
+                            </div>
+                            <div class="govuk-radios__item">
+                                <input class="govuk-radios__input" id="project-filter-not-assured"
+                                       name="projectWorkType" type="radio" value="not-approved"
+                                       onchange="applyWorkTypeFilter(this.value)">
+                                <label class="govuk-label govuk-radios__label govuk-!-padding-right-1"
+                                       for="project-filter-not-assured">Not Assured Work Only</label>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+                <div class="govuk-grid-column-one-third govuk-!-margin-bottom-2 sup_text_align_right sup_flex_end">
+                    <button type="button" class="govuk-button sup_margin_0"
+                            id="btnPreviewProjectProfitabilityReport"
+                            aria-label="Preview report"
+                            onclick="previewProfitabilityReport()">
+                        Preview Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+            <div class="govuk-grid-column-full sup_p_0">
+                <div id="gridContainer_isProjectProfitGrid">
+                    @await Html.PartialAsync("_DataGrid", Model.ProfitabilityGrid)
+                </div>
+
+                <div class="financial-summary govuk-!-margin-top-2 govuk-!-margin-bottom-0">
+                    <div class="summary-row govuk-!-margin-top-0 govuk-!-margin-bottom-0 sup_justify_content">
+                        <div class="action-buttons govuk-!-margin-0">
+                            <button type="button" class="govuk-button sup_margin_0"
+                                    id="btnPlanThisProject"
+                                    aria-label="Plan this project"
+                                    onclick="planThisProject()">
+                                Plan this Project
+                            </button>
+                        </div>
+                        <div class="summary-row pva-inline-summary govuk-!-margin-top-0 govuk-!-margin-bottom-0 sup_flex_column ppf-summary-column">
+                            <div class="summary-item sup_gap_8">
+                                <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 pva-nowrap-label"
+                                       for="ppf-programme-target">Programme Target:</label>
+                                <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                    <input type="text" id="ppf-programme-target"
+                                           class="govuk-input text-AlignRight pva-input-185"
+                                           asp-for="ProgrammeTarget"
+                                           readonly>
+                                    </div>
+                                </div>
+                                <div class="summary-item sup_gap_8">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 pva-nowrap-label sup_text_align_right"
+                                           for="ppf-programme-shortfall">Programme Level Surplus/Shortfall:</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input type="text" id="ppf-programme-shortfall"
+                                               class="govuk-input text-AlignRight pva-input-185"
+                                               asp-for="ProgrammeSurplusShortfall"
+                                               readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="projectProfitabilityTotalSummary"
+                             class="sup_margin_top_5 financial-summary govuk-!-margin-top-2 govuk-!-margin-bottom-2">
+                            <div class="summary-row ppf-total-summary-row govuk-!-margin-top-0 govuk-!-margin-bottom-0">
+                                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                                           for="ppf-total-staff-costs">Staff Costs</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input class="govuk-input text-AlignRight pva-input-185"
+                                               id="ppf-total-staff-costs" type="text" value="0" readonly>
+                                    </div>
+                                </div>
+                                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                                           for="ppf-total-test-cost">Test Cost</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input class="govuk-input text-AlignRight pva-input-185"
+                                               id="ppf-total-test-cost" type="text" value="0" readonly>
+                                    </div>
+                                </div>
+                                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                                           for="ppf-total-animal">Animal</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input class="govuk-input text-AlignRight pva-input-185"
+                                               id="ppf-total-animal" type="text" value="0" readonly>
+                                    </div>
+                                </div>
+                                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                                           for="ppf-total-add-costs">Add Costs</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input class="govuk-input text-AlignRight pva-input-185"
+                                               id="ppf-total-add-costs" type="text" value="0" readonly>
+                                    </div>
+                                </div>
+                                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                                           for="ppf-total-total-costs">Total Costs</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input class="govuk-input text-AlignRight pva-input-185"
+                                               id="ppf-total-total-costs" type="text" value="0" readonly>
+                                    </div>
+                                </div>
+                                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                                           for="ppf-total-budget">Budget</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input class="govuk-input text-AlignRight pva-input-185"
+                                               id="ppf-total-budget" type="text" value="0" readonly>
+                                    </div>
+                                </div>
+                                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                                           for="ppf-total-profit">Profit</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input class="govuk-input text-AlignRight pva-input-185"
+                                               id="ppf-total-profit" type="text" value="0" readonly>
+                                    </div>
+                                </div>
+                                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                                           for="ppf-total-target-profit">Target Profit</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input class="govuk-input text-AlignRight pva-input-185"
+                                               id="ppf-total-target-profit" type="text" value="0" readonly>
+                                    </div>
+                                </div>
+                                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                                           for="ppf-total-off-target">Off-Target</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                        <input class="govuk-input text-AlignRight pva-input-185"
+                                               id="ppf-total-off-target" type="text" value="0" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @section Scripts {
+            <script>
+                var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
+                var currentWorkTypeFilter = 'all';
+                var selectedJobCode = null;
+
+                // ── Extra filters injected into every grid POST by _DataGrid ──────────────
+                function getProjectProfitabilityExtraFilters() {
+                    return { programNo: currentProgramNo, workTypeFilter: currentWorkTypeFilter };
+                }
+
+                // ── Programme dropdown — no page refresh ──────────────────────────────────
+                $('#programNo').on('change', function () {
+                    var val = $(this).val();
+                    if (!val) return;
+                    currentProgramNo = val;
+                    reloadGrid();
+                });
+
+                // ── Work-type radios ──────────────────────────────────────────────────────
+                function applyWorkTypeFilter(filter) {
+                    currentWorkTypeFilter = filter;
+                    reloadGrid();
+                }
+
+                // ── Reload grid then refresh summary ─────────────────────────────────────
+                function reloadGrid() {
+                    window['gridManager_isProjectProfitGrid'].reloadGrid({ page: 1 });
+                }
+
+                function loadSummary() {
+                    $.get('/FPS/ProjectProfitability/GetProfitabilitySummary', {
+                        programNo: currentProgramNo,
+                        workTypeFilter: currentWorkTypeFilter
+                    })
+                    .done(function (result) {
+                        updateSummary(result.programmeTarget, result.programmeSurplusShortfall);
+                        updateTotals(result);
+                    })
+                    .fail(function () {
+                        window.showGovukAlert('Failed to load summary data.');
+                    });
+                }
+
+                function updateSummary(target, shortfall) {
+                    document.getElementById('ppf-programme-target').value = target != null ? formatGbp(target) : '£0';
+                    document.getElementById('ppf-programme-shortfall').value = shortfall != null ? formatGbp(shortfall) : '£0';
+                }
+
+                function updateTotals(data) {
+                    document.getElementById('ppf-total-staff-costs').value = formatGbp(data.totalStaffCosts ?? 0);
+                    document.getElementById('ppf-total-test-cost').value = formatGbp(data.totalTestCosts ?? 0);
+                    document.getElementById('ppf-total-animal').value = formatGbp(data.totalAnimalCosts ?? 0);
+                    document.getElementById('ppf-total-add-costs').value = formatGbp(data.totalAdditionalCosts ?? 0);
+                    document.getElementById('ppf-total-total-costs').value = formatGbp(data.totalCosts ?? 0);
+                    document.getElementById('ppf-total-budget').value = formatGbp(data.totalBudget ?? 0);
+                    document.getElementById('ppf-total-profit').value = formatGbp(data.totalProfit ?? 0);
+                    document.getElementById('ppf-total-target-profit').value = formatGbp(data.totalTargetProfit ?? 0);
+                    var offTargetValue = data.totalOffTarget ?? 0;
+                    var offTargetEl = document.getElementById('ppf-total-off-target');
+                    offTargetEl.value = formatGbp(offTargetValue);
+                    offTargetEl.style.color = offTargetValue < 0 ? 'red' : 'blue';
+                }
+
+                function formatGbp(value) {
+                    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(value));
+                }
+
+                // ── Row selection ─────────────────────────────────────────────────────────
+                function selectJobcodeTotal(row) {
+                      var parentProject = $(row).data('id');
+                      selectedJobCode = parentProject;
+                }
+
+                function previewProfitabilityReport() {
+                    window.showGovukAlert('Report preview is not yet implemented.');
+                }
+
+                function planThisProject() {
+                    if (!selectedJobCode) { window.showGovukAlert('Please select a project first.'); return; }
+                    window.fpsNavigateTo('/FPS/ProjectPlanning?projectCode=' + encodeURIComponent(selectedJobCode))                   
+                }
+
+                // ── Initialise on page load ───────────────────────────────────────────────
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.addEventListener('gridReloaded', function (e) {
+                        if (e.detail && e.detail.gridId === 'isProjectProfitGrid') {
+                            loadSummary();
+                        }
+                    });
+
+                    if (currentProgramNo) {
+                        reloadGrid();
+                    }
+                });
+            </script>
+        }

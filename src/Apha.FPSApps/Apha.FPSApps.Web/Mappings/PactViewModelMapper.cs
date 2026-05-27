@@ -53,6 +53,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<MonthlyOutputLogDto, MonthlyOutputLogItem>().ReverseMap();
             CreateMap<CalenderMonthDto, CalenderMonth>().ReverseMap();
             CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeItem>().ReverseMap();
+            CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeItem>().ReverseMap();
 
             // Summarised Workgroup Time mappings
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimePivotRow>()

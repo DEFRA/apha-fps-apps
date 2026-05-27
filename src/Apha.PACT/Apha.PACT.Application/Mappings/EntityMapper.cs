@@ -32,6 +32,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<MonthlyOutputLog, MonthlyOutputLogDto>().ReverseMap();
             CreateMap<CalenderMonth, CalenderMonthDto>().ReverseMap();
             CreateMap<WorkGroupTimeCode, WorkGroupTimeCodeDto>().ReverseMap();
+            CreateMap<WorkGroupValidTimeCode, WorkGroupValidTimeCodeDto>().ReverseMap();
             CreateMap<SummarisedWgTimeView, SummarisedWgTimeDto>().ReverseMap();
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimeRes>().ReverseMap();
         }

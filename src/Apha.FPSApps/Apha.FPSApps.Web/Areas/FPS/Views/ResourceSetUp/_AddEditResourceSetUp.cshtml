@@ -1,0 +1,91 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupEmployeeItem
+
+<div class="modal-header">
+    <h5 class="modal-title" id="wgStaffModalTitle">Edit Staff Record</h5>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+
+<div class="modal-body">
+    <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list"></ul>
+        </div>
+    </div>
+
+    <form id="wgStaffForm">
+        <input type="hidden" asp-for="PactId" />
+        <input type="hidden" asp-for="SpNumber" />
+        <input type="hidden" asp-for="Name" />
+        <input type="hidden" asp-for="HrsAvail" />
+        <input type="hidden" asp-for="PersonStatus" />
+        <input type="hidden" asp-for="PersonClass" />
+
+        <div class="row g-3">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="SpNumber">SP No</label>
+                <input type="text" class="govuk-input" asp-for="SpNumber" readonly />
+            </div>
+
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="Name">Name</label>
+                <input type="text" class="govuk-input" value="@Model.Name" readonly />
+            </div>
+
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="HrsPaid">HrsPaid</label>
+                <input type="number" step="0.01" class="govuk-input" asp-for="HrsPaid" />
+                <span asp-validation-for="HrsPaid" class="govuk-error-message" style="display:none;"></span>
+            </div>
+
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="Leave">Leave</label>
+                <input type="number" step="0.01" class="govuk-input" asp-for="Leave" />
+                <span asp-validation-for="Leave" class="govuk-error-message" style="display:none;"></span>
+            </div>
+
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="SickSpecial">SickSp</label>
+                <input type="number" step="0.01" class="govuk-input" asp-for="SickSpecial" />
+                <span asp-validation-for="SickSpecial" class="govuk-error-message" style="display:none;"></span>
+            </div>
+
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label">AtWork (computed)</label>
+                <input type="text" class="govuk-input" id="hrsAvailDisplay" readonly
+                    value="@Model.HrsAvail.ToString("0.##")" />
+            </div>
+
+            <div class="govuk-form-group sup_margin_0">
+                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                    <div class="govuk-checkboxes__item">
+                        <input class="govuk-checkboxes__input" asp-for="MakeAvailable" type="checkbox" id="MakeAvailable" />
+                        <label class="govuk-label govuk-checkboxes__label" asp-for="MakeAvailable">Planable?</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="modal-footer sup_flex_space_center">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="saveWgStaffPlan()">Update</button>
+</div>
+
+<script>
+    // Live-compute AtWork = HrsPaid - (Leave + SickSpecial) matching VBA AfterUpdate logic
+    (function () {
+        function recompute() {
+            var hrsPaid    = parseFloat(document.getElementById('HrsPaid').value)    || 0;
+            var leave      = parseFloat(document.getElementById('Leave').value)      || 0;
+            var sickSpec   = parseFloat(document.getElementById('SickSpecial').value)|| 0;
+            var atWork = hrsPaid - (leave + sickSpec);
+            document.getElementById('hrsAvailDisplay').value = atWork.toFixed(2);
+            document.getElementById('HrsAvail').value        = atWork.toFixed(2);
+        }
+        document.getElementById('HrsPaid').addEventListener('change', recompute);
+        document.getElementById('Leave').addEventListener('change', recompute);
+        document.getElementById('SickSpecial').addEventListener('change', recompute);
+    })();
+</script>

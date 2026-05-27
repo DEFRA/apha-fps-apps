@@ -64,5 +64,12 @@ public class RequestMapper : Profile
         CreateMap<AccountCategoryDto,     AccountCategoryRes>().ReverseMap();
         CreateMap<TestCodeLookupDto,       TestCodeLookupRes>().ReverseMap();
         CreateMap<AnimalLookupDto,         AnimalLookupRes>().ReverseMap();
+
+        CreateMap<StaffYearsRowDto, StaffYearsRowRes>().ReverseMap();
+        CreateMap<StaffYearsPivotDto, StaffYearsPivotRes>().ReverseMap();
+        CreateMap<StaffEffortRowDto, StaffEffortRowRes>().ReverseMap();
+        CreateMap<StaffEffortPivotDto, StaffEffortPivotRes>().ReverseMap();
+        CreateMap<ProjectCostsRowDto, ProjectCostsRowRes>().ReverseMap();
+        CreateMap<ProjectCostsPivotDto, ProjectCostsPivotRes>().ReverseMap();
     }
 }

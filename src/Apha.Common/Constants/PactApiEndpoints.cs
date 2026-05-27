@@ -31,6 +31,7 @@ namespace Apha.Common.Constants
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
         public const string GetPagedWorkGroupTimeCodes = "api/v1/workgroup/paged/timecodes";
+        public const string GetPagedWorkGroupValidTimeCodes = "api/v1/workgroup/paged/validtimecodes";
 
         // Month
         public const string GetAllMonths = "api/v1/months";

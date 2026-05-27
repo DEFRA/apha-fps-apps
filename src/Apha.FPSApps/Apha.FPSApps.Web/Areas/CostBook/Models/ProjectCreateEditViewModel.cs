@@ -17,7 +17,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public double? ContractPrice { get; set; }
 
         [Required(ErrorMessage = "Please enter Start Date")]
-        public DateOnly? StartDate { get; set; }
+        public DateTime? StartDate { get; set; }
 
         public string? Disease { get; set; }
         public double? StartFYear { get; set; }
@@ -25,7 +25,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public string? ContractNumber { get; set; }
         public string? SubmittedByFName { get; set; }
         public string? SubmittedByLName { get; set; }
-        public DateOnly? DateOfSubmission { get; set; }
+        public DateTime? DateOfSubmission { get; set; }
         public string? PreparedBy { get; set; }
         public int? Inflation { get; set; }
         public int? FinancialYears { get; set; }
