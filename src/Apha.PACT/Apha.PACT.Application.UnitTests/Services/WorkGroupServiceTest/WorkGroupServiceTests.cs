@@ -21,7 +21,29 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         public WorkGroupServiceTests()
         {
             _mockRepository = Substitute.For<IWorkGroupRepository>();
-            _mockMapper = Substitute.For<IMapper>();
+            _mockMapper     = Substitute.For<IMapper>();
+
+            // GetWgSummarisedStaffTimeUsageAsync calls _mapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>
+            // after the repository call. Configure a global pass-through so the mock performs the
+            // real property-by-property copy instead of returning an empty default.
+            _mockMapper
+                .Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(Arg.Any<object>())
+                .Returns(callInfo =>
+                {
+                    var views = (IEnumerable<WgSummarisedStaffTimeUsageView>)callInfo.Arg<object>();
+                    return views.Select(v => new WgSummarisedStaffTimeUsageEntryDto
+                    {
+                        MonthName     = v.MonthName,
+                        Name          = v.Name,
+                        HrsPaid       = v.HrsPaid,
+                        ParentProject = v.ParentProject,
+                        JobCode       = v.JobCode,
+                        JobTitle      = v.JobTitle,
+                        TotalTime     = v.TotalTime,
+                        TotalCost     = v.TotalCost
+                    });
+                });
+
             _sut = new WorkGroupService(_mockRepository, _mockMapper);
         }
 
@@ -705,21 +727,10 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_JobTitle_NullValue_ShowsNoDescriptionAvailable()
         {
-            var entries = new List<WgSummarisedStaffTimeUsageView>
-            {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
                 TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", jobTitle: null!, monthName: "April")
-            };
-            var mappedEntries = entries.Select(e => new WgSummarisedStaffTimeUsageEntryDto
-            {
-                ParentProject = e.ParentProject,
-                JobCode       = e.JobCode,
-                JobTitle      = e.JobTitle,
-                MonthName     = e.MonthName,
-                TotalTime     = e.TotalTime,
-                TotalCost     = e.TotalCost
-            });
-            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(entries);
-            _mockMapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(entries).Returns(mappedEntries);
+            ]);
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
@@ -729,21 +740,10 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_JobTitle_EmptyString_ShowsNoDescriptionAvailable()
         {
-            var entries = new List<WgSummarisedStaffTimeUsageView>
-            {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
                 TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", jobTitle: "", monthName: "April")
-            };
-            var mappedEntries = entries.Select(e => new WgSummarisedStaffTimeUsageEntryDto
-            {
-                ParentProject = e.ParentProject,
-                JobCode       = e.JobCode,
-                JobTitle      = e.JobTitle,
-                MonthName     = e.MonthName,
-                TotalTime     = e.TotalTime,
-                TotalCost     = e.TotalCost
-            });
-            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(entries);
-            _mockMapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(entries).Returns(mappedEntries);
+            ]);
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
@@ -753,21 +753,10 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         [Fact]
         public async Task GetWgSummarisedStaffTimeUsageAsync_JobTitle_WhitespaceOnly_ShowsNoDescriptionAvailable()
         {
-            var entries = new List<WgSummarisedStaffTimeUsageView>
-            {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
                 TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", jobTitle: "   ", monthName: "April")
-            };
-            var mappedEntries = entries.Select(e => new WgSummarisedStaffTimeUsageEntryDto
-            {
-                ParentProject = e.ParentProject,
-                JobCode       = e.JobCode,
-                JobTitle      = e.JobTitle,
-                MonthName     = e.MonthName,
-                TotalTime     = e.TotalTime,
-                TotalCost     = e.TotalCost
-            });
-            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(entries);
-            _mockMapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(entries).Returns(mappedEntries);
+            ]);
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
@@ -1305,17 +1294,19 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
         }
 
         [Fact]
-        public async Task GetWgSummarisedStaffTimeUsageAsync_NoMapperCallsForThisMethod()
+        public async Task GetWgSummarisedStaffTimeUsageAsync_MapperCalledOnceForViewToEntryDtoConversion()
         {
-            // GetWgSummarisedStaffTimeUsageAsync performs all computation internally — no mapper needed
-            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
-            [
+            // The service calls the mapper exactly once: to convert IEnumerable<WgSummarisedStaffTimeUsageView>
+            // → IEnumerable<WgSummarisedStaffTimeUsageEntryDto>. No other mapper calls are made.
+            var entries = new List<WgSummarisedStaffTimeUsageView>
+            {
                 TimeUsageEntry(monthName: "April")
-            ]);
+            };
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(entries);
 
             await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
-            _mockMapper.DidNotReceiveWithAnyArgs().Map<object>(default!);
+            _mockMapper.Received(1).Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(entries);
         }
 
         #endregion
