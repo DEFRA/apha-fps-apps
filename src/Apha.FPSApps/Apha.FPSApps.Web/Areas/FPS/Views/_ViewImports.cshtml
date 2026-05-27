@@ -2,5 +2,9 @@
 @using Apha.FPSApps.Web.Models
 @using Apha.FPSApps.Web.Areas.FPS.Models
 @using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Apha.FPSApps.Application.Dtos.FPS
+@using Apha.FPSApps.Web.Constants
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @addTagHelper *, Apha.FPSApps.Web
+@inject Apha.FPSApps.Web.Handler.IFpsYearContext FyContext
+@inject Apha.Common.Utilities.StateManagement.IAppStateService AppStateService
