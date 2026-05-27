@@ -3,7 +3,9 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.Common.Utilities.StateManagement;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,22 +24,29 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly ITimeCostCalcsService _projPlanVsActualsStaffService;
         private readonly IProjectService _projectService;
         private readonly IStaffJobService _staffJobService;
+        private readonly IAppStateService _appStateService;
 
         public ProjectStaffPlanActualController(
             IMapper mapper,
             ITimeCostCalcsService projPlanVsActualsStaffService,
             IProjectService projectService,
-            IStaffJobService staffJobService)
+            IStaffJobService staffJobService,
+            IAppStateService appStateService)
         {
             _mapper = mapper;
             _projPlanVsActualsStaffService = projPlanVsActualsStaffService;
             _projectService = projectService;
             _staffJobService = staffJobService;
+            _appStateService = appStateService;
         }
 
         public async Task<IActionResult> Index(string? projectCode = null)
         {
             var projectList = await GetProjectListAsync();
+
+            if (string.IsNullOrWhiteSpace(projectCode))
+                projectCode = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProjectCode);
+
             var selectedProjectCode = !string.IsNullOrWhiteSpace(projectCode)
                 && projectList.Any(p => p.Value == projectCode)
                 ? projectCode

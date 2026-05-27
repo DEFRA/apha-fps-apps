@@ -99,5 +99,9 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         public Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync()
             => _fpsClient.FpsProject.GetSubAccountsAsync();
+
+        public Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(
+            QueryParameters<string> query, string programNo, string workTypeFilter)
+            => _fpsClient.FpsProject.GetProjectProfitabilityAsync(query, programNo, workTypeFilter);
     }
 }

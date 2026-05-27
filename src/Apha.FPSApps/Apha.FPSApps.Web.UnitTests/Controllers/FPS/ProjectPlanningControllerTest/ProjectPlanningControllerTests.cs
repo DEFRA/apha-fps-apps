@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.ExcelExport;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -24,17 +25,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanningControllerTe
         private readonly ITestRequirementService _testRequirementService;
         private readonly IAdditionalCostService _additionalCostService;
         private readonly IProjectService _projectService;
+        private readonly IExcelExportService _excelExportService;
         private readonly ProjectPlanningController _controller;
         private readonly ITempDataDictionary _tempData;
 
         public ProjectPlanningControllerTests()
         {
-            _mapper = Substitute.For<IMapper>();
-            _staffJobService = Substitute.For<IStaffJobService>();
-            _animalPlanService = Substitute.For<IAnimalPlanService>();
+            _mapper               = Substitute.For<IMapper>();
+            _staffJobService      = Substitute.For<IStaffJobService>();
+            _animalPlanService    = Substitute.For<IAnimalPlanService>();
             _testRequirementService = Substitute.For<ITestRequirementService>();
-            _additionalCostService = Substitute.For<IAdditionalCostService>();
-            _projectService = Substitute.For<IProjectService>();
+            _additionalCostService  = Substitute.For<IAdditionalCostService>();
+            _projectService       = Substitute.For<IProjectService>();
+            _excelExportService   = Substitute.For<IExcelExportService>();
 
             _controller = new ProjectPlanningController(
                 _mapper,
@@ -42,7 +45,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanningControllerTe
                 _animalPlanService,
                 _testRequirementService,
                 _additionalCostService,
-                _projectService);
+                _projectService,
+                _excelExportService);
 
             var user = new ClaimsPrincipal(new ClaimsIdentity(
                 new[] { new Claim(ClaimTypes.Name, "TestUser") }, "TestAuth"));
@@ -96,6 +100,39 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanningControllerTe
                    .Returns(new List<AdditionalCostItemViewModel>());
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                    .Returns(new PaginationModel());
+        }
+
+        /// <summary>
+        /// Configures all four grid services to return empty success responses and
+        /// the excel export service to return a dummy byte array.
+        /// </summary>
+        private void SetupExportServiceDefaults()
+        {
+            _staffJobService
+                .GetAllStaffJobsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(ApiResponseDto<List<StaffJobViewDto>>.SuccessResponse(new List<StaffJobViewDto>(), new PaginationDto()));
+            _animalPlanService
+                .GetAllAnimalCostAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(ApiResponseDto<List<AnimalCostViewDto>>.SuccessResponse(new List<AnimalCostViewDto>(), new PaginationDto()));
+            _testRequirementService
+                .GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(new List<TestRequirementDto>(), new PaginationDto()));
+            _additionalCostService
+                .GetAdditionalCostsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(ApiResponseDto<List<AdditionalCostDto>>.SuccessResponse(new List<AdditionalCostDto>(), new PaginationDto()));
+
+            _mapper.Map<List<StaffJobItemViewModel>>(Arg.Any<List<StaffJobViewDto>>())
+                   .Returns(new List<StaffJobItemViewModel>());
+            _mapper.Map<List<AnimalPlanItem>>(Arg.Any<List<AnimalCostViewDto>>())
+                   .Returns(new List<AnimalPlanItem>());
+            _mapper.Map<List<TestPlanItem>>(Arg.Any<List<TestRequirementDto>>())
+                   .Returns(new List<TestPlanItem>());
+            _mapper.Map<List<AdditionalCostItemViewModel>>(Arg.Any<List<AdditionalCostDto>>())
+                   .Returns(new List<AdditionalCostItemViewModel>());
+
+            _excelExportService
+                .ExportToExcelMultiSheet(Arg.Any<List<ExcelSheetDefinition>>())
+                .Returns(new byte[] { 1, 2, 3 });
         }
 
         private static ProjectDto BuildProjectDto(string projectCode = "PROJ001") => new()
@@ -186,12 +223,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanningControllerTe
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectPlanningViewModel>(viewResult.Model);
-            Assert.Equal(projectDto.ParentProject,  model.ProjectCode);
-            Assert.Equal(projectDto.ProjectTitle,   model.ProjectDescription);
-            Assert.Equal(projectDto.Program,        model.SelectedProgramme);
-            Assert.Equal(projectDto.BudgetCvl ?? 0m, model.BudgetCVL);
-            Assert.Equal(projectDto.TransferIncome, model.TransferIncome);
-            Assert.Equal(projectDto.BudgetExt ?? 0m, model.ExternalIncome);
+            Assert.Equal(projectDto.ParentProject,    model.ProjectCode);
+            Assert.Equal(projectDto.ProjectTitle,     model.ProjectDescription);
+            Assert.Equal(projectDto.Program,          model.SelectedProgramme);
+            Assert.Equal(projectDto.BudgetCvl ?? 0m,  model.BudgetCVL);
+            Assert.Equal(projectDto.TransferIncome,   model.TransferIncome);
+            Assert.Equal(projectDto.BudgetExt ?? 0m,  model.ExternalIncome);
         }
 
         [Fact]
@@ -443,7 +480,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanningControllerTe
             await _controller.Index("PROJ001");
 
             // Assert
-            _tempData.DidNotReceive()["ErrorMessage"] = Arg.Any<object>();
+            _tempData.Received(0)["ErrorMessage"] = Arg.Any<object?>();
         }
 
         [Fact]
@@ -501,10 +538,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanningControllerTe
             _projectService.GetProjectByIdAsync(projectCode)
                 .Returns(ApiResponseDto<ProjectDto>.SuccessResponse(projectDto));
 
-            var staffJobs = new List<StaffJobViewDto> { new() { StaffID = "S1", JobCode = projectCode } };
-            var animalCosts = new List<AnimalCostViewDto> { new() { IndCounter = 1, AnimalType = "Cattle" } };
-            var testReqs = new List<TestRequirementDto> { new() { TestCode = "T001" } };
-            var addCosts = new List<AdditionalCostDto> { new() { JobCode = projectCode, Account = "ACC1" } };
+            var staffJobs   = new List<StaffJobViewDto>   { new() { StaffID = "S1", JobCode = projectCode } };
+            var animalCosts = new List<AnimalCostViewDto>  { new() { IndCounter = 1, AnimalType = "Cattle" } };
+            var testReqs    = new List<TestRequirementDto> { new() { TestCode = "T001" } };
+            var addCosts    = new List<AdditionalCostDto>  { new() { JobCode = projectCode, Account = "ACC1" } };
 
             _staffJobService
                 .GetAllStaffJobsAsync(Arg.Any<QueryParameters<string>>(), projectCode)
@@ -519,16 +556,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanningControllerTe
                 .GetAdditionalCostsAsync(Arg.Any<QueryParameters<string>>(), projectCode)
                 .Returns(ApiResponseDto<List<AdditionalCostDto>>.SuccessResponse(addCosts, new PaginationDto { TotalRecords = 1 }));
 
-            var staffItems = new List<StaffJobItemViewModel> { new() { StaffID = "S1" } };
-            var animalItems = new List<AnimalPlanItem> { new() { AnimalType = "Cattle" } };
-            var testItems = new List<TestPlanItem> { new() { TestCode = "T001" } };
-            var costItems = new List<AdditionalCostItemViewModel> { new() { Description = "Extra" } };
-
-            _mapper.Map<List<StaffJobItemViewModel>>(Arg.Any<List<StaffJobViewDto>>()).Returns(staffItems);
-            _mapper.Map<List<AnimalPlanItem>>(Arg.Any<List<AnimalCostViewDto>>()).Returns(animalItems);
-            _mapper.Map<List<TestPlanItem>>(Arg.Any<List<TestRequirementDto>>()).Returns(testItems);
-            _mapper.Map<List<AdditionalCostItemViewModel>>(Arg.Any<List<AdditionalCostDto>>()).Returns(costItems);
-            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel { TotalRecords = 1 });
+            _mapper.Map<List<StaffJobItemViewModel>>(Arg.Any<List<StaffJobViewDto>>())
+                   .Returns(new List<StaffJobItemViewModel> { new() { StaffID = "S1" } });
+            _mapper.Map<List<AnimalPlanItem>>(Arg.Any<List<AnimalCostViewDto>>())
+                   .Returns(new List<AnimalPlanItem> { new() { AnimalType = "Cattle" } });
+            _mapper.Map<List<TestPlanItem>>(Arg.Any<List<TestRequirementDto>>())
+                   .Returns(new List<TestPlanItem> { new() { TestCode = "T001" } });
+            _mapper.Map<List<AdditionalCostItemViewModel>>(Arg.Any<List<AdditionalCostDto>>())
+                   .Returns(new List<AdditionalCostItemViewModel> { new() { Description = "Extra" } });
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                   .Returns(new PaginationModel { TotalRecords = 1 });
 
             // Act
             var result = await _controller.Index(projectCode);
@@ -540,6 +577,209 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanningControllerTe
             Assert.Single(model.AnimalsBookedGrid.Data);
             Assert.Single(model.TestsBookedGrid.Data);
             Assert.Single(model.ExceptionalCostsGrid.Data);
+        }
+
+        #endregion
+
+        #region ExportToExcel Tests
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task ExportToExcel_WithNullOrWhitespaceProjectCode_ThrowsInvalidOperationException(string? projectCode)
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _controller.ExportToExcel(projectCode!));
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectCode_ReturnsFileResult()
+        {
+            // Arrange
+            SetupExportServiceDefaults();
+
+            // Act
+            var result = await _controller.ExportToExcel("PROJ001");
+
+            // Assert
+            Assert.IsType<FileContentResult>(result);
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectCode_ReturnsCorrectContentType()
+        {
+            // Arrange
+            SetupExportServiceDefaults();
+
+            // Act
+            var result = await _controller.ExportToExcel("PROJ001");
+
+            // Assert
+            var fileResult = Assert.IsType<FileContentResult>(result);
+            Assert.Equal(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileResult.ContentType);
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectCode_FileNameContainsProjectCode()
+        {
+            // Arrange
+            SetupExportServiceDefaults();
+
+            // Act
+            var result = await _controller.ExportToExcel("PROJ001");
+
+            // Assert
+            var fileResult = Assert.IsType<FileContentResult>(result);
+            Assert.Contains("PROJ001", fileResult.FileDownloadName);
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectCode_FileNameHasXlsxExtension()
+        {
+            // Arrange
+            SetupExportServiceDefaults();
+
+            // Act
+            var result = await _controller.ExportToExcel("PROJ001");
+
+            // Assert
+            var fileResult = Assert.IsType<FileContentResult>(result);
+            Assert.EndsWith(".xlsx", fileResult.FileDownloadName);
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectCode_ReturnsBytesFromExportService()
+        {
+            // Arrange
+            var expectedBytes = new byte[] { 10, 20, 30 };
+            SetupExportServiceDefaults();
+            _excelExportService
+                .ExportToExcelMultiSheet(Arg.Any<List<ExcelSheetDefinition>>())
+                .Returns(expectedBytes);
+
+            // Act
+            var result = await _controller.ExportToExcel("PROJ001");
+
+            // Assert
+            var fileResult = Assert.IsType<FileContentResult>(result);
+            Assert.Equal(expectedBytes, fileResult.FileContents);
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectCode_CallsAllFourServices()
+        {
+            // Arrange
+            const string projectCode = "PROJ001";
+            SetupExportServiceDefaults();
+
+            // Act
+            await _controller.ExportToExcel(projectCode);
+
+            // Assert
+            await _staffJobService.Received(1)
+                .GetAllStaffJobsAsync(Arg.Any<QueryParameters<string>>(), projectCode);
+            await _animalPlanService.Received(1)
+                .GetAllAnimalCostAsync(Arg.Any<QueryParameters<string>>(), projectCode);
+            await _testRequirementService.Received(1)
+                .GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), projectCode);
+            await _additionalCostService.Received(1)
+                .GetAdditionalCostsAsync(Arg.Any<QueryParameters<string>>(), projectCode);
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectCode_CallsExportServiceWithFourSheets()
+        {
+            // Arrange
+            SetupExportServiceDefaults();
+
+            // Act
+            await _controller.ExportToExcel("PROJ001");
+
+            // Assert
+            _excelExportService.Received(1)
+                .ExportToExcelMultiSheet(Arg.Is<List<ExcelSheetDefinition>>(
+                    sheets => sheets.Count == 4));
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WithValidProjectCode_SheetsHaveCorrectNames()
+        {
+            // Arrange
+            SetupExportServiceDefaults();
+
+            // Act
+            await _controller.ExportToExcel("PROJ001");
+
+            // Assert
+            _excelExportService.Received(1)
+                .ExportToExcelMultiSheet(Arg.Is<List<ExcelSheetDefinition>>(sheets =>
+                    sheets[0].SheetName == "Staff Booked"      &&
+                    sheets[1].SheetName == "Animals Booked"    &&
+                    sheets[2].SheetName == "Tests Booked"      &&
+                    sheets[3].SheetName == "Exceptional Costs"));
+        }
+
+        [Fact]
+        public async Task ExportToExcel_UsesMaxIntPageSize_ToFetchAllRecords()
+        {
+            // Arrange
+            SetupExportServiceDefaults();
+
+            // Act
+            await _controller.ExportToExcel("PROJ001");
+
+            // Assert — all four services must be called with PageSize == int.MaxValue
+            await _staffJobService.Received(1)
+                .GetAllStaffJobsAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == int.MaxValue),
+                    Arg.Any<string>());
+            await _animalPlanService.Received(1)
+                .GetAllAnimalCostAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == int.MaxValue),
+                    Arg.Any<string>());
+            await _testRequirementService.Received(1)
+                .GetPagedTestReqmtbyProjectAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == int.MaxValue),
+                    Arg.Any<string>());
+            await _additionalCostService.Received(1)
+                .GetAdditionalCostsAsync(
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == int.MaxValue),
+                    Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task ExportToExcel_WhenServiceReturnsNullData_MapsToEmptyLists()
+        {
+            // Arrange
+            _staffJobService
+                .GetAllStaffJobsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(ApiResponseDto<List<StaffJobViewDto>>.SuccessResponse(null!, new PaginationDto()));
+            _animalPlanService
+                .GetAllAnimalCostAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(ApiResponseDto<List<AnimalCostViewDto>>.SuccessResponse(null!, new PaginationDto()));
+            _testRequirementService
+                .GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(null!, new PaginationDto()));
+            _additionalCostService
+                .GetAdditionalCostsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+                .Returns(ApiResponseDto<List<AdditionalCostDto>>.SuccessResponse(null!, new PaginationDto()));
+
+            _excelExportService
+                .ExportToExcelMultiSheet(Arg.Any<List<ExcelSheetDefinition>>())
+                .Returns(new byte[] { 1 });
+
+            // Act
+            var result = await _controller.ExportToExcel("PROJ001");
+
+            // Assert — export service is still called (with empty sheet data) and a file is returned
+            Assert.IsType<FileContentResult>(result);
+            _excelExportService.Received(1)
+                .ExportToExcelMultiSheet(Arg.Is<List<ExcelSheetDefinition>>(
+                    sheets => sheets.All(s => !s.Data.Any())));
         }
 
         #endregion
