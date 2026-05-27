@@ -27,9 +27,12 @@
             
         </li>
         <li>
-            <a class="dropdown-item" href="#">
-                Maintain Resource Centres
-            </a>
+            
+                <a class="dropdown-item@(Model == "ResourceCentreMaintenance" ? " sidenav-title" : "")"
+                       asp-area="FPS" asp-controller="ResourceCentreMaintenance" asp-action="Index">
+                     Maintain Resource Centres
+                </a>
+           
         </li>
         <li>
             <a class="dropdown-item" href="#">

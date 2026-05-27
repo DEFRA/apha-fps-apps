@@ -28,6 +28,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ActualProjectCostItem, ProjectSubContractDto>().ReverseMap();
             CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
             CreateMap<DivisionGradeItem, DivisionGradeDto>().ReverseMap();
+            CreateMap<ResourceCentreMaintenanceItem, ProfitCentreDto>().ReverseMap();
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
             CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();
             CreateMap<TestPlanActualItem, TestRequirementDto>().ReverseMap();

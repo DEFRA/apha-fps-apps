@@ -1,7 +1,10 @@
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
@@ -23,6 +26,252 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(x => x.UserEmail != null && x.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .OrderBy(x => x.ProfitCentreId)
                 .ToListAsync();
+        }
+
+        public async Task<PagedData<ProfitCentre>> GetAllProfitCentresPagedAsync(PaginationParameters<string> query)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+
+            var profitCentresQuery = _dbContext.ProfitCentres
+                .AsNoTracking()
+                .AsQueryable()
+                .Distinct();
+                
+            profitCentresQuery = ApplyProfitCentreFilter(profitCentresQuery, query.Filter);
+            profitCentresQuery = ApplyProfitCentreSorting(profitCentresQuery, query.SortBy, query.Descending);
+
+            var profitCentres = await profitCentresQuery.ToListAsync();
+            return ApplyPaging(profitCentres, query.Page, query.PageSize);
+        }
+
+        public async Task<ProfitCentre?> GetProfitCentreByIdAsync(string profitCentreId)
+        {
+            if (string.IsNullOrWhiteSpace(profitCentreId))
+                return null;
+
+            var normalised = profitCentreId.ToLower();
+            return await _dbContext.ProfitCentres
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProfitCentreId.ToLower() == normalised);
+        }
+
+        public async Task<ProfitCentre> CreateProfitCentreAsync(ProfitCentre profitCentre)
+        {
+            ArgumentNullException.ThrowIfNull(profitCentre);
+
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    _dbContext.ProfitCentres.Add(profitCentre);
+                    await _dbContext.SaveChangesAsync();
+
+                    var currentUser = await _dbContext.Users
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(u => u.UserEmail != null && u.UserEmail.ToLower() == _requestContext.UserEmailId);
+
+                    var currentUserId = currentUser?.UserId ?? 42;
+
+                    var systemUserAlreadyExists = await _dbContext.UserProfitcentres
+                        .IgnoreQueryFilters()
+                        .AnyAsync(upc => upc.ProfitCentre == profitCentre.ProfitCentreId && upc.UserId == currentUserId);
+
+                    if (!systemUserAlreadyExists)
+                    {
+                        _dbContext.UserProfitcentres.Add(new UserProfitcentre
+                        {
+                            ProfitCentre = profitCentre.ProfitCentreId,
+                            UserId = currentUserId,
+                            FpsYear = _requestContext.FpsYear
+                        });
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return profitCentre;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+        }
+
+        public async Task<ProfitCentre> UpdateProfitCentreAsync(string originalProfitCentreId, ProfitCentre profitCentre)
+        {
+            ArgumentNullException.ThrowIfNull(profitCentre);
+
+            if (string.IsNullOrWhiteSpace(originalProfitCentreId))
+                throw new ArgumentException("Original profit centre ID is required.", nameof(originalProfitCentreId));
+
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    var existingProfitCentre = await _dbContext.ProfitCentres
+                        .FirstOrDefaultAsync(p => p.ProfitCentreId == originalProfitCentreId)
+                        ?? throw new InvalidOperationException($"Profit centre '{originalProfitCentreId}' not found.");
+
+                    existingProfitCentre.ProfitCentreName = profitCentre.ProfitCentreName;
+                    existingProfitCentre.Division = profitCentre.Division;
+                    existingProfitCentre.ContTarget = profitCentre.ContTarget;
+                    existingProfitCentre.ProfitCentreHead = profitCentre.ProfitCentreHead;
+                    existingProfitCentre.DivisionId = profitCentre.DivisionId;
+                    existingProfitCentre.EmailRecipient = profitCentre.EmailRecipient;
+
+                    var currentUser = await _dbContext.Users
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(u => u.UserEmail != null && u.UserEmail.ToLower() == _requestContext.UserEmailId);
+
+                    var currentUserId = currentUser?.UserId ?? 42;
+
+                    var userAlreadyLinked = await _dbContext.UserProfitcentres
+                        .IgnoreQueryFilters()
+                        .AnyAsync(upc => upc.ProfitCentre == originalProfitCentreId && upc.UserId == currentUserId);
+
+                    if (!userAlreadyLinked)
+                    {
+                        _dbContext.UserProfitcentres.Add(new UserProfitcentre
+                        {
+                            ProfitCentre = originalProfitCentreId,
+                            UserId = currentUserId,
+                            FpsYear = _requestContext.FpsYear
+                        });
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return existingProfitCentre;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+        }
+
+        public async Task<bool> DeleteProfitCentreAsync(string profitCentreId)
+        {
+            if (string.IsNullOrWhiteSpace(profitCentreId))
+                return false;
+
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    // Replicate DELETE trigger: tD_tblkpProfitCentre
+                    // RESTRICT: cannot delete if ProfitCentreGrade records exist
+                    var profitCentreGradeExists = await _dbContext.ProfitCentreGrades
+                        .IgnoreQueryFilters()
+                        .AsNoTracking()
+                        .AnyAsync(pcg => pcg.ProfitCentre == profitCentreId);
+
+                    if (profitCentreGradeExists)
+                        throw new InvalidOperationException("Cannot delete profit centre: it is referenced by profit centre grade records.");
+
+                    // RESTRICT: cannot delete if Workgroup records exist
+                    var workgroupExists = await _dbContext.Workgroups
+                        .IgnoreQueryFilters()
+                        .AsNoTracking()
+                        .AnyAsync(wg => wg.ProfitCentre == profitCentreId);
+
+                    if (workgroupExists)
+                        throw new InvalidOperationException("Cannot delete profit centre: it is referenced by work group records.");
+
+                    var profitCentre = await _dbContext.ProfitCentres
+                        .FirstOrDefaultAsync(p => p.ProfitCentreId == profitCentreId);
+
+                    if (profitCentre == null)
+                        return false;
+
+                    // CASCADE: delete from tblUser_ProfitCentre
+                    var userProfitCentres = await _dbContext.UserProfitcentres
+                        .IgnoreQueryFilters()
+                        .Where(upc => upc.ProfitCentre == profitCentreId)
+                        .ToListAsync();
+
+                    _dbContext.UserProfitcentres.RemoveRange(userProfitCentres);
+                    _dbContext.ProfitCentres.Remove(profitCentre);
+                    await _dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return true;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+        }
+
+        public async Task<bool> ProfitCentreExistsAsync(string profitCentreId)
+        {
+            if (string.IsNullOrWhiteSpace(profitCentreId))
+                return false;
+
+            var normalised = profitCentreId.ToLower();
+            return await _dbContext.ProfitCentres
+                .AsNoTracking()
+                .AnyAsync(p => p.ProfitCentreId.ToLower() == normalised);
+        }
+
+
+        private static IQueryable<ProfitCentre> ApplyProfitCentreFilter(IQueryable<ProfitCentre> query, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("ProfitCentreId", out var profitCentreId) && profitCentreId != null)
+            {
+                var filterValue = profitCentreId.ToString();
+                if (!string.IsNullOrWhiteSpace(filterValue))
+                    query = query.Where(p => p.ProfitCentreId.Contains(filterValue));
+            }
+
+            if (dict.TryGetValue("ProfitCentreName", out var profitCentreName) && profitCentreName != null)
+            {
+                var filterValue = profitCentreName.ToString();
+                if (!string.IsNullOrWhiteSpace(filterValue))
+                    query = query.Where(p => p.ProfitCentreName.Contains(filterValue));
+            }
+
+            if (dict.TryGetValue("Division", out var division) && division != null)
+            {
+                var filterValue = division.ToString();
+                if (!string.IsNullOrWhiteSpace(filterValue))
+                    query = query.Where(p => p.Division.Contains(filterValue));
+            }
+
+            return query;
+        }
+
+        private static IQueryable<ProfitCentre> ApplyProfitCentreSorting(IQueryable<ProfitCentre> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return query.OrderBy(p => p.ProfitCentreId);
+
+            return sortBy switch
+            {
+                "ProfitCentreName" => descending ? query.OrderByDescending(p => p.ProfitCentreName) : query.OrderBy(p => p.ProfitCentreName),
+                "Division" => descending ? query.OrderByDescending(p => p.Division) : query.OrderBy(p => p.Division),
+                "ContTarget" => descending ? query.OrderByDescending(p => p.ContTarget) : query.OrderBy(p => p.ContTarget),
+                "ProfitCentreHead" => descending ? query.OrderByDescending(p => p.ProfitCentreHead) : query.OrderBy(p => p.ProfitCentreHead),
+                _ => descending ? query.OrderByDescending(p => p.ProfitCentreId) : query.OrderBy(p => p.ProfitCentreId),
+            };
         }
     }
 }

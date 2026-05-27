@@ -117,8 +117,13 @@ namespace Apha.Common.Constants
         public const string GetMonthlyOutputTotalsByProject = "api/v1/MonthlyOutput/totals?projectCode={0}";
         public const string DeleteMonthlyOutput = "api/v1/MonthlyOutput";
 
-        // Resource Set-Up — Profit Centres
+        // Resource Set-Up – Profit Centres
         public const string GetProfitCentres = "api/v1/profitcentres";
+        public const string GetPagedProfitCentres = "api/v1/profitcentres/paged";
+        public const string GetProfitCentreById = "api/v1/profitcentres/{0}";
+        public const string CreateProfitCentre = "api/v1/profitcentres";
+        public const string UpdateProfitCentre = "api/v1/profitcentres/{0}";
+        public const string DeleteProfitCentre = "api/v1/profitcentres/{0}";
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";
