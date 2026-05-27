@@ -103,5 +103,8 @@ namespace Apha.Common.Constants
 
         // Monthly Output Log
         public const string SearchMonthlyOutputLog = "api/v1/monthlyoutput/log/search";
+
+        // Summarised Workgroup Time
+        public const string GetPagedSummarisedWorkgroupTime = "api/v1/summarisedworkgrouptime";
     }
 }

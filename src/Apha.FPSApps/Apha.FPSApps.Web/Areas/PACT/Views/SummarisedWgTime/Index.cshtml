@@ -1,0 +1,271 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.SummarisedWgTimeViewModel
+@{
+    ViewData["Title"] = "Time Usage Spreadsheet";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full sup_flex_space_center sup_border-bottom">
+        <div class="sup_flex_center_start govuk-grid-column-one-half sup_p_0">
+            <h1 class="sup_margin_top_10 sup_padding_bottom_10">Time Usage "Spreadsheet" for</h1>
+            <div class="sup_margin_tb_5 sup_padding_right_8 govuk-grid-column-one-half">
+                <div>
+                    <input type="text" id="txtselectedWorkgroup" class="govuk-input govuk-!-font-size-16"
+                           value="@Model.SelectedWorkgroup" readonly disabled />
+                </div>
+            </div>
+        </div>
+        <div class="govuk-grid-column-one-half">
+            <a asp-area="PACT" asp-controller="WorkGroupPeople" asp-action="Index"
+               class="govuk-back-link sup_align_right sup_margin_0">Back</a>
+        </div>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10 sup_margin_bottom_10">
+    <div class="govuk-grid-column-full">
+        <div class="sup_flex_end_center">
+            <button type="button" class="govuk-button sup_margin_right_10" 
+                    data-module="govuk-button" onclick="resetCalculationGrid()">
+                Reset Calculation
+            </button>
+            <button type="button" class="govuk-button" data-module="govuk-button" onclick="openTimeRecordModal()">
+                Calculate Year Plan
+            </button>
+        </div>
+    </div>
+</div>
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10 sup_margin_bottom_10">
+    <div id="gridContainer_summarisedWorkgroupTimeGrid" class="govuk-grid-column-full">
+        @await Html.PartialAsync("_DataGrid", Model.Grid)
+    </div>
+</div>
+
+<!-- Column Totals Row -->
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <div class="totals-wrapper">
+            <table id="tbl_totals_summarisedWorkgroupTimeGrid" class="totals-table govuk-table">
+                <tbody>
+                    <tr class="totals-row">
+                        <td class="totals-cell totals-label">Totals:</td>
+                        <td class="totals-cell" id="total_april"></td>
+                        <td class="totals-cell" id="total_may"></td>
+                        <td class="totals-cell" id="total_june"></td>
+                        <td class="totals-cell" id="total_july"></td>
+                        <td class="totals-cell" id="total_august"></td>
+                        <td class="totals-cell" id="total_september"></td>
+                        <td class="totals-cell" id="total_october"></td>
+                        <td class="totals-cell" id="total_november"></td>
+                        <td class="totals-cell" id="total_december"></td>
+                        <td class="totals-cell" id="total_january"></td>
+                        <td class="totals-cell" id="total_february"></td>
+                        <td class="totals-cell" id="total_march"></td>
+                        <td class="totals-cell" id="total_time"></td>
+                        <td class="totals-cell" id="total_cost"></td>
+                        <td class="totals-cell" id="total_yrPlan"></td>
+                        <td class="totals-cell" id="total_spent"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .totals-wrapper {
+        overflow-x: auto;
+        margin-top: -1px;
+    }
+
+    .totals-table {
+        width: 100%;
+        margin-bottom: 0;
+        border-top: 3px solid #0b0c0c;
+        background-color: #f3f2f1;
+    }
+
+    .totals-row {
+        background-color: #f3f2f1;
+    }
+
+    .totals-cell {
+        padding: 12px 10px;
+        text-align: right;
+        font-weight: bold;
+        border-right: 1px solid #b1b4b6;
+        white-space: nowrap;
+    }
+
+    .totals-label {
+        text-align: left !important;
+        padding-left: 20px;
+    }
+
+    .totals-cell:last-child {
+        border-right: none;
+    }
+
+    /* GOV.UK Edit Modal Styles */
+    .govuk-edit-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .govuk-edit-modal.open,
+    .govuk-edit-modal[style*="display: flex"] {
+        display: flex !important;
+    }
+
+    .govuk-edit-modal-dialog {
+        background: #ffffff;
+        border: none;
+        box-shadow: 0 3.5px 7px rgba(0, 0, 0, 0.13);
+        width: 90%;
+        max-width: 650px;
+        max-height: 85vh;
+        overflow: hidden;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .govuk-edit-modal__header {
+        border-bottom: 1px solid #b1b4b6;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-left: 5px;
+    }
+
+    .govuk-edit-modal__body {
+        padding: 20px;
+        font-size: 16px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .govuk-edit-modal__footer {
+        border-top: 1px solid #b1b4b6;
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-top: 15px;
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+    }
+
+    .govuk-edit-modal__close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #0b0c0c;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .govuk-edit-modal__close:hover {
+        opacity: 0.7;
+    }
+</style>
+ 
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+    <div class="govuk-grid-column-one-quarter">
+        <label for="txtSelectedProject" class="govuk-label govuk-!-font-weight-bold sup_visually_hidden">Selected Project:</label>
+        <input type="text" id="txtSelectedProject" class="govuk-input govuk-!-font-size-16" readonly />
+    </div>
+    <div class="govuk-grid-column-one-half">
+        <label for="txtProjectDescription" class="govuk-label govuk-!-font-weight-bold sup_visually_hidden">Project Description:</label>
+        <input type="text" id="txtProjectDescription" class="govuk-input govuk-!-font-size-16" readonly />
+    </div>
+</div>
+
+<!-- ============================================================
+     CALCULATE YEAR PLAN MODAL
+============================================================ -->
+<div class="govuk-edit-modal" id="timeRecordModal" aria-labelledby="timeRecordModalLabel" aria-modal="true"
+     role="dialog">
+    <div class="govuk-edit-modal-dialog sup_overflow_visible">
+
+        <div class="govuk-edit-modal__header">
+            <h3 class="govuk-heading-s sup_margin_0" id="timeRecordModalLabel">
+                Calculate Year Plan
+            </h3>
+            <button type="button" class="govuk-edit-modal__close" onclick="closeTimeRecordModal()"
+                    aria-label="Close">&#x2715;</button>
+        </div>
+
+        <div class="govuk-edit-modal__body sup_padding_top_0 sup_overflow_visible">
+            <form id="formTimeRecord" novalidate>
+                <!-- DB-level error banner (hidden by default) -->
+                <div id="formTimeRecord-db-error" class="govuk-error-summary" role="alert"
+                     aria-labelledby="formTimeRecord-db-error-title" hidden>
+                    <h2 class="govuk-error-summary__title" id="formTimeRecord-db-error-title">
+                        There is a problem
+                    </h2>
+                    <div class="govuk-error-summary__body">
+                        <p class="govuk-body" id="formTimeRecord-db-error-msg"></p>
+                    </div>
+                </div>
+
+                <fieldset class="govuk-fieldset">
+                    <legend class="govuk-visually-hidden">Time Record</legend>
+
+                    <span class="app-mandatory-note sup_padding_top_10" aria-hidden="true">
+                        <span class="app-required">*</span> Mandatory Fields
+                    </span>
+
+                    <div class="govuk-grid-row">
+                        <div class="govuk-grid-column-two-thirds">
+                            <div class="govuk-form-group sup_margin_bottom_10" id="fg-project">
+                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                                       for="modal-amount">
+                                    Years plan amount <span class="app-required" aria-hidden="true">*</span>
+                                </label>
+                                <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                    <input class="govuk-input govuk-!-font-size-16 govuk-!-width-full"
+                                           id="modal-amount" name="amount" type="number" step="0.01" autocomplete="off"
+                                           aria-required="true" aria-describedby="modal-amount-error" />
+                                </div>
+                                <p id="modal-amount-error" class="govuk-error-message" hidden>
+                                    <span class="govuk-visually-hidden">Error:</span>
+                                    <span id="modal-amount-error-msg"></span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </fieldset>
+            </form>
+        </div>
+
+        <div class="govuk-edit-modal__footer">
+            <button type="button" class="govuk-button govuk-button--secondary sup_margin_bottom_20"
+                    data-module="govuk-button" onclick="closeTimeRecordModal()">Cancel</button>
+            <div>
+                <button type="button" class="govuk-button sup_margin_bottom_20" data-module="govuk-button"
+                        id="timeRecordSaveBtn" onclick="calculateSpent()">Calculate</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pact_js/summarisedWgTime.js"></script>
+}

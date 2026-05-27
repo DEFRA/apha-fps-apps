@@ -20,6 +20,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<TimeCodeValid> TimeCodeValids { get; set; }
         public virtual DbSet<WorkGroup> WorkGroups { get; set; }
         public virtual DbSet<ProjectInvoice> ProjectInvoices { get; set; }
+        public virtual DbSet<SummarisedWgTimeView> SummarisedWgTimeViews { get; set; }
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
         public virtual DbSet<TestCapability> TestCapabilities { get; set; }
         public virtual DbSet<TestRequirement> TestRequirements { get; set; }
@@ -73,6 +74,9 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectInvoiceMap());
             modelBuilder.Entity<ProjectInvoice>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new ProjectInvoiceMap());
+            modelBuilder.Entity<ProjectInvoice>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new ProjectSubContractMap());
             modelBuilder.Entity<ProjectSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -102,6 +106,8 @@ namespace Apha.PACT.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new WorkGroupStaffViewMap());
             modelBuilder.Entity<WorkGroupStaffView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new SummarisedWgTimeMap());
         }
     }
 }

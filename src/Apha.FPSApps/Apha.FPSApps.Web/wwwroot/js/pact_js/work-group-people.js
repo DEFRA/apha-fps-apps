@@ -285,6 +285,21 @@ function initWorkGroupPeoplePage() {
         }
     });
 
+    // ── Show Summarised WorkGroup Time button ──────────────────────────────
+    $('#btnShowSummary').on('click', function () {
+        var $error = $('#workgroupValidationError');
+        var $input = $('#selectedWorkgroup');
+        if (!currentWorkGroup) {
+            $input.addClass('govuk-input--error');
+            $error.show();
+            alert('Please select a Work Group first.');
+            return;
+        }
+        $input.removeClass('govuk-input--error');
+        $error.hide();
+        window.fpsNavigateTo('/PACT/SummarisedWgTime?workGroup=' + encodeURIComponent(currentWorkGroup));
+    });
+
     // ── Show Time Records button ───────────────────────────────────────────
     $('#btnShowTimeRecords').on('click', function () {
         var $error = $('#workgroupValidationError');
