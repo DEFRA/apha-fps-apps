@@ -1257,7 +1257,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             var copyDto = new CopyInvoicesDto { SourceMonth = 4, TargetMonth = 5 };
             var errors = new List<ApiErrorDto>
             {
-                new() { Code = "DUPLICATE_INVOICE", Message = null }
+                new() { Code = "DUPLICATE_INVOICE", Message = "DUPLICATE INVOICE" }
             };
 
             _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
