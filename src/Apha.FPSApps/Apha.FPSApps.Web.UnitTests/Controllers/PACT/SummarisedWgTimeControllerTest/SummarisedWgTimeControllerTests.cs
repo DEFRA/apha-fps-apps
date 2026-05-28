@@ -848,4 +848,372 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
 
         #endregion
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // DTO unit tests
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public class SummarisedWgTimeViewDtoTests
+    {
+        // ── SummarisedWgTimeViewDto default initialisation ───────────────────
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_DefaultConstructor_InitialisesMonthsToEmptyList()
+        {
+            var dto = new SummarisedWgTimeViewDto();
+            Assert.NotNull(dto.Months);
+            Assert.Empty(dto.Months);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_DefaultConstructor_InitialisesRowsToEmptyList()
+        {
+            var dto = new SummarisedWgTimeViewDto();
+            Assert.NotNull(dto.Rows);
+            Assert.Empty(dto.Rows);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_DefaultConstructor_InitialisesSummaryToNewInstance()
+        {
+            var dto = new SummarisedWgTimeViewDto();
+            Assert.NotNull(dto.Summary);
+            Assert.IsType<SummarisedWgTimeSummaryDto>(dto.Summary);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_DefaultConstructor_InitialisesPaginationToNewInstance()
+        {
+            var dto = new SummarisedWgTimeViewDto();
+            Assert.NotNull(dto.Pagination);
+            Assert.IsType<PaginationDto>(dto.Pagination);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_DefaultConstructor_InitialisesProjectTitleLookupToEmptyList()
+        {
+            var dto = new SummarisedWgTimeViewDto();
+            Assert.NotNull(dto.ProjectTitleLookup);
+            Assert.Empty(dto.ProjectTitleLookup);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_CanSetAndGetMonths()
+        {
+            var dto = new SummarisedWgTimeViewDto { Months = [4, 5, 6] };
+            Assert.Equal([4, 5, 6], dto.Months);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_CanSetAndGetRows()
+        {
+            var rows = new List<SummarisedWgTimeDto>
+            {
+                new() { ParentProject = "PRJ1" },
+                new() { ParentProject = "PRJ2" }
+            };
+            var dto = new SummarisedWgTimeViewDto { Rows = rows };
+            Assert.Equal(2, dto.Rows.Count);
+            Assert.Equal("PRJ1", dto.Rows[0].ParentProject);
+            Assert.Equal("PRJ2", dto.Rows[1].ParentProject);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_CanSetAndGetSummary()
+        {
+            var summary = new SummarisedWgTimeSummaryDto { GrandTotalCost = 1234.56, GrandTotalTime = 99.9 };
+            var dto = new SummarisedWgTimeViewDto { Summary = summary };
+            Assert.Equal(1234.56, dto.Summary.GrandTotalCost);
+            Assert.Equal(99.9, dto.Summary.GrandTotalTime);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_CanSetAndGetProjectTitleLookup()
+        {
+            var lookup = new List<SummarisedWgTimeProjectTitleLookupItem>
+            {
+                new() { ParentProject = "PRJ1", ProjectTitle = "Alpha" },
+                new() { ParentProject = "PRJ2", ProjectTitle = "Beta" }
+            };
+            var dto = new SummarisedWgTimeViewDto { ProjectTitleLookup = lookup };
+            Assert.Equal(2, dto.ProjectTitleLookup.Count);
+            Assert.Equal("Alpha", dto.ProjectTitleLookup[0].ProjectTitle);
+            Assert.Equal("Beta",  dto.ProjectTitleLookup[1].ProjectTitle);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_ProjectTitleLookup_CanBeMappedToDictionary()
+        {
+            var dto = new SummarisedWgTimeViewDto
+            {
+                ProjectTitleLookup =
+                [
+                    new() { ParentProject = "PRJ1", ProjectTitle = "Title One" },
+                    new() { ParentProject = "PRJ2", ProjectTitle = "Title Two" }
+                ]
+            };
+
+            var dict = dto.ProjectTitleLookup.ToDictionary(x => x.ParentProject, x => x.ProjectTitle);
+
+            Assert.Equal(2, dict.Count);
+            Assert.Equal("Title One", dict["PRJ1"]);
+            Assert.Equal("Title Two", dict["PRJ2"]);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeViewDto_ProjectTitleLookup_EmptyList_ProducesEmptyDictionary()
+        {
+            var dto = new SummarisedWgTimeViewDto();
+            var dict = dto.ProjectTitleLookup.ToDictionary(x => x.ParentProject, x => x.ProjectTitle);
+            Assert.Empty(dict);
+        }
+
+        // ── SummarisedWgTimeProjectTitleLookupItem ───────────────────────────
+
+        [Fact]
+        public void SummarisedWgTimeProjectTitleLookupItem_DefaultConstructor_SetsParentProjectToEmptyString()
+        {
+            var item = new SummarisedWgTimeProjectTitleLookupItem();
+            Assert.Equal(string.Empty, item.ParentProject);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeProjectTitleLookupItem_DefaultConstructor_SetsProjectTitleToEmptyString()
+        {
+            var item = new SummarisedWgTimeProjectTitleLookupItem();
+            Assert.Equal(string.Empty, item.ProjectTitle);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeProjectTitleLookupItem_CanSetAndGetParentProject()
+        {
+            var item = new SummarisedWgTimeProjectTitleLookupItem { ParentProject = "ABC123" };
+            Assert.Equal("ABC123", item.ParentProject);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeProjectTitleLookupItem_CanSetAndGetProjectTitle()
+        {
+            var item = new SummarisedWgTimeProjectTitleLookupItem { ProjectTitle = "My Project Title" };
+            Assert.Equal("My Project Title", item.ProjectTitle);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeProjectTitleLookupItem_ParentProjectAndProjectTitle_AreIndependent()
+        {
+            var item = new SummarisedWgTimeProjectTitleLookupItem
+            {
+                ParentProject = "PRJ-X",
+                ProjectTitle  = "Project X Description"
+            };
+            Assert.Equal("PRJ-X",                item.ParentProject);
+            Assert.Equal("Project X Description", item.ProjectTitle);
+        }
+
+        // ── SummarisedWgTimeSummaryDto default values ────────────────────────
+
+        [Fact]
+        public void SummarisedWgTimeSummaryDto_DefaultConstructor_AllMonthTotalsAreZero()
+        {
+            var dto = new SummarisedWgTimeSummaryDto();
+            Assert.Equal(0, dto.TotalApril);
+            Assert.Equal(0, dto.TotalMay);
+            Assert.Equal(0, dto.TotalJune);
+            Assert.Equal(0, dto.TotalJuly);
+            Assert.Equal(0, dto.TotalAugust);
+            Assert.Equal(0, dto.TotalSeptember);
+            Assert.Equal(0, dto.TotalOctober);
+            Assert.Equal(0, dto.TotalNovember);
+            Assert.Equal(0, dto.TotalDecember);
+            Assert.Equal(0, dto.TotalJanuary);
+            Assert.Equal(0, dto.TotalFebruary);
+            Assert.Equal(0, dto.TotalMarch);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeSummaryDto_DefaultConstructor_GrandTotalsAreZero()
+        {
+            var dto = new SummarisedWgTimeSummaryDto();
+            Assert.Equal(0, dto.GrandTotalTime);
+            Assert.Equal(0, dto.GrandTotalCost);
+        }
+
+        // ── SummarisedWgTimeSummaryDto – each property can be set and read ───
+
+        [Theory]
+        [InlineData(1.1)]
+        [InlineData(0.0)]
+        [InlineData(999.99)]
+        public void SummarisedWgTimeSummaryDto_TotalApril_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalApril = value };
+            Assert.Equal(value, dto.TotalApril);
+        }
+
+        [Theory]
+        [InlineData(2.2)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalMay_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalMay = value };
+            Assert.Equal(value, dto.TotalMay);
+        }
+
+        [Theory]
+        [InlineData(3.3)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalJune_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalJune = value };
+            Assert.Equal(value, dto.TotalJune);
+        }
+
+        [Theory]
+        [InlineData(4.4)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalJuly_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalJuly = value };
+            Assert.Equal(value, dto.TotalJuly);
+        }
+
+        [Theory]
+        [InlineData(5.5)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalAugust_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalAugust = value };
+            Assert.Equal(value, dto.TotalAugust);
+        }
+
+        [Theory]
+        [InlineData(6.6)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalSeptember_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalSeptember = value };
+            Assert.Equal(value, dto.TotalSeptember);
+        }
+
+        [Theory]
+        [InlineData(7.7)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalOctober_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalOctober = value };
+            Assert.Equal(value, dto.TotalOctober);
+        }
+
+        [Theory]
+        [InlineData(8.8)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalNovember_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalNovember = value };
+            Assert.Equal(value, dto.TotalNovember);
+        }
+
+        [Theory]
+        [InlineData(9.9)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalDecember_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalDecember = value };
+            Assert.Equal(value, dto.TotalDecember);
+        }
+
+        [Theory]
+        [InlineData(10.1)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalJanuary_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalJanuary = value };
+            Assert.Equal(value, dto.TotalJanuary);
+        }
+
+        [Theory]
+        [InlineData(11.11)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalFebruary_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalFebruary = value };
+            Assert.Equal(value, dto.TotalFebruary);
+        }
+
+        [Theory]
+        [InlineData(12.12)]
+        [InlineData(0.0)]
+        public void SummarisedWgTimeSummaryDto_TotalMarch_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalMarch = value };
+            Assert.Equal(value, dto.TotalMarch);
+        }
+
+        [Theory]
+        [InlineData(100.5)]
+        [InlineData(0.0)]
+        [InlineData(9999999.99)]
+        public void SummarisedWgTimeSummaryDto_GrandTotalTime_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { GrandTotalTime = value };
+            Assert.Equal(value, dto.GrandTotalTime);
+        }
+
+        [Theory]
+        [InlineData(50000.00)]
+        [InlineData(0.0)]
+        [InlineData(1234567.89)]
+        public void SummarisedWgTimeSummaryDto_GrandTotalCost_CanBeSetAndRead(double value)
+        {
+            var dto = new SummarisedWgTimeSummaryDto { GrandTotalCost = value };
+            Assert.Equal(value, dto.GrandTotalCost);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeSummaryDto_AllProperties_SetAndReadIndependently()
+        {
+            var dto = new SummarisedWgTimeSummaryDto
+            {
+                TotalApril     = 1.1,
+                TotalMay       = 2.2,
+                TotalJune      = 3.3,
+                TotalJuly      = 4.4,
+                TotalAugust    = 5.5,
+                TotalSeptember = 6.6,
+                TotalOctober   = 7.7,
+                TotalNovember  = 8.8,
+                TotalDecember  = 9.9,
+                TotalJanuary   = 10.1,
+                TotalFebruary  = 11.11,
+                TotalMarch     = 12.12,
+                GrandTotalTime = 82.73,
+                GrandTotalCost = 99999.99
+            };
+
+            Assert.Equal(1.1,      dto.TotalApril);
+            Assert.Equal(2.2,      dto.TotalMay);
+            Assert.Equal(3.3,      dto.TotalJune);
+            Assert.Equal(4.4,      dto.TotalJuly);
+            Assert.Equal(5.5,      dto.TotalAugust);
+            Assert.Equal(6.6,      dto.TotalSeptember);
+            Assert.Equal(7.7,      dto.TotalOctober);
+            Assert.Equal(8.8,      dto.TotalNovember);
+            Assert.Equal(9.9,      dto.TotalDecember);
+            Assert.Equal(10.1,     dto.TotalJanuary);
+            Assert.Equal(11.11,    dto.TotalFebruary);
+            Assert.Equal(12.12,    dto.TotalMarch);
+            Assert.Equal(82.73,    dto.GrandTotalTime);
+            Assert.Equal(99999.99, dto.GrandTotalCost);
+        }
+
+        [Fact]
+        public void SummarisedWgTimeSummaryDto_MutatingOneMonthProperty_DoesNotAffectOthers()
+        {
+            var dto = new SummarisedWgTimeSummaryDto { TotalApril = 10.0, TotalMay = 20.0 };
+            dto.TotalApril = 99.0;
+
+            Assert.Equal(99.0, dto.TotalApril);
+            Assert.Equal(20.0, dto.TotalMay);
+        }
+    }
 }
