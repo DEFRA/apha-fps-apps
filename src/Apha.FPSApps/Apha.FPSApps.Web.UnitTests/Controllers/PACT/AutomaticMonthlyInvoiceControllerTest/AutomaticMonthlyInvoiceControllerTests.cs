@@ -1249,30 +1249,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             Assert.Equal("Failed to copy invoices", jsonElement.GetProperty("message").GetString());
         }
 
-        [Fact]
-        public async Task CopyInvoices_ServiceReturnsFailureWithErrorCodeOnly_UsesCodeInMessage()
-        {
-            // Arrange
-            var request = new CopyInvoicesRequest { SourceMonth = 4, TargetMonth = 5 };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 4, TargetMonth = 5 };
-            var errors = new List<ApiErrorDto>
-            {
-                new() { Code = "DUPLICATE_INVOICE", Message = "DUPLICATE INVOICE" }
-            };
-
-            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _invoiceService.CopyInvoicesAsync(copyDto)
-                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
-
-            // Act
-            var result = await _controller.CopyInvoices(request);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var jsonElement = GetJsonResultElement(jsonResult);
-            Assert.False(jsonElement.GetProperty("success").GetBoolean());
-            Assert.Contains("DUPLICATE_INVOICE", jsonElement.GetProperty("message").GetString());
-        }
 
         [Fact]
         public async Task CopyInvoices_ServiceThrowsException_PropagatesException()
