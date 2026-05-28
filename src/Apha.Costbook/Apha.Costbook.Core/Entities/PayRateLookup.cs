@@ -1,6 +1,6 @@
-namespace Apha.Costbook.Application.Dtos;
+namespace Apha.Costbook.Core.Entities;
 
-public class PayRateDto
+public class PayRateLookup
 {
     public string WgGrade { get; set; } = null!;
     public decimal? ChargeRate { get; set; }

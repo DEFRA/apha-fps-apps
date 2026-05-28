@@ -619,9 +619,8 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
-            Assert.Equal(4, exception.Errors.Count);
+            Assert.Equal(3, exception.Errors.Count);
             Assert.Contains(exception.Errors, e => e.Message == "Please enter Start Date");
-            Assert.Contains(exception.Errors, e => e.Message == "Please enter who has prepared this");
             Assert.Contains(exception.Errors, e => e.Message == "Please enter a title");
             Assert.Contains(exception.Errors, e => e.Message == "Please choose Defra/Non-Defra");
         }

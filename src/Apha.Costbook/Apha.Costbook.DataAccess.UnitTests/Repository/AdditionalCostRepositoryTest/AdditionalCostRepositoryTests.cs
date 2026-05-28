@@ -1,6 +1,7 @@
 using Apha.Common.Helpers.Repository;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
+using Apha.Costbook.Core.Pagination;
 using Apha.Costbook.DataAccess.Data;
 using Apha.Costbook.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -184,13 +185,14 @@ public class AdditionalCostRepositoryTests
     {
         // Arrange
         var (repo, _, _) = CreateRepository();
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024);
+        var result = await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024, query);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Empty(result);
+        Assert.Empty(result.Data);
     }
 
     [Fact]
@@ -199,14 +201,15 @@ public class AdditionalCostRepositoryTests
         // Arrange
         var costs = new List<AdditionalCost>
         {
-            new() { AcIdentity = 1, Project = "2024/001", Year = 2024, AccountCat = "TRAVEL", Description = "Match", CostEntered = 100 },
-            new() { AcIdentity = 2, Project = "2024/002", Year = 2024, AccountCat = "EQUIP", Description = "Wrong project", CostEntered = 200 },
-            new() { AcIdentity = 3, Project = "2024/001", Year = 2025, AccountCat = "TRAVEL", Description = "Wrong year", CostEntered = 300 }
+            new() { AcIdentity = 1, Project = "2024/001", Year = 2024, AccountCat = "TRAVEL", Description = "Match",        CostEntered = 100 },
+            new() { AcIdentity = 2, Project = "2024/002", Year = 2024, AccountCat = "EQUIP",  Description = "Wrong project", CostEntered = 200 },
+            new() { AcIdentity = 3, Project = "2024/001", Year = 2025, AccountCat = "TRAVEL", Description = "Wrong year",    CostEntered = 300 }
         };
         var (repo, _, _) = CreateRepository(additionalCosts: costs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -227,9 +230,10 @@ public class AdditionalCostRepositoryTests
             new() { ProjectId = "2024/001", Programme = "Programme A", Euroconvrate = 1.15 }
         };
         var (repo, _, _) = CreateRepository(additionalCosts: costs, projects: projects);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -246,9 +250,10 @@ public class AdditionalCostRepositoryTests
             new() { AcIdentity = 1, Project = "2024/001", Year = 2024, AccountCat = "TRAVEL", Description = "Test", CostEntered = 500 }
         };
         var (repo, _, _) = CreateRepository(additionalCosts: costs, projects: []);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -265,9 +270,10 @@ public class AdditionalCostRepositoryTests
             new() { AcIdentity = 10, Project = "2024/001", Year = 2024, AccountCat = "EQUIP", Description = "Equipment", ItemCost = 250.0, CostEntered = 750.0, Freq = "Monthly" }
         };
         var (repo, _, _) = CreateRepository(additionalCosts: costs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         var item = Assert.Single(result);
@@ -292,9 +298,10 @@ public class AdditionalCostRepositoryTests
             new() { AcIdentity = 3, Project = "2024/001", Year = 2024, AccountCat = "C", Description = "Mango", CostEntered = 300 }
         };
         var (repo, _, _) = CreateRepository(additionalCosts: costs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -312,9 +319,10 @@ public class AdditionalCostRepositoryTests
             new() { AcIdentity = 1, Project = "2024/001", Year = 2024, AccountCat = "TRAVEL", Description = "Test", CostEntered = 100 }
         };
         var (repo, _, _) = CreateRepository(additionalCosts: costs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024%2F001", 2024)).ToList();
+        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024%2F001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -516,8 +524,9 @@ public class AdditionalCostRepositoryTests
             new() { AcIdentity = 3, Project = "2024/001", Year = 2024, AccountCat = "C", Description = "Third",  CostEntered = 300 }
         };
         var (repo, _, _) = CreateRepository(additionalCosts: costs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
-        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         Assert.Equal(3, result.Count);
     }
@@ -530,8 +539,9 @@ public class AdditionalCostRepositoryTests
             new() { AcIdentity = 1, Project = "2024/001", Year = 2024, AccountCat = "A", Description = "Test", CostEntered = 100, ItemCost = null }
         };
         var (repo, _, _) = CreateRepository(additionalCosts: costs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
-        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         Assert.Single(result);
         Assert.Null(result[0].ItemCost);
