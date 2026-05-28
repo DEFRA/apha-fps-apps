@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -18,7 +18,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         /// <summary>
         /// Creates a ProjectInvoiceRepository alongside mocked DbSet and context for call verification.
         /// AddAsync is set up explicitly since it differs from the base SetupDbSetOperations.
-        /// UpdateAsync uses Entry().State — tested via Callback+Throws pattern (mirrors JobCodeRepositoryTests).
+        /// UpdateAsync uses Entry().State � tested via Callback+Throws pattern (mirrors JobCodeRepositoryTests).
         /// </summary>
         private static (
             ProjectInvoiceRepository Repo,
@@ -236,6 +236,313 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
             Assert.Equal(1, result.Data.First().InvoiceCounter);
         }
 
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_WithInvalidJsonFilter_ThrowsException()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                Filter = "invalid json"
+            };
+
+            await Assert.ThrowsAsync<Newtonsoft.Json.JsonReaderException>(() => repo.GetPagedProjectInvoicesAsync(query, null));
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_WithEmptyFilter_ReturnsAllRecords()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                Filter = ""
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_WithNullDetail_DoesNotMatch()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Detail = null, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Detail = "Test", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                Filter = "{\"Detail\":\"Test\"}"
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            Assert.Single(result.Data);
+            Assert.Equal(2, result.Data.First().InvoiceCounter);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_SortByProjectParent_Ascending()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "C-Project", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "A-Project", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 3, ProjectParent = "B-Project", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                SortBy = "ProjectParent",
+                Descending = false
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            var dataList = result.Data.ToList();
+            Assert.Equal("A-Project", dataList[0].ProjectParent);
+            Assert.Equal("B-Project", dataList[1].ProjectParent);
+            Assert.Equal("C-Project", dataList[2].ProjectParent);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_SortByMonth_Descending()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 6, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", Month = 1, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                SortBy = "Month",
+                Descending = true
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            var dataList = result.Data.ToList();
+            Assert.Equal(6, dataList[0].Month);
+            Assert.Equal(3, dataList[1].Month);
+            Assert.Equal(1, dataList[2].Month);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_SortByCostOfWork_Ascending()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", CostOfWork = 3000m, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", CostOfWork = 1000m, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", CostOfWork = 2000m, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                SortBy = "CostOfWork",
+                Descending = false
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            var dataList = result.Data.ToList();
+            Assert.Equal(1000m, dataList[0].CostOfWork);
+            Assert.Equal(2000m, dataList[1].CostOfWork);
+            Assert.Equal(3000m, dataList[2].CostOfWork);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_SortByWip_Descending()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Wip = 100m, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Wip = 300m, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", Wip = 200m, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                SortBy = "Wip",
+                Descending = true
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            var dataList = result.Data.ToList();
+            Assert.Equal(300m, dataList[0].Wip);
+            Assert.Equal(200m, dataList[1].Wip);
+            Assert.Equal(100m, dataList[2].Wip);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_SortByProfitLoss_Ascending()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", ProfitLoss = 50m, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", ProfitLoss = -20m, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", ProfitLoss = 30m, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                SortBy = "ProfitLoss",
+                Descending = false
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            var dataList = result.Data.ToList();
+            Assert.Equal(-20m, dataList[0].ProfitLoss);
+            Assert.Equal(30m, dataList[1].ProfitLoss);
+            Assert.Equal(50m, dataList[2].ProfitLoss);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_SortByDetail_Ascending()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Detail = "Charlie", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Detail = "Alpha", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", Detail = "Bravo", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                SortBy = "Detail",
+                Descending = false
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            var dataList = result.Data.ToList();
+            Assert.Equal("Alpha", dataList[0].Detail);
+            Assert.Equal("Bravo", dataList[1].Detail);
+            Assert.Equal("Charlie", dataList[2].Detail);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_SortByInvoiceCounter_Descending()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                SortBy = "InvoiceCounter",
+                Descending = true
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            var dataList = result.Data.ToList();
+            Assert.Equal(3, dataList[0].InvoiceCounter);
+            Assert.Equal(2, dataList[1].InvoiceCounter);
+            Assert.Equal(1, dataList[2].InvoiceCounter);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_SortByUnknownProperty_DefaultsToInvoiceCounter()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                SortBy = "UnknownProperty",
+                Descending = false
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            var dataList = result.Data.ToList();
+            Assert.Equal(1, dataList[0].InvoiceCounter);
+            Assert.Equal(2, dataList[1].InvoiceCounter);
+            Assert.Equal(3, dataList[2].InvoiceCounter);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_NoSortBy_DefaultsToInvoiceCounterAscending()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>();
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            var dataList = result.Data.ToList();
+            Assert.Equal(1, dataList[0].InvoiceCounter);
+            Assert.Equal(2, dataList[1].InvoiceCounter);
+            Assert.Equal(3, dataList[2].InvoiceCounter);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_FilterWithNullValues_IgnoresNullFilters()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                Filter = "{\"ProjectParent\":null,\"Detail\":null}"
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesAsync_FilterWithInvalidMonthString_IgnoresMonthFilter()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 6, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                Filter = "{\"Month\":\"invalid\"}"
+            };
+
+            var result = await repo.GetPagedProjectInvoicesAsync(query, null);
+
+            // Should return all records since month filter is ignored
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
         #endregion
 
         #region GetPagedProjectInvoicesByMonthAsync
@@ -402,6 +709,112 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
 
             Assert.Empty(result.Data);
             Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonthAsync_WithMonthFilterInQueryString_IgnoresMonthFilterFromQuery()
+        {
+            // ApplyInvoiceFilterExcludingMonth should ignore Month from filter JSON
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 6, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 50,
+                Filter = "{\"Month\":6}" // This should be ignored
+            };
+
+            var result = await repo.GetPagedProjectInvoicesByMonthAsync(query, 3);
+
+            // Should only get month 3 records, not month 6 despite filter
+            Assert.Single(result.Data);
+            Assert.Equal(3, result.Data.First().Month);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonthAsync_WithEmptyFilter_ReturnsAllForMonth()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 3, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 50,
+                Filter = ""
+            };
+
+            var result = await repo.GetPagedProjectInvoicesByMonthAsync(query, 3);
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonthAsync_WithInvalidJsonFilter_ThrowsException()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 50,
+                Filter = "invalid json"
+            };
+
+            await Assert.ThrowsAsync<Newtonsoft.Json.JsonReaderException>(() => repo.GetPagedProjectInvoicesByMonthAsync(query, 3));
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonthAsync_WithNullDetailFilter_DoesNotMatchNullDetails()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, Detail = null, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 3, Detail = "Test", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 50,
+                Filter = "{\"Detail\":\"Test\"}"
+            };
+
+            var result = await repo.GetPagedProjectInvoicesByMonthAsync(query, 3);
+
+            Assert.Single(result.Data);
+            Assert.Equal(2, result.Data.First().InvoiceCounter);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectInvoicesByMonthAsync_FilterWithNullValues_IgnoresNullFilters()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 3, FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(invoices);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 50,
+                Filter = "{\"ProjectParent\":null,\"Detail\":null}"
+            };
+
+            var result = await repo.GetPagedProjectInvoicesByMonthAsync(query, 3);
+
+            Assert.Equal(2, result.Data.Count);
         }
 
         #endregion
@@ -714,6 +1127,40 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
             Assert.Equal(customYear, entity.FpsYear);
         }
 
+        [Fact]
+        public async Task UpdateAsync_WithCompleteEntity_PreservesAllProperties()
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+            var invoicesMockSet = RepositoryTestHelper.CreateMockDbSet<ProjectInvoice>([]);
+            mockContext.Setup(x => x.ProjectInvoices).Returns(invoicesMockSet.Object);
+
+            mockContext.Setup(x => x.Entry(It.IsAny<ProjectInvoice>()))
+                .Throws(new NotSupportedException("Entry() is not supported in mocked DbContext"));
+
+            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
+            var entity = new ProjectInvoice 
+            { 
+                InvoiceCounter = 1, 
+                ProjectParent = "PRJ1", 
+                Month = 3, 
+                Amount = 2000m,
+                CostOfWork = 1500m,
+                Wip = 500m,
+                ProfitLoss = 100m,
+                Detail = "Updated Invoice"
+            };
+
+            await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateAsync(entity));
+
+            Assert.Equal("PRJ1", entity.ProjectParent);
+            Assert.Equal(3, entity.Month);
+            Assert.Equal(2000m, entity.Amount);
+            Assert.Equal(DefaultTestFpsYear, entity.FpsYear);
+        }
+
         #endregion
 
         #region DeleteAsync
@@ -929,7 +1376,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         }
 
         [Fact]
-        public async Task HasInvoicesForMonthAsync_NoMatchingMonth_ReturnsFalse()
+        public async Task HasInvoicesForMonthAsync_WithNoMatchingMonth_ReturnsFalse()
         {
             var invoices = new List<ProjectInvoice>
             {
@@ -943,7 +1390,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         }
 
         [Fact]
-        public async Task HasInvoicesForMonthAsync_WrongFpsYear_ReturnsFalse()
+        public async Task HasInvoicesForMonthAsync_WithDifferentFpsYear_ReturnsFalse()
         {
             var invoices = new List<ProjectInvoice>
             {
@@ -957,7 +1404,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         }
 
         [Fact]
-        public async Task HasInvoicesForMonthAsync_EmptyRepository_ReturnsFalse()
+        public async Task HasInvoicesForMonthAsync_EmptyDatabase_ReturnsFalse()
         {
             var repo = CreateRepository([]);
 
@@ -968,176 +1415,202 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
 
         #endregion
 
-        #region GetMonthlyInvoicesSummaryAsync
+        #region CopyInvoicesByMonthAsync
 
         [Fact]
-        public async Task GetMonthlyInvoicesSummaryAsync_WithProgramFilter_ReturnsFilteredData()
+        public async Task CopyInvoicesByMonthAsync_BulkCopyAllInvoices_CreatesNewInvoicesWithCorrectMonth()
         {
-            var summaries = new List<MonthlyInvoicesSummary>
+            var sourceInvoices = new List<ProjectInvoice>
             {
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "PRJ1", Month = 3, MonthlyAmount = 1000m },
-                new() { FpsYear = DefaultTestFpsYear, Program = "CORE", ParentProject = "PRJ2", Month = 3, MonthlyAmount = 2000m },
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "PRJ3", Month = 6, MonthlyAmount = 1500m }
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, Amount = 1000m, CostOfWork = 800m, Wip = 200m, ProfitLoss = 100m, Detail = "Q1 Invoice", FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 3, Amount = 2000m, CostOfWork = 1600m, Wip = 400m, ProfitLoss = 200m, Detail = "Q1 Report", FpsYear = DefaultTestFpsYear }
             };
-            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
-            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
-            var summariesMockSet = RepositoryTestHelper.CreateMockDbSet(summaries);
-            mockContext.Setup(x => x.MonthlyInvoicesSummary).Returns(summariesMockSet.Object);
-            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
+            var (repo, invoicesDbSet, mockContext) = CreateRepositoryWithMocks(sourceInvoices);
 
-            var query = new PaginationParameters<string>
-            {
-                Filter = "{\"Program\":\"ADMIN\"}"
-            };
+            var result = await repo.CopyInvoicesByMonthAsync(sourceMonth: 3, targetMonth: 4, specificInvoiceIds: null);
 
-            var result = await repo.GetMonthlyInvoicesSummaryAsync(query);
-
-            Assert.Equal(2, result.Count);
-            Assert.All(result, s => Assert.Contains("ADMIN", s.Program));
+            invoicesDbSet.Verify(x => x.AddRangeAsync(
+                It.Is<IEnumerable<ProjectInvoice>>(invoices => invoices.Count() == 2),
+                It.IsAny<CancellationToken>()), Times.Once);
+            mockContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
-        public async Task GetMonthlyInvoicesSummaryAsync_WithParentProjectFilter_ReturnsFilteredData()
+        public async Task CopyInvoicesByMonthAsync_SelectiveCopyByIds_CopiesOnlySpecifiedInvoices()
         {
-            var summaries = new List<MonthlyInvoicesSummary>
+            var sourceInvoices = new List<ProjectInvoice>
             {
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "CORE-001", Month = 3, MonthlyAmount = 1000m },
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "CORE-002", Month = 3, MonthlyAmount = 2000m },
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "TEST-001", Month = 3, MonthlyAmount = 1500m }
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, Amount = 1000m, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 3, Amount = 2000m, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", Month = 3, Amount = 3000m, FpsYear = DefaultTestFpsYear }
             };
-            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
-            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
-            var summariesMockSet = RepositoryTestHelper.CreateMockDbSet(summaries);
-            mockContext.Setup(x => x.MonthlyInvoicesSummary).Returns(summariesMockSet.Object);
-            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
+            var (repo, invoicesDbSet, mockContext) = CreateRepositoryWithMocks(sourceInvoices);
 
-            var query = new PaginationParameters<string>
-            {
-                Filter = "{\"ParentProject\":\"CORE\"}"
-            };
+            var result = await repo.CopyInvoicesByMonthAsync(sourceMonth: 3, targetMonth: 4, specificInvoiceIds: new List<int> { 1, 3 });
 
-            var result = await repo.GetMonthlyInvoicesSummaryAsync(query);
-
-            Assert.Equal(2, result.Count);
-            Assert.All(result, s => Assert.Contains("CORE", s.ParentProject));
+            invoicesDbSet.Verify(x => x.AddRangeAsync(
+                It.Is<IEnumerable<ProjectInvoice>>(invoices => invoices.Count() == 2),
+                It.IsAny<CancellationToken>()), Times.Once);
+            mockContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
-        public async Task GetMonthlyInvoicesSummaryAsync_NoFilter_ReturnsAllDataSorted()
+        public async Task CopyInvoicesByMonthAsync_EmptySourceMonth_DoesNotCopyAnyInvoices()
         {
-            var summaries = new List<MonthlyInvoicesSummary>
+            var sourceInvoices = new List<ProjectInvoice>
             {
-                new() { FpsYear = DefaultTestFpsYear, Program = "CORE", ParentProject = "B-Project", Month = 6, MonthlyAmount = 3000m },
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "A-Project", Month = 3, MonthlyAmount = 1000m },
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "C-Project", Month = 9, MonthlyAmount = 2000m }
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 6, Amount = 1000m, FpsYear = DefaultTestFpsYear }
             };
-            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
-            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
-            var summariesMockSet = RepositoryTestHelper.CreateMockDbSet(summaries);
-            mockContext.Setup(x => x.MonthlyInvoicesSummary).Returns(summariesMockSet.Object);
-            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
+            var (repo, invoicesDbSet, mockContext) = CreateRepositoryWithMocks(sourceInvoices);
+            List<ProjectInvoice>? capturedInvoices = null;
 
-            var query = new PaginationParameters<string>();
+            invoicesDbSet
+                .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<ProjectInvoice>>(), It.IsAny<CancellationToken>()))
+                .Callback<IEnumerable<ProjectInvoice>, CancellationToken>((invoices, _) => capturedInvoices = invoices.ToList())
+                .Returns(Task.CompletedTask);
 
-            var result = await repo.GetMonthlyInvoicesSummaryAsync(query);
+            var result = await repo.CopyInvoicesByMonthAsync(sourceMonth: 3, targetMonth: 4, specificInvoiceIds: null);
 
-            Assert.Equal(3, result.Count);
-            // Should be ordered by Program, ParentProject, Month
-            Assert.Equal("ADMIN", result[0].Program);
-            Assert.Equal("ADMIN", result[1].Program);
-            Assert.Equal("CORE", result[2].Program);
+            Assert.NotNull(capturedInvoices);
+            Assert.Empty(capturedInvoices);
+            mockContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
-        public async Task GetMonthlyInvoicesSummaryAsync_EmptyFilter_ReturnsAll()
+        public async Task CopyInvoicesByMonthAsync_EmptyInvoiceIdsList_FallsBackToBulkCopy()
         {
-            var summaries = new List<MonthlyInvoicesSummary>
+            // When an empty list is provided, it falls back to bulk copy behavior
+            var sourceInvoices = new List<ProjectInvoice>
             {
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "PRJ1", Month = 3, MonthlyAmount = 1000m },
-                new() { FpsYear = DefaultTestFpsYear, Program = "CORE", ParentProject = "PRJ2", Month = 6, MonthlyAmount = 2000m }
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, Amount = 1000m, FpsYear = DefaultTestFpsYear }
             };
-            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
-            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
-            var summariesMockSet = RepositoryTestHelper.CreateMockDbSet(summaries);
-            mockContext.Setup(x => x.MonthlyInvoicesSummary).Returns(summariesMockSet.Object);
-            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
+            var (repo, invoicesDbSet, mockContext) = CreateRepositoryWithMocks(sourceInvoices);
+            List<ProjectInvoice>? capturedInvoices = null;
 
-            var query = new PaginationParameters<string> { Filter = "" };
+            invoicesDbSet
+                .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<ProjectInvoice>>(), It.IsAny<CancellationToken>()))
+                .Callback<IEnumerable<ProjectInvoice>, CancellationToken>((invoices, _) => capturedInvoices = invoices.ToList())
+                .Returns(Task.CompletedTask);
 
-            var result = await repo.GetMonthlyInvoicesSummaryAsync(query);
+            var result = await repo.CopyInvoicesByMonthAsync(sourceMonth: 3, targetMonth: 4, specificInvoiceIds: new List<int>());
 
-            Assert.Equal(2, result.Count);
+            Assert.NotNull(capturedInvoices);
+            Assert.Single(capturedInvoices); // Falls back to bulk copy, so gets the one invoice from month 3
+            Assert.Equal(4, capturedInvoices[0].Month);
+            mockContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
-        public async Task GetMonthlyInvoicesSummaryAsync_NullFilter_ReturnsAll()
+        public async Task CopyInvoicesByMonthAsync_NonExistentInvoiceIds_DoesNotCopyAnyInvoices()
         {
-            var summaries = new List<MonthlyInvoicesSummary>
+            var sourceInvoices = new List<ProjectInvoice>
             {
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "PRJ1", Month = 3, MonthlyAmount = 1000m }
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, Amount = 1000m, FpsYear = DefaultTestFpsYear }
             };
-            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
-            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
-            var summariesMockSet = RepositoryTestHelper.CreateMockDbSet(summaries);
-            mockContext.Setup(x => x.MonthlyInvoicesSummary).Returns(summariesMockSet.Object);
-            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
+            var (repo, invoicesDbSet, mockContext) = CreateRepositoryWithMocks(sourceInvoices);
+            List<ProjectInvoice>? capturedInvoices = null;
 
-            var query = new PaginationParameters<string> { Filter = null };
+            invoicesDbSet
+                .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<ProjectInvoice>>(), It.IsAny<CancellationToken>()))
+                .Callback<IEnumerable<ProjectInvoice>, CancellationToken>((invoices, _) => capturedInvoices = invoices.ToList())
+                .Returns(Task.CompletedTask);
 
-            var result = await repo.GetMonthlyInvoicesSummaryAsync(query);
+            var result = await repo.CopyInvoicesByMonthAsync(sourceMonth: 3, targetMonth: 4, specificInvoiceIds: new List<int> { 99, 100 });
 
-            Assert.Single(result);
+            Assert.NotNull(capturedInvoices);
+            Assert.Empty(capturedInvoices);
+            mockContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
-        public async Task GetMonthlyInvoicesSummaryAsync_WithBothFilters_AppliesBoth()
+        public async Task CopyInvoicesByMonthAsync_CopiedInvoicesPreserveAllProperties()
         {
-            var summaries = new List<MonthlyInvoicesSummary>
+            var sourceInvoices = new List<ProjectInvoice>
             {
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "CORE-001", Month = 3, MonthlyAmount = 1000m },
-                new() { FpsYear = DefaultTestFpsYear, Program = "ADMIN", ParentProject = "TEST-001", Month = 3, MonthlyAmount = 2000m },
-                new() { FpsYear = DefaultTestFpsYear, Program = "CORE", ParentProject = "CORE-002", Month = 3, MonthlyAmount = 1500m }
+                new() 
+                { 
+                    InvoiceCounter = 1, 
+                    ProjectParent = "PRJ1", 
+                    Month = 3, 
+                    Amount = 1500m, 
+                    CostOfWork = 1200m, 
+                    Wip = 300m, 
+                    ProfitLoss = 150m, 
+                    Detail = "Test Invoice", 
+                    FpsYear = DefaultTestFpsYear 
+                }
             };
-            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
-            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
-            var summariesMockSet = RepositoryTestHelper.CreateMockDbSet(summaries);
-            mockContext.Setup(x => x.MonthlyInvoicesSummary).Returns(summariesMockSet.Object);
-            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
+            var (repo, invoicesDbSet, mockContext) = CreateRepositoryWithMocks(sourceInvoices);
+            List<ProjectInvoice>? capturedInvoices = null;
 
-            var query = new PaginationParameters<string>
-            {
-                Filter = "{\"Program\":\"ADMIN\",\"ParentProject\":\"CORE\"}"
-            };
+            invoicesDbSet
+                .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<ProjectInvoice>>(), It.IsAny<CancellationToken>()))
+                .Callback<IEnumerable<ProjectInvoice>, CancellationToken>((invoices, _) => capturedInvoices = invoices.ToList())
+                .Returns(Task.CompletedTask);
 
-            var result = await repo.GetMonthlyInvoicesSummaryAsync(query);
+            var result = await repo.CopyInvoicesByMonthAsync(sourceMonth: 3, targetMonth: 4, specificInvoiceIds: null);
 
-            Assert.Single(result);
-            Assert.Equal("ADMIN", result[0].Program);
-            Assert.Contains("CORE", result[0].ParentProject);
+            Assert.NotNull(capturedInvoices);
+            Assert.Single(capturedInvoices);
+            var copiedInvoice = capturedInvoices.First();
+            Assert.Equal("PRJ1", copiedInvoice.ProjectParent);
+            Assert.Equal(4, copiedInvoice.Month);
+            Assert.Equal(1500m, copiedInvoice.Amount);
+            Assert.Equal(1200m, copiedInvoice.CostOfWork);
+            Assert.Equal(300m, copiedInvoice.Wip);
+            Assert.Equal(150m, copiedInvoice.ProfitLoss);
+            Assert.Equal("Test Invoice", copiedInvoice.Detail);
+            Assert.Equal(DefaultTestFpsYear, copiedInvoice.FpsYear);
         }
 
         [Fact]
-        public async Task GetMonthlyInvoicesSummaryAsync_EmptyResult_ReturnsEmptyList()
+        public async Task CopyInvoicesByMonthAsync_CopiedInvoicesDoNotIncludeInvoiceCounter()
         {
-            var summaries = new List<MonthlyInvoicesSummary>();
-            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
-            fpsRequestContext.FpsYear.Returns(DefaultTestFpsYear);
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
-            var summariesMockSet = RepositoryTestHelper.CreateMockDbSet(summaries);
-            mockContext.Setup(x => x.MonthlyInvoicesSummary).Returns(summariesMockSet.Object);
-            var repo = new ProjectInvoiceRepository(mockContext.Object, fpsRequestContext);
+            var sourceInvoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 5, ProjectParent = "PRJ1", Month = 3, Amount = 1000m, FpsYear = DefaultTestFpsYear }
+            };
+            var (repo, invoicesDbSet, mockContext) = CreateRepositoryWithMocks(sourceInvoices);
+            List<ProjectInvoice>? capturedInvoices = null;
 
-            var query = new PaginationParameters<string>();
+            invoicesDbSet
+                .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<ProjectInvoice>>(), It.IsAny<CancellationToken>()))
+                .Callback<IEnumerable<ProjectInvoice>, CancellationToken>((invoices, _) => capturedInvoices = invoices.ToList())
+                .Returns(Task.CompletedTask);
 
-            var result = await repo.GetMonthlyInvoicesSummaryAsync(query);
+            var result = await repo.CopyInvoicesByMonthAsync(sourceMonth: 3, targetMonth: 4, specificInvoiceIds: null);
 
-            Assert.Empty(result);
+            Assert.NotNull(capturedInvoices);
+            Assert.Single(capturedInvoices);
+            var copiedInvoice = capturedInvoices.First();
+            Assert.Equal(0, copiedInvoice.InvoiceCounter);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesByMonthAsync_MultipleInvoices_MaintainsCorrectOrder()
+        {
+            var sourceInvoices = new List<ProjectInvoice>
+            {
+                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", Month = 3, Amount = 1000m, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", Month = 3, Amount = 2000m, FpsYear = DefaultTestFpsYear },
+                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", Month = 3, Amount = 3000m, FpsYear = DefaultTestFpsYear }
+            };
+            var (repo, invoicesDbSet, mockContext) = CreateRepositoryWithMocks(sourceInvoices);
+            List<ProjectInvoice>? capturedInvoices = null;
+
+            invoicesDbSet
+                .Setup(x => x.AddRangeAsync(It.IsAny<IEnumerable<ProjectInvoice>>(), It.IsAny<CancellationToken>()))
+                .Callback<IEnumerable<ProjectInvoice>, CancellationToken>((invoices, _) => capturedInvoices = invoices.ToList())
+                .Returns(Task.CompletedTask);
+
+            var result = await repo.CopyInvoicesByMonthAsync(sourceMonth: 3, targetMonth: 4, specificInvoiceIds: null);
+
+            Assert.NotNull(capturedInvoices);
+            Assert.Equal(3, capturedInvoices.Count);
+            Assert.Equal("PRJ1", capturedInvoices[0].ProjectParent);
+            Assert.Equal("PRJ2", capturedInvoices[1].ProjectParent);
+            Assert.Equal("PRJ3", capturedInvoices[2].ProjectParent);
+            Assert.All(capturedInvoices, invoice => Assert.Equal(4, invoice.Month));
         }
 
         #endregion
