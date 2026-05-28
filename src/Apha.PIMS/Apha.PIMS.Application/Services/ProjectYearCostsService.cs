@@ -33,10 +33,23 @@ namespace Apha.PIMS.Application.Services
             return BuildResult(_mapper.Map<List<AdditionalCostDto>>(paged.Data), paged.PaginationData);
         }
 
-        private static PaginatedResult<AdditionalCostDto> BuildResult(
-            List<AdditionalCostDto> items, PaginationData pd)
+        public async Task<PaginatedResult<AnimalCostDto>> GetAnimalActualsAsync(
+            string project, short year, PaginationParameters<string> paging)
         {
-            return new PaginatedResult<AdditionalCostDto>(items, new PaginationDto
+            PagedData<MyProjSubContract> paged = await _repository.GetAnimalActualsAsync(project, year, paging);
+            return BuildResult(_mapper.Map<List<AnimalCostDto>>(paged.Data), paged.PaginationData);
+        }
+
+        public async Task<PaginatedResult<AnimalCostDto>> GetAnimalPlansAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            PagedData<MyProjectAnimalPlan> paged = await _repository.GetAnimalPlansAsync(project, year, paging);
+            return BuildResult(_mapper.Map<List<AnimalCostDto>>(paged.Data), paged.PaginationData);
+        }
+
+        private static PaginatedResult<TDto> BuildResult<TDto>(List<TDto> items, PaginationData pd)
+        {
+            return new PaginatedResult<TDto>(items, new PaginationDto
             {
                 PageNumber   = pd.PageNumber,
                 PageSize     = pd.PageSize,

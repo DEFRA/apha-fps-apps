@@ -1,4 +1,4 @@
-@using Apha.FPSApps.Web.Models.Components.DataGrid
+﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.PIMS.Models.ProjectYearCostsViewModel
 
 @{
@@ -134,7 +134,7 @@
                     </li>
                 </ul>
 
-                <!-- Placeholder panels for other tabs -->
+                <!-- Placeholder panels -->
                 <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
                      id="nav-monthlyPact" role="tabpanel" aria-labelledby="tab_nav-monthlyPact">
                     <p class="govuk-body govuk-hint">Monthly Pact Data — coming soon.</p>
@@ -159,16 +159,37 @@
                      id="nav-test-plan" role="tabpanel" aria-labelledby="tab_nav-test-plan">
                     <p class="govuk-body govuk-hint">Test Plan vs Actuals — coming soon.</p>
                 </div>
+
+                <!-- ── Animal Plan vs Actuals tab ─────────────────────────────────────────
+                     NOTE: panel starts hidden (GOV.UK tabs controls visibility via JS).
+                     Grids are server-rendered so data is already present; reloadGrid is
+                     called on filter change exactly like the Additional Cost tab.        -->
                 <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
-                     id="nav-animal-plan" role="tabpanel" aria-labelledby="tab_nav-animal-plan">
-                    <p class="govuk-body govuk-hint">Animal Plan vs Actuals — coming soon.</p>
+                     id="nav-animal-plan" role="tabpanel"
+                     aria-labelledby="tab_nav-animal-plan">
+                    <div class="govuk-grid-row">
+
+                        <!-- Animal Plan (left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div id="@($"gridContainer_{Model.AnimalPlansGrid.GridId}")">
+                                @await Html.PartialAsync("_DataGrid", Model.AnimalPlansGrid)
+                            </div>
+                        </div>
+
+                        <!-- Animal Actuals (right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div id="@($"gridContainer_{Model.AnimalActualsGrid.GridId}")">
+                                @await Html.PartialAsync("_DataGrid", Model.AnimalActualsGrid)
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
 
-                <!-- ── Additional Cost Plan vs Actuals tab ─── -->
+                <!-- ── Additional Cost Plan vs Actuals tab ─────────────────────────────── -->
                 <div class="govuk-tabs__panel govuk-!-padding-2"
                      id="nav-additional-cost" role="tabpanel"
                      aria-labelledby="tab_nav-additional-cost">
-
                     <div class="govuk-grid-row">
 
                         <!-- Additional Cost Plan (left) -->
@@ -196,10 +217,11 @@
 
 @section Scripts {
 <script>
-    var plansGridId   = '@Model.AdditionalPlansGrid.GridId';
-    var actualsGridId = '@Model.AdditionalActualsGrid.GridId';
+    var plansGridId         = '@Model.AdditionalPlansGrid.GridId';
+    var actualsGridId       = '@Model.AdditionalActualsGrid.GridId';
+    var animalPlansGridId   = '@Model.AnimalPlansGrid.GridId';
+    var animalActualsGridId = '@Model.AnimalActualsGrid.GridId';
 
-    // Extra filters injected into both grid reload requests
     function getYearCostsExtraFilters() {
         return {
             project: document.getElementById('dpprojectSelect').value,
@@ -207,21 +229,100 @@
         };
     }
 
-    function getPlansGridManager()   { return window['gridManager_' + plansGridId]; }
-    function getActualsGridManager() { return window['gridManager_' + actualsGridId]; }
+    function getPlansGridManager()         { return window['gridManager_' + plansGridId]; }
+    function getActualsGridManager()       { return window['gridManager_' + actualsGridId]; }
+    function getAnimalPlansGridManager()   { return window['gridManager_' + animalPlansGridId]; }
+    function getAnimalActualsGridManager() { return window['gridManager_' + animalActualsGridId]; }
 
-    function refreshBothGrids() {
-        const project = document.getElementById('dpprojectSelect').value;
-        const year    = document.getElementById('dpyear').value;
-        if (!project || !year) return;
+    // Both tabs are server-rendered — mark both as loaded so filter-change works
+    var loadedTabs = {
+        'nav-additional-cost': true,
+        'nav-animal-plan':     true
+    };
 
-        const plansGm   = getPlansGridManager();
-        const actualsGm = getActualsGridManager();
-        if (plansGm)   plansGm.reloadGrid({ page: 1 });
-        if (actualsGm) actualsGm.reloadGrid({ page: 1 });
+    // ── Panel visibility (GOV.UK Frontend JS is not loaded in the layout,
+    //    so we manage show/hide manually exactly as CostBook does) ─────────
+    function showPanel(panelId) {
+        document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
+            if (p.id === panelId) {
+                p.classList.remove('govuk-tabs__panel--hidden');
+                p.style.display = 'block';
+            } else {
+                p.classList.add('govuk-tabs__panel--hidden');
+                p.style.display = 'none';
+            }
+        });
+
+        // Update selected tab styling
+        document.querySelectorAll('.govuk-tabs__list-item').forEach(function (li) {
+            li.classList.remove('govuk-tabs__list-item--selected');
+        });
+        var activeLink = document.querySelector('.govuk-tabs__tab[aria-controls="' + panelId + '"]');
+        if (activeLink) {
+            activeLink.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
+        }
     }
 
-    document.getElementById('dpprojectSelect').addEventListener('change', refreshBothGrids);
-    document.getElementById('dpyear').addEventListener('change', refreshBothGrids);
+    function refreshActiveTab() {
+        var activePanel = document.querySelector('.govuk-tabs__panel:not(.govuk-tabs__panel--hidden)');
+        if (!activePanel) return;
+        refreshTabById(activePanel.id);
+    }
+
+    function refreshTabById(tabId) {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) return;
+
+        if (tabId === 'nav-additional-cost') {
+            var plansGm   = getPlansGridManager();
+            var actualsGm = getActualsGridManager();
+            if (plansGm)   plansGm.reloadGrid({ page: 1 });
+            if (actualsGm) actualsGm.reloadGrid({ page: 1 });
+        } else if (tabId === 'nav-animal-plan') {
+            var animalPlansGm   = getAnimalPlansGridManager();
+            var animalActualsGm = getAnimalActualsGridManager();
+            if (animalPlansGm)   animalPlansGm.reloadGrid({ page: 1 });
+            if (animalActualsGm) animalActualsGm.reloadGrid({ page: 1 });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // ── Wire up tab clicks: show panel + refresh grids ────────────────
+        document.querySelectorAll('.govuk-tabs__tab').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var panelId = this.getAttribute('aria-controls');
+                if (!panelId) return;
+
+                showPanel(panelId);
+
+                if (loadedTabs[panelId]) {
+                    refreshTabById(panelId);
+                }
+            });
+        });
+
+        // ── On arrival, honour the URL hash or default to additional-cost ─
+        var hash = window.location.hash ? window.location.hash.substring(1) : 'nav-additional-cost';
+        var targetPanel = document.getElementById(hash);
+        var defaultPanel = hash && targetPanel ? hash : 'nav-additional-cost';
+
+        // Hide all panels first, then show the target
+        document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
+            p.classList.add('govuk-tabs__panel--hidden');
+            p.style.display = 'none';
+        });
+        showPanel(defaultPanel);
+
+        // If the landing tab has grids, reload them after _DataGrid scripts register
+        if (loadedTabs[defaultPanel]) {
+            setTimeout(function () { refreshTabById(defaultPanel); }, 300);
+        }
+    });
+
+    document.getElementById('dpprojectSelect').addEventListener('change', refreshActiveTab);
+    document.getElementById('dpyear').addEventListener('change', refreshActiveTab);
 </script>
 }

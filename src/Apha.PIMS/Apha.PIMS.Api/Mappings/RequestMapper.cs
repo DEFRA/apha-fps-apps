@@ -37,6 +37,7 @@ namespace Apha.PIMS.Api.Mappings
             CreateMap<YearDto, YearRes>().ReverseMap();
             CreateMap<CommentTopicDto, CommentTopicRes>().ReverseMap();
             CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
+            CreateMap<AnimalCostDto, AnimalCostRes>().ReverseMap();
         }
     }
 }

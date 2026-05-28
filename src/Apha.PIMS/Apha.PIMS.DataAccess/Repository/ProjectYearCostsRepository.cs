@@ -45,6 +45,34 @@ namespace Apha.PIMS.DataAccess.Repository
             return ApplyPaging(all, paging.Page, paging.PageSize);
         }
 
+        public async Task<PagedData<MyProjSubContract>> GetAnimalActualsAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            IQueryable<MyProjSubContract> query = _context.MyProjSubcontracts
+                .AsNoTracking()
+                .Where(s => s.Project == project
+                         && s.Year == year
+                         && AnimalAcctCodes.Contains(s.Acctcode));
+
+            query = ApplyActualsSearch(query, paging.Search);
+            query = ApplyActualsSorting(query, paging.SortBy, paging.Descending);
+            List<MyProjSubContract> all = await query.ToListAsync();
+            return ApplyPaging(all, paging.Page, paging.PageSize);
+        }
+
+        public async Task<PagedData<MyProjectAnimalPlan>> GetAnimalPlansAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            IQueryable<MyProjectAnimalPlan> query = _context.MyProjectAnimalPlans
+                .AsNoTrackingWithIdentityResolution()
+                .Where(s => s.Parentproject == project && s.Year == year);
+
+            query = ApplyAnimalPlanSearch(query, paging.Search);
+            query = ApplyAnimalPlanSorting(query, paging.SortBy, paging.Descending);
+            List<MyProjectAnimalPlan> all = await query.ToListAsync();
+            return ApplyPaging(all, paging.Page, paging.PageSize);
+        }
+
         private static IQueryable<MyProjSubContract> ApplyActualsSearch(
             IQueryable<MyProjSubContract> query, string? search)
         {
@@ -98,6 +126,28 @@ namespace Apha.PIMS.DataAccess.Repository
         private static IQueryable<T> ApplyOrder<T, TKey>(
             IQueryable<T> query, Expression<Func<T, TKey>> keySelector, bool descending)
             => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+
+        private static IQueryable<MyProjectAnimalPlan> ApplyAnimalPlanSearch(
+            IQueryable<MyProjectAnimalPlan> query, string? search)
+        {
+            if (string.IsNullOrWhiteSpace(search)) return query;
+            string s = search.ToLower();
+            return query.Where(x => x.Animaltype != null && x.Animaltype.ToLower().Contains(s));
+        }
+
+        private static IQueryable<MyProjectAnimalPlan> ApplyAnimalPlanSorting(
+            IQueryable<MyProjectAnimalPlan> query, string? sortBy, bool descending)
+        {
+            return (sortBy?.ToLower()) switch
+            {
+                "animaltype"      => ApplyOrder(query, x => x.Animaltype,      descending),
+                "numberofdays"    => ApplyOrder(query, x => x.Numberofdays,    descending),
+                "numberofanimals" => ApplyOrder(query, x => x.Numberofanimals, descending),
+                "rate"            => ApplyOrder(query, x => x.Rate,            descending),
+                "cost"            => ApplyOrder(query, x => x.Cost,            descending),
+                _                 => query.OrderBy(x => x.Animaltype)
+            };
+        }
 
         private static PagedData<T> ApplyPaging<T>(List<T> data, int page, int pageSize)
         {

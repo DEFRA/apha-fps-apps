@@ -25,6 +25,12 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Actuals grid item — maps from actuals fields on the shared DTO
             CreateMap<AdditionalCostDto, AdditionalCostActualItem>().ReverseMap();
+
+            // Animal Plan grid item
+            CreateMap<AnimalCostDto, AnimalCostPlanItem>().ReverseMap();
+
+            // Animal Actuals grid item
+            CreateMap<AnimalCostDto, AnimalCostActualItem>().ReverseMap();
         }
     }
 }

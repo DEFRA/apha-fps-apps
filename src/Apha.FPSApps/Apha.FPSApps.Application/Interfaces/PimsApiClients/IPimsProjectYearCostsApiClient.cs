@@ -8,5 +8,7 @@ namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
     {
         Task<ApiResponseDto<List<AdditionalCostDto>>> GetAdditionalActualsAsync(string project, short year, QueryParameters<string> query);
         Task<ApiResponseDto<List<AdditionalCostDto>>> GetAdditionalPlansAsync(string project, short year, QueryParameters<string> query);
+        Task<ApiResponseDto<List<AnimalCostDto>>> GetAnimalActualsAsync(string project, short year, QueryParameters<string> query);
+        Task<ApiResponseDto<List<AnimalCostDto>>> GetAnimalPlansAsync(string project, short year, QueryParameters<string> query);
     }
 }

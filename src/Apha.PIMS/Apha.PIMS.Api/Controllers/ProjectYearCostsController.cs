@@ -3,8 +3,7 @@ using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
-using Apha.PIMS.Core.Pagination;
-using Asp.Versioning;
+using Apha.PIMS.Core.Pagination;using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,6 +44,26 @@ namespace Apha.PIMS.Api.Controllers
             PaginationParameters<string> paging = _mapper.Map<PaginationParameters<string>>(query);
             PaginatedResult<AdditionalCostDto> result = await _service.GetAdditionalPlansAsync(project, year, paging);
             return Ok(_mapper.Map<PaginationRes<AdditionalCostRes>>(result));
+        }
+
+        /// <summary>Returns paginated Animal Cost actuals for a given project and year.</summary>
+        [HttpGet("{project}/{year}/animalactuals")]
+        public async Task<IActionResult> GetAnimalActuals(
+            string project, short year, [FromQuery] PaginationReq<string> query)
+        {
+            PaginationParameters<string> paging = _mapper.Map<PaginationParameters<string>>(query);
+            PaginatedResult<AnimalCostDto> result = await _service.GetAnimalActualsAsync(project, year, paging);
+            return Ok(_mapper.Map<PaginationRes<AnimalCostRes>>(result));
+        }
+
+        /// <summary>Returns paginated Animal Cost plans for a given project and year.</summary>
+        [HttpGet("{project}/{year}/animalplans")]
+        public async Task<IActionResult> GetAnimalPlans(
+            string project, short year, [FromQuery] PaginationReq<string> query)
+        {
+            PaginationParameters<string> paging = _mapper.Map<PaginationParameters<string>>(query);
+            PaginatedResult<AnimalCostDto> result = await _service.GetAnimalPlansAsync(project, year, paging);
+            return Ok(_mapper.Map<PaginationRes<AnimalCostRes>>(result));
         }
     }
 }

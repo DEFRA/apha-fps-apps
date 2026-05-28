@@ -8,5 +8,7 @@ namespace Apha.PIMS.Application.Interfaces
     {
         Task<PaginatedResult<AdditionalCostDto>> GetAdditionalActualsAsync(string project, short year, PaginationParameters<string> paging);
         Task<PaginatedResult<AdditionalCostDto>> GetAdditionalPlansAsync(string project, short year, PaginationParameters<string> paging);
+        Task<PaginatedResult<AnimalCostDto>> GetAnimalActualsAsync(string project, short year, PaginationParameters<string> paging);
+        Task<PaginatedResult<AnimalCostDto>> GetAnimalPlansAsync(string project, short year, PaginationParameters<string> paging);
     }
 }

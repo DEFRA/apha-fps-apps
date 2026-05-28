@@ -34,5 +34,7 @@ namespace Apha.Common.Constants
         // Project Year Costs
         public const string GetAdditionalActuals = "api/v1/projectyearcosts/{0}/{1}/additionalactuals";
         public const string GetAdditionalPlans = "api/v1/projectyearcosts/{0}/{1}/additionalplans";
+        public const string GetAnimalActuals = "api/v1/projectyearcosts/{0}/{1}/animalactuals";
+        public const string GetAnimalPlans = "api/v1/projectyearcosts/{0}/{1}/animalplans";
     }
 }

@@ -58,8 +58,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 BuildAdditionalPlansGridAsync(resolvedProject, resolvedYear, defaultRequest);
             Task<DataGridConfig<AdditionalCostActualItem>> actualsGridTask =
                 BuildAdditionalActualsGridAsync(resolvedProject, resolvedYear, defaultRequest);
+            Task<DataGridConfig<AnimalCostPlanItem>> animalPlansGridTask =
+                BuildAnimalPlansGridAsync(resolvedProject, resolvedYear, defaultRequest);
+            Task<DataGridConfig<AnimalCostActualItem>> animalActualsGridTask =
+                BuildAnimalActualsGridAsync(resolvedProject, resolvedYear, defaultRequest);
 
-            await Task.WhenAll(plansGridTask, actualsGridTask);
+            await Task.WhenAll(plansGridTask, actualsGridTask, animalPlansGridTask, animalActualsGridTask);
 
             return View(new ProjectYearCostsViewModel
             {
@@ -68,7 +72,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 ProjectOptions = projectOptions,
                 YearOptions = yearOptions,
                 AdditionalPlansGrid = plansGridTask.Result,
-                AdditionalActualsGrid = actualsGridTask.Result
+                AdditionalActualsGrid = actualsGridTask.Result,
+                AnimalPlansGrid = animalPlansGridTask.Result,
+                AnimalActualsGrid = animalActualsGridTask.Result
             });
         }
 
@@ -166,6 +172,102 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 BindGridUrl = "/PIMS/ProjectYearCosts/LoadAdditionalActualsGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<AdditionalCostActualItem>(null),
+                Pagination = pagination
+            };
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadAnimalPlansGrid(
+            PaginationFilter<string> request, string project, short year)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request" });
+
+            DataGridConfig<AnimalCostPlanItem> grid =
+                await BuildAnimalPlansGridAsync(project, year, request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadAnimalActualsGrid(
+            PaginationFilter<string> request, string project, short year)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request" });
+
+            DataGridConfig<AnimalCostActualItem> grid =
+                await BuildAnimalActualsGridAsync(project, year, request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        private async Task<DataGridConfig<AnimalCostPlanItem>> BuildAnimalPlansGridAsync(
+            string project, short year, PaginationFilter<string> request)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<AnimalCostDto>> response =
+                await _yearCostsService.GetAnimalPlansAsync(project, year, queryParameters);
+
+            List<AnimalCostPlanItem> items = response.Success && response.Data != null
+                ? _mapper.Map<List<AnimalCostPlanItem>>(response.Data)
+                : [];
+
+            PaginationModel pagination = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<AnimalCostPlanItem>
+            {
+                GridId = "animalPlansGrid",
+                Title = "Animal Plan",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "AnimalType",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = "/PIMS/ProjectYearCosts/LoadAnimalPlansGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<AnimalCostPlanItem>(null),
+                Pagination = pagination
+            };
+        }
+
+        private async Task<DataGridConfig<AnimalCostActualItem>> BuildAnimalActualsGridAsync(
+            string project, short year, PaginationFilter<string> request)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<AnimalCostDto>> response =
+                await _yearCostsService.GetAnimalActualsAsync(project, year, queryParameters);
+
+            List<AnimalCostActualItem> items = response.Success && response.Data != null
+                ? _mapper.Map<List<AnimalCostActualItem>>(response.Data)
+                : [];
+
+            PaginationModel pagination = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<AnimalCostActualItem>
+            {
+                GridId = "animalActualsGrid",
+                Title = "Animal Actuals",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "AcctCode",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = "/PIMS/ProjectYearCosts/LoadAnimalActualsGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<AnimalCostActualItem>(null),
                 Pagination = pagination
             };
         }

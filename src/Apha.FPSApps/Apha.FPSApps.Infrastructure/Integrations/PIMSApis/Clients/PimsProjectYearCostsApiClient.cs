@@ -65,5 +65,49 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<AnimalCostDto>>> GetAnimalActualsAsync(
+            string project, short year, QueryParameters<string> query)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(
+                    string.Format(PimsApiEndpoints.GetAnimalActuals, project, year), query);
+                var response = await _http.GetAsync<List<AnimalCostRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<AnimalCostDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<AnimalCostDto>>>(response);
+                return ApiResponseDto<List<AnimalCostDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<AnimalCostDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve animal actuals", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<List<AnimalCostDto>>> GetAnimalPlansAsync(
+            string project, short year, QueryParameters<string> query)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(
+                    string.Format(PimsApiEndpoints.GetAnimalPlans, project, year), query);
+                var response = await _http.GetAsync<List<AnimalCostRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<AnimalCostDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<AnimalCostDto>>>(response);
+                return ApiResponseDto<List<AnimalCostDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<AnimalCostDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve animal plans", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }
