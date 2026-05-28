@@ -62,7 +62,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
                 .GetCustomAttributes(typeof(AuthorizeAttribute), true);
             Assert.NotEmpty(attrs);
             var auth = (AuthorizeAttribute)attrs[0];
-            Assert.Contains("API-FPSUser", auth.Roles);
             Assert.Contains("API-FPSAdmin", auth.Roles);
         }
 

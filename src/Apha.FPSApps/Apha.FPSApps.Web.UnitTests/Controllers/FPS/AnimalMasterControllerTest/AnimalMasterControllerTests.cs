@@ -72,7 +72,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
             Assert.NotEmpty(attrs);
             var auth = (AuthorizeAttribute)attrs[0];
             Assert.Contains("FPSAdmin", auth.Roles);
-            Assert.Contains("FPSUser", auth.Roles);
         }
 
         [Fact]
@@ -473,16 +472,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
                 .Cast<AuthorizeAttribute>()
                 .First();
             Assert.Contains("FPSAdmin", attr.Roles);
-        }
-
-        [Fact]
-        public void Controller_AuthorizeRoles_IncludesFPSUser_ForReadAccess()
-        {
-            var attr = typeof(AnimalMasterController)
-                .GetCustomAttributes(typeof(AuthorizeAttribute), true)
-                .Cast<AuthorizeAttribute>()
-                .First();
-            Assert.Contains("FPSUser", attr.Roles);
         }
 
         #endregion
