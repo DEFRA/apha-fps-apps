@@ -1,0 +1,8 @@
+QUERY NAME: qryTestsActualBreakdown
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject_General.Program, MonthlyOutput.Buyer, tlkpTestCapability_TM.PlanPortfolio AS Portfolio, tlkpTestCapability_TM.WorkGroup, tlkpTestCapability_TM.TestCode, TestOrProduct.ShortDescription, MonthlyOutput.Month, IIf(IsNull([tbltestRCCost].[price]),[unitprice],[tbltestRCCost].[price]) AS PCPrice, [Volume]*IIf(IsNull([tbltestRCCost].[price]),[unitprice],[tbltestRCCost].[price]) AS PCCost, IIf(([MonthlyOutput].[Workgroup]="LTLA" And [tblTestRCCost].[profitcentre]="VetR"),"Path",IIf(IsNull([tblTestRCCost].[profitcentre]),[Workgroup_general].[profitcentre],[tblTestRCCost].[profitcentre])) AS [Profit Centre]
+FROM ((((tlkpTestReqmt_MAP INNER JOIN (tlkpTestCapability_TM INNER JOIN MonthlyOutput ON (tlkpTestCapability_TM.TestCode = MonthlyOutput.TestCode) AND (tlkpTestCapability_TM.WorkGroup = MonthlyOutput.WorkGroup)) ON (tlkpTestReqmt_MAP.TestCode = MonthlyOutput.TestCode) AND (tlkpTestReqmt_MAP.Buyer = MonthlyOutput.Buyer)) INNER JOIN WorkGroup_General ON MonthlyOutput.WorkGroup = WorkGroup_General.WorkGroup) INNER JOIN TestOrProduct ON tlkpTestReqmt_MAP.TestCode = TestOrProduct.ItemCode) INNER JOIN tlkpProject_General ON tlkpTestReqmt_MAP.Buyer = tlkpProject_General.ParentProject) LEFT JOIN tblTestRCCost ON TestOrProduct.ItemCode = tblTestRCCost.TestCode;
+

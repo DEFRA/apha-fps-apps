@@ -1,0 +1,8 @@
+QUERY NAME: qryChargeRatesUpd3New
+---------------------------------------------
+TYPE: DELETE
+
+SQL:
+DELETE DISTINCTROW tbltmpGradeCharge.*
+FROM tbltmpGradeCharge;
+

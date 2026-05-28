@@ -1,0 +1,9 @@
+QUERY NAME: qryStaffSetUp
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup.ProfitCentre, WorkGroupGrade_General.WorkGroup, WorkGroupGrade_General.WGGrade, tblStaff.Name, tblStaff.HrsAvail, tblStaff.PersonStatus
+FROM (WorkGroupGrade_General INNER JOIN WorkGroup ON WorkGroupGrade_General.WorkGroup = WorkGroup.WorkGroup) INNER JOIN tblStaff ON WorkGroupGrade_General.WGGrade = tblStaff.WorkGroupGrade
+WHERE (((tblStaff.PersonStatus)<>"I"));
+

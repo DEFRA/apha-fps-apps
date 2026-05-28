@@ -1,0 +1,10 @@
+QUERY NAME: TestFailures
+---------------------------------------------
+TYPE: MAKE TABLE
+
+SQL:
+SELECT DISTINCTROW Query9.workgroup, Query9.TCCode, Query9.TCContract, Query9.Month, Query9.SumOfVolume INTO TestFaillures
+FROM Query9 LEFT JOIN MonthlyOutput ON (Query9.Month = MonthlyOutput.Month) AND (Query9.TCContract = MonthlyOutput.Buyer) AND (Query9.TCCode = MonthlyOutput.TestCode) AND (Query9.workgroup = MonthlyOutput.WorkGroup)
+WHERE ((MonthlyOutput.TestCode Is Null))
+ORDER BY Query9.TCContract;
+

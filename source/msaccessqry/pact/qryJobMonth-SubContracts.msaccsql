@@ -1,0 +1,9 @@
+QUERY NAME: qryJobMonth-SubContracts
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW [qryJobMonth-SubContracts1].Project, [qryJobMonth-SubContracts1].Month, Sum([qryJobMonth-SubContracts1].Animals1) AS Animals, Sum([qryJobMonth-SubContracts1].Other1) AS Other, [Animals]+[Other] AS Total
+FROM [qryJobMonth-SubContracts1]
+GROUP BY [qryJobMonth-SubContracts1].Project, [qryJobMonth-SubContracts1].Month;
+

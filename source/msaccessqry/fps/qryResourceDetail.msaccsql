@@ -1,0 +1,8 @@
+QUERY NAME: qryResourceDetail
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaffJob_RM.StaffID, tblStaffJob_RM.plannedhours, tblStaffJob_RM.Jobcode, tlkpProject_General.ParentProject AS JobDescription, tlkpProject_General.Program AS Programme, tlkpProject_General.ProjectStatus
+FROM tblStaffJob_RM LEFT JOIN tlkpProject_General ON tblStaffJob_RM.Jobcode = tlkpProject_General.ParentProject;
+

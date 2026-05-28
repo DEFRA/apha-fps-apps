@@ -1,0 +1,11 @@
+QUERY NAME: qryChRatesUpd1PCNew
+---------------------------------------------
+TYPE: APPEND
+
+SQL:
+INSERT INTO tbltmpGradeCharge ( ProfitCentre, TotHrs, PCGrade, AvSalary, FactorB, PayRate, NPR, OHR, FullRate, DirectRate )
+SELECT DISTINCTROW ProfitCentreGrade.ProfitCentre, qryChRatesFactorBPC1New.TotHrs, ProfitCentreGrade.PCGrade, Grade.AvSalary, qryChRatesFactorBPC1New.FactorB, [AvSalary]*[FactorB] AS PayRate, qryChRatesFactorBPC1New.NPR, qryChRatesFactorBPC1New.OHR, [PayRate]+[OHR]+[NPR] AS FullRate, ([NPR]+[PayRate]) AS DirectRate
+FROM qryChRatesFactorBPC1New INNER JOIN (Grade INNER JOIN ProfitCentreGrade ON Grade.GradeCode = ProfitCentreGrade.GradeCode) ON qryChRatesFactorBPC1New.ProfitCentre = ProfitCentreGrade.ProfitCentre
+GROUP BY ProfitCentreGrade.ProfitCentre, qryChRatesFactorBPC1New.TotHrs, ProfitCentreGrade.PCGrade, Grade.AvSalary, qryChRatesFactorBPC1New.FactorB, [AvSalary]*[FactorB], qryChRatesFactorBPC1New.NPR, qryChRatesFactorBPC1New.OHR
+HAVING ((ProfitCentreGrade.ProfitCentre=[Forms]![frmRates]![RCPick]));
+

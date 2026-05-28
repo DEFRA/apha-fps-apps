@@ -1,0 +1,7 @@
+QUERY NAME: qryChRatesUpd2PC1newReal
+---------------------------------------------
+TYPE: UPDATE
+
+SQL:
+UPDATE DISTINCTROW tbltmpGradeCharge, ProfitCentreGrade SET ProfitCentreGrade.ChargeRate = [FullRate1], ProfitCentreGrade.DirectRate = [DirectRate1], ProfitCentreGrade.PayRate = [PayRate1], ProfitCentreGrade.NPR = [NPR1], ProfitCentreGrade.OHR = [OHR1];
+

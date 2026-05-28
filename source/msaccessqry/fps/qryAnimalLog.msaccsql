@@ -1,0 +1,9 @@
+QUERY NAME: qryAnimalLog
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT *
+FROM animalreq_Log
+WHERE 1=2;
+

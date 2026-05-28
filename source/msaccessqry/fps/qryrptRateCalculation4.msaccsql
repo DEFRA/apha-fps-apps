@@ -1,0 +1,10 @@
+QUERY NAME: qryrptRateCalculation4
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryrptRateCalculation3.ProfitCentre, qryrptRateCalculation3.CONTTARGET, qryrptRateCalculation3.AccountType, qryrptRateCalculation3.SumOfGenBid, Sum(PlanCatWGGrade.Hours) AS SumOfHours
+FROM ((qryrptRateCalculation3 INNER JOIN WorkGroup_General ON qryrptRateCalculation3.ProfitCentre = WorkGroup_General.ProfitCentre) INNER JOIN WorkGroupGrade_General ON WorkGroup_General.WorkGroup = WorkGroupGrade_General.WorkGroup) INNER JOIN PlanCatWGGrade ON WorkGroupGrade_General.WGGrade = PlanCatWGGrade.WGGrade
+WHERE ((PlanCatWGGrade.PlanCategory Not Like "ZT*"))
+GROUP BY qryrptRateCalculation3.ProfitCentre, qryrptRateCalculation3.CONTTARGET, qryrptRateCalculation3.AccountType, qryrptRateCalculation3.SumOfGenBid;
+

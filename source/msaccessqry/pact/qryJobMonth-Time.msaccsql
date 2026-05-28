@@ -1,0 +1,9 @@
+QUERY NAME: qryJobMonth-Time
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW TimeCostCalcs.Project, TimeCostCalcs.Month, Sum(TimeCostCalcs.Cost) AS SumOfCost
+FROM TimeCostCalcs
+GROUP BY TimeCostCalcs.Project, TimeCostCalcs.Month;
+

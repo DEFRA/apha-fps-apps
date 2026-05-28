@@ -1,0 +1,10 @@
+QUERY NAME: qryDeptIncomeTests
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tlkpProject_MAP.ParentProject AS Project, tlkpProject_MAP.OracleProjectCode, tlkpProject_MAP.SubAccountCode, IIf([IsDefraProject],"Yes","No") AS DefraProject, CostCentre.ProfitCentre AS OPC, CostCentre.CostCentre AS OCC, MonthlyOutput.Month, WorkGroup_MAP.ProfitCentre AS SPC, MonthlyOutput.WorkGroup, WorkGroup_MAP.CostCentre AS SCC, MonthlyOutput.TestCode, MonthlyOutput.Volume, tblTestRequ_TM.TestPrice, [TestPrice]*[Volume] AS TotalCost
+FROM ((tlkpProject_MAP LEFT JOIN CostCentre ON tlkpProject_MAP.CostCentre = CostCentre.CostCentre) INNER JOIN (MonthlyOutput INNER JOIN WorkGroup_MAP ON MonthlyOutput.WorkGroup = WorkGroup_MAP.WorkGroup) ON tlkpProject_MAP.ParentProject = MonthlyOutput.Buyer) INNER JOIN tblTestRequ_TM ON (MonthlyOutput.Buyer = tblTestRequ_TM.JobCode) AND (MonthlyOutput.TestCode = tblTestRequ_TM.TestCode)
+WHERE (((tlkpProject_MAP.ParentProject) Like nz(fnDeptIncomeProject(),"*")) AND ((MonthlyOutput.Month) Between fnDeptIncomeMonthFrom() And fnDeptIncomeMonthTo()))
+ORDER BY tlkpProject_MAP.ParentProject;
+

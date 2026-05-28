@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>2025-2026 : Project Edit</title>
+    <!-- <link rel="stylesheet" href="style_sidenav.css"> -->
+    <!-- Bootstrap CSS -->
+    <!-- <link rel="stylesheet" href="../css/govuk-frontend-6.0.0.min.css" />
+     <link rel="stylesheet" href="../css/common/headernav/navstyle.css" /> -->
+    <!-- <link rel="stylesheet" href="../css/bootstrap.min.css"> -->
+    <!-- <link rel="stylesheet" href="../css/fps_styles/styles.css">
+	  <link rel="stylesheet" href="../css/main_style.css"> -->
+    <link rel="stylesheet" href="../css/supplement_style_for_gov.uk_style.css" />
+    <link rel="stylesheet" href="../css/govuk-frontend-6.0.0.min.css" />
+    <link rel="stylesheet" href="../css/app_govuk_widget_layer.css" />
+    <link rel="stylesheet" href="../css/fps_styles/styles.css" />
+    <link rel="stylesheet" href="../css/main_style.css" />
+
+    <link rel="stylesheet" href="../css/common/headernav/navstyle.css" />
+
+    <script>
+        window.addEventListener('load', function () {
+            // Get modal element
+            const myModal = new bootstrap.Modal(document.getElementById('exampleModal'));
+            // Show modal
+            myModal.show();
+        });
+
+    </script>
+
+</head>
+
+
+<body class="app-theme app-theme--fps">
+
+    <!-- Navbar -->
+
+    <header class="govuk-header" role="banner" id="app-header"></header>
+    <div id="header"></div>
+
+    <header class="govuk-header" role="banner" id="app-header"></header>
+    <div id="header"></div>
+
+    <script src="../js/fps_js/_headernav-config.js"></script>
+    <script src="../js/common/headernav/header-builder.js"></script>
+    <script src="../js/common/headernav/menu-builder.js"></script>
+    <script>
+        buildHeader('app-header', headerConfig);
+        buildNav('header', menuConfig, userConfig);
+    </script>
+
+    <div class="govuk-width-container govuk-!-margin-0">
+        <nav class="govuk-breadcrumbs sup_border-bottom govuk-!-padding-left-2 govuk-!-padding-bottom-2 govuk-!-padding-right-2"
+            aria-label="Breadcrumb">
+            <ol class="govuk-breadcrumbs__list">
+                <li class="govuk-breadcrumbs__list-item">
+                    <a class="govuk-breadcrumbs__link" href="fpshome.html">Home</a>
+                </li>
+                <li class="govuk-breadcrumbs__list-item">
+                    <a class="govuk-breadcrumbs__link" href="program_management.html">Programme Management</a>
+                </li>
+                <li class="govuk-breadcrumbs__list-item">
+                    <a class="govuk-breadcrumbs__link" href="#">Select Programme</a>
+                </li>
+                <li class="govuk-breadcrumbs__list-item">
+                    Edit Project
+                </li>
+            </ol>
+        </nav>
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full sup_border-bottom govuk-!-margin-bottom-2">
+                <h1 class="govuk-heading-s isFloatLeft govuk-!-margin-left-2 govuk-!-margin-bottom-2"> Edit Project
+                    details in Programme </h1>
+                <a href="program_management.html"
+                    class="govuk-back-link govuk-!-margin-0 govuk-!-margin-right-4 isFloatRight">Back</a>
+            </div>
+        </div>
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <main class="main-content">
+                    <div class="govuk-grid-row">
+                        <div class="govuk-grid-column-one-half">
+                            <div class="isHighlightedWrapper govuk-form-group govuk-!-margin-0 govuk-!-padding-1">
+                                <label class="govuk-label" style="display:inline-block" for="Change Project Code">Change
+                                    Project Code:</label>                             
+                                    <input type="text"  class="govuk-input width-350" value="" id="Change Project Code">
+                               <button class="govuk-button govuk-!-margin-0">Submit</button>
+
+                            </div>
+                        </div>
+                        <div class="govuk-grid-column-one-half">
+                            <div class="action-buttons">
+                                <button class="govuk-button sup_margin_0">Add Another Project</button>
+                                <button class="govuk-button sup_margin_0">Plan this Project</button>
+                                <button class="govuk-button sup_margin_0 govuk-button--warning">Delete this
+                                    Project</button>
+                                <button class="govuk-button sup_margin_0">Save</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="govuk-grid-row">
+                        <div class="govuk-grid-column-full">
+                            <h2
+                                class="sup_border-bottom sup_text_color govuk-heading-s govuk-!-padding-left-0  sup_align_flexheading">
+                                Please insert data for mandatory fields marked with *
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div class="form-container">
+                        <div class="form-left">
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="project-code">Project Code</label>
+
+                                <input class="govuk-input" value="FZ2000" id="project-code" name="projectcode"
+                                    type="text" autocomplete="project-code">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="description">Description:</label>
+                                <input type="text" class="govuk-input"
+                                    value="Salmonella surveillance and national control programme" id="description">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="shortTitle">ShortTitle:</label>
+                                <input type="text" class="govuk-input" value="Salmonella in animals" id="shortTitle">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="Customer">Customer:</label>
+                                <select id="Customer" class="govuk-select sup_select_option_width_100">
+                                    <option>DEFRA Commission</option>
+                                    <option>Delacon</option>
+                                    <option>Department of Health</option>
+                                    <option>Diasys</option>
+                                    <option>Dr Bommeli</option>
+                                </select>
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="Programme">Programme:</label>
+                                <select id="Programme" class="govuk-select sup_select_option_width_100">
+                                    <option selected>Bact </option>
+                                    <option>Beep Insp | Beep Inspectorate</option>
+                                    <option>BTB | Bovine TB</option>
+                                    <option>GM | GM Inspectorate</option>
+                                </select>
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="Manager">Manager:</label>
+                                <select id="Manager" class="govuk-select sup_select_option_width_100">
+                                    <option selected>Vannoort, Vale </option>
+                                    <option>Vannoort, Vale | DoES3 </option>
+                                    <option>Vannoort, Virgina | PHSI-AD</option>
+                                    <option>Vannoort, Virgina | DSG</option>
+                                </select>
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="disease">Disease:</label>
+                                <select id="disease" class="govuk-select sup_select_option_width_100">
+                                    <option selected>Salmonella</option>
+                                    <option>Salmonella Typhimurium</option>
+                                    <option>Salmonella/Campylobacter</option>
+                                </select>
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="CustomerIncome">Customer Income:</label>
+                                <input type="text" class="govuk-input text-AlignRight" value="£0.00"
+                                    class="currency-input" id="CustomerIncome">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="TransferIncome">Transfer Income:</label>
+                                <input type="text" class="govuk-input text-AlignRight" value="£0.00"
+                                    class="currency-input" id="TransferIncome">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="TargetProfit">Target Profit:</label>
+                                <input type="text" class="govuk-input text-AlignRight" value="£0.00"
+                                    class="currency-input" id="TargetProfit">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="Status">Status:</label>
+                                <select id="Status" class="govuk-select sup_select_option_width_100">
+                                    <option selected>Approved</option>
+                                    <option>Completed</option>
+                                    <option>Not Approved</option>
+                                </select>
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label for="CostBookNo" class="govuk-label">CostBookNo:</label>
+                                <input type="text" class="govuk-input" id="CostBookNo">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="ContractNo">Contract No:</label>
+                                <select id="ContractNo" class="govuk-select sup_select_option_width_100">
+                                    <option selected>SurvB</option>
+                                    <option>SurvC</option>
+                                    <option>SurvD</option>
+                                </select>
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="DefraProject">Is Defra Project?</label>
+                                <select id="DefraProject" class="govuk-select sup_select_option_width_100">
+                                    <option>Yes</option>
+                                    <option>No</option>
+                                </select>
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="CostCentre">Cost Centre:</label>
+                                <select id="CostCentre" class="govuk-select sup_select_option_width_100">
+                                    <option>1006621</option>
+                                </select>
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label for="ResourceCentre" class="govuk-label">Resource Centre:</label>
+                                <input type="text" class="govuk-input" value="Bact" id="ResourceCentre">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label for="ProjectGroup" class="govuk-label">Project Group:</label>
+                                <select id="ProjectGroup" class="govuk-select sup_select_option_width_100">
+                                    <option>FES_SURV</option>
+                                </select>
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="IncomeAccount">Income Account Code:</label>
+                                <select id="IncomeAccount" class="govuk-select sup_select_option_width_100">
+                                    <option>4482501309 - Laboratory Surveillance</option>
+                                </select>
+                            </div>
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="ObjectiveCode">Objective Code:</label>
+                                <select id="ObjectiveCode" class="govuk-select sup_select_option_width_100">
+                                    <option>1020403 - Defra (GB)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-center">
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" for="Budget">Budget:</label>
+                                <input type="text" class="govuk-input text-AlignRight" value="£2,576,363.77" id="Budget"
+                                    class="currency-input">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0" style="align-items: flex-start;">
+                                <label class="govuk-label" for="PVSIncome">PVS Income:(Surv Only)</label>
+                                <input type="text" class="govuk-input text-AlignRight" id="PVSIncome">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0" style="align-items: flex-start;">
+                                <label class="govuk-label" for="PlanCWDebit">Plan CW Debit:(Surv Only)</label>
+                                <input type="text" class="govuk-input text-AlignRight" id="PlanCWDebit">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label" for="CarryOver">CarryOver:</label>
+                                <input type="text" value="£0.00" id="CarryOver" class="govuk-input currency-input ">
+                            </div>
+
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label" for="CarryOverSeed">CarryOverSeed:</label>
+                                <input type="text" class="govuk-input" id="CarryOverSeed">
+                            </div>
+                            <div class="govuk-form-group sup_margin_0" style="align-items: flex-start;">
+                                <label class="govuk-label" for="Comments">Comments::</label>
+                                <textarea class="govuk-textarea sup_margin_0" rows="5" id="Comments">PVS income is also included in this plan, but is taken out of the CBR reportFZ2026 is incorporated into this project wef 01/04/2016. Lucy Snow is PM while Jo is on M/L wef June 24
+				   </textarea>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+    <div id="app-footer"></div>
+    <script>buildFooter("app-footer", footerConfig);</script>
+
+    <!-- Bootstrap JS (required for dropdowns) -->
+    <script src="../js/common/bootstrap.bundle.min.js">    </script>
+    <script>
+        function showValue() {
+            const selectBox = document.getElementById("project");
+            const selectedValue = selectBox.value;
+            const selectedText = selectBox.options[selectBox.selectedIndex].text;
+
+
+            const selectBoxProgram = document.getElementById("program");
+            const selectedValueProgram = selectBoxProgram.value;
+            const selectedTextProgram = selectBoxProgram.options[selectBoxProgram.selectedIndex].text;
+
+
+            document.getElementById("resultproject").innerHTML = `<b>${selectedText}</b>`;
+            document.getElementById("resultprogram").innerHTML = `<b>${selectedTextProgram}</b>`;
+        }
+    </script>
+
+    <script src="../js/common/defra-dialogs.js"></script>
+</body>
+
+</html>

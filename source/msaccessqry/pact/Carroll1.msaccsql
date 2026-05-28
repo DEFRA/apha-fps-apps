@@ -1,0 +1,12 @@
+QUERY NAME: Carroll1
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(TimeCostCalcs.Cost) AS SumOfCost
+SELECT TimeCostCalcs.WorkGroup, TimeCostCalcs.Project, TimeCostCalcs.JobCode, Sum(TimeCostCalcs.Cost) AS SumOfCost1
+FROM TimeCostCalcs
+WHERE ((TimeCostCalcs.WorkGroup="LT1"))
+GROUP BY TimeCostCalcs.WorkGroup, TimeCostCalcs.Project, TimeCostCalcs.JobCode
+PIVOT TimeCostCalcs.Month In (1,2,3,4,5,6,7,8,9,10,11,12);
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryProject_PYear
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblProject.*, tblProjectYear.YearNo
+FROM tblProject INNER JOIN tblProjectYear ON tblProject.Project = tblProjectYear.Project
+WHERE (((tblProject.Project)=[Forms]![frmProject1]![Project]));
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryJobMonth-Invoices
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW Proj_Invoice.ProjectParent, Proj_Invoice.Month, Sum(Proj_Invoice.Amount) AS SumOfAmount1, Sum(Proj_Invoice.CostOfWork) AS WorkCost
+FROM Proj_Invoice
+GROUP BY Proj_Invoice.ProjectParent, Proj_Invoice.Month;
+

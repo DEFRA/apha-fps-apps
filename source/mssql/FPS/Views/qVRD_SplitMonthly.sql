@@ -1,0 +1,13 @@
+﻿USE [FPS2025]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[qVRD_SplitMonthly]
+AS
+SELECT     Month, SUM(LTSplitFee) AS TotalLTSplitFee
+FROM         dbo.vPostMort_VRD_Split
+GROUP BY Month
+
+GO

@@ -1,0 +1,16 @@
+QUERY NAME: qryShowWhichProjects
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+SELECT DISTINCTROW vProjectLatestDetails.ParentProject AS Project, vProjectLatestDetails.Program, vProjectLatestDetails.Customer, 'Yes' AS [On FPS?]
+FROM vProjectLatestDetails INNER JOIN tblRadTrackProg ON vProjectLatestDetails.Program = tblRadTrackProg.Program
+WHERE (((vProjectLatestDetails.Active) Like fnShowWhichProjects()))
+ORDER BY vProjectLatestDetails.ParentProject;
+
+
+UNION SELECT tblProposedProject.ParentProject, tblProposedProject.Program, tblProposedProject.Customer, 'No' AS Expr1
+FROM tblProposedProject LEFT JOIN G_tlkpProject ON tblProposedProject.ParentProject = G_tlkpProject.ParentProject
+WHERE (((G_tlkpProject.ParentProject) Is Null))
+ORDER BY Project;
+

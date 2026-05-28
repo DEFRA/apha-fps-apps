@@ -1,0 +1,8 @@
+QUERY NAME: QryTestYrs
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryProjectYearProject.FinancialYear, tblProject.Project, tblProject.ProjectTitle, tblTest.TestCode, tblTest.TestDescription, tblTestRequ.NoTests, [NoTests]*[UnitPrice] AS [Total Test Costs], tblTest.UnitPrice
+FROM (tblProject INNER JOIN (tblProjectYear INNER JOIN qryProjectYearProject ON tblProjectYear.ProjectYear = qryProjectYearProject.ProjectYear) ON tblProject.Project = tblProjectYear.Project) INNER JOIN (tblTest INNER JOIN tblTestRequ ON tblTest.TestCode = tblTestRequ.TestCode) ON tblProjectYear.ProjectYear = tblTestRequ.ProjectYear;
+

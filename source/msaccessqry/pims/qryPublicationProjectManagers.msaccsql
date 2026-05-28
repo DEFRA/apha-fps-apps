@@ -1,0 +1,8 @@
+QUERY NAME: qryPublicationProjectManagers
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblPublicationProject.PublicationUID, vProjectLatestDetails.Manager
+FROM vProjectLatestDetails INNER JOIN tblPublicationProject ON vProjectLatestDetails.ParentProject = tblPublicationProject.ParentProject;
+

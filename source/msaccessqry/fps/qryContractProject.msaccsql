@@ -1,0 +1,8 @@
+QUERY NAME: qryContractProject
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblContract.ContractNo, tblContract.Manager, tblContract.Title, tblContract.RegisteredDate, tblContract.StartDate, tblContract.EndDate, tblContract.ContractDoc, tblContract.Duration, vContractProject.*
+FROM tblContract INNER JOIN vContractProject ON tblContract.ContractNo = vContractProject.Contract;
+

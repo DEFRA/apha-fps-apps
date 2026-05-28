@@ -1,0 +1,9 @@
+QUERY NAME: qryTotalManHours
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_TimeCostCalcs.Project, MY_TimeCostCalcs.Year, Sum(MY_TimeCostCalcs.Time) AS TotalManHours
+FROM MY_TimeCostCalcs
+GROUP BY MY_TimeCostCalcs.Project, MY_TimeCostCalcs.Year;
+

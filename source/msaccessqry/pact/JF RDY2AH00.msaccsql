@@ -1,0 +1,9 @@
+QUERY NAME: JF RDY2AH00
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT TimeCostCalcs.Project, tlkpProject.ProjectTitle, TimeCostCalcs.JobCode, tlkpJobCode.JobCodeName, TimeCostCalcs.WorkGroup, TimeCostCalcs.Month, TimeCostCalcs.Name, TimeCostCalcs.Time, TimeCostCalcs.ChargeRate, TimeCostCalcs.Cost
+FROM (tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project) INNER JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode
+WHERE (((TimeCostCalcs.Project) Like "RDY2AH00"));
+

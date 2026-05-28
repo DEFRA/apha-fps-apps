@@ -1,0 +1,9 @@
+QUERY NAME: _MilestoneCopyOut
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MILESTONE.[PROJ NO], Format([obj no],"00") & "/" & Format([milestone no],"00") AS Expr1, MILESTONE.[MILESTONE TITLE], MILESTONE.[MIL COMPLETION DATE], MILESTONE.[ACTUAL COMPLETION DATE], MILESTONE.MilestoneUnderReviewAtCSG
+FROM (MILESTONE INNER JOIN G_tlkpProject_RadTrackData ON MILESTONE.[PROJ NO] = G_tlkpProject_RadTrackData.ParentProject) INNER JOIN MY_tlkpProject ON G_tlkpProject_RadTrackData.ParentProject = MY_tlkpProject.ParentProject
+WHERE (((MILESTONE.[PROJ NO]) Is Not Null) AND ((Format([obj no],"00") & "/" & Format([milestone no],"00")) Is Not Null) AND ((MY_tlkpProject.Year)=2004));
+

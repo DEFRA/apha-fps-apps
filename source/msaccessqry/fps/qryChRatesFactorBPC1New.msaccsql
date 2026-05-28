@@ -1,0 +1,9 @@
+QUERY NAME: qryChRatesFactorBPC1New
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkpProfitCentre.ProfitCentre, Sum(qryChRatesFactorAPC1New.AllocHrs) AS TotHrs, Sum(qryChRatesFactorAPC1New.FactorA) AS TotFactorA, IIf(IsNull([qryChRatePayTotalPC].[SumOfGenBid]),0,[qryChRatePayTotalPC].[SumOfGenBid]) AS TotPay, IIf(IsNull([TotFactorA]) Or [TotFactorA]=0,0,[TotPay]/[TotFactorA]) AS FactorB, IIf(IsNull([qryChRateNPRCTotalPC].[SumOfGenBid]),0,[qryChRateNPRCTotalPC].[SumOfGenBid]) AS NPRC, tblkpProfitCentre.CONTTARGET, IIf(IsNull([TotHrs]) Or [TotHrs]=0,0,[NPRC]/[TotHrs]) AS NPR, IIf(IsNull([TotHrs]) Or [TotHrs]=0,0,[ContTarget]/[TotHrs]) AS OHR
+FROM ((tblkpProfitCentre LEFT JOIN qryChRateNPRCTotalPC ON tblkpProfitCentre.ProfitCentre = qryChRateNPRCTotalPC.ProfitCentre) LEFT JOIN qryChRatePayTotalPC ON tblkpProfitCentre.ProfitCentre = qryChRatePayTotalPC.ProfitCentre) INNER JOIN qryChRatesFactorAPC1New ON tblkpProfitCentre.ProfitCentre = qryChRatesFactorAPC1New.ProfitCentre
+GROUP BY tblkpProfitCentre.ProfitCentre, IIf(IsNull([qryChRatePayTotalPC].[SumOfGenBid]),0,[qryChRatePayTotalPC].[SumOfGenBid]), IIf(IsNull([qryChRateNPRCTotalPC].[SumOfGenBid]),0,[qryChRateNPRCTotalPC].[SumOfGenBid]), tblkpProfitCentre.CONTTARGET;
+

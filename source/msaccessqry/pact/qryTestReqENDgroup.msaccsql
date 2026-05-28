@@ -1,0 +1,10 @@
+QUERY NAME: qryTestReqENDgroup
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpTestReqmt.TestCode, Sum(tlkpTestReqmt.NoRequired) AS NoRequired
+FROM tlkpTestReqmt
+WHERE (((tlkpTestReqmt.Buyer)="ed1000" Or (tlkpTestReqmt.Buyer)="ed1100" Or (tlkpTestReqmt.Buyer)="ed1200" Or (tlkpTestReqmt.Buyer)="ed1300" Or (tlkpTestReqmt.Buyer)="ed1500" Or (tlkpTestReqmt.Buyer)="ed1600"))
+GROUP BY tlkpTestReqmt.TestCode;
+

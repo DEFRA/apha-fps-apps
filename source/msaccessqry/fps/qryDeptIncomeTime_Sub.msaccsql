@@ -1,0 +1,8 @@
+QUERY NAME: qryDeptIncomeTime_Sub
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+select * from qryDefraTime
+UNION ALL select * from qryNonDefraTime;
+

@@ -1,0 +1,8 @@
+QUERY NAME: qryfrmBidSub
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblPurchase.WorkGroup, tblPurchase.Account, tblPurchase.ItemDescription, tblPurchase.Amount
+FROM tblPurchase;
+

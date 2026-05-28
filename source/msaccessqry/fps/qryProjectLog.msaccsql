@@ -1,0 +1,9 @@
+QUERY NAME: qryProjectLog
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT *
+FROM Project_Log
+WHERE 1=2;
+

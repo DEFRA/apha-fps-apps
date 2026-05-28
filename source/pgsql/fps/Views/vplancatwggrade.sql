@@ -1,0 +1,13 @@
+CREATE OR REPLACE VIEW fps.vplancatwggrade AS
+ SELECT pcwg.plancategory,
+    pcwg.wggrade,
+    pcwg.hours,
+    pcwg.createdby,
+    pcwg.selleragrees,
+    pcwg.buyeragrees,
+    pcwg.fpsyear,
+    wgg.user_id,
+    wgg.dt2username,
+    wgg.useremail
+   FROM fps.plancatwggrade pcwg
+     JOIN fps.vworkgroupgrade wgg ON wgg.wggrade::text = pcwg.wggrade::text AND wgg.fpsyear = pcwg.fpsyear;

@@ -1,0 +1,11 @@
+QUERY NAME: xWorkGroupGrade_Crosstab
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Count([WGGrade]) AS [The Value]
+SELECT [GradeCode], Count([WGGrade]) AS [Total Of WGGrade]
+FROM WorkGroupGrade
+GROUP BY [GradeCode]
+PIVOT [WorkGroup];
+

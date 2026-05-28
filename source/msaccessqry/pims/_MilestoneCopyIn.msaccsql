@@ -1,0 +1,8 @@
+QUERY NAME: _MilestoneCopyIn
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblMilestone.Project, tblMilestone.Number, tblMilestone.Description, tblMilestone.DateDue, tblMilestone.DateCompleted, tblMilestone.UnderSDReview
+FROM tblMilestone;
+

@@ -1,0 +1,10 @@
+QUERY NAME: TestCosting2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup.ProfitCentre, tlkpProject.ProjectWorkGroup, tlkpProject.PlanCat, tlkpProject.ProjectTitle, TestCosting1.Project, Sum(TestCosting1.TP) AS TotalTP, Sum(TestCosting1.TA) AS TotalTA, IIf([TotalTA]=0,0,[TotalTP]/[TotalTA]) AS TPper£, ProjectMonthFinal.CumCost, [CumCost]-([totalTP]+[totalTA]) AS NonTime, IIf([totalta]=0,0,[NonTime]/[TotalTA]) AS NonTimePer£, ProjectMonthFinal.MonthNo
+FROM ProjectMonthFinal INNER JOIN (WorkGroup INNER JOIN (tlkpProject INNER JOIN TestCosting1 ON tlkpProject.ParentProject = TestCosting1.Project) ON WorkGroup.WorkGroup = tlkpProject.ProjectWorkGroup) ON ProjectMonthFinal.Project = tlkpProject.ParentProject
+GROUP BY WorkGroup.ProfitCentre, tlkpProject.ProjectWorkGroup, tlkpProject.PlanCat, tlkpProject.ProjectTitle, TestCosting1.Project, ProjectMonthFinal.CumCost, ProjectMonthFinal.MonthNo
+HAVING ((ProjectMonthFinal.MonthNo=5));
+

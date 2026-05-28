@@ -1,0 +1,10 @@
+QUERY NAME: qryCOS90
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaff.Name, TimeCodeValid.TimeCode, IIf(IsNull([tlkpJobCode].[JobCodeName]),[TestOrProduct].[ItemDescription],[tlkpJobCode].[JobCodeName]) AS Description, TimeCodeValid.ParentProject, WorkGroupGrade.WorkGroup, WorkGroupGrade.GradeCode, tblStaff.SPNumber
+FROM tlkpJobCode RIGHT JOIN (TestOrProduct RIGHT JOIN (tblStaff INNER JOIN (TimeCodeValid INNER JOIN WorkGroupGrade ON TimeCodeValid.WorkGroup = WorkGroupGrade.WorkGroup) ON tblStaff.WorkGroupGrade = WorkGroupGrade.WG_Grade) ON TestOrProduct.ItemCode = TimeCodeValid.TimeCode) ON tlkpJobCode.JobCode = TimeCodeValid.TimeCode
+WHERE (((TimeCodeValid.Active)=Yes) AND ((tblStaff.PersonStatus)<>"i"))
+ORDER BY tblStaff.Name, TimeCodeValid.TimeCode, TimeCodeValid.ParentProject;
+

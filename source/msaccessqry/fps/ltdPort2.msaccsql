@@ -1,0 +1,11 @@
+QUERY NAME: ltdPort2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.Program, tlkpProject.ParentProject, tlkpTestCapability.WorkGroup, tlkpTestCapability.TestCode, Sum(MonthlyOutput.Volume) AS SumOfVolume, Sum([unitprice]*[volume]) AS Fee
+FROM tlkpTestReqmt RIGHT JOIN (tlkpProject LEFT JOIN (tlkpTestCapability LEFT JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)) ON tlkpProject.ParentProject = tlkpTestCapability.PlanPortfolio) ON (tlkpTestReqmt.Buyer = MonthlyOutput.Buyer) AND (tlkpTestReqmt.TestCode = MonthlyOutput.TestCode)
+WHERE ((MonthlyOutput.Month<=[forms]![frmLTD-ReportsMenu]![PeriodPick]))
+GROUP BY tlkpProject.Program, tlkpProject.ParentProject, tlkpTestCapability.WorkGroup, tlkpTestCapability.TestCode
+HAVING ((tlkpProject.Program="test_port"));
+

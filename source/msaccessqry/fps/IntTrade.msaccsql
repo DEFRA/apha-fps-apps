@@ -1,0 +1,10 @@
+QUERY NAME: IntTrade
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW MonthlyOutput.WorkGroup, Sum(MonthlyOutput.Volume) AS SumOfVolume, Sum([volume]*[unitprice]) AS Expr1
+FROM tlkpTestReqmt INNER JOIN MonthlyOutput ON (tlkpTestReqmt.Buyer = MonthlyOutput.Buyer) AND (tlkpTestReqmt.TestCode = MonthlyOutput.TestCode)
+WHERE ((tlkpTestReqmt.Buyer Like "int*") AND (MonthlyOutput.Month<4))
+GROUP BY MonthlyOutput.WorkGroup;
+

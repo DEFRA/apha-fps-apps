@@ -1,0 +1,7 @@
+QUERY NAME: _UpdateStaffRates
+---------------------------------------------
+TYPE: UPDATE
+
+SQL:
+UPDATE (dbo_MY_ProfitCentreGrade INNER JOIN dbo_MY_WorkGroupGrade ON (dbo_MY_ProfitCentreGrade.PCGrade = dbo_MY_WorkGroupGrade.ProfitCentreGrade) AND (dbo_MY_ProfitCentreGrade.Year = dbo_MY_WorkGroupGrade.Year)) INNER JOIN tblStaffRequ ON (dbo_MY_WorkGroupGrade.WGGrade = tblStaffRequ.WGGrade) AND (dbo_MY_WorkGroupGrade.Year = tblStaffRequ.Year) SET tblStaffRequ.PayRate = [dbo_MY_ProfitCentreGrade].[payrate], tblStaffRequ.NPR = [dbo_MY_ProfitCentreGrade].[npr], tblStaffRequ.OHR = [dbo_MY_ProfitCentreGrade].[ohr];
+

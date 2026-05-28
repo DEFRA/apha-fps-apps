@@ -1,0 +1,6 @@
+QUERY NAME: dd_VProjectLatestDetailsInd
+---------------------------------------------
+TYPE: DDL
+
+SQL:
+Create index  vProjectLatestDetails_ind on vProjectLatestDetails(ParentProject)

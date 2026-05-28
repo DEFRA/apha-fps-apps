@@ -1,0 +1,11 @@
+QUERY NAME: qryfrmCluedo2
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(TimeCostCalcs.Time) AS SumOfTime
+SELECT WorkGroup.ProfitCentre, WorkGroup.WorkGroup, TimeCostCalcs.JobCode, tlkpJobCode.JobCodeName, Sum(TimeCostCalcs.Time) AS SumOfTime1, Sum(TimeCostCalcs.Cost) AS SumOfCost
+FROM (tlkpMonth INNER JOIN (((WorkGroup INNER JOIN WorkGroupGrade ON WorkGroup.WorkGroup = WorkGroupGrade.WorkGroup) INNER JOIN tblStaff ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade) INNER JOIN (TimeCostCalcs LEFT JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode) ON tblStaff.PACTid = TimeCostCalcs.StaffID) ON tlkpMonth.AccntsPeriod = TimeCostCalcs.Month) LEFT JOIN TestOrProduct ON TimeCostCalcs.JobCode = TestOrProduct.ItemCode
+GROUP BY WorkGroup.ProfitCentre, WorkGroup.WorkGroup, TimeCostCalcs.JobCode, tlkpJobCode.JobCodeName
+PIVOT tlkpMonth.MonthName In ("April","May","June","July","August","September","October","November","December","January","February","March");
+

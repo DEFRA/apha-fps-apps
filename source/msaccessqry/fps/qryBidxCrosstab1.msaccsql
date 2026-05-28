@@ -1,0 +1,6 @@
+QUERY NAME: qryBidxCrosstab1
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+ERROR READING SQL: The SQL statement could not be executed because it contains ambiguous outer joins. To force one of the joins to be performed first, create a separate query that performs the first join and then include that query in your SQL statement.

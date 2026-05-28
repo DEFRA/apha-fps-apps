@@ -1,0 +1,9 @@
+QUERY NAME: qryStaffEdit
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW [LastName] & " " & [Firstname] AS Name, tblWGEmployee.SPNumber, tblWGEmployee.WorkGroupGrade, tblWGEmployee.PersonStatus, tblWGEmployee.PersonClass, tblWGEmployee.HrsPaid, tblWGEmployee.Leave, tblWGEmployee.SickSpecial, tblWGEmployee.HrsAvail, tblWGEmployee.PACTid, tblWGEmployee.MakeAvailable
+FROM tblWGEmployee INNER JOIN tblEmployee ON tblWGEmployee.SPNumber = tblEmployee.SPNumber
+WHERE (((tblWGEmployee.PersonStatus)<>"I"));
+

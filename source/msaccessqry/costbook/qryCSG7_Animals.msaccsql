@@ -1,0 +1,10 @@
+QUERY NAME: qryCSG7_Animals
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT tblAnimalReq.Project, tblAnimalReq.Year AS YearNo, Sum([Number of Days]*[number of animals]*[dailyrate]) AS Cost, "Other Costs" AS Category
+FROM tblAnimalReq
+GROUP BY tblAnimalReq.Project, tblAnimalReq.Year
+HAVING (((tblAnimalReq.Project)=[Forms]![frmProject1]![Project]));
+

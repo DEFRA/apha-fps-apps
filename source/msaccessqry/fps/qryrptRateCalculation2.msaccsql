@@ -1,0 +1,11 @@
+QUERY NAME: qryrptRateCalculation2
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryrptRateCalculation1.Division, qryrptRateCalculation1.ProfitCentre, qryrptRateCalculation1.PCGrade, qryrptRateCalculation1.AvHrs, Sum(PlanCatWGGrade.Hours) AS PlanHrs, [PlanHrs]/[AvHrs] AS Utilistn, qryrptRateCalculation1.AvSalary, qryrptRateCalculation1.PayRate, [planhrs]*[payrate] AS PayRecovery, qryrptRateCalculation1.NPR, [npr]*[planhrs] AS NonPayRecovery, [Payrecovery]+[nonpayrecovery] AS DirectRecovery, qryrptRateCalculation1.OHR, [ohr]*[planhrs] AS OHeadRecovery, [DirectRecovery]+[oHeadRecovery] AS TotalRecovery
+FROM qryrptRateCalculation1 INNER JOIN (WorkGroupGrade INNER JOIN PlanCatWGGrade ON WorkGroupGrade.WGGrade = PlanCatWGGrade.WGGrade) ON qryrptRateCalculation1.PCGrade = WorkGroupGrade.ProfitCentreGrade
+WHERE ((PlanCatWGGrade.PlanCategory Not Like "ZT*"))
+GROUP BY qryrptRateCalculation1.Division, qryrptRateCalculation1.ProfitCentre, qryrptRateCalculation1.PCGrade, qryrptRateCalculation1.AvHrs, qryrptRateCalculation1.AvSalary, qryrptRateCalculation1.PayRate, qryrptRateCalculation1.NPR, qryrptRateCalculation1.OHR
+HAVING ((qryrptRateCalculation1.ProfitCentre=[Forms]![frmResourceManager]![RCpick]));
+

@@ -1,0 +1,8 @@
+QUERY NAME: qryJobStaffCostRep
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW vProjectStaffPlan.Name, vProjectStaffPlan.ParentProject AS jobCode, vProjectStaffPlan.WGGrade, vProjectStaffPlan.plannedhours, vProjectStaffPlan.ChargeRate, vProjectStaffPlan.Cost AS Staffcost
+FROM vProjectStaffPlan;
+

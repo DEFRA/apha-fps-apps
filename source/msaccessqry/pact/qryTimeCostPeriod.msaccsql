@@ -1,0 +1,11 @@
+QUERY NAME: qryTimeCostPeriod
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW TimeCostCalcs.WorkGroup, TimeCostCalcs.Project, TimeCostCalcs.JobCode, Sum(TimeCostCalcs.Time) AS PeriodTime, Sum(TimeCostCalcs.Cost) AS PeriodCost, TimeCostCalcs.Month
+FROM TimeCostCalcs
+WHERE ((TimeCostCalcs.Class="Charge"))
+GROUP BY TimeCostCalcs.WorkGroup, TimeCostCalcs.Project, TimeCostCalcs.JobCode, TimeCostCalcs.Month
+HAVING ((TimeCostCalcs.Month=[Forms]![Menu-Division]![PeriodPick]));
+

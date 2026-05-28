@@ -1,0 +1,9 @@
+QUERY NAME: ProgramTotals
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW FPSYearTotals.Program AS ProgramNo, Sum(FPSYearTotals.TotalCosts) AS SumOfTotalCosts
+FROM FPSYearTotals
+GROUP BY FPSYearTotals.Program;
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryMilestoneHistoryOneYear PATH
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_tlkpProject.ParentProject, MY_tlkpProject.Program, MY_tlkpProject.Manager, G_tlkpProject.ProjectTitle, tblMilestone.Number, tblMilestone.Description, tblMilestone.DateDue, tblMilestone.DateCompleted, tblMilestone.OnTarget, tblMilestone.Project, MY_tlkpProject.Customer, dbo_vtblStaff_General.WorkGroupGrade
+FROM ((tblMilestone INNER JOIN MY_tlkpProject ON tblMilestone.Project = MY_tlkpProject.ParentProject) INNER JOIN G_tlkpProject ON MY_tlkpProject.ParentProject = G_tlkpProject.ParentProject) INNER JOIN dbo_vtblStaff_General ON MY_tlkpProject.Manager = dbo_vtblStaff_General.Name
+WHERE (((MY_tlkpProject.Manager) Like fnGetHiddenManager()) AND ((dbo_vtblStaff_General.WorkGroupGrade) Like "*PA*" And (dbo_vtblStaff_General.WorkGroupGrade) Not Like "Bsci_PA4" And (dbo_vtblStaff_General.WorkGroupGrade) Not Like "BVet_PA5") AND ((MY_tlkpProject.Year)=fnYear()) AND ((IsEU_Project([project]))=False) AND ((fnDueYear([DateDue]))=fnYear()));
+

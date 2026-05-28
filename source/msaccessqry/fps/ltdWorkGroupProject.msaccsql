@@ -1,0 +1,10 @@
+QUERY NAME: ltdWorkGroupProject
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject_General.Program, TimeCostCalcs.WorkGroup, tlkpProject_General.ShortTitle, TimeCostCalcs.Project, Sum(TimeCostCalcs.Time) AS SumOfTime, Sum(TimeCostCalcs.Cost) AS SumOfCost, IIf([sumofcost]=0,0,[sumoftime]) AS ChargeableHours, IIf([project]="ZTleave",0,[sumoftime]) AS WorkHours, IIf([program]="Test_port",0,[sumofcost]) AS SOCT
+FROM tlkpProject_General INNER JOIN TimeCostCalcs ON tlkpProject_General.ParentProject = TimeCostCalcs.Project
+WHERE ((TimeCostCalcs.Month<=[forms]![frmLTD_reportsmenu]![periodpick]))
+GROUP BY tlkpProject_General.Program, TimeCostCalcs.WorkGroup, tlkpProject_General.ShortTitle, TimeCostCalcs.Project;
+

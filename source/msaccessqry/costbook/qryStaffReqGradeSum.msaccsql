@@ -1,0 +1,9 @@
+QUERY NAME: qryStaffReqGradeSum
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaffRequ.Project, tblStaffRequ.Year, Sum([ChargeRate]*[NoHours]) AS StaffCost
+FROM tblStaffRequ
+GROUP BY tblStaffRequ.Project, tblStaffRequ.Year;
+

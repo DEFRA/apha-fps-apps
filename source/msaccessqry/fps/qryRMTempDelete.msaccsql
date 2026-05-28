@@ -1,0 +1,8 @@
+QUERY NAME: qryRMTempDelete
+---------------------------------------------
+TYPE: DELETE
+
+SQL:
+DELETE *
+FROM tblTempStaffJob;
+

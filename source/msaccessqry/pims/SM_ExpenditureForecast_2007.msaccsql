@@ -1,0 +1,12 @@
+QUERY NAME: SM_ExpenditureForecast_2007
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT MY_ProjectMonthFinal.Year, MY_ProjectMonthFinal.Project, Sum(MY_ProjectMonthFinal.TotalCost) AS SumOfTotalCost, MY_tlkpProject.Program, MY_tlkpProject.Customer
+FROM MY_ProjectMonthFinal INNER JOIN MY_tlkpProject ON (MY_ProjectMonthFinal.Project = MY_tlkpProject.ParentProject) AND (MY_ProjectMonthFinal.Year = MY_tlkpProject.Year)
+WHERE (((MY_ProjectMonthFinal.MonthNo)=1 Or (MY_ProjectMonthFinal.MonthNo)=2 Or (MY_ProjectMonthFinal.MonthNo)=3 Or (MY_ProjectMonthFinal.MonthNo)=4 Or (MY_ProjectMonthFinal.MonthNo)=5 Or (MY_ProjectMonthFinal.MonthNo)=6 Or (MY_ProjectMonthFinal.MonthNo)=7 Or (MY_ProjectMonthFinal.MonthNo)=8))
+GROUP BY MY_ProjectMonthFinal.Year, MY_ProjectMonthFinal.Project, MY_tlkpProject.Program, MY_tlkpProject.Customer
+HAVING (((MY_ProjectMonthFinal.Year)=2007) AND ((MY_tlkpProject.Customer) Like "*FFG - Res*"))
+ORDER BY MY_ProjectMonthFinal.Project;
+

@@ -1,0 +1,12 @@
+CREATE OR REPLACE VIEW fps.vtblanimalreq AS
+ SELECT ar.jobcode,
+    ar.animaltype,
+    ar.numberofdays,
+    ar.numberofanimals,
+    ar.indcounter,
+    ar.fpsyear,
+    p.user_id,
+    p.dt2username,
+    p.useremail
+   FROM fps.tblanimalreq ar
+     JOIN fps.vtlkpproject p ON p.parentproject::text = ar.jobcode::text AND p.fpsyear = ar.fpsyear;

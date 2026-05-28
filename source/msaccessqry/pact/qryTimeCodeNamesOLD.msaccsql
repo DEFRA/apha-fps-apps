@@ -1,0 +1,8 @@
+QUERY NAME: qryTimeCodeNamesOLD
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.Manager, tlkpProject.ParentProject, tlkpProject.ProjectTitle, TimeCodeNames1.TimeCode, IIf(IsNull([timecodenames1].[testcode]),[jobcodename],[ItemDescription]) AS Description, tlkpJobCode.JobCode, TestOrProduct.ItemCode, tlkpProject.Program
+FROM ((tlkpProject INNER JOIN TimeCodeNames1 ON tlkpProject.ParentProject = TimeCodeNames1.ParentProject) LEFT JOIN tlkpJobCode ON TimeCodeNames1.TimeCode = tlkpJobCode.JobCode) LEFT JOIN TestOrProduct ON TimeCodeNames1.TimeCode = TestOrProduct.ItemCode;
+

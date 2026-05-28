@@ -1,0 +1,9 @@
+QUERY NAME: BillsMOSummary
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW MonthlyOutput.TestCode, MonthlyOutput.Buyer, Sum(MonthlyOutput.Volume) AS SumOfVolume
+FROM MonthlyOutput
+GROUP BY MonthlyOutput.TestCode, MonthlyOutput.Buyer;
+

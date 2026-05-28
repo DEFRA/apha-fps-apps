@@ -1,0 +1,19 @@
+Version =0
+ColumnsShown =0
+Begin
+    Action ="DoMenuItem"
+    Argument ="20"
+    Argument ="1"
+    Argument ="4"
+    Argument ="3"
+    Argument ="0"
+End
+Begin
+    Action ="OpenForm"
+    Argument ="frmmnuMain"
+    Argument ="0"
+    Argument =""
+    Argument =""
+    Argument ="1"
+    Argument ="0"
+End

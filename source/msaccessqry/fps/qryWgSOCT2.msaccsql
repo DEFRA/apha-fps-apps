@@ -1,0 +1,12 @@
+QUERY NAME: qryWgSOCT2
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(vProjectStaffPlan.Cost) AS Expr2
+SELECT WorkGroupGrade_General.WorkGroup
+FROM (WorkGroupGrade_General INNER JOIN tblStaff_General ON WorkGroupGrade_General.WGGrade = tblStaff_General.WorkGroupGrade) LEFT JOIN vProjectStaffPlan ON tblStaff_General.StaffID = vProjectStaffPlan.StaffID
+WHERE (((WorkGroupGrade_General.WorkGroup)=[Forms]![frmResouceCentreWorkGroups]![ProjectPick]) AND ((tblStaff_General.Name) Like "*General"))
+GROUP BY WorkGroupGrade_General.WorkGroup
+PIVOT [tblStaff_General].[Name] & "=" & [ChargeRate];
+

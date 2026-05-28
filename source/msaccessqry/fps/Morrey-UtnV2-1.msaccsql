@@ -1,0 +1,11 @@
+QUERY NAME: Morrey-UtnV2-1
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+TRANSFORM Sum(TimeCostCalcs.Time) AS SumOfTime
+SELECT WorkGroup.ProfitCentre, WorkGroup.WorkGroup
+FROM ((TimeCostCalcs INNER JOIN WorkGroup ON TimeCostCalcs.WorkGroup = WorkGroup.WorkGroup) INNER JOIN tlkpProject ON TimeCostCalcs.Project = tlkpProject.ParentProject) INNER JOIN tlkpProgram ON tlkpProject.Program = tlkpProgram.ProgramNo
+GROUP BY WorkGroup.ProfitCentre, WorkGroup.WorkGroup
+PIVOT tlkpProgram.SECTOR_NAME In ("charge","free","leave");
+

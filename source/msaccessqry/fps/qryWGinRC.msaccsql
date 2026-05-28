@@ -1,0 +1,10 @@
+QUERY NAME: qryWGinRC
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+PARAMETERS Forms!frmResourceManager!RCpick Text ( 255 );
+SELECT DISTINCTROW WorkGroup_General.WorkGroup
+FROM WorkGroup_General
+WHERE ((WorkGroup_General.ProfitCentre=[Forms]![frmResourceManager]![RCpick]));
+

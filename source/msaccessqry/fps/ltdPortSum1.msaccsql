@@ -1,0 +1,11 @@
+QUERY NAME: ltdPortSum1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject_General.Program, TimeCostCalcs.Project, Sum(TimeCostCalcs.Cost) AS SumOfCost
+FROM tlkpProject_General INNER JOIN TimeCostCalcs ON tlkpProject_General.ParentProject = TimeCostCalcs.Project
+WHERE ((TimeCostCalcs.Month<=[forms]![frmPactReportMenu]![periodpick]))
+GROUP BY tlkpProject_General.Program, TimeCostCalcs.Project
+HAVING ((tlkpProject_General.Program="test_port"));
+

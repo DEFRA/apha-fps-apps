@@ -1,0 +1,9 @@
+QUERY NAME: qryDeliverablesAchieved_Dynamic
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT *
+FROM qryDeliverablesAchieved
+WHERE fnSurvProgram(projectgroup)=true;
+

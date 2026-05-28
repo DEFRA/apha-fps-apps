@@ -1,0 +1,10 @@
+QUERY NAME: qryTotalRAnimalCostsApp
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblkpProfitCentre_General.ProfitCentre, Sum(vProjectAnimalPlan.Cost) AS TAC, IIf([ProfitCentre]="ASU",[TAC],0) AS AnimalCosts
+FROM tblkpProfitCentre_General, tlkpProject_General INNER JOIN vProjectAnimalPlan ON tlkpProject_General.ParentProject = vProjectAnimalPlan.ParentProject
+WHERE (((tlkpProject_General.ProjectStatus)="Approved"))
+GROUP BY tblkpProfitCentre_General.ProfitCentre;
+

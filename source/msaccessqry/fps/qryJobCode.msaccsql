@@ -1,0 +1,9 @@
+QUERY NAME: qryJobCode
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW JobCode.*
+FROM JobCode
+ORDER BY JobCode.JobCode;
+

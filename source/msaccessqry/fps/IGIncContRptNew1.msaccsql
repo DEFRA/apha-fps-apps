@@ -1,0 +1,9 @@
+QUERY NAME: IGIncContRptNew1
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryfrmTimeSellerPC.SellingPC, Sum(MonthlyTime.Hours) AS SumOfHours
+FROM (qryfrmTimeSellerPC LEFT JOIN tblWGEmployee_general ON qryfrmTimeSellerPC.WGGrade = tblWGEmployee_general.WorkGroupGrade) LEFT JOIN MonthlyTime ON tblWGEmployee_general.PactID = MonthlyTime.PACTStaffID
+GROUP BY qryfrmTimeSellerPC.SellingPC;
+

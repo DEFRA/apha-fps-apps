@@ -1,0 +1,9 @@
+QUERY NAME: qryDeliverablesNotUnderReview
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT vProjectLatestDetails.Program, tblMilestone.Project, vProjectLatestDetails.Manager, tblMilestone.Number, tblMilestone.DateDue, tblMilestone.CAPSComment, tblMilestone.Description, tblMilestone.ProjectLeaderComment, G_tlkpProject.Contract, vProjectLatestDetails.ProjectGroup
+FROM G_tlkpProject INNER JOIN ((tblMilestone INNER JOIN vProjectLatestDetails ON tblMilestone.Project = vProjectLatestDetails.ParentProject) LEFT JOIN qryCurrentMonth_FormRecieved_Dynamic ON vProjectLatestDetails.ParentProject = qryCurrentMonth_FormRecieved_Dynamic.ParentProject) ON G_tlkpProject.ParentProject = vProjectLatestDetails.ParentProject
+WHERE (((vProjectLatestDetails.Manager) Like fnGetHiddenManager()) AND ((IsNull([currentMonth]))=False) AND ((fnDoneInPeriod([DateCompleted]))=False) AND ((tblMilestone.UnderSDReview) Is Null Or (tblMilestone.UnderSDReview)=False) AND ((fnInReportMonthOrBefore([DateDue]))=True));
+

@@ -1,0 +1,9 @@
+QUERY NAME: qryProfitCentreGrade
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ProfitCentreGrade.*
+FROM ProfitCentreGrade
+ORDER BY ProfitCentreGrade.ChargeRate DESC;
+

@@ -1,0 +1,10 @@
+QUERY NAME: qryrptCSGProjectHdr
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW ProjectMonthFinal.MonthNo AS endperiod, ProjectMonthFinal.PeriodName, tlkpProject.Program, ProjectMonthFinal.Project, First(tlkpProject.ProjectTitle) AS ProjectTitle, tlkpProject.Manager, tlkpProject.Customer, tlkpProject.Budget_cvl, tlkpProject.WIP_EOY AS wipprevyear, ProjectMonthFinal.CumProfile AS ForecastCost, ProjectMonthFinal.CumProfile AS [YTD-Forecast], ProjectMonthFinal.CumCost AS [YTD-Cost], [ForecastCost]/[tlkpProject].[Budget_cvl] AS [Forecast % Spend], [YTD-Cost]-[YTD-Forecast] AS [YTD-Variance], tlkpProject.Budget_Ext, tlkpProject.TransferIncome, Sum(FPSYearTotals.TotalCosts) AS SumOfTotalCosts
+FROM (ProjectMonthFinal INNER JOIN tlkpProject ON ProjectMonthFinal.Project = tlkpProject.ParentProject) LEFT JOIN FPSYearTotals ON tlkpProject.ParentProject = FPSYearTotals.ParentProject
+GROUP BY ProjectMonthFinal.MonthNo, ProjectMonthFinal.PeriodName, tlkpProject.Program, ProjectMonthFinal.Project, tlkpProject.Manager, tlkpProject.Customer, tlkpProject.Budget_cvl, tlkpProject.WIP_EOY, ProjectMonthFinal.CumProfile, ProjectMonthFinal.CumProfile, ProjectMonthFinal.CumCost, tlkpProject.Budget_Ext, tlkpProject.TransferIncome
+HAVING (((ProjectMonthFinal.MonthNo)=[forms]![menu-division]![periodpick]));
+

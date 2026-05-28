@@ -1,0 +1,14 @@
+QUERY NAME: qxtbStaffAndJobCodes
+---------------------------------------------
+TYPE: OTHER
+
+SQL:
+PARAMETERS Forms!frmWorkGroupStaff!Workgroup Text ( 255 );
+TRANSFORM Sum(qxtbStaffAndJobCodes_1.SumOfplannedhours) AS SumOfSumOfplannedhours
+SELECT qxtbStaffAndJobCodes_1.Name, qxtbStaffAndJobCodes_1.HrsAvail AS [Hrs Avail]
+FROM qxtbStaffAndJobCodes_1 INNER JOIN (WorkGroup_General INNER JOIN (tblStaff_General INNER JOIN WorkGroupGrade_General ON tblStaff_General.WorkGroupGrade = WorkGroupGrade_General.WGGrade) ON WorkGroup_General.WorkGroup = WorkGroupGrade_General.WorkGroup) ON qxtbStaffAndJobCodes_1.Name = tblStaff_General.Name
+WHERE ((WorkGroup_General.WorkGroup=[Forms]![frmWorkGroupStaff]![Workgroup]))
+GROUP BY qxtbStaffAndJobCodes_1.Name, qxtbStaffAndJobCodes_1.HrsAvail
+ORDER BY qxtbStaffAndJobCodes_1.Jobcode
+PIVOT qxtbStaffAndJobCodes_1.Jobcode;
+

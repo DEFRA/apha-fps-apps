@@ -1,0 +1,9 @@
+QUERY NAME: qryStaffReqGrade
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tblStaffRequ.Project, tblStaffRequ.Year, WorkGroupGrade.WorkGroup, tblStaffRequ.WGGrade, tblStaffRequ.ChargeRate, [ChargeRate]*[NoHours] AS StaffCost, tblStaffRequ.NoHours, tblStaffRequ.NoDays, tblStaffRequ.Name, tblStaffRequ.SR_Identity, tblProject.Programme, tblProject.EuroConvRate, tblStaffRequ.PayRate, tblStaffRequ.NPR, tblStaffRequ.OHR, WorkGroupGrade.GradeCode, DLookUp("EUGrade","tblEUGrade_Conversion","VLAGrade='" & [GradeCode] & "'") AS EUGrade
+FROM (tblStaffRequ LEFT JOIN WorkGroupGrade ON tblStaffRequ.WGGrade = WorkGroupGrade.WGGrade) INNER JOIN tblProject ON tblStaffRequ.Project = tblProject.Project
+ORDER BY WorkGroupGrade.WorkGroup, tblStaffRequ.WGGrade;
+

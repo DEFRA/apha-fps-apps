@@ -1,0 +1,10 @@
+QUERY NAME: qryfrmGradeAllocationSt1ZT
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW qryWorkGroupGrade.WGGrade, Sum(qryPlanCatWGGrade.Hours) AS SumOfHours
+FROM qryWorkGroupGrade INNER JOIN qryPlanCatWGGrade ON qryWorkGroupGrade.WGGrade = qryPlanCatWGGrade.WGGrade
+WHERE ((qryPlanCatWGGrade.PlanCategory Like "ZT*"))
+GROUP BY qryWorkGroupGrade.WGGrade;
+

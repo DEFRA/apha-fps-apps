@@ -1,0 +1,9 @@
+QUERY NAME: qryImportList
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT temptblProject.Project, temptblProject.ProjectTitle, temptblProject.[Prepared by], temptblProject.Ready
+FROM temptblProject
+WHERE (((fnCompleted([Ready]))=True));
+

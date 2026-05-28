@@ -1,0 +1,9 @@
+QUERY NAME: JF fin-val-pact
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT TimeCodeValid.WorkGroup, TimeCodeValid.TimeCode, tlkpProject.ParentProject, tlkpProject.ProjectTitle, TimeCodeValid.Active
+FROM tlkpProject INNER JOIN TimeCodeValid ON tlkpProject.ParentProject = TimeCodeValid.ParentProject
+WHERE (((TimeCodeValid.TimeCode) Is Not Null) AND ((tlkpProject.ParentProject) Not Like "ZT*") AND ((TimeCodeValid.Active) Like -1));
+

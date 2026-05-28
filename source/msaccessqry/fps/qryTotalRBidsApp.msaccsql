@@ -1,0 +1,9 @@
+QUERY NAME: qryTotalRBidsApp
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW WorkGroup_MAP.ProfitCentre, Sum(tblBid.GenBid) AS SumOfGenBid
+FROM tblBid INNER JOIN WorkGroup_MAP ON tblBid.WorkGroup = WorkGroup_MAP.WorkGroup
+GROUP BY WorkGroup_MAP.ProfitCentre;
+

@@ -1,0 +1,8 @@
+QUERY NAME: Project (Contract/Portfolio)
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT DISTINCTROW tlkpProject.ParentProject AS Project, tlkpProject.ProjectTitle, tlkpProject.PlanCat, tlkpProject.Program, tlkpProject.Customer, tlkpProject.Manager, tlkpProject.TransferIncome, tlkpProject.CustIncome, tlkpProject.ProjectStatus, tlkpProject.CostBookNo, tlkpProject.FECcost, tlkpProject.DateCosted, tlkpProject.ContributionPC AS TargetContribution
+FROM tlkpProject;
+

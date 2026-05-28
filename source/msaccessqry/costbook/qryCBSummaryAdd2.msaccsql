@@ -1,0 +1,11 @@
+QUERY NAME: qryCBSummaryAdd2
+---------------------------------------------
+TYPE: APPEND
+
+SQL:
+INSERT INTO tblCBSummary ( FinancialYear, CBProject, CBProjectTitle, StartDate, AnimalCost, TestCost, StaffCost, LineCost )
+SELECT DISTINCTROW qryProjectYearProject.FinancialYear, qryProjectYearProject.Project, qryProjectYearProject.ProjectTitle, qryProjectYearProject.StartDate, Sum(qryAnimalTypeAnimalSum.AnimalCost) AS SumOfAnimalCost, Sum(qryTestReqTestSum.TestCost) AS SumOfTestCost, Sum(qryStaffReqGradeSum.StaffCost) AS SumOfStaffCost, Sum(qryAdditionalCosts.LineCost) AS SumOfLineCost
+FROM (((qryProjectYearProject LEFT JOIN qryAnimalTypeAnimalSum ON qryProjectYearProject.ProjectYear = qryAnimalTypeAnimalSum.ProjectYear) LEFT JOIN qryStaffReqGradeSum ON qryProjectYearProject.ProjectYear = qryStaffReqGradeSum.ProjectYear) LEFT JOIN qryTestReqTestSum ON qryProjectYearProject.ProjectYear = qryTestReqTestSum.ProjectYear) LEFT JOIN qryAdditionalCosts ON qryProjectYearProject.ProjectYear = qryAdditionalCosts.ProjectYear
+GROUP BY qryProjectYearProject.FinancialYear, qryProjectYearProject.Project, qryProjectYearProject.ProjectTitle, qryProjectYearProject.StartDate
+HAVING ((qryProjectYearProject.Project=[Forms]![frmProject1]![Project]));
+

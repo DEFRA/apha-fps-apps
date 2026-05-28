@@ -1,0 +1,9 @@
+QUERY NAME: qryAnnualAndFinalReports_Exception
+---------------------------------------------
+TYPE: SELECT
+
+SQL:
+SELECT qryMY_RadtrackReports.Project AS ParentProject, qryMY_RadtrackReports.Program, qryMY_RadtrackReports.Customer, qryMY_RadtrackReports.Type, qryMY_RadtrackReports.Manager, G_tlkpProject.ProjectTitle, G_tlkpProject_RadTrackData.StartDate, G_tlkpProject_RadTrackData.EndDate, qryMY_RadtrackReports.Reminder1, qryMY_RadtrackReports.Reminder2, qryMY_RadtrackReports.ReplyReceived, qryMY_RadtrackReports.SentToProgManager, qryMY_RadtrackReports.SentToProjLeader, qryMY_RadtrackReports.EmailedToCustomer, qryMY_RadtrackReports.SignedCopyToCustomer, qryMY_RadtrackReports.Project, qryMY_RadtrackReports.RepDueDate, qryMY_RadtrackReports.Year, G_tlkpProject.Contract
+FROM (G_tlkpProject INNER JOIN G_tlkpProject_RadTrackData ON G_tlkpProject.ParentProject = G_tlkpProject_RadTrackData.ParentProject) INNER JOIN qryMY_RadtrackReports ON G_tlkpProject.ParentProject = qryMY_RadtrackReports.Project
+WHERE (((qryMY_RadtrackReports.EmailedToCustomer) Is Null Or (qryMY_RadtrackReports.EmailedToCustomer)>[Repduedate]) AND ((qryMY_RadtrackReports.Year)=fnReportYear()) AND ((fnInReportMonthOrBefore([repDueDate]))=True));
+
