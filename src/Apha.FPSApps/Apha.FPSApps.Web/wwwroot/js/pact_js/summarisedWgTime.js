@@ -4,6 +4,49 @@ function getSummarisedWgTimeExtraFilters() {
     };
 }
 
+// summary start
+function syncTotalsWidths() {
+    const $table = $('#gridContainer_summarisedWorkgroupTimeGrid').find('table.editable-grid-table').first();
+    if (!$table.length) return;
+
+    // Read every visible <th> in the header row (skip filter row)
+    const $headers = $table.find('thead tr.govuk-table__row th');
+    if (!$headers.length) return;
+
+    const $container = $('#columnTotalsContainer');
+    const $cells = $container.children('[data-col-index]');
+    if (!$cells.length) return;
+
+    // Use getBoundingClientRect for sub-pixel accurate width
+    $headers.each(function (i) {
+        const w = this.getBoundingClientRect().width;
+        $cells.filter('[data-col-index="' + i + '"]').css({
+            width:    w + 'px',
+            minWidth: w + 'px',
+            maxWidth: w + 'px'
+        });
+    });
+
+    // Match container width to table exactly
+    const tableWidth = $table[0].getBoundingClientRect().width;
+    $container.css('width', tableWidth + 'px');
+}
+
+function moveTotalsIntoScrollContainer() {
+    const $gridScroll = $('#gridContainer_summarisedWorkgroupTimeGrid').find('.grid-scroll-container').first();
+    const $totals     = $('#columnTotalsContainer');
+
+    if (!$gridScroll.length || !$totals.length) return;
+
+    // Already inside – nothing to do
+    if ($.contains($gridScroll[0], $totals[0])) return;
+
+    // Move totals div inside the scroll container, after the table
+    $gridScroll.css('overflow-x', 'auto');
+    $gridScroll.append($totals);
+}
+
+// summary End
 function selectGridRow($row) {
     if (!$row || $row.length === 0) return;
 
@@ -17,12 +60,29 @@ function selectGridRow($row) {
 $(document).ready(function () {
     const $firstRow = $('table[id^="tbl_summarised"]:not(.totals-table) tbody tr:first');
     selectGridRow($firstRow);
+    syncTotalsWidths();
+
+    // Re-sync while a column is being dragged (live update)
+    document.addEventListener('mousemove', function () {
+        if (document.body.style.cursor === 'col-resize') {
+            syncTotalsWidths();
+        }
+    });
+
+    // Re-sync once drag is released
+    window.addEventListener('mouseup', function () {
+        setTimeout(syncTotalsWidths, 50);
+    });
+
+    // Re-sync on window resize
+    $(window).on('resize.totalsSync', function () { syncTotalsWidths(); });
 });
 
 document.addEventListener('gridReloaded', function (e) {
     if (e.detail && e.detail.gridId === 'summarisedWorkgroupTimeGrid') {
         const $firstRow = $('table[id^="tbl_summarised"]:not(.totals-table) tbody tr:first');
         selectGridRow($firstRow);
+        syncTotalsWidths();
     }
 });
 

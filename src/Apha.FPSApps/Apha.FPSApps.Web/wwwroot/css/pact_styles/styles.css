@@ -1352,3 +1352,57 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 .isDisplayBlock{
   display: block !important;
 }
+// summary Start
+
+/* ============================================================
+   COLUMN TOTALS FOOTER (summarised workgroup time)
+   – Visual properties match .editable-grid-table td / .custom-table td exactly
+   ============================================================ */
+#columnTotalsContainer.column-totals-container {
+  display:          flex;
+  align-items:      stretch;
+  border:           2px solid #cecece;
+  margin-top:       -1px;           /* overlap grid bottom border */
+  background-color: #f3f2f1;
+  overflow:         visible;        /* let it sit flush, scroll handled by parent */
+  box-sizing:       border-box;
+  position:         relative;
+  z-index:          1;              /* sit above grid bottom border */
+}
+
+/* Base cell – matches .custom-table td / .editable-grid-table td exactly */
+#columnTotalsContainer .column-total {
+  flex:             0 0 auto;
+  box-sizing:       content-box;                      /* same default as grid td */
+  height:           24px;                             /* .editable-grid-table td */
+  padding:          6px 5px;                          /* .custom-table td !important */
+  font-family:      "GDS Transport", arial, sans-serif; /* .govuk-table font-family */
+  font-size:        12px;                             /* .editable-grid-table */
+  font-weight:      400;                              /* .govuk-table normal weight */
+  line-height:      1.3157894737;                     /* .govuk-table line-height */
+  color:            #0b0c0c;                          /* govuk default text colour */
+  white-space:      nowrap;
+  overflow:         hidden;
+  text-align:       right;
+  background-color: #ffffff;                          /* .custom-table tbody td */
+  border-right:     1px solid #d0d0d0;                /* .editable-grid-table td */
+  display:          flex;
+  align-items:      center;
+  justify-content:  flex-end;
+}
+
+/* Last cell – no right border (table edge handled by container) */
+#columnTotalsContainer .column-total:last-child {
+  border-right: 1px solid #cecece;
+}
+
+/* Label cell (col 0 – Project column) */
+#columnTotalsContainer .column-total.column-total-label {
+  background-color: #f3f2f1;
+  justify-content:  flex-start;
+  font-weight:      700;
+  border-right:     1px solid #cecece;
+  color:            #0b0c0c;
+}
+
+// summary End

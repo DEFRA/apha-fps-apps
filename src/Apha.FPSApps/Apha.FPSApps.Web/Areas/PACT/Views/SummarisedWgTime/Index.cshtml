@@ -35,150 +35,43 @@
     </div>
 </div>
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10 sup_margin_bottom_10">
-    <div id="gridContainer_summarisedWorkgroupTimeGrid" class="govuk-grid-column-full">
-        @await Html.PartialAsync("_DataGrid", Model.Grid)
-    </div>
-</div>
-
-<!-- Column Totals Row -->
-<div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-full">
-        <div class="totals-wrapper">
-            <table id="tbl_totals_summarisedWorkgroupTimeGrid" class="totals-table govuk-table">
-                <tbody>
-                    <tr class="totals-row">
-                        <td class="totals-cell totals-label">Totals:</td>
-                        <td class="totals-cell">@Model.Summary.TotalApril</td>
-                        <td class="totals-cell">@Model.Summary.TotalMay</td>
-                        <td class="totals-cell">@Model.Summary.TotalJune</td>
-                        <td class="totals-cell">@Model.Summary.TotalJuly</td>
-                        <td class="totals-cell">@Model.Summary.TotalAugust</td>
-                        <td class="totals-cell">@Model.Summary.TotalSeptember</td>
-                        <td class="totals-cell">@Model.Summary.TotalOctober</td>
-                        <td class="totals-cell">@Model.Summary.TotalNovember</td>
-                        <td class="totals-cell">@Model.Summary.TotalDecember</td>
-                        <td class="totals-cell">@Model.Summary.TotalJanuary</td>
-                        <td class="totals-cell">@Model.Summary.TotalFebruary</td>
-                        <td class="totals-cell">@Model.Summary.TotalMarch</td>
-                        <td class="totals-cell">@Model.Summary.GrandTotalTime</td>
-                        <td class="totals-cell">@Model.Summary.GrandTotalCost</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div id="gridContainer_summarisedWorkgroupTimeGrid">
+            @await Html.PartialAsync("_DataGrid", Model.Grid)
+        </div>
+
+        @* ── Column Totals Row – one cell per grid column, in the same order ── *@
+        @{
+            var s = Model.Summary;
+        }
+        <div id="columnTotalsContainer" class="column-totals-container">
+            @* Col 1 – Project (label cell) *@
+            <div class="column-total column-total-label" data-col-index="0">Totals:</div>
+            @* Col 2–13 – Apr to Mar *@
+            <div class="column-total" data-col-index="1">@(s.TotalApril    == 0 ? "" : s.TotalApril.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="2">@(s.TotalMay      == 0 ? "" : s.TotalMay.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="3">@(s.TotalJune     == 0 ? "" : s.TotalJune.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="4">@(s.TotalJuly     == 0 ? "" : s.TotalJuly.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="5">@(s.TotalAugust   == 0 ? "" : s.TotalAugust.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="6">@(s.TotalSeptember== 0 ? "" : s.TotalSeptember.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="7">@(s.TotalOctober  == 0 ? "" : s.TotalOctober.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="8">@(s.TotalNovember == 0 ? "" : s.TotalNovember.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="9">@(s.TotalDecember == 0 ? "" : s.TotalDecember.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="10">@(s.TotalJanuary == 0 ? "" : s.TotalJanuary.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="11">@(s.TotalFebruary== 0 ? "" : s.TotalFebruary.ToString("0.##"))</div>
+            <div class="column-total" data-col-index="12">@(s.TotalMarch   == 0 ? "" : s.TotalMarch.ToString("0.##"))</div>
+            @* Col 14 – Time total *@
+            <div class="column-total" data-col-index="13">@(s.GrandTotalTime == 0 ? "" : s.GrandTotalTime.ToString("0.##"))</div>
+            @* Col 15 – Cost total *@
+            <div class="column-total" data-col-index="14">@(s.GrandTotalCost == 0 ? "" : "£" + s.GrandTotalCost.ToString("N2"))</div>
+            @* Col 16 – YrPlan (no summary value) *@
+            <div class="column-total" data-col-index="15">&nbsp;</div>
+            @* Col 17 – Spent (no summary value) *@
+            <div class="column-total" data-col-index="16">&nbsp;</div>
         </div>
     </div>
 </div>
 
-<style>
-    .totals-wrapper {
-        overflow-x: auto;
-        margin-top: -1px;
-    }
-
-    .totals-table {
-        width: 100%;
-        margin-bottom: 0;
-        border-top: 3px solid #0b0c0c;
-        background-color: #f3f2f1;
-    }
-
-    .totals-row {
-        background-color: #f3f2f1;
-    }
-
-    .totals-cell {
-        padding: 12px 10px;
-        text-align: right;
-        font-weight: bold;
-        border-right: 1px solid #b1b4b6;
-        white-space: nowrap;
-    }
-
-    .totals-label {
-        text-align: left !important;
-        padding-left: 20px;
-    }
-
-    .totals-cell:last-child {
-        border-right: none;
-    }
-
-    /* GOV.UK Edit Modal Styles */
-    .govuk-edit-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-        justify-content: center;
-        align-items: center;
-    }
-
-        .govuk-edit-modal.open {
-            display: flex !important;
-        }
-
-    .govuk-edit-modal-dialog {
-        background: #ffffff;
-        border: none;
-        box-shadow: 0 3.5px 7px rgba(0, 0, 0, 0.13);
-        width: 90%;
-        max-width: 650px;
-        max-height: 85vh;
-        overflow: hidden;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .govuk-edit-modal__header {
-        border-bottom: 1px solid #b1b4b6;
-        padding: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-left: 5px;
-    }
-
-    .govuk-edit-modal__body {
-        padding: 20px;
-        font-size: 16px;
-        overflow-y: auto;
-        flex: 1;
-    }
-
-    .govuk-edit-modal__footer {
-        border-top: 1px solid #b1b4b6;
-        padding-left: 15px;
-        padding-right: 15px;
-        padding-top: 15px;
-        display: flex;
-        gap: 10px;
-        justify-content: space-between;
-    }
-
-    .govuk-edit-modal__close {
-        background: none;
-        border: none;
-        font-size: 24px;
-        color: #0b0c0c;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-        .govuk-edit-modal__close:hover {
-            opacity: 0.7;
-        }
-</style>
 
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
     <div class="govuk-grid-column-one-quarter">
