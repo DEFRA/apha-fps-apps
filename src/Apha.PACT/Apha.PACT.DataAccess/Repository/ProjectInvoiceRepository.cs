@@ -225,18 +225,6 @@ namespace Apha.PACT.DataAccess.Repository
                 .AnyAsync(i => i.Month == month && i.FpsYear == _fpsRequestContext.FpsYear);
         }
 
-        public async Task<int> CreateBulkInvoiceAsync(IEnumerable<ProjectInvoice> entities)
-        {
-            // Set FpsYear for all entities from the request context
-            foreach (var entity in entities)
-            {
-                entity.FpsYear = _fpsRequestContext.FpsYear;
-            }
-
-            await _context.ProjectInvoices.AddRangeAsync(entities);
-            return await _context.SaveChangesAsync();
-        }
-
         public async Task<int> CopyInvoicesByMonthAsync(int sourceMonth, int targetMonth, List<int>? specificInvoiceIds = null)
         {
             List<ProjectInvoice> invoicesToCopy;

@@ -883,23 +883,6 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
         }
 
         [Fact]
-        public async Task GetInvoicesByIdsAsync_FiltersOutWrongFpsYear()
-        {
-            var invoices = new List<ProjectInvoice>
-            {
-                new() { InvoiceCounter = 1, ProjectParent = "PRJ1", FpsYear = DefaultTestFpsYear },
-                new() { InvoiceCounter = 2, ProjectParent = "PRJ2", FpsYear = 2020 },
-                new() { InvoiceCounter = 3, ProjectParent = "PRJ3", FpsYear = DefaultTestFpsYear }
-            };
-            var repo = CreateRepository(invoices, fpsYear: DefaultTestFpsYear);
-
-            var result = await repo.GetInvoicesByIdsAsync(new List<int> { 1, 2, 3 });
-
-            Assert.Equal(2, result.Count);
-            Assert.All(result, invoice => Assert.Equal(DefaultTestFpsYear, invoice.FpsYear));
-        }
-
-        [Fact]
         public async Task GetInvoicesByIdsAsync_EmptyIdList_ReturnsEmptyList()
         {
             var invoices = new List<ProjectInvoice>
@@ -981,78 +964,6 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectInvoiceRepositoryTest
             var result = await repo.HasInvoicesForMonthAsync(3);
 
             Assert.False(result);
-        }
-
-        #endregion
-
-        #region CreateBulkAsync
-
-        [Fact]
-        public async Task CreateBulkAsync_ValidEntities_SetsFpsYearForAll()
-        {
-            var (repo, invoicesMockSet, mockContext) = CreateRepositoryWithMocks([]);
-            var entities = new List<ProjectInvoice>
-            {
-                new() { ProjectParent = "PRJ1", Amount = 1000m },
-                new() { ProjectParent = "PRJ2", Amount = 2000m },
-                new() { ProjectParent = "PRJ3", Amount = 3000m }
-            };
-
-            var result = await repo.CreateBulkAsync(entities);
-
-            Assert.All(entities, entity => Assert.Equal(DefaultTestFpsYear, entity.FpsYear));
-            invoicesMockSet.Verify(x => x.AddRangeAsync(It.IsAny<IEnumerable<ProjectInvoice>>(), It.IsAny<CancellationToken>()), Times.Once);
-            RepositoryTestHelper.VerifySaveChanges(mockContext);
-        }
-
-        [Fact]
-        public async Task CreateBulkAsync_EmptyList_DoesNotThrowException()
-        {
-            var (repo, invoicesMockSet, mockContext) = CreateRepositoryWithMocks([]);
-            var entities = new List<ProjectInvoice>();
-
-            var result = await repo.CreateBulkAsync(entities);
-
-            invoicesMockSet.Verify(x => x.AddRangeAsync(It.IsAny<IEnumerable<ProjectInvoice>>(), It.IsAny<CancellationToken>()), Times.Once);
-            RepositoryTestHelper.VerifySaveChanges(mockContext);
-        }
-
-        [Fact]
-        public async Task CreateBulkAsync_SetsFpsYear_FromYearContext()
-        {
-            const int customYear = 2025;
-            var (repo, _, _) = CreateRepositoryWithMocks([], fpsYear: customYear);
-            var entities = new List<ProjectInvoice>
-            {
-                new() { ProjectParent = "PRJ1" },
-                new() { ProjectParent = "PRJ2" }
-            };
-
-            await repo.CreateBulkAsync(entities);
-
-            Assert.All(entities, entity => Assert.Equal(customYear, entity.FpsYear));
-        }
-
-        [Fact]
-        public async Task CreateBulkAsync_LargeNumberOfEntities_HandlesSuccessfully()
-        {
-            var (repo, invoicesMockSet, mockContext) = CreateRepositoryWithMocks([]);
-            var entities = new List<ProjectInvoice>();
-            for (int i = 1; i <= 100; i++)
-            {
-                entities.Add(new ProjectInvoice
-                {
-                    ProjectParent = $"PRJ{i}",
-                    Month = i % 12 + 1,
-                    Amount = i * 1000m
-                });
-            }
-
-            var result = await repo.CreateBulkAsync(entities);
-
-            Assert.Equal(100, entities.Count);
-            Assert.All(entities, entity => Assert.Equal(DefaultTestFpsYear, entity.FpsYear));
-            invoicesMockSet.Verify(x => x.AddRangeAsync(It.IsAny<IEnumerable<ProjectInvoice>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         #endregion

@@ -358,5 +358,149 @@ namespace Apha.PACT.Application.UnitTests
         }
 
         #endregion
+
+        #region CopyInvoicesAsync
+
+        [Fact]
+        public async Task CopyInvoicesAsync_ValidBulkCopy_ReturnsTrue()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 9, InvoiceIds = null };
+            _repository.CopyInvoicesByMonthAsync(3, 9, null).Returns(2);
+
+            // Act
+            var result = await _service.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.True(result);
+            await _repository.Received(1).CopyInvoicesByMonthAsync(3, 9, null);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_ValidSelectiveCopy_ReturnsTrue()
+        {
+            // Arrange
+            var invoiceIds = new List<int> { 1, 3, 5 };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 9, InvoiceIds = invoiceIds };
+            _repository.CopyInvoicesByMonthAsync(3, 9, Arg.Is<List<int>>(ids => ids.SequenceEqual(invoiceIds))).Returns(3);
+
+            // Act
+            var result = await _service.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.True(result);
+            await _repository.Received(1).CopyInvoicesByMonthAsync(3, 9, Arg.Any<List<int>>());
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_SourceMonthLessThanOne_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 0, TargetMonth = 9 };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CopyInvoicesAsync(copyDto));
+            Assert.Contains(exception.Errors, e => e.Code == "Source_Month");
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_SourceMonthGreaterThanTwelve_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 13, TargetMonth = 9 };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CopyInvoicesAsync(copyDto));
+            Assert.Contains(exception.Errors, e => e.Code == "Source_Month");
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_TargetMonthLessThanOne_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 0 };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CopyInvoicesAsync(copyDto));
+            Assert.Contains(exception.Errors, e => e.Code == "Target_Month");
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_TargetMonthGreaterThanTwelve_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 13 };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CopyInvoicesAsync(copyDto));
+            Assert.Contains(exception.Errors, e => e.Code == "Target_Month");
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_SameSourceAndTargetMonth_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 5 };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CopyInvoicesAsync(copyDto));
+            Assert.Contains(exception.Errors, e => e.Code == "Same_Month");
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_NoInvoicesCopied_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 9 };
+            _repository.CopyInvoicesByMonthAsync(3, 9, null).Returns(0);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CopyInvoicesAsync(copyDto));
+            Assert.Contains(exception.Errors, e => e.Code == "Source_Month");
+            Assert.Contains(exception.Errors, e => e.Message.Contains("No Invoice copyied"));
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_MultipleValidationErrors_ThrowsBusinessValidationErrorExceptionWithAllErrors()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 0, TargetMonth = 13 };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CopyInvoicesAsync(copyDto));
+            Assert.Equal(2, exception.Errors.Count);
+            Assert.Contains(exception.Errors, e => e.Code == "Source_Month");
+            Assert.Contains(exception.Errors, e => e.Code == "Target_Month");
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_ValidMonthsButSourceAndTargetSame_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 6, TargetMonth = 6 };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _service.CopyInvoicesAsync(copyDto));
+            Assert.Single(exception.Errors);
+            Assert.Contains(exception.Errors, e => e.Code == "Same_Month");
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_SelectiveCopyWithSingleInvoice_CallsRepositoryWithSingleId()
+        {
+            // Arrange
+            var invoiceIds = new List<int> { 42 };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 1, TargetMonth = 12, InvoiceIds = invoiceIds };
+            _repository.CopyInvoicesByMonthAsync(1, 12, Arg.Any<List<int>>()).Returns(1);
+
+            // Act
+            var result = await _service.CopyInvoicesAsync(copyDto);
+
+            // Assert
+            Assert.True(result);
+            await _repository.Received(1).CopyInvoicesByMonthAsync(1, 12, Arg.Is<List<int>>(ids => ids.Count == 1 && ids[0] == 42));
+        }
+
+        #endregion
     }
 }

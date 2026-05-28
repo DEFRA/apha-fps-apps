@@ -16,7 +16,6 @@ namespace Apha.PACT.Core.Interfaces
         Task<List<ProjectInvoice>> GetInvoicesByMonthAsync(int month);
         Task<List<ProjectInvoice>> GetInvoicesByIdsAsync(List<int> invoiceIds);
         Task<bool> HasInvoicesForMonthAsync(int month);
-        Task<int> CreateBulkInvoiceAsync(IEnumerable<ProjectInvoice> entities);
         Task<int> CopyInvoicesByMonthAsync(int sourceMonth, int targetMonth, List<int>? specificInvoiceIds = null);
     }
 }

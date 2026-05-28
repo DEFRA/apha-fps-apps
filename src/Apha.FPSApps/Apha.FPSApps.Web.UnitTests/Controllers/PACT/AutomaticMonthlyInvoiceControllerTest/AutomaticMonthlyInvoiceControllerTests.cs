@@ -1002,25 +1002,22 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
 
         #region CopyInvoices Tests
 
-
         [Fact]
-        public async Task CopyInvoices_BulkCopy_NullInvoiceRecords_FetchesAndCopiesAllInvoices()
+        public async Task CopyInvoices_ValidBulkCopyRequest_ReturnsSuccessJson()
         {
             // Arrange
-            var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
-            var copyResult = new CopyInvoicesResultDto
+            var request = new CopyInvoicesRequest
             {
-                Success = true,
-                Message = "Successfully copied invoices",
-                CopiedCount = 2,
-                Errors = new List<string>()
+                SourceMonth = 3,
+                TargetMonth = 9,
+                InvoiceIds = null,
+                InvoiceRecords = null
             };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 9 };
 
             _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _invoiceService.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(dto => 
-                dto.SourceMonth == 5 && dto.TargetMonth == 6 && dto.InvoiceRecords == null))
-                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
+            _invoiceService.CopyInvoicesAsync(copyDto)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
             // Act
             var result = await _controller.CopyInvoices(request);
@@ -1029,33 +1026,35 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonElement = GetJsonResultElement(jsonResult);
             Assert.True(jsonElement.GetProperty("success").GetBoolean());
-            Assert.True(jsonElement.GetProperty("isBulkCopy").GetBoolean());
-            Assert.Equal(2, jsonElement.GetProperty("copiedCount").GetInt32());
+            Assert.Equal("Successfully copied invoices", jsonElement.GetProperty("message").GetString());
+            await _invoiceService.Received(1).CopyInvoicesAsync(copyDto);
         }
 
         [Fact]
-        public async Task CopyInvoices_BulkCopy_EmptyInvoiceRecords_FetchesAndCopiesAllInvoices()
+        public async Task CopyInvoices_ValidSelectiveCopyWithInvoiceIds_ReturnsSuccessJson()
         {
             // Arrange
-            var request = new CopyInvoicesRequest 
-            { 
-                SourceMonth = 5, 
-                TargetMonth = 6, 
-                InvoiceRecords = new List<AutomaticInvoiceItem>() 
-            };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
-            var copyResult = new CopyInvoicesResultDto
+            var request = new CopyInvoicesRequest
             {
-                Success = true,
-                Message = "Successfully copied invoices",
-                CopiedCount = 1,
-                Errors = new List<string>()
+                SourceMonth = 5,
+                TargetMonth = 6,
+                InvoiceIds = new List<int> { 1, 2, 3 },
+                InvoiceRecords = null
+            };
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 5,
+                TargetMonth = 6,
+                InvoiceIds = new List<int> { 1, 2, 3 }
             };
 
             _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _invoiceService.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(dto => 
-                dto.SourceMonth == 5 && dto.TargetMonth == 6 && dto.InvoiceRecords == null))
-                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
+            _invoiceService.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(dto =>
+                dto.SourceMonth == 5 &&
+                dto.TargetMonth == 6 &&
+                dto.InvoiceIds != null &&
+                dto.InvoiceIds.Count == 3))
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
             // Act
             var result = await _controller.CopyInvoices(request);
@@ -1064,160 +1063,100 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonElement = GetJsonResultElement(jsonResult);
             Assert.True(jsonElement.GetProperty("success").GetBoolean());
-            Assert.True(jsonElement.GetProperty("isBulkCopy").GetBoolean());
         }
 
         [Fact]
-        public async Task CopyInvoices_BulkCopy_ServiceReturnsFailure_ReturnsErrorJson()
+        public async Task CopyInvoices_WithInvoiceRecords_ExtractsIdsAndCallsService()
         {
             // Arrange
-            var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+            var invoiceRecords = new List<AutomaticInvoiceItem>
+            {
+                new() { InvoiceCounter = 10, ProjectParent = "PRJ001", Month = 5, Amount = 1000m },
+                new() { InvoiceCounter = 20, ProjectParent = "PRJ002", Month = 5, Amount = 2000m }
+            };
+            var request = new CopyInvoicesRequest
+            {
+                SourceMonth = 5,
+                TargetMonth = 6,
+                InvoiceIds = null,
+                InvoiceRecords = invoiceRecords
+            };
+            CopyInvoicesRequest? capturedRequest = null;
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 5,
+                TargetMonth = 6,
+                InvoiceIds = new List<int> { 10, 20 }
+            };
 
-            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
+            _mapper.Map<CopyInvoicesDto>(Arg.Do<CopyInvoicesRequest>(r => capturedRequest = r))
+                .Returns(copyDto);
             _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
-                .Returns(ApiResponseDto<CopyInvoicesResultDto>.FailureResponse(
-                    new List<ApiErrorDto> 
-                    { 
-                        new ApiErrorDto { Message = "Copy operation failed", Code = "COPY_ERROR" } 
-                    },
-                    new ApiMetaDto()));
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
             // Act
             var result = await _controller.CopyInvoices(request);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var jsonElement = GetJsonResultElement(jsonResult);
-            Assert.False(jsonElement.GetProperty("success").GetBoolean());
-            Assert.Contains("Copy operation failed", jsonElement.GetProperty("message").GetString());
-        }
-
-        [Fact]
-        public async Task CopyInvoices_SelectiveCopy_WithValidRecords_ReturnsSuccess()
-        {
-            // Arrange
-            var invoiceRecords = new List<AutomaticInvoiceItem>
-            {
-                new() { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 5, Amount = 1000m },
-                new() { InvoiceCounter = 2, ProjectParent = "PRJ002", Month = 5, Amount = 2000m }
-            };
-            var request = new CopyInvoicesRequest 
-            { 
-                SourceMonth = 5, 
-                TargetMonth = 6, 
-                InvoiceRecords = invoiceRecords 
-            };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceDto>() };
-            var copyResult = new CopyInvoicesResultDto
-            {
-                Success = true,
-                Message = "Successfully copied 2 invoices",
-                CopiedCount = 2,
-                FailedCount = 0,
-                Errors = new List<string>()
-            };
-
-            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
-                .Returns(x => new ProjectInvoiceDto 
-                { 
-                    ProjectParent = ((AutomaticInvoiceItem)x[0]).ProjectParent,
-                    Amount = ((AutomaticInvoiceItem)x[0]).Amount
-                });
-
-            _invoiceService.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(dto => 
-                dto.SourceMonth == 5 && dto.TargetMonth == 6 && dto.InvoiceRecords != null && dto.InvoiceRecords.Count == 2))
-                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
-
-            // Act
-            var result = await _controller.CopyInvoices(request);
-
-            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.NotNull(capturedRequest.InvoiceIds);
+            Assert.Equal(2, capturedRequest.InvoiceIds.Count);
+            Assert.Contains(10, capturedRequest.InvoiceIds);
+            Assert.Contains(20, capturedRequest.InvoiceIds);
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonElement = GetJsonResultElement(jsonResult);
             Assert.True(jsonElement.GetProperty("success").GetBoolean());
-            Assert.Equal(2, jsonElement.GetProperty("copiedCount").GetInt32());
         }
 
         [Fact]
-        public async Task CopyInvoices_SelectiveCopy_SetsTargetMonthOnAllInvoices()
+        public async Task CopyInvoices_WithInvoiceRecordsWithZeroIds_FiltersOutZeroIds()
         {
             // Arrange
             var invoiceRecords = new List<AutomaticInvoiceItem>
             {
-                new() { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 5, Amount = 1000m }
+                new() { InvoiceCounter = 0, ProjectParent = "PRJ001", Month = 5, Amount = 1000m },
+                new() { InvoiceCounter = 10, ProjectParent = "PRJ002", Month = 5, Amount = 2000m }
             };
-            var request = new CopyInvoicesRequest 
-            { 
-                SourceMonth = 5, 
-                TargetMonth = 8, 
-                InvoiceRecords = invoiceRecords 
-            };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 8, InvoiceRecords = new List<ProjectInvoiceDto>() };
-            CopyInvoicesDto? capturedDto = null;
-            var copyResult = new CopyInvoicesResultDto
+            var request = new CopyInvoicesRequest
             {
-                Success = true,
-                CopiedCount = 1,
-                Errors = new List<string>()
+                SourceMonth = 5,
+                TargetMonth = 6,
+                InvoiceIds = null,
+                InvoiceRecords = invoiceRecords
             };
+            CopyInvoicesRequest? capturedRequest = null;
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceIds = new List<int> { 10 } };
 
-            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
-                .Returns(new ProjectInvoiceDto { ProjectParent = "PRJ001", Month = 5, Amount = 1000m });
-
-            _invoiceService.CopyInvoicesAsync(Arg.Do<CopyInvoicesDto>(dto => capturedDto = dto))
-                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
+            _mapper.Map<CopyInvoicesDto>(Arg.Do<CopyInvoicesRequest>(r => capturedRequest = r))
+                .Returns(copyDto);
+            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
 
             // Act
             await _controller.CopyInvoices(request);
 
             // Assert
-            Assert.NotNull(capturedDto);
-            Assert.NotNull(capturedDto.InvoiceRecords);
-            Assert.Single(capturedDto.InvoiceRecords);
-            Assert.Equal(8, capturedDto.InvoiceRecords[0].Month);
-            Assert.Equal(0, capturedDto.InvoiceRecords[0].InvoiceCounter);
+            Assert.NotNull(capturedRequest);
+            Assert.NotNull(capturedRequest.InvoiceIds);
+            Assert.Single(capturedRequest.InvoiceIds);
+            Assert.Equal(10, capturedRequest.InvoiceIds[0]);
         }
 
         [Fact]
-        public async Task CopyInvoices_SelectiveCopy_PartialFailure_ReturnsPartialSuccess()
+        public async Task CopyInvoices_ServiceReturnsFalse_ReturnsFailureJson()
         {
             // Arrange
-            var invoiceRecords = new List<AutomaticInvoiceItem>
+            var request = new CopyInvoicesRequest
             {
-                new() { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 5, Amount = 1000m },
-                new() { InvoiceCounter = 2, ProjectParent = "PRJ002", Month = 5, Amount = 2000m },
-                new() { InvoiceCounter = 3, ProjectParent = "PRJ003", Month = 5, Amount = 3000m }
+                SourceMonth = 3,
+                TargetMonth = 9,
+                InvoiceIds = null
             };
-            var request = new CopyInvoicesRequest 
-            { 
-                SourceMonth = 5, 
-                TargetMonth = 6, 
-                InvoiceRecords = invoiceRecords 
-            };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceDto>() };
-            var copyResult = new CopyInvoicesResultDto
-            {
-                Success = false,
-                Message = "Copied 2 out of 3 invoices",
-                CopiedCount = 2,
-                FailedCount = 1,
-                Errors = new List<string> { "Failed to copy invoice for PRJ002: Duplicate invoice" }
-            };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 9 };
 
             _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
-                .Returns(x => new ProjectInvoiceDto 
-                { 
-                    ProjectParent = ((AutomaticInvoiceItem)x[0]).ProjectParent,
-                    Month = ((AutomaticInvoiceItem)x[0]).Month,
-                    Amount = ((AutomaticInvoiceItem)x[0]).Amount
-                });
-
-            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
-                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
+            _invoiceService.CopyInvoicesAsync(copyDto)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(false));
 
             // Act
             var result = await _controller.CopyInvoices(request);
@@ -1226,46 +1165,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonElement = GetJsonResultElement(jsonResult);
             Assert.False(jsonElement.GetProperty("success").GetBoolean());
-            Assert.Equal(2, jsonElement.GetProperty("copiedCount").GetInt32());
-            Assert.Contains("Copied 2 out of 3", jsonElement.GetProperty("message").GetString());
-            Assert.True(jsonElement.GetProperty("errors").GetArrayLength() > 0);
+            Assert.Equal("Failed to copy invoices", jsonElement.GetProperty("message").GetString());
         }
 
         [Fact]
-        public async Task CopyInvoices_SelectiveCopy_AllFail_ReturnsAllErrors()
+        public async Task CopyInvoices_ServiceReturnsFailureResponse_ReturnsErrorJson()
         {
             // Arrange
-            var invoiceRecords = new List<AutomaticInvoiceItem>
+            var request = new CopyInvoicesRequest
             {
-                new() { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 5, Amount = 1000m },
-                new() { InvoiceCounter = 2, ProjectParent = "PRJ002", Month = 5, Amount = 2000m }
+                SourceMonth = 5,
+                TargetMonth = 6
             };
-            var request = new CopyInvoicesRequest 
-            { 
-                SourceMonth = 5, 
-                TargetMonth = 6, 
-                InvoiceRecords = invoiceRecords 
-            };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceDto>() };
-            var copyResult = new CopyInvoicesResultDto
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
+            var errors = new List<ApiErrorDto>
             {
-                Success = false,
-                Message = "Failed to copy all invoices",
-                CopiedCount = 0,
-                FailedCount = 2,
-                Errors = new List<string> 
-                { 
-                    "Failed to copy invoice for PRJ001: Database error",
-                    "Failed to copy invoice for PRJ002: Database error"
-                }
+                new() { Code = "VALIDATION_ERROR", Message = "Source and target months must be different" },
+                new() { Code = "INVALID_MONTH", Message = "Target month is invalid" }
             };
 
             _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
-                .Returns(new ProjectInvoiceDto());
-
-            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
-                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
+            _invoiceService.CopyInvoicesAsync(copyDto)
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
             var result = await _controller.CopyInvoices(request);
@@ -1274,40 +1195,25 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonElement = GetJsonResultElement(jsonResult);
             Assert.False(jsonElement.GetProperty("success").GetBoolean());
-            Assert.Equal(0, jsonElement.GetProperty("copiedCount").GetInt32());
-            Assert.Equal(2, jsonElement.GetProperty("errors").GetArrayLength());
+            Assert.Contains("Source and target months must be different", jsonElement.GetProperty("message").GetString());
         }
 
         [Fact]
-        public async Task CopyInvoices_SelectiveCopy_CallsServiceWithMappedDtos()
+        public async Task CopyInvoices_ServiceReturnsFailureWithMultipleErrors_ConcatenatesAllErrors()
         {
             // Arrange
-            var invoiceRecords = new List<AutomaticInvoiceItem>
+            var request = new CopyInvoicesRequest { SourceMonth = 3, TargetMonth = 9 };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 9 };
+            var errors = new List<ApiErrorDto>
             {
-                new() { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 5, Amount = 1000m },
-                new() { InvoiceCounter = 2, ProjectParent = "PRJ002", Month = 5, Amount = 2000m },
-                new() { InvoiceCounter = 3, ProjectParent = "PRJ003", Month = 5, Amount = 3000m }
-            };
-            var request = new CopyInvoicesRequest 
-            { 
-                SourceMonth = 5, 
-                TargetMonth = 6, 
-                InvoiceRecords = invoiceRecords 
-            };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = new List<ProjectInvoiceDto>() };
-            var copyResult = new CopyInvoicesResultDto
-            {
-                Success = true,
-                CopiedCount = 3,
-                Errors = new List<string>()
+                new() { Code = "ERROR1", Message = "First error" },
+                new() { Code = "ERROR2", Message = "Second error" },
+                new() { Message = "Third error" }
             };
 
             _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
-                .Returns(new ProjectInvoiceDto());
-
-            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
-                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
+            _invoiceService.CopyInvoicesAsync(copyDto)
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
             var result = await _controller.CopyInvoices(request);
@@ -1315,27 +1221,23 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonElement = GetJsonResultElement(jsonResult);
-            Assert.Equal(3, jsonElement.GetProperty("copiedCount").GetInt32());
-
-            // Verify service was called with the correct DTO
-            await _invoiceService.Received(1).CopyInvoicesAsync(
-                Arg.Is<CopyInvoicesDto>(dto => 
-                    dto.SourceMonth == 5 && 
-                    dto.TargetMonth == 6 && 
-                    dto.InvoiceRecords != null && 
-                    dto.InvoiceRecords.Count == 3));
+            Assert.False(jsonElement.GetProperty("success").GetBoolean());
+            var message = jsonElement.GetProperty("message").GetString();
+            Assert.Contains("First error", message);
+            Assert.Contains("Second error", message);
+            Assert.Contains("Third error", message);
         }
 
         [Fact]
-        public async Task CopyInvoices_BulkCopy_ServiceReturnsNullResponse_HandlesGracefully()
+        public async Task CopyInvoices_ServiceReturnsFailureWithNoErrors_ReturnsGenericErrorMessage()
         {
             // Arrange
-            var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+            var request = new CopyInvoicesRequest { SourceMonth = 1, TargetMonth = 2 };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 1, TargetMonth = 2 };
 
             _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
-                .Returns((ApiResponseDto<CopyInvoicesResultDto>)null!);
+            _invoiceService.CopyInvoicesAsync(copyDto)
+                .Returns(ApiResponseDto<bool>.FailureResponse(new List<ApiErrorDto>(), new ApiMetaDto()));
 
             // Act
             var result = await _controller.CopyInvoices(request);
@@ -1343,44 +1245,24 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonElement = GetJsonResultElement(jsonResult);
-            // When service returns null, should handle gracefully with 0 copied
-            Assert.True(jsonElement.GetProperty("success").GetBoolean());
-            Assert.Equal(0, jsonElement.GetProperty("copiedCount").GetInt32());
+            Assert.False(jsonElement.GetProperty("success").GetBoolean());
+            Assert.Equal("Failed to copy invoices", jsonElement.GetProperty("message").GetString());
         }
 
         [Fact]
-        public async Task CopyInvoices_SelectiveCopy_WithManyRecords_PassesAllToService()
+        public async Task CopyInvoices_ServiceReturnsFailureWithErrorCodeOnly_UsesCodeInMessage()
         {
             // Arrange
-            var invoiceRecords = Enumerable.Range(1, 50)
-                .Select(i => new AutomaticInvoiceItem 
-                { 
-                    InvoiceCounter = i, 
-                    ProjectParent = $"PRJ{i:000}", 
-                    Month = 3, 
-                    Amount = i * 100m 
-                })
-                .ToList();
-            var request = new CopyInvoicesRequest 
-            { 
-                SourceMonth = 3, 
-                TargetMonth = 4, 
-                InvoiceRecords = invoiceRecords 
-            };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 3, TargetMonth = 4, InvoiceRecords = new List<ProjectInvoiceDto>() };
-            var copyResult = new CopyInvoicesResultDto
+            var request = new CopyInvoicesRequest { SourceMonth = 4, TargetMonth = 5 };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 4, TargetMonth = 5 };
+            var errors = new List<ApiErrorDto>
             {
-                Success = true,
-                CopiedCount = 50,
-                Errors = new List<string>()
+                new() { Code = "DUPLICATE_INVOICE", Message = null }
             };
 
             _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _mapper.Map<ProjectInvoiceDto>(Arg.Any<AutomaticInvoiceItem>())
-                .Returns(new ProjectInvoiceDto());
-
-            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
-                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
+            _invoiceService.CopyInvoicesAsync(copyDto)
+                .Returns(ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
             var result = await _controller.CopyInvoices(request);
@@ -1388,58 +1270,122 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.AutomaticMonthlyInvoiceCon
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonElement = GetJsonResultElement(jsonResult);
-            Assert.Equal(50, jsonElement.GetProperty("copiedCount").GetInt32());
-
-            await _invoiceService.Received(1).CopyInvoicesAsync(
-                Arg.Is<CopyInvoicesDto>(dto => 
-                    dto.SourceMonth == 3 && 
-                    dto.TargetMonth == 4 && 
-                    dto.InvoiceRecords != null && 
-                    dto.InvoiceRecords.Count == 50));
-        }
-
-        [Fact]
-        public async Task CopyInvoices_BulkCopy_CallsServiceWithNullDtosList()
-        {
-            // Arrange
-            var request = new CopyInvoicesRequest { SourceMonth = 2, TargetMonth = 3, InvoiceRecords = null };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 2, TargetMonth = 3, InvoiceRecords = null };
-            var copyResult = new CopyInvoicesResultDto
-            {
-                Success = true,
-                CopiedCount = 10,
-                Errors = new List<string>()
-            };
-
-            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _invoiceService.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(dto => 
-                dto.SourceMonth == 2 && dto.TargetMonth == 3 && dto.InvoiceRecords == null))
-                .Returns(ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult, null));
-
-            // Act
-            await _controller.CopyInvoices(request);
-
-            // Assert
-            await _invoiceService.Received(1).CopyInvoicesAsync(
-                Arg.Is<CopyInvoicesDto>(dto => 
-                    dto.SourceMonth == 2 && 
-                    dto.TargetMonth == 3 && 
-                    dto.InvoiceRecords == null));
+            Assert.False(jsonElement.GetProperty("success").GetBoolean());
+            Assert.Contains("DUPLICATE_INVOICE", jsonElement.GetProperty("message").GetString());
         }
 
         [Fact]
         public async Task CopyInvoices_ServiceThrowsException_PropagatesException()
         {
             // Arrange
-            var request = new CopyInvoicesRequest { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceRecords = null };
+            var request = new CopyInvoicesRequest { SourceMonth = 6, TargetMonth = 7 };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 6, TargetMonth = 7 };
 
             _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
-            _invoiceService.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>())
-                .Returns(Task.FromException<ApiResponseDto<CopyInvoicesResultDto>>(new InvalidOperationException("Service error")));
+            _invoiceService.CopyInvoicesAsync(copyDto)
+                .Returns(Task.FromException<ApiResponseDto<bool>>(new InvalidOperationException("Service unavailable")));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.CopyInvoices(request));
+        }
+
+        [Fact]
+        public async Task CopyInvoices_EmptyInvoiceIds_MapsCorrectly()
+        {
+            // Arrange
+            var request = new CopyInvoicesRequest
+            {
+                SourceMonth = 8,
+                TargetMonth = 9,
+                InvoiceIds = new List<int>(),
+                InvoiceRecords = null
+            };
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 8,
+                TargetMonth = 9,
+                InvoiceIds = new List<int>()
+            };
+
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
+            _invoiceService.CopyInvoicesAsync(copyDto)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.CopyInvoices(request);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonElement = GetJsonResultElement(jsonResult);
+            Assert.True(jsonElement.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task CopyInvoices_BothInvoiceIdsAndRecordsProvided_PreservesInvoiceIds()
+        {
+            // Arrange
+            var request = new CopyInvoicesRequest
+            {
+                SourceMonth = 10,
+                TargetMonth = 11,
+                InvoiceIds = new List<int> { 5, 6 },
+                InvoiceRecords = new List<AutomaticInvoiceItem>
+                {
+                    new() { InvoiceCounter = 1, ProjectParent = "PRJ001" }
+                }
+            };
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 10,
+                TargetMonth = 11,
+                InvoiceIds = new List<int> { 5, 6 }
+            };
+
+            _mapper.Map<CopyInvoicesDto>(request).Returns(copyDto);
+            _invoiceService.CopyInvoicesAsync(Arg.Is<CopyInvoicesDto>(dto =>
+                dto.InvoiceIds != null && dto.InvoiceIds.Contains(5) && dto.InvoiceIds.Contains(6)))
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            var result = await _controller.CopyInvoices(request);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonElement = GetJsonResultElement(jsonResult);
+            Assert.True(jsonElement.GetProperty("success").GetBoolean());
+            // Verify original InvoiceIds were preserved (not replaced by records)
+            Assert.Equal(2, request.InvoiceIds.Count);
+            Assert.Contains(5, request.InvoiceIds);
+            Assert.Contains(6, request.InvoiceIds);
+        }
+
+        [Fact]
+        public async Task CopyInvoices_MapperCalledWithCorrectRequest_PassesToService()
+        {
+            // Arrange
+            var request = new CopyInvoicesRequest
+            {
+                SourceMonth = 11,
+                TargetMonth = 12,
+                InvoiceIds = new List<int> { 100, 200 }
+            };
+            var mappedDto = new CopyInvoicesDto
+            {
+                SourceMonth = 11,
+                TargetMonth = 12,
+                InvoiceIds = new List<int> { 100, 200 }
+            };
+
+            _mapper.Map<CopyInvoicesDto>(request).Returns(mappedDto);
+            _invoiceService.CopyInvoicesAsync(mappedDto)
+                .Returns(ApiResponseDto<bool>.SuccessResponse(true));
+
+            // Act
+            await _controller.CopyInvoices(request);
+
+            // Assert
+            _mapper.Received(1).Map<CopyInvoicesDto>(request);
+            await _invoiceService.Received(1).CopyInvoicesAsync(mappedDto);
         }
 
         #endregion
