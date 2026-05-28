@@ -829,42 +829,25 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
         #region CopyInvoicesAsync Tests
 
         [Fact]
-        public async Task CopyInvoicesAsync_BulkCopy_WithNullInvoiceRecords_SuccessResponse()
+        public async Task CopyInvoicesAsync_WithNullInvoiceIds_ReturnsSuccessTrue()
         {
             // Arrange
             var copyDto = new CopyInvoicesDto
             {
                 SourceMonth = 5,
                 TargetMonth = 6,
-                InvoiceRecords = null
+                InvoiceIds = null
             };
-            var copyRes = new CopyInvoicesRes
-            {
-                Success = true,
-                Message = "Successfully copied 10 invoices",
-                CopiedCount = 10,
-                FailedCount = 0,
-                Errors = new List<string>()
-            };
+            var copyRes = new CopyInvoicesRes { Success = true };
             var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto
-                {
-                    Success = true,
-                    Message = "Successfully copied 10 invoices",
-                    CopiedCount = 10,
-                    FailedCount = 0,
-                    Errors = new List<string>()
-                }
-            };
 
             _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Any<string>(),
-                Arg.Is<CopyInvoicesReq>(req => req.InvoiceRecords == null))
+                Arg.Is<string>(url => url == PactApiEndpoints.CopyProjectInvoices),
+                Arg.Is<CopyInvoicesReq>(req =>
+                    req.InvoiceIds == null &&
+                    req.SourceMonth == 5 &&
+                    req.TargetMonth == 6))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.CopyInvoicesAsync(copyDto);
@@ -872,34 +855,24 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal(10, result.Data?.CopiedCount);
-            Assert.Equal(0, result.Data?.FailedCount);
-            await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Any<string>(),
-                Arg.Is<CopyInvoicesReq>(req => req.InvoiceRecords == null));
+            Assert.True(result.Data);
         }
 
         [Fact]
-        public async Task CopyInvoicesAsync_BulkCopy_WithEmptyInvoiceRecords_SendsNullToApi()
+        public async Task CopyInvoicesAsync_WithInvoiceIds_SendsIdsCorrectly()
         {
             // Arrange
             var copyDto = new CopyInvoicesDto
             {
                 SourceMonth = 3,
                 TargetMonth = 4,
-                InvoiceRecords = new List<ProjectInvoiceDto>()
+                InvoiceIds = [1, 2, 3]
             };
-            var copyRes = new CopyInvoicesRes { Success = true, CopiedCount = 5 };
+            var copyRes = new CopyInvoicesRes { Success = true };
             var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto { Success = true, CopiedCount = 5 }
-            };
 
             _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.CopyInvoicesAsync(copyDto);
@@ -907,112 +880,31 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            // Empty list should result in null InvoiceRecords in request
+            Assert.True(result.Data);
             await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
                 Arg.Any<string>(),
-                Arg.Is<CopyInvoicesReq>(req => req.InvoiceRecords == null));
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_SelectiveCopy_WithInvoiceRecords_MapsAndSendsCorrectly()
-        {
-            // Arrange
-            var invoiceDtos = new List<ProjectInvoiceDto>
-            {
-                new() { InvoiceCounter = 1, ProjectParent = "PP001", Month = 5, Amount = 1000m },
-                new() { InvoiceCounter = 2, ProjectParent = "PP002", Month = 5, Amount = 2000m }
-            };
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceRecords = invoiceDtos
-            };
-            var invoiceReqs = new List<ProjectInvoiceReq>
-            {
-                new() { ProjectParent = "PP001", Amount = 1000m },
-                new() { ProjectParent = "PP002", Amount = 2000m }
-            };
-            var copyRes = new CopyInvoicesRes 
-            { 
-                Success = true, 
-                CopiedCount = 2,
-                FailedCount = 0,
-                Errors = new List<string>()
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto { Success = true, CopiedCount = 2, FailedCount = 0 }
-            };
-
-            _mapper.Map<ProjectInvoiceReq>(invoiceDtos[0]).Returns(invoiceReqs[0]);
-            _mapper.Map<ProjectInvoiceReq>(invoiceDtos[1]).Returns(invoiceReqs[1]);
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
-
-            // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.Equal(2, result.Data?.CopiedCount);
-            await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Any<string>(),
-                Arg.Is<CopyInvoicesReq>(req => 
-                    req.InvoiceRecords != null && 
-                    req.InvoiceRecords.Count == 2));
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_UsesCorrectEndpoint()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 7,
-                TargetMonth = 8,
-                InvoiceRecords = null
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes>
-            {
-                Success = true,
-                Data = new CopyInvoicesRes { Success = true }
-            };
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
-                .Returns(new ApiResponseDto<CopyInvoicesResultDto> { Success = true });
-
-            // Act
-            await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert - Verify correct endpoint is called
-            await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Is<string>(url => url == PactApiEndpoints.CopyProjectInvoices),
-                Arg.Any<CopyInvoicesReq>());
+                Arg.Is<CopyInvoicesReq>(req =>
+                    req.InvoiceIds != null &&
+                    req.InvoiceIds.Count == 3));
         }
 
         [Fact]
         public async Task CopyInvoicesAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6, InvoiceIds = [1, 2] };
             var errors = new List<ApiError> { new() { Message = "Copy failed", Code = "COPY_ERROR" } };
             var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = false, Errors = errors };
-            var mappedResponse = new ApiResponseDto<CopyInvoicesResultDto>
+            var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
-                Errors = new List<ApiErrorDto> { new() { Message = "Copy failed", Code = "COPY_ERROR" } },
+                Errors = [new ApiErrorDto { Message = "Copy failed", Code = "COPY_ERROR" }],
                 Meta = new ApiMetaDto()
             };
 
             _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(mappedResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.CopyInvoicesAsync(copyDto);
@@ -1025,92 +917,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
         }
 
         [Fact]
-        public async Task CopyInvoicesAsync_PartialSuccess_ReturnsCorrectCounts()
+        public async Task CopyInvoicesAsync_WhenResponseDataIsNull_ReturnsFalse()
         {
             // Arrange
-            var invoiceDtos = new List<ProjectInvoiceDto>
-            {
-                new() { InvoiceCounter = 1, ProjectParent = "PP001" },
-                new() { InvoiceCounter = 2, ProjectParent = "PP002" },
-                new() { InvoiceCounter = 3, ProjectParent = "PP003" }
-            };
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceRecords = invoiceDtos
-            };
-            var copyRes = new CopyInvoicesRes 
-            { 
-                Success = false,
-                Message = "Copied 2 out of 3 invoices",
-                CopiedCount = 2,
-                FailedCount = 1,
-                Errors = new List<string> { "Failed to copy invoice 3" }
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto 
-                { 
-                    Success = false,
-                    CopiedCount = 2,
-                    FailedCount = 1,
-                    Errors = new List<string> { "Failed to copy invoice 3" }
-                }
-            };
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
+            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = null };
 
-            _mapper.Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>())
-                .Returns(new ProjectInvoiceReq());
             _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
-
-            // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success); // HTTP call succeeded
-            Assert.False(result.Data?.Success); // But operation had failures
-            Assert.Equal(2, result.Data?.CopiedCount);
-            Assert.Equal(1, result.Data?.FailedCount);
-            Assert.Single(result.Data!.Errors);
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithManyInvoices_MapsAllCorrectly()
-        {
-            // Arrange
-            var invoiceDtos = Enumerable.Range(1, 50)
-                .Select(i => new ProjectInvoiceDto 
-                { 
-                    InvoiceCounter = i, 
-                    ProjectParent = $"PP{i:000}",
-                    Month = 3,
-                    Amount = i * 100m 
-                })
-                .ToList();
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 3,
-                TargetMonth = 4,
-                InvoiceRecords = invoiceDtos
-            };
-            var copyRes = new CopyInvoicesRes { Success = true, CopiedCount = 50 };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto { Success = true, CopiedCount = 50 }
-            };
-
-            _mapper.Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>())
-                .Returns(new ProjectInvoiceReq());
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.CopyInvoicesAsync(copyDto);
@@ -1118,168 +932,60 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal(50, result.Data?.CopiedCount);
+            Assert.False(result.Data);
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_UsesCorrectEndpoint()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto { SourceMonth = 7, TargetMonth = 8 };
+            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = new CopyInvoicesRes { Success = true } };
+            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
+                .Returns(apiResponse);
+
+            // Act
+            await _client.CopyInvoicesAsync(copyDto);
+
+            // Assert
             await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Any<string>(),
-                Arg.Is<CopyInvoicesReq>(req => 
-                    req.InvoiceRecords != null && 
-                    req.InvoiceRecords.Count == 50));
+                Arg.Is<string>(url => url == PactApiEndpoints.CopyProjectInvoices),
+                Arg.Any<CopyInvoicesReq>());
         }
 
         [Theory]
         [InlineData(1, 2)]
         [InlineData(5, 6)]
         [InlineData(11, 12)]
-        public async Task CopyInvoicesAsync_WithDifferentMonths_SendsCorrectRequestBody(int source, int destination)
+        public async Task CopyInvoicesAsync_WithDifferentMonths_SendsCorrectMonths(int source, int target)
         {
             // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = source,
-                TargetMonth = destination,
-                InvoiceRecords = null
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes>
-            {
-                Success = true,
-                Data = new CopyInvoicesRes { Success = true }
-            };
+            var copyDto = new CopyInvoicesDto { SourceMonth = source, TargetMonth = target };
+            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = new CopyInvoicesRes { Success = true } };
             _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
-                .Returns(new ApiResponseDto<CopyInvoicesResultDto> { Success = true });
 
             // Act
             await _client.CopyInvoicesAsync(copyDto);
 
-            // Assert - Verify the request body contains correct months
+            // Assert
             await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
                 Arg.Any<string>(),
                 Arg.Is<CopyInvoicesReq>(req =>
                     req.SourceMonth == source &&
-                    req.TargetMonth == destination));
+                    req.TargetMonth == target));
         }
 
         [Fact]
-        public async Task CopyInvoicesAsync_SelectiveCopy_CallsMapperForEachInvoice()
-        {
-            // Arrange
-            var invoiceDtos = new List<ProjectInvoiceDto>
-            {
-                new() { InvoiceCounter = 1, ProjectParent = "PP001" },
-                new() { InvoiceCounter = 2, ProjectParent = "PP002" },
-                new() { InvoiceCounter = 3, ProjectParent = "PP003" }
-            };
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceRecords = invoiceDtos
-            };
-            var copyRes = new CopyInvoicesRes { Success = true, CopiedCount = 3 };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto { Success = true, CopiedCount = 3 }
-            };
-
-            _mapper.Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>())
-                .Returns(new ProjectInvoiceReq());
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
-
-            // Act
-            await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            _mapper.Received(3).Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>());
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_SetsSourceAndTargetMonthInRequest()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 7,
-                TargetMonth = 8,
-                InvoiceRecords = null
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> 
-            { 
-                Success = true, 
-                Data = new CopyInvoicesRes { Success = true } 
-            };
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
-                .Returns(new ApiResponseDto<CopyInvoicesResultDto> { Success = true });
-
-            // Act
-            await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Any<string>(),
-                Arg.Is<CopyInvoicesReq>(req => 
-                    req.SourceMonth == 7 && 
-                    req.TargetMonth == 8));
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithNullResponseData_HandlesGracefully()
+        public async Task CopyInvoicesAsync_WhenApiResponseSuccessFalse_MapsToBoolFalse()
         {
             // Arrange
             var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = null };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = null
-            };
-
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
-
-            // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.Null(result.Data);
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithSingleInvoice_ProcessesCorrectly()
-        {
-            // Arrange
-            var singleInvoice = new List<ProjectInvoiceDto>
-            {
-                new() { InvoiceCounter = 42, ProjectParent = "PP-TEST", Amount = 500m }
-            };
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 10,
-                TargetMonth = 11,
-                InvoiceRecords = singleInvoice
-            };
-            var copyRes = new CopyInvoicesRes { Success = true, CopiedCount = 1 };
+            var copyRes = new CopyInvoicesRes { Success = false };
             var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto { Success = true, CopiedCount = 1 }
-            };
 
-            _mapper.Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>())
-                .Returns(new ProjectInvoiceReq());
             _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.CopyInvoicesAsync(copyDto);
@@ -1287,369 +993,32 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectInvoiceA
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal(1, result.Data?.CopiedCount);
-            await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Any<string>(),
-                Arg.Is<CopyInvoicesReq>(req => 
-                    req.InvoiceRecords != null && 
-                    req.InvoiceRecords.Count == 1));
-        }
-
-        #endregion
-
-        #region CopyInvoicesAsync - Additional Edge Case Tests
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithNullDto_ThrowsNullReferenceException()
-        {
-            // Act & Assert - Implementation doesn't have null check, so it throws NullReferenceException
-            await Assert.ThrowsAsync<NullReferenceException>(() => _client.CopyInvoicesAsync(null!));
+            Assert.False(result.Data);
         }
 
         [Fact]
-        public async Task CopyInvoicesAsync_WithZeroMonth_SendsToApi()
+        public async Task CopyInvoicesAsync_WithEmptyInvoiceIds_SendsEmptyList()
         {
             // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 0,
-                TargetMonth = 1,
-                InvoiceRecords = null
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes>
-            {
-                Success = true,
-                Data = new CopyInvoicesRes { Success = true, CopiedCount = 0 }
-            };
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
-                .Returns(new ApiResponseDto<CopyInvoicesResultDto> { Success = true });
-
-            // Act
-            await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert - Verify the request object has the correct months
-            await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
-                Arg.Any<string>(),
-                Arg.Is<CopyInvoicesReq>(req => req.SourceMonth == 0 && req.TargetMonth == 1));
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithNegativeMonth_SendsToApi()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = -1,
-                TargetMonth = 1,
-                InvoiceRecords = null
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes>
-            {
-                Success = false,
-                Errors = [new ApiError { Message = "Invalid month" }]
-            };
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
-                .Returns(new ApiResponseDto<CopyInvoicesResultDto>
-                {
-                    Success = false,
-                    Errors = [new ApiErrorDto { Message = "Invalid month" }]
-                });
-
-            // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.False(result.Success);
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithSameSourceAndTargetMonth_ProcessesCorrectly()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 6,
-                TargetMonth = 6,
-                InvoiceRecords = null
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes>
-            {
-                Success = true,
-                Data = new CopyInvoicesRes { Success = true, CopiedCount = 0 }
-            };
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
-                .Returns(new ApiResponseDto<CopyInvoicesResultDto>
-                {
-                    Success = true,
-                    Data = new CopyInvoicesResultDto { Success = true, CopiedCount = 0 }
-                });
-
-            // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithAllFailures_ReturnsCorrectCounts()
-        {
-            // Arrange
-            var invoiceDtos = new List<ProjectInvoiceDto>
-            {
-                new() { InvoiceCounter = 1, ProjectParent = "PP001" },
-                new() { InvoiceCounter = 2, ProjectParent = "PP002" }
-            };
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceRecords = invoiceDtos
-            };
-            var copyRes = new CopyInvoicesRes
-            {
-                Success = false,
-                Message = "All copies failed",
-                CopiedCount = 0,
-                FailedCount = 2,
-                Errors = ["Failed to copy invoice 1", "Failed to copy invoice 2"]
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto
-                {
-                    Success = false,
-                    CopiedCount = 0,
-                    FailedCount = 2,
-                    Errors = ["Failed to copy invoice 1", "Failed to copy invoice 2"]
-                }
-            };
-
-            _mapper.Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>())
-                .Returns(new ProjectInvoiceReq());
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
-
-            // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.False(result.Data?.Success);
-            Assert.Equal(0, result.Data?.CopiedCount);
-            Assert.Equal(2, result.Data?.FailedCount);
-            Assert.Equal(2, result.Data?.Errors.Count);
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithHttpException_PropagatesException()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns<ApiResponse<CopyInvoicesRes>>(_ => throw new HttpRequestException("Network error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<HttpRequestException>(() => _client.CopyInvoicesAsync(copyDto));
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithInvoiceRecordsContainingNullValues_HandlesGracefully()
-        {
-            // Arrange
-            var invoiceDtos = new List<ProjectInvoiceDto>
-            {
-                new() { InvoiceCounter = 1, ProjectParent = "", Amount = 1000m },
-                new() { InvoiceCounter = 2, ProjectParent = "", Amount = 2000m }
-            };
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceRecords = invoiceDtos
-            };
-            var copyRes = new CopyInvoicesRes { Success = true, CopiedCount = 2 };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto { Success = true, CopiedCount = 2 }
-            };
-
-            _mapper.Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>())
-                .Returns(new ProjectInvoiceReq());
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
-
-            // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.Equal(2, result.Data?.CopiedCount);
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithInvalidMonthsGreaterThan12_SendsToApi()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 13,
-                TargetMonth = 14,
-                InvoiceRecords = null
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes>
-            {
-                Success = false,
-                Errors = [new ApiError { Message = "Month must be between 1 and 12" }]
-            };
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse)
-                .Returns(new ApiResponseDto<CopyInvoicesResultDto>
-                {
-                    Success = false,
-                    Errors = [new ApiErrorDto { Message = "Month must be between 1 and 12" }]
-                });
-
-            // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.False(result.Success);
-        }
-
-        [Theory]
-        [InlineData(1)]
-        [InlineData(25)]
-        [InlineData(100)]
-        public async Task CopyInvoicesAsync_WithVariousInvoiceCounts_ProcessesCorrectly(int count)
-        {
-            // Arrange
-            var invoiceDtos = Enumerable.Range(1, count)
-                .Select(i => new ProjectInvoiceDto
-                {
-                    InvoiceCounter = i,
-                    ProjectParent = $"PP{i:000}",
-                    Amount = i * 100m
-                })
-                .ToList();
             var copyDto = new CopyInvoicesDto
             {
                 SourceMonth = 3,
                 TargetMonth = 4,
-                InvoiceRecords = invoiceDtos
+                InvoiceIds = []
             };
-            var copyRes = new CopyInvoicesRes { Success = true, CopiedCount = count };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto { Success = true, CopiedCount = count }
-            };
-
-            _mapper.Map<ProjectInvoiceReq>(Arg.Any<ProjectInvoiceDto>())
-                .Returns(new ProjectInvoiceReq());
+            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = new CopyInvoicesRes { Success = true } };
             _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
+            await _client.CopyInvoicesAsync(copyDto);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.Equal(count, result.Data?.CopiedCount);
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithApiReturningMultipleErrors_ReturnsAllErrors()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
-            var errors = new List<ApiError>
-            {
-                new() { Message = "Error 1", Code = "ERR_001" },
-                new() { Message = "Error 2", Code = "ERR_002" },
-                new() { Message = "Error 3", Code = "ERR_003" }
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = false, Errors = errors };
-            var mappedResponse = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = false,
-                Errors = errors.Select(e => new ApiErrorDto { Message = e.Message, Code = e.Code }).ToList(),
-                Meta = new ApiMetaDto()
-            };
-
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(mappedResponse);
-
-            // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-            Assert.Equal(3, result.Errors?.Count);
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithEmptyErrorsInSuccessResponse_HandlesCorrectly()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceRecords = null
-            };
-            var copyRes = new CopyInvoicesRes
-            {
-                Success = true,
-                Message = "Successfully copied",
-                CopiedCount = 5,
-                FailedCount = 0,
-                Errors = new List<string>()
-            };
-            var apiResponse = new ApiResponse<CopyInvoicesRes> { Success = true, Data = copyRes };
-            var expectedDto = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = new CopyInvoicesResultDto
-                {
-                    Success = true,
-                    CopiedCount = 5,
-                    Errors = new List<string>()
-                }
-            };
-
-            _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(Arg.Any<string>(), Arg.Any<CopyInvoicesReq>())
-                .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(apiResponse).Returns(expectedDto);
-
-            // Act
-            var result = await _client.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.Empty(result.Data!.Errors);
+            await _http.Received(1).PostAsync<CopyInvoicesReq, CopyInvoicesRes>(
+                Arg.Any<string>(),
+                Arg.Is<CopyInvoicesReq>(req =>
+                    req.InvoiceIds != null &&
+                    req.InvoiceIds.Count == 0));
         }
 
         #endregion

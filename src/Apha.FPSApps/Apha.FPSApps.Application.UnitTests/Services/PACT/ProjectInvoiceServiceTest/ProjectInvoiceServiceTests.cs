@@ -590,24 +590,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
         #region CopyInvoicesAsync Tests
 
         [Fact]
-        public async Task CopyInvoicesAsync_BulkCopy_WithNullInvoiceRecords_ReturnsSuccessResult()
+        public async Task CopyInvoicesAsync_ValidRequest_ReturnsSuccessWithTrue()
         {
             // Arrange
             var copyDto = new CopyInvoicesDto
             {
                 SourceMonth = 5,
                 TargetMonth = 6,
-                InvoiceRecords = null
+                InvoiceIds = null
             };
-            var copyResult = new CopyInvoicesResultDto
-            {
-                Success = true,
-                CopiedCount = 10,
-                FailedCount = 0,
-                Message = "Successfully copied 10 invoices",
-                Errors = new List<string>()
-            };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
             _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
 
             // Act
@@ -616,34 +608,22 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal(10, result.Data?.CopiedCount);
-            Assert.Equal(0, result.Data?.FailedCount);
+            Assert.True(result.Data);
             await _pactProjectInvoiceApiClient.Received(1).CopyInvoicesAsync(copyDto);
         }
 
         [Fact]
-        public async Task CopyInvoicesAsync_SelectiveCopy_WithInvoiceRecords_ReturnsSuccessResult()
+        public async Task CopyInvoicesAsync_WithInvoiceIds_ReturnsSuccessWithTrue()
         {
             // Arrange
-            var invoiceRecords = new List<ProjectInvoiceDto>
-            {
-                new() { InvoiceCounter = 1, ProjectParent = "PP001", Month = 3, Amount = 1000m },
-                new() { InvoiceCounter = 2, ProjectParent = "PP002", Month = 3, Amount = 2000m }
-            };
+            var invoiceIds = new List<int> { 1, 2, 3 };
             var copyDto = new CopyInvoicesDto
             {
                 SourceMonth = 3,
                 TargetMonth = 4,
-                InvoiceRecords = invoiceRecords
+                InvoiceIds = invoiceIds
             };
-            var copyResult = new CopyInvoicesResultDto
-            {
-                Success = true,
-                CopiedCount = 2,
-                FailedCount = 0,
-                Message = "Successfully copied 2 invoices"
-            };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
             _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
 
             // Act
@@ -652,46 +632,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal(2, result.Data?.CopiedCount);
+            Assert.True(result.Data);
             await _pactProjectInvoiceApiClient.Received(1).CopyInvoicesAsync(
                 Arg.Is<CopyInvoicesDto>(d => 
                     d.SourceMonth == 3 && 
                     d.TargetMonth == 4 && 
-                    d.InvoiceRecords != null && 
-                    d.InvoiceRecords.Count == 2));
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithPartialFailure_ReturnsPartialSuccessResult()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceRecords = null
-            };
-            var copyResult = new CopyInvoicesResultDto
-            {
-                Success = false,
-                CopiedCount = 8,
-                FailedCount = 2,
-                Message = "Copied 8 invoices with some failures",
-                Errors = new List<string> { "Error copying invoice 1", "Error copying invoice 2" }
-            };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
-            _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
-
-            // Act
-            var result = await _service.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success); // HTTP call succeeded
-            Assert.False(result.Data?.Success); // But operation had failures
-            Assert.Equal(8, result.Data?.CopiedCount);
-            Assert.Equal(2, result.Data?.FailedCount);
-            Assert.Equal(2, result.Data?.Errors.Count);
+                    d.InvoiceIds != null && 
+                    d.InvoiceIds.Count == 3));
         }
 
         [Fact]
@@ -702,10 +649,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             {
                 SourceMonth = 5,
                 TargetMonth = 6,
-                InvoiceRecords = null
+                InvoiceIds = null
             };
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
             _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
 
             // Act
@@ -715,29 +662,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithEmptyInvoiceRecordsList_TreatsAsBulkCopy()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 7,
-                TargetMonth = 8,
-                InvoiceRecords = new List<ProjectInvoiceDto>()
-            };
-            var copyResult = new CopyInvoicesResultDto { Success = true, CopiedCount = 15 };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
-            _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
-
-            // Act
-            var result = await _service.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.Equal(15, result.Data?.CopiedCount);
         }
 
         [Theory]
@@ -751,10 +675,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             {
                 SourceMonth = source,
                 TargetMonth = destination,
-                InvoiceRecords = null
+                InvoiceIds = null
             };
-            var copyResult = new CopyInvoicesResultDto { Success = true, CopiedCount = 5 };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
             _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
 
             // Act
@@ -768,25 +691,17 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
         }
 
         [Fact]
-        public async Task CopyInvoicesAsync_WithLargeInvoiceRecordsList_HandlesCorrectly()
+        public async Task CopyInvoicesAsync_WithLargeInvoiceIdsList_HandlesCorrectly()
         {
             // Arrange
-            var largeList = Enumerable.Range(1, 100)
-                .Select(i => new ProjectInvoiceDto 
-                { 
-                    InvoiceCounter = i, 
-                    ProjectParent = $"PP{i:000}",
-                    Month = 3 
-                })
-                .ToList();
+            var largeIdList = Enumerable.Range(1, 100).ToList();
             var copyDto = new CopyInvoicesDto
             {
                 SourceMonth = 3,
                 TargetMonth = 4,
-                InvoiceRecords = largeList
+                InvoiceIds = largeIdList
             };
-            var copyResult = new CopyInvoicesResultDto { Success = true, CopiedCount = 100 };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
             _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
 
             // Act
@@ -795,28 +710,19 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal(100, result.Data?.CopiedCount);
+            Assert.True(result.Data);
         }
 
         [Fact]
-        public async Task CopyInvoicesAsync_WhenNoInvoicesFound_ReturnsErrorResult()
+        public async Task CopyInvoicesAsync_WithNullResponseData_HandlesGracefully()
         {
             // Arrange
-            var copyDto = new CopyInvoicesDto
+            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
+            var expectedResponse = new ApiResponseDto<bool>
             {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceRecords = null
+                Success = true,
+                Data = false
             };
-            var copyResult = new CopyInvoicesResultDto
-            {
-                Success = false,
-                CopiedCount = 0,
-                FailedCount = 0,
-                Errors = new List<string> { "No invoices found for source month 5" },
-                Message = "No invoices to copy"
-            };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
             _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
 
             // Act
@@ -824,51 +730,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
 
             // Assert
             Assert.NotNull(result);
-            Assert.True(result.Success); // HTTP succeeded
-            Assert.False(result.Data?.Success); // Operation failed
-            Assert.Equal(0, result.Data?.CopiedCount);
-            Assert.Contains("No invoices found", result.Data?.Errors.First());
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_AllInvoicesFail_ReturnsAllErrors()
-        {
-            // Arrange
-            var invoiceRecords = new List<ProjectInvoiceDto>
-            {
-                new() { InvoiceCounter = 1, ProjectParent = "PP001" },
-                new() { InvoiceCounter = 2, ProjectParent = "PP002" }
-            };
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 3,
-                TargetMonth = 4,
-                InvoiceRecords = invoiceRecords
-            };
-            var copyResult = new CopyInvoicesResultDto
-            {
-                Success = false,
-                CopiedCount = 0,
-                FailedCount = 2,
-                Errors = new List<string> 
-                { 
-                    "Failed to copy invoice 1: Duplicate",
-                    "Failed to copy invoice 2: Duplicate"
-                },
-                Message = "All copy operations failed"
-            };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
-            _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
-
-            // Act
-            var result = await _service.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Data?.Success);
-            Assert.Equal(0, result.Data?.CopiedCount);
-            Assert.Equal(2, result.Data?.FailedCount);
-            Assert.Equal(2, result.Data?.Errors.Count);
+            Assert.True(result.Success);
+            Assert.False(result.Data);
         }
 
         [Fact]
@@ -879,17 +742,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             {
                 SourceMonth = 9,
                 TargetMonth = 10,
-                InvoiceRecords = null
+                InvoiceIds = null
             };
-            var copyResult = new CopyInvoicesResultDto
-            {
-                Success = true,
-                CopiedCount = 7,
-                FailedCount = 0,
-                Message = "Custom success message",
-                Errors = new List<string>()
-            };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
             _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
 
             // Act
@@ -898,9 +753,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal(7, result.Data?.CopiedCount);
-            Assert.Equal("Custom success message", result.Data?.Message);
-            Assert.Empty(result.Data!.Errors);
+            Assert.True(result.Data);
         }
 
         [Fact]
@@ -911,10 +764,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             {
                 SourceMonth = 11,
                 TargetMonth = 12,
-                InvoiceRecords = null
+                InvoiceIds = null
             };
-            var copyResult = new CopyInvoicesResultDto { Success = true, CopiedCount = 3 };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
             _pactProjectInvoiceApiClient.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>()).Returns(expectedResponse);
 
             // Act
@@ -925,25 +777,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
                 Arg.Is<CopyInvoicesDto>(d => 
                     d.SourceMonth == 11 && 
                     d.TargetMonth == 12 && 
-                    d.InvoiceRecords == null));
+                    d.InvoiceIds == null));
         }
 
         [Fact]
-        public async Task CopyInvoicesAsync_WithSingleInvoiceRecord_ProcessesCorrectly()
+        public async Task CopyInvoicesAsync_WithSingleInvoiceId_ProcessesCorrectly()
         {
             // Arrange
-            var singleInvoice = new List<ProjectInvoiceDto>
-            {
-                new() { InvoiceCounter = 42, ProjectParent = "PP-TEST", Amount = 500m }
-            };
+            var singleId = new List<int> { 42 };
             var copyDto = new CopyInvoicesDto
             {
                 SourceMonth = 10,
                 TargetMonth = 11,
-                InvoiceRecords = singleInvoice
+                InvoiceIds = singleId
             };
-            var copyResult = new CopyInvoicesResultDto { Success = true, CopiedCount = 1 };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
             _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
 
             // Act
@@ -952,46 +800,21 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal(1, result.Data?.CopiedCount);
+            Assert.True(result.Data);
         }
 
         [Fact]
-        public async Task CopyInvoicesAsync_WithNullResponseData_HandlesGracefully()
+        public async Task CopyInvoicesAsync_PreservesInvoiceIdsReference()
         {
             // Arrange
-            var copyDto = new CopyInvoicesDto { SourceMonth = 5, TargetMonth = 6 };
-            var expectedResponse = new ApiResponseDto<CopyInvoicesResultDto>
-            {
-                Success = true,
-                Data = null
-            };
-            _pactProjectInvoiceApiClient.CopyInvoicesAsync(copyDto).Returns(expectedResponse);
-
-            // Act
-            var result = await _service.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.Null(result.Data);
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_PreservesInvoiceRecordsReference()
-        {
-            // Arrange
-            var invoiceRecords = new List<ProjectInvoiceDto>
-            {
-                new() { InvoiceCounter = 1, ProjectParent = "PP001" }
-            };
+            var invoiceIds = new List<int> { 1, 2, 3 };
             var copyDto = new CopyInvoicesDto
             {
                 SourceMonth = 4,
                 TargetMonth = 5,
-                InvoiceRecords = invoiceRecords
+                InvoiceIds = invoiceIds
             };
-            var copyResult = new CopyInvoicesResultDto { Success = true, CopiedCount = 1 };
-            var expectedResponse = ApiResponseDto<CopyInvoicesResultDto>.SuccessResponse(copyResult);
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
             _pactProjectInvoiceApiClient.CopyInvoicesAsync(Arg.Any<CopyInvoicesDto>()).Returns(expectedResponse);
 
             // Act
@@ -1000,8 +823,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectInvoiceService
             // Assert
             await _pactProjectInvoiceApiClient.Received(1).CopyInvoicesAsync(
                 Arg.Is<CopyInvoicesDto>(d => 
-                    d.InvoiceRecords != null && 
-                    d.InvoiceRecords == invoiceRecords));
+                    d.InvoiceIds != null && 
+                    d.InvoiceIds == invoiceIds));
         }
 
         #endregion

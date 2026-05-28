@@ -686,83 +686,7 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
         #region CopyInvoicesAsync
 
         [Fact]
-        public async Task CopyInvoicesAsync_WithInvoiceRecords_CopiesProvidedInvoices()
-        {
-            // Arrange
-            var sourceInvoiceDto = new ProjectInvoiceDto
-            {
-                InvoiceCounter = 1,
-                ProjectParent = "PRJ001",
-                Month = 5,
-                Amount = 1000m,
-                Detail = "Test Invoice"
-            };
-
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceRecords = new List<ProjectInvoiceDto> { sourceInvoiceDto }
-            };
-
-            var mappedEntity = new ProjectInvoice
-            {
-                InvoiceCounter = 1,
-                ProjectParent = "PRJ001",
-                Month = 5,
-                Amount = 1000m,
-                Detail = "Test Invoice"
-            };
-
-            _mockMapper.Map<ProjectInvoice>(sourceInvoiceDto).Returns(mappedEntity);
-            _mockRepository.CreateBulkAsync(Arg.Any<IEnumerable<ProjectInvoice>>()).Returns(1);
-
-            // Act
-            var result = await _sut.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
-            result.CopiedCount.Should().Be(1);
-            result.Errors.Should().BeEmpty();
-            await _mockRepository.Received(1).CreateBulkAsync(Arg.Is<IEnumerable<ProjectInvoice>>(
-                invoices => invoices.Count() == 1 && invoices.First().Month == 6));
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithInvoiceIds_FetchesAndCopiesInvoices()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceIds = new List<int> { 1, 2 }
-            };
-
-            var invoicesToCopy = new List<ProjectInvoice>
-            {
-                new ProjectInvoice { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 5, Amount = 1000m },
-                new ProjectInvoice { InvoiceCounter = 2, ProjectParent = "PRJ002", Month = 5, Amount = 2000m }
-            };
-
-            _mockRepository.GetInvoicesByIdsAsync(copyDto.InvoiceIds).Returns(invoicesToCopy);
-            _mockRepository.CreateBulkAsync(Arg.Any<IEnumerable<ProjectInvoice>>()).Returns(2);
-
-            // Act
-            var result = await _sut.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
-            result.CopiedCount.Should().Be(2);
-            await _mockRepository.Received(1).GetInvoicesByIdsAsync(copyDto.InvoiceIds);
-            await _mockRepository.Received(1).CreateBulkAsync(Arg.Is<IEnumerable<ProjectInvoice>>(
-                invoices => invoices.Count() == 2 && invoices.All(i => i.Month == 6)));
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_BulkCopy_FetchesAllInvoicesFromSourceMonth()
+        public async Task CopyInvoicesAsync_ValidRequest_ReturnsTrue()
         {
             // Arrange
             var copyDto = new CopyInvoicesDto
@@ -771,108 +695,151 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
                 TargetMonth = 6
             };
 
-            var invoicesToCopy = new List<ProjectInvoice>
-            {
-                new ProjectInvoice { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 5, Amount = 1000m },
-                new ProjectInvoice { InvoiceCounter = 2, ProjectParent = "PRJ002", Month = 5, Amount = 2000m },
-                new ProjectInvoice { InvoiceCounter = 3, ProjectParent = "PRJ003", Month = 5, Amount = 3000m }
-            };
-
-            _mockRepository.GetInvoicesByMonthAsync(5).Returns(invoicesToCopy);
-            _mockRepository.CreateBulkAsync(Arg.Any<IEnumerable<ProjectInvoice>>()).Returns(3);
+            _mockRepository.CopyInvoicesByMonthAsync(5, 6, null).Returns(1);
 
             // Act
             var result = await _sut.CopyInvoicesAsync(copyDto);
 
             // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
-            result.CopiedCount.Should().Be(3);
-            await _mockRepository.Received(1).GetInvoicesByMonthAsync(5);
-            await _mockRepository.Received(1).CreateBulkAsync(Arg.Is<IEnumerable<ProjectInvoice>>(
-                invoices => invoices.Count() == 3 && invoices.All(i => i.Month == 6)));
+            result.Should().BeTrue();
+            await _mockRepository.Received(1).CopyInvoicesByMonthAsync(5, 6, null);
         }
 
         [Fact]
-        public async Task CopyInvoicesAsync_InvalidSourceMonth_ReturnsErrorResult()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 13, // Invalid
-                TargetMonth = 6
-            };
-
-            // Act
-            var result = await _sut.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.Errors.Should().Contain("Source month must be between 1 and 12");
-            await _mockRepository.DidNotReceive().GetInvoicesByMonthAsync(Arg.Any<int>());
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_InvalidTargetMonth_ReturnsErrorResult()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 0 // Invalid
-            };
-
-            // Act
-            var result = await _sut.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.Errors.Should().Contain("Target month must be between 1 and 12");
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_NoInvoicesFound_ReturnsErrorResult()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6
-            };
-
-            _mockRepository.GetInvoicesByMonthAsync(5).Returns(new List<ProjectInvoice>());
-
-            // Act
-            var result = await _sut.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.Errors.Should().Contain($"No invoices found for source month {copyDto.SourceMonth}");
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_WithInvoiceIds_NoInvoicesFound_ReturnsErrorResult()
+        public async Task CopyInvoicesAsync_WithInvoiceIds_CallsRepositoryWithIds()
         {
             // Arrange
             var copyDto = new CopyInvoicesDto
             {
                 SourceMonth = 5,
                 TargetMonth = 6,
-                InvoiceIds = new List<int> { 999, 1000 }
+                InvoiceIds = new List<int> { 1, 2, 3 }
             };
 
-            _mockRepository.GetInvoicesByIdsAsync(copyDto.InvoiceIds).Returns(new List<ProjectInvoice>());
+            _mockRepository.CopyInvoicesByMonthAsync(5, 6, Arg.Is<List<int>>(ids => ids.SequenceEqual(new[] { 1, 2, 3 }))).Returns(3);
 
             // Act
             var result = await _sut.CopyInvoicesAsync(copyDto);
 
             // Assert
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.Errors.Should().Contain("No invoices found with the provided IDs");
+            result.Should().BeTrue();
+            await _mockRepository.Received(1).CopyInvoicesByMonthAsync(5, 6, Arg.Is<List<int>>(ids => ids.SequenceEqual(new[] { 1, 2, 3 })));
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_SourceMonthLessThanOne_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 0,
+                TargetMonth = 6
+            };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CopyInvoicesAsync(copyDto));
+            exception.Errors.Should().Contain(e => e.Code == "Source_Month");
+            await _mockRepository.DidNotReceive().CopyInvoicesByMonthAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<int>?>());
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_SourceMonthGreaterThanTwelve_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 13,
+                TargetMonth = 6
+            };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CopyInvoicesAsync(copyDto));
+            exception.Errors.Should().Contain(e => e.Code == "Source_Month");
+            await _mockRepository.DidNotReceive().CopyInvoicesByMonthAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<int>?>());
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_TargetMonthLessThanOne_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 5,
+                TargetMonth = 0
+            };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CopyInvoicesAsync(copyDto));
+            exception.Errors.Should().Contain(e => e.Code == "Target_Month");
+            await _mockRepository.DidNotReceive().CopyInvoicesByMonthAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<int>?>());
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_TargetMonthGreaterThanTwelve_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 5,
+                TargetMonth = 13
+            };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CopyInvoicesAsync(copyDto));
+            exception.Errors.Should().Contain(e => e.Code == "Target_Month");
+            await _mockRepository.DidNotReceive().CopyInvoicesByMonthAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<int>?>());
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_SameSourceAndTargetMonth_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 5,
+                TargetMonth = 5
+            };
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CopyInvoicesAsync(copyDto));
+            exception.Errors.Should().Contain(e => e.Code == "Same_Month");
+            await _mockRepository.DidNotReceive().CopyInvoicesByMonthAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<List<int>?>());
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_EmptyInvoiceIdsList_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 5,
+                TargetMonth = 6,
+                InvoiceIds = new List<int>()
+            };
+
+            _mockRepository.CopyInvoicesByMonthAsync(5, 6, null).Returns(0);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CopyInvoicesAsync(copyDto));
+            exception.Errors.Should().Contain(e => e.Code == "Source_Month");
+        }
+
+        [Fact]
+        public async Task CopyInvoicesAsync_NoInvoicesCopied_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var copyDto = new CopyInvoicesDto
+            {
+                SourceMonth = 5,
+                TargetMonth = 6
+            };
+
+            _mockRepository.CopyInvoicesByMonthAsync(5, 6, null).Returns(0);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.CopyInvoicesAsync(copyDto));
+            exception.Errors.Should().Contain(e => e.Code == "Source_Month");
+            await _mockRepository.Received(1).CopyInvoicesByMonthAsync(5, 6, null);
         }
 
         #endregion
@@ -971,105 +938,6 @@ namespace Apha.PACT.Application.UnitTests.Services.ProjectInvoiceServiceTest
             // Assert
             result.Should().Be(pagedResult);
             await _mockRepository.Received(1).GetPagedProjectInvoicesAsync(mappedParams, "");
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_CopiesAllProperties_ExceptInvoiceCounter()
-        {
-            // Arrange
-            var sourceInvoiceDto = new ProjectInvoiceDto
-            {
-                InvoiceCounter = 100,
-                ProjectParent = "PRJ001",
-                Month = 5,
-                Amount = 1000m,
-                CostOfWork = 600m,
-                Wip = 200m,
-                ProfitLoss = 200m,
-                Detail = "Test Detail"
-            };
-
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6,
-                InvoiceRecords = new List<ProjectInvoiceDto> { sourceInvoiceDto }
-            };
-
-            var mappedEntity = new ProjectInvoice
-            {
-                InvoiceCounter = 100,
-                ProjectParent = "PRJ001",
-                Month = 5,
-                Amount = 1000m,
-                CostOfWork = 600m,
-                Wip = 200m,
-                ProfitLoss = 200m,
-                Detail = "Test Detail"
-            };
-
-            _mockMapper.Map<ProjectInvoice>(sourceInvoiceDto).Returns(mappedEntity);
-            _mockRepository.CreateBulkAsync(Arg.Any<IEnumerable<ProjectInvoice>>()).Returns(1);
-
-            // Act
-            var result = await _sut.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            await _mockRepository.Received(1).CreateBulkAsync(Arg.Is<IEnumerable<ProjectInvoice>>(invoices =>
-                invoices.First().Month == 6 &&
-                invoices.First().ProjectParent == "PRJ001" &&
-                invoices.First().Amount == 1000m &&
-                invoices.First().CostOfWork == 600m &&
-                invoices.First().Wip == 200m &&
-                invoices.First().ProfitLoss == 200m &&
-                invoices.First().Detail == "Test Detail"));
-        }
-
-        [Fact]
-        public async Task CopyInvoicesAsync_BulkCopy_SetsCorrectSuccessMessage()
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = 5,
-                TargetMonth = 6
-            };
-
-            var invoicesToCopy = new List<ProjectInvoice>
-            {
-                new ProjectInvoice { InvoiceCounter = 1, ProjectParent = "PRJ001", Month = 5 }
-            };
-
-            _mockRepository.GetInvoicesByMonthAsync(5).Returns(invoicesToCopy);
-            _mockRepository.CreateBulkAsync(Arg.Any<IEnumerable<ProjectInvoice>>()).Returns(1);
-
-            // Act
-            var result = await _sut.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            result.Message.Should().Contain("Successfully copied 1 invoice(s) from month 5 to month 6");
-        }
-
-        [Theory]
-        [InlineData(-1, 6)]
-        [InlineData(5, -1)]
-        [InlineData(0, 6)]
-        [InlineData(5, 0)]
-        public async Task CopyInvoicesAsync_InvalidMonthValues_ReturnsErrorResult(int sourceMonth, int targetMonth)
-        {
-            // Arrange
-            var copyDto = new CopyInvoicesDto
-            {
-                SourceMonth = sourceMonth,
-                TargetMonth = targetMonth
-            };
-
-            // Act
-            var result = await _sut.CopyInvoicesAsync(copyDto);
-
-            // Assert
-            result.Success.Should().BeFalse();
-            result.Errors.Should().NotBeEmpty();
         }
 
         [Fact]
