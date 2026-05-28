@@ -97,7 +97,8 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "AnimalMaster" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="AnimalMaster" asp-action="Index">
                 Maintain Animals
             </a>
         </li>

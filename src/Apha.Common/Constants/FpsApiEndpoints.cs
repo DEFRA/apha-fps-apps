@@ -2,6 +2,14 @@ namespace Apha.Common.Constants
 {
     public static class FpsApiEndpoints
     {
+        // Animal Master (tblAnimals_MAP maintenance)
+        public const string GetAllAnimalMasters = "api/v1/animalmaster";
+        public const string GetPagedAnimalMasters = "api/v1/animalmaster/paged";
+        public const string GetAnimalMasterById = "api/v1/animalmaster/{0}";
+        public const string CreateAnimalMaster = "api/v1/animalmaster";
+        public const string UpdateAnimalMaster = "api/v1/animalmaster";
+        public const string DeleteAnimalMaster = "api/v1/animalmaster/{0}";
+
         // Animal
         public const string GetAnimalCosts = "api/v1/animal?jobCode={0}";
         public const string GetAnimalLookup = "api/v1/animal/lookup";
