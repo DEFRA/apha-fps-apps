@@ -33,8 +33,7 @@ namespace Apha.FPSApps.Application.Services.Costbook
         public Task<ApiResponseDto<ProjectDto>> AddProjectAsync(ProjectDto project)
         {
             // Apply business logic: Set audit fields
-            project.CreatedDate = DateTime.UtcNow;
-            project.Status = "Active";
+           
 
             var response = _costBookClient.Projects.AddProjectAsync(project);
             return response;
@@ -42,8 +41,7 @@ namespace Apha.FPSApps.Application.Services.Costbook
 
         public Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string id, ProjectDto project)
         {
-            // Apply business logic: Set audit fields
-            project.ModifiedDate = DateTime.UtcNow;
+            // Apply business logic: Set audit fields           
 
             var response = _costBookClient.Projects.UpdateProjectAsync(id, project);
             return response;

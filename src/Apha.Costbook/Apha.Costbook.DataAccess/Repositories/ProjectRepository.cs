@@ -8,6 +8,7 @@ using System.Dynamic;
 using System.Linq.Expressions;
 using System.Web;
 
+
 namespace Apha.Costbook.DataAccess.Repositories
 {
     public class ProjectRepository : IProjectRepository
@@ -150,6 +151,9 @@ namespace Apha.Costbook.DataAccess.Repositories
                     };
                     _context.Set<ProjectYear>().Add(newPY);
                 }
+
+                // Save ProjectYear records before inserting child records that FK reference them
+                await _context.SaveChangesAsync();
 
                 // 3. Copy AnimalRequirement records
                 var sourceAnimalReqs = await _context.Set<AnimalRequirement>()
@@ -784,8 +788,8 @@ namespace Apha.Costbook.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("ProjectId", out var projectId) && projectId != null)
-            {
-                queryProjects = queryProjects.Where(x => x.ProjectId.Contains(projectId.ToString()!));
+            {                
+                queryProjects = queryProjects.Where(x => EF.Functions.ILike(x.ProjectId, $"%{projectId}%"));
             }           
 
             return queryProjects;
@@ -998,6 +1002,12 @@ namespace Apha.Costbook.DataAccess.Repositories
 
                 return inflation + inflation2;
             }
+        }
+
+        public async Task<double> GetInflationFactorAsync(string infType, string projectId, int year, int currentYear)
+        {
+            var decodedId = HttpUtility.UrlDecode(projectId);
+            return await fnInflation(infType, decodedId, year, currentYear);
         }
 
         public async Task<double> GetProfitIncludedTotalAsync(string projectId, int year)

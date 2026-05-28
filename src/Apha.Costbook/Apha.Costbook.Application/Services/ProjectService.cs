@@ -85,11 +85,8 @@ namespace Apha.Costbook.Application.Services
                 throw new InvalidOperationException("Project not found");            
 
             if (dto.Startdate == null)
-                errors.Add(new BusinessValidationError("Please enter Start Date", "Please enter Start Date"));
+                errors.Add(new BusinessValidationError("Please enter Start Date", "Please enter Start Date"));           
             
-            if (string.IsNullOrEmpty(dto.PreparedBy))
-                errors.Add(new BusinessValidationError("Please enter who has prepared this", "Please enter who has prepared this"));
-
             if (string.IsNullOrEmpty(dto.ProjectTitle))
                 errors.Add(new BusinessValidationError("Please enter a title", "Please enter a title"));    
             if (!string.IsNullOrEmpty(dto.ProjectTitle) && dto.ProjectTitle.Length > 255)
