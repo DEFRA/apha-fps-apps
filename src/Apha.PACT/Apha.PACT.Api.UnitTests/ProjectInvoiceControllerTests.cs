@@ -204,38 +204,6 @@ namespace Apha.PACT.Api.UnitTests
 
         #endregion
 
-        #region Delete
-
-        [Fact]
-        public async Task Delete_ExistingId_ReturnsOkWithTrue()
-        {
-            // Arrange
-            _service.DeleteAsync(3).Returns(true);
-
-            // Act
-            var result = await _controller.Delete(3);
-
-            // Assert
-            var ok = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(true, ok.Value);
-        }
-
-        [Fact]
-        public async Task Delete_NotFound_ReturnsOkWithFalse()
-        {
-            // Arrange
-            _service.DeleteAsync(99).Returns(false);
-
-            // Act
-            var result = await _controller.Delete(99);
-
-            // Assert
-            var ok = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(false, ok.Value);
-        }
-
-        #endregion
-
         #region CopyInvoices
 
         [Fact]

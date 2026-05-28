@@ -744,7 +744,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<MonthlyInvoicesPivotRes>(okResult.Value);
-            Assert.Equal(3, response.Months.Count());
+            Assert.Equal(3, response.Months.Count);
             Assert.Single(response.Rows);
             Assert.Equal("ADMIN", response.Rows.First().Program);
             await _serviceMock.Received(1).GetMonthlyInvoicesSummaryAsync(query);
@@ -817,7 +817,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectInvoiceControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<MonthlyInvoicesPivotRes>(okResult.Value);
-            Assert.Equal(3, response.Rows.Count());
+            Assert.Equal(3, response.Rows.Count);
         }
 
         [Fact]
