@@ -9,7 +9,15 @@ namespace Apha.Costbook.DataAccess.Repositories;
 
 public class AnimalRequirementRepository : RepositoryBase<AnimalRequirement>, IAnimalRequirementRepository
 {
-    public AnimalRequirementRepository(CostbookDbContext context) : base(context) { }
+    private readonly ISettingsRepository _settingsRepo;
+    private readonly IProjectRepository _projectRepo;
+
+    public AnimalRequirementRepository(CostbookDbContext context, ISettingsRepository settingsRepo, IProjectRepository projectRepo)
+        : base(context)
+    {
+        _settingsRepo = settingsRepo;
+        _projectRepo = projectRepo;
+    }
 
     public async Task<PagedData<AnimalRequirementDetailView>> GetAnimalRequirementsByProjectYearAsync(
         string project, int year, PaginationParameters<string> query)
@@ -74,8 +82,17 @@ public class AnimalRequirementRepository : RepositoryBase<AnimalRequirement>, IA
         return deleted > 0;
     }
 
-    public async Task<IEnumerable<AnimalRateLookup>> GetAnimalRatesAsync(bool isDefra)
+    public async Task<IEnumerable<AnimalRateLookup>> GetAnimalRatesAsync(string projectId, int year, bool isDefra)
     {
+        var decodedId = HttpUtility.UrlDecode(projectId);
+
+        var currentYearSetting = await _settingsRepo.GetSettingValueByIdAsync("CurrentYear");
+
+        if (string.IsNullOrEmpty(currentYearSetting) || !int.TryParse(currentYearSetting, out int fyear))
+        {
+            throw new InvalidOperationException("CurrentYear setting not found or invalid in settings table.");
+        }
+
         var results = await _context.FpsAnimals
             .AsNoTracking()
             .OrderBy(a => a.AnimalType)
@@ -86,7 +103,20 @@ public class AnimalRequirementRepository : RepositoryBase<AnimalRequirement>, IA
             })
             .ToListAsync();
 
-        return results.Select(a => new AnimalRateLookup(a.AnimalType, (double?)a.Rate));
+        double inflationFactor = await _projectRepo.GetInflationFactorAsync("InflationAnimals", decodedId, year, fyear);
+
+        return results.Select(a =>
+        {
+            var baseRate = (double?)Convert.ToDouble(a.Rate);
+            return new AnimalRateLookup
+            {
+                AnimalType = a.AnimalType,
+                DailyRate = a.Rate,
+                DailyRateWithInflamation = a.Rate.HasValue
+                    ? (decimal?)(Convert.ToDouble(a.Rate.Value) * inflationFactor)
+                    : null
+            };
+        });
     }
 
     public async Task<IEnumerable<FpsAnimals>> GetAllAnimalsAsync()

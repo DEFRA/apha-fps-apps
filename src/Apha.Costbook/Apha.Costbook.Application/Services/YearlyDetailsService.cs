@@ -249,23 +249,24 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     // ── Lookups ──────────────────────────────────────────────────────────────
 
-    public async Task<IEnumerable<PayRateDto>> GetPayRatesAsync(bool isDefra)
+    public async Task<IEnumerable<PayRateDto>> GetPayRatesAsync(string projectId, int year, bool isDefra)
     {
-        var rates = await _projectYearRepo.GetPayRatesAsync(isDefra);
+        var rates = await _projectYearRepo.GetPayRatesAsync(projectId, year, isDefra);
         return rates.Select(r => new PayRateDto
         {
             WgGrade = r.WgGrade,
             ChargeRate = r.ChargeRate,
             PayRate = r.PayRate,
             Npr = r.Npr,
-            Ohr = r.Ohr
+            Ohr = r.Ohr,
+            ChargeRateWithInflamation = r.ChargeRateWithInflamation
         });
     }
 
-    public async Task<IEnumerable<AnimalRateDto>> GetAnimalRatesAsync(bool isDefra)
+    public async Task<IEnumerable<AnimalRateDto>> GetAnimalRatesAsync(string projectId, int year, bool isDefra)
     {
-        var rates = await _animalRepo.GetAnimalRatesAsync(isDefra);
-        return rates.Select(r => new AnimalRateDto { AnimalType = r.AnimalType, DailyRate = r.DailyRate });
+        var rates = await _animalRepo.GetAnimalRatesAsync(projectId, year, isDefra);
+        return rates.Select(r => new AnimalRateDto { AnimalType = r.AnimalType, DailyRate = r.DailyRate, DailyRateWithInflamation = r.DailyRateWithInflamation });
     }
 
     public async Task<IEnumerable<AccountCategoryDto>> GetAccountCategoriesAsync()
@@ -274,14 +275,15 @@ public class YearlyDetailsService : IYearlyDetailsService
         return cats.Select(c => new AccountCategoryDto { AccShortName = c.AccShortName, UseInflation = c.UseInflation });
     }
 
-    public async Task<IEnumerable<TestCodeLookupDto>> GetTestCodeLookupsAsync(bool isDefra)
+    public async Task<IEnumerable<TestCodeLookupDto>> GetTestCodeLookupsAsync(string projectId, int year, bool isDefra)
     {
-        var lookups = await _testRepo.GetTestCodeLookupsAsync(isDefra);
+        var lookups = await _testRepo.GetTestCodeLookupsAsync(projectId, year, isDefra);
         return lookups.Select(t => new TestCodeLookupDto
         {
             ItemCode = t.ItemCode,
             ItemDescription = t.ItemDescription,
-            UnitPrice = t.UnitPrice
+            UnitPrice = t.UnitPrice,
+            UnitPriceWithInflamation = t.UnitPriceWithInflamation
         });
     }
 

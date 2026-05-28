@@ -76,9 +76,7 @@
                     <form asp-area="CostBook" asp-controller="Projects" asp-action="Edit" asp-route-id="@Model.ProjectId" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
-                        <input type="hidden" name="CreatedDate" value="@Model.CreatedDate.ToString("o")" />
-                        <input type="hidden" name="CreatedBy" value="@Model.CreatedBy" />
-                        <input type="hidden" name="Status" value="@Model.Status" />
+                        
 
                         @if (!ViewData.ModelState.IsValid)
                         {

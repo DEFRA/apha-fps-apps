@@ -3,7 +3,7 @@
 @model Apha.FPSApps.Web.Areas.CostBook.Models.AnimalRequirementItem
 
 @{
-    var animalTypes = ViewBag.AnimalTypeOptions as List<AnimalLookupDto> ?? new List<AnimalLookupDto>();
+    var animalTypes = ViewBag.AnimalTypeOptions as List<AnimalRateDto> ?? new List<AnimalRateDto>();
 }
 
 <div class="modal-header">
@@ -47,6 +47,7 @@
                             {
                                 <tr data-value="@a.AnimalType"
                                     data-dailyrate="@(a.DailyRate?.ToString("F2") ?? "")"
+                                    data-dailyratewithinflamation="@(a.DailyRateWithInflamation?.ToString("F2") ?? "")"
                                     style="cursor:pointer;">
                                     <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@a.AnimalType</td>
                                     <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(a.DailyRate?.ToString("F2") ?? "N/A")</td>

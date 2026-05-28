@@ -581,16 +581,16 @@ public class YearlyDetailsServiceTests
     {
         var rates = new List<PayRateLookup>
         {
-            new("HEO", 45.50, 30.0, 5.0, 10.0)
+            new() { WgGrade = "HEO", ChargeRate = 45.50m, PayRate = 30.0m, Npr = 5.0m, Ohr = 10.0m }
         };
-        _projectYearRepo.GetPayRatesAsync(false).Returns(rates);
+        _projectYearRepo.GetPayRatesAsync("2024/001", 2024, false).Returns(rates);
 
-        var result = (await _sut.GetPayRatesAsync(false)).ToList();
+        var result = (await _sut.GetPayRatesAsync("2024/001", 2024, false)).ToList();
 
         Assert.Single(result);
         Assert.Equal("HEO", result[0].WgGrade);
-        Assert.Equal(45.50, result[0].ChargeRate);
-        Assert.Equal(30.0, result[0].PayRate);
+        Assert.Equal(45.50m, result[0].ChargeRate);
+        Assert.Equal(30.0m, result[0].PayRate);
     }
 
     #endregion
@@ -602,15 +602,15 @@ public class YearlyDetailsServiceTests
     {
         var rates = new List<AnimalRateLookup>
         {
-            new("CAT", 10.50)
+            new() { AnimalType = "CAT", DailyRate = 10.50m }
         };
-        _animalRepo.GetAnimalRatesAsync(true).Returns(rates);
+        _animalRepo.GetAnimalRatesAsync("2024/001", 2024, true).Returns(rates);
 
-        var result = (await _sut.GetAnimalRatesAsync(true)).ToList();
+        var result = (await _sut.GetAnimalRatesAsync("2024/001", 2024, true)).ToList();
 
         Assert.Single(result);
         Assert.Equal("CAT", result[0].AnimalType);
-        Assert.Equal(10.50, result[0].DailyRate);
+        Assert.Equal(10.50m, result[0].DailyRate);
     }
 
     #endregion
@@ -642,11 +642,11 @@ public class YearlyDetailsServiceTests
     {
         var lookups = new List<TestCodeLookup>
         {
-            new("TC001", "Blood Test", 100m)
+            new() { ItemCode = "TC001", ItemDescription = "Blood Test", UnitPrice = 100m }
         };
-        _testRepo.GetTestCodeLookupsAsync(false).Returns(lookups);
+        _testRepo.GetTestCodeLookupsAsync("2024/001", 2024, false).Returns(lookups);
 
-        var result = (await _sut.GetTestCodeLookupsAsync(false)).ToList();
+        var result = (await _sut.GetTestCodeLookupsAsync("2024/001", 2024, false)).ToList();
 
         Assert.Single(result);
         Assert.Equal("TC001", result[0].ItemCode);
@@ -1447,22 +1447,22 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetPayRatesAsync_ReturnsRates_WhenIsDefraTrue()
     {
-        var rates = new List<PayRateLookup> { new("SEO", 55.0, 40.0, 6.0, 12.0) };
-        _projectYearRepo.GetPayRatesAsync(true).Returns(rates);
+        var rates = new List<PayRateLookup> { new() { WgGrade = "SEO", ChargeRate = 55.0m, PayRate = 40.0m, Npr = 6.0m, Ohr = 12.0m } };
+        _projectYearRepo.GetPayRatesAsync("2024/001", 2024, true).Returns(rates);
 
-        var result = (await _sut.GetPayRatesAsync(true)).ToList();
+        var result = (await _sut.GetPayRatesAsync("2024/001", 2024, true)).ToList();
 
         Assert.Single(result);
         Assert.Equal("SEO", result[0].WgGrade);
-        await _projectYearRepo.Received(1).GetPayRatesAsync(true);
+        await _projectYearRepo.Received(1).GetPayRatesAsync("2024/001", 2024, true);
     }
 
     [Fact]
     public async Task GetPayRatesAsync_ReturnsEmpty_WhenNoRatesExist()
     {
-        _projectYearRepo.GetPayRatesAsync(false).Returns(new List<PayRateLookup>());
+        _projectYearRepo.GetPayRatesAsync("2024/001", 2024, false).Returns(new List<PayRateLookup>());
 
-        var result = await _sut.GetPayRatesAsync(false);
+        var result = await _sut.GetPayRatesAsync("2024/001", 2024, false);
 
         Assert.Empty(result);
     }
@@ -1474,23 +1474,23 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetAnimalRatesAsync_ReturnsRates_WhenIsDefraFalse()
     {
-        var rates = new List<AnimalRateLookup> { new("DOG", 8.50) };
-        _animalRepo.GetAnimalRatesAsync(false).Returns(rates);
+        var rates = new List<AnimalRateLookup> { new() { AnimalType = "DOG", DailyRate = 8.50m } };
+        _animalRepo.GetAnimalRatesAsync("2024/001", 2024, false).Returns(rates);
 
-        var result = (await _sut.GetAnimalRatesAsync(false)).ToList();
+        var result = (await _sut.GetAnimalRatesAsync("2024/001", 2024, false)).ToList();
 
         Assert.Single(result);
         Assert.Equal("DOG", result[0].AnimalType);
-        Assert.Equal(8.50, result[0].DailyRate);
-        await _animalRepo.Received(1).GetAnimalRatesAsync(false);
+        Assert.Equal(8.50m, result[0].DailyRate);
+        await _animalRepo.Received(1).GetAnimalRatesAsync("2024/001", 2024, false);
     }
 
     [Fact]
     public async Task GetAnimalRatesAsync_ReturnsEmpty_WhenNoRatesExist()
     {
-        _animalRepo.GetAnimalRatesAsync(true).Returns(new List<AnimalRateLookup>());
+        _animalRepo.GetAnimalRatesAsync("2024/001", 2024, true).Returns(new List<AnimalRateLookup>());
 
-        var result = await _sut.GetAnimalRatesAsync(true);
+        var result = await _sut.GetAnimalRatesAsync("2024/001", 2024, true);
 
         Assert.Empty(result);
     }
@@ -1516,22 +1516,22 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetTestCodeLookupsAsync_ReturnsLookups_WhenIsDefraTrue()
     {
-        var lookups = new List<TestCodeLookup> { new("TC002", "Virus Screen", 200m) };
-        _testRepo.GetTestCodeLookupsAsync(true).Returns(lookups);
+        var lookups = new List<TestCodeLookup> { new() { ItemCode = "TC002", ItemDescription = "Virus Screen", UnitPrice = 200m } };
+        _testRepo.GetTestCodeLookupsAsync("2024/001", 2024, true).Returns(lookups);
 
-        var result = (await _sut.GetTestCodeLookupsAsync(true)).ToList();
+        var result = (await _sut.GetTestCodeLookupsAsync("2024/001", 2024, true)).ToList();
 
         Assert.Single(result);
         Assert.Equal("TC002", result[0].ItemCode);
-        await _testRepo.Received(1).GetTestCodeLookupsAsync(true);
+        await _testRepo.Received(1).GetTestCodeLookupsAsync("2024/001", 2024, true);
     }
 
     [Fact]
     public async Task GetTestCodeLookupsAsync_ReturnsEmpty_WhenNoLookups()
     {
-        _testRepo.GetTestCodeLookupsAsync(false).Returns(new List<TestCodeLookup>());
+        _testRepo.GetTestCodeLookupsAsync("2024/001", 2024, false).Returns(new List<TestCodeLookup>());
 
-        var result = await _sut.GetTestCodeLookupsAsync(false);
+        var result = await _sut.GetTestCodeLookupsAsync("2024/001", 2024, false);
 
         Assert.Empty(result);
     }

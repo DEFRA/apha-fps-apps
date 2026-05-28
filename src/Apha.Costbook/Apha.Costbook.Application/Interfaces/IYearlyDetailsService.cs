@@ -32,9 +32,9 @@ public interface IYearlyDetailsService
     Task<AdditionalCostDto> UpdateAdditionalCostAsync(AdditionalCostDto dto);
     Task<bool> DeleteAdditionalCostAsync(int acIdentity);
 
-    Task<IEnumerable<PayRateDto>> GetPayRatesAsync(bool isDefra);
-    Task<IEnumerable<AnimalRateDto>> GetAnimalRatesAsync(bool isDefra);
+    Task<IEnumerable<PayRateDto>> GetPayRatesAsync(string projectId, int year, bool isDefra);
+    Task<IEnumerable<AnimalRateDto>> GetAnimalRatesAsync(string projectId, int year, bool isDefra);
     Task<IEnumerable<AccountCategoryDto>> GetAccountCategoriesAsync();
-    Task<IEnumerable<TestCodeLookupDto>> GetTestCodeLookupsAsync(bool isDefra);
+    Task<IEnumerable<TestCodeLookupDto>> GetTestCodeLookupsAsync(string projectId, int year, bool isDefra);
     Task<IEnumerable<AnimalLookupDto>> GetAllAnimalsAsync();
 }

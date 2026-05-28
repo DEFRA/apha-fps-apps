@@ -28,15 +28,10 @@ namespace Apha.FPSApps.Application.Dtos.CostBook
         public int? FinancialYears { get; set; }
         public string? Notes { get; set; }
         public double? EuroConvRate { get; set; }
-        public short? IsDefraProject { get; set; }
-        public DateTime? EndDate { get; set; }
+        public short? IsDefraProject { get; set; }        
         public decimal? BudgetAmount { get; set; }
         public decimal? ActualCost { get; set; }
-        public string Status { get; set; } = "Active";
-        public DateTime CreatedDate { get; set; }
-        public DateTime? ModifiedDate { get; set; }
-        public string? CreatedBy { get; set; }
-        public string? ModifiedBy { get; set; }
+       
 
     }
 }

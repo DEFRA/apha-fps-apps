@@ -39,7 +39,7 @@ public class YearlyDetailsController : Controller
             return RedirectToAction("Index", "Projects");
 
         var header = headerResponse.Data;
-        var isDefra = header.IsDefraProject == 1;
+        var isDefra = header.IsDefraProject == -1;
 
         var yearsResponse = await _service.GetProjectYearsAsync(decodedProjectId);
         var projectYears = yearsResponse.Success && yearsResponse.Data != null
@@ -73,9 +73,7 @@ public class YearlyDetailsController : Controller
             ProjectHeaderDto = header,
             SelectedYear = selectedYear,
             ProjectYears = projectYears,
-        };
-
-        await PopulateDropdownsAsync(viewModel, isDefra);
+        };        
 
         if (selectedYear > 0 && yearsResponse.Success && yearsResponse.Data != null)
         {
@@ -212,7 +210,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateStaff(string projectId, int year, bool isDefra)
     {
-        await GetPayRateOptionsAsync(isDefra);
+        await GetPayRateOptionsAsync(projectId, year,isDefra);
         return PartialView("_AddEditStaffRequirement", new StaffRequirementItem { WgGrade = string.Empty });
     }
 
@@ -234,7 +232,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditStaff(string projectId, int year, int srIdentity, bool isDefra)
     {
-        await GetPayRateOptionsAsync(isDefra);
+        await GetPayRateOptionsAsync(projectId, year, isDefra);
 
         var query = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
         var listResponse = await _service.GetStaffRequirementsAsync(
@@ -274,7 +272,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateTest(string projectId, int year, bool isDefra)
     {
-        await GetTestCodeOptionsAsync(isDefra);
+        await GetTestCodeOptionsAsync(projectId, year, isDefra);
         return PartialView("_AddEditTestRequirement", new TestRequirementItem { TestCode = string.Empty });
     }
 
@@ -296,7 +294,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditTest(string projectId, int year, string testCode, bool isDefra)
     {
-        await GetTestCodeOptionsAsync(isDefra);
+        await GetTestCodeOptionsAsync(projectId, year, isDefra);
         var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
         var listResponse = await _service.GetTestRequirementsAsync(HttpUtility.UrlDecode(projectId), year, allQuery);
         var row = listResponse.Data?.data?.FirstOrDefault(t => t.TestCode == testCode);
@@ -332,7 +330,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateAnimal(string projectId, int year, bool isDefra)
     {
-        await GetAnimalTypeOptionsAsync();
+        await GetAnimalTypeOptionsAsync(projectId, year, isDefra);
         return PartialView("_AddEditAnimalRequirement", new AnimalRequirementItem { AnimalType = string.Empty });
     }
 
@@ -354,7 +352,7 @@ public class YearlyDetailsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditAnimal(string projectId, int year, int arIdentity, bool isDefra)
     {
-        await GetAnimalTypeOptionsAsync();
+        await GetAnimalTypeOptionsAsync(projectId, year, isDefra);
         var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
         var listResponse = await _service.GetAnimalRequirementsAsync(HttpUtility.UrlDecode(projectId), year, allQuery);
         var row = listResponse.Data?.data?.FirstOrDefault(a => a.ArIdentity == arIdentity);
@@ -705,16 +703,7 @@ public class YearlyDetailsController : Controller
     }
 
     private async Task PopulateDropdownsAsync(YearlyDetailsViewModel viewModel, bool isDefra)
-    {
-        var payRates = await _service.GetPayRatesAsync(isDefra);
-        viewModel.WgGradeOptions = payRates.Success && payRates.Data != null
-            ? payRates.Data.Select(p => new SelectListItem(p.WgGrade, p.WgGrade)).ToList()
-            : new List<SelectListItem>();
-
-        var animalRates = await _service.GetAnimalRatesAsync(isDefra);
-        viewModel.AnimalTypeOptions = animalRates.Success && animalRates.Data != null
-            ? animalRates.Data.Select(a => new SelectListItem(a.AnimalType, a.AnimalType)).ToList()
-            : new List<SelectListItem>();
+    {       
 
         var accountCats = await _service.GetAccountCategoriesAsync();
         viewModel.AccountCatOptions = accountCats.Success && accountCats.Data != null
@@ -722,18 +711,18 @@ public class YearlyDetailsController : Controller
             : new List<SelectListItem>();
     }
 
-    private async Task GetPayRateOptionsAsync(bool isDefra)
+    private async Task GetPayRateOptionsAsync(string projectId, int year,bool isDefra)
     {
-        var response = await _service.GetPayRatesAsync(isDefra);
+        var response = await _service.GetPayRatesAsync(projectId, year, isDefra);
         ViewBag.WgGradeOptions = response.Data;
     }
 
-    private async Task GetAnimalTypeOptionsAsync()
+    private async Task GetAnimalTypeOptionsAsync(string projectId, int year, bool isDefra)
     {
-        var response = await _service.GetAllAnimalsAsync();
+        var response = await _service.GetAnimalRatesAsync(projectId, year, isDefra);
         ViewBag.AnimalTypeOptions = response.Success && response.Data != null
             ? response.Data
-            : new List<AnimalLookupDto>();
+            : new List<AnimalRateDto>();
     }
 
     private async Task GetAccountCatOptionsAsync()
@@ -744,9 +733,9 @@ public class YearlyDetailsController : Controller
             : new List<AccountCategoryDto>();
     }
 
-    private async Task GetTestCodeOptionsAsync(bool isDefra)
+    private async Task GetTestCodeOptionsAsync(string projectId, int year, bool isDefra)
     {
-        var response = await _service.GetTestCodeLookupsAsync(isDefra);
+        var response = await _service.GetTestCodeLookupsAsync(projectId, year, isDefra);
         if (!response.Success || response.Data is null)
         {
             ViewBag.TestCodeOptions = new List<TestCodeLookupDto>();

@@ -645,22 +645,22 @@ public class CostBookYearlyDetailsServiceTests
     public async Task GetPayRatesAsync_WithIsDefraTrue_DelegatesToClient()
     {
         var rates = new List<PayRateDto> { new() { WgGrade = "SEO" } };
-        _yearlyDetailsClient.GetPayRatesAsync(true).Returns(ApiResponseDto<List<PayRateDto>>.SuccessResponse(rates));
+        _yearlyDetailsClient.GetPayRatesAsync(Arg.Any<string>(), Arg.Any<int>(), true).Returns(ApiResponseDto<List<PayRateDto>>.SuccessResponse(rates));
 
-        var result = await _sut.GetPayRatesAsync(true);
+        var result = await _sut.GetPayRatesAsync("2024/001", 2024, true);
 
         Assert.True(result.Success);
-        await _yearlyDetailsClient.Received(1).GetPayRatesAsync(true);
+        await _yearlyDetailsClient.Received(1).GetPayRatesAsync(Arg.Any<string>(), Arg.Any<int>(), true);
     }
 
     [Fact]
     public async Task GetPayRatesAsync_WhenApiFails_ReturnsFailure()
     {
-        _yearlyDetailsClient.GetPayRatesAsync(false)
+        _yearlyDetailsClient.GetPayRatesAsync(Arg.Any<string>(), Arg.Any<int>(), false)
             .Returns(ApiResponseDto<List<PayRateDto>>.FailureResponse(
                 new List<ApiErrorDto> { new() { Code = "ERR", Message = "Failed" } }, new ApiMetaDto()));
 
-        var result = await _sut.GetPayRatesAsync(false);
+        var result = await _sut.GetPayRatesAsync("2024/001", 2024, false);
 
         Assert.False(result.Success);
     }
@@ -669,22 +669,22 @@ public class CostBookYearlyDetailsServiceTests
     public async Task GetAnimalRatesAsync_WithIsDefraFalse_DelegatesToClient()
     {
         var rates = new List<AnimalRateDto> { new() { AnimalType = "DOG" } };
-        _yearlyDetailsClient.GetAnimalRatesAsync(false).Returns(ApiResponseDto<List<AnimalRateDto>>.SuccessResponse(rates));
+        _yearlyDetailsClient.GetAnimalRatesAsync(Arg.Any<string>(), Arg.Any<int>(), false).Returns(ApiResponseDto<List<AnimalRateDto>>.SuccessResponse(rates));
 
-        var result = await _sut.GetAnimalRatesAsync(false);
+        var result = await _sut.GetAnimalRatesAsync("2024/001", 2024, false);
 
         Assert.True(result.Success);
-        await _yearlyDetailsClient.Received(1).GetAnimalRatesAsync(false);
+        await _yearlyDetailsClient.Received(1).GetAnimalRatesAsync(Arg.Any<string>(), Arg.Any<int>(), false);
     }
 
     [Fact]
     public async Task GetAnimalRatesAsync_WhenApiFails_ReturnsFailure()
     {
-        _yearlyDetailsClient.GetAnimalRatesAsync(true)
+        _yearlyDetailsClient.GetAnimalRatesAsync(Arg.Any<string>(), Arg.Any<int>(), true)
             .Returns(ApiResponseDto<List<AnimalRateDto>>.FailureResponse(
                 new List<ApiErrorDto> { new() { Code = "ERR", Message = "Failed" } }, new ApiMetaDto()));
 
-        var result = await _sut.GetAnimalRatesAsync(true);
+        var result = await _sut.GetAnimalRatesAsync("2024/001", 2024, true);
 
         Assert.False(result.Success);
     }
@@ -705,22 +705,22 @@ public class CostBookYearlyDetailsServiceTests
     public async Task GetTestCodeLookupsAsync_WithIsDefraTrue_DelegatesToClient()
     {
         var lookups = new List<TestCodeLookupDto> { new() { ItemCode = "TC002" } };
-        _yearlyDetailsClient.GetTestCodeLookupsAsync(true).Returns(ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(lookups));
+        _yearlyDetailsClient.GetTestCodeLookupsAsync(Arg.Any<string>(), Arg.Any<int>(), true).Returns(ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(lookups));
 
-        var result = await _sut.GetTestCodeLookupsAsync(true);
+        var result = await _sut.GetTestCodeLookupsAsync("2024/001", 2024, true);
 
         Assert.True(result.Success);
-        await _yearlyDetailsClient.Received(1).GetTestCodeLookupsAsync(true);
+        await _yearlyDetailsClient.Received(1).GetTestCodeLookupsAsync(Arg.Any<string>(), Arg.Any<int>(), true);
     }
 
     [Fact]
     public async Task GetTestCodeLookupsAsync_WhenApiFails_ReturnsFailure()
     {
-        _yearlyDetailsClient.GetTestCodeLookupsAsync(false)
+        _yearlyDetailsClient.GetTestCodeLookupsAsync(Arg.Any<string>(), Arg.Any<int>(), false)
             .Returns(ApiResponseDto<List<TestCodeLookupDto>>.FailureResponse(
                 new List<ApiErrorDto> { new() { Code = "ERR", Message = "Failed" } }, new ApiMetaDto()));
 
-        var result = await _sut.GetTestCodeLookupsAsync(false);
+        var result = await _sut.GetTestCodeLookupsAsync("2024/001", 2024, false);
 
         Assert.False(result.Success);
     }

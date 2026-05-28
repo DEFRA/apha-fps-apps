@@ -9,7 +9,7 @@ public interface ITestRequirementRepository
     Task<TestRequirement> AddTestRequirementAsync(TestRequirement testRequirement);
     Task<TestRequirement> UpdateTestRequirementAsync(TestRequirement testRequirement);
     Task<bool> DeleteTestRequirementAsync(string project, int year, string testCode);
-    Task<IEnumerable<TestCodeLookup>> GetTestCodeLookupsAsync(bool isDefra);
+    Task<IEnumerable<TestCodeLookup>> GetTestCodeLookupsAsync(string projectId, int year, bool isDefra);
 }
 
-public record TestCodeLookup(string ItemCode, string? ItemDescription, decimal? UnitPrice);
+

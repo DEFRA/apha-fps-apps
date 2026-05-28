@@ -33,9 +33,9 @@ public interface ICostBookYearlyDetailsApiClient
     Task<ApiResponseDto<AdditionalCostDto>> UpdateAdditionalCostAsync(string projectId, int year, int acIdentity, AdditionalCostDto dto);
     Task<ApiResponseDto<bool>> DeleteAdditionalCostAsync(string projectId, int year, int acIdentity);
 
-    Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(bool isDefra);
-    Task<ApiResponseDto<List<AnimalRateDto>>> GetAnimalRatesAsync(bool isDefra);
+    Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(string projectId, int year, bool isDefra);
+    Task<ApiResponseDto<List<AnimalRateDto>>> GetAnimalRatesAsync(string projectId, int year, bool isDefra);
     Task<ApiResponseDto<List<AccountCategoryDto>>> GetAccountCategoriesAsync();
-    Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(bool isDefra);
+    Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(string projectId, int year, bool isDefra);
     Task<ApiResponseDto<List<AnimalLookupDto>>> GetAllAnimalsAsync();
 }

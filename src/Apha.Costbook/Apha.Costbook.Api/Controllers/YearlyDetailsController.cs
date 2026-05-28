@@ -233,16 +233,16 @@ public class YearlyDetailsController : ControllerBase
     // ── Lookups ───────────────────────────────────────────────────────────────
 
     [HttpGet("lookups/payrates")]
-    public async Task<IActionResult> GetPayRates([FromQuery] bool isDefra = false)
+    public async Task<IActionResult> GetPayRates([FromQuery] string projectId, int year, bool isDefra = false)
     {
-        var dtos = await _service.GetPayRatesAsync(isDefra);
+        var dtos = await _service.GetPayRatesAsync(projectId, year, isDefra);
         return Ok(BuildOk(_mapper.Map<List<PayRateRes>>(dtos)));
     }
 
     [HttpGet("lookups/animalrates")]
-    public async Task<IActionResult> GetAnimalRates([FromQuery] bool isDefra = false)
+    public async Task<IActionResult> GetAnimalRates([FromQuery] string projectId, int year, bool isDefra = false)
     {
-        var dtos = await _service.GetAnimalRatesAsync(isDefra);
+        var dtos = await _service.GetAnimalRatesAsync(projectId, year, isDefra);
 
         return Ok(BuildOk(_mapper.Map<List<AnimalRateRes>>(dtos)));
     }
@@ -256,9 +256,9 @@ public class YearlyDetailsController : ControllerBase
     }
 
     [HttpGet("lookups/testcodes")]
-    public async Task<IActionResult> GetTestCodeLookups([FromQuery] bool isDefra = false)
+    public async Task<IActionResult> GetTestCodeLookups([FromQuery] string projectId, int year, bool isDefra = false)
     {
-        var dtos = await _service.GetTestCodeLookupsAsync(isDefra);
+        var dtos = await _service.GetTestCodeLookupsAsync(projectId, year, isDefra);
         return Ok(BuildOk(_mapper.Map<List<TestCodeLookupRes>>(dtos)));
     }
 

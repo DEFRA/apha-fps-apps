@@ -45,7 +45,15 @@ public class TestRequirementRepositoryTests
 
         RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-        var repo = new TestRequirementRepository(mockContext.Object, mockFpsYearContext.Object);
+        var settingsRepo = new Mock<ISettingsRepository>();
+        settingsRepo.Setup(x => x.GetSettingValueByIdAsync("CurrentYear"))
+            .ReturnsAsync(fpsYear.ToString());
+
+        var projectRepo = new Mock<IProjectRepository>();
+        projectRepo.Setup(x => x.GetInflationFactorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(1.0);
+
+        var repo = new TestRequirementRepository(mockContext.Object, mockFpsYearContext.Object, settingsRepo.Object, projectRepo.Object);
         return (repo, testReqMockSet, mockContext);
     }
 
@@ -176,7 +184,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: []);
 
         // Act
-        var result = await repo.GetTestCodeLookupsAsync(isDefra: false);
+        var result = await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false);
 
         // Assert
         Assert.NotNull(result);
@@ -195,7 +203,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -214,7 +222,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -232,7 +240,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -250,7 +258,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: true)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: true)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -270,7 +278,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -290,7 +298,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -312,7 +320,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -680,7 +688,7 @@ public class TestRequirementRepositoryTests
         };
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         Assert.Single(result);
         Assert.Null(result[0].UnitPrice);
@@ -696,7 +704,7 @@ public class TestRequirementRepositoryTests
         };
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: true)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: true)).ToList();
 
         Assert.Equal(2, result.Count);
         Assert.Equal(15m, result[0].UnitPrice);

@@ -3,7 +3,7 @@
     ViewData["Title"] = "Project Requirements";
     var projectId = Model.ProjectHeaderDto.ProjectId;
     var selectedYear = Model.SelectedYear;
-    var isDefra = Model.ProjectHeaderDto.IsDefraProject == 1;
+    var isDefra = Model.ProjectHeaderDto.IsDefraProject == -1;
     var programme = (Model.ProjectHeaderDto.Programme ?? "").ToLower() == "comm";
 }
 <div class="govuk-template__body govuk-frontend-supported project-requirement-page">
@@ -313,6 +313,7 @@
         const projectId = '@projectId';
         let selectedYear = @selectedYear;
         const programme = '@Model.ProjectHeaderDto.Programme';
+        const isDefra = @(isDefra ? "true" : "false");
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -509,7 +510,7 @@
         var _staffCurrentIdentity = null;
 
         function openAddStaffModal(pid, year) {
-            fetch('@Url.Action("CreateStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
+            fetch('@Url.Action("CreateStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=' + isDefra)
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
@@ -521,7 +522,7 @@
                 });
         }
         function openEditStaffModal(pid, year, srIdentity) {
-            fetch('@Url.Action("EditStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&srIdentity=' + srIdentity + '&isDefra=@isDefra')
+            fetch('@Url.Action("EditStaff", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&srIdentity=' + srIdentity + '&isDefra=' + isDefra)
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
@@ -601,7 +602,7 @@
         var _testCurrentCode = null;
 
         function openAddTestModal(pid, year) {
-            fetch('@Url.Action("CreateTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
+            fetch('@Url.Action("CreateTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=' + isDefra)
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
@@ -612,7 +613,7 @@
                 });
         }
         function openEditTestModal(pid, year, testCode) {
-            fetch('@Url.Action("EditTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode) + '&isDefra=@isDefra')
+            fetch('@Url.Action("EditTest", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&testCode=' + encodeURIComponent(testCode) + '&isDefra=' + isDefra)
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
@@ -689,7 +690,7 @@
         var _animalCurrentIdentity = null;
 
         function openAddAnimalModal(pid, year) {
-            fetch('@Url.Action("CreateAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=@isDefra')
+            fetch('@Url.Action("CreateAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&isDefra=' + isDefra)
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
@@ -700,7 +701,7 @@
                 });
         }
         function openEditAnimalModal(pid, year, arIdentity) {
-            fetch('@Url.Action("EditAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&arIdentity=' + arIdentity + '&isDefra=@isDefra')
+            fetch('@Url.Action("EditAnimal", "YearlyDetails", new { area = "CostBook" })?projectId=' + encodeURIComponent(pid) + '&year=' + year + '&arIdentity=' + arIdentity + '&isDefra=' + isDefra)
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     document.getElementById('project1ModalContent').innerHTML = html;
@@ -1183,7 +1184,7 @@ function initWgGradeDropdown() {
     document.querySelectorAll('#wgGradeDropdownBody tr').forEach(function (row) {
         row.addEventListener('click', function () {
             var grade      = this.getAttribute('data-value');
-            var chargeRate = this.getAttribute('data-chargerate');
+            var chargeRate = this.getAttribute('data-chargeratewithinflamation') || this.getAttribute('data-chargerate');
             var payrate    = this.getAttribute('data-payrate');
             var npr        = this.getAttribute('data-npr');
             var ohr        = this.getAttribute('data-ohr');
@@ -1326,7 +1327,7 @@ function initTestCodeDropdown() {
     document.querySelectorAll('#testCodeDropdownBody tr').forEach(function (row) {
         row.addEventListener('click', function () {
             var code      = this.getAttribute('data-value');
-            var unitPrice = this.getAttribute('data-unitprice');
+            var unitPrice = this.getAttribute('data-unitpricewithinflamation') || this.getAttribute('data-unitprice');
 
             input.value = code;
             document.getElementById('TestCode').value    = code;
@@ -1401,7 +1402,7 @@ function initAnimalTypeDropdown() {
     document.querySelectorAll('#animalTypeDropdownBody tr').forEach(function (row) {
         row.addEventListener('click', function () {
             var animalType = this.getAttribute('data-value');
-            var dailyRate  = this.getAttribute('data-dailyrate');
+            var dailyRate  = this.getAttribute('data-dailyratewithinflamation') || this.getAttribute('data-dailyrate');
 
             input.value = animalType;
             document.getElementById('AnimalType').value = animalType;

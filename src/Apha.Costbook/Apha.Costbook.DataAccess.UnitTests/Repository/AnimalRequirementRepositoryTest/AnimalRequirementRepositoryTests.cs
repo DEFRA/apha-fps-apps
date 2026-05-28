@@ -47,7 +47,15 @@ public class AnimalRequirementRepositoryTests
 
         RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-        var repo = new AnimalRequirementRepository(mockContext.Object);
+        var settingsRepo = new Mock<ISettingsRepository>();
+        settingsRepo.Setup(x => x.GetSettingValueByIdAsync("CurrentYear"))
+            .ReturnsAsync(DefaultFpsYear.ToString());
+
+        var projectRepo = new Mock<IProjectRepository>();
+        projectRepo.Setup(x => x.GetInflationFactorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(1.0);
+
+        var repo = new AnimalRequirementRepository(mockContext.Object, settingsRepo.Object, projectRepo.Object);
         return (repo, animalReqMockSet, mockContext);
     }
 
@@ -183,7 +191,7 @@ public class AnimalRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsAnimals: []);
 
         // Act
-        var result = await repo.GetAnimalRatesAsync(isDefra: false);
+        var result = await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: false);
 
         // Assert
         Assert.NotNull(result);
@@ -201,12 +209,12 @@ public class AnimalRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
         // Act
-        var result = (await repo.GetAnimalRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
         Assert.Equal("CAT", result[0].AnimalType);
-        Assert.Equal(10.50, result[0].DailyRate);
+        Assert.Equal(10.50m, result[0].DailyRate);
     }
 
     [Fact]
@@ -220,11 +228,11 @@ public class AnimalRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
         // Act
-        var result = (await repo.GetAnimalRatesAsync(isDefra: true)).ToList();
+        var result = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: true)).ToList();
 
         // Assert
         Assert.Single(result);
-        Assert.Equal(15.00, result[0].DailyRate);
+        Assert.Equal(15.00m, result[0].DailyRate);
     }
 
     [Fact]
@@ -240,7 +248,7 @@ public class AnimalRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
         // Act
-        var result = (await repo.GetAnimalRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -260,12 +268,12 @@ public class AnimalRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
         // Act
-        var result = (await repo.GetAnimalRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
         Assert.Equal("HORSE", result[0].AnimalType);
-        Assert.Equal(50.0, result[0].DailyRate);
+        Assert.Equal(50.0m, result[0].DailyRate);
     }
 
     #endregion
@@ -650,7 +658,7 @@ public class AnimalRequirementRepositoryTests
         };
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
-        var result = (await repo.GetAnimalRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         Assert.Single(result);
         Assert.Null(result[0].DailyRate);
@@ -666,11 +674,11 @@ public class AnimalRequirementRepositoryTests
         };
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
-        var resultDefra = (await repo.GetAnimalRatesAsync(isDefra: true)).ToList();
+        var resultDefra = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: true)).ToList();
 
         Assert.Equal(2, resultDefra.Count);
-        Assert.Equal(15.0, resultDefra.First(r => r.AnimalType == "CAT").DailyRate);
-        Assert.Equal(30.0, resultDefra.First(r => r.AnimalType == "DOG").DailyRate);
+        Assert.Equal(15.0m, resultDefra.First(r => r.AnimalType == "CAT").DailyRate);
+        Assert.Equal(30.0m, resultDefra.First(r => r.AnimalType == "DOG").DailyRate);
     }
 
     #endregion

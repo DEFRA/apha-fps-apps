@@ -528,7 +528,7 @@ public class CostBookYearlyDetailsApiClientTests
         _http.GetAsync<List<PayRateRes>>(Arg.Any<string>()).Returns(apiResponse);
         _mapper.Map<List<PayRateDto>>(resList).Returns(mappedDtos);
 
-        var result = await _client.GetPayRatesAsync(false);
+        var result = await _client.GetPayRatesAsync("2024/001", 2024, false);
 
         Assert.True(result.Success);
         Assert.Single(result.Data!);
@@ -544,7 +544,7 @@ public class CostBookYearlyDetailsApiClientTests
         _http.GetAsync<List<AnimalRateRes>>(Arg.Any<string>()).Returns(apiResponse);
         _mapper.Map<List<AnimalRateDto>>(resList).Returns(mappedDtos);
 
-        var result = await _client.GetAnimalRatesAsync(true);
+        var result = await _client.GetAnimalRatesAsync("2024/001", 2024, true);
 
         Assert.True(result.Success);
         Assert.Single(result.Data!);
@@ -576,7 +576,7 @@ public class CostBookYearlyDetailsApiClientTests
         _http.GetAsync<List<TestCodeLookupRes>>(Arg.Any<string>()).Returns(apiResponse);
         _mapper.Map<List<TestCodeLookupDto>>(resList).Returns(mappedDtos);
 
-        var result = await _client.GetTestCodeLookupsAsync(false);
+        var result = await _client.GetTestCodeLookupsAsync("2024/001", 2024, false);
 
         Assert.True(result.Success);
         Assert.Single(result.Data!);
@@ -991,7 +991,7 @@ public class CostBookYearlyDetailsApiClientTests
         _http.GetAsync<List<PayRateRes>>(Arg.Is<string>(s => s.Contains("isDefra=True"))).Returns(apiResponse);
         _mapper.Map<List<PayRateDto>>(resList).Returns(new List<PayRateDto> { new() { WgGrade = "SEO" } });
 
-        var result = await _client.GetPayRatesAsync(true);
+        var result = await _client.GetPayRatesAsync("2024/001", 2024, true);
 
         Assert.True(result.Success);
         await _http.Received(1).GetAsync<List<PayRateRes>>(Arg.Is<string>(s => s.Contains("isDefra=True")));
@@ -1005,7 +1005,7 @@ public class CostBookYearlyDetailsApiClientTests
         _mapper.Map<ApiResponseDto<List<PayRateDto>>>(apiResponse)
             .Returns(new ApiResponseDto<List<PayRateDto>> { Success = false, Errors = new(), Meta = new() });
 
-        var result = await _client.GetPayRatesAsync(false);
+        var result = await _client.GetPayRatesAsync("2024/001", 2024, false);
 
         Assert.False(result.Success);
     }
@@ -1018,7 +1018,7 @@ public class CostBookYearlyDetailsApiClientTests
         _http.GetAsync<List<AnimalRateRes>>(Arg.Is<string>(s => s.Contains("isDefra=False"))).Returns(apiResponse);
         _mapper.Map<List<AnimalRateDto>>(resList).Returns(new List<AnimalRateDto> { new() { AnimalType = "DOG" } });
 
-        var result = await _client.GetAnimalRatesAsync(false);
+        var result = await _client.GetAnimalRatesAsync("2024/001", 2024, false);
 
         Assert.True(result.Success);
         await _http.Received(1).GetAsync<List<AnimalRateRes>>(Arg.Is<string>(s => s.Contains("isDefra=False")));
@@ -1032,7 +1032,7 @@ public class CostBookYearlyDetailsApiClientTests
         _mapper.Map<ApiResponseDto<List<AnimalRateDto>>>(apiResponse)
             .Returns(new ApiResponseDto<List<AnimalRateDto>> { Success = false, Errors = new(), Meta = new() });
 
-        var result = await _client.GetAnimalRatesAsync(true);
+        var result = await _client.GetAnimalRatesAsync("2024/001", 2024, true);
 
         Assert.False(result.Success);
     }
@@ -1058,7 +1058,7 @@ public class CostBookYearlyDetailsApiClientTests
         _http.GetAsync<List<TestCodeLookupRes>>(Arg.Is<string>(s => s.Contains("isDefra=True"))).Returns(apiResponse);
         _mapper.Map<List<TestCodeLookupDto>>(resList).Returns(new List<TestCodeLookupDto> { new() { ItemCode = "TC002" } });
 
-        var result = await _client.GetTestCodeLookupsAsync(true);
+        var result = await _client.GetTestCodeLookupsAsync("2024/001", 2024, true);
 
         Assert.True(result.Success);
         await _http.Received(1).GetAsync<List<TestCodeLookupRes>>(Arg.Is<string>(s => s.Contains("isDefra=True")));
@@ -1072,7 +1072,7 @@ public class CostBookYearlyDetailsApiClientTests
         _mapper.Map<ApiResponseDto<List<TestCodeLookupDto>>>(apiResponse)
             .Returns(new ApiResponseDto<List<TestCodeLookupDto>> { Success = false, Errors = new(), Meta = new() });
 
-        var result = await _client.GetTestCodeLookupsAsync(false);
+        var result = await _client.GetTestCodeLookupsAsync("2024/001", 2024, false);
 
         Assert.False(result.Success);
     }

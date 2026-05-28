@@ -493,10 +493,10 @@ public class YearlyDetailsControllerTests
         var dtos = new List<PayRateDto> { new() { WgGrade = "HEO" } };
         var resList = new List<PayRateRes> { new() { WgGrade = "HEO" } };
 
-        _service.GetPayRatesAsync(false).Returns(dtos);
+        _service.GetPayRatesAsync("2024/001", 2024, false).Returns(dtos);
         _mapper.Map<List<PayRateRes>>(dtos).Returns(resList);
 
-        var result = await _controller.GetPayRates(false);
+        var result = await _controller.GetPayRates("2024/001", 2024, false);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var apiResponse = Assert.IsType<ApiResponse<List<PayRateRes>>>(okResult.Value);
@@ -509,10 +509,10 @@ public class YearlyDetailsControllerTests
         var dtos = new List<AnimalRateDto> { new() { AnimalType = "CAT" } };
         var resList = new List<AnimalRateRes> { new() { AnimalType = "CAT" } };
 
-        _service.GetAnimalRatesAsync(true).Returns(dtos);
+        _service.GetAnimalRatesAsync("2024/001", 2024, true).Returns(dtos);
         _mapper.Map<List<AnimalRateRes>>(dtos).Returns(resList);
 
-        var result = await _controller.GetAnimalRates(true);
+        var result = await _controller.GetAnimalRates("2024/001", 2024, true);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.NotNull(okResult.Value);
@@ -539,10 +539,10 @@ public class YearlyDetailsControllerTests
         var dtos = new List<TestCodeLookupDto> { new() { ItemCode = "TC001" } };
         var resList = new List<TestCodeLookupRes> { new() { ItemCode = "TC001" } };
 
-        _service.GetTestCodeLookupsAsync(false).Returns(dtos);
+        _service.GetTestCodeLookupsAsync("2024/001", 2024, false).Returns(dtos);
         _mapper.Map<List<TestCodeLookupRes>>(dtos).Returns(resList);
 
-        var result = await _controller.GetTestCodeLookups(false);
+        var result = await _controller.GetTestCodeLookups("2024/001", 2024, false);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.NotNull(okResult.Value);
@@ -707,48 +707,48 @@ public class YearlyDetailsControllerTests
     public async Task GetPayRates_Defra_DelegatesToService_WithIsDefraTrue()
     {
         var dtos = new List<PayRateDto>();
-        _service.GetPayRatesAsync(true).Returns(dtos);
+        _service.GetPayRatesAsync("2024/001", 2024, true).Returns(dtos);
         _mapper.Map<List<PayRateRes>>(dtos).Returns(new List<PayRateRes>());
 
-        await _controller.GetPayRates(true);
+        await _controller.GetPayRates("2024/001", 2024, true);
 
-        await _service.Received(1).GetPayRatesAsync(true);
+        await _service.Received(1).GetPayRatesAsync("2024/001", 2024, true);
     }
 
     [Fact]
     public async Task GetPayRates_DefaultsToNonDefra()
     {
         var dtos = new List<PayRateDto>();
-        _service.GetPayRatesAsync(false).Returns(dtos);
+        _service.GetPayRatesAsync("2024/001", 2024, false).Returns(dtos);
         _mapper.Map<List<PayRateRes>>(dtos).Returns(new List<PayRateRes>());
 
-        var result = await _controller.GetPayRates();
+        var result = await _controller.GetPayRates("2024/001", 2024);
 
         Assert.IsType<OkObjectResult>(result);
-        await _service.Received(1).GetPayRatesAsync(false);
+        await _service.Received(1).GetPayRatesAsync("2024/001", 2024, false);
     }
 
     [Fact]
     public async Task GetAnimalRates_DefaultsToNonDefra()
     {
         var dtos = new List<AnimalRateDto>();
-        _service.GetAnimalRatesAsync(false).Returns(dtos);
+        _service.GetAnimalRatesAsync("2024/001", 2024, false).Returns(dtos);
         _mapper.Map<List<AnimalRateRes>>(dtos).Returns(new List<AnimalRateRes>());
 
-        var result = await _controller.GetAnimalRates();
+        var result = await _controller.GetAnimalRates("2024/001", 2024);
 
         Assert.IsType<OkObjectResult>(result);
-        await _service.Received(1).GetAnimalRatesAsync(false);
+        await _service.Received(1).GetAnimalRatesAsync("2024/001", 2024, false);
     }
 
     [Fact]
     public async Task GetAnimalRates_NonDefra_DelegatesToService()
     {
         var dtos = new List<AnimalRateDto> { new() { AnimalType = "DOG" } };
-        _service.GetAnimalRatesAsync(false).Returns(dtos);
+        _service.GetAnimalRatesAsync("2024/001", 2024, false).Returns(dtos);
         _mapper.Map<List<AnimalRateRes>>(dtos).Returns(new List<AnimalRateRes> { new() { AnimalType = "DOG" } });
 
-        var result = await _controller.GetAnimalRates(false);
+        var result = await _controller.GetAnimalRates("2024/001", 2024, false);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var apiResponse = Assert.IsType<ApiResponse<List<AnimalRateRes>>>(okResult.Value);
@@ -759,25 +759,25 @@ public class YearlyDetailsControllerTests
     public async Task GetTestCodeLookups_DefaultsToNonDefra()
     {
         var dtos = new List<TestCodeLookupDto>();
-        _service.GetTestCodeLookupsAsync(false).Returns(dtos);
+        _service.GetTestCodeLookupsAsync("2024/001", 2024, false).Returns(dtos);
         _mapper.Map<List<TestCodeLookupRes>>(dtos).Returns(new List<TestCodeLookupRes>());
 
-        var result = await _controller.GetTestCodeLookups();
+        var result = await _controller.GetTestCodeLookups("2024/001", 2024);
 
         Assert.IsType<OkObjectResult>(result);
-        await _service.Received(1).GetTestCodeLookupsAsync(false);
+        await _service.Received(1).GetTestCodeLookupsAsync("2024/001", 2024, false);
     }
 
     [Fact]
     public async Task GetTestCodeLookups_Defra_DelegatesToService_WithIsDefraTrue()
     {
         var dtos = new List<TestCodeLookupDto>();
-        _service.GetTestCodeLookupsAsync(true).Returns(dtos);
+        _service.GetTestCodeLookupsAsync("2024/001", 2024, true).Returns(dtos);
         _mapper.Map<List<TestCodeLookupRes>>(dtos).Returns(new List<TestCodeLookupRes>());
 
-        await _controller.GetTestCodeLookups(true);
+        await _controller.GetTestCodeLookups("2024/001", 2024, true);
 
-        await _service.Received(1).GetTestCodeLookupsAsync(true);
+        await _service.Received(1).GetTestCodeLookupsAsync("2024/001", 2024, true);
     }
 
     [Fact]

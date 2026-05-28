@@ -337,18 +337,18 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
 
     // ── Lookups ───────────────────────────────────────────────────────────────
 
-    public async Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(bool isDefra)
+    public async Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(string projectId, int year, bool isDefra)
     {
-        var response = await _http.GetAsync<List<PayRateRes>>($"{CostBookApiEndpoints.GetPayRates}?isDefra={isDefra}");
+        var response = await _http.GetAsync<List<PayRateRes>>($"{CostBookApiEndpoints.GetPayRates}?projectId={HttpUtility.UrlEncode(projectId)}&year={year}&isDefra={isDefra}");
         if (response.Success && response.Data != null)
             return ApiResponseDto<List<PayRateDto>>.SuccessResponse(_mapper.Map<List<PayRateDto>>(response.Data));
         var err = _mapper.Map<ApiResponseDto<List<PayRateDto>>>(response);
         return ApiResponseDto<List<PayRateDto>>.FailureResponse(err.Errors, err.Meta);
     }
 
-    public async Task<ApiResponseDto<List<AnimalRateDto>>> GetAnimalRatesAsync(bool isDefra)
+    public async Task<ApiResponseDto<List<AnimalRateDto>>> GetAnimalRatesAsync(string projectId, int year, bool isDefra)
     {
-        var response = await _http.GetAsync<List<AnimalRateRes>>($"{CostBookApiEndpoints.GetAnimalRates}?isDefra={isDefra}");
+        var response = await _http.GetAsync<List<AnimalRateRes>>($"{CostBookApiEndpoints.GetAnimalRates}?projectId={HttpUtility.UrlEncode(projectId)}&year={year}&isDefra={isDefra}");
         if (response.Success && response.Data != null)
             return ApiResponseDto<List<AnimalRateDto>>.SuccessResponse(_mapper.Map<List<AnimalRateDto>>(response.Data));
         var err = _mapper.Map<ApiResponseDto<List<AnimalRateDto>>>(response);
@@ -364,9 +364,9 @@ public class CostBookYearlyDetailsApiClient : ICostBookYearlyDetailsApiClient
         return ApiResponseDto<List<AccountCategoryDto>>.FailureResponse(err.Errors, err.Meta);
     }
 
-    public async Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(bool isDefra)
+    public async Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(string projectId, int year, bool isDefra)
     {
-        var response = await _http.GetAsync<List<TestCodeLookupRes>>($"{CostBookApiEndpoints.GetTestCodeLookups}?isDefra={isDefra}");
+        var response = await _http.GetAsync<List<TestCodeLookupRes>>($"{CostBookApiEndpoints.GetTestCodeLookups}?projectId={HttpUtility.UrlEncode(projectId)}&year={year}&isDefra={isDefra}");
         if (response.Success && response.Data != null)
             return ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(_mapper.Map<List<TestCodeLookupDto>>(response.Data));
         var err = _mapper.Map<ApiResponseDto<List<TestCodeLookupDto>>>(response);

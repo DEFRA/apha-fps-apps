@@ -81,17 +81,17 @@ public class CostBookYearlyDetailsService : ICostBookYearlyDetailsService
     public Task<ApiResponseDto<bool>> DeleteAdditionalCostAsync(string projectId, int year, int acIdentity)
         => _client.YearlyDetails.DeleteAdditionalCostAsync(projectId, year, acIdentity);
 
-    public Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(bool isDefra)
-        => _client.YearlyDetails.GetPayRatesAsync(isDefra);
+    public Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(string projectId, int year,bool isDefra)
+        => _client.YearlyDetails.GetPayRatesAsync(projectId, year, isDefra);
 
-    public Task<ApiResponseDto<List<AnimalRateDto>>> GetAnimalRatesAsync(bool isDefra)
-        => _client.YearlyDetails.GetAnimalRatesAsync(isDefra);
+    public Task<ApiResponseDto<List<AnimalRateDto>>> GetAnimalRatesAsync(string projectId, int year, bool isDefra)
+        => _client.YearlyDetails.GetAnimalRatesAsync(projectId, year, isDefra);
 
     public Task<ApiResponseDto<List<AccountCategoryDto>>> GetAccountCategoriesAsync()
         => _client.YearlyDetails.GetAccountCategoriesAsync();
 
-    public Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(bool isDefra)
-        => _client.YearlyDetails.GetTestCodeLookupsAsync(isDefra);
+    public Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(string projectId, int year, bool isDefra)
+        => _client.YearlyDetails.GetTestCodeLookupsAsync(projectId, year, isDefra);
 
     public Task<ApiResponseDto<List<AnimalLookupDto>>> GetAllAnimalsAsync()
         => _client.YearlyDetails.GetAllAnimalsAsync();

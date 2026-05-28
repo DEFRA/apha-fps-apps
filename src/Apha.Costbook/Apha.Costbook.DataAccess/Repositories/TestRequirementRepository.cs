@@ -10,11 +10,15 @@ namespace Apha.Costbook.DataAccess.Repositories;
 public class TestRequirementRepository : RepositoryBase<TestRequirement>, ITestRequirementRepository
 {
     private readonly IFPSYearContext _fpsYearContext;
+    private readonly ISettingsRepository _settingsRepo;
+    private readonly IProjectRepository _projectRepo;
 
-    public TestRequirementRepository(CostbookDbContext context, IFPSYearContext fpsYearContext)
+    public TestRequirementRepository(CostbookDbContext context, IFPSYearContext fpsYearContext, ISettingsRepository settingsRepo, IProjectRepository projectRepo)
         : base(context)
     {
         _fpsYearContext = fpsYearContext;
+        _settingsRepo = settingsRepo;
+        _projectRepo = projectRepo;
     }
 
     public async Task<PagedData<TestRequirementDetailView>> GetTestRequirementsByProjectYearAsync(
@@ -114,17 +118,39 @@ public class TestRequirementRepository : RepositoryBase<TestRequirement>, ITestR
         return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 
-    public async Task<IEnumerable<TestCodeLookup>> GetTestCodeLookupsAsync(bool isDefra)
-        => (await _context.FpsTestorProducts
-                .AsNoTracking()
-                .Where(t => !t.ItemCode.StartsWith("PA") && !t.ItemCode.EndsWith("ND"))
-                .OrderBy(t => t.ItemCode)
-                .Select(t => new
-                {
-                    t.ItemCode,
-                    t.ItemDescription,
-                    UnitPrice = isDefra ? t.DefraUnitPrice : t.UnitPriceVla
-                })
-                .ToListAsync())
-            .Select(t => new TestCodeLookup(t.ItemCode, t.ItemDescription, t.UnitPrice));
+    public async Task<IEnumerable<TestCodeLookup>> GetTestCodeLookupsAsync(string projectId, int year, bool isDefra)
+    {
+        var decodedId = HttpUtility.UrlDecode(projectId);
+
+        var currentYearSetting = await _settingsRepo.GetSettingValueByIdAsync("CurrentYear");
+
+        if (string.IsNullOrEmpty(currentYearSetting) || !int.TryParse(currentYearSetting, out int fyear))
+        {
+            throw new InvalidOperationException("CurrentYear setting not found or invalid in settings table.");
+        }
+
+        var results = await _context.FpsTestorProducts
+            .AsNoTracking()
+            .Where(t => !t.ItemCode.StartsWith("PA") && !t.ItemCode.EndsWith("ND"))
+            .OrderBy(t => t.ItemCode)
+            .Select(t => new
+            {
+                t.ItemCode,
+                t.ItemDescription,
+                UnitPrice = isDefra ? t.DefraUnitPrice : t.UnitPriceVla
+            })
+            .ToListAsync();
+
+        double inflationFactor = await _projectRepo.GetInflationFactorAsync("InflationTests", decodedId, year, fyear);
+
+        return results.Select(t => new TestCodeLookup
+        {
+            ItemCode = t.ItemCode,
+            ItemDescription = t.ItemDescription,
+            UnitPrice = t.UnitPrice,
+            UnitPriceWithInflamation = t.UnitPrice.HasValue
+                ? (decimal?)(Convert.ToDouble(t.UnitPrice.Value) * inflationFactor)
+                : null
+        });
+    }
 }
