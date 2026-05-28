@@ -12,7 +12,7 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         public AnimalMasterService(IFpsApiClient fpsApiClient)
         {
-            _fpsApiClient = fpsApiClient;
+            _fpsApiClient = fpsApiClient ?? throw new ArgumentNullException(nameof(fpsApiClient));
         }
 
         public async Task<ApiResponseDto<IEnumerable<AnimalDto>>> GetAllAnimalsAsync()

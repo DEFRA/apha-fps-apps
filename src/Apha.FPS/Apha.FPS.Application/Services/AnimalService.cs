@@ -15,8 +15,8 @@ namespace Apha.FPS.Application.Services
 
         public AnimalService(IAnimalRepository animalRepository, IMapper mapper)
         {
-            _animalRepository = animalRepository;
-            _mapper = mapper;
+            _animalRepository = animalRepository ?? throw new ArgumentNullException(nameof(animalRepository));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         // Animal Master CRUD
@@ -29,6 +29,7 @@ namespace Apha.FPS.Application.Services
 
         public async Task<PaginatedResult<AnimalDto>> GetAllAnimalsAsync(QueryParameters<string> query)
         {
+            ArgumentNullException.ThrowIfNull(query);
             var filter = _mapper.Map<PaginationParameters<string>>(query);
             var paged = await _animalRepository.GetAllAnimalsAsync(filter);
             return _mapper.Map<PaginatedResult<AnimalDto>>(paged);
@@ -69,9 +70,7 @@ namespace Apha.FPS.Application.Services
         public async Task<bool> DeleteAnimalAsync(string animalType)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(animalType);
-            var existing = await _animalRepository.GetAnimalByIdAsync(animalType)
-                ?? throw new KeyNotFoundException($"Animal '{animalType}' not found.");
-            return await _animalRepository.DeleteAnimalAsync(existing.AnimalType);
+            return await _animalRepository.DeleteAnimalAsync(animalType);
         }
 
         // Animal Cost (AnimalJob)

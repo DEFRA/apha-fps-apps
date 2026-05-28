@@ -106,10 +106,15 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<bool> DeleteAnimalAsync(string animalType)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(animalType);
-            var deleted = await _dbContext.Animals
-                .Where(a => a.AnimalType == animalType && a.FpsYear == _requestContext.FpsYear)
-                .ExecuteDeleteAsync();
-            return deleted > 0;
+            var entity = await _dbContext.Animals
+                .FirstOrDefaultAsync(a => a.AnimalType == animalType && a.FpsYear == _requestContext.FpsYear);
+
+            if (entity == null)
+                return false;
+
+            _dbContext.Animals.Remove(entity);
+            await _dbContext.SaveChangesAsync();
+            return true;
         }
 
 

@@ -22,8 +22,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         public AnimalMasterController(IMapper mapper, IAnimalMasterService animalMasterService)
         {
-            _mapper = mapper;
-            _animalMasterService = animalMasterService;
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _animalMasterService = animalMasterService ?? throw new ArgumentNullException(nameof(animalMasterService));
         }
 
         public async Task<IActionResult> Index()

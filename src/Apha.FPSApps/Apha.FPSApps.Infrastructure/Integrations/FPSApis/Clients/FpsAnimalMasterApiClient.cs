@@ -16,8 +16,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public FpsAnimalMasterApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
-            _http = http;
-            _mapper = mapper;
+            _http = http ?? throw new ArgumentNullException(nameof(http));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         public async Task<ApiResponseDto<IEnumerable<AnimalDto>>> GetAllAnimalsAsync()
