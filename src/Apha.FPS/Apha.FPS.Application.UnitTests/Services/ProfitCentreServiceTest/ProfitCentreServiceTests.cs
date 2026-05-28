@@ -216,9 +216,23 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         }
 
         [Fact]
+        public async Task CreateProfitCentreAsync_ThrowsArgumentException_WhenIdIsWhiteSpace()
+        {
+            var dto = new ProfitCentreDto { ProfitCentreId = "   ", ProfitCentreName = "Centre" };
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateProfitCentreAsync(dto));
+        }
+
+        [Fact]
         public async Task CreateProfitCentreAsync_ThrowsArgumentException_WhenNameIsEmpty()
         {
             var dto = new ProfitCentreDto { ProfitCentreId = "PC01", ProfitCentreName = "" };
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateProfitCentreAsync(dto));
+        }
+
+        [Fact]
+        public async Task CreateProfitCentreAsync_ThrowsArgumentException_WhenNameIsWhiteSpace()
+        {
+            var dto = new ProfitCentreDto { ProfitCentreId = "PC01", ProfitCentreName = "   " };
             await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateProfitCentreAsync(dto));
         }
 
@@ -328,8 +342,25 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         }
 
         [Fact]
+        public async Task DeleteProfitCentreAsync_ThrowsInvalidOperationException_WhenGradeExists()
+        {
+            _mockRepository.HasLinkedGradesAsync("PC01").Returns(true);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteProfitCentreAsync("PC01"));
+        }
+
+        [Fact]
+        public async Task DeleteProfitCentreAsync_ThrowsInvalidOperationException_WhenWorkgroupExists()
+        {
+            _mockRepository.HasLinkedGradesAsync("PC01").Returns(false);
+            _mockRepository.HasLinkedWorkgroupsAsync("PC01").Returns(true);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteProfitCentreAsync("PC01"));
+        }
+
+        [Fact]
         public async Task DeleteProfitCentreAsync_ReturnsTrue_WhenDeleted()
         {
+            _mockRepository.HasLinkedGradesAsync("PC01").Returns(false);
+            _mockRepository.HasLinkedWorkgroupsAsync("PC01").Returns(false);
             _mockRepository.DeleteProfitCentreAsync("PC01").Returns(true);
             var result = await _sut.DeleteProfitCentreAsync("PC01");
             result.Should().BeTrue();
@@ -339,6 +370,8 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         [Fact]
         public async Task DeleteProfitCentreAsync_ReturnsFalse_WhenNotFound()
         {
+            _mockRepository.HasLinkedGradesAsync("NOTEXIST").Returns(false);
+            _mockRepository.HasLinkedWorkgroupsAsync("NOTEXIST").Returns(false);
             _mockRepository.DeleteProfitCentreAsync("NOTEXIST").Returns(false);
             var result = await _sut.DeleteProfitCentreAsync("NOTEXIST");
             result.Should().BeFalse();

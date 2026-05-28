@@ -231,19 +231,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         #region GetProfitCentreByIdAsync Tests
 
         [Fact]
-        public async Task GetProfitCentreByIdAsync_ReturnsNull_WhenIdIsNullOrEmpty()
+        public async Task GetProfitCentreByIdAsync_ThrowsArgumentException_WhenIdIsNullOrEmpty()
         {
             var repo = CreateRepository(profitCentres: []);
-            var result = await repo.GetProfitCentreByIdAsync("");
-            Assert.Null(result);
+            await Assert.ThrowsAsync<ArgumentException>(() => repo.GetProfitCentreByIdAsync(""));
         }
 
         [Fact]
-        public async Task GetProfitCentreByIdAsync_ReturnsNull_WhenIdIsWhiteSpace()
+        public async Task GetProfitCentreByIdAsync_ThrowsArgumentException_WhenIdIsWhiteSpace()
         {
             var repo = CreateRepository(profitCentres: []);
-            var result = await repo.GetProfitCentreByIdAsync("   ");
-            Assert.Null(result);
+            await Assert.ThrowsAsync<ArgumentException>(() => repo.GetProfitCentreByIdAsync("   "));
         }
 
         [Fact]
@@ -286,11 +284,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         }
 
         [Fact]
-        public async Task ProfitCentreExistsAsync_ReturnsFalse_WhenIdIsEmpty()
+        public async Task ProfitCentreExistsAsync_ThrowsArgumentException_WhenIdIsEmpty()
         {
             var repo = CreateRepository(profitCentres: []);
-            var result = await repo.ProfitCentreExistsAsync("");
-            Assert.False(result);
+            await Assert.ThrowsAsync<ArgumentException>(() => repo.ProfitCentreExistsAsync(""));
         }
 
         #endregion
@@ -384,11 +381,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         #region DeleteProfitCentreAsync Tests
 
         [Fact]
-        public async Task DeleteProfitCentreAsync_ReturnsFalse_WhenIdIsEmpty()
+        public async Task DeleteProfitCentreAsync_ThrowsArgumentException_WhenIdIsEmpty()
         {
             var repo = CreateRepository(profitCentres: []);
-            var result = await repo.DeleteProfitCentreAsync("");
-            Assert.False(result);
+            await Assert.ThrowsAsync<ArgumentException>(() => repo.DeleteProfitCentreAsync(""));
         }
 
         [Fact]
@@ -403,36 +399,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         }
 
         [Fact]
-        public async Task DeleteProfitCentreAsync_ThrowsInvalidOperationException_WhenGradeExists()
-        {
-            var grades = new List<ProfitCentreGrade>
-            {
-                new() { PcGrade = "G1", DivisionGrade = "DG1", GradeCode = "GC1", ProfitCentre = "PC01" }
-            };
-            var repo = CreateRepository(
-                profitCentres: [BuildEntity("PC01")],
-                profitCentreGrades: grades,
-                workgroups: []);
-
-            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.DeleteProfitCentreAsync("PC01"));
-        }
-
-        [Fact]
-        public async Task DeleteProfitCentreAsync_ThrowsInvalidOperationException_WhenWorkgroupExists()
-        {
-            var workgroups = new List<Workgroup>
-            {
-                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
-            };
-            var repo = CreateRepository(
-                profitCentres: [BuildEntity("PC01")],
-                profitCentreGrades: [],
-                workgroups: workgroups);
-
-            await Assert.ThrowsAsync<InvalidOperationException>(() => repo.DeleteProfitCentreAsync("PC01"));
-        }
-
-        [Fact]
         public async Task DeleteProfitCentreAsync_ReturnsTrue_WhenDeletedSuccessfully()
         {
             var repo = CreateRepository(
@@ -443,6 +409,68 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
 
             var result = await repo.DeleteProfitCentreAsync("PC01");
 
+            Assert.True(result);
+        }
+
+        #endregion
+
+        #region HasLinkedGradesAsync Tests
+
+        [Fact]
+        public async Task HasLinkedGradesAsync_ThrowsArgumentException_WhenIdIsEmpty()
+        {
+            var repo = CreateRepository(profitCentres: []);
+            await Assert.ThrowsAsync<ArgumentException>(() => repo.HasLinkedGradesAsync(""));
+        }
+
+        [Fact]
+        public async Task HasLinkedGradesAsync_ReturnsFalse_WhenNoGradesExist()
+        {
+            var repo = CreateRepository(profitCentres: [BuildEntity("PC01")], profitCentreGrades: []);
+            var result = await repo.HasLinkedGradesAsync("PC01");
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasLinkedGradesAsync_ReturnsTrue_WhenGradesExist()
+        {
+            var grades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "G1", DivisionGrade = "DG1", GradeCode = "GC1", ProfitCentre = "PC01" }
+            };
+            var repo = CreateRepository(profitCentres: [BuildEntity("PC01")], profitCentreGrades: grades);
+            var result = await repo.HasLinkedGradesAsync("PC01");
+            Assert.True(result);
+        }
+
+        #endregion
+
+        #region HasLinkedWorkgroupsAsync Tests
+
+        [Fact]
+        public async Task HasLinkedWorkgroupsAsync_ThrowsArgumentException_WhenIdIsEmpty()
+        {
+            var repo = CreateRepository(profitCentres: []);
+            await Assert.ThrowsAsync<ArgumentException>(() => repo.HasLinkedWorkgroupsAsync(""));
+        }
+
+        [Fact]
+        public async Task HasLinkedWorkgroupsAsync_ReturnsFalse_WhenNoWorkgroupsExist()
+        {
+            var repo = CreateRepository(profitCentres: [BuildEntity("PC01")], workgroups: []);
+            var result = await repo.HasLinkedWorkgroupsAsync("PC01");
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasLinkedWorkgroupsAsync_ReturnsTrue_WhenWorkgroupsExist()
+        {
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
+            };
+            var repo = CreateRepository(profitCentres: [BuildEntity("PC01")], workgroups: workgroups);
+            var result = await repo.HasLinkedWorkgroupsAsync("PC01");
             Assert.True(result);
         }
 

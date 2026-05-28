@@ -35,8 +35,7 @@ namespace Apha.FPS.Application.Services
 
         public async Task<ProfitCentreDto?> GetProfitCentreByIdAsync(string profitCentreId)
         {
-            if (string.IsNullOrWhiteSpace(profitCentreId))
-                throw new ArgumentException("Profit centre ID cannot be null or empty.", nameof(profitCentreId));
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
 
             var profitCentre = await _repository.GetProfitCentreByIdAsync(profitCentreId);
             return profitCentre == null ? null : _mapper.Map<ProfitCentreDto>(profitCentre);
@@ -45,12 +44,8 @@ namespace Apha.FPS.Application.Services
         public async Task<ProfitCentreDto> CreateProfitCentreAsync(ProfitCentreDto profitCentreDto)
         {
             ArgumentNullException.ThrowIfNull(profitCentreDto);
-
-            if (string.IsNullOrWhiteSpace(profitCentreDto.ProfitCentreId))
-                throw new ArgumentException("Profit centre ID is required.", nameof(profitCentreDto));
-
-            if (string.IsNullOrWhiteSpace(profitCentreDto.ProfitCentreName))
-                throw new ArgumentException("Profit centre name is required.", nameof(profitCentreDto));
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreDto.ProfitCentreId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreDto.ProfitCentreName);
 
             if (await _repository.ProfitCentreExistsAsync(profitCentreDto.ProfitCentreId))
                 throw new InvalidOperationException($"Profit centre '{profitCentreDto.ProfitCentreId}' already exists.");
@@ -63,9 +58,7 @@ namespace Apha.FPS.Application.Services
         public async Task<ProfitCentreDto> UpdateProfitCentreAsync(string originalProfitCentreId, ProfitCentreDto profitCentreDto)
         {
             ArgumentNullException.ThrowIfNull(profitCentreDto);
-
-            if (string.IsNullOrWhiteSpace(originalProfitCentreId))
-                throw new ArgumentException("Original profit centre ID is required.", nameof(originalProfitCentreId));
+            ArgumentException.ThrowIfNullOrWhiteSpace(originalProfitCentreId);
 
             var entity = _mapper.Map<ProfitCentre>(profitCentreDto);
             var updated = await _repository.UpdateProfitCentreAsync(originalProfitCentreId, entity);
@@ -74,8 +67,13 @@ namespace Apha.FPS.Application.Services
 
         public async Task<bool> DeleteProfitCentreAsync(string profitCentreId)
         {
-            if (string.IsNullOrWhiteSpace(profitCentreId))
-                throw new ArgumentException("Profit centre ID cannot be null or empty.", nameof(profitCentreId));
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
+
+            if (await _repository.HasLinkedGradesAsync(profitCentreId))
+                throw new InvalidOperationException("Cannot delete profit centre: it is referenced by profit centre grade records.");
+
+            if (await _repository.HasLinkedWorkgroupsAsync(profitCentreId))
+                throw new InvalidOperationException("Cannot delete profit centre: it is referenced by work group records.");
 
             return await _repository.DeleteProfitCentreAsync(profitCentreId);
         }

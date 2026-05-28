@@ -46,8 +46,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<ProfitCentre?> GetProfitCentreByIdAsync(string profitCentreId)
         {
-            if (string.IsNullOrWhiteSpace(profitCentreId))
-                return null;
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
 
             var normalised = profitCentreId.ToLower();
             return await _dbContext.ProfitCentres
@@ -103,9 +102,7 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<ProfitCentre> UpdateProfitCentreAsync(string originalProfitCentreId, ProfitCentre profitCentre)
         {
             ArgumentNullException.ThrowIfNull(profitCentre);
-
-            if (string.IsNullOrWhiteSpace(originalProfitCentreId))
-                throw new ArgumentException("Original profit centre ID is required.", nameof(originalProfitCentreId));
+            ArgumentException.ThrowIfNullOrWhiteSpace(originalProfitCentreId);
 
             var strategy = _dbContext.Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
@@ -158,8 +155,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> DeleteProfitCentreAsync(string profitCentreId)
         {
-            if (string.IsNullOrWhiteSpace(profitCentreId))
-                return false;
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
 
             var strategy = _dbContext.Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
@@ -167,25 +163,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-                    // Replicate DELETE trigger: tD_tblkpProfitCentre
-                    // RESTRICT: cannot delete if ProfitCentreGrade records exist
-                    var profitCentreGradeExists = await _dbContext.ProfitCentreGrades
-                        .IgnoreQueryFilters()
-                        .AsNoTracking()
-                        .AnyAsync(pcg => pcg.ProfitCentre == profitCentreId);
-
-                    if (profitCentreGradeExists)
-                        throw new InvalidOperationException("Cannot delete profit centre: it is referenced by profit centre grade records.");
-
-                    // RESTRICT: cannot delete if Workgroup records exist
-                    var workgroupExists = await _dbContext.Workgroups
-                        .IgnoreQueryFilters()
-                        .AsNoTracking()
-                        .AnyAsync(wg => wg.ProfitCentre == profitCentreId);
-
-                    if (workgroupExists)
-                        throw new InvalidOperationException("Cannot delete profit centre: it is referenced by work group records.");
-
                     var profitCentre = await _dbContext.ProfitCentres
                         .FirstOrDefaultAsync(p => p.ProfitCentreId == profitCentreId);
 
@@ -212,10 +189,29 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
+        public async Task<bool> HasLinkedGradesAsync(string profitCentreId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
+
+            return await _dbContext.ProfitCentreGrades
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .AnyAsync(pcg => pcg.ProfitCentre == profitCentreId);
+        }
+
+        public async Task<bool> HasLinkedWorkgroupsAsync(string profitCentreId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
+
+            return await _dbContext.Workgroups
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .AnyAsync(wg => wg.ProfitCentre == profitCentreId);
+        }
+
         public async Task<bool> ProfitCentreExistsAsync(string profitCentreId)
         {
-            if (string.IsNullOrWhiteSpace(profitCentreId))
-                return false;
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentreId);
 
             var normalised = profitCentreId.ToLower();
             return await _dbContext.ProfitCentres

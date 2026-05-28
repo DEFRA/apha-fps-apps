@@ -12,5 +12,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<ProfitCentre> UpdateProfitCentreAsync(string originalProfitCentreId, ProfitCentre profitCentre);
         Task<bool> DeleteProfitCentreAsync(string profitCentreId);
         Task<bool> ProfitCentreExistsAsync(string profitCentreId);
+        Task<bool> HasLinkedGradesAsync(string profitCentreId);
+        Task<bool> HasLinkedWorkgroupsAsync(string profitCentreId);
     }
 }
