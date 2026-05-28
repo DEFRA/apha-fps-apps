@@ -11,6 +11,7 @@
         DateTime,
         ReadOnly,
         UsdValue, // $0.00
-        GbpValue // £0.00
+        GbpValue, // £0.00
+        GbpValueRounded // £0 (rounded, no decimals)
     }
 }

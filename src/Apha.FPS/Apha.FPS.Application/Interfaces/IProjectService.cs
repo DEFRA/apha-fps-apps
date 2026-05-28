@@ -22,5 +22,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<bool> CheckProjectExistsInFarmFileAsync(string oldProject);
         Task ChangeProjectCodeAsync(string oldCode, string newCode);
         Task DeleteProjectAndChildrenAsync(string parentProject);
+
+        Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
     }
 }

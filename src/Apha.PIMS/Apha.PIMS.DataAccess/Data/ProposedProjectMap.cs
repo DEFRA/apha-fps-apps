@@ -17,7 +17,7 @@ namespace Apha.PIMS.DataAccess.Data
 
             entity.HasIndex(e => e.Parentproject, "uq_tblproposedproject_parentproject").IsUnique();
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd().UseIdentityByDefaultColumn();
             entity.Property(e => e.Costbookno)
                 .HasMaxLength(50)
                 .HasColumnName("costbookno");

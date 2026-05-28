@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectService, ProjectService>();
             services.AddScoped<IAnimalPlanService, AnimalPlanService>();
             services.AddScoped<ISettingService, SettingService>();
-             // CostBook services - Following FPS pattern
+            // CostBook services - Following FPS pattern
             services.AddScoped<ICostBookProjectService, CostBookProjectService>();
             services.AddScoped<ICostBookCustomerService, CostBookCustomerService>();
             services.AddScoped<ICostBookDiseaseService, CostBookDiseaseService>();
@@ -57,6 +57,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectListService, ProjectListService>();
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
             services.AddScoped<IProjectCommentService, ProjectCommentService>();
+            services.AddScoped<IProposedProjectService, ProposedProjectService>();
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
@@ -70,6 +71,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

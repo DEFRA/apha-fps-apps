@@ -4,6 +4,7 @@ using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -21,6 +22,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
         private readonly IMonthlyOutputService _projTestPlanActualService;
         private readonly IProjectService _projectService;
         private readonly ITestRequirementService _testRequirementService;
+        private readonly IAppStateService _appStateService;
         private readonly ProjectTestPlanActualController _controller;
 
         public ProjectTestPlanActualControllerTests()
@@ -29,7 +31,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectTestPlanActualContro
             _projTestPlanActualService = Substitute.For<IMonthlyOutputService>();
             _projectService = Substitute.For<IProjectService>();
             _testRequirementService = Substitute.For<ITestRequirementService>();
-            _controller = new ProjectTestPlanActualController(_mapper, _projTestPlanActualService, _projectService, _testRequirementService);
+            _appStateService = Substitute.For<IAppStateService>();
+            _controller = new ProjectTestPlanActualController(_mapper, _projTestPlanActualService, _projectService, _testRequirementService, _appStateService);
         }
 
         private static T? Deserialize<T>(JsonResult r) => JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(r.Value), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
