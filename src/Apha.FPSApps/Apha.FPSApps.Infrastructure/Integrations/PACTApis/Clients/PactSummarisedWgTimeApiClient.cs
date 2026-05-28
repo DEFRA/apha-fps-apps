@@ -1,5 +1,4 @@
 using Apha.Common.Constants;
-using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -22,13 +21,12 @@ public class PactSummarisedWgTimeApiClient : IPactSummarisedWgTimeApiClient
         _mapper = mapper;
     }
 
-    public async Task<ApiResponseDto<SummarisedWgTimePivotDto>> GetSummarisedWorkgroupTimeSummaryAsync(
+    public async Task<ApiResponseDto<SummarisedWgTimeViewDto>> GetSummarisedWorkgroupTimeSummaryAsync(
         QueryParameters<string> query,
         string? workGroup)
     {
         string baseUrl = PactApiEndpoints.GetPagedSummarisedWorkgroupTime;
 
-        // Add workGroup as query parameter if provided
         if (!string.IsNullOrWhiteSpace(workGroup))
         {
             baseUrl += $"?workGroup={Uri.EscapeDataString(workGroup)}";
@@ -36,13 +34,15 @@ public class PactSummarisedWgTimeApiClient : IPactSummarisedWgTimeApiClient
 
         string url = QueryStringHelper.AddQueryString(baseUrl, query);
 
-        // The PACT API's ApiResponseActionFilter wraps SummarisedWgTimePivotRes as ApiResponse<SummarisedWgTimePivotRes>
         var response = await _http.GetAsync<SummarisedWgTimePivotRes>(url);
 
         if (response.Success)
-            return _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(response);
+        {
+            var dto = _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(response);
+            return dto;
+        }
 
-        var responseDto = _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(response);
-        return ApiResponseDto<SummarisedWgTimePivotDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        var responseDto = _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(response);
+        return ApiResponseDto<SummarisedWgTimeViewDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
     }
 }

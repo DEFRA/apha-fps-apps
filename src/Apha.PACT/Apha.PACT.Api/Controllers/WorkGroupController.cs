@@ -99,9 +99,9 @@ namespace Apha.PACT.Api.Controllers
         [HttpGet("paged/summarisedtime")]
         public async Task<IActionResult> GetPagedSummarisedWorkgroupTime(
             [FromQuery] QueryParameters<string> query,
-            [FromQuery] string? workGroup)
+            [FromQuery] string workGroup)
         {
-            SummarisedWgTimePivotDto result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
+            var result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
             return Ok(_mapper.Map<SummarisedWgTimePivotRes>(result));
         }
     }

@@ -1,21 +1,21 @@
-namespace Apha.Common.Contracts.PACT;
+namespace Apha.FPSApps.Application.Dtos.PACT;
 
-public class SummarisedWgTimePivotRes
+public class SummarisedWgTimeViewDto
 {
     public List<int> Months { get; set; } = [];
-    public List<SummarisedWgTimeRes> Rows { get; set; } = [];
-    public SummarisedWgTimeSummaryRes Summary { get; set; } = new();
-    public Pagination Pagination { get; set; } = new();
-    public List<ProjectTitleLookupRes> ProjectTitleLookup { get; set; } = [];
+    public List<SummarisedWgTimeDto> Rows { get; set; } = [];
+    public SummarisedWgTimeSummaryDto Summary { get; set; } = new();
+    public PaginationDto Pagination { get; set; } = new();
+    public List<SummarisedWgTimeProjectTitleLookupItem> ProjectTitleLookup { get; set; } = [];
 }
 
-public class ProjectTitleLookupRes
+public class SummarisedWgTimeProjectTitleLookupItem
 {
     public string ParentProject { get; set; } = string.Empty;
     public string ProjectTitle { get; set; } = string.Empty;
 }
 
-public class SummarisedWgTimeSummaryRes
+public class SummarisedWgTimeSummaryDto
 {
     public double TotalApril { get; set; }
     public double TotalMay { get; set; }

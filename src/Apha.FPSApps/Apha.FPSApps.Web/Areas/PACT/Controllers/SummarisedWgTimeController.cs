@@ -1,6 +1,6 @@
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
-using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -8,7 +8,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
-using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers;
 
@@ -19,179 +18,94 @@ public class SummarisedWgTimeController : Controller
 {
     private readonly IMapper _mapper;
     private readonly ISummarisedWorkgroupTimeService _service;
-    private readonly IProjectService _projectService;
 
     public SummarisedWgTimeController(
-        IMapper mapper, 
-        ISummarisedWorkgroupTimeService service,
-        IProjectService projectService)
+        IMapper mapper,
+        ISummarisedWorkgroupTimeService service)
     {
         _mapper = mapper;
         _service = service;
-        _projectService = projectService;
     }
 
     public async Task<IActionResult> Index(string? workGroup)
     {
-        var grid = await BuildGridAsync(new PaginationFilter<string>(), workGroup);
-        return View(new SummarisedWgTimeViewModel 
-        { 
-            Grid = grid,
+        var query = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
+        var response = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
+
+        ViewBag.ProjectTitleLookup = response.Data?.ProjectTitleLookup
+            .ToDictionary(x => x.ParentProject, x => x.ProjectTitle)
+            ?? [];
+
+        return View(new SummarisedWgTimeViewModel
+        {
+            Grid = MapToGridConfig(response, sortBy: null, descending: false, workGroup, yrPlanAmount: 0),
+            Summary = MapToSummary(response),
             SelectedWorkgroup = workGroup
         });
     }
 
     [HttpPost]
-    public async Task<IActionResult> LoadGrid(PaginationFilter<string> request, string? workGroup)
+    public async Task<IActionResult> LoadGrid(PaginationFilter<string> request, string? workGroup, decimal yrPlanAmount = 0)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var grid = await BuildGridAsync(request, workGroup);
-        return PartialView("_DataGrid", grid);
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetProjectDescription(string projectId)
-    {
-        var response = await _projectService.GetProjectByIdAsync(projectId);
-
-        if (response.Success && response.Data != null)
-        {
-            return Ok(new 
-            { 
-                success = true, 
-                projectTitle = response.Data.ProjectTitle ?? string.Empty 
-            });
-        }
-
-        return NotFound(new 
-        { 
-            success = false, 
-            message = "Project not found" 
-        });
-    }
-
-    private async Task<DataGridConfig<SummarisedWgTimePivotRow>> BuildGridAsync(
-        PaginationFilter<string> request,
-        string? workGroup)
-    {
-        var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
-                         ?? new Dictionary<string, string>();
-
         var query = _mapper.Map<QueryParameters<string>>(request);
         var response = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
-        var pivot = response.Success && response.Data != null
-            ? response.Data
-            : new SummarisedWgTimePivotDto();
 
-        var rows = pivot.Rows.Select(r =>
+        return PartialView("_DataGrid", MapToGridConfig(response, request.SortBy, request.Descending, workGroup, yrPlanAmount));
+    }
+
+    private DataGridConfig<SummarisedWgTimePivotRow> MapToGridConfig(
+        ApiResponseDto<SummarisedWgTimeViewDto> response,
+        string? sortBy,
+        bool descending,
+        string? workGroup,
+        decimal yrPlanAmount = 0)
+    {
+        var grid = SummarisedWgTimeGridConfig(workGroup);
+
+        if (!response.Success || response.Data is null)
+            return grid;
+
+        grid.Data = _mapper.Map<List<SummarisedWgTimePivotRow>>(response.Data.Rows);
+
+        foreach (var row in grid.Data)
         {
-            var row = new SummarisedWgTimePivotRow
-            {
-                WorkGroup = r.WorkGroup,
-                ProfitCentre = r.ProfitCentre,
-                ParentProject = r.ParentProject,
-                ProjectTitle = r.ProjectTitle,
-                SumOfTime = r.SumOfTime,
-                SumOfCost = r.SumOfCost,
-                Budget = r.Budget,
-                PercentSpent = r.PercentSpent
-            };
-
-            // Map month properties to M1-M12 (financial year: 1=Apr, 2=May, ..., 12=Mar)
-            row.M1 = r.April;
-            row.M2 = r.May;
-            row.M3 = r.June;
-            row.M4 = r.July;
-            row.M5 = r.August;
-            row.M6 = r.September;
-            row.M7 = r.October;
-            row.M8 = r.November;
-            row.M9 = r.December;
-            row.M10 = r.January;
-            row.M11 = r.February;
-            row.M12 = r.March;
-
-            return row;
-        }).ToList();
-
-        var columns = new List<DataGridColumn>
-        {
-            new() { PropertyName = "ParentProject",  DisplayName = "Project",          ColumnType = GridColumnType.Text, IsFilterable = false, Width = 150 },
-            new() { PropertyName = "ProjectTitle",   DisplayName = "ProjectTitle",     ColumnType = GridColumnType.Text, IsFilterable = false, Width = 0, IsVisible = false }
-        };
-
-        // Add fixed month columns (all 12 months of the financial year) - month names only
-        var monthNames = new[] { "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar" };
-        for (int month = 1; month <= 12; month++)
-        {
-            columns.Add(new DataGridColumn
-            {
-                PropertyName = $"M{month}",
-                DisplayName  = monthNames[month - 1],
-                ColumnType   = GridColumnType.DecimalNumber,
-                IsFilterable = false,
-                Width        = 90
-            });
+            row.Budget       = yrPlanAmount > 0 ? yrPlanAmount : row.Budget;
+            row.PercentSpent = row.Budget > 0
+                ? Math.Round((row.SumOfCost / row.Budget.Value) * 100, 2)
+                : 0;
         }
 
-        // Add total columns
-        columns.Add(new DataGridColumn
+        grid.Pagination = new PaginationModel
         {
-            PropertyName = "SumOfTime",
-            DisplayName  = "Time",
-            ColumnType   = GridColumnType.DecimalNumber,
-            IsFilterable = false,
-            Width        = 100
-        });
-
-        columns.Add(new DataGridColumn
-        {
-            PropertyName = "SumOfCost",
-            DisplayName  = "Cost",
-            ColumnType   = GridColumnType.GbpValue,
-            IsFilterable = false,
-            Width        = 110
-        });
-
-        columns.Add(new DataGridColumn
-        {
-            PropertyName = "Budget",
-            DisplayName  = "YrPlan",
-            ColumnType   = GridColumnType.GbpValue,
-            IsFilterable = false,
-            Width        = 110
-        });
-
-        columns.Add(new DataGridColumn
-        {
-            PropertyName = "PercentSpent",
-            DisplayName  = "Spent",
-            ColumnType   = GridColumnType.DecimalNumber,
-            IsFilterable = false,
-            Width        = 90
-        });
-
-        var pagination = pivot.Pagination != null
-            ? _mapper.Map<PaginationModel>(pivot.Pagination)
-            : new PaginationModel();
-        pagination.SortColumn    = request.SortBy;
-        pagination.SortDirection = request.Descending;
-
-        return new DataGridConfig<SummarisedWgTimePivotRow>
-        {
-            GridId         = "summarisedWorkgroupTimeGrid",
-            KeyProperty    = "ParentProject",
-            AllowAdd       = false,
-            AllowEdit      = false,
-            AllowDelete    = false,
-            ShowPagination = true,
-            BindGridUrl    = $"/PACT/SummarisedWgTime/LoadGrid?workGroup={Uri.EscapeDataString(workGroup ?? "")}",
-            Columns        = columns,
-            Data           = rows,
-            CurrentFilters = filterDict,
-            Pagination     = pagination
+            TotalRecords = response.Data.Pagination.TotalRecords,
+            PageNumber   = response.Data.Pagination.PageNumber,
+            PageSize     = response.Data.Pagination.PageSize,
+            SortColumn   = sortBy,
+            SortDirection = descending
         };
+
+        return grid;
     }
+
+    private SummarisedWgTimeSummary MapToSummary(ApiResponseDto<SummarisedWgTimeViewDto> response)
+    {
+        var result= response.Success && response.Data is not null
+            ? _mapper.Map<SummarisedWgTimeSummary>(response.Data.Summary)
+            : new SummarisedWgTimeSummary();
+
+        return result;
+    }
+
+    private static DataGridConfig<SummarisedWgTimePivotRow> SummarisedWgTimeGridConfig(string? workGroup) => new()
+    {
+        GridId            = "summarisedWorkgroupTimeGrid",
+        KeyProperty       = "ParentProject",
+        AllowAdd          = false,
+        AllowEdit         = false,
+        AllowDelete       = false,
+        ShowPagination    = true,
+        ExtraFilterMethod = "getSummarisedWgTimeExtraFilters",
+        BindGridUrl       = $"/PACT/SummarisedWgTime/LoadGrid?workGroup={Uri.EscapeDataString(workGroup ?? "")}",
+        Columns           = GridDataProvider.GetColumnsDefination<SummarisedWgTimePivotRow>()
+    };
 }

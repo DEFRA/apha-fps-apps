@@ -55,20 +55,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeItem>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeItem>().ReverseMap();
 
-            // Summarised Workgroup Time mappings
-            CreateMap<SummarisedWgTimeDto, SummarisedWgTimePivotRow>()
-                .ForMember(dest => dest.M1, opt => opt.MapFrom(src => src.April))
-                .ForMember(dest => dest.M2, opt => opt.MapFrom(src => src.May))
-                .ForMember(dest => dest.M3, opt => opt.MapFrom(src => src.June))
-                .ForMember(dest => dest.M4, opt => opt.MapFrom(src => src.July))
-                .ForMember(dest => dest.M5, opt => opt.MapFrom(src => src.August))
-                .ForMember(dest => dest.M6, opt => opt.MapFrom(src => src.September))
-                .ForMember(dest => dest.M7, opt => opt.MapFrom(src => src.October))
-                .ForMember(dest => dest.M8, opt => opt.MapFrom(src => src.November))
-                .ForMember(dest => dest.M9, opt => opt.MapFrom(src => src.December))
-                .ForMember(dest => dest.M10, opt => opt.MapFrom(src => src.January))
-                .ForMember(dest => dest.M11, opt => opt.MapFrom(src => src.February))
-                .ForMember(dest => dest.M12, opt => opt.MapFrom(src => src.March));
+            CreateMap<SummarisedWgTimeDto, SummarisedWgTimePivotRow>();
+            CreateMap<SummarisedWgTimeSummaryDto, SummarisedWgTimeSummary>();
         }
     }
 }

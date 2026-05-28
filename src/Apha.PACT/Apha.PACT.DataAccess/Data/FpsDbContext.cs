@@ -107,7 +107,8 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new WorkGroupStaffViewMap());
             modelBuilder.Entity<WorkGroupStaffView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            modelBuilder.ApplyConfiguration(new SummarisedWgTimeMap());
+            modelBuilder.ApplyConfiguration(new SummarisedWgTimeViewMap());
+            modelBuilder.Entity<SummarisedWgTimeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

@@ -56,8 +56,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                 Success = true,
                 Data = pivotRes
             };
-            var expectedDto = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
-                new SummarisedWgTimePivotDto
+            var expectedDto = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
+                new SummarisedWgTimeViewDto
                 {
                     Months = [1, 2, 3],
                     Rows = new List<SummarisedWgTimeDto>
@@ -79,7 +79,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                 url.Contains(PactApiEndpoints.GetPagedSummarisedWorkgroupTime) &&
                 url.Contains($"workGroup={Uri.EscapeDataString(workGroup)}")))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -128,8 +128,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                 Success = true,
                 Data = pivotRes
             };
-            var expectedDto = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
-                new SummarisedWgTimePivotDto
+            var expectedDto = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
+                new SummarisedWgTimeViewDto
                 {
                     Months = [1, 2, 3],
                     Rows = new List<SummarisedWgTimeDto>()
@@ -140,7 +140,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Is<string>(url =>
                 url.Contains(PactApiEndpoints.GetPagedSummarisedWorkgroupTime)))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, null);
@@ -170,15 +170,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                     Pagination = new Pagination()
                 }
             };
-            var expectedDto = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
-                new SummarisedWgTimePivotDto(),
+            var expectedDto = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
+                new SummarisedWgTimeViewDto(),
                 new PaginationDto()
             );
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Is<string>(url =>
                 url.Contains(PactApiEndpoints.GetPagedSummarisedWorkgroupTime)))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -201,13 +201,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                 Success = true,
                 Data = new SummarisedWgTimePivotRes()
             };
-            var expectedDto = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
-                new SummarisedWgTimePivotDto(),
+            var expectedDto = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
+                new SummarisedWgTimeViewDto(),
                 new PaginationDto()
             );
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -234,7 +234,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                 Success = false,
                 Errors = errors
             };
-            var mappedResponse = new ApiResponseDto<SummarisedWgTimePivotDto>
+            var mappedResponse = new ApiResponseDto<SummarisedWgTimeViewDto>
             {
                 Success = false,
                 Errors = new List<ApiErrorDto>
@@ -245,7 +245,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
             };
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(mappedResponse);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -284,13 +284,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                     }
                 }
             };
-            var expectedDto = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
-                new SummarisedWgTimePivotDto(),
+            var expectedDto = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
+                new SummarisedWgTimeViewDto(),
                 new PaginationDto()
             );
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -335,13 +335,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                     Pagination = new Pagination()
                 }
             };
-            var expectedDto = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
-                new SummarisedWgTimePivotDto(),
+            var expectedDto = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
+                new SummarisedWgTimeViewDto(),
                 new PaginationDto()
             );
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -375,8 +375,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                     }
                 }
             };
-            var expectedDto = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
-                new SummarisedWgTimePivotDto
+            var expectedDto = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
+                new SummarisedWgTimeViewDto
                 {
                     Months = [],
                     Rows = []
@@ -391,7 +391,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
             );
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -434,8 +434,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                 Success = true,
                 Data = pivotRes
             };
-            var expectedDto = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
-                new SummarisedWgTimePivotDto
+            var expectedDto = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
+                new SummarisedWgTimeViewDto
                 {
                     Months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                     Rows = []
@@ -444,7 +444,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
             );
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -472,13 +472,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                     Pagination = new Pagination()
                 }
             };
-            var expectedDto = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
-                new SummarisedWgTimePivotDto(),
+            var expectedDto = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
+                new SummarisedWgTimeViewDto(),
                 new PaginationDto()
             );
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -501,13 +501,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                 Success = true,
                 Data = new SummarisedWgTimePivotRes()
             };
-            var expectedDto = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
-                new SummarisedWgTimePivotDto(),
+            var expectedDto = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
+                new SummarisedWgTimeViewDto(),
                 new PaginationDto()
             );
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(expectedDto);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -532,7 +532,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                 Success = false,
                 Errors = errors
             };
-            var mappedResponse = new ApiResponseDto<SummarisedWgTimePivotDto>
+            var mappedResponse = new ApiResponseDto<SummarisedWgTimeViewDto>
             {
                 Success = false,
                 Errors = new List<ApiErrorDto>
@@ -543,7 +543,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
             };
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(mappedResponse);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -571,7 +571,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
                 Success = false,
                 Errors = errors
             };
-            var mappedResponse = new ApiResponseDto<SummarisedWgTimePivotDto>
+            var mappedResponse = new ApiResponseDto<SummarisedWgTimeViewDto>
             {
                 Success = false,
                 Errors = new List<ApiErrorDto>
@@ -583,7 +583,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
             };
 
             _http.GetAsync<SummarisedWgTimePivotRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<SummarisedWgTimePivotDto>>(apiResponse).Returns(mappedResponse);
+            _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);

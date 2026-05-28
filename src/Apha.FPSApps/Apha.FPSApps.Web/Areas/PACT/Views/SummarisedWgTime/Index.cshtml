@@ -24,7 +24,7 @@
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10 sup_margin_bottom_10">
     <div class="govuk-grid-column-full">
         <div class="sup_flex_end_center">
-            <button type="button" class="govuk-button sup_margin_right_10" 
+            <button type="button" class="govuk-button sup_margin_right_10"
                     data-module="govuk-button" onclick="resetCalculationGrid()">
                 Reset Calculation
             </button>
@@ -48,22 +48,20 @@
                 <tbody>
                     <tr class="totals-row">
                         <td class="totals-cell totals-label">Totals:</td>
-                        <td class="totals-cell" id="total_april"></td>
-                        <td class="totals-cell" id="total_may"></td>
-                        <td class="totals-cell" id="total_june"></td>
-                        <td class="totals-cell" id="total_july"></td>
-                        <td class="totals-cell" id="total_august"></td>
-                        <td class="totals-cell" id="total_september"></td>
-                        <td class="totals-cell" id="total_october"></td>
-                        <td class="totals-cell" id="total_november"></td>
-                        <td class="totals-cell" id="total_december"></td>
-                        <td class="totals-cell" id="total_january"></td>
-                        <td class="totals-cell" id="total_february"></td>
-                        <td class="totals-cell" id="total_march"></td>
-                        <td class="totals-cell" id="total_time"></td>
-                        <td class="totals-cell" id="total_cost"></td>
-                        <td class="totals-cell" id="total_yrPlan"></td>
-                        <td class="totals-cell" id="total_spent"></td>
+                        <td class="totals-cell">@Model.Summary.TotalApril</td>
+                        <td class="totals-cell">@Model.Summary.TotalMay</td>
+                        <td class="totals-cell">@Model.Summary.TotalJune</td>
+                        <td class="totals-cell">@Model.Summary.TotalJuly</td>
+                        <td class="totals-cell">@Model.Summary.TotalAugust</td>
+                        <td class="totals-cell">@Model.Summary.TotalSeptember</td>
+                        <td class="totals-cell">@Model.Summary.TotalOctober</td>
+                        <td class="totals-cell">@Model.Summary.TotalNovember</td>
+                        <td class="totals-cell">@Model.Summary.TotalDecember</td>
+                        <td class="totals-cell">@Model.Summary.TotalJanuary</td>
+                        <td class="totals-cell">@Model.Summary.TotalFebruary</td>
+                        <td class="totals-cell">@Model.Summary.TotalMarch</td>
+                        <td class="totals-cell">@Model.Summary.GrandTotalTime</td>
+                        <td class="totals-cell">@Model.Summary.GrandTotalCost</td>
                     </tr>
                 </tbody>
             </table>
@@ -119,10 +117,9 @@
         align-items: center;
     }
 
-    .govuk-edit-modal.open,
-    .govuk-edit-modal[style*="display: flex"] {
-        display: flex !important;
-    }
+        .govuk-edit-modal.open {
+            display: flex !important;
+        }
 
     .govuk-edit-modal-dialog {
         background: #ffffff;
@@ -178,11 +175,11 @@
         justify-content: center;
     }
 
-    .govuk-edit-modal__close:hover {
-        opacity: 0.7;
-    }
+        .govuk-edit-modal__close:hover {
+            opacity: 0.7;
+        }
 </style>
- 
+
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
     <div class="govuk-grid-column-one-quarter">
         <label for="txtSelectedProject" class="govuk-label govuk-!-font-weight-bold sup_visually_hidden">Selected Project:</label>
@@ -206,11 +203,13 @@
                 Calculate Year Plan
             </h3>
             <button type="button" class="govuk-edit-modal__close" onclick="closeTimeRecordModal()"
-                    aria-label="Close">&#x2715;</button>
+                    aria-label="Close">
+                &#x2715;
+            </button>
         </div>
 
         <div class="govuk-edit-modal__body sup_padding_top_0 sup_overflow_visible">
-            <form id="formTimeRecord" novalidate>
+            <form id="formTimeRecord" novalidate onsubmit="return false;">
                 <!-- DB-level error banner (hidden by default) -->
                 <div id="formTimeRecord-db-error" class="govuk-error-summary" role="alert"
                      aria-labelledby="formTimeRecord-db-error-title" hidden>
@@ -256,16 +255,26 @@
 
         <div class="govuk-edit-modal__footer">
             <button type="button" class="govuk-button govuk-button--secondary sup_margin_bottom_20"
-                    data-module="govuk-button" onclick="closeTimeRecordModal()">Cancel</button>
+                    data-module="govuk-button" onclick="closeTimeRecordModal()">
+                Cancel
+            </button>
             <div>
                 <button type="button" class="govuk-button sup_margin_bottom_20" data-module="govuk-button"
-                        id="timeRecordSaveBtn" onclick="calculateSpent()">Calculate</button>
+                        id="timeRecordSaveBtn" onclick="calculateSpent()">
+                    Calculate
+                </button>
             </div>
         </div>
 
     </div>
 </div>
 
+<script>
+    var projectTitleLookup = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ProjectTitleLookup ?? new Dictionary<string, string>()))
+</script>
+
+<input type="hidden" id="hdnYrPlanAmount" value="0" />
+
 @section Scripts {
-    <script src="~/js/pact_js/summarisedWgTime.js"></script>
+    <script src="~/js/pact_js/summarisedWgTime.js" asp-append-version="true"></script>
 }

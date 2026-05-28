@@ -15,11 +15,10 @@ public class SummarisedWgTimeService : ISummarisedWorkgroupTimeService
         _pactClient = pactClient;
     }
 
-    public async Task<ApiResponseDto<SummarisedWgTimePivotDto>> GetSummarisedWorkgroupTimeSummaryAsync(
+    public async Task<ApiResponseDto<SummarisedWgTimeViewDto>> GetSummarisedWorkgroupTimeSummaryAsync(
         QueryParameters<string> query,
         string? workGroup)
     {
-        // The API client now returns the pivot structure directly from the PACT API
         return await _pactClient.PactSummarisedWgTime.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
     }
 }

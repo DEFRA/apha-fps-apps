@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Pagination;
 namespace Apha.FPSApps.Application.Interfaces.PACT;
 public interface ISummarisedWorkgroupTimeService
 {
-    Task<ApiResponseDto<SummarisedWgTimePivotDto>> GetSummarisedWorkgroupTimeSummaryAsync(
+    Task<ApiResponseDto<SummarisedWgTimeViewDto>> GetSummarisedWorkgroupTimeSummaryAsync(
         QueryParameters<string> query,
         string? workGroup);
 }

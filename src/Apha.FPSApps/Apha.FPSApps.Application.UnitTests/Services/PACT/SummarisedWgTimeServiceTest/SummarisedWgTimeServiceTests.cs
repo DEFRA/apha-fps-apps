@@ -30,7 +30,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var workGroup = "WG001";
-            var pivotDto = new SummarisedWgTimePivotDto
+            var pivotDto = new SummarisedWgTimeViewDto
             {
                 Months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 Rows =
@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
                 ],
                 Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
             };
-            var expectedResponse = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(
+            var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(
                 pivotDto,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
             );
@@ -91,7 +91,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var pivotDto = new SummarisedWgTimePivotDto
+            var pivotDto = new SummarisedWgTimeViewDto
             {
                 Months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 Rows =
@@ -115,7 +115,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
                 ],
                 Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
             };
-            var expectedResponse = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(pivotDto);
+            var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(pivotDto);
             _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, null)
                 .Returns(expectedResponse);
 
@@ -139,13 +139,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var workGroup = "NONEXISTENT";
-            var pivotDto = new SummarisedWgTimePivotDto
+            var pivotDto = new SummarisedWgTimeViewDto
             {
                 Months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 Rows = [],
                 Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }
             };
-            var expectedResponse = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(pivotDto);
+            var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(pivotDto);
             _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup)
                 .Returns(expectedResponse);
 
@@ -167,7 +167,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
             // Arrange
             var query = new QueryParameters<string> { Page = 2, PageSize = 5 };
             var workGroup = "WG001";
-            var pivotDto = new SummarisedWgTimePivotDto
+            var pivotDto = new SummarisedWgTimeViewDto
             {
                 Months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 Rows =
@@ -183,7 +183,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
                 ],
                 Pagination = new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 15 }
             };
-            var expectedResponse = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(pivotDto);
+            var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(pivotDto);
             _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup)
                 .Returns(expectedResponse);
 
@@ -206,7 +206,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var workGroup = "WG001";
-            var pivotDto = new SummarisedWgTimePivotDto
+            var pivotDto = new SummarisedWgTimeViewDto
             {
                 Months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 Rows =
@@ -236,7 +236,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
                 ],
                 Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
             };
-            var expectedResponse = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(pivotDto);
+            var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(pivotDto);
             _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup)
                 .Returns(expectedResponse);
 
@@ -266,7 +266,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
             {
                 new ApiErrorDto { Message = "Database connection failed", Code = "DB_ERROR" }
             };
-            var expectedResponse = ApiResponseDto<SummarisedWgTimePivotDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.FailureResponse(errors, new ApiMetaDto());
             _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup)
                 .Returns(expectedResponse);
 
@@ -292,7 +292,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
                 new ApiErrorDto { Message = "Invalid workgroup", Code = "INVALID_WG" },
                 new ApiErrorDto { Message = "Unauthorized access", Code = "UNAUTHORIZED" }
             };
-            var expectedResponse = ApiResponseDto<SummarisedWgTimePivotDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.FailureResponse(errors, new ApiMetaDto());
             _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, null)
                 .Returns(expectedResponse);
 
@@ -318,13 +318,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
                 Descending = true
             };
             var workGroup = "WG001";
-            var pivotDto = new SummarisedWgTimePivotDto
+            var pivotDto = new SummarisedWgTimeViewDto
             {
                 Months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 Rows = [],
                 Pagination = new PaginationDto { PageNumber = 1, PageSize = 20, TotalRecords = 0 }
             };
-            var expectedResponse = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(pivotDto);
+            var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(pivotDto);
             _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup)
                 .Returns(expectedResponse);
 
@@ -349,7 +349,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var pivotDto = new SummarisedWgTimePivotDto
+            var pivotDto = new SummarisedWgTimeViewDto
             {
                 Months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 Rows =
@@ -368,7 +368,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
                 ],
                 Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
             };
-            var expectedResponse = ApiResponseDto<SummarisedWgTimePivotDto>.SuccessResponse(pivotDto);
+            var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(pivotDto);
             _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, null)
                 .Returns(expectedResponse);
 

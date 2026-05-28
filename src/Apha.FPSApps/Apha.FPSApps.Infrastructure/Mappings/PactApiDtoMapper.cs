@@ -43,7 +43,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeRes>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeRes>().ReverseMap();
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimeRes>().ReverseMap();
-            CreateMap<SummarisedWgTimePivotDto, SummarisedWgTimePivotRes>().ReverseMap();
+            CreateMap<SummarisedWgTimeSummaryDto, SummarisedWgTimeSummaryRes>().ReverseMap();
+            CreateMap<SummarisedWgTimeViewDto, SummarisedWgTimePivotRes>().ReverseMap();
+            CreateMap<ProjectTitleLookupRes, SummarisedWgTimeProjectTitleLookupItem>().ReverseMap();
+            CreateMap<ApiResponse<SummarisedWgTimePivotRes>, ApiResponseDto<SummarisedWgTimeViewDto>>();
         }
     }
 }

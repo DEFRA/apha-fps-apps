@@ -6,7 +6,7 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients;
 
 public interface IPactSummarisedWgTimeApiClient
 {
-    Task<ApiResponseDto<SummarisedWgTimePivotDto>> GetSummarisedWorkgroupTimeSummaryAsync(
+    Task<ApiResponseDto<SummarisedWgTimeViewDto>> GetSummarisedWorkgroupTimeSummaryAsync(
         QueryParameters<string> query,
         string? workGroup);
 }

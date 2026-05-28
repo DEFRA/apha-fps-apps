@@ -27,18 +27,10 @@ namespace Apha.PACT.DataAccess.Repository
         public async Task<IEnumerable<SummarisedWgTimeView>> GetSummarisedWorkgroupTimeAsync(
             string? workGroup)
         {
-
-            // Query the SummarisedWgTimeView DbSet directly (assumes the view is already created in the database)
-            var query = _context.SummarisedWgTimeViews
-                .AsNoTracking();
-
-            if (!string.IsNullOrEmpty(workGroup))
-            {
-                query = query.Where(v => v.WorkGroup == workGroup);
-            }
-
-            var result = await query.ToListAsync();
-            return result;
+            return await _context.SummarisedWgTimeViews
+                .AsNoTracking()
+                .Where(e => e.WorkGroup == workGroup)
+                .ToListAsync();
         }
 
         public async Task<PagedData<WorkGroupTimeCode>> GetWorkGroupTimeCodeAsync(

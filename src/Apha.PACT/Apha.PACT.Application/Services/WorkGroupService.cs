@@ -42,162 +42,104 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<PaginatedResult<WorkGroupValidTimeCodeDto>>(pagedData);
         }
 
-        public async Task<SummarisedWgTimePivotDto> GetSummarisedWorkgroupTimeSummaryAsync(
+        public async Task<SummarisedWgTimeViewDto> GetSummarisedWorkgroupTimeSummaryAsync(
             QueryParameters<string> query,
-            string? workGroup)
+            string workGroup)
         {
-            // Get all data from repository (normalized format: one row per project per month)
-            var data = await _repository.GetSummarisedWorkgroupTimeAsync(workGroup);
+            ValidateWorkGroup(workGroup);
 
-            // Group by project and pivot the months
-            var pivotedData = data
-                .GroupBy(x => new
-                {
-                    x.WorkGroup,
-                    x.ParentProject
-                })
-                .Select(group =>
-                {
-                    var dto = new SummarisedWgTimeDto
-                    {
-                        WorkGroup = group.Key.WorkGroup,
-                        ParentProject = group.Key.ParentProject,
-                        ProjectTitle = group.FirstOrDefault()?.Name // Assuming ProjectTitle is in Name field
-                    };
+            var rawEntries = await _repository.GetSummarisedWorkgroupTimeAsync(workGroup);
+            var entries = _mapper.Map<IEnumerable<SummarisedWgTimeEntryDto>>(rawEntries).ToList();
 
-                    // Pivot months - sum time for each month
-                    foreach (var item in group)
-                    {
-                        switch (item.MonthName?.ToLower())
-                        {
-                            case "april":
-                                dto.April = (dto.April ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "may":
-                                dto.May = (dto.May ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "june":
-                                dto.June = (dto.June ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "july":
-                                dto.July = (dto.July ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "august":
-                                dto.August = (dto.August ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "september":
-                                dto.September = (dto.September ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "october":
-                                dto.October = (dto.October ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "november":
-                                dto.November = (dto.November ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "december":
-                                dto.December = (dto.December ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "january":
-                                dto.January = (dto.January ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "february":
-                                dto.February = (dto.February ?? 0) + (decimal)item.TotalTime;
-                                break;
-                            case "march":
-                                dto.March = (dto.March ?? 0) + (decimal)item.TotalTime;
-                                break;
-                        }
-                    }
+            var allRows = BuildSummarisedRows(entries);
+            var summary = BuildSummarisedSummary(allRows);
 
-                    // Calculate totals
-                    dto.SumOfTime = (decimal)group.Sum(x => x.TotalTime);
-                    dto.SumOfCost = (decimal)group.Sum(x => x.TotalCost);
-
-                    return dto;
-                })
+            var page = Math.Max(1, query.Page);
+            var pageSize = Math.Max(1, query.PageSize);
+            var totalRecords = allRows.Count;
+            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var pagedRows = allRows
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToList();
 
-            var dtoList = pivotedData;
-
-            // Apply filtering (search across multiple fields)
-            if (!string.IsNullOrEmpty(query.Search))
+            return new SummarisedWgTimeViewDto
             {
-                dtoList = dtoList.Where(x =>
-                    (x.WorkGroup?.Contains(query.Search, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (x.ParentProject?.Contains(query.Search, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (x.ProjectTitle?.Contains(query.Search, StringComparison.OrdinalIgnoreCase) ?? false)
-                ).ToList();
-            }
-
-            // Get total count before pagination
-            int totalCount = dtoList.Count;
-
-            // Apply sorting
-            if (!string.IsNullOrEmpty(query.SortBy))
-            {
-                dtoList = query.SortBy.ToLower() switch
-                {
-                    "workgroup" => query.Descending
-                        ? dtoList.OrderByDescending(x => x.WorkGroup).ToList()
-                        : dtoList.OrderBy(x => x.WorkGroup).ToList(),
-                    "parentproject" => query.Descending
-                        ? dtoList.OrderByDescending(x => x.ParentProject).ToList()
-                        : dtoList.OrderBy(x => x.ParentProject).ToList(),
-                    "projecttitle" => query.Descending
-                        ? dtoList.OrderByDescending(x => x.ProjectTitle).ToList()
-                        : dtoList.OrderBy(x => x.ProjectTitle).ToList(),
-                    "sumoftime" => query.Descending
-                        ? dtoList.OrderByDescending(x => x.SumOfTime).ToList()
-                        : dtoList.OrderBy(x => x.SumOfTime).ToList(),
-                    "sumofcost" => query.Descending
-                        ? dtoList.OrderByDescending(x => x.SumOfCost).ToList()
-                        : dtoList.OrderBy(x => x.SumOfCost).ToList(),
-                    "percentspent" => query.Descending
-                        ? dtoList.OrderByDescending(x => x.PercentSpent).ToList()
-                        : dtoList.OrderBy(x => x.PercentSpent).ToList(),
-                    _ => dtoList.OrderBy(x => x.WorkGroup).ToList()
-                };
-            }
-
-            // Apply pagination
-            var pagedData = dtoList
-                .Skip((query.Page - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .ToList();
-
-            // Calculate total pages
-            int totalPages = (int)Math.Ceiling(totalCount / (double)query.PageSize);
-
-            // Extract unique months present in the data (financial year periods 1-12)
-            var months = new HashSet<int>();
-            foreach (var row in pagedData)
-            {
-                if (row.April.HasValue) months.Add(1);
-                if (row.May.HasValue) months.Add(2);
-                if (row.June.HasValue) months.Add(3);
-                if (row.July.HasValue) months.Add(4);
-                if (row.August.HasValue) months.Add(5);
-                if (row.September.HasValue) months.Add(6);
-                if (row.October.HasValue) months.Add(7);
-                if (row.November.HasValue) months.Add(8);
-                if (row.December.HasValue) months.Add(9);
-                if (row.January.HasValue) months.Add(10);
-                if (row.February.HasValue) months.Add(11);
-                if (row.March.HasValue) months.Add(12);
-            }
-
-            return new SummarisedWgTimePivotDto
-            {
-                Months = months.OrderBy(m => m).ToList(),
-                Rows = pagedData,
+                Rows = pagedRows,
+                Summary = summary,
                 Pagination = new PaginationDto
                 {
-                    PageNumber = query.Page,
-                    PageSize = query.PageSize,
-                    TotalPages = totalPages,
-                    TotalRecords = totalCount
-                }
+                    PageNumber = page,
+                    PageSize = pageSize,
+                    TotalRecords = totalRecords,
+                    TotalPages = totalPages
+                },
+                ProjectTitleLookup = entries
+                    .Where(r => !string.IsNullOrWhiteSpace(r.ParentProject))
+                    .DistinctBy(r => r.ParentProject)
+                    .Select(r => new ProjectTitleLookupItem
+                    {
+                        ParentProject = r.ParentProject!,
+                        ProjectTitle = string.IsNullOrWhiteSpace(r.ProjectTitle) ? "No description available" : r.ProjectTitle
+                    })
+                    .ToList()
             };
+        }
+
+        private static SummarisedWgTimeSummaryDto BuildSummarisedSummary(
+            IReadOnlyList<SummarisedWgTimeRowDto> rows)
+        {
+            return new SummarisedWgTimeSummaryDto
+            {
+                TotalApril = rows.Sum(r => r.April),
+                TotalMay = rows.Sum(r => r.May),
+                TotalJune = rows.Sum(r => r.June),
+                TotalJuly = rows.Sum(r => r.July),
+                TotalAugust = rows.Sum(r => r.August),
+                TotalSeptember = rows.Sum(r => r.September),
+                TotalOctober = rows.Sum(r => r.October),
+                TotalNovember = rows.Sum(r => r.November),
+                TotalDecember = rows.Sum(r => r.December),
+                TotalJanuary = rows.Sum(r => r.January),
+                TotalFebruary = rows.Sum(r => r.February),
+                TotalMarch = rows.Sum(r => r.March),
+                GrandTotalTime = rows.Sum(r => r.TotalTime),
+                GrandTotalCost = rows.Sum(r => r.TotalCost)
+            };
+        }
+
+        private static List<SummarisedWgTimeRowDto> BuildSummarisedRows(
+            IEnumerable<SummarisedWgTimeEntryDto> entries)
+        {
+            return entries
+                .GroupBy(e => e.ParentProject)
+                .Select(g =>
+                {
+                    double HoursForMonth(string monthName) =>
+                        g.Where(e => e.MonthName!.Equals(monthName, StringComparison.CurrentCultureIgnoreCase))
+                         .Sum(e => e.TotalTime.GetValueOrDefault());
+
+                    return new SummarisedWgTimeRowDto
+                    {
+                        ParentProject = g.Key,
+                        April = HoursForMonth("April"),
+                        May = HoursForMonth("May"),
+                        June = HoursForMonth("June"),
+                        July = HoursForMonth("July"),
+                        August = HoursForMonth("August"),
+                        September = HoursForMonth("September"),
+                        October = HoursForMonth("October"),
+                        November = HoursForMonth("November"),
+                        December = HoursForMonth("December"),
+                        January = HoursForMonth("January"),
+                        February = HoursForMonth("February"),
+                        March = HoursForMonth("March"),
+                        TotalTime = g.Sum(e => e.TotalTime.GetValueOrDefault()),
+                        TotalCost = g.Sum(e => e.TotalCost.GetValueOrDefault())
+                    };
+                })
+                .OrderBy(r => r.ParentProject)
+                .ToList();
         }
 
         private static void ValidateWorkGroup(string workGroup)

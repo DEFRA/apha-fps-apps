@@ -44,7 +44,12 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<WorkGroupTimeCodeRes, WorkGroupTimeCodeDto>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeRes, WorkGroupValidTimeCodeDto>().ReverseMap();
             CreateMap<SummarisedWgTimeRes, SummarisedWgTimeDto>().ReverseMap();
-            CreateMap<SummarisedWgTimePivotRes, SummarisedWgTimePivotDto>().ReverseMap();
+            CreateMap<SummarisedWgTimeSummaryRes, SummarisedWgTimeSummaryDto>().ReverseMap();
+            CreateMap<SummarisedWgTimePivotRes, SummarisedWgTimeViewDto>().ReverseMap();
+            CreateMap<ProjectTitleLookupRes, ProjectTitleLookupItem>().ReverseMap();
+            CreateMap<SummarisedWgTimeRowDto, SummarisedWgTimeRes>(MemberList.Source)
+                .ForMember(dest => dest.SumOfTime, opt => opt.MapFrom(src => src.TotalTime))
+                .ForMember(dest => dest.SumOfCost, opt => opt.MapFrom(src => src.TotalCost));
         }
     }
 }

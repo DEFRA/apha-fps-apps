@@ -1,3 +1,5 @@
+using Apha.PACT.Application.Pagination;
+
 namespace Apha.PACT.Application.Dtos;
 
 public class SummarisedWgTimeDto
@@ -26,4 +28,10 @@ public class SummarisedWgTimeDto
     public decimal SumOfCost { get; set; }
     public decimal? Budget { get; set; }
     public decimal? PercentSpent { get; set; }
+
+    public IEnumerable<SummarisedWgTimeRowDto> Rows { get; set; } = [];
+    public SummarisedWgTimeSummaryDto Summary { get; set; } = new();
+    public PaginationDto Pagination { get; set; } = new();
+
+    public List<ProjectTitleLookupItem> ProjectTitleLookup { get; set; } = [];
 }

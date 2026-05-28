@@ -34,6 +34,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<WorkGroupTimeCode, WorkGroupTimeCodeDto>().ReverseMap();
             CreateMap<WorkGroupValidTimeCode, WorkGroupValidTimeCodeDto>().ReverseMap();
             CreateMap<SummarisedWgTimeView, SummarisedWgTimeDto>().ReverseMap();
+            CreateMap<SummarisedWgTimeView, SummarisedWgTimeEntryDto>();
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimeRes>().ReverseMap();
         }
     }
