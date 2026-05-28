@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
     [Area("FPS")]
-    [Authorize(Roles = "FPSAdmin,FPSUser")]
+    [Authorize(Roles = "FPSAdmin")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class AnimalMasterController : Controller
     {

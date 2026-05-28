@@ -13,7 +13,7 @@ namespace Apha.FPS.Api.Controllers
     /// <summary>
     /// Controller for managing Animal Master (tblAnimals_MAP) CRUD operations.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSAdmin")]
     [Route("api/v{version:apiVersion}/animalmaster")]
     [ApiController]
     [ApiVersion("1.0")]
