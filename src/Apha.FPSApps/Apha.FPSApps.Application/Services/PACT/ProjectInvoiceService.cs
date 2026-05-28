@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<MonthlyInvoicesPivotDto>> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query)
             => await _pactClient.PactProjectInvoice.GetMonthlyInvoicesSummaryAsync(query);
 
-        public async Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(CopyInvoicesDto request)
+        public async Task<ApiResponseDto<bool>> CopyInvoicesAsync(CopyInvoicesDto request)
             => await _pactClient.PactProjectInvoice.CopyInvoicesAsync(request);
     }
 }

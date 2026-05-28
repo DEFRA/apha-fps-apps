@@ -170,79 +170,62 @@ namespace Apha.PACT.Application.Services
             };
         }
 
-        public async Task<CopyInvoicesResultDto> CopyInvoicesAsync(CopyInvoicesDto copyDto)
+        public async Task<bool> CopyInvoicesAsync(CopyInvoicesDto copyDto)
         {
-            var result = new CopyInvoicesResultDto();
+            var errors = new List<BusinessValidationError>();
 
             // Validation
             if (copyDto.SourceMonth < 1 || copyDto.SourceMonth > 12)
             {
-                result.Errors.Add("Source month must be between 1 and 12");
-                return result;
+                errors.Add(new BusinessValidationError("Source month must be between 1 and 12", "Source_Month"));
             }
 
             if (copyDto.TargetMonth < 1 || copyDto.TargetMonth > 12)
             {
-                result.Errors.Add("Target month must be between 1 and 12");
-                return result;
+                errors.Add(new BusinessValidationError("Target month must be between 1 and 12", "Target_Month"));
             }
 
-            List<ProjectInvoice> invoicesToCopy;
-
-            // Determine copy strategy: direct invoice records, by IDs, or bulk copy
-            if (copyDto.InvoiceRecords != null && copyDto.InvoiceRecords.Count > 0)
+            if (copyDto.SourceMonth == copyDto.TargetMonth)
             {
-                // Selective copy using provided invoice records
-                invoicesToCopy = copyDto.InvoiceRecords
-                    .Select(dto => _mapper.Map<ProjectInvoice>(dto))
+                errors.Add(new BusinessValidationError("Source and target months must be different", "Same_Month"));
+            }
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            // Extract invoice IDs if selective copy
+            List<int>? specificInvoiceIds = null;
+            if (copyDto.InvoiceIds != null && copyDto.InvoiceIds.Count > 0)
+            {
+                // Extract IDs from the invoice records
+                specificInvoiceIds = copyDto.InvoiceIds
+                    .Select(id => id)
                     .ToList();
-            }
-            else if (copyDto.InvoiceIds != null && copyDto.InvoiceIds.Count > 0)
-            {
-                // Selective copy using provided invoice IDs
-                invoicesToCopy = await _repository.GetInvoicesByIdsAsync(copyDto.InvoiceIds);
 
-                if (invoicesToCopy == null || invoicesToCopy.Count == 0)
+                if (specificInvoiceIds.Count == 0)
                 {
-                    result.Errors.Add("No invoices found with the provided IDs");
-                    return result;
-                }
-            }
-            else
-            {
-                // Bulk copy: all invoices from source month
-                invoicesToCopy = await _repository.GetInvoicesByMonthAsync(copyDto.SourceMonth);
-
-                if (invoicesToCopy == null || invoicesToCopy.Count == 0)
-                {
-                    result.Errors.Add($"No invoices found for source month {copyDto.SourceMonth}");
-                    return result;
+                    throw new BusinessValidationErrorException(new List<BusinessValidationError>
+                    {
+                        new BusinessValidationError("Invalid invoice records provided", "Invalid_Records")
+                    });
                 }
             }
 
-            // Copy invoices to target month using bulk insert
-            var newInvoices = invoicesToCopy.Select(sourceInvoice => new ProjectInvoice
+            // Call repository to copy invoices
+            int inserted = await _repository.CopyInvoicesByMonthAsync(
+                copyDto.SourceMonth, 
+                copyDto.TargetMonth, 
+                specificInvoiceIds);
+
+            if (inserted == 0)
             {
-                ProjectParent = sourceInvoice.ProjectParent,
-                Month = copyDto.TargetMonth,
-                Amount = sourceInvoice.Amount,
-                CostOfWork = sourceInvoice.CostOfWork,
-                Wip = sourceInvoice.Wip,
-                ProfitLoss = sourceInvoice.ProfitLoss,
-                Detail = sourceInvoice.Detail,
-                FpsYear = sourceInvoice.FpsYear
-            }).ToList();
+                throw new BusinessValidationErrorException(new List<BusinessValidationError>
+                {
+                    new BusinessValidationError($"No Invoice copyied", "Source_Month")
+                });
+            }
 
-            int inserted = await _repository.CreateBulkAsync(newInvoices);
-            result.CopiedCount = newInvoices.Count;
-
-
-            result.Success = result.FailedCount == 0;
-            result.Message = result.Success
-                ? $"Successfully copied {result.CopiedCount} invoice(s) from month {copyDto.SourceMonth} to month {copyDto.TargetMonth}"
-                : $"Copied {result.CopiedCount} invoice(s) with {result.FailedCount} failure(s)";
-
-            return result;
+            return true;
         }
     }
 }

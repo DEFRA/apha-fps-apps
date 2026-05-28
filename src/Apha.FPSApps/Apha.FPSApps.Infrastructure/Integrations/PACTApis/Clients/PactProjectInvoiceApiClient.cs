@@ -156,32 +156,28 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<MonthlyInvoicesPivotDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<CopyInvoicesResultDto>> CopyInvoicesAsync(CopyInvoicesDto copyDto)
+        public async Task<ApiResponseDto<bool>> CopyInvoicesAsync(CopyInvoicesDto copyDto)
         {
-            // Map DTOs to request objects if provided
-            List<ProjectInvoiceReq>? invoiceRequests = null;
-            if (copyDto.InvoiceRecords != null && copyDto.InvoiceRecords.Count > 0)
-            {
-                invoiceRequests = copyDto.InvoiceRecords.Select(dto => _mapper.Map<ProjectInvoiceReq>(dto)).ToList();
-            }
-
             var request = new CopyInvoicesReq
             {
-                InvoiceRecords = invoiceRequests,
-                SourceMonth= copyDto.SourceMonth,
-                TargetMonth=copyDto.TargetMonth
+                InvoiceIds = copyDto.InvoiceIds,
+                SourceMonth = copyDto.SourceMonth,
+                TargetMonth = copyDto.TargetMonth
             };
 
-            // Convert int months to strings for API endpoint
             string url = $"{PactApiEndpoints.CopyProjectInvoices}";
 
             var response = await _http.PostAsync<CopyInvoicesReq, CopyInvoicesRes>(url, request);
 
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(response);
+            {
+                // Extract success status from the CopyInvoicesRes and return as bool
+                bool success = response.Data?.Success ?? false;
+                return ApiResponseDto<bool>.SuccessResponse(success);
+            }
 
-            var responseDto = _mapper.Map<ApiResponseDto<CopyInvoicesResultDto>>(response);
-            return ApiResponseDto<CopyInvoicesResultDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }

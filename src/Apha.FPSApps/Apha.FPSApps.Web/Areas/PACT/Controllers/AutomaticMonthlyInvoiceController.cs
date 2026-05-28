@@ -206,64 +206,41 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> CopyInvoices([FromBody] CopyInvoicesRequest request)
         {
+            // If InvoiceIds is null but InvoiceRecords has data, extract IDs from records
+            if ((request.InvoiceIds == null || request.InvoiceIds.Count == 0) && 
+                request.InvoiceRecords != null && request.InvoiceRecords.Count > 0)
+            {
+                request.InvoiceIds = request.InvoiceRecords
+                    .Select(r => r.InvoiceCounter)
+                    .Where(id => id > 0)
+                    .ToList();
+            }
+
             // Map the request to DTO
             var copyDto = _mapper.Map<CopyInvoicesDto>(request);
 
-            // Determine if this is a bulk copy (no records or empty list) or selective copy
-            bool isBulkCopy = request.InvoiceRecords == null || request.InvoiceRecords.Count == 0;
-
-            // Map invoice records to DTOs collection if selective copy
-            if (!isBulkCopy)
-            {
-                copyDto.InvoiceRecords = request.InvoiceRecords!.Select(item =>
-                {
-                    var dto = _mapper.Map<ProjectInvoiceDto>(item);
-                    dto.Month = request.TargetMonth;
-                    dto.InvoiceCounter = 0; // Reset counter for new invoices
-                    return dto;
-                }).ToList();
-            }
-            else
-            {
-                // For bulk copy, ensure InvoiceRecords is null
-                copyDto.InvoiceRecords = null;
-            }
-
             // Call unified API method for both bulk and selective copy
-            ApiResponseDto<CopyInvoicesResultDto> response = await _invoiceService.CopyInvoicesAsync(copyDto);
+            var response = await _invoiceService.CopyInvoicesAsync(copyDto);
 
-            if (response == null)
+            if (!response.Success || !response.Data)
             {
-                // Handle null response gracefully - no invoices copied
-                return Json(new
-                {
-                    success = true,
-                    message = "No invoices to copy",
-                    copiedCount = 0,
-                    errors = new List<string>(),
-                    isBulkCopy = isBulkCopy
-                });
-            }
+                // Handle failure response
+                string errorMessage = response.Errors != null && response.Errors.Any()
+                    ? string.Join(", ", response.Errors.Select(e => e.Message ?? e.Code ?? "Unknown error"))
+                    : "Failed to copy invoices";
 
-            if (!response.Success || response.Data == null)
-            {
-                var errorMessages = response?.Errors?.Select(e => e.Message ?? e.Code ?? "Unknown error").ToList() ?? new List<string>();
                 return Json(new
                 {
                     success = false,
-                    message = errorMessages.Count > 0 ? string.Join(", ", errorMessages) : "Failed to copy invoices",
-                    errors = errorMessages
+                    message = errorMessage
                 });
             }
 
-            var result = response.Data;
+            // Success case
             return Json(new
             {
-                success = result.Success,
-                message = result.Message,
-                copiedCount = result.CopiedCount,
-                errors = result.Errors,
-                isBulkCopy = isBulkCopy
+                success = true,
+                message = "Successfully copied invoices"
             });
         }
 

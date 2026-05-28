@@ -107,11 +107,21 @@ namespace Apha.PACT.Api.Controllers
         {
             // Map request to DTO
             CopyInvoicesDto dto = _mapper.Map<CopyInvoicesDto>(request);
-           
-            // Call service
-            CopyInvoicesResultDto result = await _service.CopyInvoicesAsync(dto);
 
-            return Ok(_mapper.Map<CopyInvoicesRes>(result));
+            // Call service
+            bool success = await _service.CopyInvoicesAsync(dto);
+
+            // Map boolean result to response object
+            var response = new CopyInvoicesRes
+            {
+                Success = success,
+                Message = success ? "Invoices copied successfully" : "Failed to copy invoices",
+                CopiedCount = success ? (request.InvoiceRecords?.Count ?? 0) : 0,
+                FailedCount = 0,
+                Errors = new List<string>()
+            };
+
+            return Ok(response);
         }
     }
 }

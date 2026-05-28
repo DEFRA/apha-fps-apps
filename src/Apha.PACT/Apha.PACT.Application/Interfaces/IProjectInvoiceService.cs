@@ -13,6 +13,6 @@ namespace Apha.PACT.Application.Interfaces
         Task<ProjectInvoiceDto> UpdateAsync(ProjectInvoiceDto dto);
         Task<bool> DeleteAsync(int invoiceCounter);
         Task<MonthlyInvoicesPivotDto> GetMonthlyInvoicesSummaryAsync(QueryParameters<string> query);
-        Task<CopyInvoicesResultDto> CopyInvoicesAsync(CopyInvoicesDto copyDto);
+        Task<bool> CopyInvoicesAsync(CopyInvoicesDto copyDto);
     }
 }

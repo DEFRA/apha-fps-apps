@@ -214,7 +214,7 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.ProjectInvoices
                 .AsNoTracking()
-                .Where(i => invoiceIds.Contains(i.InvoiceCounter) && i.FpsYear == _fpsRequestContext.FpsYear)
+                .Where(i => invoiceIds.Contains(i.InvoiceCounter))
                 .ToListAsync();
         }
 
@@ -225,16 +225,47 @@ namespace Apha.PACT.DataAccess.Repository
                 .AnyAsync(i => i.Month == month && i.FpsYear == _fpsRequestContext.FpsYear);
         }
 
-        public async Task<int> CreateBulkAsync(IEnumerable<ProjectInvoice> entities)
+        public async Task<int> CreateBulkInvoiceAsync(IEnumerable<ProjectInvoice> entities)
         {
-            // Set FpsYear for all entities using LINQ projection
-            var invoicesList = entities.Select(entity =>
+            // Set FpsYear for all entities from the request context
+            foreach (var entity in entities)
             {
                 entity.FpsYear = _fpsRequestContext.FpsYear;
-                return entity;
+            }
+
+            await _context.ProjectInvoices.AddRangeAsync(entities);
+            return await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> CopyInvoicesByMonthAsync(int sourceMonth, int targetMonth, List<int>? specificInvoiceIds = null)
+        {
+            List<ProjectInvoice> invoicesToCopy;
+
+            if (specificInvoiceIds != null && specificInvoiceIds.Count > 0)
+            {
+                // Selective copy: fetch specific invoices by their IDs
+                invoicesToCopy = await GetInvoicesByIdsAsync(specificInvoiceIds);
+            }
+            else
+            {
+                // Bulk copy: fetch all invoices from source month
+                invoicesToCopy = await GetInvoicesByMonthAsync(sourceMonth);
+            }
+
+            // Transform invoices to target month
+            var newInvoices = invoicesToCopy.Select(sourceInvoice => new ProjectInvoice
+            {
+                ProjectParent = sourceInvoice.ProjectParent,
+                Month = targetMonth,
+                Amount = sourceInvoice.Amount,
+                CostOfWork = sourceInvoice.CostOfWork,
+                Wip = sourceInvoice.Wip,
+                ProfitLoss = sourceInvoice.ProfitLoss,
+                Detail = sourceInvoice.Detail,
+                FpsYear = _fpsRequestContext.FpsYear
             }).ToList();
 
-            await _context.ProjectInvoices.AddRangeAsync(invoicesList);
+            await _context.ProjectInvoices.AddRangeAsync(newInvoices);
             return await _context.SaveChangesAsync();
         }
     }
