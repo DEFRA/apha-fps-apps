@@ -18,24 +18,24 @@ public interface ICostBookYearlyDetailsApiClient
     Task<ApiResponseDto<StaffRequirementDto>> UpdateStaffRequirementAsync(string projectId, int year, int srIdentity, StaffRequirementDto dto);
     Task<ApiResponseDto<bool>> DeleteStaffRequirementAsync(string projectId, int year, int srIdentity);
 
-    Task<ApiResponseDto<List<TestRequirementDto>>> GetTestRequirementsAsync(string projectId, int year);
+    Task<ApiResponseDto<PaginatedResult<TestRequirementDto>>> GetTestRequirementsAsync(string projectId, int year, QueryParameters<string> query);    
     Task<ApiResponseDto<TestRequirementDto>> AddTestRequirementAsync(string projectId, int year, TestRequirementDto dto);
     Task<ApiResponseDto<TestRequirementDto>> UpdateTestRequirementAsync(string projectId, int year, string testCode, TestRequirementDto dto);
     Task<ApiResponseDto<bool>> DeleteTestRequirementAsync(string projectId, int year, string testCode);
 
-    Task<ApiResponseDto<List<AnimalRequirementDto>>> GetAnimalRequirementsAsync(string projectId, int year);
+    Task<ApiResponseDto<PaginatedResult<AnimalRequirementDto>>> GetAnimalRequirementsAsync(string projectId, int year, QueryParameters<string> query);
     Task<ApiResponseDto<AnimalRequirementDto>> AddAnimalRequirementAsync(string projectId, int year, AnimalRequirementDto dto);
     Task<ApiResponseDto<AnimalRequirementDto>> UpdateAnimalRequirementAsync(string projectId, int year, int arIdentity, AnimalRequirementDto dto);
     Task<ApiResponseDto<bool>> DeleteAnimalRequirementAsync(string projectId, int year, int arIdentity);
 
-    Task<ApiResponseDto<List<AdditionalCostDto>>> GetAdditionalCostsAsync(string projectId, int year);
+    Task<ApiResponseDto<PaginatedResult<AdditionalCostDto>>> GetAdditionalCostsAsync(string projectId, int year, QueryParameters<string> query);
     Task<ApiResponseDto<AdditionalCostDto>> AddAdditionalCostAsync(string projectId, int year, AdditionalCostDto dto);
     Task<ApiResponseDto<AdditionalCostDto>> UpdateAdditionalCostAsync(string projectId, int year, int acIdentity, AdditionalCostDto dto);
     Task<ApiResponseDto<bool>> DeleteAdditionalCostAsync(string projectId, int year, int acIdentity);
 
-    Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(bool isDefra);
-    Task<ApiResponseDto<List<AnimalRateDto>>> GetAnimalRatesAsync(bool isDefra);
+    Task<ApiResponseDto<List<PayRateDto>>> GetPayRatesAsync(string projectId, int year, bool isDefra);
+    Task<ApiResponseDto<List<AnimalRateDto>>> GetAnimalRatesAsync(string projectId, int year, bool isDefra);
     Task<ApiResponseDto<List<AccountCategoryDto>>> GetAccountCategoriesAsync();
-    Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(bool isDefra);
+    Task<ApiResponseDto<List<TestCodeLookupDto>>> GetTestCodeLookupsAsync(string projectId, int year, bool isDefra);
     Task<ApiResponseDto<List<AnimalLookupDto>>> GetAllAnimalsAsync();
 }
