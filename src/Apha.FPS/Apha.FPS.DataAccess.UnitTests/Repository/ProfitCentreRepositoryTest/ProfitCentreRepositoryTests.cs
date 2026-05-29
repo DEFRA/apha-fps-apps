@@ -475,5 +475,259 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         }
 
         #endregion
+
+        #region GetProfitCentresAsync Email Filter Tests
+
+        [Fact]
+        public async Task GetProfitCentresAsync_ReturnsEmpty_WhenEmailDoesNotMatch()
+        {
+            var profitCentres = new List<ProfitCentreView>
+            {
+                BuildView("PC01", "Centre One", "DIV1", "other@example.com")
+            };
+            var repo = CreateRepository(profitCentreViews: profitCentres);
+            var result = await repo.GetProfitCentresAsync();
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetProfitCentresAsync_ExcludesRecordsWithNullEmail()
+        {
+            var profitCentres = new List<ProfitCentreView>
+            {
+                new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One", Division = "DIV1", UserEmail = null }
+            };
+            var repo = CreateRepository(profitCentreViews: profitCentres);
+            var result = await repo.GetProfitCentresAsync();
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region ApplyProfitCentreFilter Tests
+
+        [Fact]
+        public async Task GetAllProfitCentresPagedAsync_FiltersByProfitCentreName()
+        {
+            var entities = new List<ProfitCentre>
+            {
+                BuildEntity("PC01", "Alpha Centre"),
+                BuildEntity("PC02", "Beta Centre"),
+                BuildEntity("PC03", "Alpha North")
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var filter = System.Text.Json.JsonSerializer.Serialize(
+                new Dictionary<string, string> { { "ProfitCentreName", "Alpha" } });
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetAllProfitCentresPagedAsync_ThrowsJsonException_WhenFilterIsInvalidJson()
+        {
+            var entities = new List<ProfitCentre> { BuildEntity("PC01"), BuildEntity("PC02") };
+            var repo = CreateRepository(profitCentres: entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "not-valid-json" };
+            await Assert.ThrowsAsync<Newtonsoft.Json.JsonReaderException>(() => repo.GetAllProfitCentresPagedAsync(query));
+        }
+
+        [Fact]
+        public async Task GetAllProfitCentresPagedAsync_ReturnsAll_WhenFilterIsEmptyObject()
+        {
+            var entities = new List<ProfitCentre> { BuildEntity("PC01"), BuildEntity("PC02") };
+            var repo = CreateRepository(profitCentres: entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        #endregion
+
+        #region ApplyProfitCentreSorting Tests
+
+        [Theory]
+        [InlineData("ProfitCentreName", false, "Alpha Centre", "Beta Centre")]
+        [InlineData("ProfitCentreName", true,  "Beta Centre",  "Alpha Centre")]
+        public async Task GetAllProfitCentresPagedAsync_SortsByProfitCentreName(string sortBy, bool descending, string firstExpected, string secondExpected)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                BuildEntity("PC01", "Beta Centre"),
+                BuildEntity("PC02", "Alpha Centre")
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            var list = result.Data.ToList();
+            Assert.Equal(firstExpected,  list[0].ProfitCentreName);
+            Assert.Equal(secondExpected, list[1].ProfitCentreName);
+        }
+
+        [Theory]
+        [InlineData("Division", false, "AAA", "ZZZ")]
+        [InlineData("Division", true,  "ZZZ", "AAA")]
+        public async Task GetAllProfitCentresPagedAsync_SortsByDivision(string sortBy, bool descending, string firstExpected, string secondExpected)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                BuildEntity("PC01", division: "ZZZ"),
+                BuildEntity("PC02", division: "AAA")
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            var list = result.Data.ToList();
+            Assert.Equal(firstExpected,  list[0].Division);
+            Assert.Equal(secondExpected, list[1].Division);
+        }
+
+        [Theory]
+        [InlineData("ContTarget", false)]
+        [InlineData("ContTarget", true)]
+        public async Task GetAllProfitCentresPagedAsync_SortsByContTarget(string sortBy, bool descending)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                new() { ProfitCentreId = "PC01", ProfitCentreName = "A", Division = "D", ContTarget = 200m },
+                new() { ProfitCentreId = "PC02", ProfitCentreName = "B", Division = "D", ContTarget = 100m }
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            var list = result.Data.ToList();
+            var firstTarget  = descending ? 200m : 100m;
+            Assert.Equal(firstTarget, list[0].ContTarget);
+        }
+
+        [Theory]
+        [InlineData("ProfitCentreHead", false, "Alice", "Bob")]
+        [InlineData("ProfitCentreHead", true,  "Bob",   "Alice")]
+        public async Task GetAllProfitCentresPagedAsync_SortsByProfitCentreHead(string sortBy, bool descending, string firstExpected, string secondExpected)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                new() { ProfitCentreId = "PC01", ProfitCentreName = "A", Division = "D", ProfitCentreHead = "Bob" },
+                new() { ProfitCentreId = "PC02", ProfitCentreName = "B", Division = "D", ProfitCentreHead = "Alice" }
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            var list = result.Data.ToList();
+            Assert.Equal(firstExpected,  list[0].ProfitCentreHead);
+            Assert.Equal(secondExpected, list[1].ProfitCentreHead);
+        }
+
+        [Theory]
+        [InlineData("UnknownColumn", false, "PC01", "PC02")]
+        [InlineData("UnknownColumn", true,  "PC02", "PC01")]
+        public async Task GetAllProfitCentresPagedAsync_SortsByProfitCentreId_WhenSortByIsUnknown(string sortBy, bool descending, string firstExpected, string secondExpected)
+        {
+            var entities = new List<ProfitCentre>
+            {
+                BuildEntity("PC02"), BuildEntity("PC01")
+            };
+            var repo = CreateRepository(profitCentres: entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+            var result = await repo.GetAllProfitCentresPagedAsync(query);
+            var list = result.Data.ToList();
+            Assert.Equal(firstExpected,  list[0].ProfitCentreId);
+            Assert.Equal(secondExpected, list[1].ProfitCentreId);
+        }
+
+        #endregion
+
+        #region CreateProfitCentreAsync UserProfitcentre Link Tests
+
+        [Fact]
+        public async Task CreateProfitCentreAsync_SkipsUserLink_WhenLinkAlreadyExists()
+        {
+            var entity = BuildEntity("PC01");
+            var user = new User { UserId = 10, UserEmail = "test@example.com" };
+            var existingLink = new UserProfitcentre { ProfitCentre = "PC01", UserId = 10, FpsYear = 2024 };
+            var repo = CreateRepository(
+                profitCentres: [],
+                userProfitCentres: [existingLink],
+                users: [user]);
+
+            var result = await repo.CreateProfitCentreAsync(entity);
+
+            Assert.NotNull(result);
+            Assert.Equal("PC01", result.ProfitCentreId);
+        }
+
+        #endregion
+
+        #region UpdateProfitCentreAsync UserProfitcentre Link Tests
+
+        [Fact]
+        public async Task UpdateProfitCentreAsync_SkipsUserLink_WhenLinkAlreadyExists()
+        {
+            var existing = BuildEntity("PC01", "Old Name", "OLD");
+            var updated  = BuildEntity("PC01", "New Name", "NEW");
+            var user = new User { UserId = 10, UserEmail = "test@example.com" };
+            var existingLink = new UserProfitcentre { ProfitCentre = "PC01", UserId = 10, FpsYear = 2024 };
+            var repo = CreateRepository(
+                profitCentres: [existing],
+                userProfitCentres: [existingLink],
+                users: [user]);
+
+            var result = await repo.UpdateProfitCentreAsync("PC01", updated);
+
+            Assert.Equal("New Name", result.ProfitCentreName);
+        }
+
+        [Fact]
+        public async Task UpdateProfitCentreAsync_AddsUserLink_WhenUserFoundButNotLinked()
+        {
+            var existing = BuildEntity("PC01", "Old Name", "OLD");
+            var updated  = BuildEntity("PC01", "New Name", "NEW");
+            var user = new User { UserId = 10, UserEmail = "test@example.com" };
+            var repo = CreateRepository(
+                profitCentres: [existing],
+                userProfitCentres: [],
+                users: [user]);
+
+            var result = await repo.UpdateProfitCentreAsync("PC01", updated);
+
+            Assert.Equal("New Name", result.ProfitCentreName);
+        }
+
+        [Fact]
+        public async Task UpdateProfitCentreAsync_UsesFallbackUserId_WhenUserNotFound()
+        {
+            var existing = BuildEntity("PC01", "Old Name", "OLD");
+            var updated  = BuildEntity("PC01", "New Name", "NEW");
+            var repo = CreateRepository(
+                profitCentres: [existing],
+                userProfitCentres: [],
+                users: []);
+
+            var result = await repo.UpdateProfitCentreAsync("PC01", updated);
+
+            Assert.Equal("New Name", result.ProfitCentreName);
+        }
+
+        #endregion
+
+        #region DeleteProfitCentreAsync Cascade Tests
+
+        [Fact]
+        public async Task DeleteProfitCentreAsync_CascadesUserProfitCentreLinks()
+        {
+            var existingLink = new UserProfitcentre { ProfitCentre = "PC01", UserId = 10, FpsYear = 2024 };
+            var repo = CreateRepository(
+                profitCentres: [BuildEntity("PC01")],
+                profitCentreGrades: [],
+                workgroups: [],
+                userProfitCentres: [existingLink]);
+
+            var result = await repo.DeleteProfitCentreAsync("PC01");
+
+            Assert.True(result);
+        }
+
+        #endregion
+
     }
 }

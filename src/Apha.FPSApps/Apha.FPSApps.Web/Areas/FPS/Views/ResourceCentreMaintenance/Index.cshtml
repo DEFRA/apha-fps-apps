@@ -47,65 +47,6 @@
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
-
-        // Function to get current filters from the grid
-        function getCurrentFilters() {
-            var filters = {};
-            $('.grid-filter').each(function () {
-                var filterName = $(this).data('filter');
-                var filterValue = $(this).val();
-                if (filterValue && filterValue.trim() !== '') {
-                    filters[filterName] = filterValue;
-                }
-            });
-            return filters;
-        }
-
-        // Function to get current sort state
-        function getCurrentSort() {
-            var sortColumn = '';
-            var sortDescending = false;
-
-            var $sortedHeader = $('.sortable-header').filter(function() {
-                return $(this).find('.sort-icon').text().trim() !== '';
-            });
-
-            if ($sortedHeader.length > 0) {
-                sortColumn = $sortedHeader.data('column');
-                sortDescending = $sortedHeader.data('sortdir') === 'true';
-            }
-
-            return { column: sortColumn, descending: sortDescending };
-        }
-
-        // Function to refresh grid with current filters and sort
-        function refreshGrid() {
-            var filters = getCurrentFilters();
-            var sort = getCurrentSort();
-            var currentPage = parseInt($('#resourceCentreGrid').data('current-page')) || 1;
-            var pageSize = parseInt($('#resourceCentreGrid').data('page-size')) || 10;
-            var requestData = {
-                Page: currentPage,
-                PageSize: pageSize,
-                Filter: JSON.stringify(filters),
-                SortBy: sort.column,
-                Descending: sort.descending
-            };
-
-            $.ajax({
-                url: '@Url.Action("LoadResourceCentreGrid", "ResourceCentreMaintenance", new { area = "FPS" })',
-                type: 'POST',
-                data: requestData,
-                success: function (html) {
-                    $('#gridContainer_resourceCentreGrid').html(html);
-                },
-                error: function (xhr, status, error) {
-                    window.location.reload();
-                }
-            });
-        }
-
-        // Add Resource Centre
         function addResourceCentre(btn) {
             $.ajax({
                 url: '@Url.Action("Create", "ResourceCentreMaintenance", new { area = "FPS" })',
@@ -270,17 +211,6 @@
             clearValidationErrors('#modaPopupBody');
             $('#modaPopupBody').html("");
             $('#modalPopup').removeClass("show");
-        }
-
-        function isFormValid(form) {
-            var isValid = true;
-            form.find('[required]').each(function () {
-                if (!$(this).val() || $(this).val().trim() === '') {
-                    isValid = false;
-                    return false;
-                }
-            });
-            return isValid;
         }
 
         $(document).ready(function() {
