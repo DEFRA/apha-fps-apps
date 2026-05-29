@@ -60,6 +60,9 @@ namespace Apha.FPS.Application.Services
             ArgumentNullException.ThrowIfNull(profitCentreDto);
             ArgumentException.ThrowIfNullOrWhiteSpace(originalProfitCentreId);
 
+            if (!await _repository.ProfitCentreExistsAsync(originalProfitCentreId))
+                throw new InvalidOperationException($"Profit centre '{originalProfitCentreId}' not found.");
+
             var entity = _mapper.Map<ProfitCentre>(profitCentreDto);
             var updated = await _repository.UpdateProfitCentreAsync(originalProfitCentreId, entity);
             return _mapper.Map<ProfitCentreDto>(updated);

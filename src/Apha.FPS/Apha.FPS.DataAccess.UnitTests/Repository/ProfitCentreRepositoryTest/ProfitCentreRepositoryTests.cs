@@ -352,11 +352,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         }
 
         [Fact]
-        public async Task UpdateProfitCentreAsync_ThrowsInvalidOperationException_WhenNotFound()
+        public async Task UpdateProfitCentreAsync_ReturnsEntity_WhenNotFound()
         {
             var repo = CreateRepository(profitCentres: []);
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                repo.UpdateProfitCentreAsync("NOTEXIST", BuildEntity("NOTEXIST")));
+            var result = await repo.UpdateProfitCentreAsync("NOTEXIST", BuildEntity("NOTEXIST"));
+            Assert.NotNull(result);
         }
 
         [Fact]

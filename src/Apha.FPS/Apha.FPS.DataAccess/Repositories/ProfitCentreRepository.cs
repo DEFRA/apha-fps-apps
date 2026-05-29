@@ -1,4 +1,4 @@
-using Apha.Common.Constants;
+using Apha.FPS.Core.Enums;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -112,8 +112,10 @@ namespace Apha.FPS.DataAccess.Repositories
                 try
                 {
                     var existingProfitCentre = await _dbContext.ProfitCentres
-                        .FirstOrDefaultAsync(p => p.ProfitCentreId == originalProfitCentreId)
-                        ?? throw new InvalidOperationException($"Profit centre '{originalProfitCentreId}' not found.");
+                        .FirstOrDefaultAsync(p => p.ProfitCentreId == originalProfitCentreId);
+
+                    if (existingProfitCentre == null)
+                        return profitCentre;
 
                     existingProfitCentre.ProfitCentreName = profitCentre.ProfitCentreName;
                     existingProfitCentre.Division = profitCentre.Division;

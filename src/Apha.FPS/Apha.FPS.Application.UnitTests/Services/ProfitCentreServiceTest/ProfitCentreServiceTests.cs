@@ -298,6 +298,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             var entity  = BuildEntity("PC01");
             var updated = BuildEntity("PC01");
 
+            _mockRepository.ProfitCentreExistsAsync("PC01").Returns(true);
             _mockMapper.Map<ProfitCentre>(dto).Returns(entity);
             _mockRepository.UpdateProfitCentreAsync("PC01", entity).Returns(updated);
             _mockMapper.Map<ProfitCentreDto>(updated).Returns(dto);
@@ -314,15 +315,13 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         public async Task UpdateProfitCentreAsync_ThrowsInvalidOperationException_WhenNotFound()
         {
             // Arrange
-            var dto    = BuildDto("PC01");
-            var entity = BuildEntity("PC01");
+            var dto = BuildDto("PC01");
 
-            _mockMapper.Map<ProfitCentre>(dto).Returns(entity);
-            _mockRepository.UpdateProfitCentreAsync("NOTEXIST", entity)
-                .ThrowsAsync(new InvalidOperationException("not found"));
+            _mockRepository.ProfitCentreExistsAsync("NOTEXIST").Returns(false);
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.UpdateProfitCentreAsync("NOTEXIST", dto));
+            await _mockRepository.DidNotReceive().UpdateProfitCentreAsync(Arg.Any<string>(), Arg.Any<ProfitCentre>());
         }
 
         #endregion
