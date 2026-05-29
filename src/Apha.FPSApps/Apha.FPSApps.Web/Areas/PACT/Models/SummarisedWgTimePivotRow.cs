@@ -61,15 +61,23 @@ public class SummarisedWgTimePivotRow
     [GridColumn(Order = 14, Width = 130, Type = GridColumnType.Text)]
     public decimal SumOfTime { get; set; }
 
+    // Used for the YrPlan % calculation – hidden from the grid
+    [GridColumn(IsVisible = false)]
+    public decimal SumOfCost { get; set; }
+
     [Display(Name = "Cost")]
     [GridColumn(Order = 15, Width = 130, Type = GridColumnType.Text)]
-    public decimal SumOfCost { get; set; }
+    public string CostDisplay { get; set; } = string.Empty;
 
     [Display(Name = "YrPlan")]
     [GridColumn(Order = 16, Width = 130, Type = GridColumnType.Text)]
     public decimal? Budget { get; set; }
 
+    // Used for calculation only – hidden from the grid
+    [GridColumn(IsVisible = false)]
+    public decimal? PercentSpent { get; set; }
+
     [Display(Name = "Spent")]
     [GridColumn(Order = 17, Width = 130, Type = GridColumnType.Text)]
-    public decimal? PercentSpent { get; set; }
+    public string SpentDisplay { get; set; } = string.Empty;
 }

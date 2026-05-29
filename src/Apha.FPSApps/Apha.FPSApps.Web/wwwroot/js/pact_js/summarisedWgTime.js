@@ -17,7 +17,9 @@ function syncTotalsWidths() {
     const $cells = $container.children('[data-col-index]');
     if (!$cells.length) return;
 
-    // Use getBoundingClientRect for sub-pixel accurate width
+    // Use getBoundingClientRect for sub-pixel accurate width.
+    // Cells use border-box, so the assigned width equals the th BCR exactly –
+    // no padding/border offset accumulates across columns.
     $headers.each(function (i) {
         const w = this.getBoundingClientRect().width;
         $cells.filter('[data-col-index="' + i + '"]').css({
@@ -26,6 +28,14 @@ function syncTotalsWidths() {
             maxWidth: w + 'px'
         });
     });
+
+    // Sync cell height from the first tbody row so the totals row is the
+    // same height as the data rows regardless of font/padding changes.
+    const $firstDataRow = $table.find('tbody tr:first');
+    if ($firstDataRow.length) {
+        const rowH = Math.round($firstDataRow[0].getBoundingClientRect().height);
+        $cells.css('height', rowH + 'px');
+    }
 
     // Match container width to table exactly
     const tableWidth = $table[0].getBoundingClientRect().width;

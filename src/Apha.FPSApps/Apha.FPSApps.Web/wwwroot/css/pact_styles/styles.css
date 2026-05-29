@@ -1444,22 +1444,22 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
   z-index:          1;              /* sit above grid bottom border */
 }
 
-/* Base cell – matches .custom-table td / .editable-grid-table td exactly */
+/* Base cell – width is set by JS (getBoundingClientRect on <th>); border-box means
+   the assigned width IS the total occupied width, matching the collapsed-table th exactly */
 #columnTotalsContainer .column-total {
   flex:             0 0 auto;
-  box-sizing:       content-box;                      /* same default as grid td */
-  height:           24px;                             /* .editable-grid-table td */
-  padding:          6px 5px;                          /* .custom-table td !important */
-  font-family:      "GDS Transport", arial, sans-serif; /* .govuk-table font-family */
-  font-size:        12px;                             /* .editable-grid-table */
-  font-weight:      400;                              /* .govuk-table normal weight */
-  line-height:      1.3157894737;                     /* .govuk-table line-height */
-  color:            #0b0c0c;                          /* govuk default text colour */
+  box-sizing:       border-box;                       /* width = BCR of matching <th> */
+  padding:          2px 4px;                          /* exact match: .editable-grid-table td */
+  font-family:      "GDS Transport", arial, sans-serif;
+  font-size:        12px;
+  font-weight:      400;
+  line-height:      1.3157894737;
+  color:            #0b0c0c;
   white-space:      nowrap;
   overflow:         hidden;
   text-align:       right;
-  background-color: #ffffff;                          /* .custom-table tbody td */
-  border-right:     1px solid #d0d0d0;                /* .editable-grid-table td */
+  background-color: #ffffff;
+  border-right:     1px solid #d0d0d0;
   display:          flex;
   align-items:      center;
   justify-content:  flex-end;

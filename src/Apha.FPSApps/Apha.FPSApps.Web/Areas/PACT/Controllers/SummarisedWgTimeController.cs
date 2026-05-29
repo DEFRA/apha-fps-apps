@@ -73,6 +73,9 @@ public class SummarisedWgTimeController : Controller
             row.PercentSpent = row.Budget > 0
                 ? Math.Round((row.SumOfCost / row.Budget.Value) * 100, 2)
                 : 0;
+
+            row.CostDisplay  = row.SumOfCost.ToString("£#,##0.00;-£#,##0.00");
+            row.SpentDisplay = row.PercentSpent.HasValue ? row.PercentSpent.Value.ToString("0.##") + "%" : string.Empty;
         }
 
         grid.Pagination = new PaginationModel
