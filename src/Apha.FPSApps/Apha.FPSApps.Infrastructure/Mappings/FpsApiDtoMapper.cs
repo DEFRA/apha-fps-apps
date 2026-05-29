@@ -95,6 +95,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
+
+            // Staff Plan view
+            CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
         }
     }
 }

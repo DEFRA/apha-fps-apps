@@ -87,6 +87,9 @@ namespace Apha.Common.Constants
         // Setting
         public const string GetHoursPerDay = "api/v1/setting/hoursperday";
 
+        // Project Staff Plan
+        public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
+
         // Staff Job
         public const string GetAllStaffJobs = "api/v1/staffjob?jobCode={0}";
         public const string GetStaffWorkgroupLookup = "api/v1/staffjob/workgrouplookup";
