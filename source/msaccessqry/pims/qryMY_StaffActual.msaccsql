@@ -1,8 +1,0 @@
-QUERY NAME: qryMY_StaffActual
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MY_TimeCostCalcs.Year, MY_TimeCostCalcs.Project, MY_TimeCostCalcs.JobCode, MY_TimeCostCalcs.Name, MY_TimeCostCalcs.WorkGroup, MY_TimeCostCalcs.GradeCode, MY_TimeCostCalcs.Time, MY_TimeCostCalcs.ChargeRate, MY_TimeCostCalcs.Cost, MY_TimeCostCalcs.Month
-FROM MY_TimeCostCalcs;
-

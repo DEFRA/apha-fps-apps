@@ -1,8 +1,0 @@
-QUERY NAME: qryAD6000_DeleteTempTable
----------------------------------------------
-TYPE: DELETE
-
-SQL:
-DELETE tempMonthlyTime_Transform.*
-FROM tempMonthlyTime_Transform;
-

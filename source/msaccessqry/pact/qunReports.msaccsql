@@ -1,9 +1,0 @@
-QUERY NAME: qunReports
----------------------------------------------
-TYPE: OTHER
-
-SQL:
-SELECT tblReportSets.Name from tblReportSets
-
-UNION Select tblReports.Name from tblReports;
-

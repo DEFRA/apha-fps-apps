@@ -1,8 +1,0 @@
-QUERY NAME: qryAnimalTypeAnimal_Com
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblAnimalReq.Project, tblAnimalReq.Year, tblAnimalReq.AnimalType, tblAnimalReq.[Number of Days], tblAnimalReq.[Number of Animals], tblAnimalReq.DailyRate, [Number of Days]*[Number of Animals]*[tblAnimalReq].[DailyRate] AS AnimalCost, tblAnimalReq.AR_Identity, tblProject.Programme, tblProjectYear.Markup_Animals, tblProjectYear.Profit_Animals, [AnimalCost]*(1+[Markup_Animals]/100) AS CostIncMarkup, 100*[CostIncMarkup]/(100-[Profit_Animals]) AS CostIncProfit
-FROM (tblProject INNER JOIN tblProjectYear ON tblProject.Project = tblProjectYear.Project) INNER JOIN tblAnimalReq ON (tblAnimalReq.Year = tblProjectYear.YearNo) AND (tblProjectYear.Project = tblAnimalReq.Project);
-

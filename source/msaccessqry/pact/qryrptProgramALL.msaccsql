@@ -1,9 +1,0 @@
-QUERY NAME: qryrptProgramALL
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProgram.leader, tlkpProgram.MINIM, tlkpProgram.SECTOR_NAME, tlkpProgram.CUSTOMER, Sum(tlkpProject.Budget_cvl) AS SumOfBudget_cvl, Sum(tlkpProject.Budget_Ext) AS SumOfBudget_Ext, tlkpProgram.Directorate, Sum(FPSYearTotals.TotalCosts) AS SumOfTotalCosts, Sum(tlkpProject.TransferIncome) AS SumOfTransferIncome1
-FROM (tlkpProgram INNER JOIN tlkpProject ON tlkpProgram.ProgramNo = tlkpProject.Program) INNER JOIN FPSYearTotals ON tlkpProject.ParentProject = FPSYearTotals.ParentProject
-GROUP BY tlkpProgram.ProgramNo, tlkpProgram.ProgramName, tlkpProgram.leader, tlkpProgram.MINIM, tlkpProgram.SECTOR_NAME, tlkpProgram.CUSTOMER, tlkpProgram.Directorate;
-

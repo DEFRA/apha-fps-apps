@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndextblkpProject_ByGroup
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX tlkpProject_ByGroupPK ON tlkpProject_ByGroup(ParentProject)

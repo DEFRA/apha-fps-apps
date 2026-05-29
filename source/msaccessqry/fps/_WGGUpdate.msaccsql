@@ -1,9 +1,0 @@
-QUERY NAME: _WGGUpdate
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT [gradecode] & "_" & [old workgroup] AS oldWGG, [gradecode] & "_" & [new workgroup] AS newWGG, [_NewStaffWG].StaffID
-FROM _NewStaffWG
-WHERE ((([gradecode] & "_" & [old workgroup])<>[gradecode] & "_" & [new workgroup]));
-

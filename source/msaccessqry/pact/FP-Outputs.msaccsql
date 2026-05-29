@@ -1,9 +1,0 @@
-QUERY NAME: FP-Outputs
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpTestCapability.PlanPortfolio, WorkGroup.ProfitCentre, MonthlyOutput.TestCode, MonthlyOutput.Buyer, IIf([Buyer] Like "FT*","FixTerm",[Buyer]) AS Buyer1, IIf([buyer] Like "UT*","Utility",[Buyer1]) AS Expr1, MonthlyOutput.WorkGroup, Sum(MonthlyOutput.Volume) AS SumOfVolume
-FROM WorkGroup INNER JOIN (tlkpTestCapability INNER JOIN MonthlyOutput ON (tlkpTestCapability.WorkGroup = MonthlyOutput.WorkGroup) AND (tlkpTestCapability.TestCode = MonthlyOutput.TestCode)) ON WorkGroup.WorkGroup = tlkpTestCapability.WorkGroup
-GROUP BY tlkpTestCapability.PlanPortfolio, WorkGroup.ProfitCentre, MonthlyOutput.TestCode, MonthlyOutput.Buyer, IIf([Buyer] Like "FT*","FixTerm",[Buyer]), MonthlyOutput.WorkGroup;
-

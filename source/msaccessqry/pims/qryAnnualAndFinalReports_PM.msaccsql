@@ -1,9 +1,0 @@
-QUERY NAME: qryAnnualAndFinalReports_PM
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryMY_RadtrackReports.Year, qryMY_RadtrackReports.Program, qryMY_RadtrackReports.Project, qryMY_RadtrackReports.Type, G_tlkpProject.ProjectTitle, qryMY_RadtrackReports.RepDueDate, qryMY_RadtrackReports.EmailedToCustomer, 1 AS Due, (Not IsNull([EmailedToCustomer]))*-1 AS Sub, IIf([EmailedToCustomer]<=[RepDueDate],1,0) AS SubOnTime, G_tlkpProject.Contract, qryMY_RadtrackReports.Customer, qryMY_RadtrackReports.Manager
-FROM G_tlkpProject INNER JOIN qryMY_RadtrackReports ON G_tlkpProject.ParentProject = qryMY_RadtrackReports.Project
-WHERE (((qryMY_RadtrackReports.Year)=fnYear()));
-

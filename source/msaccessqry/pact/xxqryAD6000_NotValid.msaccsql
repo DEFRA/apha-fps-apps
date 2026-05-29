@@ -1,9 +1,0 @@
-QUERY NAME: xxqryAD6000_NotValid
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT TimeCodeValid.WorkGroup, TimeCodeValid.Active, TimeCodeValid.TimeCode, TimeCodeValid.ParentProject
-FROM TimeCodeValid
-WHERE (((TimeCodeValid.WorkGroup)=BESettingsGet("AD6000_WG")) AND ((TimeCodeValid.Active)=-1));
-

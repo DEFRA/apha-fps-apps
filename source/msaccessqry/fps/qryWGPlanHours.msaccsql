@@ -1,9 +1,0 @@
-QUERY NAME: qryWGPlanHours
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroupGrade_General.WorkGroup, tblStaffJob_MAP.Jobcode, Sum(tblStaffJob_MAP.plannedhours) AS SumOfplannedhours
-FROM (WorkGroupGrade_General INNER JOIN tblWGEmployee_general ON WorkGroupGrade_General.WGGrade = tblWGEmployee_general.WorkGroupGrade) INNER JOIN tblStaffJob_MAP ON tblWGEmployee_general.PactID = tblStaffJob_MAP.StaffID
-GROUP BY WorkGroupGrade_General.WorkGroup, tblStaffJob_MAP.Jobcode;
-

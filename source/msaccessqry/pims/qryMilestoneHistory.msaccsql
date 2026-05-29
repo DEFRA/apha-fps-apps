@@ -1,9 +1,0 @@
-QUERY NAME: qryMilestoneHistory
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT vProjectLatestDetails.ParentProject, vProjectLatestDetails.Program, vProjectLatestDetails.Manager, vProjectLatestDetails.ProjectTitle, tblMilestone.Number, tblMilestone.Description, tblMilestone.DateDue, tblMilestone.DateCompleted, tblMilestone.OnTarget, tblMilestone.Project, vProjectLatestDetails.Customer, G_tlkpProject.Contract, vProjectLatestDetails.ProjectGroup
-FROM (G_tlkpProject INNER JOIN vProjectLatestDetails ON G_tlkpProject.ParentProject = vProjectLatestDetails.ParentProject) INNER JOIN tblMilestone ON G_tlkpProject.ParentProject = tblMilestone.Project
-WHERE (((vProjectLatestDetails.Manager) Like fnGetHiddenManager()));
-

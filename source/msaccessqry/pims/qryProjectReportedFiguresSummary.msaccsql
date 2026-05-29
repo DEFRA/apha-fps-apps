@@ -1,9 +1,0 @@
-QUERY NAME: qryProjectReportedFiguresSummary
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MY_tlkpProjectRadTrackData.Project, MY_tlkpProjectRadTrackData.Year, MY_tlkpProjectRadTrackData.PYBudget AS ApprovedExpenditure, MY_tlkpProjectRadTrackData.ManYears AS ApprovedManYears, MY_tlkpProjectRadTrackData.ActualExpenditure, MY_tlkpProjectRadTrackData.ActualManYears, G_tlkpProject_RadTrackData.StartDate, Nz([RevisedEndDate],[Enddate]) AS EDate, MY_tlkpProjectRadTrackData.Adjustment
-FROM MY_tlkpProjectRadTrackData INNER JOIN G_tlkpProject_RadTrackData ON MY_tlkpProjectRadTrackData.Project = G_tlkpProject_RadTrackData.ParentProject
-WHERE (((IsEU_Project([project]))=False));
-

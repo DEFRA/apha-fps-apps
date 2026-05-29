@@ -1,8 +1,0 @@
-QUERY NAME: qryTimeCostFinal
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroup.ProfitCentre, qryTimeCostPeriod.Month, tlkpProject.PlanCat, tlkpProject.ParentProject, qryTimeCostCumulative.JobCode, qryTimeCostCumulative.Description, qryTimeCostCumulative.WorkGroup, qryTimeCostPeriod.PeriodTime, qryTimeCostPeriod.PeriodCost, qryTimeCostCumulative.CumTime, qryTimeCostCumulative.CumCost
-FROM tlkpProject INNER JOIN ((qryTimeCostCumulative LEFT JOIN qryTimeCostPeriod ON (qryTimeCostCumulative.Project = qryTimeCostPeriod.Project) AND (qryTimeCostCumulative.JobCode = qryTimeCostPeriod.JobCode) AND (qryTimeCostCumulative.WorkGroup = qryTimeCostPeriod.WorkGroup)) INNER JOIN WorkGroup ON qryTimeCostCumulative.WorkGroup = WorkGroup.WorkGroup) ON tlkpProject.ParentProject = qryTimeCostCumulative.Project;
-

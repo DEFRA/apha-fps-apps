@@ -1,9 +1,0 @@
-QUERY NAME: qryChRatesFinalPC
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryChRatesFactorBPC1.ProfitCentre, qryChRatesFactorBPC1.TotHrs, ProfitCentreGrade.PCGrade, Grade.AvSalary, qryChRatesFactorBPC1.FactorB, [AvSalary]*[FactorB] AS PayRate, qryChRatesFactorBPC1.NPR, qryChRatesFactorBPC1.OHR, [PayRate]+[OHR]+[NPR] AS FullRate, [NPR]+[PayRate] AS DirectRate, ProfitCentreGrade.ChargeRate
-FROM qryChRatesFactorBPC1 INNER JOIN (Grade INNER JOIN ProfitCentreGrade ON Grade.GradeCode = ProfitCentreGrade.GradeCode) ON qryChRatesFactorBPC1.ProfitCentre = ProfitCentreGrade.ProfitCentre
-GROUP BY qryChRatesFactorBPC1.ProfitCentre, qryChRatesFactorBPC1.TotHrs, ProfitCentreGrade.PCGrade, Grade.AvSalary, qryChRatesFactorBPC1.FactorB, [AvSalary]*[FactorB], qryChRatesFactorBPC1.NPR, qryChRatesFactorBPC1.OHR, ProfitCentreGrade.ChargeRate;
-

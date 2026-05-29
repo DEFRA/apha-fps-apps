@@ -1,8 +1,0 @@
-QUERY NAME: qryTestsPCPlan_Final
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryTestsPCPlan_xtab.*, qryTestsPCCostPlan_xtab.*, [total]*[labt] AS LabTFec, [total]*[VetR] AS VetRFec, [total]*[Viro] AS ViroFec
-FROM qryTestsPCPlan_xtab LEFT JOIN qryTestsPCCostPlan_xtab ON qryTestsPCPlan_xtab.TestCode = qryTestsPCCostPlan_xtab.TestCode;
-

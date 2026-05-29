@@ -1,9 +1,0 @@
-QUERY NAME: qry2N
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT [tblN].[n] & [tblN_1].[n] AS [No]
-FROM tblN, tblN AS tblN_1
-ORDER BY tblN.n, tblN_1.n;
-

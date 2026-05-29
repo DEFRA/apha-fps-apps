@@ -1,6 +1,0 @@
-QUERY NAME: ddCreateIndextblWGEmployee_General
----------------------------------------------
-TYPE: DDL
-
-SQL:
-CREATE UNIQUE INDEX tblWGEmployee_GeneralPK ON tblWGEmployee_General(PactID)

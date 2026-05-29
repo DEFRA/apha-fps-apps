@@ -1,9 +1,0 @@
-QUERY NAME: qryTBidSum
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroup_General.ProfitCentre, Sum(tblBid.GenBid) AS SumOfGenBid
-FROM tblBid INNER JOIN WorkGroup_General ON tblBid.WorkGroup = WorkGroup_General.WorkGroup
-GROUP BY WorkGroup_General.ProfitCentre;
-

@@ -1,7 +1,0 @@
-QUERY NAME: qptGetMaxStaffid
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-Select Max(Staffid) from vtblStaff
-

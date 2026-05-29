@@ -1,9 +1,0 @@
-QUERY NAME: qryAccess_UserLevels
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblAccessUsers_Levels.AccessLevelID, tblAccessSystems.SystemName, tblAccessLevels.AccessLevel
-FROM (tblAccessUsers INNER JOIN tblAccessUsers_Levels ON (tblAccessUsers.NTLogin = tblAccessUsers_Levels.NTLogin) AND (tblAccessUsers.SystemID = tblAccessUsers_Levels.SystemID)) INNER JOIN (tblAccessSystems INNER JOIN tblAccessLevels ON tblAccessSystems.SystemID = tblAccessLevels.SystemID) ON (tblAccessUsers_Levels.AccessLevelID = tblAccessLevels.AccesslevelID) AND (tblAccessUsers_Levels.SystemID = tblAccessLevels.SystemID)
-WHERE (((tblAccessUsers.NTLogin)=userName()));
-

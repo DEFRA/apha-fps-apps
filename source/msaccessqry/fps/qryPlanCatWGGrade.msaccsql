@@ -1,8 +1,0 @@
-QUERY NAME: qryPlanCatWGGrade
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW PlanCatWGGrade.*
-FROM PlanCatWGGrade;
-

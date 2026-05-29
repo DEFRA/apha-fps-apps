@@ -1,8 +1,0 @@
-QUERY NAME: qryPactSummary
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryJobCodeTotals.Program, qryJobCodeTotals.OldPlanningCode AS Disease, qryJobCodeTotals.JobCode, qryJobCodeTotals.TotalCosts, qryJobCodeTotals.TotalIncome, dbo_ProjectMonthFinal.CumProfile, dbo_ProjectMonthFinal.CumCost, dbo_ProjectMonthFinal.CumInvoices, dbo_ProjectMonthFinal.SumOfMstoneDue, dbo_ProjectMonthFinal.SumOfDue__Done
-FROM qryJobCodeTotals INNER JOIN dbo_ProjectMonthFinal ON qryJobCodeTotals.JobCode = dbo_ProjectMonthFinal.Project;
-

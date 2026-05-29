@@ -1,9 +1,0 @@
-QUERY NAME: JF ZT0126 Ex Wal query
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT TimeCostCalcs.WorkGroup, TimeCostCalcs.Name, TimeCostCalcs.GradeCode, TimeCostCalcs.Project, TimeCostCalcs.JobCode, tlkpProject.ProjectTitle, TimeCostCalcs.Month, tlkpJobCode.JobCodeName, TimeCostCalcs.Time, TimeCostCalcs.GradeCode, TimeCostCalcs.ChargeRate, TimeCostCalcs.Cost, TimeCostCalcs.Overhead
-FROM (TimeCostCalcs INNER JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode) INNER JOIN tlkpProject ON tlkpJobCode.ParentProject = tlkpProject.ParentProject
-WHERE (((TimeCostCalcs.WorkGroup) Like "SVBR" Or (TimeCostCalcs.WorkGroup) Like "SVTR" Or (TimeCostCalcs.WorkGroup) Like "SVST") AND ((TimeCostCalcs.JobCode) Like "ZT*"));
-

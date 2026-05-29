@@ -1,9 +1,0 @@
-QUERY NAME: JF proj summary
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.ParentProject, ProjectMonthFinal.Animals AS LgeAnimals, ProjectMonthFinal.NonAnimals AS ExcCosts, ProjectMonthFinal.TimeCosts AS [Time], ProjectMonthFinal.TransferCosts AS Tests
-FROM tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project
-WHERE (((tlkpProject.ParentProject)="sb4080"));
-

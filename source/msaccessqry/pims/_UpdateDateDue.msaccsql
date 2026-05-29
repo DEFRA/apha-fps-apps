@@ -1,7 +1,0 @@
-QUERY NAME: _UpdateDateDue
----------------------------------------------
-TYPE: UPDATE
-
-SQL:
-UPDATE _RepDateDue INNER JOIN MY_Radtrack_Reports ON ([_RepDateDue].Year = MY_Radtrack_Reports.Year) AND ([_RepDateDue].Project = MY_Radtrack_Reports.Project) AND ([_RepDateDue].Type = MY_Radtrack_Reports.Type) SET MY_Radtrack_Reports.Reminder1 = [_RepDateDue].[Reminder1], MY_Radtrack_Reports.Reminder2 = [_RepDateDue].[Reminder2], MY_Radtrack_Reports.ReplyReceived = [_RepDateDue].[ReplyReceived], MY_Radtrack_Reports.SentToProgManager = [_RepDateDue].[SentToProgManager], MY_Radtrack_Reports.SentToProjLeader = [_RepDateDue].[SentToProjLeader], MY_Radtrack_Reports.EmailedToCustomer = [_RepDateDue].[EmailedToCustomer], MY_Radtrack_Reports.SignedCopyToCustomer = [_RepDateDue].[SignedCopyToCustomer], MY_Radtrack_Reports.RepDueDate = [_RepDateDue].[due date];
-

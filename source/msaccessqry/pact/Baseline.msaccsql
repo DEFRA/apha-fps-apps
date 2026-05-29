@@ -1,9 +1,0 @@
-QUERY NAME: Baseline
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW WorkGroup.WorkGroup, tlkpJobCode.JobCode, GradeType.Type, TimeCostCalcs.GradeCode, WorkGroup.ProfitCentre, [PC-New].PC, tlkpProject.PlanCat, tlkpProject.Program, dbo_vtlkpProject.Program, IIf([type]="science" And [PC]="Split","LabTest",[PC]) AS Expr1, TimeCostCalcs.Project, TimeCostCalcs.JobCode, Sum(TimeCostCalcs.Time) AS SumOfTime, Sum(TimeCostCalcs.Cost) AS SumOfCost
-FROM (([PC-New] INNER JOIN ((GradeType INNER JOIN (tlkpProject INNER JOIN TimeCostCalcs ON tlkpProject.ParentProject = TimeCostCalcs.Project) ON GradeType.GradeCode = TimeCostCalcs.GradeCode) LEFT JOIN WorkGroup ON TimeCostCalcs.WorkGroup = WorkGroup.WorkGroup) ON [PC-New].WG = TimeCostCalcs.WorkGroup) LEFT JOIN dbo_vtlkpProject ON TimeCostCalcs.JobCode = dbo_vtlkpProject.ParentProject) LEFT JOIN tlkpJobCode ON TimeCostCalcs.JobCode = tlkpJobCode.JobCode
-GROUP BY WorkGroup.WorkGroup, tlkpJobCode.JobCode, GradeType.Type, TimeCostCalcs.GradeCode, WorkGroup.ProfitCentre, [PC-New].PC, tlkpProject.PlanCat, tlkpProject.Program, dbo_vtlkpProject.Program, IIf([type]="science" And [PC]="Split","LabTest",[PC]), TimeCostCalcs.Project, TimeCostCalcs.JobCode;
-

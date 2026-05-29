@@ -1,9 +1,0 @@
-QUERY NAME: qryShowWhichProjects_GRadtrack
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT G_tlkpProject_RadTrackData.ParentProject, vProjectLatestDetails.Program, vProjectLatestDetails.Customer, fnDecodeMilestoneDeliverable([projectgroup]) AS Expr1, G_tlkpProject_RadTrackData.ParentProject AS project, vProjectLatestDetails.ProjectGroup
-FROM G_tlkpProject_RadTrackData INNER JOIN vProjectLatestDetails ON G_tlkpProject_RadTrackData.ParentProject = vProjectLatestDetails.ParentProject
-ORDER BY G_tlkpProject_RadTrackData.ParentProject;
-

@@ -1,9 +1,0 @@
-QUERY NAME: qryTotalAnimalCosts
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW vProjectAnimalPlan.ParentProject AS JobCode, Sum(vProjectAnimalPlan.Cost) AS TotalAnimalCosts
-FROM vProjectAnimalPlan
-GROUP BY vProjectAnimalPlan.ParentProject;
-

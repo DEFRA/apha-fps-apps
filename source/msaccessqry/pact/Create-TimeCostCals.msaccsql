@@ -1,7 +1,0 @@
-QUERY NAME: Create-TimeCostCals
----------------------------------------------
-TYPE: OTHER
-
-SQL:
-sp_CreateTimeCostCalcs 
-

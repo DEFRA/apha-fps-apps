@@ -1,8 +1,0 @@
-QUERY NAME: JF Salmonella Output
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT MonthlyOutput.TestCode, TestorProduct.ItemDescription, MonthlyOutput.Buyer, tlkpTestReqmt.UnitPrice, MonthlyOutput.Month, MonthlyOutput.WorkGroup, MonthlyOutput.Volume, MonthlyOutput.WGBuyer, [Janee tests list].testcode
-FROM (TestorProduct INNER JOIN (MonthlyOutput INNER JOIN tlkpTestReqmt ON (MonthlyOutput.Buyer = tlkpTestReqmt.Buyer) AND (MonthlyOutput.TestCode = tlkpTestReqmt.TestCode)) ON TestorProduct.ItemCode = MonthlyOutput.TestCode) INNER JOIN [Janee tests list] ON tlkpTestReqmt.TestCode = [Janee tests list].testcode;
-

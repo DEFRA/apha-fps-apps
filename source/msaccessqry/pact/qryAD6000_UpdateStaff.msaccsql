@@ -1,7 +1,0 @@
-QUERY NAME: qryAD6000_UpdateStaff
----------------------------------------------
-TYPE: UPDATE
-
-SQL:
-UPDATE tempMonthlyTime_Transform SET tempMonthlyTime_Transform.PACTStaffID = BESettingsGet("AD6000_ID"), tempMonthlyTime_Transform.WorkGroup = BESettingsGet("AD6000_WG");
-

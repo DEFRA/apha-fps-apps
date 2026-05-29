@@ -1,8 +1,0 @@
-QUERY NAME: Pivot_Time
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.PlanCat, tlkpProject.Program, MonthlyTime.ParentProject AS Project, MonthlyTime.TimeCode, MonthlyTime.Month, MonthlyTime.Hours, tblStaff.Name, WorkGroupGrade.WorkGroup, IIf([plancat] In ("ztwork","ztleave"),0,[chargerate]*[hours]) AS Fee
-FROM ProfitCentreGrade INNER JOIN (tlkpProgram INNER JOIN (WorkGroupGrade INNER JOIN (tblStaff INNER JOIN (MonthlyTime INNER JOIN tlkpProject ON MonthlyTime.ParentProject = tlkpProject.ParentProject) ON tblStaff.PACTid = MonthlyTime.PACTStaffID) ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade) ON tlkpProgram.ProgramNo = tlkpProject.Program) ON ProfitCentreGrade.PC_Grade = WorkGroupGrade.ProfitCentreGrade;
-

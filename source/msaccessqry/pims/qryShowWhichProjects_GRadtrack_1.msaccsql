@@ -1,9 +1,0 @@
-QUERY NAME: qryShowWhichProjects_GRadtrack_1
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT G_tlkpProject_RadTrackData.ParentProject, vProjectLatestDetails.Manager
-FROM G_tlkpProject_RadTrackData INNER JOIN vProjectLatestDetails ON G_tlkpProject_RadTrackData.ParentProject = vProjectLatestDetails.ParentProject
-ORDER BY G_tlkpProject_RadTrackData.ParentProject;
-

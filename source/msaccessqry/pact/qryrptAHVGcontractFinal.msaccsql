@@ -1,8 +1,0 @@
-QUERY NAME: qryrptAHVGcontractFinal
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW qryrptAHVGcontract3.PeriodName, qryrptAHVGcontract3.Budget_Ext, qryrptAHVGcontract3.ParentProject, qryrptAHVGcontract3.ProjectTitle, qryrptAHVGcontract3.TestCode, qryrptAHVGcontract3.ItemDescription, qryrptAHVGcontract3.ContrVolume, qryrptAHVGcontract3.SumOfMonthVol, IIf(IsNull([CurrentMonthVol]),0,[CurrentMonthVol]) AS ThisMonth, IIf(([contrvolume]=0 Or IsNull([currentmonthvol])),0,[ThisMonth]/[ContrVolume]) AS [ThisMonth%], IIf(IsNull([SumOfVolume]),0,[SumofVolume]) AS YTD, IIf(([contrvolume]=0 Or IsNull([sumofvolume])),0,[YTD]/[contrvolume]) AS [YTD%]
-FROM (qryrptAHVGcontract3 LEFT JOIN qryrptAHVGcontract2 ON (qryrptAHVGcontract3.TestCode = qryrptAHVGcontract2.TestCode) AND (qryrptAHVGcontract3.ParentProject = qryrptAHVGcontract2.Buyer)) LEFT JOIN qryrptAHVGcontract1 ON (qryrptAHVGcontract3.TestCode = qryrptAHVGcontract1.TestCode) AND (qryrptAHVGcontract3.ParentProject = qryrptAHVGcontract1.Buyer);
-

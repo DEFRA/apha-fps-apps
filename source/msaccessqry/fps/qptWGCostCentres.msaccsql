@@ -1,6 +1,0 @@
-QUERY NAME: qptWGCostCentres
----------------------------------------------
-TYPE: PASS-THROUGH
-
-SQL:
-[dbo].[usp_CostCentreWGs]

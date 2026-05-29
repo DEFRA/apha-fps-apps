@@ -1,8 +1,0 @@
-QUERY NAME: pvtProjectCosts
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.PlanCat, tlkpProject.Program, tlkpProject.ParentProject, ProjectMonthFinal.MonthNo, ProjectMonthFinal.CostProfile, ProjectMonthFinal.Subcontracts, ProjectMonthFinal.Animals, ProjectMonthFinal.NonAnimals, ProjectMonthFinal.TimeCosts, ProjectMonthFinal.TransferCosts, ProjectMonthFinal.TotalCost, ProjectMonthFinal.Invoices, ProjectMonthFinal.PortSales
-FROM tlkpProject INNER JOIN ProjectMonthFinal ON tlkpProject.ParentProject = ProjectMonthFinal.Project;
-

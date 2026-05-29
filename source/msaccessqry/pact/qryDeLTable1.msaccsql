@@ -1,8 +1,0 @@
-QUERY NAME: qryDeLTable1
----------------------------------------------
-TYPE: DELETE
-
-SQL:
-DELETE Table1.*
-FROM Table1;
-

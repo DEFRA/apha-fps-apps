@@ -1,9 +1,0 @@
-QUERY NAME: qryrptCSGprogramGraph
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpProject.Program, ProjectMonthFinal.MonthNo, tlkpProject.Budget_cvl, ProjectMonthFinal.CumCost, ProjectMonthFinal.CumProfile, ProjectMonthFinal.SumOfCostProfile, ProjectMonthFinal.SumOfMstoneDue, ProjectMonthFinal.SumOfDue__Done
-FROM ProjectMonthFinal INNER JOIN tlkpProject ON ProjectMonthFinal.Project = tlkpProject.ParentProject
-WHERE ((tlkpProject.Program Is Not Null));
-

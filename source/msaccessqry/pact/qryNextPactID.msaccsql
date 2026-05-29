@@ -1,9 +1,0 @@
-QUERY NAME: qryNextPactID
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW Max(CLng([PACTid])+1) AS NextPactID
-FROM tblWGEmployee
-WHERE (((CLng([pactid]))<2000));
-

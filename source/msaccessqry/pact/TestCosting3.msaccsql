@@ -1,9 +1,0 @@
-QUERY NAME: TestCosting3
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tlkpPortfolioTest.PlanPortfolio, TestCosting2.Project, tlkpPortfolioTest.TestCode, TestCosting2.ProfitCentre, TestCosting2.ProjectWorkGroup, TestCosting2.PlanCat, TestCosting2.ProjectTitle, TestCosting2.TotalTP, TestCosting2.TotalTA, TestCosting2.[NonTimePer£], TestCosting2.[TPper£], tlkpPortfolioTest.TestCode AS JobCode, TestOrProduct.ItemDescription, Sum(TimeCostCalcs.Cost) AS CostSum, [CostSum]*[TPper£] AS TPSurcharge, [CostSum]*[NonTimePer£] AS NonTimeSurcharge, [CostSum]+[TPsurcharge]+[NonTimeSurcharge] AS Total, TestCosting2.CumCost
-FROM ((tlkpPortfolioTest LEFT JOIN TestCosting2 ON tlkpPortfolioTest.PlanPortfolio = TestCosting2.Project) INNER JOIN TestOrProduct ON tlkpPortfolioTest.TestCode = TestOrProduct.ItemCode) LEFT JOIN TimeCostCalcs ON (tlkpPortfolioTest.PlanPortfolio = TimeCostCalcs.Project) AND (tlkpPortfolioTest.TestCode = TimeCostCalcs.JobCode)
-GROUP BY tlkpPortfolioTest.PlanPortfolio, TestCosting2.Project, tlkpPortfolioTest.TestCode, TestCosting2.ProfitCentre, TestCosting2.ProjectWorkGroup, TestCosting2.PlanCat, TestCosting2.ProjectTitle, TestCosting2.TotalTP, TestCosting2.TotalTA, TestCosting2.[NonTimePer£], TestCosting2.[TPper£], tlkpPortfolioTest.TestCode, TestOrProduct.ItemDescription, TestCosting2.CumCost;
-

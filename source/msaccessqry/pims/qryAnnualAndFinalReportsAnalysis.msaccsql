@@ -1,9 +1,0 @@
-QUERY NAME: qryAnnualAndFinalReportsAnalysis
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryMY_RadtrackReports.Year, qryMY_RadtrackReports.Program, IIf([type]='Annual',1,0) AS IsAnnual, IIf([type]='Final',1,0) AS IsFinal, IIf(IsNull([EmailedToCustomer]) Or Not fnDoneInPeriod([EmailedToCustomer]),0,1) AS Met, -fnInReportMonthOrBefore([RepDueDate]) AS DueThisMonth, (Met*IsAnnual) AS A_Sub, (Met*IsFinal) AS F_Sub, IIf(IsNull([RepDueDate]) Or IsNull([EmailedToCustomer]),0,IIf(([RepDueDate]>=[EmailedToCustomer]) And ([RepDueDate]<=fnReportEndOfMonth()),1,0)) AS MetOnTime, qryMY_RadtrackReports.RepDueDate, qryMY_RadtrackReports.EmailedToCustomer, qryMY_RadtrackReports.Customer, G_tlkpProject.Contract, qryMY_RadtrackReports.Manager
-FROM (G_tlkpProject INNER JOIN G_tlkpProject_RadTrackData ON G_tlkpProject.ParentProject = G_tlkpProject_RadTrackData.ParentProject) INNER JOIN qryMY_RadtrackReports ON G_tlkpProject.ParentProject = qryMY_RadtrackReports.Project
-WHERE (((qryMY_RadtrackReports.Year)=fnReportYear()) AND ((qryMY_RadtrackReports.Customer) Like "*"));
-

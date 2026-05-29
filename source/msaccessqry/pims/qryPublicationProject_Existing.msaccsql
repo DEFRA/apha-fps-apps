@@ -1,9 +1,0 @@
-QUERY NAME: qryPublicationProject_Existing
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT tblPublicationProject.PublicationUID, tblPublicationProject.ParentProject, tblPublicationProject.Year
-FROM tblPublicationProject
-WHERE (((tblPublicationProject.PublicationUID)=[Forms]![frmPublicationProject]![UID]));
-

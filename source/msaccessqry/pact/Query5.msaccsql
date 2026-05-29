@@ -1,9 +1,0 @@
-QUERY NAME: Query5
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT Query4.WorkGroup, Count(Query4.Program) AS CountOfProgram
-FROM Query4
-GROUP BY Query4.WorkGroup;
-

@@ -1,9 +1,0 @@
-QUERY NAME: JF Seedcorn proj costs
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT TimeCostCalcs.WorkGroup, TimeCostCalcs.JobCode, TimeCostCalcs.Project, TimeCostCalcs.Month, TimeCostCalcs.GradeCode, TimeCostCalcs.Name, TimeCostCalcs.Division, TimeCostCalcs.Time, TimeCostCalcs.ChargeRate, TimeCostCalcs.Cost
-FROM TimeCostCalcs
-WHERE (((TimeCostCalcs.Project) Like "RD*")) OR (((TimeCostCalcs.Project) Like "CF*"));
-

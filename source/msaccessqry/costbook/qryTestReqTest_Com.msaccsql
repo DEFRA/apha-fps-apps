@@ -1,8 +1,0 @@
-QUERY NAME: qryTestReqTest_Com
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblTestRequ.Project, tblTestRequ.Year, tblTestRequ.TestCode, tblTestRequ.UnitPrice, tblTestRequ.NoTests, [tbltestrequ].[UnitPrice]*[NoTests] AS TestCost, tblTest.ItemDescription AS TestDescription, tblProject.Programme, [TestCost]*(1+[Markup_Tests]/100) AS CostIncMarkup, 100*[CostIncMarkup]/(100-[Profit_Tests]) AS CostIncProfit, tblProjectYear.Markup_Tests, tblProjectYear.Profit_Tests
-FROM (tblTestRequ LEFT JOIN tblTest ON tblTestRequ.TestCode = tblTest.ItemCode) INNER JOIN (tblProject INNER JOIN tblProjectYear ON tblProject.Project = tblProjectYear.Project) ON (tblTestRequ.Year = tblProjectYear.YearNo) AND (tblTestRequ.Project = tblProjectYear.Project);
-

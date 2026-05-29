@@ -1,7 +1,0 @@
-QUERY NAME: _NewYearProjectUpdate
----------------------------------------------
-TYPE: UPDATE
-
-SQL:
-UPDATE tlkpProject SET tlkpProject.TransferIncome = 0, tlkpProject.CustIncome = 0, tlkpProject.WIP_EOY = 0, tlkpProject.FECcost = 0, tlkpProject.Profit = 0, tlkpProject.Budget_CVL = 0, tlkpProject.CarryOver = 0, tlkpProject.WIP_Limit = Null, tlkpProject.WIP_Current = Null, tlkpProject.PVSIncome = Null, tlkpProject.PlanCaseworkDebit = Null;
-

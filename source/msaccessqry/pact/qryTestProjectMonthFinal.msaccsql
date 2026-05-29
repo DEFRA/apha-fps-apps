@@ -1,8 +1,0 @@
-QUERY NAME: qryTestProjectMonthFinal
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW Count(ProjectMonthFinal.Project) AS RowCount, Sum(ProjectMonthFinal.CostProfile) AS SumOfCostProfile1, Sum(ProjectMonthFinal.Subcontracts) AS SumOfSubcontracts, Sum(ProjectMonthFinal.Animals) AS SumOfAnimals, Sum(ProjectMonthFinal.NonAnimals) AS SumOfNonAnimals, Sum(ProjectMonthFinal.TimeCosts) AS SumOfTimeCosts, Sum(ProjectMonthFinal.TransferCosts) AS SumOfTransferCosts, Sum(ProjectMonthFinal.TotalCost) AS SumOfTotalCost, Sum(ProjectMonthFinal.Invoices) AS SumOfInvoices, Sum(ProjectMonthFinal.COIW) AS SumOfCOIW, Sum(ProjectMonthFinal.PortSales) AS SumOfPortSales, Sum(ProjectMonthFinal.CumCost) AS SumOfCumCost, Sum(ProjectMonthFinal.CumProfile) AS SumOfCumProfile, Sum(ProjectMonthFinal.SumOfCostProfile) AS SumOfSumOfCostProfile, Sum(ProjectMonthFinal.CumInvoices) AS SumOfCumInvoices, Sum(ProjectMonthFinal.CumCOIW) AS SumOfCumCOIW, Sum(ProjectMonthFinal.CumPortSales) AS SumOfCumPortSales, Sum(ProjectMonthFinal.MstoneDue) AS SumOfMstoneDue1, Sum(ProjectMonthFinal.Due__Done) AS SumOfDue__Done1, Sum(ProjectMonthFinal.OnTime) AS SumOfOnTime1, Sum(ProjectMonthFinal.SumOfMstoneDue) AS SumOfSumOfMstoneDue, Sum(ProjectMonthFinal.SumOfDue__Done) AS SumOfSumOfDue__Done, Sum(ProjectMonthFinal.SumOfOnTime) AS SumOfSumOfOnTime
-FROM ProjectMonthFinal;
-

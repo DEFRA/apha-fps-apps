@@ -1,9 +1,0 @@
-QUERY NAME: qryDeptIncomeTimeSummary
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT qryDeptIncomeTime_Sub.Project, qryDeptIncomeTime_Sub.OracleProjectCode, qryDeptIncomeTime_Sub.SubAccountCode, qryDeptIncomeTime_Sub.DefraProject, qryDeptIncomeTime_Sub.OPC, qryDeptIncomeTime_Sub.OCC, qryDeptIncomeTime_Sub.SPC, qryDeptIncomeTime_Sub.SCC, Sum(qryDeptIncomeTime_Sub.Time) AS SumOfTime, Sum(qryDeptIncomeTime_Sub.TotalCost) AS SumOfTotalCost
-FROM qryDeptIncomeTime_Sub
-GROUP BY qryDeptIncomeTime_Sub.Project, qryDeptIncomeTime_Sub.OracleProjectCode, qryDeptIncomeTime_Sub.SubAccountCode, qryDeptIncomeTime_Sub.DefraProject, qryDeptIncomeTime_Sub.OPC, qryDeptIncomeTime_Sub.OCC, qryDeptIncomeTime_Sub.SPC, qryDeptIncomeTime_Sub.SCC;
-

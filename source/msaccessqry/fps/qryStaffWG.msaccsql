@@ -1,8 +1,0 @@
-QUERY NAME: qryStaffWG
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW tblStaff.*, WorkGroupGrade.WorkGroup
-FROM WorkGroupGrade INNER JOIN tblStaff ON WorkGroupGrade.WGGrade = tblStaff.WorkGroupGrade;
-

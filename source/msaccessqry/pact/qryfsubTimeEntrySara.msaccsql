@@ -1,8 +1,0 @@
-QUERY NAME: qryfsubTimeEntrySara
----------------------------------------------
-TYPE: SELECT
-
-SQL:
-SELECT DISTINCTROW MonthlyTime.PACTStaffID, MonthlyTime.ParentProject, WorkGroupGrade.WorkGroup, tblStaff.Name, MonthlyTime.TimeCode, MonthlyTime.Month, MonthlyTime.Hours
-FROM WorkGroupGrade INNER JOIN (tblStaff INNER JOIN MonthlyTime ON tblStaff.PACTid = MonthlyTime.PACTStaffID) ON WorkGroupGrade.WG_Grade = tblStaff.WorkGroupGrade;
-
