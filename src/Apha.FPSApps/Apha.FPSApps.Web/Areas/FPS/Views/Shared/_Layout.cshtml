@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @{
+        var allYears = await AppStateService.GetCacheValueAsync<IEnumerable<YearMasterDto>>(FpsCacheKeys.AllYears);
+        var fpsYearCode = allYears?.FirstOrDefault(y => y.FpsYear == FyContext.Year)?.FpsYearCode
+                          ?? FyContext.Year.ToString();
+        var pageTitle = ViewData["Title"]?.ToString();
+        ViewData["Title"] = $"{fpsYearCode} : {pageTitle}";
+    }
     <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
