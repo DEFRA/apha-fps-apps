@@ -30,6 +30,8 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<MyProjSubContract> MyProjSubcontracts { get; set; }
         public virtual DbSet<MyTblAdditionalCosts> MyTblAdditionalCosts { get; set; }
         public virtual DbSet<MyProjectAnimalPlan> MyProjectAnimalPlans { get; set; }
+        public virtual DbSet<MyMonthlyOutput> MyMonthlyOutputs { get; set; }
+        public virtual DbSet<MyTlkpTestReqmt> MyTlkpTestReqmts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +52,8 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new MyProjSubContractMap());
             modelBuilder.ApplyConfiguration(new MyTblAdditionalCostsMap());
             modelBuilder.ApplyConfiguration(new MyProjectAnimalPlanMap());
+            modelBuilder.ApplyConfiguration(new MyMonthlyOutputMap());
+            modelBuilder.ApplyConfiguration(new MyTlkpTestReqmtMap());
 
         }
     }

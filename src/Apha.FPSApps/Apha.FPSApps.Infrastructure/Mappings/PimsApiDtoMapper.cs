@@ -52,6 +52,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Animal Cost
             CreateMap<AnimalCostRes, AnimalCostDto>().ReverseMap();
+
+            // Test Cost
+            CreateMap<TestCostRes, TestCostDto>().ReverseMap();
         }
     }
 }

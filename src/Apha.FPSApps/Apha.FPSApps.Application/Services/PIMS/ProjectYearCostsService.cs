@@ -26,5 +26,11 @@ namespace Apha.FPSApps.Application.Services.PIMS
 
         public async Task<ApiResponseDto<List<AnimalCostDto>>> GetAnimalPlansAsync(string project, short year, QueryParameters<string> query)
             => await _client.PimsProjectYearCosts.GetAnimalPlansAsync(project, year, query);
+
+        public async Task<ApiResponseDto<List<TestCostDto>>> GetTestPlansAsync(string project, short year, QueryParameters<string> query)
+            => await _client.PimsProjectYearCosts.GetTestPlansAsync(project, year, query);
+
+        public async Task<ApiResponseDto<List<TestCostDto>>> GetTestActualsAsync(string project, short year, QueryParameters<string> query)
+            => await _client.PimsProjectYearCosts.GetTestActualsAsync(project, year, query);
     }
 }

@@ -47,6 +47,45 @@ namespace Apha.PIMS.Application.Services
             return BuildResult(_mapper.Map<List<AnimalCostDto>>(paged.Data), paged.PaginationData);
         }
 
+        public async Task<PaginatedResult<TestCostDto>> GetTestPlansAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            PagedData<MyTlkpTestReqmt> paged = await _repository.GetTestPlansAsync(project, year, paging);
+            List<TestCostDto> items = paged.Data.Select(t => new TestCostDto
+            {
+                Year       = t.Year,
+                Buyer      = t.Buyer,
+                TestCode   = t.Testcode,
+                UnitPrice  = t.Unitprice,
+                NoRequired = t.Norequired,
+                Cost       = t.Norequired.HasValue && t.Unitprice.HasValue
+                                 ? t.Unitprice.Value * (decimal)t.Norequired.Value
+                                 : null
+            }).ToList();
+            return BuildResult(items, paged.PaginationData);
+        }
+
+        public async Task<PaginatedResult<TestCostDto>> GetTestActualsAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            PagedData<(MyMonthlyOutput Output, MyTlkpTestReqmt Reqmt)> paged =
+                await _repository.GetTestActualsAsync(project, year, paging);
+            List<TestCostDto> items = paged.Data.Select(x => new TestCostDto
+            {
+                Year      = x.Output.Year,
+                Buyer     = x.Output.Buyer,
+                TestCode  = x.Output.Testcode,
+                UnitPrice = x.Reqmt.Unitprice,
+                Month     = x.Output.Month,
+                WorkGroup = x.Output.Workgroup,
+                Volume    = x.Output.Volume,
+                Charge    = x.Output.Volume.HasValue && x.Reqmt.Unitprice.HasValue
+                                ? x.Reqmt.Unitprice.Value * (decimal)x.Output.Volume.Value
+                                : null
+            }).ToList();
+            return BuildResult(items, paged.PaginationData);
+        }
+
         private static PaginatedResult<TDto> BuildResult<TDto>(List<TDto> items, PaginationData pd)
         {
             return new PaginatedResult<TDto>(items, new PaginationDto

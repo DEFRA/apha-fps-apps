@@ -109,5 +109,49 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<TestCostDto>>> GetTestPlansAsync(
+            string project, short year, QueryParameters<string> query)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(
+                    string.Format(PimsApiEndpoints.GetTestPlans, project, year), query);
+                var response = await _http.GetAsync<List<TestCostRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<TestCostDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<TestCostDto>>>(response);
+                return ApiResponseDto<List<TestCostDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<TestCostDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve test plans", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<List<TestCostDto>>> GetTestActualsAsync(
+            string project, short year, QueryParameters<string> query)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(
+                    string.Format(PimsApiEndpoints.GetTestActuals, project, year), query);
+                var response = await _http.GetAsync<List<TestCostRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<TestCostDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<TestCostDto>>>(response);
+                return ApiResponseDto<List<TestCostDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<TestCostDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve test actuals", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }

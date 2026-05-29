@@ -149,6 +149,76 @@ namespace Apha.PIMS.DataAccess.Repository
             };
         }
 
+        public async Task<PagedData<MyTlkpTestReqmt>> GetTestPlansAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            IQueryable<MyTlkpTestReqmt> query = _context.MyTlkpTestReqmts
+                .AsNoTracking()
+                .Where(t => t.Buyer == project && t.Year == year);
+
+            query = ApplyTestPlanSearch(query, paging.Search);
+            query = ApplyTestPlanSorting(query, paging.SortBy, paging.Descending);
+            List<MyTlkpTestReqmt> all = await query.ToListAsync();
+            return ApplyPaging(all, paging.Page, paging.PageSize);
+        }
+
+        public async Task<PagedData<(MyMonthlyOutput Output, MyTlkpTestReqmt Reqmt)>> GetTestActualsAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            List<(MyMonthlyOutput Output, MyTlkpTestReqmt Reqmt)> joined = await (
+                from mo in _context.MyMonthlyOutputs.AsNoTracking()
+                join tr in _context.MyTlkpTestReqmts.AsNoTracking()
+                    on new { mo.Year, mo.Testcode, mo.Buyer }
+                    equals new { tr.Year, tr.Testcode, tr.Buyer }
+                where mo.Buyer == project && mo.Year == year
+                select new { mo, tr }
+            ).ToListAsync().ContinueWith(t => t.Result.Select(x => (x.mo, x.tr)).ToList());
+
+            string? search = paging.Search?.ToLower();
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                joined = joined.Where(x =>
+                    (x.Output.Testcode?.ToLower().Contains(search) ?? false) ||
+                    (x.Output.Workgroup?.ToLower().Contains(search) ?? false) ||
+                    (x.Output.Buyer?.ToLower().Contains(search) ?? false))
+                    .ToList();
+            }
+
+            joined = (paging.SortBy?.ToLower()) switch
+            {
+                "testcode"  => paging.Descending ? joined.OrderByDescending(x => x.Output.Testcode).ToList()  : joined.OrderBy(x => x.Output.Testcode).ToList(),
+                "month"     => paging.Descending ? joined.OrderByDescending(x => x.Output.Month).ToList()     : joined.OrderBy(x => x.Output.Month).ToList(),
+                "workgroup" => paging.Descending ? joined.OrderByDescending(x => x.Output.Workgroup).ToList() : joined.OrderBy(x => x.Output.Workgroup).ToList(),
+                "volume"    => paging.Descending ? joined.OrderByDescending(x => x.Output.Volume).ToList()    : joined.OrderBy(x => x.Output.Volume).ToList(),
+                _           => joined.OrderBy(x => x.Output.Testcode).ThenBy(x => x.Output.Month).ToList()
+            };
+
+            return ApplyPaging(joined, paging.Page, paging.PageSize);
+        }
+
+        private static IQueryable<MyTlkpTestReqmt> ApplyTestPlanSearch(
+            IQueryable<MyTlkpTestReqmt> query, string? search)
+        {
+            if (string.IsNullOrWhiteSpace(search)) return query;
+            string s = search.ToLower();
+            return query.Where(x =>
+                (x.Testcode != null && x.Testcode.ToLower().Contains(s)) ||
+                (x.Buyer    != null && x.Buyer.ToLower().Contains(s)));
+        }
+
+        private static IQueryable<MyTlkpTestReqmt> ApplyTestPlanSorting(
+            IQueryable<MyTlkpTestReqmt> query, string? sortBy, bool descending)
+        {
+            return (sortBy?.ToLower()) switch
+            {
+                "testcode"    => ApplyOrder(query, x => x.Testcode,    descending),
+                "buyer"       => ApplyOrder(query, x => x.Buyer,       descending),
+                "unitprice"   => ApplyOrder(query, x => x.Unitprice,   descending),
+                "norequired"  => ApplyOrder(query, x => x.Norequired,  descending),
+                _             => query.OrderBy(x => x.Testcode)
+            };
+        }
+
         private static PagedData<T> ApplyPaging<T>(List<T> data, int page, int pageSize)
         {
             if (page < 1) page = 1;

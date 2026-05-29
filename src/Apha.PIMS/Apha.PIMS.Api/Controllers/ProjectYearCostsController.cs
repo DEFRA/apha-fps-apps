@@ -65,5 +65,25 @@ namespace Apha.PIMS.Api.Controllers
             PaginatedResult<AnimalCostDto> result = await _service.GetAnimalPlansAsync(project, year, paging);
             return Ok(_mapper.Map<PaginationRes<AnimalCostRes>>(result));
         }
+
+        /// <summary>Returns paginated Test Cost plans for a given project and year.</summary>
+        [HttpGet("{project}/{year}/testplans")]
+        public async Task<IActionResult> GetTestPlans(
+            string project, short year, [FromQuery] PaginationReq<string> query)
+        {
+            PaginationParameters<string> paging = _mapper.Map<PaginationParameters<string>>(query);
+            PaginatedResult<TestCostDto> result = await _service.GetTestPlansAsync(project, year, paging);
+            return Ok(_mapper.Map<PaginationRes<TestCostRes>>(result));
+        }
+
+        /// <summary>Returns paginated Test Cost actuals for a given project and year.</summary>
+        [HttpGet("{project}/{year}/testactuals")]
+        public async Task<IActionResult> GetTestActuals(
+            string project, short year, [FromQuery] PaginationReq<string> query)
+        {
+            PaginationParameters<string> paging = _mapper.Map<PaginationParameters<string>>(query);
+            PaginatedResult<TestCostDto> result = await _service.GetTestActualsAsync(project, year, paging);
+            return Ok(_mapper.Map<PaginationRes<TestCostRes>>(result));
+        }
     }
 }

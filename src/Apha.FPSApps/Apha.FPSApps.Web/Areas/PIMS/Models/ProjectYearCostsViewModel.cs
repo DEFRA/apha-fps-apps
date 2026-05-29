@@ -15,5 +15,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         public DataGridConfig<AdditionalCostActualItem> AdditionalActualsGrid { get; set; } = new();
         public DataGridConfig<AnimalCostPlanItem> AnimalPlansGrid { get; set; } = new();
         public DataGridConfig<AnimalCostActualItem> AnimalActualsGrid { get; set; } = new();
+        public DataGridConfig<TestCostPlanItem> TestPlansGrid { get; set; } = new();
+        public DataGridConfig<TestCostActualItem> TestActualsGrid { get; set; } = new();
     }
 }

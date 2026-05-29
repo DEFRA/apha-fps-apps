@@ -31,6 +31,12 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Animal Actuals grid item
             CreateMap<AnimalCostDto, AnimalCostActualItem>().ReverseMap();
+
+            // Test Plan grid item
+            CreateMap<TestCostDto, TestCostPlanItem>().ReverseMap();
+
+            // Test Actuals grid item
+            CreateMap<TestCostDto, TestCostActualItem>().ReverseMap();
         }
     }
 }
