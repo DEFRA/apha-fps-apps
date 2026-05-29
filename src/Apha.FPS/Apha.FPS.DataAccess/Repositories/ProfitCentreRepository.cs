@@ -1,3 +1,4 @@
+using Apha.Common.Constants;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -71,7 +72,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         .AsNoTracking()
                         .FirstOrDefaultAsync(u => u.UserEmail != null && u.UserEmail.ToLower() == _requestContext.UserEmailId);
 
-                    var currentUserId = currentUser?.UserId ?? 42;
+                    var currentUserId = currentUser?.UserId ?? (int)SuperUser.SuperUserId;
 
                     var systemUserAlreadyExists = await _dbContext.UserProfitcentres
                         .IgnoreQueryFilters()
@@ -125,7 +126,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         .AsNoTracking()
                         .FirstOrDefaultAsync(u => u.UserEmail != null && u.UserEmail.ToLower() == _requestContext.UserEmailId);
 
-                    var currentUserId = currentUser?.UserId ?? 42;
+                    var currentUserId = currentUser?.UserId ?? (int)SuperUser.SuperUserId;
 
                     var userAlreadyLinked = await _dbContext.UserProfitcentres
                         .IgnoreQueryFilters()
