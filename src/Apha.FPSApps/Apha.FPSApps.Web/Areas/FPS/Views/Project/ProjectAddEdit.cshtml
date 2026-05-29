@@ -16,18 +16,8 @@
                 <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
                     <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
                         <div class="col-md-6">
-                            
+
                         </div>
-                        @if (!isEditMode)
-                        {
-                            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px;" class="col-md-6">
-                                <label class="fw-bold mt-2" for="programmeSelect">Programme:</label>
-                                <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
-                                        class="form-select form-select-sm" style="width: auto; min-width: 260px;">
-                                    <option value="">-- Select Programme --</option>
-                                </select>
-                            </div>
-                        }
                     </div>
                 </div>
             </div>
@@ -409,16 +399,6 @@
         if (typeof $ !== 'undefined' && $.validator && $.validator.unobtrusive) {
             $.validator.unobtrusive.parse(document);
         }
-
-        $('#programmeSelect').on('change', function () {
-            var programSelect = document.getElementById('Program');
-            if (programSelect && !programSelect.value) {
-                var val = $(this).val();
-                Array.from(programSelect.options).forEach(function (o) { o.selected = o.value === val; });
-                var matchRow = document.querySelector('#ProgramDropdownBody tr[data-value="' + val + '"]');
-                document.getElementById('ProgramDisplay').value = matchRow ? matchRow.getAttribute('data-display') : val;
-            }
-        });
 
         function syncResourceCentreFromCostCentre() {
             const sel = document.getElementById('CostCentre');
