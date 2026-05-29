@@ -14,17 +14,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     [Area("PACT")]
     [Authorize(Roles = "PACTAdmin,PACTUser")]
     [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
-    public class WorkGroupTimeByJobCodeController : Controller
+    public class WorkGroupSummarisedStaffTimeUsageController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IWorkGroupService _workGroupService;
 
         /// <summary>
-        /// Initialises a new instance of <see cref="WorkGroupTimeByJobCodeController"/>.
+        /// Initialises a new instance of <see cref="WorkGroupSummarisedStaffTimeUsageController"/>.
         /// </summary>
         /// <param name="mapper">AutoMapper instance used to map pagination filters, row collections, and summary DTOs to their corresponding view-model types.</param>
         /// <param name="workGroupService">Application service that retrieves summarised staff time-usage data from the PACT API.</param>
-        public WorkGroupTimeByJobCodeController(IMapper mapper, IWorkGroupService workGroupService)
+        public WorkGroupSummarisedStaffTimeUsageController(IMapper mapper, IWorkGroupService workGroupService)
         {
             _mapper = mapper;
             _workGroupService = workGroupService;
@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
 
         /// <summary>
-        /// Renders the Work Group Time By Job Code page (frmCluedo1 equivalent).
+        /// Renders the Work Group Time By Job Code page .
         /// Fetches the full summarised staff time-usage dataset for the supplied work group,
         /// builds the initial data-grid configuration with no sort applied, computes the
         /// pre-aggregated footer summary, and populates <c>ViewBag.JobTitleLookup</c> with a
@@ -72,7 +72,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// page of summarised staff time-usage data, and returns only the <c>_DataGrid</c> partial
         /// view so the page can be updated in-place without a full reload.
         /// After the partial is injected the grid fires a <c>gridReloaded</c> custom event which
-        /// <c>work-group-time-by-job-code.js</c> listens to in order to auto-select the first row.
+        /// <c>work-group-summarised-staffTimeUsage.js</c> listens to in order to auto-select the first row.
         /// </summary>
         /// <param name="request">Pagination, sort, and column-filter parameters submitted by the grid via AJAX POST.</param>
         /// <param name="workGroup">Work group name used to scope the data query.
@@ -132,7 +132,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Maps the service response to the <see cref="WgSummarisedStaffTimeUsageSummary"/> footer model.
         /// Returns a default (zero-valued) summary when the response is unsuccessful or contains no data,
-        /// mirroring the three-row footer of the legacy MS-Access form <c>frmCluedo1</c>.
         /// </summary>
         /// <param name="response">The API response whose <c>Summary</c> property is mapped to the view model.</param>
         /// <returns>
@@ -158,7 +157,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             GridId = "timeUsageGrid",
             Title = string.Empty,
-            BindGridUrl = "/PACT/WorkGroupTimeByJobCode/LoadSummarisedStaffTimeGrid",
+            BindGridUrl = "/PACT/WorkGroupSummarisedStaffTimeUsage/LoadSummarisedStaffTimeGrid",
             ExtraFilterMethod = "getWorkGroupTimeByJobCodeExtraFilters",
             ShowCheckboxColumn = false,
             AllowAdd = false,

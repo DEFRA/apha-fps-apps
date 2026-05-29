@@ -10,26 +10,21 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeControllerTest
+namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupSummarisedStaffTimeUsageControllerTest
 {
-    public class WorkGroupTimeByJobCodeControllerTests
+    public class WorkGroupSummarisedStaffTimeUsageControllerTests
     {
         private readonly IMapper _mapper;
         private readonly IWorkGroupService _workGroupService;
-        private readonly WorkGroupTimeByJobCodeController _controller;
+        private readonly WorkGroupSummarisedStaffTimeUsageController _controller;
 
-        public WorkGroupTimeByJobCodeControllerTests()
+        public WorkGroupSummarisedStaffTimeUsageControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
             _workGroupService = Substitute.For<IWorkGroupService>();
-            _controller = new WorkGroupTimeByJobCodeController(_mapper, _workGroupService);
+            _controller = new WorkGroupSummarisedStaffTimeUsageController(_mapper, _workGroupService);
         }
 
-        // â”€â”€ Shared helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-        /// <summary>
-        /// Wires _mapper.Map&lt;QueryParameters&lt;string&gt;&gt; for any PaginationFilter input.
-        /// </summary>
         private void SetupMapperQueryParameters()
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -67,10 +62,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             => ApiResponseDto<WgSummarisedStaffTimeUsageDto>.FailureResponse(
                    [new ApiErrorDto { Message = "Error", Code = "ERR" }], new ApiMetaDto());
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // Index
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
+       
         #region Index â€” return type and view model structure
 
         [Fact]
@@ -330,7 +322,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             // Assert
             var model = (WgSummarisedStaffTimeUsageViewModel)((ViewResult)result).Model!;
             Assert.Equal("timeUsageGrid",                                      model.Grid.GridId);
-            Assert.Equal("/PACT/WorkGroupTimeByJobCode/LoadSummarisedStaffTimeGrid",              model.Grid.BindGridUrl);
+            Assert.Equal("/PACT/WorkGroupSummarisedStaffTimeUsage/LoadSummarisedStaffTimeGrid",              model.Grid.BindGridUrl);
             Assert.Equal("getWorkGroupTimeByJobCodeExtraFilters",              model.Grid.ExtraFilterMethod);
             Assert.False(model.Grid.ShowCheckboxColumn);
             Assert.False(model.Grid.AllowAdd);
@@ -795,7 +787,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTimeByJobCodeCont
             var partial = Assert.IsType<PartialViewResult>(result);
             var grid = Assert.IsType<DataGridConfig<WgSummarisedStaffTimeUsageRow>>(partial.Model);
             Assert.Equal("timeUsageGrid",                                      grid.GridId);
-            Assert.Equal("/PACT/WorkGroupTimeByJobCode/LoadSummarisedStaffTimeGrid",              grid.BindGridUrl);
+            Assert.Equal("/PACT/WorkGroupSummarisedStaffTimeUsage/LoadSummarisedStaffTimeGrid",              grid.BindGridUrl);
             Assert.Equal("getWorkGroupTimeByJobCodeExtraFilters",              grid.ExtraFilterMethod);
             Assert.False(grid.ShowCheckboxColumn);
             Assert.False(grid.AllowAdd);
