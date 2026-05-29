@@ -39,6 +39,14 @@ namespace Apha.FPSApps.Web.Mappings
             // Resource Set-Up
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 
+            // BudgetResourceLevel
+            CreateMap<BudgetResourceCentreLevelItem, BidViewDto>().ReverseMap();
+            CreateMap<PurchaseItem, PurchaseDto>().ReverseMap();
+            CreateMap<WorkGroupItem, WorkGroupViewDto>()
+                .ForMember(d => d.WorkgroupName, o => o.MapFrom(s => s.WorkgroupName))
+                .ReverseMap()
+                .ForMember(d => d.WorkGroup, o => o.MapFrom(s => s.WorkgroupName));
+
             // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityItem>().ReverseMap();
         }

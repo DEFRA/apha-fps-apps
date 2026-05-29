@@ -73,6 +73,13 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
+
+            // BudgetResourceLevel
+            CreateMap<BidDto, BidReq>().ReverseMap();
+            CreateMap<BidDto, BidRes>().ReverseMap();
+            CreateMap<BidViewDto, BidViewRes>().ReverseMap();
+            CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
+            CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
         }
     }
 }
