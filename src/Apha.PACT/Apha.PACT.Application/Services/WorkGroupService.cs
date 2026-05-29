@@ -2,7 +2,6 @@ using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Validation;
-using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
@@ -51,7 +50,7 @@ namespace Apha.PACT.Application.Services
             var rawEntries = await _repository.GetWgSummarisedStaffTimeUsageAsync(workGroup);
             var entries = _mapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(rawEntries);
 
-            // Derive HrsPaid: sum across all distinct people in the work group (mirrors Access FormHeader HrsPaid)
+            // Derive HrsPaid: sum across all distinct people in the work group
             var hrsPaid = entries
                 .GroupBy(e => e.Name)
                 .Select(g => g.First())
@@ -84,7 +83,7 @@ namespace Apha.PACT.Application.Services
                     .Select(r => new JobTitleLookupItem
                     {
                         JobCode  = r.JobCode!,
-                        JobTitle = string.IsNullOrWhiteSpace(r.JobTitle) ? "No description available" : r.JobTitle
+                        JobTitle = string.IsNullOrWhiteSpace(r.JobTitle) ? string.Empty : r.JobTitle
                     })
                     .ToList(),
                 Pagination = new PaginationDto
@@ -111,7 +110,7 @@ namespace Apha.PACT.Application.Services
                     {
                         ParentProject = g.Key.ParentProject,
                         JobCode = g.Key.JobCode,
-                        JobTitle = string.IsNullOrWhiteSpace(g.First().JobTitle) ? "No description available" : g.First().JobTitle,
+                        JobTitle = string.IsNullOrWhiteSpace(g.First().JobTitle) ? string.Empty : g.First().JobTitle,
                         April = HoursForMonth("April"),
                         May = HoursForMonth("May"),
                         June = HoursForMonth("June"),
@@ -134,15 +133,7 @@ namespace Apha.PACT.Application.Services
         }
 
         /// <summary>
-        /// Builds the three-row footer that appeared at the bottom of frmCluedo1.
-        ///
-        /// Access expressions translated:
-        ///   Field46  = Sum([April])
-        ///   Field54  = IIf(IsNull([field46]), 0, [hrspaid]/12)   → standard hours for April
-        ///   Field75  = [field46] / [hrspaidmonth]                → % of std hrs for April
-        ///   (same pattern repeated for every other month)
-        ///   Field66  = sum of all 12 standard-hours fields        → total standard hours
-        ///   Field80  = [field51] / [field66]                     → overall %
+        /// Builds the three-row footer that appeared at the botton.
         /// </summary>
         private static WgSummarisedStaffTimeUsageSummaryDto BuildSummary(
             IReadOnlyList<WgSummarisedStaffTimeUsageRowDto> rows, double standardHoursPerMonth)
@@ -161,14 +152,13 @@ namespace Apha.PACT.Application.Services
             var totalHoursMarch = rows.Sum(r => r.March);
             var grandTotalTime = rows.Sum(r => r.TotalTime);
 
-            // Standard hours per month: 0 when the month has no recorded entries
-            // mirrors IIf(IsNull([field46]), 0, [hrspaid]/12)
+            // Returns the standard hours allowance for a month
             double StandardHoursFor(double totalHoursInMonth)
             {
                 return totalHoursInMonth == 0 ? 0 : standardHoursPerMonth;
             }
 
-            // Percentage of standard hours allocated per month: mirrors =[field46]/[hrspaidmonth]
+            // Percentage of recorded hours against the standard hours allowance for a single month, rounded to one decimal place;
             double PercentAllocated(double totalHoursInMonth, double standardHours)
             {
                 return standardHours == 0 ? 0 : Math.Round(totalHoursInMonth / standardHours * 100, 1);
@@ -192,8 +182,7 @@ namespace Apha.PACT.Application.Services
                 GrandTotalCost = rows.Sum(r => r.TotalCost),
                 StandardHoursPerMonth = standardHoursPerMonth,
 
-                // Field66: sum of per-month standard hours — only months with data contribute
-                // mirrors =[hrspaidmonth]+[Field55]+[Field56]+...+[field104]
+                // Sum of the standard hours allowance for each month that had recorded activity;
                 TotalStandardHours =
                     StandardHoursFor(totalHoursApril)     + StandardHoursFor(totalHoursMay)      +
                     StandardHoursFor(totalHoursJune)      + StandardHoursFor(totalHoursJuly)     +
@@ -202,8 +191,7 @@ namespace Apha.PACT.Application.Services
                     StandardHoursFor(totalHoursDecember)  + StandardHoursFor(totalHoursJanuary)  +
                     StandardHoursFor(totalHoursFebruary)  + StandardHoursFor(totalHoursMarch),
 
-                // Grand total % allocated: mirrors Access Field80 = [field51] / [field66]
-                // field51 = grandTotalTime, field66 = TotalStandardHours (sum of active months only)
+                // Percentage of total recorded hours against the sum of standard hours for all months that had activity;
                 GrandTotalPercentAllocated = (
                     StandardHoursFor(totalHoursApril)      + StandardHoursFor(totalHoursMay)       +
                     StandardHoursFor(totalHoursJune)       + StandardHoursFor(totalHoursJuly)      +

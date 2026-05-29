@@ -734,7 +734,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
-            result.Rows.Single().JobTitle.Should().Be("No description available");
+            result.Rows.Single().JobTitle.Should().BeEmpty();
         }
 
         [Fact]
@@ -747,7 +747,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
-            result.Rows.Single().JobTitle.Should().Be("No description available");
+            result.Rows.Single().JobTitle.Should().BeEmpty();
         }
 
         [Fact]
@@ -760,7 +760,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
-            result.Rows.Single().JobTitle.Should().Be("No description available");
+            result.Rows.Single().JobTitle.Should().BeEmpty();
         }
 
         [Fact]
@@ -904,7 +904,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
-            result.JobTitleLookup.Single().JobTitle.Should().Be("No description available");
+            result.JobTitleLookup.Single().JobTitle.Should().BeEmpty();
         }
 
         [Fact]
@@ -917,7 +917,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
-            result.JobTitleLookup.Single().JobTitle.Should().Be("No description available");
+            result.JobTitleLookup.Single().JobTitle.Should().BeEmpty();
         }
 
         [Fact]
@@ -930,7 +930,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
             var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
-            result.JobTitleLookup.Single().JobTitle.Should().Be("No description available");
+            result.JobTitleLookup.Single().JobTitle.Should().BeEmpty();
         }
 
         [Fact]

@@ -3,9 +3,25 @@ using Apha.PACT.Application.Pagination;
 namespace Apha.PACT.Application.Dtos
 {
     /// <summary>
-    /// Represents one row in the Work Group Time By Job Code view for a person / job-code combination,
-    /// with hours recorded against each of the 12 fiscal-year months (April – March).
-    /// Mirrors the data shown in the legacy MS-Access form frmCluedo1.
+    /// Wrapper returned by the service containing the pivot rows and pre-computed footer summary.
+    /// </summary>
+    public class WgSummarisedStaffTimeUsageDto
+    {
+        public IEnumerable<WgSummarisedStaffTimeUsageRowDto> Rows { get; set; } = [];
+        public WgSummarisedStaffTimeUsageSummaryDto Summary { get; set; } = new();
+        public PaginationDto Pagination { get; set; } = new();
+
+        public double HrsPaid { get; set; }
+
+        /// <summary>
+        /// Complete JobCode → JobTitle list built from all rows (pre-pagination)
+        /// so clients can resolve job titles across any page without an extra round-trip.
+        /// </summary>
+        public List<JobTitleLookupItem> JobTitleLookup { get; set; } = [];
+    }
+
+    /// <summary>
+    /// Pivot row representing total hours and cost per fiscal month for a single ParentProject and JobCode combination.
     /// </summary>
     public class WgSummarisedStaffTimeUsageRowDto
     {
@@ -13,7 +29,6 @@ namespace Apha.PACT.Application.Dtos
         public string? JobCode { get; set; }
         public string? JobTitle { get; set; }
 
-        // Monthly hours — fiscal year runs April (month 1) to March (month 12)
         public double April { get; set; }
         public double May { get; set; }
         public double June { get; set; }
@@ -87,21 +102,19 @@ namespace Apha.PACT.Application.Dtos
     }
 
     /// <summary>
-    /// Wrapper returned by the service containing the pivot rows and pre-computed footer summary.
+    /// Flat DTO representing one raw row returned by the repository for the summarised
+    /// staff time-usage query. Maps 1-to-1 from <c>WgSummarisedStaffTimeUsageView</c>
+    /// so that the Application service layer is fully decoupled from the EF-mapped entity.
     /// </summary>
-    public class WgSummarisedStaffTimeUsageDto
+    public class WgSummarisedStaffTimeUsageEntryDto
     {
-        public IEnumerable<WgSummarisedStaffTimeUsageRowDto> Rows    { get; set; } = [];
-        public WgSummarisedStaffTimeUsageSummaryDto          Summary { get; set; } = new();
-        public PaginationDto Pagination { get; set; } = new();
-
-        /// <summary>Total HrsPaid</summary>
-        public double HrsPaid { get; set; }
-
-        /// <summary>
-        /// Complete JobCode → JobTitle list built from all rows (pre-pagination)
-        /// so clients can resolve job titles across any page without an extra round-trip.
-        /// </summary>
-        public List<JobTitleLookupItem> JobTitleLookup { get; set; } = [];
+        public string? MonthName { get; set; }
+        public string? Name { get; set; }
+        public double? HrsPaid { get; set; }
+        public string? ParentProject { get; set; }
+        public string? JobCode { get; set; }
+        public string? JobTitle { get; set; }
+        public double? TotalTime { get; set; }
+        public double? TotalCost { get; set; }
     }
 }
