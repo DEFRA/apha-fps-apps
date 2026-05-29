@@ -258,13 +258,11 @@ namespace Apha.PACT.Api.UnitTests
             var ok = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<CopyInvoicesRes>(ok.Value);
             Assert.True(response.Success);
-            Assert.Equal(0, response.CopiedCount);
-            Assert.Equal(0, response.FailedCount);
             Assert.Empty(response.Errors);
         }
 
         [Fact]
-        public async Task CopyInvoices_WithInvoiceRecords_ReturnsOkWithCopiedCount()
+        public async Task CopyInvoices_WithInvoiceRecords_ReturnsOkWithSuccess()
         {
             // Arrange
             var invoiceRecords = new List<ProjectInvoiceReq>
@@ -289,7 +287,6 @@ namespace Apha.PACT.Api.UnitTests
             var ok = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<CopyInvoicesRes>(ok.Value);
             Assert.True(response.Success);
-            Assert.Equal(2, response.CopiedCount);
         }
 
         [Fact]
@@ -313,7 +310,6 @@ namespace Apha.PACT.Api.UnitTests
             var response = Assert.IsType<CopyInvoicesRes>(ok.Value);
             Assert.False(response.Success);
             Assert.Equal("Failed to copy invoices", response.Message);
-            Assert.Equal(0, response.CopiedCount);
         }
 
         [Fact]
@@ -420,7 +416,7 @@ namespace Apha.PACT.Api.UnitTests
         }
 
         [Fact]
-        public async Task CopyInvoices_SuccessWithNullInvoiceRecords_SetsCopiedCountToZero()
+        public async Task CopyInvoices_SuccessWithNullInvoiceRecords_ReturnsSuccess()
         {
             // Arrange
             var request = new CopyInvoicesReq
@@ -439,7 +435,7 @@ namespace Apha.PACT.Api.UnitTests
             // Assert
             var ok = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<CopyInvoicesRes>(ok.Value);
-            Assert.Equal(0, response.CopiedCount);
+            Assert.True(response.Success);
         }
 
         [Fact]
@@ -463,8 +459,6 @@ namespace Apha.PACT.Api.UnitTests
             var response = Assert.IsType<CopyInvoicesRes>(ok.Value);
             Assert.NotNull(response.Message);
             Assert.NotNull(response.Errors);
-            Assert.True(response.CopiedCount >= 0);
-            Assert.True(response.FailedCount >= 0);
         }
 
         #endregion

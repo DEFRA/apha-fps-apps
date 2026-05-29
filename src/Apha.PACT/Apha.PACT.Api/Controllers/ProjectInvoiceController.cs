@@ -116,8 +116,6 @@ namespace Apha.PACT.Api.Controllers
             {
                 Success = success,
                 Message = success ? "Invoices copied successfully" : "Failed to copy invoices",
-                CopiedCount = success ? (request.InvoiceRecords?.Count ?? 0) : 0,
-                FailedCount = 0,
                 Errors = new List<string>()
             };
 
