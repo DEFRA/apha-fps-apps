@@ -14,7 +14,7 @@ var TestPlanJobConfig = {
 
 function addTestPlan(btn) {
     if (TestPlanJobConfig.requireJobCodeForAdd && !TestPlanJobConfig.getJobCode()) {
-        alert('Please select a project first.');
+        showGovukAlert('Please select a project first.');
         return;
     }
     $.ajax({
@@ -30,7 +30,7 @@ function addTestPlan(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while opening the form.');
+                showGovukAlert('An error occurred while opening the form.');
             }
         }
     });
@@ -58,9 +58,10 @@ function saveTestPlan() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                alert(result.message);
                 closeModal();
-                TestPlanJobConfig.onSaved();
+                showGovukAlert(result.message).then(function () {                   
+                    TestPlanJobConfig.onSaved();
+                });
             } else {
                 displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
             }
@@ -69,7 +70,7 @@ function saveTestPlan() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while saving.');
+                showGovukAlert('An error occurred while saving.');
             }
         }
     });
@@ -90,7 +91,7 @@ function editTestPlan(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while fetching the record.');
+                showGovukAlert('An error occurred while fetching the record.');
             }
         }
     });
@@ -118,9 +119,10 @@ function updateTestPlan() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                alert(result.message);
                 closeModal();
-                TestPlanJobConfig.onUpdated();
+                showGovukAlert(result.message).then(function () {                  
+                    TestPlanJobConfig.onUpdated();
+                });
             } else {
                 displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
             }
@@ -129,7 +131,7 @@ function updateTestPlan() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while saving.');
+                showGovukAlert('An error occurred while saving.');
             }
         }
     });

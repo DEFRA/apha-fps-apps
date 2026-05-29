@@ -46,6 +46,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
+            services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -77,6 +78,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupGradeRepository, WorkGroupGradeRepository>();
             services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
             services.AddScoped<IDivisionGradeRepository, DivisionGradeRepository>();
+            services.AddScoped<IProjectStaffPlanRepository, ProjectStaffPlanRepository>();
             return services;
 
         }

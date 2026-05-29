@@ -9,5 +9,6 @@ namespace Apha.PACT.Core.Interfaces
         Task<IEnumerable<SummarisedWgTimeView>> GetSummarisedWorkgroupTimeAsync(string? workGroup);
         Task<PagedData<WorkGroupTimeCode>> GetWorkGroupTimeCodeAsync(PaginationParameters<string> query, string? workGroup, int? monthNumber);
         Task<PagedData<WorkGroupValidTimeCode>> GetWorkGroupValidTimeCodeAsync(PaginationParameters<string> query, string workGroup);
+        Task<IEnumerable<WgSummarisedStaffTimeUsageView>> GetWgSummarisedStaffTimeUsageAsync(string workGroup);
     }
 }

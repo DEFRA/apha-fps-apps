@@ -653,6 +653,324 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             Assert.Equal(2.0, result.Data.ElementAt(1).Hours);
         }
 
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_SortByPACTStaffIDAscending_ReturnsSortedRows()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG1")],
+                [StaffView("S2", "Alice", "G1"), StaffView("S1", "Bob", "G1")],
+                [TimeRecord("S2", "PP1", "TC1", 1), TimeRecord("S1", "PP2", "TC2", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "PACTStaffID", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal("S1", result.Data.ElementAt(0).PACTStaffID);
+            Assert.Equal("S2", result.Data.ElementAt(1).PACTStaffID);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_SortByPACTStaffIDDescending_ReturnsSortedRows()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG1")],
+                [StaffView("S1", "Alice", "G1"), StaffView("S2", "Bob", "G1")],
+                [TimeRecord("S1", "PP1", "TC1", 1), TimeRecord("S2", "PP2", "TC2", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "PACTStaffID", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal("S2", result.Data.ElementAt(0).PACTStaffID);
+            Assert.Equal("S1", result.Data.ElementAt(1).PACTStaffID);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_SortByWorkGroupAscending_ReturnsSortedRows()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG_BETA"), GradeView("G2", "WG_ALPHA")],
+                [StaffView("S1", "Alice", "G1"), StaffView("S2", "Bob", "G2")],
+                [TimeRecord("S1", "PP1", "TC1", 1), TimeRecord("S2", "PP2", "TC2", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "WorkGroup", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal("WG_ALPHA", result.Data.ElementAt(0).WorkGroup);
+            Assert.Equal("WG_BETA",  result.Data.ElementAt(1).WorkGroup);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_SortByWorkGroupDescending_ReturnsSortedRows()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG_ALPHA"), GradeView("G2", "WG_BETA")],
+                [StaffView("S1", "Alice", "G1"), StaffView("S2", "Bob", "G2")],
+                [TimeRecord("S1", "PP1", "TC1", 1), TimeRecord("S2", "PP2", "TC2", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "WorkGroup", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal("WG_BETA",  result.Data.ElementAt(0).WorkGroup);
+            Assert.Equal("WG_ALPHA", result.Data.ElementAt(1).WorkGroup);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_SortByParentProjectAscending_ReturnsSortedRows()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG1")],
+                [StaffView("S1", "Alice", "G1"), StaffView("S2", "Bob", "G1")],
+                [TimeRecord("S1", "PP_B", "TC1", 1), TimeRecord("S2", "PP_A", "TC2", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "ParentProject", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal("PP_A", result.Data.ElementAt(0).ParentProject);
+            Assert.Equal("PP_B", result.Data.ElementAt(1).ParentProject);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_SortByParentProjectDescending_ReturnsSortedRows()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG1")],
+                [StaffView("S1", "Alice", "G1"), StaffView("S2", "Bob", "G1")],
+                [TimeRecord("S1", "PP_A", "TC1", 1), TimeRecord("S2", "PP_B", "TC2", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "ParentProject", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal("PP_B", result.Data.ElementAt(0).ParentProject);
+            Assert.Equal("PP_A", result.Data.ElementAt(1).ParentProject);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_SortByTimeCodeAscending_ReturnsSortedRows()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG1")],
+                [StaffView("S1", "Alice", "G1"), StaffView("S2", "Bob", "G1")],
+                [TimeRecord("S1", "PP1", "TC_B", 1), TimeRecord("S2", "PP2", "TC_A", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "TimeCode", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal("TC_A", result.Data.ElementAt(0).TimeCode);
+            Assert.Equal("TC_B", result.Data.ElementAt(1).TimeCode);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_SortByTimeCodeDescending_ReturnsSortedRows()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG1")],
+                [StaffView("S1", "Alice", "G1"), StaffView("S2", "Bob", "G1")],
+                [TimeRecord("S1", "PP1", "TC_A", 1), TimeRecord("S2", "PP2", "TC_B", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "TimeCode", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal("TC_B", result.Data.ElementAt(0).TimeCode);
+            Assert.Equal("TC_A", result.Data.ElementAt(1).TimeCode);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_SortByMonthAscending_ReturnsSortedRows()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG1")],
+                [StaffView("S1", "Alice", "G1"), StaffView("S2", "Bob", "G1")],
+                [TimeRecord("S1", "PP1", "TC1", 5), TimeRecord("S2", "PP2", "TC2", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "Month", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal(2, result.Data.ElementAt(0).Month);
+            Assert.Equal(5, result.Data.ElementAt(1).Month);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_SortByMonthDescending_ReturnsSortedRows()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG1")],
+                [StaffView("S1", "Alice", "G1"), StaffView("S2", "Bob", "G1")],
+                [TimeRecord("S1", "PP1", "TC1", 2), TimeRecord("S2", "PP2", "TC2", 5)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "Month", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal(5, result.Data.ElementAt(0).Month);
+            Assert.Equal(2, result.Data.ElementAt(1).Month);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_UnknownSortByAscending_DefaultsToOrderByName()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG1")],
+                [StaffView("S1", "Zara", "G1"), StaffView("S2", "Amy", "G1")],
+                [TimeRecord("S1", "PP1", "TC1", 1), TimeRecord("S2", "PP2", "TC2", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "UnknownColumn", Descending = false
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal("Amy",  result.Data.ElementAt(0).Name);
+            Assert.Equal("Zara", result.Data.ElementAt(1).Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_UnknownSortByDescending_DefaultsToOrderByNameDescending()
+        {
+            var repo = CreateTimeCodeRepository(
+                [GradeView("G1", "WG1")],
+                [StaffView("S1", "Amy", "G1"), StaffView("S2", "Zara", "G1")],
+                [TimeRecord("S1", "PP1", "TC1", 1), TimeRecord("S2", "PP2", "TC2", 2)]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "UnknownColumn", Descending = true
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Equal("Zara", result.Data.ElementAt(0).Name);
+            Assert.Equal("Amy",  result.Data.ElementAt(1).Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_NullDeserializedFilter_ReturnsAllRows()
+        {
+            var repo  = CreateDefaultTimeCodeRepository();
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "null"
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_FilterWithBlankPACTStaffID_IsIgnored()
+        {
+            var repo  = CreateDefaultTimeCodeRepository();
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"PACTStaffID\":\"   \"}"
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_FilterWithBlankName_IsIgnored()
+        {
+            var repo  = CreateDefaultTimeCodeRepository();
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"Name\":\"   \"}"
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_FilterWithBlankWorkGroup_IsIgnored()
+        {
+            var repo  = CreateDefaultTimeCodeRepository();
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"WorkGroup\":\"   \"}"
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_FilterWithBlankParentProject_IsIgnored()
+        {
+            var repo  = CreateDefaultTimeCodeRepository();
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ParentProject\":\"   \"}"
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupTimeCodeAsync_FilterWithBlankTimeCode_IsIgnored()
+        {
+            var repo  = CreateDefaultTimeCodeRepository();
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"TimeCode\":\"   \"}"
+            };
+
+            var result = await repo.GetWorkGroupTimeCodeAsync(query, null, null);
+
+            Assert.Single(result.Data);
+        }
+
         #endregion
 
         // ────────────────────────────────────────────────────────────────────
@@ -1424,6 +1742,341 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             Assert.Equal("PROJ_A",         row.ParentProject);
             Assert.Equal("MANAGER_JONES",  row.Manager);
             Assert.True(row.Active);
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // GetWgSummarisedStaffTimeUsageAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        // ── Factory helpers ───────────────────────────────────────────────────
+
+        private static WgSummarisedStaffTimeUsageView TimeUsageRow(
+            string  workGroup    = "WG1",
+            string  name         = "Alice",
+            string  monthName    = "April",
+            string  parentProject = "PP1",
+            string  jobCode      = "JC1",
+            string  jobTitle     = "Job Title 1",
+            double? hrsPaid      = 120.0,
+            double? totalTime    = 10.0,
+            double? totalCost    = 500.0,
+            int     fpsYear      = 2024) =>
+            new()
+            {
+                WorkGroup     = workGroup,
+                Name          = name,
+                MonthName     = monthName,
+                ParentProject = parentProject,
+                JobCode       = jobCode,
+                JobTitle      = jobTitle,
+                HrsPaid       = hrsPaid,
+                TotalTime     = totalTime,
+                TotalCost     = totalCost,
+                FpsYear       = fpsYear
+            };
+
+        private static WorkGroupRepository CreateTimeUsageRepository(
+            IEnumerable<WgSummarisedStaffTimeUsageView> rows)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            var mockContext       = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            var timeUsageSet = RepositoryTestHelper.CreateMockDbSet(rows);
+            var workGroupSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroup>());
+
+            mockContext.Setup(x => x.WgSummarisedStaffTimeUsageViews).Returns(timeUsageSet.Object);
+            mockContext.Setup(x => x.WorkGroups).Returns(workGroupSet.Object);
+
+            return new WorkGroupRepository(mockContext.Object);
+        }
+
+        // ────────────────────────────────────────────────────────────────────
+        #region GetWgSummarisedStaffTimeUsageAsync — basic retrieval
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_MatchingWorkGroup_ReturnsRows()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(workGroup: "WG1", name: "Alice", monthName: "April"),
+                TimeUsageRow(workGroup: "WG1", name: "Alice", monthName: "May")
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, r => Assert.Equal("WG1", r.WorkGroup));
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_NoMatchingWorkGroup_ReturnsEmpty()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(workGroup: "WG1")
+            ]);
+
+            var result = await repo.GetWgSummarisedStaffTimeUsageAsync("WG_MISSING");
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_EmptyView_ReturnsEmpty()
+        {
+            var repo = CreateTimeUsageRepository([]);
+
+            var result = await repo.GetWgSummarisedStaffTimeUsageAsync("WG1");
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_MultipleWorkGroups_ReturnsOnlyMatchingWorkGroup()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(workGroup: "WG1", name: "Alice"),
+                TimeUsageRow(workGroup: "WG2", name: "Bob"),
+                TimeUsageRow(workGroup: "WG3", name: "Carol")
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("WG1",   result[0].WorkGroup);
+            Assert.Equal("Alice", result[0].Name);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_SingleRow_AllFieldsMappedCorrectly()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(
+                    workGroup:     "WG1",
+                    name:          "Alice",
+                    monthName:     "April",
+                    parentProject: "PROJ_A",
+                    jobCode:       "JC1",
+                    jobTitle:      "Analyst",
+                    hrsPaid:       120.0,
+                    totalTime:     10.0,
+                    totalCost:     500.0,
+                    fpsYear:       2024)
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            var row = result[0];
+            Assert.Equal("WG1",    row.WorkGroup);
+            Assert.Equal("Alice",  row.Name);
+            Assert.Equal("April",  row.MonthName);
+            Assert.Equal("PROJ_A", row.ParentProject);
+            Assert.Equal("JC1",    row.JobCode);
+            Assert.Equal("Analyst",row.JobTitle);
+            Assert.Equal(120.0,    row.HrsPaid);
+            Assert.Equal(10.0,     row.TotalTime);
+            Assert.Equal(500.0,    row.TotalCost);
+            Assert.Equal(2024,     row.FpsYear);
+        }
+
+        #endregion
+
+        // ────────────────────────────────────────────────────────────────────
+        #region GetWgSummarisedStaffTimeUsageAsync — nullable fields
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_NullHrsPaid_ReturnedAsNull()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(workGroup: "WG1", hrsPaid: null)
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].HrsPaid);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_NullTotalTime_ReturnedAsNull()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(workGroup: "WG1", totalTime: null)
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].TotalTime);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_NullTotalCost_ReturnedAsNull()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(workGroup: "WG1", totalCost: null)
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].TotalCost);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_NullName_ReturnedAsNull()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                new WgSummarisedStaffTimeUsageView { WorkGroup = "WG1", Name = null, MonthName = "April" }
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].Name);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_NullJobCode_ReturnedAsNull()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                new WgSummarisedStaffTimeUsageView { WorkGroup = "WG1", JobCode = null }
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].JobCode);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_NullJobTitle_ReturnedAsNull()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                new WgSummarisedStaffTimeUsageView { WorkGroup = "WG1", JobTitle = null }
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].JobTitle);
+        }
+
+        #endregion
+
+        // ────────────────────────────────────────────────────────────────────
+        #region GetWgSummarisedStaffTimeUsageAsync — multiple staff / months
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_MultipleStaffInSameWorkGroup_ReturnsAllRows()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(workGroup: "WG1", name: "Alice", monthName: "April"),
+                TimeUsageRow(workGroup: "WG1", name: "Bob",   monthName: "April"),
+                TimeUsageRow(workGroup: "WG1", name: "Carol", monthName: "April")
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Equal(3, result.Count);
+            Assert.Contains(result, r => r.Name == "Alice");
+            Assert.Contains(result, r => r.Name == "Bob");
+            Assert.Contains(result, r => r.Name == "Carol");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_SameStaffMultipleMonths_ReturnsOneRowPerMonth()
+        {
+            var months = new[] { "April", "May", "June", "July", "August", "September",
+                                 "October", "November", "December", "January", "February", "March" };
+            var rows = months.Select(m => TimeUsageRow(workGroup: "WG1", name: "Alice", monthName: m));
+            var repo = CreateTimeUsageRepository(rows);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Equal(12, result.Count);
+            Assert.All(result, r => Assert.Equal("Alice", r.Name));
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_SameStaffMultipleJobCodes_ReturnsOneRowPerJobCode()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(workGroup: "WG1", name: "Alice", jobCode: "JC_A", monthName: "April"),
+                TimeUsageRow(workGroup: "WG1", name: "Alice", jobCode: "JC_B", monthName: "April"),
+                TimeUsageRow(workGroup: "WG1", name: "Alice", jobCode: "JC_C", monthName: "April")
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Equal(3, result.Count);
+            Assert.Contains(result, r => r.JobCode == "JC_A");
+            Assert.Contains(result, r => r.JobCode == "JC_B");
+            Assert.Contains(result, r => r.JobCode == "JC_C");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_MixedWorkGroups_FiltersCorrectly()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(workGroup: "WG1", name: "Alice",  monthName: "April"),
+                TimeUsageRow(workGroup: "WG1", name: "Bob",    monthName: "May"),
+                TimeUsageRow(workGroup: "WG2", name: "Carol",  monthName: "April"),
+                TimeUsageRow(workGroup: "WG2", name: "Dave",   monthName: "May"),
+                TimeUsageRow(workGroup: "WG3", name: "Eve",    monthName: "April")
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG2")).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, r => Assert.Equal("WG2", r.WorkGroup));
+            Assert.Contains(result, r => r.Name == "Carol");
+            Assert.Contains(result, r => r.Name == "Dave");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_ZeroTotalTimeAndCost_ReturnedCorrectly()
+        {
+            var repo = CreateTimeUsageRepository(
+            [
+                TimeUsageRow(workGroup: "WG1", totalTime: 0.0, totalCost: 0.0)
+            ]);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Equal(0.0, result[0].TotalTime);
+            Assert.Equal(0.0, result[0].TotalCost);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_LargeDataset_ReturnsAllMatchingRows()
+        {
+            const int totalRows = 100;
+            var rows = Enumerable.Range(1, totalRows)
+                .Select(i => TimeUsageRow(workGroup: "WG1", name: $"Staff{i}", monthName: "April"));
+            var repo = CreateTimeUsageRepository(rows);
+
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+
+            Assert.Equal(totalRows, result.Count);
         }
 
         #endregion

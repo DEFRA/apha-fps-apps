@@ -86,6 +86,25 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves work group time usage rows pivoted across the 12 fiscal-year months (April – March).
+        /// Mirrors the legacy MS-Access form frmCluedo1 (qryfrmCluedo1).
+        /// </summary>
+        /// <param name="query">Pagination and sort parameters.</param>
+        /// <param name="workGroup">Work group name to filter results by.</param>
+        /// <returns>
+        /// <c>200 OK</c> with a <see cref="WgSummarisedStaffTimeUsageRes"/> containing paged rows and
+        /// pre-computed footer summary.
+        /// </returns>
+        [HttpGet("timeusage")]
+        public async Task<IActionResult> GetWgSummarisedStaffTimeUsage(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string workGroup)
+        {
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
+            return Ok(_mapper.Map<WgSummarisedStaffTimeUsageRes>(result));
+        }
+
+        /// <summary>
         /// Retrieves a paged and sorted list of summarised workgroup time data,
         /// optionally filtered by work group name. Returns pivoted monthly time allocations
         /// along with computed totals and budget information.

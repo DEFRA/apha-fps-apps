@@ -175,19 +175,24 @@
 
 .grid-readonly {
     display: block;
-    padding: 2px 4px;
-    color: #666;
+    padding: 2px 4px; 
 }
 
-.grid-footer {
-    /* background-color: #e0e0e0;
-    border-top: 1px solid #999;*/
-    padding: 6px 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
+.grid-data-right-align {
+    display: block;
+    padding: 2px 4px;
+    text-align:right;
 }
+
+    .grid-footer {
+        /* background-color: #e0e0e0;
+    border-top: 1px solid #999;*/
+        padding: 6px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+    }
 
 .record-navigation {
     display: flex;
@@ -321,3 +326,4 @@
 .sorted-desc {
     background-color: #f3f2f1;
 }
+

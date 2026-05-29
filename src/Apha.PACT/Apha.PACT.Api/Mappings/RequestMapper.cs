@@ -43,6 +43,10 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<CalenderMonthRes, CalenderMonthDto>().ReverseMap();
             CreateMap<WorkGroupTimeCodeRes, WorkGroupTimeCodeDto>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeRes, WorkGroupValidTimeCodeDto>().ReverseMap();
+            CreateMap<WgSummarisedStaffTimeUsageRowRes, WgSummarisedStaffTimeUsageRowDto>().ReverseMap();
+            CreateMap<WgSummarisedStaffTimeUsageSummaryRes, WgSummarisedStaffTimeUsageSummaryDto>().ReverseMap();
+            CreateMap<JobTitleLookupItemRes, JobTitleLookupItem>().ReverseMap();
+            CreateMap<WgSummarisedStaffTimeUsageDto, WgSummarisedStaffTimeUsageRes>().ReverseMap();
             CreateMap<SummarisedWgTimeRes, SummarisedWgTimeDto>().ReverseMap();
             CreateMap<SummarisedWgTimeSummaryRes, SummarisedWgTimeSummaryDto>().ReverseMap();
             CreateMap<SummarisedWgTimePivotRes, SummarisedWgTimeViewDto>().ReverseMap();
