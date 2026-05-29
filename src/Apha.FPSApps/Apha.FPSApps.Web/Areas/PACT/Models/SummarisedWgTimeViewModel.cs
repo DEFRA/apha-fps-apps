@@ -5,5 +5,5 @@ public class SummarisedWgTimeViewModel
 {
     public DataGridConfig<SummarisedWgTimePivotRow> Grid { get; set; } = new DataGridConfig<SummarisedWgTimePivotRow>();
     public SummarisedWgTimeSummary Summary { get; set; } = new();
-    public string? SelectedWorkgroup { get; set; }
+    public string SelectedWorkgroup { get; set; } = string.Empty;
 }

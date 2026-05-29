@@ -17,7 +17,7 @@ public class SummarisedWgTimeService : ISummarisedWorkgroupTimeService
 
     public async Task<ApiResponseDto<SummarisedWgTimeViewDto>> GetSummarisedWorkgroupTimeSummaryAsync(
         QueryParameters<string> query,
-        string? workGroup)
+        string workGroup)
     {
         return await _pactClient.PactSummarisedWgTime.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
     }

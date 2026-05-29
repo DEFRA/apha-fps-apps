@@ -23,7 +23,7 @@ public class PactSummarisedWgTimeApiClient : IPactSummarisedWgTimeApiClient
 
     public async Task<ApiResponseDto<SummarisedWgTimeViewDto>> GetSummarisedWorkgroupTimeSummaryAsync(
         QueryParameters<string> query,
-        string? workGroup)
+        string workGroup)
     {
         string baseUrl = PactApiEndpoints.GetPagedSummarisedWorkgroupTime;
 

@@ -7,5 +7,5 @@ public interface ISummarisedWorkgroupTimeService
 {
     Task<ApiResponseDto<SummarisedWgTimeViewDto>> GetSummarisedWorkgroupTimeSummaryAsync(
         QueryParameters<string> query,
-        string? workGroup);
+        string workGroup);
 }

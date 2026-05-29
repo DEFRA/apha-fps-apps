@@ -134,7 +134,7 @@ namespace Apha.PACT.Application.Services
                     .Select(r => new ProjectTitleLookupItem
                     {
                         ParentProject = r.ParentProject!,
-                        ProjectTitle = string.IsNullOrWhiteSpace(r.ProjectTitle) ? "No description available" : r.ProjectTitle
+                        ProjectTitle = string.IsNullOrWhiteSpace(r.ProjectTitle) ? "" : r.ProjectTitle
                     })
                     .ToList()
             };

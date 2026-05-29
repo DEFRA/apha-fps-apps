@@ -8,5 +8,5 @@ public interface IPactSummarisedWgTimeApiClient
 {
     Task<ApiResponseDto<SummarisedWgTimeViewDto>> GetSummarisedWorkgroupTimeSummaryAsync(
         QueryParameters<string> query,
-        string? workGroup);
+        string workGroup);
 }

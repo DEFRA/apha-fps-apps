@@ -1,6 +1,5 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
-using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
 using Asp.Versioning;
@@ -87,7 +86,6 @@ namespace Apha.PACT.Api.Controllers
 
         /// <summary>
         /// Retrieves work group time usage rows pivoted across the 12 fiscal-year months (April – March).
-        /// Mirrors the legacy MS-Access form frmCluedo1 (qryfrmCluedo1).
         /// </summary>
         /// <param name="query">Pagination and sort parameters.</param>
         /// <param name="workGroup">Work group name to filter results by.</param>

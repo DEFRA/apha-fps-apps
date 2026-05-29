@@ -14,12 +14,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers;
 [Area("PACT")]
 [Authorize(Roles = "PACTAdmin,PACTUser")]
 [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
-public class SummarisedWgTimeController : Controller
+public class WorkGroupSummarisedTimeUsageController : Controller
 {
     private readonly IMapper _mapper;
     private readonly ISummarisedWorkgroupTimeService _service;
 
-    public SummarisedWgTimeController(
+    public WorkGroupSummarisedTimeUsageController(
         IMapper mapper,
         ISummarisedWorkgroupTimeService service)
     {
@@ -33,8 +33,8 @@ public class SummarisedWgTimeController : Controller
     /// populates <c>ViewBag.ProjectTitleLookup</c> so the client-side script can
     /// display project descriptions alongside selected rows.
     /// </summary>
-    /// <param name="workGroup">The workgroup code to filter data by, or <c>null</c> to show all.</param>
-    public async Task<IActionResult> Index(string? workGroup)
+    /// <param name="workGroup">The workgroup code to filter data by, or an empty string to show all.</param>
+    public async Task<IActionResult> Index(string workGroup = "")
     {
         var query = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
         var response = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -58,14 +58,14 @@ public class SummarisedWgTimeController : Controller
     /// sorts, or submits a year-plan amount from the Calculate Year Plan modal.
     /// </summary>
     /// <param name="request">Pagination and sort state sent by the grid.</param>
-    /// <param name="workGroup">The workgroup code to filter data by, or <c>null</c> for all.</param>
+    /// <param name="workGroup">The workgroup code to filter data by, or an empty string for all.</param>
     /// <param name="yrPlanAmount">
     /// The year-plan budget amount entered in the modal. When greater than zero it
     /// overrides the per-row <c>Budget</c> value and is used to calculate
     /// <c>PercentSpent</c>. Defaults to <c>0</c> (no override).
     /// </param>
     [HttpPost]
-    public async Task<IActionResult> LoadGrid(PaginationFilter<string> request, string? workGroup, decimal yrPlanAmount = 0)
+    public async Task<IActionResult> LoadSummarisedWgTimeGrid(PaginationFilter<string> request, string workGroup = "", decimal yrPlanAmount = 0)
     {
         var query = _mapper.Map<QueryParameters<string>>(request);
         var response = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
@@ -90,7 +90,7 @@ public class SummarisedWgTimeController : Controller
         ApiResponseDto<SummarisedWgTimeViewDto> response,
         string? sortBy,
         bool descending,
-        string? workGroup,
+        string workGroup,
         decimal yrPlanAmount = 0)
     {
         var grid = SummarisedWgTimeGridConfig(workGroup);
@@ -141,12 +141,12 @@ public class SummarisedWgTimeController : Controller
 
     /// <summary>
     /// Builds the static <see cref="DataGridConfig{SummarisedWgTimePivotRow}"/> shared
-    /// by both the <see cref="Index"/> and <see cref="LoadGrid"/> actions.
+    /// by both the <see cref="Index"/> and <see cref="LoadSummarisedWgTimeGrid"/> actions.
     /// Sets grid identity, URL bindings, column definitions, and disables add/edit/delete
     /// operations since this is a read-only summary view.
     /// </summary>
     /// <param name="workGroup">Workgroup code appended to the grid's AJAX reload URL.</param>
-    private static DataGridConfig<SummarisedWgTimePivotRow> SummarisedWgTimeGridConfig(string? workGroup) => new()
+    private static DataGridConfig<SummarisedWgTimePivotRow> SummarisedWgTimeGridConfig(string workGroup) => new()
     {
         GridId            = "summarisedWorkgroupTimeGrid",
         KeyProperty       = "ParentProject",
@@ -155,7 +155,7 @@ public class SummarisedWgTimeController : Controller
         AllowDelete       = false,
         ShowPagination    = true,
         ExtraFilterMethod = "getSummarisedWgTimeExtraFilters",
-        BindGridUrl       = $"/PACT/SummarisedWgTime/LoadGrid?workGroup={Uri.EscapeDataString(workGroup ?? "")}",
+        BindGridUrl       = $"/PACT/WorkGroupSummarisedTimeUsage/LoadSummarisedWgTimeGrid?workGroup={Uri.EscapeDataString(workGroup)}",
         Columns           = GridDataProvider.GetColumnsDefination<SummarisedWgTimePivotRow>()
     };
 }

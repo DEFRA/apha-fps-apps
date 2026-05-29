@@ -11,17 +11,17 @@ using NSubstitute;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeControllerTest
 {
-    public class SummarisedWgTimeControllerTests
+    public class WorkGroupSummarisedTimeUsageControllerTests
     {
         private readonly IMapper _mapper;
         private readonly ISummarisedWorkgroupTimeService _service;
-        private readonly SummarisedWgTimeController _controller;
+        private readonly WorkGroupSummarisedTimeUsageController _controller;
 
-        public SummarisedWgTimeControllerTests()
+        public WorkGroupSummarisedTimeUsageControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
             _service = Substitute.For<ISummarisedWorkgroupTimeService>();
-            _controller = new SummarisedWgTimeController(_mapper, _service);
+            _controller = new WorkGroupSummarisedTimeUsageController(_mapper, _service);
         }
 
         private void SetupGridMapper()
@@ -117,19 +117,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task Index_WithNullWorkGroup_SetsSelectedWorkgroupToNull()
+        public async Task Index_WithEmptyWorkGroup_SetsSelectedWorkgroupToEmptyString()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
-            Assert.Null(model.SelectedWorkgroup);
+            Assert.Equal(string.Empty, model.SelectedWorkgroup);
         }
 
         [Fact]
@@ -163,12 +163,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
                     new SummarisedWgTimeProjectTitleLookupItem { ParentProject = "PRJ2", ProjectTitle = "Title Two" }
                 ]
             };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(dto));
             SetupGridMapper();
 
             // Act
-            await _controller.Index(null);
+            await _controller.Index("");
 
             // Assert
             var lookup = Assert.IsType<Dictionary<string, string>>(_controller.ViewBag.ProjectTitleLookup);
@@ -181,12 +181,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_WhenServiceReturnsFailure_SetsViewBagLookupToEmptyDictionary()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(FailureResponse());
             SetupGridMapper();
 
             // Act
-            await _controller.Index(null);
+            await _controller.Index("");
 
             // Assert
             var lookup = Assert.IsType<Dictionary<string, string>>(_controller.ViewBag.ProjectTitleLookup);
@@ -197,12 +197,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_WhenServiceReturnsFailure_ReturnsViewWithEmptyGridData()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(FailureResponse());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -213,12 +213,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_WhenServiceReturnsNullData_ReturnsViewWithEmptyGridData()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(null!));
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -229,12 +229,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_SetsGridId_Correctly()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -245,12 +245,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_SetsKeyProperty_Correctly()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -261,12 +261,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_DisablesAddEditDelete_OnGrid()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -279,12 +279,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_EnablesPagination_OnGrid()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -295,12 +295,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_SetsExtraFilterMethod_OnGrid()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -328,12 +328,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_SetsGridColumns_FromGridDataProvider()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -345,12 +345,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_GridColumns_ContainParentProjectColumn()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -361,12 +361,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_GridColumns_ContainAllTwelveMonthColumns()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -387,7 +387,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
                 Pagination = new PaginationDto(),
                 Summary = new SummarisedWgTimeSummaryDto { GrandTotalCost = 9999.99, GrandTotalTime = 42.5 }
             };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(dto));
             SetupGridMapper();
             var expectedSummary = new SummarisedWgTimeSummary { GrandTotalCost = 9999.99, GrandTotalTime = 42.5 };
@@ -395,7 +395,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
                 .Returns(expectedSummary);
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -407,12 +407,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         public async Task Index_WhenServiceReturnsFailure_ReturnsEmptySummary()
         {
             // Arrange
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(FailureResponse());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -429,13 +429,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
                 Rows = [new SummarisedWgTimeDto { ParentProject = "PRJ1", SumOfCost = 500 }],
                 Pagination = new PaginationDto()
             };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(dto));
             SetupGridMapper();
             SetupRowMapper([new SummarisedWgTimePivotRow { ParentProject = "PRJ1", SumOfCost = 500, Budget = null }]);
 
             // Act
-            var result = await _controller.Index(null);
+            var result = await _controller.Index("");
 
             // Assert
             var model = Assert.IsType<SummarisedWgTimeViewModel>(((ViewResult)result).Model);
@@ -445,35 +445,35 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
 
         #endregion
 
-        #region LoadGrid
+        #region LoadLoadSummarisedWgTimeGrid
 
         [Fact]
-        public async Task LoadGrid_ValidRequest_ReturnsPartialViewResult()
+        public async Task LoadLoadSummarisedWgTimeGrid_ValidRequest_ReturnsPartialViewResult()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.LoadGrid(request, null);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "");
 
             // Assert
             Assert.IsType<PartialViewResult>(result);
         }
 
         [Fact]
-        public async Task LoadGrid_ValidRequest_ReturnsDataGridPartialView()
+        public async Task LoadLoadSummarisedWgTimeGrid_ValidRequest_ReturnsDataGridPartialView()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.LoadGrid(request, null);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -481,16 +481,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_ValidRequest_ReturnsDataGridConfigAsModel()
+        public async Task LoadLoadSummarisedWgTimeGrid_ValidRequest_ReturnsDataGridConfigAsModel()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.LoadGrid(request, null);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -498,7 +498,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_CallsServiceWithMappedQueryParameters()
+        public async Task LoadLoadSummarisedWgTimeGrid_CallsServiceWithMappedQueryParameters()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -508,7 +508,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
             SetupGridMapper();
 
             // Act
-            await _controller.LoadGrid(request, workGroup);
+            await _controller.LoadSummarisedWgTimeGrid(request, workGroup);
 
             // Assert
             await _service.Received(1).GetSummarisedWorkgroupTimeSummaryAsync(
@@ -516,33 +516,33 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_WithNullWorkGroup_PassesNullToService()
+        public async Task LoadLoadSummarisedWgTimeGrid_WithEmptyWorkGroup_PassesEmptyStringToService()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            await _controller.LoadGrid(request, null);
+            await _controller.LoadSummarisedWgTimeGrid(request, "");
 
             // Assert
             await _service.Received(1).GetSummarisedWorkgroupTimeSummaryAsync(
-                Arg.Any<QueryParameters<string>>(), null);
+                Arg.Any<QueryParameters<string>>(), "");
         }
 
         [Fact]
-        public async Task LoadGrid_WhenServiceReturnsFailure_ReturnsPartialViewWithEmptyData()
+        public async Task LoadLoadSummarisedWgTimeGrid_WhenServiceReturnsFailure_ReturnsPartialViewWithEmptyData()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(FailureResponse());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.LoadGrid(request, null);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -551,16 +551,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_WhenServiceReturnsNullData_ReturnsPartialViewWithEmptyData()
+        public async Task LoadLoadSummarisedWgTimeGrid_WhenServiceReturnsNullData_ReturnsPartialViewWithEmptyData()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(null!));
             SetupGridMapper();
 
             // Act
-            var result = await _controller.LoadGrid(request, null);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -569,7 +569,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_SetsPaginationFromResponse()
+        public async Task LoadLoadSummarisedWgTimeGrid_SetsPaginationFromResponse()
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 2, PageSize = 5, Filter = "{}" };
@@ -578,7 +578,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
                 Rows = [],
                 Pagination = new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 15 }
             };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(dto));
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
@@ -590,7 +590,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
                 .Returns(new SummarisedWgTimeSummary());
 
             // Act
-            var result = await _controller.LoadGrid(request, null);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -601,14 +601,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_SetsSortColumnAndDirectionFromRequest()
+        public async Task LoadLoadSummarisedWgTimeGrid_SetsSortColumnAndDirectionFromRequest()
         {
             // Arrange
             var request = new PaginationFilter<string>
             {
                 Page = 1, PageSize = 10, SortBy = "SumOfCost", Descending = true, Filter = "{}"
             };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
@@ -620,7 +620,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
                 .Returns(new SummarisedWgTimeSummary());
 
             // Act
-            var result = await _controller.LoadGrid(request, null);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -630,7 +630,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_SetsBindGridUrl_ContainingWorkGroup()
+        public async Task LoadLoadSummarisedWgTimeGrid_SetsBindGridUrl_ContainingWorkGroup()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -640,7 +640,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
             SetupGridMapper();
 
             // Act
-            var result = await _controller.LoadGrid(request, workGroup);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, workGroup);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -649,16 +649,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_SetsExtraFilterMethod_OnGrid()
+        public async Task LoadLoadSummarisedWgTimeGrid_SetsExtraFilterMethod_OnGrid()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseEmpty());
             SetupGridMapper();
 
             // Act
-            var result = await _controller.LoadGrid(request, null);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -668,20 +668,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
 
         #endregion
 
-        #region LoadGrid – yrPlanAmount Budget / PercentSpent logic
+        #region LoadLoadSummarisedWgTimeGrid – yrPlanAmount Budget / PercentSpent logic
 
         [Fact]
-        public async Task LoadGrid_WhenYrPlanAmountGreaterThanZero_OverridesRowBudget()
+        public async Task LoadLoadSummarisedWgTimeGrid_WhenYrPlanAmountGreaterThanZero_OverridesRowBudget()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseWithRow(sumOfCost: 500));
             SetupGridMapper();
             SetupRowMapper([new SummarisedWgTimePivotRow { ParentProject = "PRJ1", SumOfCost = 500, Budget = 200m }]);
 
             // Act
-            var result = await _controller.LoadGrid(request, null, yrPlanAmount: 1000m);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "", yrPlanAmount: 1000m);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -691,17 +691,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_WhenYrPlanAmountIsZero_DoesNotOverrideRowBudget()
+        public async Task LoadLoadSummarisedWgTimeGrid_WhenYrPlanAmountIsZero_DoesNotOverrideRowBudget()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseWithRow(sumOfCost: 500));
             SetupGridMapper();
             SetupRowMapper([new SummarisedWgTimePivotRow { ParentProject = "PRJ1", SumOfCost = 500, Budget = 800m }]);
 
             // Act
-            var result = await _controller.LoadGrid(request, null, yrPlanAmount: 0m);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "", yrPlanAmount: 0m);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -711,17 +711,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_WhenBudgetIsPositive_CalculatesPercentSpentCorrectly()
+        public async Task LoadLoadSummarisedWgTimeGrid_WhenBudgetIsPositive_CalculatesPercentSpentCorrectly()
         {
             // Arrange – SumOfCost=250, yrPlanAmount=1000 → Budget=1000; PercentSpent=(250/1000)*100=25
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseWithRow(sumOfCost: 250));
             SetupGridMapper();
             SetupRowMapper([new SummarisedWgTimePivotRow { ParentProject = "PRJ1", SumOfCost = 250, Budget = null }]);
 
             // Act
-            var result = await _controller.LoadGrid(request, null, yrPlanAmount: 1000m);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "", yrPlanAmount: 1000m);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -731,17 +731,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_WhenBudgetIsZero_SetsPercentSpentToZero()
+        public async Task LoadLoadSummarisedWgTimeGrid_WhenBudgetIsZero_SetsPercentSpentToZero()
         {
             // Arrange – yrPlanAmount=0 so Budget stays 0; PercentSpent must be 0
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseWithRow(sumOfCost: 500));
             SetupGridMapper();
             SetupRowMapper([new SummarisedWgTimePivotRow { ParentProject = "PRJ1", SumOfCost = 500, Budget = 0m }]);
 
             // Act
-            var result = await _controller.LoadGrid(request, null, yrPlanAmount: 0m);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "", yrPlanAmount: 0m);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -751,17 +751,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_WhenBudgetIsNull_SetsPercentSpentToZero()
+        public async Task LoadLoadSummarisedWgTimeGrid_WhenBudgetIsNull_SetsPercentSpentToZero()
         {
             // Arrange – yrPlanAmount=0 so Budget stays null; PercentSpent must be 0
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseWithRow(sumOfCost: 500));
             SetupGridMapper();
             SetupRowMapper([new SummarisedWgTimePivotRow { ParentProject = "PRJ1", SumOfCost = 500, Budget = null }]);
 
             // Act
-            var result = await _controller.LoadGrid(request, null, yrPlanAmount: 0m);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "", yrPlanAmount: 0m);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -771,17 +771,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_WhenYrPlanAmountGreaterThanZero_PercentSpentIsRoundedToTwoDecimalPlaces()
+        public async Task LoadLoadSummarisedWgTimeGrid_WhenYrPlanAmountGreaterThanZero_PercentSpentIsRoundedToTwoDecimalPlaces()
         {
             // Arrange – SumOfCost=1, Budget=3 → (1/3)*100=33.333… → rounds to 33.33
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseWithRow(sumOfCost: 1m));
             SetupGridMapper();
             SetupRowMapper([new SummarisedWgTimePivotRow { ParentProject = "PRJ1", SumOfCost = 1m, Budget = null }]);
 
             // Act
-            var result = await _controller.LoadGrid(request, null, yrPlanAmount: 3m);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "", yrPlanAmount: 3m);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -791,17 +791,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_WhenYrPlanAmountDefaulted_BudgetAndPercentSpentDependOnRowBudget()
+        public async Task LoadLoadSummarisedWgTimeGrid_WhenYrPlanAmountDefaulted_BudgetAndPercentSpentDependOnRowBudget()
         {
             // Arrange – omitting yrPlanAmount uses default=0; existing Budget=1000 is preserved
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(SuccessResponseWithRow(sumOfCost: 400));
             SetupGridMapper();
             SetupRowMapper([new SummarisedWgTimePivotRow { ParentProject = "PRJ1", SumOfCost = 400, Budget = 1000m }]);
 
             // Act
-            var result = await _controller.LoadGrid(request, null);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request, "");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -812,7 +812,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
         }
 
         [Fact]
-        public async Task LoadGrid_WithMultipleRows_AppliesYrPlanAndPercentSpent_ToEachRow()
+        public async Task LoadLoadSummarisedWgTimeGrid_WithMultipleRows_AppliesYrPlanAndPercentSpent_ToEachRow()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
@@ -825,7 +825,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
                 ],
                 Pagination = new PaginationDto()
             };
-            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _service.GetSummarisedWorkgroupTimeSummaryAsync(Arg.Any<QueryParameters<string>>(), "")
                 .Returns(ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(dto));
             SetupGridMapper();
             SetupRowMapper(
@@ -835,7 +835,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.SummarisedWgTimeController
             ]);
 
             // Act – PRJ1: (200/1000)*100=20%, PRJ2: (400/1000)*100=40%
-            var result = await _controller.LoadGrid(request, null, yrPlanAmount: 1000m);
+            var result = await _controller.LoadSummarisedWgTimeGrid(request,"", yrPlanAmount: 1000m);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);

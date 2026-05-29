@@ -336,6 +336,21 @@ function initWorkGroupPeoplePage() {
         $error.hide();
         window.fpsNavigateTo('/PACT/WorkGroupValidTimeCode?workGroup=' + encodeURIComponent(currentWorkGroup));
     });
+
+    // ── Show Summarised WorkGroup Time button ──────────────────────────────
+    $('#btnShowSummary').on('click', function () {
+        var $error = $('#workgroupValidationError');
+        var $input = $('#selectedWorkgroup');
+        if (!currentWorkGroup) {
+            $input.addClass('govuk-input--error');
+            $error.show();
+            alert('Please select a Work Group first.');
+            return;
+        }
+        $input.removeClass('govuk-input--error');
+        $error.hide();
+        window.fpsNavigateTo('/PACT/WorkGroupSummarisedTimeUsage?workGroup=' + encodeURIComponent(currentWorkGroup));
+    });
 }
 
 $(document).ready(function () {
@@ -362,19 +377,4 @@ $(document).ready(function () {
             selectFirstPersonRow();
         }
     });
-});
-
-// ── Show Summarised WorkGroup Time button ──────────────────────────────
-$('#btnShowSummary').on('click', function () {
-    var $error = $('#workgroupValidationError');
-    var $input = $('#selectedWorkgroup');
-    if (!currentWorkGroup) {
-        $input.addClass('govuk-input--error');
-        $error.show();
-        alert('Please select a Work Group first.');
-        return;
-    }
-    $input.removeClass('govuk-input--error');
-    $error.hide();
-    window.fpsNavigateTo('/PACT/SummarisedWgTime?workGroup=' + encodeURIComponent(currentWorkGroup));
 });
