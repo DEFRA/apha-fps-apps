@@ -116,11 +116,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
                 Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
             };
             var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(pivotDto);
-            _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, null)
+            _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, "")
                 .Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, null);
+            var result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, "");
 
             // Assert
             Assert.NotNull(result);
@@ -130,7 +130,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
             Assert.Equal("WG001", result.Data.Rows[0].WorkGroup);
             Assert.Equal("WG002", result.Data.Rows[1].WorkGroup);
             await _pactSummarisedWgTimeApiClient.Received(1)
-                .GetSummarisedWorkgroupTimeSummaryAsync(query, null);
+                .GetSummarisedWorkgroupTimeSummaryAsync(query, "");
         }
 
         [Fact]
@@ -293,11 +293,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
                 new ApiErrorDto { Message = "Unauthorized access", Code = "UNAUTHORIZED" }
             };
             var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.FailureResponse(errors, new ApiMetaDto());
-            _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, null)
+            _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, "")
                 .Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, null);
+            var result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, "");
 
             // Assert
             Assert.NotNull(result);
@@ -369,11 +369,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.SummarisedWgTimeServi
                 Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
             };
             var expectedResponse = ApiResponseDto<SummarisedWgTimeViewDto>.SuccessResponse(pivotDto);
-            _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, null)
+            _pactSummarisedWgTimeApiClient.GetSummarisedWorkgroupTimeSummaryAsync(query, "")
                 .Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, null);
+            var result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, "");
 
             // Assert
             Assert.NotNull(result);
