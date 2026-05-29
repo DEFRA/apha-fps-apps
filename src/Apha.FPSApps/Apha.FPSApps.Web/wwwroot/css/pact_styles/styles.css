@@ -1352,11 +1352,9 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 .isDisplayBlock{
   display: block !important;
 }
-/* summary Start */
 
 /* ============================================================
-   MODAL (govuk-edit-modal) – ported from pims_styles/styles.css
-   so the PACT layout can use the same modal component
+   MODAL (govuk-edit-modal)
    ============================================================ */
 .govuk-edit-modal {
     display: none;
@@ -1426,58 +1424,6 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 
 .govuk-edit-modal__close:hover {
     opacity: 0.7;
-}
-
-/* ============================================================
-   COLUMN TOTALS FOOTER
-   – Visual properties match .editable-grid-table td / .custom-table td exactly
-   ============================================================ */
-#columnTotalsContainer.column-totals-container {
-  display:          flex;
-  align-items:      stretch;
-  border:           2px solid #cecece;
-  margin-top:       -1px;           /* overlap grid bottom border */
-  background-color: #f3f2f1;
-  overflow:         visible;        /* let it sit flush, scroll handled by parent */
-  box-sizing:       border-box;
-  position:         relative;
-  z-index:          1;              /* sit above grid bottom border */
-}
-
-/* Base cell – width is set by JS (getBoundingClientRect on <th>); border-box means
-   the assigned width IS the total occupied width, matching the collapsed-table th exactly */
-#columnTotalsContainer .column-total {
-  flex:             0 0 auto;
-  box-sizing:       border-box;                       /* width = BCR of matching <th> */
-  padding:          2px 4px;                          /* exact match: .editable-grid-table td */
-  font-family:      "GDS Transport", arial, sans-serif;
-  font-size:        12px;
-  font-weight:      400;
-  line-height:      1.3157894737;
-  color:            #0b0c0c;
-  white-space:      nowrap;
-  overflow:         hidden;
-  text-align:       right;
-  background-color: #ffffff;
-  border-right:     1px solid #d0d0d0;
-  display:          flex;
-  align-items:      center;
-  justify-content:  flex-end;
-}
-
-/* Last cell – no right border (table edge handled by container) */
-#columnTotalsContainer .column-total:last-child {
-  border-right: 1px solid #cecece;
-}
-
-
-    /* Label cell (col 0 – Project column) */
-#columnTotalsContainer .column-total.column-total-label {
-  background-color: #f3f2f1;
-  justify-content:  flex-start;
-  font-weight:      700;
-  border-right:     1px solid #cecece;
-  color:            #0b0c0c;
 }
 
 /* summary End */

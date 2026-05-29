@@ -62,6 +62,9 @@ namespace Apha.PACT.Application.Services
             var allRows = BuildRows(entries);
             var summary = BuildSummary(allRows, standardHoursPerMonth);
 
+            // Apply sort before paging so the requested order is respected
+            allRows = ApplySortToWgStaffTimeRows(allRows, query.SortBy, query.Descending);
+
             // Paginate rows after summary is computed
             var page     = Math.Max(1, query.Page);
             var pageSize = Math.Max(1, query.PageSize);
@@ -107,6 +110,9 @@ namespace Apha.PACT.Application.Services
 
             var allRows = BuildWgSummarisedTimeRows(entries);
             var summary = BuildWgSummarisedTimeSummary(allRows);
+
+            // Apply sort before paging so the requested order is respected
+            allRows = ApplySortToWgSummarisedTimeRows(allRows, query.SortBy, query.Descending);
 
             var page = Math.Max(1, query.Page);
             var pageSize = Math.Max(1, query.PageSize);
@@ -278,6 +284,73 @@ namespace Apha.PACT.Application.Services
                 throw new BusinessValidationErrorException(errors);
         }
 
+
+        private static List<SummarisedWgTimeRowDto> ApplySortToWgSummarisedTimeRows(
+            List<SummarisedWgTimeRowDto> rows,
+            string? sortBy,
+            bool descending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return rows;
+
+            Func<SummarisedWgTimeRowDto, object> keySelector = sortBy switch
+            {
+                nameof(SummarisedWgTimeRowDto.ParentProject) => r => (object)(r.ParentProject ?? string.Empty),
+                nameof(SummarisedWgTimeRowDto.April)         => r => r.April,
+                nameof(SummarisedWgTimeRowDto.May)           => r => r.May,
+                nameof(SummarisedWgTimeRowDto.June)          => r => r.June,
+                nameof(SummarisedWgTimeRowDto.July)          => r => r.July,
+                nameof(SummarisedWgTimeRowDto.August)        => r => r.August,
+                nameof(SummarisedWgTimeRowDto.September)     => r => r.September,
+                nameof(SummarisedWgTimeRowDto.October)       => r => r.October,
+                nameof(SummarisedWgTimeRowDto.November)      => r => r.November,
+                nameof(SummarisedWgTimeRowDto.December)      => r => r.December,
+                nameof(SummarisedWgTimeRowDto.January)       => r => r.January,
+                nameof(SummarisedWgTimeRowDto.February)      => r => r.February,
+                nameof(SummarisedWgTimeRowDto.March)         => r => r.March,
+                nameof(SummarisedWgTimeRowDto.TotalTime)     => r => r.TotalTime,
+                nameof(SummarisedWgTimeRowDto.TotalCost)     => r => r.TotalCost,
+                _ => r => (object)(r.ParentProject ?? string.Empty)
+            };
+
+            return descending
+                ? rows.OrderByDescending(keySelector).ToList()
+                : rows.OrderBy(keySelector).ToList();
+        }
+
+        private static List<WgSummarisedStaffTimeUsageRowDto> ApplySortToWgStaffTimeRows(
+            List<WgSummarisedStaffTimeUsageRowDto> rows,
+            string? sortBy,
+            bool descending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return rows;
+
+            Func<WgSummarisedStaffTimeUsageRowDto, object> keySelector = sortBy switch
+            {
+                nameof(WgSummarisedStaffTimeUsageRowDto.ParentProject) => r => (object)(r.ParentProject ?? string.Empty),
+                nameof(WgSummarisedStaffTimeUsageRowDto.JobCode)       => r => (object)(r.JobCode       ?? string.Empty),
+                nameof(WgSummarisedStaffTimeUsageRowDto.April)         => r => r.April,
+                nameof(WgSummarisedStaffTimeUsageRowDto.May)           => r => r.May,
+                nameof(WgSummarisedStaffTimeUsageRowDto.June)          => r => r.June,
+                nameof(WgSummarisedStaffTimeUsageRowDto.July)          => r => r.July,
+                nameof(WgSummarisedStaffTimeUsageRowDto.August)        => r => r.August,
+                nameof(WgSummarisedStaffTimeUsageRowDto.September)     => r => r.September,
+                nameof(WgSummarisedStaffTimeUsageRowDto.October)       => r => r.October,
+                nameof(WgSummarisedStaffTimeUsageRowDto.November)      => r => r.November,
+                nameof(WgSummarisedStaffTimeUsageRowDto.December)      => r => r.December,
+                nameof(WgSummarisedStaffTimeUsageRowDto.January)       => r => r.January,
+                nameof(WgSummarisedStaffTimeUsageRowDto.February)      => r => r.February,
+                nameof(WgSummarisedStaffTimeUsageRowDto.March)         => r => r.March,
+                nameof(WgSummarisedStaffTimeUsageRowDto.TotalTime)     => r => r.TotalTime,
+                nameof(WgSummarisedStaffTimeUsageRowDto.TotalCost)     => r => r.TotalCost,
+                _ => r => (object)(r.ParentProject ?? string.Empty)
+            };
+
+            return descending
+                ? rows.OrderByDescending(keySelector).ToList()
+                : rows.OrderBy(keySelector).ToList();
+        }
 
         private static List<SummarisedWgTimeRowDto> BuildWgSummarisedTimeRows(
            IEnumerable<SummarisedWgTimeEntryDto> entries)

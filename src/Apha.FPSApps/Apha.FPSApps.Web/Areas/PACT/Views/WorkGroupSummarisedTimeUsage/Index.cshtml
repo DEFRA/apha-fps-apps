@@ -45,29 +45,29 @@
             var s = Model.Summary;
         }
         <div id="columnTotalsContainer" class="column-totals-container">
-            @* Col 1 – Project (label cell) *@
-            <div class="column-total column-total-label" data-col-index="0">Totals:</div>
-            @* Col 2–13 – Apr to Mar *@
-            <div class="column-total" data-col-index="1">@(s.TotalApril    == 0 ? "" : s.TotalApril.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="2">@(s.TotalMay      == 0 ? "" : s.TotalMay.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="3">@(s.TotalJune     == 0 ? "" : s.TotalJune.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="4">@(s.TotalJuly     == 0 ? "" : s.TotalJuly.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="5">@(s.TotalAugust   == 0 ? "" : s.TotalAugust.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="6">@(s.TotalSeptember== 0 ? "" : s.TotalSeptember.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="7">@(s.TotalOctober  == 0 ? "" : s.TotalOctober.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="8">@(s.TotalNovember == 0 ? "" : s.TotalNovember.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="9">@(s.TotalDecember == 0 ? "" : s.TotalDecember.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="10">@(s.TotalJanuary == 0 ? "" : s.TotalJanuary.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="11">@(s.TotalFebruary== 0 ? "" : s.TotalFebruary.ToString("0.##"))</div>
-            <div class="column-total" data-col-index="12">@(s.TotalMarch   == 0 ? "" : s.TotalMarch.ToString("0.##"))</div>
-            @* Col 14 – Time total *@
-            <div class="column-total" data-col-index="13">@(s.GrandTotalTime == 0 ? "" : s.GrandTotalTime.ToString("0.##"))</div>
-            @* Col 15 – Cost total *@
-            <div class="column-total" data-col-index="14">@(s.GrandTotalCost == 0 ? "" : "£" + s.GrandTotalCost.ToString("N2"))</div>
-            @* Col 16 – YrPlan (no summary value) *@
-            <div class="column-total" data-col-index="15">&nbsp;</div>
-            @* Col 17 – Spent (no summary value) *@
-            <div class="column-total" data-col-index="16">&nbsp;</div>
+            @* Label cell – spans the Project column *@
+            <div class="column-total-label">Totals:</div>
+            @* Apr–Mar *@
+            <div class="column-total">@(s.TotalApril    == 0 ? "" : s.TotalApril.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalMay      == 0 ? "" : s.TotalMay.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalJune     == 0 ? "" : s.TotalJune.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalJuly     == 0 ? "" : s.TotalJuly.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalAugust   == 0 ? "" : s.TotalAugust.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalSeptember== 0 ? "" : s.TotalSeptember.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalOctober  == 0 ? "" : s.TotalOctober.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalNovember == 0 ? "" : s.TotalNovember.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalDecember == 0 ? "" : s.TotalDecember.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalJanuary  == 0 ? "" : s.TotalJanuary.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalFebruary == 0 ? "" : s.TotalFebruary.ToString("0.##"))</div>
+            <div class="column-total">@(s.TotalMarch    == 0 ? "" : s.TotalMarch.ToString("0.##"))</div>
+            @* Time total *@
+            <div class="column-total">@(s.GrandTotalTime == 0 ? "" : s.GrandTotalTime.ToString("0.##"))</div>
+            @* Cost total *@
+            <div class="column-total">@(s.GrandTotalCost == 0 ? "" : "£" + s.GrandTotalCost.ToString("N2"))</div>
+            @* YrPlan – no summary value *@
+            <div class="column-total">&nbsp;</div>
+            @* Spent – no summary value *@
+            <div class="column-total">&nbsp;</div>
         </div>
     </div>
 </div>
