@@ -99,4 +99,3 @@ web.*.config
 
 # exclude files which shouldnt be git ignored
 !*.slnLaunch.user
-/src/docs
