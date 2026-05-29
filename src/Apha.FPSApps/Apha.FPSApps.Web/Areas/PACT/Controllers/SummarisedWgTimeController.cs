@@ -27,6 +27,13 @@ public class SummarisedWgTimeController : Controller
         _service = service;
     }
 
+    /// <summary>
+    /// Renders the Summarised Workgroup Time index page for the specified workgroup.
+    /// Loads an initial (page 1, unsorted) grid, maps the summary totals row, and
+    /// populates <c>ViewBag.ProjectTitleLookup</c> so the client-side script can
+    /// display project descriptions alongside selected rows.
+    /// </summary>
+    /// <param name="workGroup">The workgroup code to filter data by, or <c>null</c> to show all.</param>
     public async Task<IActionResult> Index(string? workGroup)
     {
         var query = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
@@ -44,6 +51,19 @@ public class SummarisedWgTimeController : Controller
         });
     }
 
+    /// <summary>
+    /// AJAX endpoint that reloads the data grid partial view with the requested
+    /// pagination, sorting, and year-plan amount applied.
+    /// Called by the shared <c>_DataGrid</c> partial whenever the user pages,
+    /// sorts, or submits a year-plan amount from the Calculate Year Plan modal.
+    /// </summary>
+    /// <param name="request">Pagination and sort state sent by the grid.</param>
+    /// <param name="workGroup">The workgroup code to filter data by, or <c>null</c> for all.</param>
+    /// <param name="yrPlanAmount">
+    /// The year-plan budget amount entered in the modal. When greater than zero it
+    /// overrides the per-row <c>Budget</c> value and is used to calculate
+    /// <c>PercentSpent</c>. Defaults to <c>0</c> (no override).
+    /// </param>
     [HttpPost]
     public async Task<IActionResult> LoadGrid(PaginationFilter<string> request, string? workGroup, decimal yrPlanAmount = 0)
     {
@@ -53,6 +73,19 @@ public class SummarisedWgTimeController : Controller
         return PartialView("_DataGrid", MapToGridConfig(response, request.SortBy, request.Descending, workGroup, yrPlanAmount));
     }
 
+    /// <summary>
+    /// Maps a service response to a <see cref="DataGridConfig{SummarisedWgTimePivotRow}"/>.
+    /// If the response is unsuccessful or contains no data, an empty grid config is
+    /// returned. Otherwise each row's <c>Budget</c> is optionally overridden by
+    /// <paramref name="yrPlanAmount"/>, <c>PercentSpent</c> is calculated, and the
+    /// human-readable <c>CostDisplay</c> (e.g. £1,234.56) and
+    /// <c>SpentDisplay</c> (e.g. 42.5%) strings are set.
+    /// </summary>
+    /// <param name="response">The API response containing rows and pagination data.</param>
+    /// <param name="sortBy">Column name to sort by, or <c>null</c> for default order.</param>
+    /// <param name="descending"><c>true</c> for descending sort; <c>false</c> for ascending.</param>
+    /// <param name="workGroup">Workgroup code embedded in the grid's reload URL.</param>
+    /// <param name="yrPlanAmount">Year-plan budget override; ignored when zero.</param>
     private DataGridConfig<SummarisedWgTimePivotRow> MapToGridConfig(
         ApiResponseDto<SummarisedWgTimeViewDto> response,
         string? sortBy,
@@ -90,6 +123,13 @@ public class SummarisedWgTimeController : Controller
         return grid;
     }
 
+    /// <summary>
+    /// Maps the summary totals from the service response to a
+    /// <see cref="SummarisedWgTimeSummary"/> view model.
+    /// Returns a default (zero-valued) summary when the response is unsuccessful
+    /// or contains no data.
+    /// </summary>
+    /// <param name="response">The API response containing the summary DTO.</param>
     private SummarisedWgTimeSummary MapToSummary(ApiResponseDto<SummarisedWgTimeViewDto> response)
     {
         var result= response.Success && response.Data is not null
@@ -99,6 +139,13 @@ public class SummarisedWgTimeController : Controller
         return result;
     }
 
+    /// <summary>
+    /// Builds the static <see cref="DataGridConfig{SummarisedWgTimePivotRow}"/> shared
+    /// by both the <see cref="Index"/> and <see cref="LoadGrid"/> actions.
+    /// Sets grid identity, URL bindings, column definitions, and disables add/edit/delete
+    /// operations since this is a read-only summary view.
+    /// </summary>
+    /// <param name="workGroup">Workgroup code appended to the grid's AJAX reload URL.</param>
     private static DataGridConfig<SummarisedWgTimePivotRow> SummarisedWgTimeGridConfig(string? workGroup) => new()
     {
         GridId            = "summarisedWorkgroupTimeGrid",
