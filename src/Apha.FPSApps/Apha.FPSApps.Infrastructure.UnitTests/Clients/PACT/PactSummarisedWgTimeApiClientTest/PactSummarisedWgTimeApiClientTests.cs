@@ -8,7 +8,6 @@ using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients;
 using AutoMapper;
 using NSubstitute;
-using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTimeApiClientTest
 {
@@ -143,7 +142,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactSummarisedWgTim
             _mapper.Map<ApiResponseDto<SummarisedWgTimeViewDto>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, null);
+            var result = await _client.GetSummarisedWorkgroupTimeSummaryAsync(query, "");
 
             // Assert
             Assert.NotNull(result);
