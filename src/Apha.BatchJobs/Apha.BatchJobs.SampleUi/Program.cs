@@ -5,7 +5,10 @@ using Apha.BatchJobs.Triggering.Policy;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<DownstreamApisOptions>(builder.Configuration.GetSection("DownstreamApis"));
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("triggering", client =>
+{
+	client.Timeout = TimeSpan.FromMinutes(10);
+});
 
 var app = builder.Build();
 
@@ -65,7 +68,15 @@ app.MapPost("/api/trigger", async (
 	if (string.IsNullOrWhiteSpace(baseUrl))
 		return Results.Problem("Downstream API base URL is not configured.", statusCode: StatusCodes.Status500InternalServerError);
 
-	var client = clientFactory.CreateClient();
+	var client = clientFactory.CreateClient("triggering");
+	var readiness = await WaitForServiceReadyAsync(client, baseUrl, cancellationToken);
+	if (!readiness.IsReady)
+	{
+		return Results.Problem(
+			$"Downstream API '{baseUrl.TrimEnd('/')}' is not reachable before trigger. {readiness.ErrorMessage}",
+			statusCode: StatusCodes.Status503ServiceUnavailable);
+	}
+
 	var response = await client.PostAsJsonAsync(
 		$"{baseUrl.TrimEnd('/')}/api/v1/batch-jobs/trigger",
 		new BatchTriggerRequest
@@ -82,6 +93,40 @@ app.MapPost("/api/trigger", async (
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "sample-ui", timestamp = DateTime.UtcNow }));
 
 app.Run();
+
+static async Task<(bool IsReady, string ErrorMessage)> WaitForServiceReadyAsync(
+	HttpClient client,
+	string baseUrl,
+	CancellationToken cancellationToken)
+{
+	var healthUrl = $"{baseUrl.TrimEnd('/')}/health";
+	Exception? lastError = null;
+
+	for (var attempt = 1; attempt <= 10; attempt++)
+	{
+		try
+		{
+			using var healthResponse = await client.GetAsync(healthUrl, cancellationToken);
+			if (healthResponse.IsSuccessStatusCode)
+			{
+				return (true, string.Empty);
+			}
+
+			lastError = new HttpRequestException($"Health check returned {(int)healthResponse.StatusCode} ({healthResponse.ReasonPhrase}).");
+		}
+		catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+		{
+			lastError = ex;
+		}
+
+		if (attempt < 10)
+		{
+			await Task.Delay(250, cancellationToken);
+		}
+	}
+
+	return (false, lastError?.Message ?? "No response from downstream API.");
+}
 
 public sealed class DownstreamApisOptions
 {

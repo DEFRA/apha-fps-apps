@@ -1,6 +1,6 @@
 using Apha.BatchJobs.Triggering.Models;
 using Apha.BatchJobs.Triggering.Policy;
-using Apha.BatchJobs.Triggering.Services;
+using Apha.BatchJobs.Pact.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.BatchJobs.Pact.Api.Controllers;
@@ -9,12 +9,12 @@ namespace Apha.BatchJobs.Pact.Api.Controllers;
 [Route("api/v1/batch-jobs")]
 public sealed class BatchJobTriggerController : ControllerBase
 {
-    private readonly IEventBridgePublisher _eventBridgePublisher;
+    private readonly ITriggerDispatcher _triggerDispatcher;
     private readonly ILogger<BatchJobTriggerController> _logger;
 
-    public BatchJobTriggerController(IEventBridgePublisher eventBridgePublisher, ILogger<BatchJobTriggerController> logger)
+    public BatchJobTriggerController(ITriggerDispatcher triggerDispatcher, ILogger<BatchJobTriggerController> logger)
     {
-        _eventBridgePublisher = eventBridgePublisher;
+        _triggerDispatcher = triggerDispatcher;
         _logger = logger;
     }
 
@@ -56,7 +56,7 @@ public sealed class BatchJobTriggerController : ControllerBase
         var acceptedAtUtc = DateTime.UtcNow;
         var requestedBy = string.IsNullOrWhiteSpace(request.RequestedBy) ? "pact.api@local" : request.RequestedBy;
 
-        var eventId = await _eventBridgePublisher.PublishAsync(
+        var eventId = await _triggerDispatcher.DispatchAsync(
             new BatchTriggerEventDetail(
                 jobExecutionId,
                 normalizedJobName,
@@ -71,6 +71,13 @@ public sealed class BatchJobTriggerController : ControllerBase
             jobExecutionId,
             eventId);
 
+        int? workerPid = null;
+        if (eventId.StartsWith("localproc-", StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(eventId["localproc-".Length..], out var parsedWorkerPid))
+        {
+            workerPid = parsedWorkerPid;
+        }
+
         return Accepted(new
         {
             accepted = true,
@@ -78,9 +85,10 @@ public sealed class BatchJobTriggerController : ControllerBase
             jobName = normalizedJobName,
             jobExecutionId,
             eventId,
+            workerPid,
             status = "TriggerAccepted",
             acceptedAtUtc,
-            message = "Event accepted for EventBridge dispatch."
+            message = "Trigger accepted for dispatch."
         });
     }
 }

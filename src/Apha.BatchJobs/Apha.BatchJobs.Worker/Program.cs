@@ -86,6 +86,8 @@ try
     logger.LogInformation("ProcessId: {ProcessId}", Environment.ProcessId);
     logger.LogInformation("Environment: {EnvironmentName}", builder.Environment.EnvironmentName);
 
+    await WaitForDebuggerAttachIfRequestedAsync(logger, cancellationToken: CancellationToken.None);
+
     var config = serviceProvider.GetRequiredService<IConfiguration>();
     var dbCommandTimeoutSeconds = ResolveIntSetting(
         config,
@@ -352,6 +354,41 @@ finally
     }
 
     Log.CloseAndFlush();
+}
+
+static async Task WaitForDebuggerAttachIfRequestedAsync(Microsoft.Extensions.Logging.ILogger logger, CancellationToken cancellationToken)
+{
+    var waitForAttach = Environment.GetEnvironmentVariable("BATCH_DEBUG_WAIT_FOR_ATTACH");
+    if (!string.Equals(waitForAttach, "true", StringComparison.OrdinalIgnoreCase) || System.Diagnostics.Debugger.IsAttached)
+    {
+        return;
+    }
+
+    var timeoutSecondsRaw = Environment.GetEnvironmentVariable("BATCH_DEBUG_ATTACH_TIMEOUT_SECONDS");
+    var timeoutSeconds = int.TryParse(timeoutSecondsRaw, out var parsedTimeout) ? parsedTimeout : 120;
+    var timeoutAt = DateTime.UtcNow.AddSeconds(Math.Max(0, timeoutSeconds));
+
+    logger.LogInformation(
+        "Waiting for debugger attach | ProcessId={ProcessId} | TimeoutSeconds={TimeoutSeconds}",
+        Environment.ProcessId,
+        timeoutSeconds);
+
+    while (!System.Diagnostics.Debugger.IsAttached && DateTime.UtcNow < timeoutAt)
+    {
+        await Task.Delay(250, cancellationToken);
+    }
+
+    var breakOnStart = Environment.GetEnvironmentVariable("BATCH_DEBUG_BREAK_ON_START");
+    if (System.Diagnostics.Debugger.IsAttached && string.Equals(breakOnStart, "true", StringComparison.OrdinalIgnoreCase))
+    {
+        logger.LogInformation("Debugger attached; breaking at worker startup | ProcessId={ProcessId}", Environment.ProcessId);
+        System.Diagnostics.Debugger.Break();
+    }
+
+    logger.LogInformation(
+        "Debugger attach wait finished | ProcessId={ProcessId} | DebuggerAttached={DebuggerAttached}",
+        Environment.ProcessId,
+        System.Diagnostics.Debugger.IsAttached);
 }
 
 return exitCode;
