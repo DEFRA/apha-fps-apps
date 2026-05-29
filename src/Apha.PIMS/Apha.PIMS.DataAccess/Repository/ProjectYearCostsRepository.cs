@@ -234,5 +234,63 @@ namespace Apha.PIMS.DataAccess.Repository
                 TotalPages   = totalPages
             });
         }
+
+        public async Task<PagedData<MyProjectStaffPlan>> GetStaffPlansAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            IQueryable<MyProjectStaffPlan> query = _context.MyProjectStaffPlans
+                .AsNoTracking()
+                .Where(s => s.Parentproject == project && s.Year == year);
+
+            string? search = paging.Search?.ToLower();
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(x =>
+                    (x.Workgroupgrade != null && x.Workgroupgrade.ToLower().Contains(search)) ||
+                    (x.Name           != null && x.Name.ToLower().Contains(search)));
+
+            query = (paging.SortBy?.ToLower()) switch
+            {
+                "wggrade"      => ApplyOrder(query, x => x.Workgroupgrade, paging.Descending),
+                "name"         => ApplyOrder(query, x => x.Name,          paging.Descending),
+                "plannedhours" => ApplyOrder(query, x => x.Plannedhours,  paging.Descending),
+                "rate"         => ApplyOrder(query, x => x.Rate,          paging.Descending),
+                "cost"         => ApplyOrder(query, x => x.Cost,          paging.Descending),
+                _              => query.OrderBy(x => x.Workgroupgrade)
+            };
+
+            List<MyProjectStaffPlan> all = await query.ToListAsync();
+            return ApplyPaging(all, paging.Page, paging.PageSize);
+        }
+
+        public async Task<PagedData<MyTimeCostCalcs>> GetStaffActualsAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            IQueryable<MyTimeCostCalcs> query = _context.MyTimeCostCalcs
+                .AsNoTracking()
+                .Where(s => s.Project == project && s.Year == year);
+
+            string? search = paging.Search?.ToLower();
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(x =>
+                    (x.Jobcode    != null && x.Jobcode.ToLower().Contains(search)) ||
+                    (x.Name       != null && x.Name.ToLower().Contains(search)) ||
+                    (x.Workgroup  != null && x.Workgroup.ToLower().Contains(search)) ||
+                    (x.Gradecode  != null && x.Gradecode.ToLower().Contains(search)));
+
+            query = (paging.SortBy?.ToLower()) switch
+            {
+                "jobcode"   => ApplyOrder(query, x => x.Jobcode,    paging.Descending),
+                "name"      => ApplyOrder(query, x => x.Name,       paging.Descending),
+                "workgroup" => ApplyOrder(query, x => x.Workgroup,  paging.Descending),
+                "gradecode" => ApplyOrder(query, x => x.Gradecode,  paging.Descending),
+                "month"     => ApplyOrder(query, x => x.Month,      paging.Descending),
+                "time"      => ApplyOrder(query, x => x.Time,       paging.Descending),
+                "cost"      => ApplyOrder(query, x => x.Cost,       paging.Descending),
+                _           => query.OrderBy(x => x.Jobcode).ThenBy(x => x.Month)
+            };
+
+            List<MyTimeCostCalcs> all = await query.ToListAsync();
+            return ApplyPaging(all, paging.Page, paging.PageSize);
+        }
     }
 }

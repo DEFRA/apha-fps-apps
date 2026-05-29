@@ -55,6 +55,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Test Cost
             CreateMap<TestCostRes, TestCostDto>().ReverseMap();
+
+            // Staff Cost
+            CreateMap<StaffCostRes, StaffCostDto>().ReverseMap();
         }
     }
 }

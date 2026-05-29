@@ -30,6 +30,8 @@ namespace Apha.PIMS.Application.Mappings
                 .ForMember(dest => dest.AnimalDays, opt => opt.MapFrom(src => src.Animaldays))
                 .ReverseMap();
             CreateMap<MyProjectAnimalPlan, AnimalCostDto>().ReverseMap();
+            CreateMap<MyProjectStaffPlan, StaffCostDto>().ReverseMap();
+            CreateMap<MyTimeCostCalcs, StaffCostDto>().ReverseMap();
         }
     }
 }

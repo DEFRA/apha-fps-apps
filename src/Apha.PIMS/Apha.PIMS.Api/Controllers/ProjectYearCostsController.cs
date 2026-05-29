@@ -3,7 +3,8 @@ using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
-using Apha.PIMS.Core.Pagination;using Asp.Versioning;
+using Apha.PIMS.Core.Pagination;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -84,6 +85,26 @@ namespace Apha.PIMS.Api.Controllers
             PaginationParameters<string> paging = _mapper.Map<PaginationParameters<string>>(query);
             PaginatedResult<TestCostDto> result = await _service.GetTestActualsAsync(project, year, paging);
             return Ok(_mapper.Map<PaginationRes<TestCostRes>>(result));
+        }
+
+        /// <summary>Returns paginated Staff Cost plans for a given project and year.</summary>
+        [HttpGet("{project}/{year}/staffplans")]
+        public async Task<IActionResult> GetStaffPlans(
+            string project, short year, [FromQuery] PaginationReq<string> query)
+        {
+            PaginationParameters<string> paging = _mapper.Map<PaginationParameters<string>>(query);
+            PaginatedResult<StaffCostDto> result = await _service.GetStaffPlansAsync(project, year, paging);
+            return Ok(_mapper.Map<PaginationRes<StaffCostRes>>(result));
+        }
+
+        /// <summary>Returns paginated Staff Cost actuals for a given project and year.</summary>
+        [HttpGet("{project}/{year}/staffactuals")]
+        public async Task<IActionResult> GetStaffActuals(
+            string project, short year, [FromQuery] PaginationReq<string> query)
+        {
+            PaginationParameters<string> paging = _mapper.Map<PaginationParameters<string>>(query);
+            PaginatedResult<StaffCostDto> result = await _service.GetStaffActualsAsync(project, year, paging);
+            return Ok(_mapper.Map<PaginationRes<StaffCostRes>>(result));
         }
     }
 }

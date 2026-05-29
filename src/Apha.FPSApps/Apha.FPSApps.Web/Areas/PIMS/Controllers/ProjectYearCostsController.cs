@@ -66,9 +66,13 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                     BuildTestPlansGridAsync(resolvedProject, resolvedYear, defaultRequest);
                 Task<DataGridConfig<TestCostActualItem>> testActualsGridTask =
                     BuildTestActualsGridAsync(resolvedProject, resolvedYear, defaultRequest);
+                Task<DataGridConfig<StaffCostPlanItem>> staffPlansGridTask =
+                    BuildStaffPlansGridAsync(resolvedProject, resolvedYear, defaultRequest);
+                Task<DataGridConfig<StaffCostActualItem>> staffActualsGridTask =
+                    BuildStaffActualsGridAsync(resolvedProject, resolvedYear, defaultRequest);
 
                 await Task.WhenAll(plansGridTask, actualsGridTask, animalPlansGridTask, animalActualsGridTask,
-                    testPlansGridTask, testActualsGridTask);
+                    testPlansGridTask, testActualsGridTask, staffPlansGridTask, staffActualsGridTask);
 
             return View(new ProjectYearCostsViewModel
             {
@@ -81,7 +85,9 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 AnimalPlansGrid = animalPlansGridTask.Result,
                 AnimalActualsGrid = animalActualsGridTask.Result,
                 TestPlansGrid = testPlansGridTask.Result,
-                TestActualsGrid = testActualsGridTask.Result
+                TestActualsGrid = testActualsGridTask.Result,
+                StaffPlansGrid = staffPlansGridTask.Result,
+                StaffActualsGrid = staffActualsGridTask.Result
             });
         }
 
@@ -371,6 +377,102 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 BindGridUrl = "/PIMS/ProjectYearCosts/LoadTestActualsGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<TestCostActualItem>(null),
+                Pagination = pagination
+            };
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadStaffPlansGrid(
+            PaginationFilter<string> request, string project, short year)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request" });
+
+            DataGridConfig<StaffCostPlanItem> grid =
+                await BuildStaffPlansGridAsync(project, year, request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadStaffActualsGrid(
+            PaginationFilter<string> request, string project, short year)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request" });
+
+            DataGridConfig<StaffCostActualItem> grid =
+                await BuildStaffActualsGridAsync(project, year, request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        private async Task<DataGridConfig<StaffCostPlanItem>> BuildStaffPlansGridAsync(
+            string project, short year, PaginationFilter<string> request)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<StaffCostDto>> response =
+                await _yearCostsService.GetStaffPlansAsync(project, year, queryParameters);
+
+            List<StaffCostPlanItem> items = response.Success && response.Data != null
+                ? _mapper.Map<List<StaffCostPlanItem>>(response.Data)
+                : [];
+
+            PaginationModel pagination = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<StaffCostPlanItem>
+            {
+                GridId = "staffPlansGrid",
+                Title = "Staff Plan",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "WgGrade",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = "/PIMS/ProjectYearCosts/LoadStaffPlansGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<StaffCostPlanItem>(null),
+                Pagination = pagination
+            };
+        }
+
+        private async Task<DataGridConfig<StaffCostActualItem>> BuildStaffActualsGridAsync(
+            string project, short year, PaginationFilter<string> request)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<StaffCostDto>> response =
+                await _yearCostsService.GetStaffActualsAsync(project, year, queryParameters);
+
+            List<StaffCostActualItem> items = response.Success && response.Data != null
+                ? _mapper.Map<List<StaffCostActualItem>>(response.Data)
+                : [];
+
+            PaginationModel pagination = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<StaffCostActualItem>
+            {
+                GridId = "staffActualsGrid",
+                Title = "Staff Actuals",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "JobCode",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = "/PIMS/ProjectYearCosts/LoadStaffActualsGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<StaffCostActualItem>(null),
                 Pagination = pagination
             };
         }

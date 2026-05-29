@@ -96,5 +96,42 @@ namespace Apha.PIMS.Application.Services
                 TotalRecords = pd.TotalRecords
             });
         }
+
+        public async Task<PaginatedResult<StaffCostDto>> GetStaffPlansAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            PagedData<MyProjectStaffPlan> paged = await _repository.GetStaffPlansAsync(project, year, paging);
+            List<StaffCostDto> items = paged.Data.Select(s => new StaffCostDto
+            {
+                Year         = s.Year,
+                ParentProject = s.Parentproject,
+                WgGrade      = s.Workgroupgrade,
+                Name         = s.Name,
+                PlannedHours = s.Plannedhours,
+                Rate         = s.Rate,
+                Cost         = s.Cost
+            }).ToList();
+            return BuildResult(items, paged.PaginationData);
+        }
+
+        public async Task<PaginatedResult<StaffCostDto>> GetStaffActualsAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            PagedData<MyTimeCostCalcs> paged = await _repository.GetStaffActualsAsync(project, year, paging);
+            List<StaffCostDto> items = paged.Data.Select(s => new StaffCostDto
+            {
+                JobCode    = s.Jobcode,
+                Name       = s.Name,
+                WorkGroup  = s.Workgroup,
+                GradeCode  = s.Gradecode,
+                Month      = s.Month,
+                Time       = s.Time,
+                ChargeRate = s.Chargerate,
+                ActualCost = s.Time.HasValue && s.Chargerate.HasValue
+                                 ? Math.Round((decimal)s.Time.Value * s.Chargerate.Value, 2)
+                                 : null
+            }).ToList();
+            return BuildResult(items, paged.PaginationData);
+        }
     }
 }

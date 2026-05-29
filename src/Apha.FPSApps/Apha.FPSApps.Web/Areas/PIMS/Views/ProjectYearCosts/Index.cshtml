@@ -159,9 +159,30 @@
                      id="nav-plan" role="tabpanel" aria-labelledby="tab_nav-plan">
                     <p class="govuk-body govuk-hint">Plan — coming soon.</p>
                 </div>
-                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
-                     id="nav-staff-plan" role="tabpanel" aria-labelledby="tab_nav-staff-plan">
-                    <p class="govuk-body govuk-hint">Staff Plan vs Actuals — coming soon.</p>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
+                     id="nav-staff-plan" role="tabpanel"
+                     aria-labelledby="tab_nav-staff-plan">
+                    <div class="govuk-grid-row">
+
+                        <!-- Staff Plan (left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.StaffPlansGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.StaffPlansGrid)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Staff Actuals (right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.StaffActualsGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.StaffActualsGrid)
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
                 <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
                      id="nav-test-plan" role="tabpanel"
@@ -260,6 +281,8 @@
     var animalActualsGridId = '@Model.AnimalActualsGrid.GridId';
     var testPlansGridId     = '@Model.TestPlansGrid.GridId';
     var testActualsGridId   = '@Model.TestActualsGrid.GridId';
+    var staffPlansGridId    = '@Model.StaffPlansGrid.GridId';
+    var staffActualsGridId  = '@Model.StaffActualsGrid.GridId';
 
     // ── Sidebar ──────────────────────────────────────────────────────
     function toggleSidebar() {
@@ -279,12 +302,15 @@
     function getAnimalActualsGridManager() { return window['gridManager_' + animalActualsGridId]; }
     function getTestPlansGridManager()     { return window['gridManager_' + testPlansGridId]; }
     function getTestActualsGridManager()   { return window['gridManager_' + testActualsGridId]; }
+    function getStaffPlansGridManager()    { return window['gridManager_' + staffPlansGridId]; }
+    function getStaffActualsGridManager()  { return window['gridManager_' + staffActualsGridId]; }
 
     // Server-rendered tabs — mark as loaded so filter-change reloads them
     var loadedTabs = {
         'nav-additional-cost': true,
         'nav-animal-plan':     true,
-        'nav-test-plan':       true
+        'nav-test-plan':       true,
+        'nav-staff-plan':      true
     };
 
     // ── Panel visibility ──────────────────────────────────────────────────
@@ -334,6 +360,11 @@
             var testActualsGm = getTestActualsGridManager();
             if (testPlansGm)   testPlansGm.reloadGrid({ page: 1 });
             if (testActualsGm) testActualsGm.reloadGrid({ page: 1 });
+        } else if (tabId === 'nav-staff-plan') {
+            var staffPlansGm   = getStaffPlansGridManager();
+            var staffActualsGm = getStaffActualsGridManager();
+            if (staffPlansGm)   staffPlansGm.reloadGrid({ page: 1 });
+            if (staffActualsGm) staffActualsGm.reloadGrid({ page: 1 });
         }
     }
 

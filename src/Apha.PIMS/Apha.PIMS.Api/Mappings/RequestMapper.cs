@@ -39,6 +39,7 @@ namespace Apha.PIMS.Api.Mappings
             CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
             CreateMap<AnimalCostDto, AnimalCostRes>().ReverseMap();
             CreateMap<TestCostDto, TestCostRes>().ReverseMap();
+            CreateMap<StaffCostDto, StaffCostRes>().ReverseMap();
         }
     }
 }

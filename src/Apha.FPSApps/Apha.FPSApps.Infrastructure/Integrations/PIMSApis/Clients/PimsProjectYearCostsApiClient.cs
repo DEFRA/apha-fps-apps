@@ -153,5 +153,49 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<StaffCostDto>>> GetStaffPlansAsync(
+            string project, short year, QueryParameters<string> query)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(
+                    string.Format(PimsApiEndpoints.GetStaffPlans, project, year), query);
+                var response = await _http.GetAsync<List<StaffCostRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<StaffCostDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<StaffCostDto>>>(response);
+                return ApiResponseDto<List<StaffCostDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<StaffCostDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve staff plans", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<List<StaffCostDto>>> GetStaffActualsAsync(
+            string project, short year, QueryParameters<string> query)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(
+                    string.Format(PimsApiEndpoints.GetStaffActuals, project, year), query);
+                var response = await _http.GetAsync<List<StaffCostRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<StaffCostDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<StaffCostDto>>>(response);
+                return ApiResponseDto<List<StaffCostDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<StaffCostDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve staff actuals", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }
