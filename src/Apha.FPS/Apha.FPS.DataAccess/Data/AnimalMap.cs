@@ -10,7 +10,7 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<Animal> entity)
         {
-            entity.HasKey(e => e.AnimalType).HasName("tblanimals_pk__tblanimals__18ebb532");
+            entity.HasKey(e => new { e.AnimalType, e.FpsYear }).HasName("pk_tblanimals");
 
             entity.ToTable("tblanimals", "fps");
 

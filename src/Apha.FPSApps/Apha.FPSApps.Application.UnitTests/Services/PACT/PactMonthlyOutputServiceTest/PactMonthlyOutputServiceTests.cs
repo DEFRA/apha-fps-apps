@@ -1,0 +1,155 @@
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Interfaces.PactApiClients;
+using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Application.Services.PACT;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
+using Xunit;
+
+namespace Apha.FPSApps.Application.UnitTests.Services.PACT.PactMonthlyOutputServiceTest
+{
+    public class PactMonthlyOutputServiceTests
+    {
+        private readonly IPactApiClient _pactClient;
+        private readonly IPactMonthlyOutputApiClient _pactMonthlyOutputApiClient;
+        private readonly PactMonthlyOutputService _service;
+
+        public PactMonthlyOutputServiceTests()
+        {
+            _pactClient = Substitute.For<IPactApiClient>();
+            _pactMonthlyOutputApiClient = Substitute.For<IPactMonthlyOutputApiClient>();
+            _pactClient.PactMonthlyOutput.Returns(_pactMonthlyOutputApiClient);
+            _service = new PactMonthlyOutputService(_pactClient);
+        }
+
+        #region SearchAsync Tests
+
+        [Fact]
+        public async Task SearchAsync_WithValidQueryAndFilter_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var filter = new MonthlyOutputLogFilterDto { WorkGroup = "WG1", TestCode = "TC1" };
+            var logs = new List<MonthlyOutputLogDto>
+            {
+                new() { SequenceNo = 1, TestCode = "TC1", Buyer = "BuyerA", WorkGroup = "WG1" },
+                new() { SequenceNo = 2, TestCode = "TC1", Buyer = "BuyerB", WorkGroup = "WG1" }
+            };
+            var expectedResponse = ApiResponseDto<List<MonthlyOutputLogDto>>.SuccessResponse(logs);
+            _pactMonthlyOutputApiClient.SearchAsync(query, filter).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SearchAsync(query, filter);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _pactMonthlyOutputApiClient.Received(1).SearchAsync(query, filter);
+        }
+
+        [Fact]
+        public async Task SearchAsync_WithNoMatchingRecords_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var filter = new MonthlyOutputLogFilterDto { WorkGroup = "WG_NONE" };
+            var expectedResponse = ApiResponseDto<List<MonthlyOutputLogDto>>.SuccessResponse(new List<MonthlyOutputLogDto>());
+            _pactMonthlyOutputApiClient.SearchAsync(query, filter).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SearchAsync(query, filter);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task SearchAsync_WithAllFilters_PassesFilterToApiClient()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var filter = new MonthlyOutputLogFilterDto
+            {
+                WorkGroup = "WG1",
+                TestCode = "TC1",
+                Buyer = "BuyerA",
+                DateImported = new DateTime(2024, 1, 15),
+                Month = 1.0,
+                UserId = "user1",
+                InsertDelete = "I"
+            };
+            var logs = new List<MonthlyOutputLogDto>
+            {
+                new() { SequenceNo = 1, TestCode = "TC1", Buyer = "BuyerA", WorkGroup = "WG1", Month = 1.0, UserId = "user1", InsertDelete = "I" }
+            };
+            var expectedResponse = ApiResponseDto<List<MonthlyOutputLogDto>>.SuccessResponse(logs);
+            _pactMonthlyOutputApiClient.SearchAsync(query, filter).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SearchAsync(query, filter);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _pactMonthlyOutputApiClient.Received(1).SearchAsync(query, filter);
+        }
+
+        [Fact]
+        public async Task SearchAsync_WithEmptyFilter_DelegatesToApiClient()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var filter = new MonthlyOutputLogFilterDto();
+            var expectedResponse = ApiResponseDto<List<MonthlyOutputLogDto>>.SuccessResponse(new List<MonthlyOutputLogDto>());
+            _pactMonthlyOutputApiClient.SearchAsync(query, filter).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SearchAsync(query, filter);
+
+            // Assert
+            Assert.NotNull(result);
+            await _pactMonthlyOutputApiClient.Received(1).SearchAsync(query, filter);
+        }
+
+        [Fact]
+        public async Task SearchAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var filter = new MonthlyOutputLogFilterDto { WorkGroup = "WG1" };
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<MonthlyOutputLogDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactMonthlyOutputApiClient.SearchAsync(query, filter).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SearchAsync(query, filter);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task SearchAsync_ApiClientThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var filter = new MonthlyOutputLogFilterDto();
+            _pactMonthlyOutputApiClient
+                .SearchAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<MonthlyOutputLogFilterDto>())
+                .ThrowsAsync(new Exception("API client error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _service.SearchAsync(query, filter));
+        }
+
+        #endregion
+    }
+}

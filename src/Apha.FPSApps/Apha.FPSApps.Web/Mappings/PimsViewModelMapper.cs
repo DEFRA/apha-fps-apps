@@ -16,6 +16,7 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<ProjectListItem, ProjectListViewDto>().ReverseMap();
             CreateMap<ProjectListViewModel, ProposedProjectDto>().ReverseMap();
+            CreateMap<ProposedProjectViewModel, ProposedProjectDto>().ReverseMap();
             CreateMap<ProjectDetailsViewModel, ProjectDetailDto>().ReverseMap();
             CreateMap<ProjectDetailsViewModel, ProposedProjectDto>().ReverseMap();
             CreateMap<ProjectCommentItem, CommentDto>().ReverseMap();

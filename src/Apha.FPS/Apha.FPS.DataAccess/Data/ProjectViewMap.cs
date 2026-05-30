@@ -28,7 +28,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnName("caseworksub");
             entity.Property(e => e.Comments).HasColumnName("comments");
             entity.Property(e => e.Contract)
-                .HasColumnType("citext")
+                .HasMaxLength(10)
                 .HasColumnName("contract");
             entity.Property(e => e.CostBookNo)
                 .HasMaxLength(50)
@@ -38,7 +38,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnType("money")
                 .HasColumnName("custincome");
             entity.Property(e => e.Customer)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("customer");
             entity.Property(e => e.DateCosted)
                 .HasColumnType("timestamp without time zone")
@@ -47,11 +47,10 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("datecreated");
             entity.Property(e => e.Disease)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("disease");
             entity.Property(e => e.Dt2Username)
                 .HasMaxLength(50)
-                .UseCollation("latin1_general_ci_as")
                 .HasColumnName("dt2username");
             entity.Property(e => e.FecCost)
                 .HasColumnType("money")
@@ -59,7 +58,7 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.Finished).HasColumnName("finished");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.IncomeAccountCode)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("incomeaccountcode");
             entity.Property(e => e.IsDefraProject).HasColumnName("isdefraproject");
             entity.Property(e => e.Manager)
@@ -72,7 +71,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("owningrc");
             entity.Property(e => e.ParentProject)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("parentproject");
             entity.Property(e => e.PlanCaseWorkDebit)
                 .HasColumnType("money")
@@ -81,16 +80,16 @@ namespace Apha.FPS.DataAccess.Data
                 .HasColumnType("money")
                 .HasColumnName("profit");
             entity.Property(e => e.Program)
-                .HasColumnType("citext")
+                .HasMaxLength(10)
                 .HasColumnName("program");
             entity.Property(e => e.ProjectGroup)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("projectgroup");
             entity.Property(e => e.ProjectParent)
                 .HasMaxLength(50)
                 .HasColumnName("projectparent");
             entity.Property(e => e.ProjectStatus)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("projectstatus");
             entity.Property(e => e.ProjectTitle)
                 .HasMaxLength(200)
@@ -102,7 +101,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasMaxLength(30)
                 .HasColumnName("shorttitle");
             entity.Property(e => e.SubAccountCode)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("subaccountcode");
             entity.Property(e => e.TransferIncome)
                 .HasColumnType("money")
@@ -110,7 +109,6 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.UserEmail)
                 .HasMaxLength(255)
-                .UseCollation("latin1_general_ci_as")
                 .HasColumnName("useremail");
             entity.Property(e => e.WipCurrent)
                 .HasColumnType("money")

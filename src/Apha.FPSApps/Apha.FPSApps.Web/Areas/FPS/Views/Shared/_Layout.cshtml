@@ -1,225 +1,99 @@
-@using System.Security.Claims
-@{
-    // Get display name from claims (try multiple claim types)
-    var displayName = User.FindFirst("name")?.Value
-                      ?? User.FindFirst(ClaimTypes.GivenName)?.Value
-                      ?? User.FindFirst(ClaimTypes.Name)?.Value?.Split('@')[0]
-                      ?? "Unknown User";
-   
-}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @{
+        var allYears = await AppStateService.GetCacheValueAsync<IEnumerable<YearMasterDto>>(FpsCacheKeys.AllYears);
+        var fpsYearCode = allYears?.FirstOrDefault(y => y.FpsYear == FyContext.Year)?.FpsYearCode
+                          ?? FyContext.Year.ToString();
+        var pageTitle = ViewData["Title"]?.ToString();
+        ViewData["Title"] = $"{fpsYearCode} : {pageTitle}";
+    }
     <title>@ViewData["Title"]</title>
-    <link rel="stylesheet" href="~/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
+    <link rel="stylesheet" href="~/css/supplement_style_for_gov.uk_style.css" />
     <link rel="stylesheet" href="~/css/fps_styles/styles.css" />
     <link rel="stylesheet" href="~/css/main_style.css" />
     <link rel="stylesheet" href="~/DataGrid/editable-grid.css" />
-    <link rel="stylesheet" href="~/css/suppliement_style_over_gov.uk_style.css" />
-    <link rel="stylesheet" href="~/css/govuk-frontend-6.0.0.min.css" />
+    <link rel="stylesheet" href="~/css/common/headernav/navstyle.css" />
     <script src="~/lib/jquery/dist/jquery.js"></script>
     @await RenderSectionAsync("Styles", required: false)
-    <style>
-            .form-container {
-                display: flex;
-                gap: 20px;
-                margin-bottom: 50px;
-            }
-
-            .form-left {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .form-center {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-    </style>
 </head>
 <body>
-    <header>
-        <div class="header-nav">
-            <div class="pims-log-wrapper">
-                <div>
-                    <img src="~/images/defra_logo.png" alt="Logo of Animal & Plant Health Agency" width="80">
-                    </div>
-                    <div class="pims-log">
-                        <span style="display:inline-block; padding: 2px;">FPS</span>
-                    </div>
-                    <div>
-                        @await Component.InvokeAsync("YearSelector")
-                    </div>
-                </div>
-                <div class="btn-group" style="display: flex; align-items: center; font-size: 16px;">
-                    <button type="button" aria-label="user dropdown arrow to go home page" style="border: 0;" class="btn btn-secondary dropdown-toggle user-menu" data-bs-toggle="dropdown" aria-expanded="false">
-                        @displayName
-                        <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24">
-                            <img src="~/images/down-arrow.png" alt="dropdown arrow for logout of application" width="30" height="30">
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a href="/" class="dropdown-item" type="button">
-                                        <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22">
-                                            Home
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </header>
-                    <nav class="navbar navbar-expand-lg main-nav">
-                        <div class="container-fluid">
-                            <button class="navbar-toggler" type="button" aria-label="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown">
-                                <span class="navbar-toggler-icon"></span>
-                            </button>
-                            <div class="collapse navbar-collapse" id="navbarNavDropdown">
-                                <ul class="navbar-nav">
-                                    <li class="nav-item dropdown">
-                                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-current="page" href="#">Programme Management<span class="arrow"><img src="~/images/arrow-down.svg" alt="dropdown arrow for Programme Management Menu" width="12"></span></a>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="program_management.html">Select Programme</a></li>
-                                            <li>
-                                                <a class="dropdown-item" style="display: flex; justify-content: space-between;" href="#">Plan Projects  <img src="~/images/right-arrow.png" alt="Arrow for Plan Projects Sub menu" width="30" height="30"></a>
-                                                <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="#">Set Up A New Projects</a></li>
-                                                    <li><a class="dropdown-item" asp-area="FPS" asp-controller="ProgramProject" asp-action="Index">Plan Project Individually</a></li>
-                                                    <li><a class="dropdown-item" asp-area="FPS" asp-controller="ProgramStaffPlan" asp-action="Index">Plan STAFF for Entire Programme</a></li>
-                                                    <li><a class="dropdown-item" asp-area="FPS" asp-controller="ProgramAnimalPlan" asp-action="Index">Plan Animals for Entire Programme</a></li>
-                                                    <li><a class="dropdown-item" asp-area="FPS" asp-controller="ProgramTestPlan" asp-action="Index">Plan Test Purchases for Entire Programme</a></li>
-                                                    <li><a class="dropdown-item" asp-area="FPS" asp-controller="ProgramAdditionalCostPlan" asp-action="Index">Plan Additional cost for Entire Programme</a></li>
-                                                </ul>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item" style="display: flex; justify-content: space-between;" href="#">Review Plans <img src="~/images/right-arrow.png" alt="Arrow for Review Plans Sub menu" width="30" height="30"></a>
-                                                <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="#">Project Portability</a></li>
-                                                    <li><a class="dropdown-item" href="#">Staff Plan Pivot</a></li>
-                                                </ul>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item" style="display: flex; justify-content: space-between;" href="#">Summary Printouts <img src="~/images/right-arrow.png" alt="Arrow for Summary Printouts Sub menu" width="30" height="30"></a>
-                                                <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" aria-label="Programme Profitability Report" href="#">Programme Profitability Report</a></li>
-                                                    <li><a class="dropdown-item" aria-label="Summarized by disease" href="#">Summarized by disease</a></li>
-                                                    <li><a class="dropdown-item" href="#">Summarized by Customer</a></li>
-                                                    <li><a class="dropdown-item" href="#">Project Specifics</a></li>
-                                                </ul>
-                                            </li>
-                                        </ul>
-                                    </li>
-                                    <li class="nav-item dropdown">
-                                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-current="page" href="#">Resource Management<span class="arrow"><img src="~/images/arrow-down.svg" alt="dropdown arrow for Resource Management Menu" width="12"></span></a>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="createresourcecenter.html">Create Resource Center</a></li>
-                                            <li><a class="dropdown-item" href="setupresource.html">Setup Resource</a></li>
-                                            <li><a class="dropdown-item" href="reviewplans.html">Review Plans</a></li>
-                                            <li><a class="dropdown-item" href="reports.html">Reports</a></li>
-                                        </ul>
-                                    </li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Contract</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Lab Testing Manager's</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Luvely Pivots</a></li>
-                                    <li class="nav-item dropdown">
-                                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-current="page" href="#">MAB <span class="arrow"><img src="~/images/arrow-down.svg" alt="dropdown arrow for Programme Management Menu" width="12"></span></a>
-                                        <div class="dropdown-menu my-flex-dropdown" style="border: 1px solid #000; left: -70px;">
-                                            <ul>
-                                                <li><a class="dropdown-item" asp-area="FPS" asp-controller="StaffMaintenance" asp-action="Index">Maintenance Menu</a></li>
-                                                <li><a class="dropdown-item" href="#">Stage 1 Plans</a></li>
-                                                <li><a class="dropdown-item" href="#">ASU Data View</a></li>
-                                                <li><a class="dropdown-item" href="#">VLA Project Totals</a></li>
-                                                <li><a class="dropdown-item" href="#">Generic Bids</a></li>
-                                                <li><a class="dropdown-item" href="#">Project Audit Trails</a></li>
-                                            </ul>
-                                            <ul>
-                                                <li><a class="dropdown-item" href="#">SMG Summary Report - All Work</a></li>
-                                                <li><a class="dropdown-item" href="#">SMG Summary Report - Assured Work Only</a></li>
-                                                <li><a class="dropdown-item" href="#">All Programs Profitability</a></li>
-                                                <li><a class="dropdown-item" href="#">Program Exceptional Bids</a></li>
-                                                <li><a class="dropdown-item" href="#">Income Contribution Rpt</a></li>
-                                                <li><a class="dropdown-item" href="#">Income Cont - Summary</a></li>
-                                                <li><a class="dropdown-item" href="#">Project Specific - Query</a></li>
-                                            </ul>
-                                            <ul>
-                                                <li><a class="dropdown-item" href="#">Resource Grades by Programme</a></li>
-                                                <li><a class="dropdown-item" href="#">Resource Utilisation</a></li>
-                                                <li><a class="dropdown-item" href="#">Open FPS</a></li>
-                                                <li><a class="dropdown-item" href="#">Close FPS</a></li>
-                                                <li><a class="dropdown-item" href="#">Run Snapshot Queries</a></li>
-                                                <li><a class="dropdown-item" href="#">Run Comparison Queries</a></li>
-                                            </ul>
-                                        </div>
-                                    </li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Project Plan Viewer</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Project Group</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Management Account</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </nav>
+    <!-- ── Top Header ─────────────────────────────────────────────────── -->
+    @await Component.InvokeAsync("AppHeader", new { appName = "FPS", showYearSelector = true })
 
-                    <div class="modal fade" id="" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-label="staticBackdropLabel">
-                        <div class="modal-dialog modal-md">
-                            <div class="modal-content">
-                                <div class="modal-body">
-                                    <form>
-                                        <div class="display-flex">
-                                            <div class="col">
-                                                <label for="select_program" class="col-form-label">Select a Programme</label>
-                                                <select class="form-select" required="" id="select_program" value="">
-                                                    <option>--select programme--</option>
-                                                    <option>ADMIN</option>
-                                                    <option>ASU</option>
-                                                    <option>B&M</option>
-                                                    <option>Bact</option>
-                                                    <option>Bee Insp</option>
-                                                    <option>BTB</option>
-                                                    <option>Comm</option>
-                                                    <option>DoES</option>
-                                                    <option>GM</option>
-                                                    <option>LapT</option>
-                                                    <option>Path</option>
-                                                    <option>PHINSLT</option>
-                                                    <option>PHSIN</option>
-                                                    <option>PVS</option>
-                                                </select>
-                                            </div>
-                                            <div class="ms-3">
-                                                <button class="btn btn-primary" type="button" onclick="SelectProgram()" data-bs-dismiss="modal">
-                                                    <i class="fa-solid fa-circle-chevron-right"></i> GO
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <!-- ── Main Navigation ───────────────────────────────────────────── -->
+    @await Component.InvokeAsync("AppNav", new { appArea = "FPS" })
 
-                    <div class="container-fluid">
-                        @RenderBody()
-                    </div>
+    <!-- ── Page Body ─────────────────────────────────────────────────── -->
+    <div class="sup_margin_bottom_10 content-wrapper">
+        @RenderBody()
+    </div>
 
-                    <div class="footer">
-                        © Copyright Defra 2025
-                    </div>
+    <!-- ── Footer ────────────────────────────────────────────────────── -->
+    @await Component.InvokeAsync("AppFooter")
 
-                    <div class="modal fade" id="modalPopup" tabindex="-1" aria-labelledby="exampleModalLabel">
-                        <div class="modal-dialog modal-md">
-                            <div id="modaPopupBody" class="modal-content">
-                            </div>
-                        </div>
-                    </div>
-    
-                    <script src="~/js/fps_js/bootstrap.bundle.min.js"></script>
-                    <script src="~/js/govuk-modal-dialog.js"></script>
-                    <fps-year-script></fps-year-script>
-                    @await RenderSectionAsync("Scripts", required: false)
-                </body>
-            </html>
+    <!-- ── Shared modal popup (for add/edit forms) ───────────────────── -->
+    <div id="modalPopup" tabindex="-1" aria-labelledby="modalPopupLabel"
+         style="display:none; position:fixed; inset:0; z-index:1050;
+                background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+        <div class="modal-dialog modal-lg" style="margin:auto; width:100%; max-width:700px;">
+            <div id="modaPopupBody" class="modal-content" style="border-radius:4px;">
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Scripts ───────────────────────────────────────────────────── -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+    <script src="~/js/govuk-modal-dialog.js"></script>
+    <fps-year-script></fps-year-script>
+
+    <script>
+        // ── Modal open / close helpers ────────────────────────────────────
+        (function () {
+            var modal = document.getElementById('modalPopup');
+            if (!modal) return;
+
+            var observer = new MutationObserver(function () {
+                if (modal.classList.contains('show')) {
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            });
+            observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    return false;
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal.classList.contains('show')) {
+                    modal.classList.remove('show');
+                }
+            });
+        })();
+
+        // ── jQuery.fn.serializeObject helper ─────────────────────────────
+        $.fn.serializeObject = function () {
+            var obj = {};
+            this.serializeArray().forEach(function (item) {
+                obj[item.name] = item.value;
+            });
+            return obj;
+        };
+    </script>
+
+    <script src="~/js/common/headernav/navmenu.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

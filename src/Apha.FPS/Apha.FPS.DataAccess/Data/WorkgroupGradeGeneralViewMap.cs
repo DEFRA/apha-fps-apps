@@ -1,4 +1,4 @@
-using Apha.FPS.Core.Enities;
+using Apha.FPS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -6,17 +6,13 @@ namespace Apha.FPS.DataAccess.Data
 {
     public class WorkgroupGradeGeneralViewMap : IEntityTypeConfiguration<WorkgroupGradeGeneralView>
     {
-
-
         public void Configure(EntityTypeBuilder<WorkgroupGradeGeneralView> entity)
         {
-            entity
-                .HasNoKey()
-                .ToView("vworkgroupgrade_general", "fps");
+            entity.HasNoKey();
+            entity.ToView("vworkgroupgrade_general", "fps");
 
             entity.Property(e => e.GradeCode)
-                .HasMaxLength(50)
-                .UseCollation("latin1_general_ci_as")
+                .HasMaxLength(10)
                 .HasColumnName("gradecode");
             entity.Property(e => e.ProfitCentreGrade)
                 .HasMaxLength(20)
@@ -27,7 +23,8 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.WorkGroup)
                 .HasMaxLength(50)
                 .HasColumnName("workgroup");
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+            entity.Property(e => e.FpsYear)
+                .HasColumnName("fpsyear");
         }
     }
 }

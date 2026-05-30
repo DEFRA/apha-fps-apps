@@ -1,0 +1,148 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.WorkGroupPeopleViewModel
+
+@{
+    ViewData["Title"] = "PACT : Work Group People";
+}
+
+@* Filter Header *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_flex_left_center sup_padding_bottom_10 sup_border-bottom" style="margin-top:10px;">
+
+    @* Work Group dropdown *@
+    <div class="govuk-grid-column-one-third">
+        <label for="workGroupSelect" class="govuk-label govuk-!-font-weight-bold">Select a WorkGroup......</label>
+        <div style="position: relative; z-index: 50;">
+            <input type="text" id="workGroupSelect" placeholder="Select WorkGroup" autocomplete="off"
+                   class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly />
+            <div id="workGroupDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                    max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                    box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                <input type="text" id="workGroupSearchBox" placeholder="Type to search work group"
+                       style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                        <tr>
+                            <th style="padding:6px 8px; text-align:left;">Work Group</th>
+                            <th style="padding:6px 8px; text-align:left;">Profit Centre</th>
+                        </tr>
+                    </thead>
+                    <tbody id="workGroupDropdownBody">
+                        @foreach (var item in Model.WorkGroupOptions)
+                        {
+                            <tr data-value="@item.WorkGroupName" style="cursor:pointer;">
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@item.WorkGroupName</td>
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@item.ProfitCentre</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @* OR separator *@
+    <div class="govuk-grid-column-one-sixth sup_margin_top_20" style="text-align:center; padding-top:4px;">
+        <span class="govuk-body govuk-!-font-weight-bold">..Or a Person....</span>
+    </div>
+
+    @* Person dropdown *@
+    <div class="govuk-grid-column-one-third">
+        <label for="personSelect" class="govuk-label govuk-!-font-weight-bold">&nbsp;</label>
+        <div style="position: relative; z-index: 50;">
+            <input type="text" id="personSelect" placeholder="Select Person" autocomplete="off"
+                   class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly />
+            <div id="personDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                    max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                    box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                <input type="text" id="personSearchBox" placeholder="Type to search person"
+                       style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                        <tr>
+                            <th style="padding:6px 8px; text-align:left;">Name</th>
+                            <th style="padding:6px 8px; text-align:left;">Work Group Grade</th>
+                            <th style="padding:6px 8px; text-align:left;">Work Group</th>
+                        </tr>
+                    </thead>
+                    <tbody id="personDropdownBody">
+                        @foreach (var item in Model.PersonOptions)
+                        {
+                            <tr data-value="@item.Name" data-workgroup="@item.WorkGroup" style="cursor:pointer;">
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@item.Name</td>
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@item.WorkGroupGrade</td>
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@item.WorkGroup</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@* Main content row: grid (left) + info panels (right) *@
+<div class="govuk-grid-row sup_margin_0 sup_margin_top_20">
+
+    @* People Grid *@
+    <div class="govuk-grid-column-three-quarters">
+        <div id="gridContainer_peopleGrid">
+            @await Html.PartialAsync("_DataGrid", Model.PeopleGrid)
+        </div>
+    </div>
+
+    @* Right-hand information panels *@
+    <div class="govuk-grid-column-one-quarter">
+
+        @* WorkGroup Information Panel *@
+        <div class="sup_border sup_margin_bottom_15 sup_p_8">
+            <h3 class="govuk-heading-s sup_margin_0">WorkGroup Information</h3>
+            <div class="sup_margin_bottom_10">
+                <label for="selectedWorkgroup" class="govuk-label govuk-!-font-weight-bold">I have selected:</label>
+                <input type="text" id="selectedWorkgroup" class="govuk-input govuk-!-font-size-16" readonly />
+            </div>
+            <div class="sup_flex_column">
+                <button type="button" class="govuk-button sup_margin_bottom_10 sup_p_8" id="btnShowSummary"
+                        data-module="govuk-button" disabled>
+                    Show me summarised WorkGroup time
+                </button>
+                <button type="button" class="govuk-button sup_margin_bottom_10 sup_p_8" id="btnShowTimeRecords"
+                        data-module="govuk-button" disabled>
+                    Show Time Records
+                </button>
+                <button type="button" class="govuk-button sup_margin_bottom_10 sup_p_8" id="btnShowTimeCodes"
+                        data-module="govuk-button" disabled>
+                    Show me valid TimeCodes
+                </button>
+                <button type="button" class="govuk-button sup_margin_bottom_0 sup_p_8" id="btnShowTestOutputs"
+                        data-module="govuk-button" disabled>
+                    Show me valid Test Outputs
+                </button>
+            </div>
+        </div>
+
+        @* People Information Panel *@
+        <div class="sup_border sup_margin_bottom_10 sup_p_8">
+            <h3 class="govuk-heading-s sup_margin_0">People Information</h3>
+            <div class="sup_margin_bottom_10">
+                <label for="selectedPerson" class="govuk-label govuk-!-font-weight-bold">I have selected:</label>
+                <input type="text" id="selectedPerson" class="govuk-input govuk-!-font-size-16" readonly />
+            </div>
+            <div class="sup_flex_column">
+                <button type="button" class="govuk-button sup_margin_0 sup_p_8" id="btnShowTimeByJob"
+                        data-module="govuk-button" disabled>
+                    Show me Time by JobCode and Month
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/pact_js/work-group-people.js"></script>
+    <script>
+        peopleGridId = '@Model.PeopleGrid.GridId';
+        preselectedWorkGroup = '@Html.Raw(Model.SelectedWorkGroup ?? "")';
+    </script>
+}

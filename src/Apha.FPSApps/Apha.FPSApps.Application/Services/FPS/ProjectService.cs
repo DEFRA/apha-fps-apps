@@ -57,12 +57,51 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<ContractDto>>> GetAllContractsAsync()
             => await _fpsClient.FpsLookup.GetAllContractsAsync();
 
+        public async Task<ApiResponseDto<List<ContractDto>>> GetContractsByUserAsync()
+            => await _fpsClient.FpsProject.GetContractsByUserAsync();
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo)
-        {
-            return await _fpsClient.FpsProject.GetProjectsByProgramAsync(query, programNo);
-        }
+            => await _fpsClient.FpsProject.GetProjectsByProgramAsync(query, programNo);
 
         public async Task<ApiResponseDto<List<ProjectGroupDto>>> GetAllProjectGroupsAsync()
             => await _fpsClient.FpsLookup.GetAllProjectGroupsAsync();
+
+        // Merged from ProgrammeNewProjectService
+        public Task<ApiResponseDto<ProjectDto>> GetProgrammeNewProjectByIdAsync(string parentProject)
+            => _fpsClient.FpsProject.GetProjectByIdAsync(parentProject);
+
+        public Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project)
+            => _fpsClient.FpsProject.UpdateProjectAsync(parentProject, project);
+
+        public Task<ApiResponseDto<bool>> DeleteProjectAndChildrenAsync(string parentProject)
+            => _fpsClient.FpsProject.DeleteProjectAndChildrenAsync(parentProject);
+
+        public Task<ApiResponseDto<bool>> ChangeProjectCodeAsync(string oldCode, string newCode)
+            => _fpsClient.FpsProject.ChangeProjectCodeAsync(oldCode, newCode);
+
+        public Task<ApiResponseDto<bool>> CheckProjectExistsAsync(string code)
+            => _fpsClient.FpsProject.CheckProjectExistsAsync(code);
+
+        public Task<ApiResponseDto<List<ManagerDto>>> GetManagersAsync()
+            => _fpsClient.FpsProject.GetManagersAsync();
+
+        public Task<ApiResponseDto<List<CostCentreWorkgroupDto>>> GetCostCentresAsync()
+            => _fpsClient.FpsProject.GetCostCentresAsync();
+
+        public Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsAsync()
+            => _fpsClient.FpsProject.GetProjectGroupsAsync();
+
+        public Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsByUserAsync()
+            => _fpsClient.FpsProject.GetProjectGroupsByUserAsync();
+
+        public Task<ApiResponseDto<List<AccountCodeDto>>> GetAccountCodesAsync()
+            => _fpsClient.FpsProject.GetAccountCodesAsync();
+
+        public Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync()
+            => _fpsClient.FpsProject.GetSubAccountsAsync();
+
+        public Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(
+            QueryParameters<string> query, string programNo, string workTypeFilter)
+            => _fpsClient.FpsProject.GetProjectProfitabilityAsync(query, programNo, workTypeFilter);
     }
 }

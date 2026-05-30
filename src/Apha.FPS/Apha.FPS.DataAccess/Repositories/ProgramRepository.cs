@@ -241,16 +241,16 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("ProgramNo", out var programNo) && programNo != null)
-                query = query.Where(x => x.ProgramNo.Contains(programNo.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.ProgramNo, $"%{programNo}%"));
 
             if (dict.TryGetValue("ProgramName", out var programName) && programName != null)
-                query = query.Where(x => x.ProgramName!.Contains(programName.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.ProgramName!, $"%{programName}%"));
 
             if (dict.TryGetValue("Directorate", out var directorate) && directorate != null)
-                query = query.Where(x => x.Directorate!.Contains(directorate.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.Directorate!, $"%{directorate}%"));
 
             if (dict.TryGetValue("Manager", out var manager) && manager != null)
-                query = query.Where(x => x.Manager!.Contains(manager.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
 
             return query;
         }

@@ -18,6 +18,9 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetPagedProjectSubContractsAsync(QueryParameters<string> query, string? project)
             => await _pactClient.PactProjectSubContract.GetPagedProjectSubContractsAsync(query, project);
 
+        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetPagedProjectSubContractsManualAsync(QueryParameters<string> query, string? project)
+            => await _pactClient.PactProjectSubContract.GetPagedProjectSubContractsManualAsync(query, project);
+
         public async Task<ApiResponseDto<decimal>> GetTotalAmountAsync(string? project)
             => await _pactClient.PactProjectSubContract.GetTotalAmountAsync(project);
 
@@ -33,10 +36,13 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<bool>> DeleteAsync(int subContCounter)
             => await _pactClient.PactProjectSubContract.DeleteAsync(subContCounter);
 
-        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetFpsProjectSubContractsAsync(QueryParameters<string> query, string? project)
-            => await _pactClient.PactProjectSubContract.GetFpsProjectSubContractsAsync(query, project);
+        public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetFpsProjectSubContractsAsync(QueryParameters<string> query, string? project, bool filterByAnimalAcctCodes = false)
+            => await _pactClient.PactProjectSubContract.GetFpsProjectSubContractsAsync(query, project, filterByAnimalAcctCodes);
 
-        public async Task<ApiResponseDto<decimal>> GetFpsProjectSubContractTotalAmountAsync(string? project)
-            => await _pactClient.PactProjectSubContract.GetFpsProjectSubContractTotalAmountAsync(project);
+        public async Task<ApiResponseDto<decimal>> GetFpsProjectSubContractTotalAmountAsync(string? project, bool filterByAnimalAcctCodes = false)
+            => await _pactClient.PactProjectSubContract.GetFpsProjectSubContractTotalAmountAsync(project, filterByAnimalAcctCodes);
+
+        public async Task<ApiResponseDto<MonthlySubContractsPivotDto>> GetMonthlySubContractsSummaryAsync(QueryParameters<string> query)
+           => await _pactClient.PactProjectSubContract.GetMonthlySubContractsSummaryAsync(query);
     }
 }

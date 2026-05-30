@@ -628,5 +628,339 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
         }
 
         #endregion
+
+        #region UpdateProjectAsync (with parentProject) Tests
+
+        [Fact]
+        public async Task UpdateProjectAsync_WithParentProject_ReturnsSuccess()
+        {
+            var projectDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "Updated" };
+            var projectReq = new ProjectReq { ParentProject = "PP001", ProjectTitle = "Updated" };
+            var projectRes = new ProjectRes { ParentProject = "PP001", ProjectTitle = "Updated" };
+            var apiResponse = new ApiResponse<ProjectRes> { Success = true, Data = projectRes };
+            var expectedDto = ApiResponseDto<ProjectDto>.SuccessResponse(projectDto);
+
+            _mapper.Map<ProjectReq>(projectDto).Returns(projectReq);
+            _http.PutAsync<ProjectReq, ProjectRes>(Arg.Is<string>(url => url.Contains("PP001")), projectReq).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProjectDto>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.UpdateProjectAsync("PP001", projectDto);
+
+            Assert.True(result.Success);
+            Assert.Equal("PP001", result.Data?.ParentProject);
+        }
+
+        [Fact]
+        public async Task UpdateProjectAsync_WithParentProject_WhenFails_ReturnsFailure()
+        {
+            var projectDto = new ProjectDto { ParentProject = "PP001" };
+            var projectReq = new ProjectReq { ParentProject = "PP001" };
+            var errors = new List<ApiError> { new() { Message = "Failed", Code = "ERR" } };
+            var apiResponse = new ApiResponse<ProjectRes> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<ProjectDto>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Failed", Code = "ERR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _mapper.Map<ProjectReq>(projectDto).Returns(projectReq);
+            _http.PutAsync<ProjectReq, ProjectRes>(Arg.Any<string>(), Arg.Any<ProjectReq>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProjectDto>>(apiResponse).Returns(mappedResponse);
+
+            var result = await _client.UpdateProjectAsync("PP001", projectDto);
+
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region DeleteProjectAndChildrenAsync Tests
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WithValidId_ReturnsSuccess()
+        {
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.DeleteAsync<bool?>(Arg.Is<string>(url => url.Contains("PP001") && url.Contains("delete-with-children"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.DeleteProjectAndChildrenAsync("PP001");
+
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+        }
+
+        [Fact]
+        public async Task DeleteProjectAndChildrenAsync_WhenFails_ReturnsFailure()
+        {
+            var errors = new List<ApiError> { new() { Message = "Failed", Code = "ERR" } };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Failed", Code = "ERR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            var result = await _client.DeleteProjectAndChildrenAsync("PP001");
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region ChangeProjectCodeAsync Tests
+
+        [Fact]
+        public async Task ChangeProjectCodeAsync_WithValidCodes_ReturnsSuccess()
+        {
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.PostAsync<object, bool?>(Arg.Is<string>(url => url.Contains("change-code")), Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.ChangeProjectCodeAsync("OLD1", "NEW1");
+
+            Assert.True(result.Success);
+            await _http.Received(1).PostAsync<object, bool?>(Arg.Is<string>(url => url.Contains("change-code")), Arg.Any<object>());
+        }
+
+        [Fact]
+        public async Task ChangeProjectCodeAsync_WhenFails_ReturnsFailure()
+        {
+            var errors = new List<ApiError> { new() { Message = "Code exists", Code = "DUPLICATE" } };
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Code exists", Code = "DUPLICATE" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<object, bool?>(Arg.Any<string>(), Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            var result = await _client.ChangeProjectCodeAsync("OLD1", "NEW1");
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region CheckProjectExistsAsync Tests
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_WhenExists_ReturnsTrue()
+        {
+            var apiResponse = new ApiResponse<bool> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.GetAsync<bool>(Arg.Is<string>(url => url.Contains("check-exists/PP001"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.CheckProjectExistsAsync("PP001");
+
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_WhenFails_ReturnsFailure()
+        {
+            var errors = new List<ApiError> { new() { Message = "Error", Code = "ERR" } };
+            var apiResponse = new ApiResponse<bool> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<bool>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            var result = await _client.CheckProjectExistsAsync("PP001");
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetManagersAsync Tests
+
+        [Fact]
+        public async Task GetManagersAsync_WithSuccess_ReturnsMappedManagers()
+        {
+            var managerList = new List<ManagerRes> { new() { Name = "Alice" } };
+            var apiResponse = new ApiResponse<List<ManagerRes>> { Success = true, Data = managerList };
+            var expectedDto = ApiResponseDto<List<ManagerDto>>.SuccessResponse(new List<ManagerDto> { new() { Name = "Alice" } });
+
+            _http.GetAsync<List<ManagerRes>>(Arg.Is<string>(url => url.Contains("employee/managers"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ManagerDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetManagersAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetManagersAsync_WhenFails_ReturnsFailure()
+        {
+            var apiResponse = new ApiResponse<List<ManagerRes>> { Success = false, Errors = new List<ApiError> { new() { Message = "Error" } } };
+            var mappedResponse = new ApiResponseDto<List<ManagerDto>> { Success = false, Errors = new List<ApiErrorDto> { new() { Message = "Error" } }, Meta = new ApiMetaDto() };
+
+            _http.GetAsync<List<ManagerRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ManagerDto>>>(apiResponse).Returns(mappedResponse);
+
+            var result = await _client.GetManagersAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetCostCentresAsync Tests
+
+        [Fact]
+        public async Task GetCostCentresAsync_WithSuccess_ReturnsMappedCostCentres()
+        {
+            var data = new List<CostCentreWorkgroupRes> { new() { CostCentre = 100 } };
+            var apiResponse = new ApiResponse<List<CostCentreWorkgroupRes>> { Success = true, Data = data };
+            var expectedDto = ApiResponseDto<List<CostCentreWorkgroupDto>>.SuccessResponse(new List<CostCentreWorkgroupDto> { new() { CostCentre = 100 } });
+
+            _http.GetAsync<List<CostCentreWorkgroupRes>>(Arg.Is<string>(url => url.Contains("costcentre"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<CostCentreWorkgroupDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetCostCentresAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetCostCentresAsync_WhenFails_ReturnsFailure()
+        {
+            var apiResponse = new ApiResponse<List<CostCentreWorkgroupRes>> { Success = false, Errors = new List<ApiError> { new() { Message = "Error" } } };
+            var mappedResponse = new ApiResponseDto<List<CostCentreWorkgroupDto>> { Success = false, Errors = new List<ApiErrorDto> { new() { Message = "Error" } }, Meta = new ApiMetaDto() };
+
+            _http.GetAsync<List<CostCentreWorkgroupRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<CostCentreWorkgroupDto>>>(apiResponse).Returns(mappedResponse);
+
+            var result = await _client.GetCostCentresAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetProjectGroupsAsync Tests
+
+        [Fact]
+        public async Task GetProjectGroupsAsync_WithSuccess_ReturnsMappedProjectGroups()
+        {
+            var data = new List<ProjectGroupRes> { new() { ProjectGroupName = "GRP1" } };
+            var apiResponse = new ApiResponse<List<ProjectGroupRes>> { Success = true, Data = data };
+            var expectedDto = ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(new List<ProjectGroupDto> { new() { ProjectGroupName = "GRP1" } });
+
+            _http.GetAsync<List<ProjectGroupRes>>(Arg.Is<string>(url => url.Contains("projectgroup"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetProjectGroupsAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetProjectGroupsAsync_WhenFails_ReturnsFailure()
+        {
+            var apiResponse = new ApiResponse<List<ProjectGroupRes>> { Success = false, Errors = new List<ApiError> { new() { Message = "Error" } } };
+            var mappedResponse = new ApiResponseDto<List<ProjectGroupDto>> { Success = false, Errors = new List<ApiErrorDto> { new() { Message = "Error" } }, Meta = new ApiMetaDto() };
+
+            _http.GetAsync<List<ProjectGroupRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(apiResponse).Returns(mappedResponse);
+
+            var result = await _client.GetProjectGroupsAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetAccountCodesAsync Tests
+
+        [Fact]
+        public async Task GetAccountCodesAsync_WithSuccess_ReturnsMappedAccountCodes()
+        {
+            var data = new List<AccountCodeRes> { new() { Code = "AC1" } };
+            var apiResponse = new ApiResponse<List<AccountCodeRes>> { Success = true, Data = data };
+            var expectedDto = ApiResponseDto<List<AccountCodeDto>>.SuccessResponse(new List<AccountCodeDto> { new() { Code = "AC1" } });
+
+            _http.GetAsync<List<AccountCodeRes>>(Arg.Is<string>(url => url.Contains("accountcode"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<AccountCodeDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetAccountCodesAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAccountCodesAsync_WhenFails_ReturnsFailure()
+        {
+            var apiResponse = new ApiResponse<List<AccountCodeRes>> { Success = false, Errors = new List<ApiError> { new() { Message = "Error" } } };
+            var mappedResponse = new ApiResponseDto<List<AccountCodeDto>> { Success = false, Errors = new List<ApiErrorDto> { new() { Message = "Error" } }, Meta = new ApiMetaDto() };
+
+            _http.GetAsync<List<AccountCodeRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<AccountCodeDto>>>(apiResponse).Returns(mappedResponse);
+
+            var result = await _client.GetAccountCodesAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetSubAccountsAsync Tests
+
+        [Fact]
+        public async Task GetSubAccountsAsync_WithSuccess_ReturnsMappedSubAccounts()
+        {
+            var data = new List<SubAccountRes> { new() { SubAccountCode = "SA1" } };
+            var apiResponse = new ApiResponse<List<SubAccountRes>> { Success = true, Data = data };
+            var expectedDto = ApiResponseDto<List<SubAccountDto>>.SuccessResponse(new List<SubAccountDto> { new() { SubAccountCode = "SA1" } });
+
+            _http.GetAsync<List<SubAccountRes>>(Arg.Is<string>(url => url.Contains("subaccount"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<SubAccountDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetSubAccountsAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetSubAccountsAsync_WhenFails_ReturnsFailure()
+        {
+            var apiResponse = new ApiResponse<List<SubAccountRes>> { Success = false, Errors = new List<ApiError> { new() { Message = "Error" } } };
+            var mappedResponse = new ApiResponseDto<List<SubAccountDto>> { Success = false, Errors = new List<ApiErrorDto> { new() { Message = "Error" } }, Meta = new ApiMetaDto() };
+
+            _http.GetAsync<List<SubAccountRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<SubAccountDto>>>(apiResponse).Returns(mappedResponse);
+
+            var result = await _client.GetSubAccountsAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
     }
 }

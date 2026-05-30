@@ -14,17 +14,16 @@ namespace Apha.PIMS.Core.Entities
 
         public string? Customerref { get; set; }
 
-        public DateOnly? Startdate { get; set; }
+        public DateTime? Startdate { get; set; }
 
-        public DateOnly? Enddate { get; set; }
+        public DateTime? Enddate { get; set; }
 
-        public DateOnly? Finalreportreceived { get; set; }
-
-        public DateOnly? Finalreportsent { get; set; }
+        public DateTime? Finalreportreceived { get; set; }  
+        public DateTime? Finalreportsent { get; set; }
 
         public short? Inflation { get; set; }
 
-        public DateOnly? Closeddate { get; set; }
+        public DateTime? Closeddate { get; set; }
 
         public short Useprojectyear { get; set; }
 
@@ -36,7 +35,7 @@ namespace Apha.PIMS.Core.Entities
 
         public string? Costbooknumber { get; set; }
 
-        public DateOnly? Revisedenddate { get; set; }
+        public DateTime? Revisedenddate { get; set; }
 
         public bool Formrequired { get; set; }
 

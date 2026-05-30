@@ -1,11 +1,11 @@
-﻿using Apha.Common.Helpers.Repository;
-using Apha.FPS.Core.Enities;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
 using Moq;
+using NSubstitute;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 {
@@ -30,7 +30,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             IEnumerable<Employee> employees,
             IEnumerable<StaffActiveView>? staffActiveViews = null,
             IEnumerable<WorkgroupGradeGeneralView>? workgroupGrades = null,
-            IEnumerable<WgEmployee>? wgEmployees = null,
+            IEnumerable<WorkGroupEmployee>? wgEmployees = null,
             int fpsYear = DefaultTestFpsYear)
         {
             var mockFpsYearContext = CreateMockFpsYearContext(fpsYear);
@@ -41,10 +41,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             // Setup WgEmployees DbSet (for DeleteEmployeeAsync guard)
-            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(wgEmployees ?? Enumerable.Empty<WgEmployee>());
-            mockContext.Setup(x => x.WgEmployees).Returns(wgEmployeesMockSet.Object);
+            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(wgEmployees ?? Enumerable.Empty<WorkGroupEmployee>());
+            mockContext.Setup(x => x.WorkGroupEmployees).Returns(wgEmployeesMockSet.Object);
 
-            // Setup StaffActiveView DbSet (for GetAllManagersAsync)
+            // Setup StaffActiveView
             if (staffActiveViews != null)
             {
                 var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staffActiveViews);
@@ -55,7 +55,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             if (workgroupGrades != null)
             {
                 var gradeMockSet = RepositoryTestHelper.CreateMockDbSet(workgroupGrades);
-                mockContext.Setup(x => x.WorkgroupGradeGeneralView).Returns(gradeMockSet.Object);
+                mockContext.Setup(x => x.WorkgroupGradeGeneralViews).Returns(gradeMockSet.Object);
             }
 
             return new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -346,6 +346,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         [InlineData("LastName", true, "Smith")]
         [InlineData("Title", false, "Analyst")]
         [InlineData("Title", true, "Manager")]
+        [InlineData("FpsCalYear", false, "SP001")] // year 2023 → Alice (SP001)
+        [InlineData("FpsCalYear", true, "SP003")]  // year 2025 → Charlie (SP003)
         public async Task GetEmployeesByPrefixAsync_WithSorting_SortsCorrectly(
             string sortBy,
             bool descending,
@@ -354,9 +356,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             // Arrange
             var employees = new List<Employee>
             {
-                new() { SPNumber = "SP002", FirstName = "Bob", LastName = "Jones", Title = "Developer" },
-                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith", Title = "Analyst" },
-                new() { SPNumber = "SP003", FirstName = "Charlie", LastName = "Brown", Title = "Manager" }
+                new() { SPNumber = "SP002", FirstName = "Bob",     LastName = "Jones", Title = "Developer", FpsYear = 2024 },
+                new() { SPNumber = "SP001", FirstName = "Alice",   LastName = "Smith", Title = "Analyst",   FpsYear = 2023 },
+                new() { SPNumber = "SP003", FirstName = "Charlie", LastName = "Brown", Title = "Manager",   FpsYear = 2025 }
             };
             var repo = CreateRepository(employees);
             var query = new PaginationParameters<string>
@@ -374,12 +376,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             Assert.NotNull(result);
             Assert.Equal(3, result.Data.Count());
             var firstEmployee = result.Data.First();
-            var actualValue = sortBy.ToLower() switch
+            string? actualValue = sortBy.ToLower() switch
             {
                 "spnumber" => firstEmployee.SPNumber,
                 "firstname" => firstEmployee.FirstName,
                 "lastname" => firstEmployee.LastName,
                 "title" => firstEmployee.Title,
+                "fpscalyear" => firstEmployee.SPNumber, // identify record by SPNumber after sorting by FpsYear
                 _ => firstEmployee.SPNumber
             };
             Assert.Equal(expectedFirstValue, actualValue);
@@ -497,11 +500,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         {
             // Arrange
             var mockFpsYearContext = CreateMockFpsYearContext(2025);
-            var (mockContext, employeesMockSet) = 
+            var (mockContext, employeesMockSet) =
                 RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
-                    new List<Employee>(), 
+                    new List<Employee>(),
                     mockFpsYearContext.Object);
-            
+
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -529,11 +532,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         {
             // Arrange
             var mockFpsYearContext = CreateMockFpsYearContext(2026);
-            var (mockContext, employeesMockSet) = 
+            var (mockContext, employeesMockSet) =
                 RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
-                    new List<Employee>(), 
+                    new List<Employee>(),
                     mockFpsYearContext.Object);
-            
+
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
@@ -570,13 +573,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 FpsYear = 2023
             };
             var employees = new List<Employee> { existingEmployee };
-            
+
             var mockFpsYearContext = CreateMockFpsYearContext(2025);
-            var (mockContext, employeesMockSet) = 
+            var (mockContext, employeesMockSet) =
                 RepositoryTestHelper.CreateRepositoryContext<FpsDbContext, Employee>(
-                    employees, 
+                    employees,
                     mockFpsYearContext.Object);
-            
+
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
             // Don't setup Entry - just verify it gets called and handle the exception
@@ -596,7 +599,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 
             // Act & Assert
             await Assert.ThrowsAsync<NotSupportedException>(() => repo.UpdateEmployeeAsync(updatedEmployee));
-            
+
             // Verify the FPS year was set before Entry was called
             Assert.Equal(2025, updatedEmployee.FpsYear);
             Assert.True(entryWasCalled);
@@ -626,8 +629,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 
             mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
 
-            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WgEmployee>());
-            mockContext.Setup(x => x.WgEmployees).Returns(wgEmployeesMockSet.Object);
+            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroupEmployee>());
+            mockContext.Setup(x => x.WorkGroupEmployees).Returns(wgEmployeesMockSet.Object);
 
             var repo = new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
 
@@ -680,14 +683,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
                 LastName = "Smith",
                 FpsYear = DefaultTestFpsYear
             };
-            var linkedWgEmployee = new WgEmployee
+            var linkedWgEmployee = new WorkGroupEmployee
             {
                 SpNumber = "SP001",
                 FpsYear = DefaultTestFpsYear
             };
             var repo = CreateRepository(
                 new List<Employee> { employee },
-                wgEmployees: new List<WgEmployee> { linkedWgEmployee });
+                wgEmployees: new List<WorkGroupEmployee> { linkedWgEmployee });
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -822,7 +825,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             Assert.Single(resultList);
             Assert.Equal("Manager One", resultList[0].Name);
         }
-        
+
         [Fact]
         public async Task GetAllManagersAsync_ReturnsOrderedByName()
         {
@@ -927,6 +930,1039 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             var result = await repo.GetAllManagersAsync();
 
             // Assert
+            var resultList = result.ToList();
+            Assert.Single(resultList);
+            Assert.Equal("Manager One", resultList[0].Name);
+        }
+
+        #endregion
+
+        // ── Helpers for PactManagers tests ────────────────────────────────────
+
+        private static EmployeeRepository CreateRepositoryForPactManagers(
+            IEnumerable<PactWorkGroupGradeView> pactGrades,
+            IEnumerable<StaffGeneralView> staffGeneralViews,
+            int fpsYear = DefaultTestFpsYear)
+        {
+            var mockFpsYearContext = CreateMockFpsYearContext(fpsYear);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
+
+            var employeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<Employee>());
+            mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
+
+            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroupEmployee>());
+            mockContext.Setup(x => x.WorkGroupEmployees).Returns(wgEmployeesMockSet.Object);
+
+            var pactGradesMockSet = RepositoryTestHelper.CreateMockDbSet(pactGrades);
+            mockContext.Setup(x => x.PactWorkGroupGradeViews).Returns(pactGradesMockSet.Object);
+
+            var staffGeneralMockSet = RepositoryTestHelper.CreateMockDbSet(staffGeneralViews);
+            mockContext.Setup(x => x.StaffGeneralViews).Returns(staffGeneralMockSet.Object);
+
+            return new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
+        }
+
+        #region GetAllPactManagersAsync Tests
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsManagers_WithGradeCodeLessThanOrEqualToE()
+        {
+            // Arrange – GradeCode "A", "D", "E" are all <= "E" so should be included
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A",  WorkGroup = "Group A" },
+                new() { WgGrade = "WG02", GradeCode = "D",  WorkGroup = "Group D" },
+                new() { WgGrade = "WG03", GradeCode = "E",  WorkGroup = "Group E" },
+                new() { WgGrade = "WG04", GradeCode = "F",  WorkGroup = "Group F" }  // excluded
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice",   WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob",     WorkGroupGrade = "WG02" },
+                new() { StaffId = "S003", Name = "Charlie", WorkGroupGrade = "WG03" },
+                new() { StaffId = "S004", Name = "Dave",    WorkGroupGrade = "WG04" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Equal(3, list.Count);
+            Assert.DoesNotContain(list, m => m.Name == "Dave");
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_IncludesGD5_EvenThoughGreaterThanE()
+        {
+            // Arrange – "GD5" > "E" alphabetically but is explicitly allowed
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "GD5", WorkGroup = "Group GD5" },
+                new() { WgGrade = "WG02", GradeCode = "Z",   WorkGroup = "Group Z" }  // excluded
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice Director", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob Other",      WorkGroupGrade = "WG02" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Single(list);
+            Assert.Equal("Alice Director", list[0].Name);
+            Assert.Equal("GD5",            list[0].GradeCode);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ExcludesGradeCodesAboveE_ExceptGD5()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "B",   WorkGroup = "Group B" },   // included (<=E)
+                new() { WgGrade = "WG02", GradeCode = "GD5", WorkGroup = "Group GD5" }, // included (special)
+                new() { WgGrade = "WG03", GradeCode = "G",   WorkGroup = "Group G" },   // excluded (>E, not GD5)
+                new() { WgGrade = "WG04", GradeCode = "Z",   WorkGroup = "Group Z" }    // excluded (>E, not GD5)
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob",   WorkGroupGrade = "WG02" },
+                new() { StaffId = "S003", Name = "Charlie", WorkGroupGrade = "WG03" },
+                new() { StaffId = "S004", Name = "Dave",  WorkGroupGrade = "WG04" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.Contains(list, m => m.Name == "Alice");
+            Assert.Contains(list, m => m.Name == "Bob");
+            Assert.DoesNotContain(list, m => m.Name == "Charlie");
+            Assert.DoesNotContain(list, m => m.Name == "Dave");
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsOrderedByName()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A", WorkGroup = "Group A" },
+                new() { WgGrade = "WG02", GradeCode = "B", WorkGroup = "Group B" },
+                new() { WgGrade = "WG03", GradeCode = "C", WorkGroup = "Group C" }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Charlie Manager", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Alice Manager",   WorkGroupGrade = "WG02" },
+                new() { StaffId = "S003", Name = "Bob Manager",     WorkGroupGrade = "WG03" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Equal(3, list.Count);
+            Assert.Equal("Alice Manager",   list[0].Name);
+            Assert.Equal("Bob Manager",     list[1].Name);
+            Assert.Equal("Charlie Manager", list[2].Name);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_SetsExpr1FromFirstCharOfGradeCode()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A1", WorkGroup = "Group A" },
+                new() { WgGrade = "WG02", GradeCode = "D2", WorkGroup = "Group D" }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob",   WorkGroupGrade = "WG02" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Equal(2, list.Count);
+            var alice = list.First(m => m.Name == "Alice");
+            var bob   = list.First(m => m.Name == "Bob");
+            Assert.Equal("A", alice.Expr1);
+            Assert.Equal("D", bob.Expr1);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_SetsWorkGroupFromGradeJoin()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "C", WorkGroup = "Alpha Group" }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var manager = Assert.Single(result.ToList());
+            Assert.Equal("Alice",       manager.Name);
+            Assert.Equal("C",           manager.GradeCode);
+            Assert.Equal("Alpha Group", manager.WorkGroup);
+            Assert.Equal("C",           manager.Expr1);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsEmpty_WhenNoStaffMatchGrades()
+        {
+            // Arrange – grades exist but no staff linked to them
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A", WorkGroup = "Group A" }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG_NOMATCH" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsEmpty_WhenNoGradesExist()
+        {
+            // Arrange
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" }
+            };
+            var repo = CreateRepositoryForPactManagers(
+                new List<PactWorkGroupGradeView>(), staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ReturnsEmpty_WhenBothCollectionsEmpty()
+        {
+            // Arrange
+            var repo = CreateRepositoryForPactManagers(
+                new List<PactWorkGroupGradeView>(),
+                new List<StaffGeneralView>());
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ExcludesNullGradeCode()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A",  WorkGroup = "Group A" },
+                new() { WgGrade = "WG02", GradeCode = null, WorkGroup = "Group Null" }  // excluded
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob",   WorkGroupGrade = "WG02" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Single(list);
+            Assert.Equal("Alice", list[0].Name);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_ExcludesNullStaffName()
+        {
+            // Arrange
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A", WorkGroup = "Group A" },
+                new() { WgGrade = "WG02", GradeCode = "B", WorkGroup = "Group B" }
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = null,    WorkGroupGrade = "WG02" }  // excluded
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Single(list);
+            Assert.Equal("Alice", list[0].Name);
+        }
+
+        [Fact]
+        public async Task GetAllPactManagersAsync_DeduplicatesDistinctRows()
+        {
+            // Note: Distinct() deduplication on reference types without IEquatable only works
+            // server-side (against the real database). In-memory mock evaluation returns the
+            // cross-join result as-is. This test verifies the query still executes without error
+            // and that all projected rows have the expected field values.
+
+            // Arrange – same grade entry duplicated; staff has one entry joined to it
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "A", WorkGroup = "Group A" },
+                new() { WgGrade = "WG01", GradeCode = "A", WorkGroup = "Group A" }  // duplicate
+            };
+            var staff = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" }
+            };
+            var repo = CreateRepositoryForPactManagers(pactGrades, staff);
+
+            // Act
+            var result = await repo.GetAllPactManagersAsync();
+
+            // Assert – all returned rows belong to Alice and carry the correct projected values
+            var list = result.ToList();
+            Assert.All(list, m =>
+            {
+                Assert.Equal("Alice",    m.Name);
+                Assert.Equal("A",        m.GradeCode);
+                Assert.Equal("A",        m.Expr1);
+                Assert.Equal("Group A",  m.WorkGroup);
+            });
+        }
+
+        #endregion
+
+        // ── Helpers for WorkGroupStaff tests ─────────────────────────────────
+
+        private static EmployeeRepository CreateRepositoryForWorkGroupStaff(
+            IEnumerable<WorkGroupStaff> WorkGroupStaff,
+            IEnumerable<WorkgroupGrade>? workgroupGrades = null,
+            IEnumerable<Workgroup>? workgroups = null,
+            IEnumerable<PactWorkGroupGradeView>? pactWorkGroupGradeViews = null,
+            int fpsYear = DefaultTestFpsYear)
+        {
+            var mockFpsYearContext = CreateMockFpsYearContext(fpsYear);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockFpsYearContext.Object);
+
+            // Employees DbSet (required by base constructor)
+            var employeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<Employee>());
+            mockContext.Setup(x => x.Employees).Returns(employeesMockSet.Object);
+
+            // WorkGroupEmployee DbSet
+            var wgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroupEmployee>());
+            mockContext.Setup(x => x.WorkGroupEmployees).Returns(wgEmployeesMockSet.Object);
+
+            // WorkGroupStaffs DbSet
+            var wgPeopleMockSet = RepositoryTestHelper.CreateMockDbSet(WorkGroupStaff);
+            mockContext.Setup(x => x.WorkGroupStaffs).Returns(wgPeopleMockSet.Object);
+
+            // WorkgroupGrades DbSet
+            var gradesMockSet = RepositoryTestHelper.CreateMockDbSet(workgroupGrades ?? Enumerable.Empty<WorkgroupGrade>());
+            mockContext.Setup(x => x.WorkgroupGrades).Returns(gradesMockSet.Object);
+
+            // Workgroups DbSet (used by GetWorkGroupStaffAsync when workGroup filter is applied)
+            var workgroupsMockSet = RepositoryTestHelper.CreateMockDbSet(workgroups ?? Enumerable.Empty<Workgroup>());
+            mockContext.Setup(x => x.Workgroups).Returns(workgroupsMockSet.Object);
+
+            // PactWorkGroupGradeViews DbSet (used by GetWorkGroupStaffAsync when workGroup filter is applied)
+            var pactGradesMockSet = RepositoryTestHelper.CreateMockDbSet(pactWorkGroupGradeViews ?? Enumerable.Empty<PactWorkGroupGradeView>());
+            mockContext.Setup(x => x.PactWorkGroupGradeViews).Returns(pactGradesMockSet.Object);
+
+            return new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
+        }
+
+        #region GetAllWorkGroupPersonAsync Tests
+
+        [Fact]
+        public async Task GetAllPersonAsync_ReturnsPersonsJoinedWithWorkgroupGrades()
+        {
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1" },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2" }
+            };
+            var grades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", Workgroup = "Group A" },
+                new() { WgGrade = "WG2", Workgroup = "Group B" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+
+            // Act
+            var result = await repo.GetAllWorkGroupPersonAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Equal(2, list.Count);
+            Assert.All(list, p => Assert.NotNull(p.Name));
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_ReturnsOrderedByName()
+        {
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Charlie", WorkGroupGrade = "WG1" },
+                new() { Name = "Alice",   WorkGroupGrade = "WG2" },
+                new() { Name = "Bob",     WorkGroupGrade = "WG3" }
+            };
+            var grades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", Workgroup = "Group A" },
+                new() { WgGrade = "WG2", Workgroup = "Group B" },
+                new() { WgGrade = "WG3", Workgroup = "Group C" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+
+            // Act
+            var result = await repo.GetAllWorkGroupPersonAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Equal("Alice",   list[0].Name);
+            Assert.Equal("Bob",     list[1].Name);
+            Assert.Equal("Charlie", list[2].Name);
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_ReturnsEmptyList_WhenNoPeopleExist()
+        {
+            // Arrange
+            var repo = CreateRepositoryForWorkGroupStaff(
+                new List<WorkGroupStaff>(),
+                new List<WorkgroupGrade>());
+
+            // Act
+            var result = await repo.GetAllWorkGroupPersonAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_ExcludesPeopleWithNoMatchingGrade()
+        {
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1" },
+                new() { Name = "Bob",   WorkGroupGrade = "WG_NOMATCH" }
+            };
+            var grades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", Workgroup = "Group A" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+
+            // Act
+            var result = await repo.GetAllWorkGroupPersonAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.Single(list);
+            Assert.Equal("Alice", list[0].Name);
+        }
+
+        [Fact]
+        public async Task GetAllPersonAsync_SetsWorkGroupFromGradeJoin()
+        {
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1" }
+            };
+            var grades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", Workgroup = "Alpha Group" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+
+            // Act
+            var result = await repo.GetAllWorkGroupPersonAsync();
+
+            // Assert
+            var person = Assert.Single(result.ToList());
+            Assert.Equal("Alice",       person.Name);
+            Assert.Equal("WG1",         person.WorkGroupGrade);
+            Assert.Equal("Alpha Group", person.WorkGroup);
+        }
+
+        #endregion
+
+        #region GetWorkGroupStaffAsync Tests
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_NoFilter_ReturnsAllPeopleOrderedByName()
+        {
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Charlie", WorkGroupGrade = "WG1", PactId = "P003" },
+                new() { Name = "Alice",   WorkGroupGrade = "WG1", PactId = "P001" },
+                new() { Name = "Bob",     WorkGroupGrade = "WG2", PactId = "P002" }
+            };
+            var grades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", Workgroup = "Group A" },
+                new() { WgGrade = "WG2", Workgroup = "Group B" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            Assert.Equal(3, result.Data.Count());
+            Assert.Equal("Alice", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_FilterByWorkGroup_ReturnsMatchingPeople()
+        {
+            // Arrange
+            // GetWorkGroupStaffAsync joins: Workgroups → PactWorkGroupGradeViews → WorkGroupStaffs
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1" },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2" }
+            };
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "Group A" },
+                new() { WorkgroupName = "Group B" }
+            };
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG1", WorkGroup = "Group A" },
+                new() { WgGrade = "WG2", WorkGroup = "Group B" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(
+                people,
+                workgroups: workgroups,
+                pactWorkGroupGradeViews: pactGrades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query, "Group A");
+
+            // Assert – workGroup filter joins through Workgroups + PactWorkGroupGradeViews; only WG1 staff returned
+            Assert.All(result.Data, p => Assert.Equal("WG1", p.WorkGroupGrade));
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_FilterByLeave_ReturnsMatchingPeople()
+        {
+            // Note: EF.Functions.Like (used for string fields such as Name/PersonStatus) is not
+            // supported in client-side mock evaluation and can only be tested via integration tests.
+            // This test exercises the numeric filter path (Leave) which uses Contains and works
+            // correctly with in-memory mock DbSets.
+
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", Leave = 50.0 },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2", Leave = 120.0 }
+            };
+            var grades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", Workgroup = "Group A" },
+                new() { WgGrade = "WG2", Workgroup = "Group B" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"Leave\":\"50\"}"
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("Alice", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_FilterBySickSpecial_ReturnsMatchingPeople()
+        {
+            // Note: EF.Functions.Like (used for string fields such as Name/PersonStatus) is not
+            // supported in client-side mock evaluation and can only be tested via integration tests.
+            // This test exercises the numeric filter path (SickSpecial) which uses Contains and
+            // works correctly with in-memory mock DbSets.
+
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", SickSpecial = 10.0 },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2", SickSpecial = 99.5 }
+            };
+            var grades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", Workgroup = "Group A" },
+                new() { WgGrade = "WG2", Workgroup = "Group B" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"SickSpecial\":\"10\"}"
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("Alice", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_NumericFilter_HrsPaid_ReturnsMatchingPeople()
+        {
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 100.5 },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2", HrsPaid = 200.0 }
+            };
+            var grades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", Workgroup = "Group A" },
+                new() { WgGrade = "WG2", Workgroup = "Group B" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"HrsPaid\":\"100\"}"
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("Alice", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_NumericFilter_HrsAvail_ReturnsMatchingPeople()
+        {
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", HrsAvail = 30.0 },
+                new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsAvail = 40.0 }
+            };
+            var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"HrsAvail\":\"30\"}"
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("Alice", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_NumericFilter_MultipleFields_FiltersCorrectly()
+        {
+            // Covers HrsPaid + Leave + SickSpecial + HrsAvail applied together
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 37.5, Leave = 5.0, SickSpecial = 1.0, HrsAvail = 31.5 },
+                new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsPaid = 20.0, Leave = 5.0, SickSpecial = 1.0, HrsAvail = 14.0 }
+            };
+            var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            // Filter targets Alice's unique HrsPaid value AND common Leave/SickSpecial values
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"HrsPaid\":\"37\",\"Leave\":\"5\",\"SickSpecial\":\"1\",\"HrsAvail\":\"31\"}"
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("Alice", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_NumericFilter_HighPrecisionFloats_ReturnsMatchingPeople()
+        {
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 100.12345 },
+                new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsPaid = 200.67891 }
+            };
+            var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"HrsPaid\":\"100.123\"}"
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("Alice", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_Pagination_ReturnsCorrectPage()
+        {
+            // Arrange
+            var people = Enumerable.Range(1, 15)
+                .Select(i => new WorkGroupStaff { Name = $"Person{i:D2}", WorkGroupGrade = "WG1" })
+                .ToList();
+            var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            var query = new PaginationParameters<string> { Page = 2, PageSize = 5, Filter = null };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            Assert.Equal(5, result.Data.Count());
+            Assert.Equal(2, result.PaginationData.PageNumber);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_SortByName_Descending_ReturnsSortedResults()
+        {
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "WG1" },
+                new() { Name = "Charlie", WorkGroupGrade = "WG1" },
+                new() { Name = "Bob",   WorkGroupGrade = "WG2" }
+            };
+            var grades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", Workgroup = "Group A" },
+                new() { WgGrade = "WG2", Workgroup = "Group B" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = "Name", Descending = true, Filter = null
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            var list = result.Data.ToList();
+            Assert.Equal("Charlie", list[0].Name);
+            Assert.Equal("Bob",     list[1].Name);
+            Assert.Equal("Alice",   list[2].Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupStaffAsync_EmptyDatabase_ReturnsEmptyPaginatedResult()
+        {
+            // Arrange
+            var repo = CreateRepositoryForWorkGroupStaff(
+                new List<WorkGroupStaff>(),
+                new List<WorkgroupGrade>());
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result.Data);
+        }
+
+        // ── ApplyWorkGroupStaffSorting – all remaining sort keys ─────────────
+
+        [Theory]
+        // Assert checks result.Data.First().Name; expected = Name of person with lowest/highest sort-key value
+        [InlineData("PactId",        false, "Alice")]   // P001 → Alice
+        [InlineData("PactId",        true,  "Charlie")] // P003 → Charlie
+        [InlineData("SpNumber",      false, "Alice")]   // SP001 → Alice
+        [InlineData("SpNumber",      true,  "Charlie")] // SP003 → Charlie
+        [InlineData("Title",         false, "Alice")]   // Analyst → Alice
+        [InlineData("Title",         true,  "Charlie")] // Manager → Charlie
+        [InlineData("WorkGroupGrade",false, "Alice")]   // WG1 → Alice
+        [InlineData("WorkGroupGrade",true,  "Charlie")] // WG3 → Charlie
+        [InlineData("PersonStatus",  false, "Alice")]   // Active → Alice
+        [InlineData("PersonStatus",  true,  "Charlie")] // Retired → Charlie
+        [InlineData("HrsPaid",       false, "Alice")]   // lowest HrsPaid
+        [InlineData("HrsPaid",       true,  "Charlie")] // highest HrsPaid
+        [InlineData("Leave",         false, "Alice")]
+        [InlineData("Leave",         true,  "Charlie")]
+        [InlineData("SickSpecial",   false, "Alice")]
+        [InlineData("SickSpecial",   true,  "Charlie")]
+        [InlineData("HrsAvail",      false, "Alice")]
+        [InlineData("HrsAvail",      true,  "Charlie")]
+        [InlineData("Name",          false, "Alice")]   // ascending – already tested via Descending test
+        [InlineData("UnknownKey",    false, "Alice")]   // unknown key → default OrderBy(Name) asc
+        public async Task GetWorkGroupStaffAsync_SortBy_SortsCorrectly(
+            string sortBy, bool descending, string expectedFirstName)
+        {
+            // Arrange
+            var people = new List<WorkGroupStaff>
+            {
+                new() { Name = "Bob",     WorkGroupGrade = "WG2", PactId = "P002", SpNumber = "SP002",
+                        Title = "Developer", PersonStatus = "OnLeave",
+                        HrsPaid = 20.0, Leave = 2.0, SickSpecial = 2.0, HrsAvail = 16.0 },
+                new() { Name = "Alice",   WorkGroupGrade = "WG1", PactId = "P001", SpNumber = "SP001",
+                        Title = "Analyst",   PersonStatus = "Active",
+                        HrsPaid = 10.0, Leave = 1.0, SickSpecial = 1.0, HrsAvail = 8.0 },
+                new() { Name = "Charlie", WorkGroupGrade = "WG3", PactId = "P003", SpNumber = "SP003",
+                        Title = "Manager",   PersonStatus = "Retired",
+                        HrsPaid = 30.0, Leave = 3.0, SickSpecial = 3.0, HrsAvail = 24.0 }
+            };
+            var grades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", Workgroup = "Group A" },
+                new() { WgGrade = "WG2", Workgroup = "Group B" },
+                new() { WgGrade = "WG3", Workgroup = "Group C" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = sortBy,
+                Descending = descending
+            };
+
+            // Act
+            var result = await repo.GetWorkGroupStaffAsync(query);
+
+            // Assert
+            Assert.Equal(expectedFirstName, result.Data.First().Name);
+        }
+
+        #endregion
+
+        #region ApplyEmployeeFilter – missing branch coverage
+
+        [Fact]
+        public async Task GetEmployeesByPrefixAsync_WithEmptyFilter_ReturnsAll()
+        {
+            // Covers the string.IsNullOrEmpty(filter) early-return in ApplyEmployeeFilter
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith" },
+                new() { SPNumber = "SP002", FirstName = "Bob", LastName = "Jones" }
+            };
+            var repo = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "" };
+
+            // Act
+            var result = await repo.GetEmployeesByPrefixAsync(query, "SP");
+
+            // Assert – empty filter returns all records unfiltered
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetEmployeesByPrefixAsync_WithNullFilterModel_ReturnsAll()
+        {
+            // Covers the filterModel == null branch in ApplyEmployeeFilter
+            // JSON literal "null" deserialises to null ExpandoObject
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith" },
+                new() { SPNumber = "SP002", FirstName = "Bob", LastName = "Jones" }
+            };
+            var repo = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "null" };
+
+            // Act
+            var result = await repo.GetEmployeesByPrefixAsync(query, "SP");
+
+            // Assert – null filterModel falls through; all rows returned
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetEmployeesByPrefixAsync_WithAllNullFilterValues_SkipsAllPredicates()
+        {
+            // Covers the "&& spNumber != null", "&& firstName != null", etc. guards in
+            // ApplyEmployeeFilter – when a key is present but the JSON value is null
+            // the predicate must be skipped and all rows must be returned.
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith",  Title = "Analyst" },
+                new() { SPNumber = "SP002", FirstName = "Bob",   LastName = "Jones",  Title = "Manager" }
+            };
+            var repo = CreateRepository(employees);
+            // All four string-filter keys present with explicit JSON null values
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"SPNumber\":null,\"FirstName\":null,\"LastName\":null,\"Title\":null}"
+            };
+
+            // Act
+            var result = await repo.GetEmployeesByPrefixAsync(query, "SP");
+
+            // Assert – null-value guards skip every predicate; both rows returned
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetEmployeesByPrefixAsync_WithAllStringFilters_FiltersCorrectly()
+        {
+            // Covers all 4 ILike branches in ApplyEmployeeFilter simultaneously
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith",  Title = "Analyst" },
+                new() { SPNumber = "SP002", FirstName = "Alice", LastName = "Brown",  Title = "Manager" },
+                new() { SPNumber = "SP003", FirstName = "Bob",   LastName = "Smith",  Title = "Analyst" }
+            };
+            var repo = CreateRepository(employees);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"SPNumber\":\"SP001\",\"FirstName\":\"Alice\",\"LastName\":\"Smith\",\"Title\":\"Analyst\"}"
+            };
+
+            // Act
+            var result = await repo.GetEmployeesByPrefixAsync(query, "SP");
+
+            // Assert – only SP001 matches all four filters
+            Assert.Single(result.Data);
+            Assert.Equal("SP001", result.Data.First().SPNumber);
+        }
+
+        #endregion
+
+        #region GetAllManagersAsync – empty GradeCode branch
+
+        [Fact]
+        public async Task GetAllManagersAsync_ExcludesEmptyGradeCode()
+        {
+            // Covers the grade.GradeCode.Length > 0 branch in GetAllManagersAsync
+            // A grade with an empty string GradeCode must be excluded even though it is not null.
+            // Arrange
+            var staffActiveViews = new List<StaffActiveView>
+            {
+                new() { StaffID = "S001", Name = "Manager One", WorkgroupGrade = "WG01" },
+                new() { StaffID = "S002", Name = "Manager Two", WorkgroupGrade = "WG02" }
+            };
+            var workgroupGrades = new List<WorkgroupGradeGeneralView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "M01", WorkGroup = "Management" },
+                new() { WgGrade = "WG02", GradeCode = "",    WorkGroup = "Management" }  // empty – excluded
+            };
+            var repo = CreateRepository(
+                new List<Employee>(),
+                staffActiveViews,
+                workgroupGrades);
+
+            // Act
+            var result = await repo.GetAllManagersAsync();
+
+            // Assert – the record with empty GradeCode is excluded
+            var resultList = result.ToList();
+            Assert.Single(resultList);
+            Assert.Equal("Manager One", resultList[0].Name);
+        }
+
+        #endregion
+
+        #region GetAllManagersAsync – null staff Name branch
+
+        [Fact]
+        public async Task GetAllManagersAsync_ExcludesNullStaffName()
+        {
+            // Covers the staff.Name != null guard in GetAllManagersAsync
+            // Arrange
+            var staffActiveViews = new List<StaffActiveView>
+            {
+                new() { StaffID = "S001", Name = "Manager One", WorkgroupGrade = "WG01" },
+                new() { StaffID = "S002", Name = null,          WorkgroupGrade = "WG02" }  // excluded
+            };
+            var workgroupGrades = new List<WorkgroupGradeGeneralView>
+            {
+                new() { WgGrade = "WG01", GradeCode = "M01", WorkGroup = "Management" },
+                new() { WgGrade = "WG02", GradeCode = "M02", WorkGroup = "Management" }
+            };
+            var repo = CreateRepository(
+                new List<Employee>(),
+                staffActiveViews,
+                workgroupGrades);
+
+            // Act
+            var result = await repo.GetAllManagersAsync();
+
+            // Assert – the entry with null Name is excluded
             var resultList = result.ToList();
             Assert.Single(resultList);
             Assert.Equal("Manager One", resultList[0].Name);

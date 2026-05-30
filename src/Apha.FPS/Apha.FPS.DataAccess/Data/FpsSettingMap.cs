@@ -22,6 +22,7 @@ namespace Apha.FPS.DataAccess.Data
                 .HasComment("Fiscal year scope. NULL = not year-specific.")
                 .HasColumnName("fpsyear");
             entity.Property(e => e.Notes)
+                .HasMaxLength(255)
                 .HasComment("Free-text description of purpose, origin, and usage.")
                 .HasColumnName("notes");
             entity.Property(e => e.Setting)

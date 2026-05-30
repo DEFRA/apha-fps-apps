@@ -1,0 +1,174 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.ValidTimeCodeViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    // isEdit is true when the controller has populated OriginalWorkGroup
+    var isEdit = !string.IsNullOrEmpty(Model.OriginalWorkGroup);
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="govuk-heading-s" style="margin:0;">@(isEdit ? "Edit Time Code" : "Add Time Code")</h3>
+    <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
+</div>
+
+<div class="modal-body" style="overflow:hidden; padding:8px 16px 0 16px;">
+    <form id="timeCodeForm" class="govuk-grid-column-full">
+
+        <input type="hidden" name="isEdit" value="@isEdit.ToString().ToLower()" />
+        <input type="hidden" asp-for="ParentProject" />
+
+        <!-- Validation error summary -->
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="error-summary-title">
+                There is a problem
+            </h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
+        @if (isEdit)
+        {
+            @*
+                OriginalWorkGroup carries the WorkGroup value that was loaded from the database.
+                The controller uses (OriginalWorkGroup + TimeCode + ParentProject) to locate
+                the existing composite-key record before applying the update.
+            *@
+            <input type="hidden" asp-for="OriginalWorkGroup" />
+            <input type="hidden" asp-for="TimeCode" />
+        }
+
+        <!-- Work Group — editable dropdown for add, disabled for edit -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="WorkGroup"><span class="sup_color_red">* </span>Work Group</label>
+            @if (isEdit)
+            {
+                <input type="hidden" asp-for="WorkGroup" />
+                <input class="govuk-input govuk-!-font-size-16" value="@Model.WorkGroup" disabled />
+            }
+            else
+            {
+                <select class="govuk-select govuk-!-font-size-16" asp-for="WorkGroup"
+                        asp-items="@(ViewBag.WorkGroups as List<SelectListItem>)">
+                    <option value="">--select--</option>
+                </select>
+                <span asp-validation-for="WorkGroup" class="govuk-error-message"></span>
+            }
+        </div>
+
+        <!-- Active -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" for="Active"><span class="sup_color_red">* </span>Active</label>
+            <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
+                <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input govuk-!-font-size-16"
+                           id="Active" name="Active" type="checkbox"
+                           value="true" @(Model.Active ? "checked" : "") />
+                    <label class="govuk-label govuk-checkboxes__label sup_label_auto_width" for="Active">
+                        Yes
+                    </label>
+                </div>
+            </div>
+            <span asp-validation-for="Active" class="govuk-error-message"></span>
+        </div>
+
+        <!-- Time Code (Editable for add, disabled for edit) -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="TimeCode"><span class="sup_color_red">* </span>Time Code</label>
+            @if (isEdit)
+            {
+                <input class="govuk-input govuk-!-font-size-16" value="@Model.TimeCode" disabled />
+            }
+            else
+            {
+                <input class="govuk-input govuk-!-font-size-16" asp-for="TimeCode" required />
+                <span asp-validation-for="TimeCode" class="govuk-error-message"></span>
+            }
+        </div>
+
+        <!-- Project Dropdown (Editable for add, disabled for edit) -->
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project"><span class="sup_color_red">* </span>Project</label>
+            @if (isEdit)
+            {
+                <input type="hidden" asp-for="Project" />
+                <input class="govuk-input govuk-!-font-size-16" value="@Model.Project" disabled />
+            }
+            else
+            {
+                <select class="govuk-select govuk-!-font-size-16" asp-for="Project"
+                        asp-items="@(ViewBag.Projects as List<SelectListItem>)" required>
+                    <option value="">--select--</option>
+                </select>
+                <span asp-validation-for="Project" class="govuk-error-message"></span>
+            }
+        </div>
+
+        <!-- Job Code — editable -->
+        <div class="govuk-form-group sup_margin_bottom_10" id="jobCodeGroup">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCode">
+                Job Code
+                <span style="font-size: 0.875rem; color: #505a5f; font-weight: normal;">(Use Job Code OR Portfolio/Test Code)</span>
+            </label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="JobCode" id="JobCode" />
+            <span asp-validation-for="JobCode" class="govuk-error-message"></span>
+        </div>
+
+        <!-- Test Code -->
+        <div class="govuk-form-group sup_margin_bottom_10" id="testCodeGroup">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="TestCode">Test Code</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="TestCode" id="TestCode" />
+        </div>
+
+        <!-- Portfolio -->
+        <div class="govuk-form-group sup_margin_bottom_10" id="portfolioGroup">
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Portfolio">Portfolio</label>
+            <input class="govuk-input govuk-!-font-size-16" asp-for="Portfolio" id="Portfolio" />
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer sup_flex_space_center">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            onclick="$('#modalPopup').removeClass('show')">Cancel</button>
+    <button type="button" class="govuk-button sup_margin_0" onclick="saveTimeCode()" allow-edit="true">
+        @(isEdit ? "Update" : "Save")
+    </button>
+</div>
+
+<script>
+    // Business Rule: JobCode is mutually exclusive with Portfolio/TestCode
+    $(document).ready(function() {
+        function handleMutualExclusivity() {
+            var jobCodeValue = $('#JobCode').val();
+            var testCodeValue = $('#TestCode').val();
+            var portfolioValue = $('#Portfolio').val();
+
+            var hasJobCode = jobCodeValue && jobCodeValue.trim() !== '';
+            var hasTestCodeOrPortfolio = (testCodeValue && testCodeValue.trim() !== '') || 
+                                         (portfolioValue && portfolioValue.trim() !== '');
+
+            if (hasJobCode) {
+                // If JobCode is filled, disable and clear Portfolio/TestCode
+                $('#TestCode, #Portfolio').prop('disabled', true).css('background-color', '#f3f2f1');
+                $('#testCodeGroup, #portfolioGroup').css('opacity', '0.6');
+            } else if (hasTestCodeOrPortfolio) {
+                // If Portfolio or TestCode is filled, disable and clear JobCode
+                $('#JobCode').prop('disabled', true).css('background-color', '#f3f2f1');
+                $('#jobCodeGroup').css('opacity', '0.6');
+            } else {
+                // Enable all if nothing is filled
+                $('#JobCode, #TestCode, #Portfolio').prop('disabled', false).css('background-color', '');
+                $('#jobCodeGroup, #testCodeGroup, #portfolioGroup').css('opacity', '1');
+            }
+        }
+
+        // Attach event handlers
+        $('#JobCode, #TestCode, #Portfolio').on('input change', handleMutualExclusivity);
+
+        // Run on load to set initial state
+        handleMutualExclusivity();
+    });
+</script>

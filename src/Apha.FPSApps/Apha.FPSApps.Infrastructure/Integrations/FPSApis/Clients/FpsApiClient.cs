@@ -17,9 +17,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsProjectStaffPlanActualApiClient FpsProjectStaffPlanActual { get; }
         public IFpsMonthlyOutputApiClient FpsMonthlyOutput { get; }
         public IFpsDivisionApiClient FpsDivision { get; }
-
         public IFpsAgencyApiClient FpsAgency { get; }
         public IFpsAdditionalCostApiClient FpsAdditionalCost { get; }
+        public IFpsDivisionGradeApiClient FpsMaintDG { get; }
+
+        public IFpsProfitCentreApiClient FpsProfitCentre { get; }
+        public IFpsProfitCentreGradeApiClient FpsProfitCentreGrade { get; }
+        public IFpsWorkGroupGradeApiClient FpsWorkGroupGrade { get; }
+        public IFpsWorkGroupEmployeeApiClient FpsWorkGroupEmployee { get; }
+        public IFpsProjectStaffPlanApiClient FpsProjectStaffPlan { get; }
 
         public IFpsWorkgroupGradeApiClient FpsWorkgroupGrade { get; }
 
@@ -38,6 +44,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsDivision = new FpsDivisionApiClient(http, mapper);
             FpsAgency = new FpsAgencyApiClient(http, mapper);
             FpsAdditionalCost = new FpsAdditionalCostApiClient(http, mapper);
+            FpsProfitCentre = new FpsProfitCentreApiClient(http, mapper);
+            FpsProfitCentreGrade = new FpsProfitCentreGradeApiClient(http, mapper);
+            FpsWorkGroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
+            FpsWorkGroupEmployee = new FpsWorkGroupEmployeeApiClient(http, mapper);
+            FpsMaintDG = new FpsDivisionGradeApiClient(http, mapper);
+            FpsProjectStaffPlan = new FpsProjectStaffPlanApiClient(http, mapper);
             FpsWorkgroupGrade = new FpsWorkgroupGradeApiClient(http, mapper);
         }
     }

@@ -1,4 +1,5 @@
-﻿using Apha.Costbook.Core.Interfaces;
+﻿using Apha.Costbook.Application.Interfaces;
+using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess.Context;
 
 namespace Apha.Costbook.Api.Middleware
@@ -16,7 +17,7 @@ namespace Apha.Costbook.Api.Middleware
             _next = next;            
         }
 
-        public async Task InvokeAsync(HttpContext context, IFPSYearContext yearContext)
+        public async Task InvokeAsync(HttpContext context, IFPSYearContext yearContext, IYearMasterService yearMasterService)
         {
             var path = context.Request.Path.Value?.ToLower();
 
@@ -29,11 +30,12 @@ namespace Apha.Costbook.Api.Middleware
                 await _next(context);
                 return;
             }
-           
+
 
             SetCorrelationId(context, CorrelationIdHeader);
 
-            ((FPSYearContext)yearContext).FPSYear = 2025;
+            var openYear = await yearMasterService.GetOpenYearAsync();
+            ((FPSYearContext)yearContext).FPSYear = openYear;
 
             await _next(context);
         }

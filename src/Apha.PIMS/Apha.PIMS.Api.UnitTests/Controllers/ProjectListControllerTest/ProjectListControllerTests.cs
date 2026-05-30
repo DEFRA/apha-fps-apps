@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
 using Apha.PIMS.Application.Dtos;
@@ -34,20 +34,21 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
             var filter = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var paginatedResult = new PaginatedResult<ProjectListViewDto>();
             var mappedResult = new PaginationRes<ProjectListRes>();
+            var showWhichProjects = 2;
 
             _mapper.Map<QueryParameters<string>>(query).Returns(filter);
-            _service.GetAllProjectsAsync(filter).Returns(paginatedResult);
+            _service.GetAllProjectsAsync(filter, showWhichProjects).Returns(paginatedResult);
             _mapper.Map<PaginationRes<ProjectListRes>>(paginatedResult).Returns(mappedResult);
 
             // Act
-            var result = await _controller.GetAllProjectsAsync(query);
+            var result = await _controller.GetAllProjectsAsync(query, showWhichProjects);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mappedResult, okResult.Value);
 
             _mapper.Received(1).Map<QueryParameters<string>>(query);
-            await _service.Received(1).GetAllProjectsAsync(filter);
+            await _service.Received(1).GetAllProjectsAsync(filter, showWhichProjects);
             _mapper.Received(1).Map<PaginationRes<ProjectListRes>>(paginatedResult);
         }
 
@@ -59,19 +60,20 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
             var filter = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var emptyResult = new PaginatedResult<ProjectListViewDto>();
             var emptyMapped = new PaginationRes<ProjectListRes>();
+            var showWhichProjects = 2;
 
             _mapper.Map<QueryParameters<string>>(query).Returns(filter);
-            _service.GetAllProjectsAsync(filter).Returns(emptyResult);
+            _service.GetAllProjectsAsync(filter, showWhichProjects).Returns(emptyResult);
             _mapper.Map<PaginationRes<ProjectListRes>>(emptyResult).Returns(emptyMapped);
 
             // Act
-            var result = await _controller.GetAllProjectsAsync(query);
+            var result = await _controller.GetAllProjectsAsync(query, showWhichProjects);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(emptyMapped, okResult.Value);
 
-            await _service.Received(1).GetAllProjectsAsync(filter);
+            await _service.Received(1).GetAllProjectsAsync(filter, showWhichProjects);
         }
 
         [Fact]
@@ -80,161 +82,84 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
             // Arrange
             var query = new PaginationReq<string> { Page = 1 };
             var filter = new QueryParameters<string> { Page = 1 };
+            var showWhichProjects = 2;
 
             _mapper.Map<QueryParameters<string>>(query).Returns(filter);
-            _service.GetAllProjectsAsync(filter).Throws(new Exception("Database error"));
+            _service.GetAllProjectsAsync(filter, showWhichProjects).Throws(new Exception("Database error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllProjectsAsync(query));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllProjectsAsync(query, showWhichProjects));
 
             _mapper.Received(1).Map<QueryParameters<string>>(query);
-            await _service.Received(1).GetAllProjectsAsync(filter);
-        }
-
-        #endregion      
-
-        #region GetFpsProjectById
-
-        [Fact]
-        public async Task GetFpsProjectById_WithValidProject_ReturnsOkResult_WithMappedProject()
-        {
-            // Arrange
-            var parentproject = "PP001";
-            var projectDto = new ProjectDto
-            {
-                Parentproject = parentproject,
-                Projecttitle = "FMD Survey",
-                Disease = "FMD",
-                Contract = "CON001",
-                Projectstatus = "Active",
-                Shorttitle = "FMD",
-                Costbookno = "CB001"
-            };
-            var projectRes = new ProjectRes
-            {
-                Parentproject = parentproject,
-                Projecttitle = "FMD Survey",
-                Disease = "FMD",
-                Contract = "CON001",
-                Projectstatus = "Active"
-            };
-
-            _service.GetFpsProjectByIdAsync(parentproject).Returns(projectDto);
-            _mapper.Map<ProjectRes>(projectDto).Returns(projectRes);
-
-            // Act
-            var result = await _controller.GetFpsProjectById(parentproject);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(projectRes, okResult.Value);
-
-            await _service.Received(1).GetFpsProjectByIdAsync(parentproject);
-            _mapper.Received(1).Map<ProjectRes>(projectDto);
-        }
-
-        [Fact]
-        public async Task GetFpsProjectById_WhenProjectNotFound_ThrowsKeyNotFoundException()
-        {
-            // Arrange
-            var parentproject = "UNKNOWN";
-            _service.GetFpsProjectByIdAsync(parentproject).Returns((ProjectDto?)null);
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _controller.GetFpsProjectById(parentproject));
-
-            Assert.Equal($"FPS project '{parentproject}' not found.", exception.Message);
-
-            await _service.Received(1).GetFpsProjectByIdAsync(parentproject);
-            _mapper.DidNotReceive().Map<ProjectRes>(Arg.Any<ProjectDto>());
-        }
-
-        [Fact]
-        public async Task GetFpsProjectById_WhenServiceThrowsException_PropagatesException()
-        {
-            // Arrange
-            var parentproject = "PP001";
-            _service.GetFpsProjectByIdAsync(parentproject).Throws(new Exception("Database error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetFpsProjectById(parentproject));
-
-            await _service.Received(1).GetFpsProjectByIdAsync(parentproject);
-            _mapper.DidNotReceive().Map<ProjectRes>(Arg.Any<ProjectDto>());
+            await _service.Received(1).GetAllProjectsAsync(filter, showWhichProjects);
         }
 
         #endregion
 
-        #region GetProposedProjectById
+        #region GetAllProjectsForDropDownAsync
 
         [Fact]
-        public async Task GetProposedProjectById_WithValidProject_ReturnsOkResult_WithMappedProject()
+        public async Task GetAllProjectsForDropDownAsync_ReturnsOkResult_WithMappedList()
         {
             // Arrange
-            var parentproject = "PP001";
-            var proposedDto = new ProposedProjectDto
+            var dtoList = new List<ProjectListViewDto>
             {
-                Id = 1,
-                Parentproject = parentproject,
-                Projecttitle = "TB Project",
-                Program = "PROG1",
-                Customer = "CUST1",
-                Manager = "MGR1",
-                Projectstatus = "Proposed",
-                Disease = "TB"
+                new ProjectListViewDto { Parentproject = "PP001", Program = "PROG1", Customer = "CUST1", OnFps = "Yes" },
+                new ProjectListViewDto { Parentproject = "PP002", Program = "PROG2", Customer = "CUST2", OnFps = "No" }
             };
-            var proposedRes = new ProposedProjectRes
+            var resList = new List<ProjectListRes>
             {
-                Id = 1,
-                Parentproject = parentproject,
-                Projecttitle = "TB Project",
-                Projectstatus = "Proposed"
+                new ProjectListRes { Parentproject = "PP001", Program = "PROG1", Customer = "CUST1", OnFps = "Yes" },
+                new ProjectListRes { Parentproject = "PP002", Program = "PROG2", Customer = "CUST2", OnFps = "No" }
             };
 
-            _service.GetProposedProjectByIdAsync(parentproject).Returns(proposedDto);
-            _mapper.Map<ProposedProjectRes>(proposedDto).Returns(proposedRes);
+            _service.GetAllProjectsForDropDownAsync().Returns(dtoList);
+            _mapper.Map<List<ProjectListRes>>(dtoList).Returns(resList);
 
             // Act
-            var result = await _controller.GetProposedProjectById(parentproject);
+            var result = await _controller.GetAllProjectsForDropDownAsync();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(proposedRes, okResult.Value);
+            Assert.Equal(resList, okResult.Value);
 
-            await _service.Received(1).GetProposedProjectByIdAsync(parentproject);
-            _mapper.Received(1).Map<ProposedProjectRes>(proposedDto);
+            await _service.Received(1).GetAllProjectsForDropDownAsync();
+            _mapper.Received(1).Map<List<ProjectListRes>>(dtoList);
         }
 
         [Fact]
-        public async Task GetProposedProjectById_WhenProjectNotFound_ThrowsKeyNotFoundException()
+        public async Task GetAllProjectsForDropDownAsync_WithEmptyList_ReturnsOkWithEmptyList()
         {
             // Arrange
-            var parentproject = "UNKNOWN";
-            _service.GetProposedProjectByIdAsync(parentproject).Returns((ProposedProjectDto?)null);
+            var emptyDtoList = new List<ProjectListViewDto>();
+            var emptyResList = new List<ProjectListRes>();
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _controller.GetProposedProjectById(parentproject));
+            _service.GetAllProjectsForDropDownAsync().Returns(emptyDtoList);
+            _mapper.Map<List<ProjectListRes>>(emptyDtoList).Returns(emptyResList);
 
-            Assert.Equal($"Proposed project '{parentproject}' not found.", exception.Message);
+            // Act
+            var result = await _controller.GetAllProjectsForDropDownAsync();
 
-            await _service.Received(1).GetProposedProjectByIdAsync(parentproject);
-            _mapper.DidNotReceive().Map<ProposedProjectRes>(Arg.Any<ProposedProjectDto>());
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var value = Assert.IsType<List<ProjectListRes>>(okResult.Value);
+            Assert.Empty(value);
+
+            await _service.Received(1).GetAllProjectsForDropDownAsync();
+            _mapper.Received(1).Map<List<ProjectListRes>>(emptyDtoList);
         }
 
         [Fact]
-        public async Task GetProposedProjectById_WhenServiceThrowsException_PropagatesException()
+        public async Task GetAllProjectsForDropDownAsync_WhenServiceThrowsException_PropagatesException()
         {
             // Arrange
-            var parentproject = "PP001";
-            _service.GetProposedProjectByIdAsync(parentproject).Throws(new Exception("Database error"));
+            _service.GetAllProjectsForDropDownAsync().Throws(new Exception("Database error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetProposedProjectById(parentproject));
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllProjectsForDropDownAsync());
 
-            await _service.Received(1).GetProposedProjectByIdAsync(parentproject);
-            _mapper.DidNotReceive().Map<ProposedProjectRes>(Arg.Any<ProposedProjectDto>());
+            await _service.Received(1).GetAllProjectsForDropDownAsync();
+            _mapper.DidNotReceive().Map<List<ProjectListRes>>(Arg.Any<List<ProjectListViewDto>>());
         }
 
         #endregion
@@ -306,85 +231,6 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectListControllerTest
 
             await _service.Received(1).GetYearlyDetailsByProjectAsync(parentproject);
             _mapper.DidNotReceive().Map<List<ProjectsRes>>(Arg.Any<List<ProjectsDto>>());
-        }
-
-        #endregion
-
-        #region CreateProject
-
-        [Fact]
-        public async Task CreateProject_ReturnsCreatedAtAction_WithMappedProposedProject()
-        {
-            // Arrange
-            var request = new ProposedProjectReq
-            {
-                Parentproject = "PP001",
-                Projecttitle = "New Project",
-                Program = "PROG1",
-                Customer = "CUST1",
-                Projectstatus = "Proposed",
-                Disease = "FMD"
-            };
-            var dto = new ProposedProjectDto
-            {
-                Parentproject = "PP001",
-                Projecttitle = "New Project",
-                Program = "PROG1",
-                Customer = "CUST1",
-                Projectstatus = "Proposed"
-            };
-            var createdDto = new ProposedProjectDto
-            {
-                Id = 42,
-                Parentproject = "PP001",
-                Projecttitle = "New Project",
-                Program = "PROG1",
-                Customer = "CUST1",
-                Projectstatus = "Proposed"
-            };
-            var createdRes = new ProposedProjectRes
-            {
-                Id = 42,
-                Parentproject = "PP001",
-                Projecttitle = "New Project",
-                Projectstatus = "Proposed"
-            };
-
-            _mapper.Map<ProposedProjectDto>(request).Returns(dto);
-            _service.AddProjectAsync(dto).Returns(createdDto);
-            _mapper.Map<ProposedProjectRes>(createdDto).Returns(createdRes);
-
-            // Act
-            var result = await _controller.CreateProject(request);
-
-            // Assert
-            var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-            Assert.Equal(nameof(_controller.GetProposedProjectById), createdResult.ActionName);
-            Assert.NotNull(createdResult.RouteValues);
-            Assert.Equal("PP001", createdResult.RouteValues["parentproject"]);
-            Assert.Equal(createdRes, createdResult.Value);
-
-            _mapper.Received(1).Map<ProposedProjectDto>(request);
-            await _service.Received(1).AddProjectAsync(dto);
-            _mapper.Received(1).Map<ProposedProjectRes>(createdDto);
-        }
-
-        [Fact]
-        public async Task CreateProject_WhenServiceThrowsException_PropagatesException()
-        {
-            // Arrange
-            var request = new ProposedProjectReq { Parentproject = "PP001", Projecttitle = "New Project" };
-            var dto = new ProposedProjectDto { Parentproject = "PP001", Projecttitle = "New Project" };
-
-            _mapper.Map<ProposedProjectDto>(request).Returns(dto);
-            _service.AddProjectAsync(dto).Throws(new Exception("Database error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.CreateProject(request));
-
-            _mapper.Received(1).Map<ProposedProjectDto>(request);
-            await _service.Received(1).AddProjectAsync(dto);
-            _mapper.DidNotReceive().Map<ProposedProjectRes>(Arg.Any<ProposedProjectDto>());
         }
 
         #endregion

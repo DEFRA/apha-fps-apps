@@ -57,7 +57,11 @@
                     break;
                 case GridColumnType.GbpValue:
                     if (value is decimal gbpValue)
-                        return gbpValue.ToString("£#,##0;-£#,##0");
+                        return gbpValue.ToString("£#,##0.00;-£#,##0.00");
+                    break;
+                case GridColumnType.GbpValueRounded:
+                    if (value is decimal gbpRounded)
+                        return Math.Round(gbpRounded, MidpointRounding.AwayFromZero).ToString("£#,##0;-£#,##0");
                     break;
             }
             

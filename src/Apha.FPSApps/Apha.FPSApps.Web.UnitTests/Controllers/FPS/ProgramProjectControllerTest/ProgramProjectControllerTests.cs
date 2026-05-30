@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -18,6 +19,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
         private readonly IProjectService _projectService;
         private readonly IProgramService _programService;
         private readonly IEmployeeService _employeeService;
+        private readonly IAppStateService _appStateService;
         private readonly ProgramProjectController _controller;
 
         public ProgramProjectControllerTests()
@@ -26,7 +28,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
             _projectService = Substitute.For<IProjectService>();
             _programService = Substitute.For<IProgramService>();
             _employeeService = Substitute.For<IEmployeeService>();
-            _controller = new ProgramProjectController(_mapper, _projectService, _programService, _employeeService);
+            _appStateService = Substitute.For<IAppStateService>();
+            _controller = new ProgramProjectController(_mapper, _projectService, _programService, _employeeService, _appStateService);
         }
 
         private static T? GetJsonResultValue<T>(JsonResult jsonResult)

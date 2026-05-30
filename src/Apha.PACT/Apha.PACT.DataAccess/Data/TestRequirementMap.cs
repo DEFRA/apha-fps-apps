@@ -18,10 +18,10 @@ namespace Apha.PACT.DataAccess.Data
             entity.HasIndex(e => e.TestCode, "reference31");
 
             entity.Property(e => e.TestCode)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("testcode");
             entity.Property(e => e.Buyer)
-                .HasColumnType("citext")
+                .HasMaxLength(20)
                 .HasColumnName("buyer");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.Active)

@@ -8,11 +8,11 @@ namespace Apha.Costbook.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<ProjectYear> entity)
         {
-            entity.HasKey(e => new { e.Project, e.YearValue }).HasName("aaaaatblprojectyear_pk");
+            entity.HasKey(e => new { e.Project, e.YearValue }).HasName("pk_tblprojectyear");
 
-            entity.ToTable("tblprojectyear", "mabarchive");
+            entity.ToTable("tblprojectyear", DbConstants.MabArchiveSchemaName);
 
-            entity.HasIndex(e => e.Project, "tblprojecttblprojectyear");
+            entity.HasIndex(e => e.Project, "idx_tblprojectyear_project");
 
             entity.Property(e => e.Project)
                 .HasMaxLength(50)

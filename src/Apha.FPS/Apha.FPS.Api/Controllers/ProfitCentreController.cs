@@ -1,0 +1,106 @@
+using Apha.Common.Contracts;
+using Apha.Common.Contracts.FPS;
+using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Pagination;
+using Asp.Versioning;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Apha.FPS.Api.Controllers
+{
+    /// <summary>
+    /// API controller for Profit Centre (Resource Centre) maintenance operations.
+    /// </summary>
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [ApiController]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/profitcentres")]
+    public class ProfitCentreController : ControllerBase
+    {
+        private readonly IProfitCentreService _profitCentreService;
+        private readonly IMapper _mapper;
+
+        public ProfitCentreController(IProfitCentreService profitCentreService, IMapper mapper)
+        {
+            _profitCentreService = profitCentreService ?? throw new ArgumentNullException(nameof(profitCentreService));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        }
+
+        /// <summary>
+        /// Returns all profit centres for the Resource Centre dropdown.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetProfitCentresAsync()
+        {
+            var result = await _profitCentreService.GetProfitCentresAsync();
+            return Ok(_mapper.Map<List<ProfitCentreRes>>(result));
+        }
+
+        /// <summary>
+        /// Returns a paginated list of profit centres for maintenance.
+        /// </summary>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetAllProfitCentresPagedAsync([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _profitCentreService.GetAllProfitCentresPagedAsync(query);
+            if (result == null)
+                throw new ArgumentException("Profit centre records not found");
+
+            return Ok(_mapper.Map<PaginationRes<ProfitCentreRes>>(result));
+        }
+
+        /// <summary>
+        /// Returns a single profit centre by ID.
+        /// </summary>
+        [HttpGet("{profitCentreId}")]
+        public async Task<IActionResult> GetProfitCentreByIdAsync(string profitCentreId)
+        {
+            var result = await _profitCentreService.GetProfitCentreByIdAsync(profitCentreId);
+            if (result == null)
+                throw new ArgumentException($"Profit centre record with ID: {profitCentreId} not found");
+
+            return Ok(_mapper.Map<ProfitCentreRes>(result));
+        }
+
+        /// <summary>
+        /// Creates a new profit centre record.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> CreateProfitCentreAsync([FromBody] ProfitCentreReq request)
+        {
+            var dto = _mapper.Map<ProfitCentreDto>(request);
+            var created = await _profitCentreService.CreateProfitCentreAsync(dto);
+            return Ok(_mapper.Map<ProfitCentreRes>(created));
+        }
+
+        /// <summary>
+        /// Updates an existing profit centre record.
+        /// </summary>
+        [HttpPut("{profitCentreId}")]
+        public async Task<IActionResult> UpdateProfitCentreAsync(string profitCentreId, [FromBody] ProfitCentreReq request)
+        {
+            var dto = _mapper.Map<ProfitCentreDto>(request);
+            var updated = await _profitCentreService.UpdateProfitCentreAsync(profitCentreId, dto);
+            return Ok(_mapper.Map<ProfitCentreRes>(updated));
+        }
+
+        /// <summary>
+        /// Deletes a profit centre record by ID.
+        /// </summary>
+        [HttpDelete("{profitCentreId}")]
+        public async Task<IActionResult> DeleteProfitCentreAsync(string profitCentreId)
+        {
+            if (string.IsNullOrWhiteSpace(profitCentreId))
+                throw new ArgumentException("Profit centre ID cannot be null or empty.", nameof(profitCentreId));
+
+            var isDeleted = await _profitCentreService.DeleteProfitCentreAsync(profitCentreId);
+            if (!isDeleted)
+                throw new ArgumentException($"Profit centre record with ID: {profitCentreId} not found for deletion");
+
+            return Ok(isDeleted);
+        }
+
+        }
+}

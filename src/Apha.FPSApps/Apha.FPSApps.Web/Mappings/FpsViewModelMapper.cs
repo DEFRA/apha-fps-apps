@@ -11,11 +11,11 @@ namespace Apha.FPSApps.Web.Mappings
     {
         public FpsViewModelMapper()
         {
-            CreateMap(typeof(PaginationFilter<>), typeof(QueryParameters<>)).ReverseMap();            
+            CreateMap(typeof(PaginationFilter<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap<StaffJobItemViewModel, StaffJobViewDto>().ReverseMap();
-            CreateMap<PaginationModel, PaginationDto>().ReverseMap(); 
-            CreateMap<ProgramViewModel, ProgramDto>().ReverseMap(); 
-            CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();           
+            CreateMap<PaginationModel, PaginationDto>().ReverseMap();
+            CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
+            CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
             CreateMap<ProjectDto, ProgramProjectEditViewModel>().ReverseMap();
@@ -27,10 +27,24 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<CompareStaff2Item, TimeCostCalcsViewDto>().ReverseMap();
             CreateMap<ActualProjectCostItem, ProjectSubContractDto>().ReverseMap();
             CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
+            CreateMap<DivisionGradeItem, DivisionGradeDto>().ReverseMap();
+            CreateMap<ResourceCentreMaintenanceItem, ProfitCentreDto>().ReverseMap();
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
             CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();
             CreateMap<TestPlanActualItem, TestRequirementDto>().ReverseMap();
             CreateMap<ActualTestOutputItem, MonthlyOutputDto>().ReverseMap();
+
+            // ProgrammeNewProject
+            CreateMap<ProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();
+
+            // Resource Set-Up
+            CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
+
+            // ProjectProfitability
+            CreateMap<ProjectProfitabilityDto, ProjectProfitabilityItem>().ReverseMap();
+
+            // Staff Plan view
+            CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();
             CreateMap<MaintWGGradeItem, WorkgroupGradeDto>().ReverseMap();
         }
     }

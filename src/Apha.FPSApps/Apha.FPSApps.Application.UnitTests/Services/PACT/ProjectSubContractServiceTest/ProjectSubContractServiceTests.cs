@@ -89,6 +89,90 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
 
         #endregion
 
+        #region GetPagedProjectSubContractsManualAsync Tests
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsManualAsync_WithValidQuery_ReturnsPaginatedSubContracts()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var project = "PP001";
+            var subContracts = new List<ProjectSubContractDto>
+            {
+                new ProjectSubContractDto { SubContCounter = 1, Project = project, Amount = 300.00m },
+                new ProjectSubContractDto { SubContCounter = 2, Project = project, Amount = 600.00m }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(
+                subContracts,
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
+            );
+            _pactProjectSubContractApiClient.GetPagedProjectSubContractsManualAsync(query, project).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedProjectSubContractsManualAsync(query, project);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _pactProjectSubContractApiClient.Received(1).GetPagedProjectSubContractsManualAsync(query, project);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsManualAsync_WithNullProject_DelegatesToClientWithNullProject()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(new List<ProjectSubContractDto>());
+            _pactProjectSubContractApiClient.GetPagedProjectSubContractsManualAsync(query, null).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedProjectSubContractsManualAsync(query, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _pactProjectSubContractApiClient.Received(1).GetPagedProjectSubContractsManualAsync(query, null);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsManualAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactProjectSubContractApiClient.GetPagedProjectSubContractsManualAsync(query, "PP001").Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetPagedProjectSubContractsManualAsync(query, "PP001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsManualAsync_DelegatesToPactClientPactProjectSubContract()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 5 };
+            var project = "PP002";
+            var expectedResponse = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([], new PaginationDto());
+            _pactProjectSubContractApiClient.GetPagedProjectSubContractsManualAsync(query, project).Returns(expectedResponse);
+
+            // Act
+            await _service.GetPagedProjectSubContractsManualAsync(query, project);
+
+            // Assert — verifies the service delegates to the correct nested client property
+            await _pactProjectSubContractApiClient.Received(1).GetPagedProjectSubContractsManualAsync(query, project);
+            await _pactProjectSubContractApiClient.DidNotReceive().GetPagedProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string?>());
+        }
+
+        #endregion
+
         #region GetTotalAmountAsync Tests
 
         [Fact]
@@ -280,7 +364,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
                 subContracts,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
             );
-            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, project).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, project, false).Returns(expectedResponse);
 
             // Act
             var result = await _service.GetFpsProjectSubContractsAsync(query, project);
@@ -289,7 +373,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _pactProjectSubContractApiClient.Received(1).GetFpsProjectSubContractsAsync(query, project);
+            await _pactProjectSubContractApiClient.Received(1).GetFpsProjectSubContractsAsync(query, project, false);
         }
 
         [Fact]
@@ -298,7 +382,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var expectedResponse = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(new List<ProjectSubContractDto>());
-            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, null).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, null, false).Returns(expectedResponse);
 
             // Act
             var result = await _service.GetFpsProjectSubContractsAsync(query, null);
@@ -316,7 +400,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
             var expectedResponse = ApiResponseDto<List<ProjectSubContractDto>>.FailureResponse(errors, new ApiMetaDto());
-            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, null).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractsAsync(query, null, false).Returns(expectedResponse);
 
             // Act
             var result = await _service.GetFpsProjectSubContractsAsync(query, null);
@@ -338,7 +422,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             // Arrange
             var project = "PP001";
             var expectedResponse = ApiResponseDto<decimal>.SuccessResponse(1500.00m);
-            _pactProjectSubContractApiClient.GetFpsProjectSubContractTotalAmountAsync(project).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractTotalAmountAsync(project, false).Returns(expectedResponse);
 
             // Act
             var result = await _service.GetFpsProjectSubContractTotalAmountAsync(project);
@@ -347,7 +431,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(1500.00m, result.Data);
-            await _pactProjectSubContractApiClient.Received(1).GetFpsProjectSubContractTotalAmountAsync(project);
+            await _pactProjectSubContractApiClient.Received(1).GetFpsProjectSubContractTotalAmountAsync(project, false);
         }
 
         [Fact]
@@ -356,7 +440,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             // Arrange
             var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
             var expectedResponse = ApiResponseDto<decimal>.FailureResponse(errors, new ApiMetaDto());
-            _pactProjectSubContractApiClient.GetFpsProjectSubContractTotalAmountAsync(null).Returns(expectedResponse);
+            _pactProjectSubContractApiClient.GetFpsProjectSubContractTotalAmountAsync(null, false).Returns(expectedResponse);
 
             // Act
             var result = await _service.GetFpsProjectSubContractTotalAmountAsync(null);
@@ -365,6 +449,97 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region GetMonthlySubContractsSummaryAsync Tests
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WithValidQuery_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pivot = new MonthlySubContractsPivotDto
+            {
+                Months = [1, 2, 3],
+                Rows =
+                [
+                    new MonthlySubContractsSummaryItemDto
+                    {
+                        Program = "ADMIN",
+                        ParentProject = "AH",
+                        MonthlyAmounts = new Dictionary<int, decimal> { { 1, 100m }, { 2, 200m } }
+                    }
+                ],
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+            var expectedResponse = ApiResponseDto<MonthlySubContractsPivotDto>.SuccessResponse(pivot);
+            _pactProjectSubContractApiClient.GetMonthlySubContractsSummaryAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(3, result.Data.Months.Count);
+            Assert.Single(result.Data.Rows);
+            await _pactProjectSubContractApiClient.Received(1).GetMonthlySubContractsSummaryAsync(query);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WithEmptyData_ReturnsSuccessWithEmptyPivot()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pivot = new MonthlySubContractsPivotDto();
+            var expectedResponse = ApiResponseDto<MonthlySubContractsPivotDto>.SuccessResponse(pivot);
+            _pactProjectSubContractApiClient.GetMonthlySubContractsSummaryAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!.Months);
+            Assert.Empty(result.Data.Rows);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<MonthlySubContractsPivotDto>.FailureResponse(errors, new ApiMetaDto());
+            _pactProjectSubContractApiClient.GetMonthlySubContractsSummaryAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_DelegatesToPactClient()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "program", Descending = true };
+            var expectedResponse = ApiResponseDto<MonthlySubContractsPivotDto>.SuccessResponse(new MonthlySubContractsPivotDto());
+            _pactProjectSubContractApiClient.GetMonthlySubContractsSummaryAsync(query).Returns(expectedResponse);
+
+            // Act
+            await _service.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            await _pactProjectSubContractApiClient.Received(1).GetMonthlySubContractsSummaryAsync(query);
         }
 
         #endregion

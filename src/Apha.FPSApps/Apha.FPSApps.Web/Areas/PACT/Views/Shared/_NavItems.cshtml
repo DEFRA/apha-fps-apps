@@ -1,0 +1,79 @@
+@* PACT navigation items — referenced by Views/Shared/Components/AppNav/Default.cshtml *@
+
+            <!-- Project & Programme -->
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="project-management" allow-edit="true">
+                    <div class="align-menu-text"><span>Project &amp; Programme</span></div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
+                </button>
+                <div class="dropdown-menu" id="project-management">
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="ProgramMaintenance" asp-action="Index">Program Maintenance</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index">Project Maintenance</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index">Portfolio Maintenance</a>
+                </div>
+            </div>
+
+            <!-- Monthly Project Data -->
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="monthly-data" allow-edit="true">
+                    <div class="align-menu-text"><span>Monthly Project Data</span></div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
+                </button>
+                <div class="dropdown-menu" id="monthly-data">
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="Invoice" asp-action="Index">Project Invoices (Manual)</a>
+                    <a class="dropdown-item" href="#">OM, OG, FT &amp; UT Invoices (Batch Mode from RMS)</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="InvoiceByMonth" asp-action="Index">Invoices by Month</a>
+                    <a class="dropdown-item" href="#">FT &amp; UT Project Work In Progress (WIP Over-ride)</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="SubContract" asp-action="Index">SubContracts (Exceptional Costs) (Manual)</a>
+                    <a class="dropdown-item" href="#">SubContracts (Exceptional Costs) (Batch mode from RMS)</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="SubContractByMonth" asp-action="Index">SubContracts By Month</a>
+                </div>
+            </div>
+
+            <!-- Work Group Static Data -->
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="work-group" allow-edit="true">
+                    <div class="align-menu-text"><span>Work Group Static Data</span></div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
+                </button>
+                <div class="dropdown-menu" id="work-group">
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="WorkGroupPeople" asp-action="Index">Work Group People</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="TestCapability" asp-action="Index">Test Capabilities</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="TestorProduct" asp-action="Index">Test Maintenance List</a>
+                </div>
+            </div>
+
+            <!-- Bosworth Interface -->
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="bosworth-interface" allow-edit="true">
+                    <div class="align-menu-text"><span>Bosworth Interface</span></div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
+                </button>
+                <div class="dropdown-menu" id="bosworth-interface">
+                    <a class="dropdown-item" href="#">Resource Management</a>
+                    <a class="dropdown-item" href="#">Time Purchase Pivot Wizard</a>
+                    <a class="dropdown-item" href="#">Time Sales Pivot Wizard</a>
+                    <a class="dropdown-item" href="#">Test Sale Pivot Wizard</a>
+                </div>
+            </div>
+
+            <!-- Time & Output Data -->
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="time-data" allow-edit="true">
+                    <div class="align-menu-text"><span>Time &amp; Output Data</span></div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
+                </button>
+                <div class="dropdown-menu" id="time-data">
+                    <a class="dropdown-item" href="#">Time record data entry</a>
+                    <a class="dropdown-item" href="#">Output record data entry</a>
+                    <a class="dropdown-item" href="#">Create &amp; email time &amp; output summaries</a>
+                    <a class="dropdown-item" href="#">Create &amp; print individual COS90s</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="MonthlyOutputLog" asp-action="Index">Search Audit Log for Monthly Output Change</a>
+                    <a class="dropdown-item" href="#">Search Audit Log for Monthly Time Change</a>
+                </div>
+            </div>
+
+            <!-- Reports -->
+            <div class="nav-item">
+                <button class="nav-button" allow-edit="true">Reports</button>
+            </div>

@@ -16,7 +16,7 @@ var StaffJobConfig = {
 
 function addStaffJob(btn) {
     if (StaffJobConfig.requireJobCodeForAdd && !StaffJobConfig.getJobCode()) {
-        alert('Please select a project first.');
+        showGovukAlert('Please select a project first.');
         return;
     }
     $.ajax({
@@ -30,7 +30,7 @@ function addStaffJob(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while opening the form.');
+                showGovukAlert('An error occurred while opening the form.');
             }
         }
     });
@@ -43,7 +43,7 @@ function saveStaffJob() {
         return;
     }
     var staffId = $('#StaffID').val();
-    var staffName = $('#Name option:selected').val();
+    var staffName = $('#Name').val();
     var data = {
         StaffID: staffId,
         JobCode: StaffJobConfig.getJobCode(),
@@ -60,9 +60,10 @@ function saveStaffJob() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                alert(result.message);
                 closeModal();
-                StaffJobConfig.onSaved();
+                showGovukAlert(result.message).then(function () {                    
+                    StaffJobConfig.onSaved();
+                });
             } else {
                 displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
             }
@@ -71,7 +72,7 @@ function saveStaffJob() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while saving.');
+                showGovukAlert('An error occurred while saving.');
             }
         }
     });
@@ -91,7 +92,7 @@ function editStaffJob(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while fetching the record.');
+                showGovukAlert('An error occurred while fetching the record.');
             }
         }
     });
@@ -105,7 +106,7 @@ function updateStaffJob() {
     }
     var staffId = $('#StaffID').val();
     var jobCode = form.find('[name="JobCode"]').val();
-    var staffName = $('#Name option:selected').val();
+    var staffName = $('#Name').val();
     var data = {
         StaffID: staffId,
         JobCode: jobCode,
@@ -122,9 +123,10 @@ function updateStaffJob() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                alert(result.message);
                 closeModal();
-                StaffJobConfig.onUpdated();
+                showGovukAlert(result.message).then(function () {                   
+                    StaffJobConfig.onUpdated();
+                });
             } else {
                 displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
             }
@@ -133,7 +135,7 @@ function updateStaffJob() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while saving.');
+                showGovukAlert('An error occurred while saving.');
             }
         }
     });
@@ -218,8 +220,20 @@ function calculateStaffCost() {
     $('#Days').val((hours / _hoursPerDay).toFixed(2));
 }
 
+function calculateHoursFromDays() {
+    var days = parseFloat($('#Days').val()) || 0;
+    var hours = days * _hoursPerDay;
+    $('#PlannedHours').val(hours.toFixed(2));
+    var rate = parseFloat($('#ChargeRate').val()) || 0;
+    $('#StaffCost').val((rate * hours).toFixed(2));
+}
+
 $(document).on('change', '#PlannedHours, #ChargeRate', function () {
     calculateStaffCost();
+});
+
+$(document).on('change', '#Days', function () {
+    calculateHoursFromDays();
 });
 
 $(document).ready(function () {

@@ -8,7 +8,7 @@
     #gridContainer_animalBookedGrid .grid-scroll-container {
         height: 255px;
         max-height: 255px;
-    }
+    }   
 </style>
 
 <div class="container-fluid">
@@ -18,9 +18,7 @@
             <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
                 <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
                     <div class="col-md-6">
-                        <nav aria-label="Breadcrumb">
-                            <a class="" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; Programme Management &gt; Programme Animal Plan
-                        </nav>
+                        
                     </div>
                     <div style="display: flex; justify-content: flex-end;" class="col-md-6">
                         <label class="fw-bold mt-2" for="programmeSelect">Programme:</label>
@@ -36,15 +34,7 @@
     <!-- Title section -->
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-full">
-            <div class="row" style="display:flex; align-items: center;">
-                <div class="col-sm-12" style="padding:0px;">
-                    <div style="border-bottom: 2px solid #1d70b8; height:48px;">
-                        <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
-                            Plan All Animal Costs for Programme
-                        </h1>
-                    </div>
-                </div>
-            </div>
+            <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Plan All Animal Costs for Programme</h1>
         </div>
     </div>
 
@@ -54,13 +44,13 @@
                 <div class="row">
                     <div class="col-lg-7">
                         <label class="govuk-label--s" for="managerName" style="color:#3e3e3e">Programme Manager</label>
-                        <input type="text" value="@Model.Manager" id="managerName" class="projectplan-code govuk-input">
+                        <input type="text" value="@Model.Manager" id="managerName" class="projectplan-code govuk-input" readonly>
                     </div>
                     <div class="col-lg-5">
                         <label class="govuk-label--s" for="Target" style="color:#3e3e3e">Target</label>
                         <div class="govuk-input__wrapper">
                             <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                            <input type="text" value="@Model.Target.ToString("C")" id="Target" readonly class="projectplan-code govuk-input">
+                            <input type="text" value="@Model.Target.ToString("N2")" id="Target" readonly class="projectplan-code govuk-input">
                         </div>
                     </div>
                 </div>
@@ -98,15 +88,24 @@
                             </div>
                             <div class="summary-item">
                                 <label class="govuk-label--s" for="Animal_Cost">Animal Cost:</label>
-                                <input type="text" aria-label="Animal_Cost" id="Animal_Cost" readonly class="govuk-input text-AlignRight" value="@Model.AnimalCost.ToString("C")">
+                                <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                    <input type="text" aria-label="Animal_Cost" id="Animal_Cost" readonly class="govuk-input text-AlignRight" value="@Model.AnimalCost.ToString("N2")">
+                                </div>
                             </div>
                             <div class="summary-item">
-                                <label class="govuk-label--s" for="BudgetCVL">Budget:</label>
-                                <input type="text" value="£0" aria-label="BudgetCVL" id="BudgetCVL" readonly class="govuk-input text-AlignRight">
+                                <label class="govuk-label--s" for="BudgetCVL">Predicted Income:</label>
+                                <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                    <input type="text" value="0" aria-label="BudgetCVL" id="BudgetCVL" readonly class="govuk-input text-AlignRight">
+                                </div>
                             </div>
                             <div class="summary-item">
                                 <label class="govuk-label--s" for="Remainder">Remainder:</label>
-                                <input type="text" value="£0" aria-label="Remainder" id="Remainder" readonly class="govuk-input text-AlignRight">
+                                <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                    <input type="text" value="0" aria-label="Remainder" id="Remainder" readonly class="govuk-input text-AlignRight">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -144,14 +143,23 @@
         });
 
         $('#programmeSelect').on('change', function () {
-            currentProgramNo = $(this).val();
+            const val = $(this).val();
+            if (!val) return;
+            currentProgramNo = val;
+            // Persist selection to session for other pages
+            $.ajax({
+                url: '@Url.Action("SaveProgrammeSession", "ProgrammeSelect", new { area = "FPS" })',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(val)
+            });
             currentJobCode = '';
             $('#hdnJobCode').val('');
             $('#txtSelectedProject').val('');
             $('#for_project').val('');
             $('#Animal_Cost').val('');
-            $('#BudgetCVL').val('£0');
-            $('#Remainder').val('£0');
+            $('#BudgetCVL').val('0');
+            $('#Remainder').val('0');
 
             if (currentProgramNo) {
                 $.get('@Url.Action("GetProgramInfo", "ProgramAnimalPlan", new { area = "FPS" })',
@@ -180,7 +188,7 @@
             $('#for_project').val(jobCode);
             $('#BudgetCVL').val(formatCurrency(budget));
             $('#Animal_Cost').val(formatCurrency(0));
-            $('#Remainder').val(formatCurrency(budget));
+            setRemainder(budget);
 
             $('#tbl_@Model.ProjectsGrid.GridId tbody tr').removeClass('selected-row');
             row.addClass('selected-row');
@@ -191,7 +199,7 @@
                     if (result.success) {
                         var total = parseFloat(result.totalAnimalCost) || 0;
                         $('#Animal_Cost').val(formatCurrency(total));
-                        $('#Remainder').val(formatCurrency(budget - total));
+                        setRemainder(budget - total);
                     }
                 }
             );
@@ -215,11 +223,23 @@
             $('#Animal_Cost').val(formatCurrency(total));
 
             var budget = parseFloat($('#BudgetCVL').val().replace(/[£,\s]/g, '')) || 0;
-            $('#Remainder').val(formatCurrency(budget - total));
+            setRemainder(budget - total);
         }
 
         function formatCurrency(value) {
-            return '\u00A3' + parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return parseFloat(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function setRemainder(value) {
+            var num = parseFloat(value) || 0;
+            var el = document.getElementById('Remainder');
+            if (num < 0) {
+                el.value = '-(' + formatCurrency(Math.abs(num)) + ')';
+                el.style.color = 'red';
+            } else {
+                el.value = formatCurrency(num);
+                el.style.color = 'blue';
+            }
         }
     </script>
 }

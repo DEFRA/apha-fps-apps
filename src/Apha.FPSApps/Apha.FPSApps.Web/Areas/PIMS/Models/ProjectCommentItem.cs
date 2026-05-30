@@ -6,7 +6,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
     public class ProjectCommentItem
     {
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
-        public int Commentno { get; set; }
+        public int CommentNo { get; set; }
 
         [Display(Name = "Year")]
         [GridColumn(Width = 80, Type = GridColumnType.Number)]

@@ -8,13 +8,14 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<ProjectGroup> entity)
         {
-            entity.HasKey(e => e.ProjectGroupName).HasName("tlkpprojectgroup_pk_tlkpprojectgroup");
+            entity.HasKey(e => new { e.ProjectGroupName, e.FpsYear }).HasName("pk_tlkpprojectgroup");
 
             entity.ToTable("tlkpprojectgroup", "fps");
 
             entity.Property(e => e.ProjectGroupName)
                 .HasMaxLength(50)
                 .HasColumnName("projectgroup");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }

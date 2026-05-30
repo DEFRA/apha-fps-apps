@@ -239,7 +239,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.ProjectsControllerTest
             {
                 ProjectId = "P001",
                 ProjectTitle = "New Project",
-                StartDate = DateOnly.FromDateTime(DateTime.Today)
+                StartDate = DateTime.Today
             };
             var projectDto = new ProjectDto { ProjectId = "P001", ProjectTitle = "New Project" };
             var serviceResponse = ApiResponseDto<ProjectDto>.SuccessResponse(projectDto);

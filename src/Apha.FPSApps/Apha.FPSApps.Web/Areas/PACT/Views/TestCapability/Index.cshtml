@@ -10,10 +10,7 @@
     <div class="govuk-grid-column-full">
         <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
             <div class="sup_flex_left_center" style="display: flex; font-size: 14px; align-items: center;">
-                <nav aria-label="Breadcrumb">
-                    <a href="@Url.Action("Index", "Home", new { area = "PACT" })">Home</a>
-                    &gt; WorkGroup Test Capability
-                </nav>
+                
             </div>
             <div style="visibility: hidden"> <a id="backlink" href="home.html" class="govuk-back-link">Back</a></div>
         </h1>
@@ -129,6 +126,28 @@
         function getReqmtGridManager() {
             return window['gridManager_' + testReqmtGridId];
         }
+
+        // ── URL Parameter Helper ──────────────────────────────────────────────
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // ── Page Initialization ───────────────────────────────────────────────
+        $(document).ready(function() {
+            // Check if workgroup is passed as query parameter
+            var workgroupParam = getUrlParameter('workgroup');
+            if (workgroupParam) {
+                // Set the dropdown value
+                $('#workGroupPick').val(workgroupParam);
+                currentViewBy = 1;
+                currentFilterValue = workgroupParam;
+                // Load the grid with the workgroup
+                reloadTestCapabilityGrid(workgroupParam);
+            }
+        });
 
         // ── WorkGroup dropdown change ──────────────────────────────────────────
         function onWorkGroupPickChange(value) {

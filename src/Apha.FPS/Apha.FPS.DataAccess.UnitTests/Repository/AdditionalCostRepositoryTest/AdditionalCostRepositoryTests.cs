@@ -23,6 +23,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AdditionalCostRepositoryTest
 
         private static AdditionalCostRepository CreateRepository(
             IEnumerable<AdditionalCost>? additionalCosts = null,
+            IEnumerable<AdditionalCostView>? additionalCostViews = null,
             IEnumerable<AdditionalCostLog>? additionalCostLogs = null,
             IEnumerable<AccountCategory>? accountCategories = null,
             int fpsYear = DefaultFpsYear)
@@ -34,6 +35,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AdditionalCostRepositoryTest
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(additionalCosts);
                 mockContext.Setup(x => x.AdditionalCosts).Returns(mockSet.Object);
+            }
+
+            if (additionalCostViews != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(additionalCostViews);
+                mockContext.Setup(x => x.AdditionalCostViews).Returns(mockSet.Object);
             }
 
             if (additionalCostLogs != null)
@@ -57,13 +64,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AdditionalCostRepositoryTest
         public async Task GetByJobCodeAsync_ReturnsPagedData_WithValidJobCode()
         {
             // Arrange
-            var additionalCosts = new List<AdditionalCost>
+            var viewData = new List<AdditionalCostView>
             {
-                new() { JobCode = "JOB001", Account = "ACC1", Description = "Desc1", ItemCost = 100m, FpsYear = DefaultFpsYear },
-                new() { JobCode = "JOB001", Account = "ACC2", Description = "Desc2", ItemCost = 200m, FpsYear = DefaultFpsYear }
+                new() { JobCode = "JOB001", Account = "ACC1", Description = "Desc1", ItemCost = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { JobCode = "JOB001", Account = "ACC2", Description = "Desc2", ItemCost = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
 
-            var repo = CreateRepository(additionalCosts: additionalCosts);
+            var repo = CreateRepository(additionalCostViews: viewData);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
@@ -79,12 +86,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AdditionalCostRepositoryTest
         public async Task GetByJobCodeAsync_WithNonMatchingJobCode_ReturnsEmpty()
         {
             // Arrange
-            var additionalCosts = new List<AdditionalCost>
+            var viewData = new List<AdditionalCostView>
             {
-                new() { JobCode = "JOB001", Account = "ACC1", Description = "Desc1", ItemCost = 100m, FpsYear = DefaultFpsYear }
+                new() { JobCode = "JOB001", Account = "ACC1", Description = "Desc1", ItemCost = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
 
-            var repo = CreateRepository(additionalCosts: additionalCosts);
+            var repo = CreateRepository(additionalCostViews: viewData);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
@@ -99,13 +106,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AdditionalCostRepositoryTest
         public async Task GetByJobCodeAsync_AppliesFilter_ByDescription()
         {
             // Arrange
-            var additionalCosts = new List<AdditionalCost>
+            var viewData = new List<AdditionalCostView>
             {
-                new() { JobCode = "JOB001", Account = "ACC1", Description = "Alpha", ItemCost = 100m, FpsYear = DefaultFpsYear },
-                new() { JobCode = "JOB001", Account = "ACC2", Description = "Beta",  ItemCost = 200m, FpsYear = DefaultFpsYear }
+                new() { JobCode = "JOB001", Account = "ACC1", Description = "Alpha", ItemCost = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { JobCode = "JOB001", Account = "ACC2", Description = "Beta",  ItemCost = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
 
-            var repo = CreateRepository(additionalCosts: additionalCosts);
+            var repo = CreateRepository(additionalCostViews: viewData);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -124,13 +131,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AdditionalCostRepositoryTest
         public async Task GetByJobCodeAsync_AppliesFilter_BySupplier()
         {
             // Arrange
-            var additionalCosts = new List<AdditionalCost>
+            var viewData = new List<AdditionalCostView>
             {
-                new() { JobCode = "JOB001", Account = "ACC1", Description = "Desc1", Supplier = "SupplierA", ItemCost = 100m, FpsYear = DefaultFpsYear },
-                new() { JobCode = "JOB001", Account = "ACC2", Description = "Desc2", Supplier = "SupplierB", ItemCost = 200m, FpsYear = DefaultFpsYear }
+                new() { JobCode = "JOB001", Account = "ACC1", Description = "Desc1", Supplier = "SupplierA", ItemCost = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { JobCode = "JOB001", Account = "ACC2", Description = "Desc2", Supplier = "SupplierB", ItemCost = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
 
-            var repo = CreateRepository(additionalCosts: additionalCosts);
+            var repo = CreateRepository(additionalCostViews: viewData);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -153,14 +160,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AdditionalCostRepositoryTest
         public async Task GetByJobCodeAsync_AppliesSorting_Correctly(string sortBy, bool descending, object expectedFirst)
         {
             // Arrange
-            var additionalCosts = new List<AdditionalCost>
+            var viewData = new List<AdditionalCostView>
             {
-                new() { JobCode = "JOB001", Account = "ACC1", Description = "Beta",  ItemCost = 100m, FpsYear = DefaultFpsYear },
-                new() { JobCode = "JOB001", Account = "ACC2", Description = "Alpha", ItemCost = 50m,  FpsYear = DefaultFpsYear },
-                new() { JobCode = "JOB001", Account = "ACC3", Description = "Gamma", ItemCost = 300m, FpsYear = DefaultFpsYear }
+                new() { JobCode = "JOB001", Account = "ACC1", Description = "Beta",  ItemCost = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { JobCode = "JOB001", Account = "ACC2", Description = "Alpha", ItemCost = 50m,  FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { JobCode = "JOB001", Account = "ACC3", Description = "Gamma", ItemCost = 300m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
 
-            var repo = CreateRepository(additionalCosts: additionalCosts);
+            var repo = CreateRepository(additionalCostViews: viewData);
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
@@ -185,14 +192,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AdditionalCostRepositoryTest
         public async Task GetByJobCodeAsync_AppliesPaging_Correctly()
         {
             // Arrange
-            var additionalCosts = Enumerable.Range(1, 15)
-                .Select(i => new AdditionalCost
+            var viewData = Enumerable.Range(1, 15)
+                .Select(i => new AdditionalCostView
                 {
                     JobCode = "JOB001", Account = $"ACC{i}", Description = $"Desc{i:D2}",
-                    ItemCost = i * 10m, FpsYear = DefaultFpsYear
+                    ItemCost = i * 10m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail
                 }).ToList();
 
-            var repo = CreateRepository(additionalCosts: additionalCosts);
+            var repo = CreateRepository(additionalCostViews: viewData);
             var query = new PaginationParameters<string> { Page = 2, PageSize = 5 };
 
             // Act

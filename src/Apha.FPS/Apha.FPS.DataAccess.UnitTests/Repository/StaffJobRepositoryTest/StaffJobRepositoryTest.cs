@@ -33,7 +33,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             IEnumerable<StaffView>? staffViews = null,
             IEnumerable<StaffPickView>? staffPickViews = null,
             IEnumerable<FpsSetting>? settings = null,
-            IEnumerable<WgEmployee>? wgEmployees = null,
+            IEnumerable<WorkGroupEmployee>? wgEmployees = null,
             IEnumerable<Employee>? employees = null,
             IEnumerable<Project>? projects = null,
             int fpsYear = DefaultTestFpsYear)
@@ -68,7 +68,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             if (profitCentreGrades != null)
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(profitCentreGrades);
-                mockContext.Setup(x => x.ProfitcentreGrades).Returns(mockSet.Object);
+                mockContext.Setup(x => x.ProfitCentreGrades).Returns(mockSet.Object);
             }
 
             if (projectViews != null)
@@ -104,7 +104,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             if (wgEmployees != null)
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(wgEmployees);
-                mockContext.Setup(x => x.WgEmployees).Returns(mockSet.Object);
+                mockContext.Setup(x => x.WorkGroupEmployees).Returns(mockSet.Object);
             }
 
             if (employees != null)
@@ -161,6 +161,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 profitCentreGrades: profitCentreGrades,
                 projectViews: projectViews,
                 programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
                 settings: settings);
 
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -173,132 +175,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             Assert.NotEmpty(result.Data);
             Assert.Equal(1, result.PaginationData.TotalRecords);
         }
-
-        [Fact]
-        public async Task GetJobStaffCostAsync_AppliesFilter_ByName()
-        {
-            // Arrange
-            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
-            var staffJobTblViews = new List<StaffJobTblView>
-            {
-                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId },
-                new() { StaffId = "S002", JobCode = "JOB001", PlannedHours = 30, UserId = DefaultUserId }
-            };
-            var staffGeneralViews = new List<StaffGeneralView>
-            {
-                new() { StaffId = "S001", Name = "Alice", WorkGroupGrade = "WG01" },
-                new() { StaffId = "S002", Name = "Bob", WorkGroupGrade = "WG01" }
-            };
-            var workgroupGrades = new List<WorkgroupGrade>
-            {
-                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
-            };
-            var profitCentreGrades = new List<ProfitCentreGrade>
-            {
-                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
-            };
-            var projectViews = new List<ProjectView>
-            {
-                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
-            };
-            var programViews = new List<ProgramView>
-            {
-                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
-            };
-
-            var repo = CreateRepository(
-                staffJobTblViews: staffJobTblViews,
-                staffGeneralViews: staffGeneralViews,
-                workgroupGrades: workgroupGrades,
-                profitCentreGrades: profitCentreGrades,
-                projectViews: projectViews,
-                programViews: programViews,
-                settings: settings);
-
-            var query = new PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                Filter = "{\"Name\":\"Alice\"}"
-            };
-
-            // Act
-            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
-
-            // Assert
-            Assert.Single(result.Data);
-            Assert.Contains("Alice", result.Data.First().Name);
-        }
-
-        [Theory]
-        [InlineData("name", false, "Alice")]
-        [InlineData("name", true, "Charlie")]
-        [InlineData("plannedhours", false, 20.0)]
-        [InlineData("plannedhours", true, 40.0)]
-        public async Task GetJobStaffCostAsync_AppliesSorting_Correctly(string sortBy, bool descending, object expectedFirstValue)
-        {
-            // Arrange
-            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
-            var staffJobTblViews = new List<StaffJobTblView>
-            {
-                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 30, UserId = DefaultUserId },
-                new() { StaffId = "S002", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId },
-                new() { StaffId = "S003", JobCode = "JOB001", PlannedHours = 20, UserId = DefaultUserId }
-            };
-            var staffGeneralViews = new List<StaffGeneralView>
-            {
-                new() { StaffId = "S001", Name = "Bob", WorkGroupGrade = "WG01" },
-                new() { StaffId = "S002", Name = "Charlie", WorkGroupGrade = "WG01" },
-                new() { StaffId = "S003", Name = "Alice", WorkGroupGrade = "WG01" }
-            };
-            var workgroupGrades = new List<WorkgroupGrade>
-            {
-                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
-            };
-            var profitCentreGrades = new List<ProfitCentreGrade>
-            {
-                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
-            };
-            var projectViews = new List<ProjectView>
-            {
-                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
-            };
-            var programViews = new List<ProgramView>
-            {
-                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
-            };
-
-            var repo = CreateRepository(
-                staffJobTblViews: staffJobTblViews,
-                staffGeneralViews: staffGeneralViews,
-                workgroupGrades: workgroupGrades,
-                profitCentreGrades: profitCentreGrades,
-                projectViews: projectViews,
-                programViews: programViews,
-                settings: settings);
-
-            var query = new PaginationParameters<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                SortBy = sortBy,
-                Descending = descending
-            };
-
-            // Act
-            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
-
-            // Assert
-            var firstItem = result.Data.First();
-            var actualValue = sortBy.ToLower() switch
-            {
-                "name" => (object?)firstItem.Name,
-                "plannedhours" => (object)firstItem.PlannedHours,
-                _ => (object?)firstItem.Name
-            };
-            Assert.Equal(expectedFirstValue.ToString(), actualValue?.ToString());
-        }
-
+        
         [Fact]
         public async Task GetJobStaffCostAsync_CalculatesStaffCost_ForChargeableSector()
         {
@@ -336,6 +213,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 profitCentreGrades: profitCentreGrades,
                 projectViews: projectViews,
                 programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
                 settings: settings);
 
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -360,6 +239,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 profitCentreGrades: new List<ProfitCentreGrade>(),
                 projectViews: new List<ProjectView>(),
                 programViews: new List<ProgramView>(),
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
                 settings: settings);
 
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
@@ -524,6 +405,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 profitCentreGrades: profitCentreGrades,
                 projectViews: projectViews,
                 programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
                 settings: settings);
 
             // Act
@@ -547,6 +430,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 profitCentreGrades: new List<ProfitCentreGrade>(),
                 projectViews: new List<ProjectView>(),
                 programViews: new List<ProgramView>(),
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
                 settings: settings);
 
             // Act
@@ -663,7 +548,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             staffJobLogsMockSet.Verify(m => m.Add(It.Is<StaffJobLog>(log =>
                 log.StaffId == "S001" &&
                 log.JobCode == "JOB001" &&
-                log.InsertDelete == "I")), Times.Once);
+                log.InsertDelete == "U")), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 

@@ -10,13 +10,13 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<UserProfitcentre> entity)
         {
-            entity.HasKey(e => new { e.ProfitCentre, e.UserId }).HasName("tbluser_profitcentre_pk__tbluser_profitce__77bfcb91");
+            entity.HasKey(e => new { e.ProfitCentre, e.UserId, e.FpsYear }).HasName("pk_tbluser_profitcentre");
 
             entity.ToTable("tbluser_profitcentre", "fps");
 
-            entity.HasIndex(e => e.UserId, "dbo_tbluser_profitcentre_xif89tbluser_profitcentre");
+            entity.HasIndex(e => e.UserId, "xif89tbluser_profitcentre");
 
-            entity.HasIndex(e => e.ProfitCentre, "dbo_tbluser_profitcentre_xif90tbluser_profitcentre");
+            entity.HasIndex(e => e.ProfitCentre, "xif90tbluser_profitcentre");
 
             entity.Property(e => e.ProfitCentre)
                 .HasMaxLength(50)

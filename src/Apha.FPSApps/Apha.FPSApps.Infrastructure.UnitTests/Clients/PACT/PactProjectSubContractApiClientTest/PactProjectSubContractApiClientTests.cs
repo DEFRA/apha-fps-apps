@@ -69,15 +69,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
         }
 
         [Fact]
-        public async Task GetPagedProjectSubContractsAsync_WithNullProject_UsesBaseUrl()
+        public async Task GetPagedProjectSubContractsAsync_WithNullProject_ReturnsEmptySuccessWithoutCallingApi()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = new ApiResponse<List<ProjectSubContractRes>> { Success = true, Data = new List<ProjectSubContractRes>() };
-            var expectedDto = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(new List<ProjectSubContractDto>(), new PaginationDto());
-
-            _http.GetAsync<List<ProjectSubContractRes>>(Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract"))).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetPagedProjectSubContractsAsync(query, null);
@@ -85,7 +80,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).GetAsync<List<ProjectSubContractRes>>(Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract")));
+            Assert.NotNull(result.Data);
+            Assert.Empty(result.Data);
+            await _http.DidNotReceive().GetAsync<List<ProjectSubContractRes>>(Arg.Any<string>());
         }
 
         [Fact]
@@ -106,7 +103,125 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetPagedProjectSubContractsAsync(query, null);
+            var result = await _client.GetPagedProjectSubContractsAsync(query, "PP001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region GetPagedProjectSubContractsManualAsync Tests
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsManualAsync_WithProject_IncludesProjectInUrl()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var project = "PP001";
+            var subContractList = new List<ProjectSubContractRes>
+            {
+                new() { SubContCounter = 1, Project = project, Amount = 300.00m },
+                new() { SubContCounter = 2, Project = project, Amount = 600.00m }
+            };
+            var apiResponse = new ApiResponse<List<ProjectSubContractRes>>
+            {
+                Success = true,
+                Data = subContractList,
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
+            };
+            var expectedDto = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse(
+                new List<ProjectSubContractDto>
+                {
+                    new() { SubContCounter = 1, Project = project },
+                    new() { SubContCounter = 2, Project = project }
+                },
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
+            );
+
+            _http.GetAsync<List<ProjectSubContractRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/projectsubcontract") && url.Contains("project=PP001")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetPagedProjectSubContractsManualAsync(query, project);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _http.Received(1).GetAsync<List<ProjectSubContractRes>>(
+                Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract") && url.Contains("project=PP001")));
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsManualAsync_WithNullProject_CallsApiUsingBaseUrl()
+        {
+            // Arrange — unlike GetPagedProjectSubContractsAsync, the manual variant always calls the API
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProjectSubContractRes>> { Success = true, Data = [] };
+            var expectedDto = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([]);
+
+            _http.GetAsync<List<ProjectSubContractRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/projectsubcontract") && !url.Contains("project=")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetPagedProjectSubContractsManualAsync(query, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _http.Received(1).GetAsync<List<ProjectSubContractRes>>(
+                Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract") && !url.Contains("project=")));
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsManualAsync_WithWhitespaceProject_CallsApiUsingBaseUrl()
+        {
+            // Arrange — whitespace project is treated the same as null: no project param in URL
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProjectSubContractRes>> { Success = true, Data = [] };
+            var expectedDto = ApiResponseDto<List<ProjectSubContractDto>>.SuccessResponse([]);
+
+            _http.GetAsync<List<ProjectSubContractRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/projectsubcontract") && !url.Contains("project=")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetPagedProjectSubContractsManualAsync(query, "   ");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _http.Received(1).GetAsync<List<ProjectSubContractRes>>(
+                Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract") && !url.Contains("project=")));
+        }
+
+        [Fact]
+        public async Task GetPagedProjectSubContractsManualAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiError> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var apiResponse = new ApiResponse<List<ProjectSubContractRes>> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<List<ProjectSubContractDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProjectSubContractRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectSubContractDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetPagedProjectSubContractsManualAsync(query, "PP001");
 
             // Assert
             Assert.NotNull(result);
@@ -143,14 +258,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
         }
 
         [Fact]
-        public async Task GetTotalAmountAsync_WithNullProject_UsesBaseUrl()
+        public async Task GetTotalAmountAsync_WithNullProject_ReturnsZeroSuccessWithoutCallingApi()
         {
-            // Arrange
-            var apiResponse = new ApiResponse<decimal?> { Success = true, Data = 0m };
-            var expectedDto = ApiResponseDto<decimal>.SuccessResponse(0m);
-
-            _http.GetAsync<decimal?>("api/v1/projectsubcontract/total").Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<decimal>>(apiResponse).Returns(expectedDto);
+            // Arrange — no HTTP setup needed; the implementation short-circuits for null/whitespace project
 
             // Act
             var result = await _client.GetTotalAmountAsync(null);
@@ -158,7 +268,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).GetAsync<decimal?>("api/v1/projectsubcontract/total");
+            Assert.Equal(0m, result.Data);
+            await _http.DidNotReceive().GetAsync<decimal?>(Arg.Any<string>());
         }
 
         #endregion
@@ -326,6 +437,138 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactProjectSubContr
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region GetMonthlySubContractsSummaryAsync Tests
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiReturnsSuccess_ReturnsMappedDto()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pivotRes = new MonthlySubContractsPivotRes
+            {
+                Months = [1, 2, 3],
+                Rows = [new MonthlySubContractsSummaryItemRes { Program = "ADMIN", ParentProject = "AH" }],
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes> { Success = true, Data = pivotRes };
+            var expectedDto = new MonthlySubContractsPivotDto
+            {
+                Months = [1, 2, 3],
+                Rows = [new MonthlySubContractsSummaryItemDto { Program = "ADMIN", ParentProject = "AH" }],
+                Pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(
+                    Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract/monthly-summary")))
+                .Returns(apiResponse);
+            _mapper.Map<MonthlySubContractsPivotDto>(pivotRes).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(3, result.Data.Months.Count);
+            Assert.Single(result.Data.Rows);
+            await _http.Received(1).GetAsync<MonthlySubContractsPivotRes>(
+                Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract/monthly-summary")));
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WithQueryParameters_IncludesQueryStringInUrl()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "program", Descending = true };
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes> { Success = true, Data = new MonthlySubContractsPivotRes() };
+            var expectedDto = new MonthlySubContractsPivotDto();
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(
+                    Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract/monthly-summary")))
+                .Returns(apiResponse);
+            _mapper.Map<MonthlySubContractsPivotDto>(Arg.Any<MonthlySubContractsPivotRes>()).Returns(expectedDto);
+
+            // Act
+            await _client.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            await _http.Received(1).GetAsync<MonthlySubContractsPivotRes>(
+                Arg.Is<string>(url => url.Contains("api/v1/projectsubcontract/monthly-summary")));
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiReturnsSuccess_MapsResponseData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var pivotRes = new MonthlySubContractsPivotRes();
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes> { Success = true, Data = pivotRes };
+            var expectedDto = new MonthlySubContractsPivotDto();
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<MonthlySubContractsPivotDto>(pivotRes).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.True(result.Success);
+            _mapper.Received(1).Map<MonthlySubContractsPivotDto>(pivotRes);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiError> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes> { Success = false, Errors = errors };
+            var mappedFailure = new ApiResponseDto<MonthlySubContractsPivotDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlySubContractsPivotDto>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            var result = await _client.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetMonthlySubContractsSummaryAsync_WhenApiReturnsFailure_DoesNotMapResponseData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<MonthlySubContractsPivotRes> { Success = false, Errors = [] };
+            var mappedFailure = new ApiResponseDto<MonthlySubContractsPivotDto>
+            {
+                Success = false,
+                Errors = [],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<MonthlySubContractsPivotRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<MonthlySubContractsPivotDto>>(apiResponse).Returns(mappedFailure);
+
+            // Act
+            await _client.GetMonthlySubContractsSummaryAsync(query);
+
+            // Assert
+            _mapper.DidNotReceive().Map<MonthlySubContractsPivotDto>(Arg.Any<MonthlySubContractsPivotRes>());
         }
 
         #endregion

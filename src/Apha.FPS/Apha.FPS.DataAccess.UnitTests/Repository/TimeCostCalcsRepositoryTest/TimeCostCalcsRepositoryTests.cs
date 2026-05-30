@@ -10,13 +10,17 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
 {
     public class TimeCostCalcsRepositoryTests
     {
+        private const int DefaultFpsYear = 2024;
+        private const string DefaultUserEmail = "test@example.com";
+
         private static TimeCostCalcsRepository CreateRepository(
             IEnumerable<TimeCostCalcsView>? timeCostCalcsViews = null,
             IEnumerable<TimeCostCalcs>? timeCostCalcs = null,
-            int fpsYear = 2024)
+            int fpsYear = DefaultFpsYear)
         {
             var mockRequestContext = new Mock<IFpsRequestContext>();
             mockRequestContext.Setup(x => x.FpsYear).Returns(fpsYear);
+            mockRequestContext.Setup(x => x.UserEmailId).Returns(DefaultUserEmail);
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
 
             if (timeCostCalcsViews != null)
@@ -33,7 +37,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
                 RepositoryTestHelper.SetupSaveChanges(mockContext);
             }
 
-            return new TimeCostCalcsRepository(mockContext.Object);
+            return new TimeCostCalcsRepository(mockContext.Object, mockRequestContext.Object);
         }
 
         private static PaginationParameters<string> DefaultQuery(
@@ -56,9 +60,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JOB1", StaffId = "S01", Name = "Alice", Month = 1, Time = 8, Cost = 100 },
-                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "JOB2", StaffId = "S02", Name = "Bob",   Month = 2, Time = 6, Cost = 80  },
-                new() { Project = "OTHER",  WorkGroup = "WG3", GradeCode = "G3", JobCode = "JOB3", StaffId = "S03", Name = "Carol", Month = 1, Time = 4, Cost = 60  }
+                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JOB1", StaffId = "S01", Name = "Alice", Month = 1, Time = 8, Cost = 100, UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "JOB2", StaffId = "S02", Name = "Bob",   Month = 2, Time = 6, Cost = 80,  UserEmail = DefaultUserEmail },
+                new() { Project = "OTHER",  WorkGroup = "WG3", GradeCode = "G3", JobCode = "JOB3", StaffId = "S03", Name = "Carol", Month = 1, Time = 4, Cost = 60,  UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
@@ -77,8 +81,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "OTHER1", WorkGroup = "WG1", StaffId = "S01", Name = "Alice" },
-                new() { Project = "OTHER2", WorkGroup = "WG2", StaffId = "S02", Name = "Bob"   }
+                new() { Project = "OTHER1", WorkGroup = "WG1", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail },
+                new() { Project = "OTHER2", WorkGroup = "WG2", StaffId = "S02", Name = "Bob",   UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
@@ -114,14 +118,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", Name = "Alice Smith",   WorkGroup = "WG1", StaffId = "S01" },
-                new() { Project = "AH0033", Name = "Bob Jones",     WorkGroup = "WG2", StaffId = "S02" },
-                new() { Project = "AH0033", Name = "Alice Johnson", WorkGroup = "WG1", StaffId = "S03" }
+                new() { Project = "AH0033", Name = "Alice Smith",   WorkGroup = "WG1", StaffId = "S01", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", Name = "Bob Jones",     WorkGroup = "WG2", StaffId = "S02", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", Name = "Alice Johnson", WorkGroup = "WG1", StaffId = "S03", UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
             // Act
-            var result = await repo.GetTimeCostCalcsByProjectAsync(DefaultQuery(filter: "alice"), "AH0033");
+            var result = await repo.GetTimeCostCalcsByProjectAsync(DefaultQuery(filter: "{\"Name\":\"Alice\"}"), "AH0033");
 
             // Assert
             Assert.Equal(2, result.Data.Count());
@@ -134,14 +138,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", WorkGroup = "APHA_WG1", StaffId = "S01", Name = "Alice" },
-                new() { Project = "AH0033", WorkGroup = "OTHER_WG",  StaffId = "S02", Name = "Bob"  },
-                new() { Project = "AH0033", WorkGroup = "APHA_WG2", StaffId = "S03", Name = "Carol" }
+                new() { Project = "AH0033", WorkGroup = "APHA_WG1", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", WorkGroup = "OTHER_WG",  StaffId = "S02", Name = "Bob",   UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", WorkGroup = "APHA_WG2", StaffId = "S03", Name = "Carol", UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
             // Act
-            var result = await repo.GetTimeCostCalcsByProjectAsync(DefaultQuery(filter: "apha"), "AH0033");
+            var result = await repo.GetTimeCostCalcsByProjectAsync(DefaultQuery(filter: "{\"WorkGroup\":\"APHA\"}"), "AH0033");
 
             // Assert
             Assert.Equal(2, result.Data.Count());
@@ -153,8 +157,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", StaffId = "S01", Name = "Alice" },
-                new() { Project = "AH0033", StaffId = "S02", Name = "Bob"   }
+                new() { Project = "AH0033", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", StaffId = "S02", Name = "Bob",   UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
@@ -175,8 +179,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", WorkGroup = "APHA_WG1", GradeCode = "G1", JobCode = "JB1", StaffId = "S01", Name = "Alice" },
-                new() { Project = "AH0033", WorkGroup = "OTHER_WG",  GradeCode = "G2", JobCode = "JB2", StaffId = "S02", Name = "Bob"   }
+                new() { Project = "AH0033", WorkGroup = "APHA_WG1", GradeCode = "G1", JobCode = "JB1", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", WorkGroup = "OTHER_WG",  GradeCode = "G2", JobCode = "JB2", StaffId = "S02", Name = "Bob",   UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
             var jsonFilter = """{"WorkGroup":"APHA_WG1"}""";
@@ -195,8 +199,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JB1", StaffId = "S01", Name = "Alice" },
-                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "JB2", StaffId = "S02", Name = "Bob"   }
+                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JB1", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "JB2", StaffId = "S02", Name = "Bob",   UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
             var jsonFilter = """{"GradeCode":"G1"}""";
@@ -215,8 +219,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JB1", StaffId = "S01", Name = "Alice" },
-                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "JB2", StaffId = "S02", Name = "Bob"   }
+                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JB1", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "JB2", StaffId = "S02", Name = "Bob",   UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
             var jsonFilter = """{"JobCode":"JB2"}""";
@@ -235,8 +239,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JB1", StaffId = "S01", Name = "Alice Smith" },
-                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "JB2", StaffId = "S02", Name = "Bob Jones"   }
+                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JB1", StaffId = "S01", Name = "Alice Smith", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "JB2", StaffId = "S02", Name = "Bob Jones",   UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
             var jsonFilter = """{"Name":"Alice"}""";
@@ -255,8 +259,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JB1", StaffId = "S01", Name = "Alice" },
-                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "JB2", StaffId = "S02", Name = "Bob"   }
+                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JB1", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "JB2", StaffId = "S02", Name = "Bob",   UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
             var jsonFilter = """{"WorkGroup":"WG1","GradeCode":"G1","JobCode":"JB1","Name":"Alice"}""";
@@ -275,8 +279,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", WorkGroup = "WG1", StaffId = "S01", Name = "Alice" },
-                new() { Project = "AH0033", WorkGroup = "WG2", StaffId = "S02", Name = "Bob"   }
+                new() { Project = "AH0033", WorkGroup = "WG1", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", WorkGroup = "WG2", StaffId = "S02", Name = "Bob",   UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
             var jsonFilter = "{}";
@@ -307,8 +311,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", Name = "Bob",   WorkGroup = "WG2", GradeCode = "G2", JobCode = "JB2", Month = 2, Time = 6, Cost = 80 },
-                new() { Project = "AH0033", Name = "Alice", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JB1", Month = 1, Time = 8, Cost = 100 }
+                new() { Project = "AH0033", Name = "Bob",   WorkGroup = "WG2", GradeCode = "G2", JobCode = "JB2", Month = 2, Time = 6, Cost = 80,  UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", Name = "Alice", WorkGroup = "WG1", GradeCode = "G1", JobCode = "JB1", Month = 1, Time = 8, Cost = 100, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
@@ -326,8 +330,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", StaffId = "S01", Name = "Alice" },
-                new() { Project = "AH0033", StaffId = "S02", Name = "Bob"   }
+                new() { Project = "AH0033", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", StaffId = "S02", Name = "Bob",   UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
@@ -347,7 +351,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
         {
             // Arrange
             var views = Enumerable.Range(1, 15)
-                .Select(i => new TimeCostCalcsView { Project = "AH0033", StaffId = $"S{i:D2}", Name = $"Staff{i}" })
+                .Select(i => new TimeCostCalcsView { Project = "AH0033", StaffId = $"S{i:D2}", Name = $"Staff{i}", UserEmail = DefaultUserEmail })
                 .ToList();
             var repo = CreateRepository(timeCostCalcsViews: views);
 
@@ -364,8 +368,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", StaffId = "S01", Name = "Alice" },
-                new() { Project = "AH0033", StaffId = "S02", Name = "Bob"   }
+                new() { Project = "AH0033", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", StaffId = "S02", Name = "Bob",   UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
@@ -388,7 +392,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", StaffId = "S01", Name = "Alice" }
+                new() { Project = "AH0033", StaffId = "S01", Name = "Alice", UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
@@ -409,9 +413,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "J1", StaffId = "S01", Name = "Alice", Time = 8,  Cost = 200, FpsYear = 2024 },
-                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "J2", StaffId = "S02", Name = "Bob",   Time = 6,  Cost = 150, FpsYear = 2024 },
-                new() { Project = "OTHER",  WorkGroup = "WG3", GradeCode = "G3", JobCode = "J3", StaffId = "S03", Name = "Carol", Time = 10, Cost = 300, FpsYear = 2024 }
+                new() { Project = "AH0033", WorkGroup = "WG1", GradeCode = "G1", JobCode = "J1", StaffId = "S01", Name = "Alice", Time = 8,  Cost = 200, FpsYear = 2024, UserEmail = DefaultUserEmail },
+                new() { Project = "AH0033", WorkGroup = "WG2", GradeCode = "G2", JobCode = "J2", StaffId = "S02", Name = "Bob",   Time = 6,  Cost = 150, FpsYear = 2024, UserEmail = DefaultUserEmail },
+                new() { Project = "OTHER",  WorkGroup = "WG3", GradeCode = "G3", JobCode = "J3", StaffId = "S03", Name = "Carol", Time = 10, Cost = 300, FpsYear = 2024, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
@@ -429,7 +433,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "OTHER", WorkGroup = "WG1", StaffId = "S01", Time = 8, Cost = 200 }
+                new() { Project = "OTHER", WorkGroup = "WG1", StaffId = "S01", Time = 8, Cost = 200, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 
@@ -463,7 +467,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeCostCalcsRepositoryTest
             // Arrange
             var views = new List<TimeCostCalcsView>
             {
-                new() { Project = "AH0033", WorkGroup = "WG1", StaffId = "S01", Time = 8, Cost = 200 }
+                new() { Project = "AH0033", WorkGroup = "WG1", StaffId = "S01", Time = 8, Cost = 200, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(timeCostCalcsViews: views);
 

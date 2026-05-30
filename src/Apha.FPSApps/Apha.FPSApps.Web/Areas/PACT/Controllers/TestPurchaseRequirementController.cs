@@ -40,11 +40,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> Index(string? parentProject)
         {
             var defaultRequest = new PaginationFilter<string>();
-            var grid = await BuildTestPurchaseRequiremntGridAsync(defaultRequest, parentProject ?? string.Empty);            
+            var grid = await BuildTestPurchaseRequiremntGridAsync(defaultRequest, parentProject ?? string.Empty);
 
+            var origin = TempData.Peek("PactOrigin") as string;
             var viewModel = new TestPurchaseRequirementViewModel
             {
                 ParentProject = parentProject ?? string.Empty,
+                NavigationOrigin = origin ?? "Project",
                 TestPurchaseReqGrid = grid,
             };
 

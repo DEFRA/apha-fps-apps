@@ -1,10 +1,9 @@
-﻿.editable-grid-container {
+.editable-grid-container {
     display: flex;
     flex-direction: column;
     /*height: 100vh; */
     position: relative;
     min-height: 350px;
-    border: 1px solid var(--govuk-border-colour) !important; 
 }
 
 .filter-row th {
@@ -25,12 +24,12 @@
     border-bottom: 1px solid #999;
 }
 
-    .grid-header h2 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: bold;
-        color: #000;
-    }
+.grid-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: #000;
+}
 
 .grid-toolbar button {
     margin-left: 5px;
@@ -50,7 +49,7 @@
 }
 
 .grid-scroll-container {
-  /*  flex: 1;
+    /*  flex: 1;
     overflow: auto;
     background-color: #fff;*/
     max-height: 400px;
@@ -64,22 +63,22 @@
     font-size: 12px;
 }
 
-    .editable-grid-table thead {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background-color: #c0c0c0;
-    }
+.editable-grid-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #c0c0c0;
+}
 
-    .editable-grid-table th {
-        border: 1px solid var(--govuk-border-colour);
-        border-top: 0;
-        padding: 6px 8px;
-        text-align: center;
-        font-weight: bold !important;
-        white-space: nowrap;
-        position: relative;
-    }
+.editable-grid-table th {
+    border: 1px solid var(--govuk-border-colour);
+    border-top: 0;
+    padding: 6px 8px;
+    text-align: center;
+    font-weight: bold !important;
+    white-space: nowrap;
+    position: relative;
+}
 
 .row-number-header {
     background-color: #a0a0a0 !important;
@@ -98,6 +97,15 @@
     padding: 2px 4px;
     background-color: #fff;
     height: 24px;
+}
+
+/* Override custom-table styles that remove borders */
+.editable-grid-container .editable-grid-table td:first-child {
+    border-right: 1px solid var(--govuk-border-colour) !important;
+}
+
+.editable-grid-container .editable-grid-table td:last-child {
+    border-right: 1px solid var(--govuk-border-colour) !important;
 }
 
 .editable-grid-table tbody tr:hover {
@@ -146,10 +154,10 @@
     box-sizing: border-box;
 }
 
-    .grid-input:focus {
-        outline: 2px solid #4a90e2;
-        background-color: #fff;
-    }
+.grid-input:focus {
+    outline: 2px solid #4a90e2;
+    background-color: #fff;
+}
 
 .grid-dropdown {
     height: 22px;
@@ -167,19 +175,24 @@
 
 .grid-readonly {
     display: block;
-    padding: 2px 4px;
-   /* color: #666;*/
+    padding: 2px 4px; 
 }
 
-.grid-footer {
-   /* background-color: #e0e0e0;
-    border-top: 1px solid #999;*/
-    padding: 6px 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
+.grid-data-right-align {
+    display: block;
+    padding: 2px 4px;
+    text-align:right;
 }
+
+    .grid-footer {
+        /* background-color: #e0e0e0;
+    border-top: 1px solid #999;*/
+        padding: 6px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+    }
 
 .record-navigation {
     display: flex;
@@ -218,9 +231,9 @@
     font-size: 12px;
 }
 
-    .btn-link:hover {
-        color: #004499;
-    }
+.btn-link:hover {
+    color: #004499;
+}
 
 .search-box {
     color: #666;
@@ -235,7 +248,8 @@
     height: 100%;
     cursor: col-resize;
     z-index: 100;
-    background: transparent; /* subtle background for visibility */
+    background: transparent;
+    /* subtle background for visibility */
     pointer-events: auto;
 }
 
@@ -246,16 +260,70 @@
 /*End CSS class for the resize handle */
 
 /*new and updated classes for grid */
-.editable-grid-table > tbody > tr > td:last-child > button {
+.editable-grid-table>tbody>tr>td:last-child>button {
     padding: 0;
-    text-align: center; 
+    text-align: center;
 }
 
-.editable-grid-table > tbody > tr > td:last-child {
+.editable-grid-table>tbody>tr>td:last-child {
     text-align: center;
 }
 
 /*bootstrap giving bydefault border to table to avoid this below class added */
-.grid-scroll-container > table > tbody > tr > td, .grid-scroll-container > table > thead > tr > th {
+.grid-scroll-container>table>tbody>tr>td, .grid-scroll-container>table>thead>tr>th {
     border-left: 0;
 }
+
+
+.sup_flex_space_between {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* grid footer*/
+.sup_pagination_footer {
+    display: flex;
+    margin-top: 0;
+    border-top: 0;
+    /* border: 1px solid var(--govuk-border-colour) !important; */
+    padding: 0 0px;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0;
+    width: 100%;
+}
+
+.sup_pagination_wrapper {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    border-top: 1px solid var(--govuk-border-colour);
+}
+
+/* Sortable header styles */
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.sortable-header:hover {
+    background-color: #f3f2f1;
+}
+
+.sort-icon {
+    margin-left: 4px;
+    font-size: 10px;
+    color: #1d70b8;
+}
+
+.sorted-asc,
+.sorted-desc {
+    background-color: #f3f2f1;
+}
+

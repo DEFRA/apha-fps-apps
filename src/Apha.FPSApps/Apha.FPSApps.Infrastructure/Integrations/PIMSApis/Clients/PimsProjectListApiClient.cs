@@ -24,8 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
         public async Task<ApiResponseDto<List<ProjectListViewDto>>> GetAllProjectsAsync(QueryParameters<string> query, int filterOption = 2)
         {
-            try
-            {
+            
                 string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetAllProjects, query);
                 url += $"&showWhichProjects={filterOption}";
                 var response = await _http.GetAsync<List<ProjectListRes>>(url);
@@ -35,19 +34,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
                 var dto = _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(response);
                 return ApiResponseDto<List<ProjectListViewDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<ProjectListViewDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve project list", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+           
         }
 
         public async Task<ApiResponseDto<List<ProjectListViewDto>>> GetAllProjectsListAsync()
         {
-            try
-            {
+           
                 var response = await _http.GetAsync<List<ProjectListRes>>(PimsApiEndpoints.GetAllProjectsList);
 
                 if (response.Success && response.Data != null)
@@ -55,13 +47,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
 
                 var dto = _mapper.Map<ApiResponseDto<List<ProjectListViewDto>>>(response);
                 return ApiResponseDto<List<ProjectListViewDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<ProjectListViewDto>>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to retrieve all projects list", Code = InternalCodeError }],
-                    new ApiMetaDto());
-            }
+            
         }
 
         public async Task<ApiResponseDto<ProjectDto>> GetFpsProjectByIdAsync(string parentproject)
@@ -121,25 +107,5 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<ProposedProjectDto>> CreateProjectAsync(ProposedProjectDto dto)
-        {
-            try
-            {
-                ProposedProjectReq request = _mapper.Map<ProposedProjectReq>(dto);
-                var response = await _http.PostAsync<ProposedProjectReq, ProposedProjectRes>(PimsApiEndpoints.CreateProject, request);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<ProposedProjectDto>>(response);
-
-                var responseDto = _mapper.Map<ApiResponseDto<ProposedProjectDto>>(response);
-                return ApiResponseDto<ProposedProjectDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<ProposedProjectDto>.FailureResponse(
-                    [new ApiErrorDto { Message = "Failed to create project", Code = InternalCodeError }],
-                    new ApiMetaDto());
             }
         }
-        
-    }
-}

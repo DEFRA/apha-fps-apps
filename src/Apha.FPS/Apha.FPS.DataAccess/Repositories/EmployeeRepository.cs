@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -84,7 +84,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> DeleteEmployeeAsync(string spNumber)
         {
-            var existingWgEmployee = await _dbContext.WgEmployees
+            var existingWgEmployee = await _dbContext.WorkGroupEmployees
                       .AsNoTracking()
                       .Where(e => e.SpNumber == spNumber && e.FpsYear == _fpsYearContext.FpsYear)
                       .FirstOrDefaultAsync();
@@ -112,7 +112,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var query = (
                  from staff in _dbContext.StaffActiveView
-                 join grade in _dbContext.WorkgroupGradeGeneralView
+                 join grade in _dbContext.WorkgroupGradeGeneralViews
                      on staff.WorkgroupGrade equals grade.WgGrade
                  where
                     staff.Name != null &&
@@ -178,24 +178,16 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("SPNumber", out var spNumber) && spNumber != null)
-            {
-                queryEmployees = queryEmployees.Where(x => x.SPNumber.Contains(spNumber.ToString()!));
-            }
+                queryEmployees = queryEmployees.Where(x => EF.Functions.ILike(x.SPNumber, $"%{spNumber}%"));
 
             if (dict.TryGetValue("FirstName", out var firstName) && firstName != null)
-            {
-                queryEmployees = queryEmployees.Where(x => x.FirstName!.Contains(firstName.ToString()!));
-            }
+                queryEmployees = queryEmployees.Where(x => EF.Functions.ILike(x.FirstName!, $"%{firstName}%"));
 
             if (dict.TryGetValue("LastName", out var lastName) && lastName != null)
-            {
-                queryEmployees = queryEmployees.Where(x => x.LastName!.Contains(lastName.ToString()!));
-            }
+                queryEmployees = queryEmployees.Where(x => EF.Functions.ILike(x.LastName!, $"%{lastName}%"));
 
             if (dict.TryGetValue("Title", out var title) && title != null)
-            {
-                queryEmployees = queryEmployees.Where(x => x.Title!.Contains(title.ToString()!));
-            }
+                queryEmployees = queryEmployees.Where(x => EF.Functions.ILike(x.Title!, $"%{title}%"));
 
             return queryEmployees;
         }
@@ -227,5 +219,139 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
-    }
-}
+
+        private static IQueryable ApplyOrder<T>(IQueryable<WorkGroupStaff> query, Expression<Func<WorkGroupStaff, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        }
+
+        public async Task<IEnumerable<WorkGroupPerson>> GetAllWorkGroupPersonAsync()
+        {
+            return await _dbContext.WorkGroupStaffs
+                .AsNoTracking()
+                .Join(_dbContext.WorkgroupGrades,
+                    s => s.WorkGroupGrade,
+                    g => g.WgGrade,
+                    (s, g) => new WorkGroupPerson
+                    {
+                        Name = s.Name,
+                        WorkGroupGrade = s.WorkGroupGrade,
+                        WorkGroup = g.Workgroup
+                    })
+                .Distinct()
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+        }
+
+        public async Task<PagedData<WorkGroupStaff>> GetWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null)
+        {
+            IQueryable<WorkGroupStaff> queryStaff;
+
+            if (string.IsNullOrWhiteSpace(workGroup))
+            {
+                queryStaff = _dbContext.WorkGroupStaffs.AsNoTracking();
+            }
+            else
+            {
+                queryStaff = _dbContext.Workgroups
+                    .AsNoTracking()
+                    .Join(_dbContext.PactWorkGroupGradeViews.AsNoTracking(),
+                        wg    => wg.WorkgroupName,
+                        grade => grade.WorkGroup,
+                        (wg, grade) => new { wg, grade })
+                    .Join(_dbContext.WorkGroupStaffs.AsNoTracking(),
+                        wgGrade => wgGrade.grade.WgGrade,
+                        staff   => staff.WorkGroupGrade,
+                        (wgGrade, staff) => new { wgGrade.wg, staff })
+                    .Where(x => x.wg.WorkgroupName == workGroup)
+                    .Select(x => x.staff);
+            }
+
+            queryStaff = ApplyWorkGroupStaffFilter(queryStaff, query.Filter);
+            queryStaff = (IQueryable<WorkGroupStaff>)ApplyWorkGroupStaffSorting(queryStaff, query.SortBy, query.Descending);
+
+            var result = await queryStaff.ToListAsync();
+            result = ApplyWorkGroupStaffNumericFilter(result, query.Filter);
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        private static IQueryable<WorkGroupStaff> ApplyWorkGroupStaffFilter(IQueryable<WorkGroupStaff> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("PactId", out var pactId) && pactId != null)
+                query = query.Where(x => EF.Functions.ILike(x.PactId!.ToLower(), $"%{pactId.ToString()!.ToLower()}%"));
+
+            if (dict.TryGetValue("SpNumber", out var spNumber) && spNumber != null)
+                query = query.Where(x => EF.Functions.ILike(x.SpNumber!.ToLower(), $"%{spNumber.ToString()!.ToLower()}%"));
+
+            if (dict.TryGetValue("Name", out var name) && name != null)
+                query = query.Where(x => EF.Functions.ILike(x.Name!.ToLower(), $"%{name.ToString()!.ToLower()}%"));
+
+            if (dict.TryGetValue("WorkGroupGrade", out var wgg) && wgg != null)
+                query = query.Where(x => EF.Functions.ILike(x.WorkGroupGrade!.ToLower(), $"%{wgg.ToString()!.ToLower()}%"));
+
+            if (dict.TryGetValue("Title", out var title) && title != null)
+                query = query.Where(x => EF.Functions.ILike(x.Title!.ToLower(), $"%{title.ToString()!.ToLower()}%"));
+
+            if (dict.TryGetValue("PersonStatus", out var personStatus) && personStatus != null)
+                query = query.Where(x => EF.Functions.ILike(x.PersonStatus!.ToLower(), $"%{personStatus.ToString()!.ToLower()}%"));
+
+            return query;
+        }
+        private static List<WorkGroupStaff> ApplyWorkGroupStaffNumericFilter(List<WorkGroupStaff> list, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return list;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return list;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("HrsPaid", out var hrsPaid) && hrsPaid != null && !string.IsNullOrWhiteSpace(hrsPaid.ToString()))
+                list = list.Where(x => x.HrsPaid.HasValue && x.HrsPaid.Value.ToString("G").Contains(hrsPaid.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("Leave", out var leave) && leave != null && !string.IsNullOrWhiteSpace(leave.ToString()))
+                list = list.Where(x => x.Leave.HasValue && x.Leave.Value.ToString("G").Contains(leave.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("SickSpecial", out var sickSpecial) && sickSpecial != null && !string.IsNullOrWhiteSpace(sickSpecial.ToString()))
+                list = list.Where(x => x.SickSpecial.HasValue && x.SickSpecial.Value.ToString("G").Contains(sickSpecial.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (dict.TryGetValue("HrsAvail", out var hrsAvail) && hrsAvail != null && !string.IsNullOrWhiteSpace(hrsAvail.ToString()))
+                list = list.Where(x => x.HrsAvail.HasValue && x.HrsAvail.Value.ToString("G").Contains(hrsAvail.ToString()!, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            return list;
+        }
+
+        private static IQueryable ApplyWorkGroupStaffSorting(IQueryable<WorkGroupStaff> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+                return query.OrderBy(s => s.Name);
+
+            return sortBy.ToLower() switch
+            {
+                "pactid" => ApplyOrder(query, s => s.PactId, descending),
+                "name" => ApplyOrder(query, s => s.Name, descending),
+                "spnumber" => ApplyOrder(query, s => s.SpNumber, descending),
+                "title" => ApplyOrder(query, s => s.Title, descending),
+                "workgroupgrade" => ApplyOrder(query, s => s.WorkGroupGrade, descending),
+                "personstatus" => ApplyOrder(query, s => s.PersonStatus, descending),
+                "hrspaid" => ApplyOrder(query, s => s.HrsPaid, descending),
+                "leave" => ApplyOrder(query, s => s.Leave, descending),
+                "sickspecial" => ApplyOrder(query, s => s.SickSpecial, descending),
+                "hrsavail" => ApplyOrder(query, s => s.HrsAvail, descending),
+                _ => query.OrderBy(s => s.Name)
+            };
+        }
+
+            }
+        }

@@ -10,18 +10,18 @@ namespace Apha.Costbook.DataAccess.Data
         {
             entity.HasKey(e => new { e.AnimalType, e.FpsYear }).HasName("pk_tblanimals");
 
-            entity.ToTable("tblanimals", "fps");
+            entity.ToTable("tblanimals", DbConstants.FpsSchemaName);
 
             entity.Property(e => e.AnimalType)
-                .HasColumnType("citext")
+                .HasMaxLength(50)
                 .HasColumnName("animaltype");
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.DailyRate)
-                .HasColumnType("money")
+                .HasColumnType(DbConstants.MoneyColumnType)
                 .HasColumnName("dailyrate");
             entity.Property(e => e.DefraDailyRate)
-                .HasColumnType("money")
+                .HasColumnType(DbConstants.MoneyColumnType)
                 .HasColumnName("defradailyrate");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.PlanByWeek)
                 .HasDefaultValue(false)
                 .HasColumnName("planbyweek");
@@ -32,7 +32,6 @@ namespace Apha.Costbook.DataAccess.Data
                 .HasMaxLength(50)
                 .HasColumnName("species");
 
-            
         }
     }
 }

@@ -17,7 +17,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public double? ContractPrice { get; set; }
 
         [Required(ErrorMessage = "Please enter Start Date")]
-        public DateOnly? StartDate { get; set; }
+        public DateTime? StartDate { get; set; }
 
         public string? Disease { get; set; }
         public double? StartFYear { get; set; }
@@ -25,7 +25,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public string? ContractNumber { get; set; }
         public string? SubmittedByFName { get; set; }
         public string? SubmittedByLName { get; set; }
-        public DateOnly? DateOfSubmission { get; set; }
+        public DateTime? DateOfSubmission { get; set; }
         public string? PreparedBy { get; set; }
         public int? Inflation { get; set; }
         public int? FinancialYears { get; set; }
@@ -33,15 +33,10 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public double? Euroconvrate { get; set; }
 
         [Required(ErrorMessage = "Please choose Defra/Non-Defra")]
-        public short? IsDefraProject { get; set; }
-
-        public DateTime? EndDate { get; set; }
+        public short? IsDefraProject { get; set; }        
         public decimal? BudgetAmount { get; set; }
         public decimal? ActualCost { get; set; }
-        public string Status { get; set; } = "Active";
-        public DateTime CreatedDate { get; set; }
-        public string? CreatedBy { get; set; }
-
+       
         [BindNever] public List<SelectListItem> AvailablePrograms { get; set; } = new();
         [BindNever] public List<SelectListItem> AvailableCustomers { get; set; } = new();
         [BindNever] public List<SelectListItem> AvailableDiseases { get; set; } = new();

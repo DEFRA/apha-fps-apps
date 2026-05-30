@@ -7,33 +7,10 @@
 
 <main id="main-content">
     <div class="container-fluid">
-        <!-- Breadcrumb section -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                        <div class="col-md-6">
-                            <nav aria-label="Breadcrumb">
-                                <a class="" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; MAB &gt; Maintenance Menu &gt; Maintain Division
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Title section -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <div class="row" style="display:flex; align-items: center;">
-                    <div class="col-sm-12" style="padding:0px;">
-                        <div style="border-bottom: 2px solid #1d70b8; height:48px;">
-                            <h1 style="padding: 15px 0 5px 17px; font-size:16px; width: 50%; font-weight: 700; float:left; margin: 0;">
-                                Division Maintenance
-                            </h1>
-                        </div>
-                    </div>
-                </div>
+                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Division Maintenance</h1>
             </div>
         </div>
 
@@ -197,7 +174,7 @@
                     $('#modalPopup').addClass("show");
                 },
                 error: function () {
-                    alert('An error occurred while loading the form');
+                    showGovukAlert('An error occurred while loading the form');
                 }
             });
         }
@@ -235,9 +212,10 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
                     if (result.success) {
-                        alert(result.message);
-                        closeModal();
-                        window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
+                        showGovukAlert(result.message).then(function () {
+                            closeModal();
+                            window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
+                        });
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
                     }
@@ -246,7 +224,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        alert('An error occurred while saving');
+                        showGovukAlert('An error occurred while saving');
                     }
                 }
             });
@@ -286,9 +264,10 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
                     if (result.success) {
-                        alert(result.message);
-                        closeModal();
-                        window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
+                        showGovukAlert(result.message).then(function () {
+                            closeModal();
+                            window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
+                        });
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody')
                     }
@@ -297,7 +276,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        alert('An error occurred while saving.');
+                        showGovukAlert('An error occurred while saving.');
                     }
                 }
             });
@@ -315,7 +294,7 @@
                     $('#modalPopup').addClass("show");
                 },
                 error: function () {
-                    alert('An error occurred while editing record');
+                    showGovukAlert('An error occurred while editing record');
                 }
             });
         }

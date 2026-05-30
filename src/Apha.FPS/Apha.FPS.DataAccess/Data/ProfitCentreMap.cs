@@ -8,23 +8,26 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<ProfitCentre> entity)
         {
-            entity.HasKey(e => e.ProfitCentreId).HasName("tblkpprofitcentre_pk__tblkpprofitcentr__1db06a4f");
+            entity.HasKey(e => e.ProfitCentreId).HasName("pk__tblkpprofitcentr__1db06a4f");
 
             entity.ToTable("tblkpprofitcentre", "fps");
 
-            entity.HasIndex(e => e.Division, "dbo_tblkpprofitcentre_division");
+            entity.HasIndex(e => e.Division, "division");
 
             entity.Property(e => e.ProfitCentreId)
                 .HasMaxLength(50)
                 .HasColumnName("profitcentre");
             entity.Property(e => e.ContTarget)
+                .HasDefaultValueSql("0")
                 .HasColumnType("money")
                 .HasColumnName("conttarget");
             entity.Property(e => e.Division)
                 .HasMaxLength(10)
                 .HasDefaultValueSql("0")
                 .HasColumnName("division");
-            entity.Property(e => e.DivisionId).HasColumnName("divisionid");
+            entity.Property(e => e.DivisionId)
+                .HasDefaultValue(0)
+                .HasColumnName("divisionid");
             entity.Property(e => e.EmailRecipient)
                 .HasMaxLength(50)
                 .HasColumnName("email_recipient");

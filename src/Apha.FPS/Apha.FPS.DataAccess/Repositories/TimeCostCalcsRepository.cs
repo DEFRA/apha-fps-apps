@@ -12,10 +12,12 @@ namespace Apha.FPS.DataAccess.Repositories
     public class TimeCostCalcsRepository : BaseRepository, ITimeCostCalcsRepository
     {
         private readonly FpsDbContext _dbContext;
+        private readonly IFpsRequestContext _requestContext;
 
-        public TimeCostCalcsRepository(FpsDbContext dbContext) : base(dbContext)
+        public TimeCostCalcsRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
+            _requestContext = requestContext;
         }
 
         public async Task<PagedData<TimeCostCalcsView>> GetTimeCostCalcsByProjectAsync(
@@ -23,7 +25,9 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var baseQuery = _dbContext.TimeCostCalcsViews
                 .AsNoTracking()
-                .Where(x => x.Project == projectCode)
+                .Where(x => x.Project == projectCode 
+                            && x.UserEmail != null
+                            && x.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .Select(x => new TimeCostCalcsView
                 {
                     WorkGroup  = x.WorkGroup,
@@ -53,7 +57,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var totals = await _dbContext.TimeCostCalcsViews
                 .AsNoTracking()
-                .Where(x => x.Project == projectCode)
+                .Where(x => x.Project == projectCode
+                            && x.UserEmail != null
+                            && x.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .Select(x => new TimeCostCalcsView
                 {
                     WorkGroup = x.WorkGroup,
@@ -105,20 +111,6 @@ namespace Apha.FPS.DataAccess.Repositories
             if (string.IsNullOrEmpty(filter))
                 return query;
 
-            if (filter.TrimStart().StartsWith('{'))
-                return ApplyJsonFilter(query, filter);
-
-            // Plain-string global search across all filterable text columns (case-insensitive)
-            var search = filter.ToLower();
-            return query.Where(x =>
-                (x.WorkGroup != null && x.WorkGroup.ToLower().Contains(search)) ||
-                (x.GradeCode != null && x.GradeCode.ToLower().Contains(search)) ||
-                (x.JobCode   != null && x.JobCode.ToLower().Contains(search))   ||
-                (x.Name      != null && x.Name.ToLower().Contains(search)));
-        }
-
-        private static IQueryable<TimeCostCalcsView> ApplyJsonFilter(IQueryable<TimeCostCalcsView> query, string filter)
-        {
             dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
             if (filterModel == null)
                 return query;
@@ -126,16 +118,16 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
-                query = query.Where(x => x.WorkGroup != null && x.WorkGroup.Contains(workGroup.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.WorkGroup!, $"%{workGroup}%"));
 
             if (dict.TryGetValue("GradeCode", out var gradeCode) && gradeCode != null)
-                query = query.Where(x => x.GradeCode != null && x.GradeCode.Contains(gradeCode.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.GradeCode!, $"%{gradeCode}%"));
 
             if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-                query = query.Where(x => x.JobCode != null && x.JobCode.Contains(jobCode.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.JobCode!, $"%{jobCode}%"));
 
             if (dict.TryGetValue("Name", out var name) && name != null)
-                query = query.Where(x => x.Name != null && x.Name.Contains(name.ToString()!));
+                query = query.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
 
             return query;
         }

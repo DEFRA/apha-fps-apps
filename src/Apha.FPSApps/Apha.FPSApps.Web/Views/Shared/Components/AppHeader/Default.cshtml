@@ -1,0 +1,35 @@
+@model Apha.FPSApps.Web.Models.Components.AppHeader.AppHeaderViewModel
+
+<header>
+    <div class="header-nav">
+        <div class="app-log-wrapper">
+            <div>
+                <img src="~/images/defra_logo.png" alt="Animal &amp; Plant Health Agency logo" width="80" />
+            </div>
+            <div class="app-log">
+                <span>@Model.AppName</span>
+            </div>
+            @if (Model.ShowYearSelector)
+            {
+                <div>
+                    @await Component.InvokeAsync("YearSelector")
+                </div>
+            }
+        </div>
+        <div>
+            <button class="userdropdownbtn" id="userdropdownbtn" allow-edit="true">
+                @Model.DisplayName &nbsp; <img src="~/images/circle-user-regular-full.svg" alt="user icon" width="24" />
+            </button>
+            <div class="userdropdown" id="userdropdowndp">
+                <ul>
+                    <li>
+                        <a href="/" style="display: flex; align-items: center;" type="button">
+                            <img src="~/images/house-user-solid-full.svg" alt="dropdown home icon" width="22" />
+                            Home
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>

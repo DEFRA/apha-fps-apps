@@ -20,6 +20,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             IEnumerable<ProjectView>? projectViews = null,
             IEnumerable<JobCode>? jobCodes = null,
             IEnumerable<PactProjectView>? pactProjectViews = null,
+            IEnumerable<SurvFFSubmission>? survFFSubmissions = null,
+            IEnumerable<ProjectLog>? projectLogs = null,
+            IEnumerable<TestRequirement>? testRequirements = null,
+            IEnumerable<MonthlyOutput>? monthlyOutputs = null,
+            IEnumerable<MonthlyTime>? monthlyTimes = null,
+            IEnumerable<ProjectInvoice>? projectInvoices = null,
+            IEnumerable<ProjectSubContract>? projectSubContracts = null,
             string userEmailId = "test@example.com", // always lowercase - matches middleware ToLowerInvariant()
             int fpsYear = 2024)
         {
@@ -50,6 +57,48 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 var pactProjectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(pactProjectViews);
                 mockContext.Setup(x => x.PactProjectViews).Returns(pactProjectViewsMockSet.Object);
+            }
+
+            if (survFFSubmissions != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(survFFSubmissions);
+                mockContext.Setup(x => x.SurvFFSubmissions).Returns(mockSet.Object);
+            }
+
+            if (projectLogs != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(projectLogs);
+                mockContext.Setup(x => x.ProjectLogs).Returns(mockSet.Object);
+            }
+
+            if (testRequirements != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(testRequirements);
+                mockContext.Setup(x => x.TestRequirements).Returns(mockSet.Object);
+            }
+
+            if (monthlyOutputs != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(monthlyOutputs);
+                mockContext.Setup(x => x.MonthlyOutputs).Returns(mockSet.Object);
+            }
+
+            if (monthlyTimes != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(monthlyTimes);
+                mockContext.Setup(x => x.MonthlyTimes).Returns(mockSet.Object);
+            }
+
+            if (projectInvoices != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(projectInvoices);
+                mockContext.Setup(x => x.ProjectInvoices).Returns(mockSet.Object);
+            }
+
+            if (projectSubContracts != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(projectSubContracts);
+                mockContext.Setup(x => x.ProjectSubContracts).Returns(mockSet.Object);
             }
 
             return new ProjectRepository(mockContext.Object, mockRequestContext.Object);
@@ -746,6 +795,387 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
             // Assert
             Assert.True(result);
+        }
+
+        #endregion
+
+        #region GetAllPactProjectsAsync Tests
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_ReturnsAllPactProjects()
+        {
+            var pactViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "PACT Alpha" },
+                new() { ParentProject = "PP002", ProjectTitle = "PACT Beta" }
+            };
+            var repo = CreateRepository(pactProjectViews: pactViews);
+
+            var result = await repo.GetAllPactProjectsAsync();
+
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count());
+        }
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_ReturnsEmpty_WhenNoPactProjects()
+        {
+            var repo = CreateRepository(pactProjectViews: new List<PactProjectView>());
+
+            var result = await repo.GetAllPactProjectsAsync();
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllPactProjectsAsync_OrdersByParentProject()
+        {
+            var pactViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "CC003", ProjectTitle = "Gamma" },
+                new() { ParentProject = "AA001", ProjectTitle = "Alpha" },
+                new() { ParentProject = "BB002", ProjectTitle = "Beta" }
+            };
+            var repo = CreateRepository(pactProjectViews: pactViews);
+
+            var result = (await repo.GetAllPactProjectsAsync()).ToList();
+
+            Assert.Equal("AA001", result[0].ParentProject);
+            Assert.Equal("BB002", result[1].ParentProject);
+            Assert.Equal("CC003", result[2].ParentProject);
+        }
+
+        #endregion
+
+        #region CheckProjectExistsAsync Tests
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_ReturnsTrue_WhenProjectExists()
+        {
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Test", Program = "P1", Customer = "C1", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" }
+            };
+            var repo = CreateRepository(projects: projects);
+
+            var result = await repo.CheckProjectExistsAsync("PP001");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_ReturnsFalse_WhenProjectDoesNotExist()
+        {
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Test", Program = "P1", Customer = "C1", ProjectStatus = "Active", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" }
+            };
+            var repo = CreateRepository(projects: projects);
+
+            var result = await repo.CheckProjectExistsAsync("NOPE");
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsAsync_ReturnsFalse_WhenProjectsEmpty()
+        {
+            var repo = CreateRepository(projects: new List<Project>());
+
+            var result = await repo.CheckProjectExistsAsync("PP001");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region CheckProjectExistsInFarmFileAsync Tests
+
+        [Fact]
+        public async Task CheckProjectExistsInFarmFileAsync_ReturnsTrue_WhenSubmissionExists()
+        {
+            var submissions = new List<SurvFFSubmission>
+            {
+                new() { SdPactWg = "WG1", Contract = "PP001" }
+            };
+            var repo = CreateRepository(survFFSubmissions: submissions);
+
+            var result = await repo.CheckProjectExistsInFarmFileAsync("PP001");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsInFarmFileAsync_ReturnsFalse_WhenNoSubmission()
+        {
+            var submissions = new List<SurvFFSubmission>
+            {
+                new() { SdPactWg = "WG1", Contract = "PP002" }
+            };
+            var repo = CreateRepository(survFFSubmissions: submissions);
+
+            var result = await repo.CheckProjectExistsInFarmFileAsync("PP001");
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task CheckProjectExistsInFarmFileAsync_ReturnsFalse_WhenEmpty()
+        {
+            var repo = CreateRepository(survFFSubmissions: new List<SurvFFSubmission>());
+
+            var result = await repo.CheckProjectExistsInFarmFileAsync("PP001");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region HasPlannedTestsAsync Tests
+
+        [Fact]
+        public async Task HasPlannedTestsAsync_ReturnsTrue_WhenTestRequirementsExist()
+        {
+            var testReqs = new List<TestRequirement>
+            {
+                new() { ProjectBuyerCode = "PP001", TestCode = "T1", Buyer = "B1", FpsYear = 2024 }
+            };
+            var repo = CreateRepository(testRequirements: testReqs);
+
+            var result = await repo.HasPlannedTestsAsync("PP001");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task HasPlannedTestsAsync_ReturnsFalse_WhenNoTestRequirements()
+        {
+            var repo = CreateRepository(testRequirements: new List<TestRequirement>());
+
+            var result = await repo.HasPlannedTestsAsync("PP001");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region HasMonthlyOutputAsync Tests
+
+        [Fact]
+        public async Task HasMonthlyOutputAsync_ReturnsTrue_WhenOutputsExist()
+        {
+            var outputs = new List<MonthlyOutput>
+            {
+                new() { Buyer = "PP001" }
+            };
+            var repo = CreateRepository(monthlyOutputs: outputs);
+
+            var result = await repo.HasMonthlyOutputAsync("PP001");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task HasMonthlyOutputAsync_ReturnsFalse_WhenNoOutputs()
+        {
+            var repo = CreateRepository(monthlyOutputs: new List<MonthlyOutput>());
+
+            var result = await repo.HasMonthlyOutputAsync("PP001");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region HasMonthlyTimeAsync Tests
+
+        [Fact]
+        public async Task HasMonthlyTimeAsync_ReturnsTrue_WhenTimesExist()
+        {
+            var times = new List<MonthlyTime>
+            {
+                new() { ParentProject = "PP001" }
+            };
+            var repo = CreateRepository(monthlyTimes: times);
+
+            var result = await repo.HasMonthlyTimeAsync("PP001");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task HasMonthlyTimeAsync_ReturnsFalse_WhenNoTimes()
+        {
+            var repo = CreateRepository(monthlyTimes: new List<MonthlyTime>());
+
+            var result = await repo.HasMonthlyTimeAsync("PP001");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region HasProjectInvoicesAsync Tests
+
+        [Fact]
+        public async Task HasProjectInvoicesAsync_ReturnsTrue_WhenInvoicesExist()
+        {
+            var invoices = new List<ProjectInvoice>
+            {
+                new() { ProjectParent = "PP001" }
+            };
+            var repo = CreateRepository(projectInvoices: invoices);
+
+            var result = await repo.HasProjectInvoicesAsync("PP001");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task HasProjectInvoicesAsync_ReturnsFalse_WhenNoInvoices()
+        {
+            var repo = CreateRepository(projectInvoices: new List<ProjectInvoice>());
+
+            var result = await repo.HasProjectInvoicesAsync("PP001");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region HasProjectSubcontractsAsync Tests
+
+        [Fact]
+        public async Task HasProjectSubcontractsAsync_ReturnsTrue_WhenSubcontractsExist()
+        {
+            var subcontracts = new List<ProjectSubContract>
+            {
+                new() { Project = "PP001" }
+            };
+            var repo = CreateRepository(projectSubContracts: subcontracts);
+
+            var result = await repo.HasProjectSubcontractsAsync("PP001");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task HasProjectSubcontractsAsync_ReturnsFalse_WhenNoSubcontracts()
+        {
+            var repo = CreateRepository(projectSubContracts: new List<ProjectSubContract>());
+
+            var result = await repo.HasProjectSubcontractsAsync("PP001");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region GetPagedProjectsAsync Tests
+
+        [Fact]
+        public async Task GetPagedProjectsAsync_ReturnsPagedResults()
+        {
+            var projects = Enumerable.Range(1, 15)
+                .Select(i => new Project
+                {
+                    ParentProject = $"PP{i:D3}", ProjectTitle = $"Project {i}",
+                    Program = "P001", Customer = "C1", ProjectStatus = "Active",
+                    Disease = "D1", Contract = "C1", IncomeAccountCode = "I1"
+                }).ToList();
+            var repo = CreateRepository(projects: projects);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectsAsync(query);
+
+            Assert.Equal(15, result.PaginationData.TotalRecords);
+            Assert.Equal(10, result.Data.Count());
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsAsync_ReturnsEmpty_WhenNoProjects()
+        {
+            var repo = CreateRepository(projects: new List<Project>());
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectsAsync(query);
+
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsAsync_SortsByParentProjectAscending_ByDefault()
+        {
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "CC003", ProjectTitle = "Gamma", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
+                new() { ParentProject = "AA001", ProjectTitle = "Alpha", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
+                new() { ParentProject = "BB002", ProjectTitle = "Beta",  Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
+            };
+            var repo = CreateRepository(projects: projects);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectsAsync(query);
+
+            var items = result.Data.ToList();
+            Assert.Equal("AA001", items[0].ParentProject);
+            Assert.Equal("BB002", items[1].ParentProject);
+            Assert.Equal("CC003", items[2].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsAsync_SortsByProjectTitleDescending()
+        {
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
+                new() { ParentProject = "PP002", ProjectTitle = "Gamma", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
+                new() { ParentProject = "PP003", ProjectTitle = "Beta",  Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
+            };
+            var repo = CreateRepository(projects: projects);
+            var query = new PaginationParameters<string>(sortBy: "projecttitle", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectsAsync(query);
+
+            var items = result.Data.ToList();
+            Assert.Equal("Gamma", items[0].ProjectTitle);
+            Assert.Equal("Beta", items[1].ProjectTitle);
+            Assert.Equal("Alpha", items[2].ProjectTitle);
+        }
+
+        #endregion
+
+        #region GetPagedPactProjectsAsync Tests
+
+        [Fact]
+        public async Task GetPagedPactProjectsAsync_ReturnsPagedResults()
+        {
+            var pactViews = Enumerable.Range(1, 5)
+                .Select(i => new PactProjectView { ParentProject = $"PP{i:D3}", ProjectTitle = $"PACT {i}" })
+                .ToList();
+            var repo = CreateRepository(pactProjectViews: pactViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 3);
+
+            var result = await repo.GetPagedPactProjectsAsync(query);
+
+            Assert.Equal(5, result.PaginationData.TotalRecords);
+            Assert.Equal(3, result.Data.Count());
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsAsync_ReturnsEmpty_WhenNoPactProjects()
+        {
+            var repo = CreateRepository(pactProjectViews: new List<PactProjectView>());
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedPactProjectsAsync(query);
+
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         #endregion

@@ -39,7 +39,14 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IAgencyService, AgencyService>();
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
-            services.AddScoped<IWorkgroupGradeService, WorkgroupGradeService>();
+            services.AddScoped<IAccountCodeService, AccountCodeService>();
+            services.AddScoped<ISubAccountService, SubAccountService>();
+            services.AddScoped<IProfitCentreService, ProfitCentreService>();
+            services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
+            services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
+            services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
+            services.AddScoped<IDivisionGradeService, DivisionGradeService>();
+            services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -63,7 +70,15 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IAgencyRepository, AgencyRepository>();
             services.AddScoped<IAdditionalCostRepository, AdditionalCostRepository>();
             services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
-            services.AddScoped<IWorkgroupGradeRepository, WorkgroupGradeRepository>();
+            services.AddScoped<IAccountCodeRepository, AccountCodeRepository>();
+            services.AddScoped<ISubAccountRepository, SubAccountRepository>();
+            services.AddScoped<IStoredProcRepository, StoredProcRepository>();
+            services.AddScoped<IProfitCentreRepository, ProfitCentreRepository>();
+            services.AddScoped<IProfitCentreGradeRepository, ProfitCentreGradeRepository>();
+            services.AddScoped<IWorkGroupGradeRepository, WorkGroupGradeRepository>();
+            services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
+            services.AddScoped<IDivisionGradeRepository, DivisionGradeRepository>();
+            services.AddScoped<IProjectStaffPlanRepository, ProjectStaffPlanRepository>();
             return services;
 
         }
