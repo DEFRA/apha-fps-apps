@@ -37,6 +37,8 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<CalenderMonth> CalenderMonths { get; set; }
         public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
         public virtual DbSet<WorkGroupStaffView> WorkGroupStaffViews { get; set; }
+        public virtual DbSet<RecreateSummariesLog> RecreateSummariesLogs { get; set; }
+        public virtual DbSet<TblUser> TblUsers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -102,6 +104,12 @@ namespace Apha.PACT.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new WorkGroupStaffViewMap());
             modelBuilder.Entity<WorkGroupStaffView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TblUserMap());
+
+            modelBuilder.ApplyConfiguration(new RecreateSummariesLogMap());
+            modelBuilder.Entity<RecreateSummariesLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
         }
     }
 }
