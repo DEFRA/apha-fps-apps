@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
-    public class AnimalMasterViewModel
+    public class AnimalMaintenanceViewModel
     {
         [Required(ErrorMessage = "Animal type is required")]
         [StringLength(50, ErrorMessage = "Animal type cannot exceed 50 characters")]
@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "Plan Full Weeks")]
         public bool PlanByWeek { get; set; }
 
-        public AnimalMasterViewModel()
+        public AnimalMaintenanceViewModel()
         {
             AnimalType = string.Empty;
         }

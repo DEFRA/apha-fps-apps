@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<StaffJobItemViewModel, StaffJobViewDto>().ReverseMap();
             CreateMap<PaginationModel, PaginationDto>().ReverseMap();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
-            CreateMap<AnimalMasterViewModel, AnimalDto>().ReverseMap();
+            CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();

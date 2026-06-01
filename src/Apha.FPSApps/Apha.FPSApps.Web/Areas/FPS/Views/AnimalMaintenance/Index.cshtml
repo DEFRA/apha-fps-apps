@@ -1,13 +1,13 @@
 @using Apha.FPSApps.Web.Areas.FPS.Models
 @using Apha.FPSApps.Web.Models.Components.DataGrid
-@model DataGridConfig<AnimalMasterViewModel>
+@model DataGridConfig<AnimalMaintenanceViewModel>
 
 <main id="main-content">
     <div class="container-fluid">
         <!-- Title section -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Animal Master</h1>
+                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Animal Maintenance</h1>
             </div>
         </div>
 
@@ -45,7 +45,7 @@
     <script>
         function addAnimalMaster(btn) {
             $.ajax({
-                url: '/FPS/AnimalMaster/Create',
+        url: '/FPS/AnimalMaintenance/Create',
                 type: 'GET',
                 success: function (html) {
                     $('#modaPopupBody').html(html);
@@ -76,7 +76,7 @@
             };
 
             $.ajax({
-                url: '@Url.Action("Create", "AnimalMaster", new { area = "FPS" })',
+            url: '@Url.Action("Create", "AnimalMaintenance", new { area = "FPS" })',
                 type: 'POST',
                 data: JSON.stringify(data),
                 contentType: 'application/json; charset=utf-8',
@@ -119,7 +119,7 @@
             };
 
             $.ajax({
-                url: '@Url.Action("Edit", "AnimalMaster", new { area = "FPS" })',
+            url: '@Url.Action("Edit", "AnimalMaintenance", new { area = "FPS" })',
                 type: 'POST',
                 data: JSON.stringify(data),
                 contentType: 'application/json; charset=utf-8',
@@ -145,7 +145,7 @@
         function editAnimalMaster(btn) {
             var animalType = $(btn).data('id');
             $.ajax({
-                url: '/FPS/AnimalMaster/Edit',
+            url: '/FPS/AnimalMaintenance/Edit',
                 type: 'GET',
                 data: { animalType: animalType },
                 success: function (html) {
@@ -163,7 +163,7 @@
             showGovukConfirm('Are you sure you want to delete this record?').then(function (result) {
                 if (!result) return;
                 $.ajax({
-                    url: '/FPS/AnimalMaster/Delete',
+                url: '/FPS/AnimalMaintenance/Delete',
                     type: 'DELETE',
                     data: { animalType: animalType },
                     success: function (response) {

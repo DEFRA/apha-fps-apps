@@ -15,17 +15,17 @@ using Xunit;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
 {
-    public class AnimalMasterControllerTests
+    public class AnimalMaintenanceControllerTests
     {
         private readonly IMapper _mapper;
         private readonly IAnimalMasterService _animalMasterService;
-        private readonly AnimalMasterController _controller;
+        private readonly AnimalMaintenanceController _controller;
 
-        public AnimalMasterControllerTests()
+        public AnimalMaintenanceControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
             _animalMasterService = Substitute.For<IAnimalMasterService>();
-            _controller = new AnimalMasterController(_mapper, _animalMasterService);
+            _controller = new AnimalMaintenanceController(_mapper, _animalMasterService);
         }
 
         private static T? GetJsonResultValue<T>(JsonResult jsonResult)
@@ -37,7 +37,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
         private static AnimalDto BuildDto(string animalType = "CATTLE") =>
             new() { AnimalType = animalType, Species = "Bovine", SecurityLevel = "L1", DailyRate = 50m };
 
-        private static AnimalMasterViewModel BuildViewModel(string animalType = "CATTLE") =>
+        private static AnimalMaintenanceViewModel BuildViewModel(string animalType = "CATTLE") =>
             new() { AnimalType = animalType, Species = "Bovine", SecurityLevel = "L1", DailyRate = 50m };
 
         private static ApiResponseDto<List<AnimalDto>> BuildPagedResponse(
@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
             _animalMasterService
                 .GetAllAnimalsAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(response);
-            _mapper.Map<List<AnimalMasterViewModel>>(Arg.Any<List<AnimalDto>>())
+            _mapper.Map<List<AnimalMaintenanceViewModel>>(Arg.Any<List<AnimalDto>>())
                 .Returns(dtoList.Select(d => BuildViewModel(d.AnimalType)).ToList());
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
         [Fact]
         public void Controller_HasAuthorizeAttribute_WithExpectedRoles()
         {
-            var attrs = typeof(AnimalMasterController)
+            var attrs = typeof(AnimalMaintenanceController)
                 .GetCustomAttributes(typeof(AuthorizeAttribute), true);
             Assert.NotEmpty(attrs);
             var auth = (AuthorizeAttribute)attrs[0];
@@ -77,7 +77,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
         [Fact]
         public void Index_HasNoAdditionalAuthRestriction_AllAuthorizedUsersCanAccess()
         {
-            var method = typeof(AnimalMasterController).GetMethod(nameof(AnimalMasterController.Index));
+            var method = typeof(AnimalMaintenanceController).GetMethod(nameof(AnimalMaintenanceController.Index));
             Assert.NotNull(method);
             var additionalAuthorize = method!.GetCustomAttributes(typeof(AuthorizeAttribute), true);
             Assert.Empty(additionalAuthorize);
@@ -86,7 +86,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
         [Fact]
         public void Create_Post_HasHttpPostAttribute()
         {
-            var methods = typeof(AnimalMasterController).GetMethods()
+            var methods = typeof(AnimalMaintenanceController).GetMethods()
                 .Where(m => m.Name == "Create" && m.GetParameters().Length > 0);
             Assert.NotEmpty(methods);
             var postMethod = methods.FirstOrDefault(m =>
@@ -97,7 +97,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
         [Fact]
         public void Edit_Post_HasHttpPostAttribute()
         {
-            var methods = typeof(AnimalMasterController).GetMethods()
+            var methods = typeof(AnimalMaintenanceController).GetMethods()
                 .Where(m => m.Name == "Edit" && m.GetParameters().Length > 0);
             var postMethod = methods.FirstOrDefault(m =>
                 m.GetCustomAttributes(typeof(HttpPostAttribute), true).Length > 0);
@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
         [Fact]
         public void Delete_HasHttpDeleteAttribute()
         {
-            var method = typeof(AnimalMasterController).GetMethod(nameof(AnimalMasterController.Delete));
+            var method = typeof(AnimalMaintenanceController).GetMethod(nameof(AnimalMaintenanceController.Delete));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpDeleteAttribute), true);
             Assert.NotEmpty(attr);
@@ -121,14 +121,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new AnimalMasterController(null!, _animalMasterService));
+                new AnimalMaintenanceController(null!, _animalMasterService));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenServiceIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new AnimalMasterController(_mapper, null!));
+                new AnimalMaintenanceController(_mapper, null!));
         }
 
         #endregion
@@ -143,7 +143,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
             var result = await _controller.Index();
 
             var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.IsType<DataGridConfig<AnimalMasterViewModel>>(viewResult.Model);
+            Assert.IsType<DataGridConfig<AnimalMaintenanceViewModel>>(viewResult.Model);
         }
 
         [Fact]
@@ -154,7 +154,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
             var result = await _controller.Index();
 
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<DataGridConfig<AnimalMasterViewModel>>(viewResult.Model);
+            var model = Assert.IsType<DataGridConfig<AnimalMaintenanceViewModel>>(viewResult.Model);
             Assert.Equal("animalMasterGrid", model.GridId);
         }
 
@@ -166,8 +166,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
             var result = await _controller.Index();
 
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<DataGridConfig<AnimalMasterViewModel>>(viewResult.Model);
-            Assert.Equal("/FPS/AnimalMaster/LoadAnimalMasterGrid", model.BindGridUrl);
+            var model = Assert.IsType<DataGridConfig<AnimalMaintenanceViewModel>>(viewResult.Model);
+            Assert.Equal("/FPS/AnimalMaintenance/LoadAnimalMasterGrid", model.BindGridUrl);
         }
 
         #endregion
@@ -184,7 +184,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
 
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partialViewResult.ViewName);
-            Assert.IsType<DataGridConfig<AnimalMasterViewModel>>(partialViewResult.Model);
+            Assert.IsType<DataGridConfig<AnimalMaintenanceViewModel>>(partialViewResult.Model);
         }
 
         [Fact]
@@ -210,7 +210,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
             var result = await _controller.LoadAnimalMasterGrid(new PaginationFilter<string>());
 
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            var gridConfig = Assert.IsType<DataGridConfig<AnimalMasterViewModel>>(partialViewResult.Model);
+            var gridConfig = Assert.IsType<DataGridConfig<AnimalMaintenanceViewModel>>(partialViewResult.Model);
             Assert.Empty(gridConfig.Data);
         }
 
@@ -241,8 +241,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
             var result = _controller.Create();
 
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddEditAnimalMaster", partialViewResult.ViewName);
-            var model = Assert.IsType<AnimalMasterViewModel>(partialViewResult.Model);
+            Assert.Equal("_AddEditAnimalMaintenance", partialViewResult.ViewName);
+            var model = Assert.IsType<AnimalMaintenanceViewModel>(partialViewResult.Model);
             Assert.Equal(string.Empty, model.AnimalType);
         }
 
@@ -314,13 +314,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
             var response = ApiResponseDto<AnimalDto?>.SuccessResponse(dto);
 
             _animalMasterService.GetAnimalByIdAsync("CATTLE").Returns(response);
-            _mapper.Map<AnimalMasterViewModel>(dto).Returns(viewModel);
+            _mapper.Map<AnimalMaintenanceViewModel>(dto).Returns(viewModel);
 
             var result = await _controller.Edit("CATTLE");
 
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddEditAnimalMaster", partialViewResult.ViewName);
-            Assert.IsType<AnimalMasterViewModel>(partialViewResult.Model);
+            Assert.Equal("_AddEditAnimalMaintenance", partialViewResult.ViewName);
+            Assert.IsType<AnimalMaintenanceViewModel>(partialViewResult.Model);
         }
 
         [Fact]
@@ -467,7 +467,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
         [Fact]
         public void Controller_AuthorizeRoles_IncludesFPSAdmin_ForWriteAccess()
         {
-            var attr = typeof(AnimalMasterController)
+            var attr = typeof(AnimalMaintenanceController)
                 .GetCustomAttributes(typeof(AuthorizeAttribute), true)
                 .Cast<AuthorizeAttribute>()
                 .First();

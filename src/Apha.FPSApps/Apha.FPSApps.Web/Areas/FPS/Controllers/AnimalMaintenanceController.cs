@@ -15,12 +15,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
-    public class AnimalMasterController : Controller
+    public class AnimalMaintenanceController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IAnimalMasterService _animalMasterService;
 
-        public AnimalMasterController(IMapper mapper, IAnimalMasterService animalMasterService)
+        public AnimalMaintenanceController(IMapper mapper, IAnimalMasterService animalMasterService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _animalMasterService = animalMasterService ?? throw new ArgumentNullException(nameof(animalMasterService));
@@ -57,13 +57,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // GET: Create
         public IActionResult Create()
         {
-            var model = new AnimalMasterViewModel { AnimalType = string.Empty };
-            return PartialView("_AddEditAnimalMaster", model);
+            var model = new AnimalMaintenanceViewModel { AnimalType = string.Empty };
+            return PartialView("_AddEditAnimalMaintenance", model);
         }
 
         // POST: Create
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] AnimalMasterViewModel model)
+        public async Task<IActionResult> Create([FromBody] AnimalMaintenanceViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -104,13 +104,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var response = await _animalMasterService.GetAnimalByIdAsync(animalType);
             if (!response.Success || response.Data == null)
                 return NotFound();
-            var model = _mapper.Map<AnimalMasterViewModel>(response.Data);
-            return PartialView("_AddEditAnimalMaster", model);
+            var model = _mapper.Map<AnimalMaintenanceViewModel>(response.Data);
+            return PartialView("_AddEditAnimalMaintenance", model);
         }
 
         // POST: Edit
         [HttpPost]
-        public async Task<IActionResult> Edit([FromBody] AnimalMasterViewModel model)
+        public async Task<IActionResult> Edit([FromBody] AnimalMaintenanceViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -165,20 +165,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
-        private async Task<DataGridConfig<AnimalMasterViewModel>> GetAnimalMasterGridConfigAsync(
+        private async Task<DataGridConfig<AnimalMaintenanceViewModel>> GetAnimalMasterGridConfigAsync(
             QueryParameters<string>? query = null,
             Dictionary<string, string>? filterDict = null)
         {
             var response = await _animalMasterService.GetAllAnimalsAsync(query ?? new QueryParameters<string>());
-            var items = new List<AnimalMasterViewModel>();
+            var items = new List<AnimalMaintenanceViewModel>();
             if (response.Data != null)
-                items = _mapper.Map<List<AnimalMasterViewModel>>(response.Data.ToList());
+                items = _mapper.Map<List<AnimalMaintenanceViewModel>>(response.Data.ToList());
 
             var paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
             paginationModel.SortColumn = query?.SortBy;
             paginationModel.SortDirection = query?.Descending ?? false;
 
-            return new DataGridConfig<AnimalMasterViewModel>
+            return new DataGridConfig<AnimalMaintenanceViewModel>
             {
                 GridId = "animalMasterGrid",
                 Title = "Animals",
@@ -188,9 +188,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AddFunction = "addAnimalMaster",
                 EditFunction = "editAnimalMaster",
                 DeleteFunction = "deleteAnimalMaster",
-                BindGridUrl = "/FPS/AnimalMaster/LoadAnimalMasterGrid",
+                BindGridUrl = "/FPS/AnimalMaintenance/LoadAnimalMasterGrid",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<AnimalMasterViewModel>(null),
+                Columns = GridDataProvider.GetColumnsDefination<AnimalMaintenanceViewModel>(null),
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
             };
