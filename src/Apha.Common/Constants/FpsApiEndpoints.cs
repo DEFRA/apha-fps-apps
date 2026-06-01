@@ -38,6 +38,14 @@ namespace Apha.Common.Constants
         public const string UpdateDivision = "api/v1/division/{0}";
         public const string DeleteDivision = "api/v1/division/{0}";
 
+        // Division Grade
+        public const string GetPagedDivisionGrades = "api/v1/DivisionGrade/paged";
+        public const string GetDivisionGradeById = "api/v1/DivisionGrade/{0}";
+        public const string CreateDivisionGrade = "api/v1/DivisionGrade";
+        public const string UpdateDivisionGrade = "api/v1/DivisionGrade/{0}";
+        public const string DeleteDivisionGrade = "api/v1/DivisionGrade/{0}";
+        public const string GetAllDivisionGrades = "api/v1/DivisionGrade/grades";
+
         // Program
         public const string GetAllPrograms = "api/v1/program";
         public const string GetPagedPrograms = "api/v1/program/paged";
@@ -79,6 +87,9 @@ namespace Apha.Common.Constants
         // Setting
         public const string GetHoursPerDay = "api/v1/setting/hoursperday";
 
+        // Project Staff Plan
+        public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
+
         // Staff Job
         public const string GetAllStaffJobs = "api/v1/staffjob?jobCode={0}";
         public const string GetStaffWorkgroupLookup = "api/v1/staffjob/workgrouplookup";
@@ -109,10 +120,14 @@ namespace Apha.Common.Constants
         public const string GetMonthlyOutputTotalsByProject = "api/v1/MonthlyOutput/totals?projectCode={0}";
         public const string DeleteMonthlyOutput = "api/v1/MonthlyOutput";
 
-        // Resource Set-Up — Profit Centres
-        public const string GetProfitCentres = "api/v1/profitcentres";        
-        public const string GetAllProfitCentres = "api/v1/profitcentres/all";
+        // Resource Set-Up – Profit Centres
+        public const string GetProfitCentres = "api/v1/profitcentres";
+        public const string GetPagedProfitCentres = "api/v1/profitcentres/paged";
         public const string GetProfitCentreById = "api/v1/profitcentres/{0}";
+        public const string CreateProfitCentre = "api/v1/profitcentres";
+        public const string UpdateProfitCentre = "api/v1/profitcentres/{0}";
+        public const string DeleteProfitCentre = "api/v1/profitcentres/{0}";                    
+        public const string GetAllProfitCentres = "api/v1/profitcentres/all";        
         public const string PatchProfitCentreSettings = "api/v1/profitcentres/settings";
 
         // Resource Set-Up — PC Grades
@@ -127,5 +142,8 @@ namespace Apha.Common.Constants
         public const string UpdateWgEmployee = "api/v1/wgstaff";
         public const string DeleteWgEmployee = "api/v1/wgstaff/{0}";
         public const string DeleteWgGrade = "api/v1/wggrades/{0}";
+
+        // Project profitability (merged into project route)
+        public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
     }
 }

@@ -37,9 +37,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedWorkGroupTimeCodes, query);
             if (!string.IsNullOrWhiteSpace(workGroup))
-                url = QueryHelpers.AddQueryString(url, "workGroup", workGroup);
+                url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
             if (monthNumber.HasValue)
-                url = QueryHelpers.AddQueryString(url, "monthNumber", monthNumber.Value.ToString());
+                url += $"&monthNumber={monthNumber.Value}";
 
             var response = await _http.GetAsync<List<WorkGroupTimeCodeRes>>(url);
             if (response.Success)
@@ -54,7 +54,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedWorkGroupValidTimeCodes, query);
             if (!string.IsNullOrWhiteSpace(workGroup))
-                url = QueryHelpers.AddQueryString(url, "workGroup", workGroup);
+                url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
 
             var response = await _http.GetAsync<List<WorkGroupValidTimeCodeRes>>(url);
             if (response.Success)
@@ -62,6 +62,20 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
             var dto = _mapper.Map<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>>(response);
             return ApiResponseDto<List<WorkGroupValidTimeCodeDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<WgSummarisedStaffTimeUsageDto>> GetWgSummarisedStaffTimeUsageAsync(
+            QueryParameters<string> query, string workGroup)
+        {
+            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetWgSummarisedStaffTimeUsage, query);
+            url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
+
+            var response = await _http.GetAsync<WgSummarisedStaffTimeUsageRes>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<WgSummarisedStaffTimeUsageDto>>(response);
+
+            var failureResponse = _mapper.Map<ApiResponseDto<WgSummarisedStaffTimeUsageDto>>(response);
+            return ApiResponseDto<WgSummarisedStaffTimeUsageDto>.FailureResponse(failureResponse.Errors, failureResponse.Meta);
         }
 
         public async Task<ApiResponseDto<List<WorkGroupDto>>> GetWorkGroupsByProfitCentreAsync(

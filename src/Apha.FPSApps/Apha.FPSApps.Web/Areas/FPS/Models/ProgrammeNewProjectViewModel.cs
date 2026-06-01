@@ -48,8 +48,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string? OracleProjectCode { get; set; }
 
         // Dropdown lists
-        public string SelectedProgramNo { get; set; } = string.Empty;
-        public List<SelectListItem> ProgrammeList { get; set; } = new();
         public List<SelectListItem> CustomerList { get; set; } = new();
         public List<SelectListItem> ProgramList { get; set; } = new();
         public List<SelectListItem> ManagerList { get; set; } = new();

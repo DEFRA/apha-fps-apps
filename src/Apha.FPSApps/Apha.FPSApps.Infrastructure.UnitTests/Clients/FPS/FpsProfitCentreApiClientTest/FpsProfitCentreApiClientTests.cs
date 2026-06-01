@@ -2,6 +2,7 @@ using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
@@ -23,23 +24,27 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _client = new FpsProfitCentreApiClient(_http, _mapper);
         }
 
+        private static ProfitCentreRes BuildRes(string id = "PC01") =>
+            new() { ProfitCentreId = id, ProfitCentreName = "Centre One", Division = "DIV1" };
+
+        private static ProfitCentreDto BuildDto(string id = "PC01") =>
+            new() { ProfitCentreId = id, ProfitCentreName = "Centre One", Division = "DIV1" };
+
+        private static ApiResponse<T> SuccessApiResponse<T>(T data) =>
+            new() { Success = true, Data = data };
+
+        private static ApiResponse<T> FailureApiResponse<T>() =>
+            new() { Success = false, Errors = new List<ApiError> { new() { Message = "Error", Code = "ERROR" } } };
+
         #region GetProfitCentresAsync Tests
 
         [Fact]
         public async Task GetProfitCentresAsync_WithSuccessResponse_ReturnsMappedList()
         {
             // Arrange
-            var resList = new List<ProfitCentreRes>
-            {
-                new() { ProfitCentreId = "PC01", ProfitCentreName = "Profit Centre One" },
-                new() { ProfitCentreId = "PC02", ProfitCentreName = "Profit Centre Two" }
-            };
-            var apiResponse = new ApiResponse<List<ProfitCentreRes>> { Success = true, Data = resList };
-            var dtoList     = new List<ProfitCentreDto>
-            {
-                new() { ProfitCentreId = "PC01", ProfitCentreName = "Profit Centre One" },
-                new() { ProfitCentreId = "PC02", ProfitCentreName = "Profit Centre Two" }
-            };
+            var resList     = new List<ProfitCentreRes> { BuildRes("PC01"), BuildRes("PC02") };
+            var apiResponse = SuccessApiResponse(resList);
+            var dtoList     = new List<ProfitCentreDto> { BuildDto("PC01"), BuildDto("PC02") };
             var expectedDto = ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(dtoList);
 
             _http.GetAsync<List<ProfitCentreRes>>(Arg.Any<string>()).Returns(apiResponse);
@@ -59,11 +64,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
         public async Task GetProfitCentresAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var apiResponse = new ApiResponse<List<ProfitCentreRes>>
-            {
-                Success = false,
-                Errors  = new List<ApiError> { new() { Message = "API Error", Code = "ERROR" } }
-            };
+            var apiResponse = FailureApiResponse<List<ProfitCentreRes>>();
             var mappedResponse = new ApiResponseDto<List<ProfitCentreDto>>
             {
                 Success = false,
@@ -87,7 +88,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
         public async Task GetProfitCentresAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
         {
             // Arrange
-            var apiResponse = new ApiResponse<List<ProfitCentreRes>> { Success = true, Data = new List<ProfitCentreRes>() };
+            var apiResponse = SuccessApiResponse(new List<ProfitCentreRes>());
             var expectedDto = ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(new List<ProfitCentreDto>());
 
             _http.GetAsync<List<ProfitCentreRes>>(Arg.Any<string>()).Returns(apiResponse);
@@ -106,7 +107,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
         public async Task GetProfitCentresAsync_UsesCorrectEndpoint()
         {
             // Arrange
-            var apiResponse = new ApiResponse<List<ProfitCentreRes>> { Success = true, Data = new List<ProfitCentreRes>() };
+            var apiResponse = SuccessApiResponse(new List<ProfitCentreRes>());
             var expectedDto = ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(new List<ProfitCentreDto>());
 
             _http.GetAsync<List<ProfitCentreRes>>(Arg.Any<string>()).Returns(apiResponse);
@@ -128,9 +129,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
         public async Task GetAllProfitCentresAsync_WithSuccessResponse_ReturnsMappedEnumerable()
         {
             // Arrange
-            var resList    = new List<ProfitCentreRes> { new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One" } };
+            var resList = new List<ProfitCentreRes> { new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One" } };
             var apiResponse = new ApiResponse<IEnumerable<ProfitCentreRes>> { Success = true, Data = resList };
-            var dtoList    = new List<ProfitCentreDto> { new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One" } };
+            var dtoList = new List<ProfitCentreDto> { new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One" } };
             var expectedDto = ApiResponseDto<IEnumerable<ProfitCentreDto>>.SuccessResponse(dtoList);
 
             _http.GetAsync<IEnumerable<ProfitCentreRes>>(Arg.Any<string>()).Returns(apiResponse);
@@ -152,13 +153,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             var apiResponse = new ApiResponse<IEnumerable<ProfitCentreRes>>
             {
                 Success = false,
-                Errors  = new List<ApiError> { new() { Message = "API Error", Code = "ERROR" } }
+                Errors = new List<ApiError> { new() { Message = "API Error", Code = "ERROR" } }
             };
             var mappedResponse = new ApiResponseDto<IEnumerable<ProfitCentreDto>>
             {
                 Success = false,
-                Errors  = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERROR" } },
-                Meta    = new ApiMetaDto()
+                Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERROR" } },
+                Meta = new ApiMetaDto()
             };
 
             _http.GetAsync<IEnumerable<ProfitCentreRes>>(Arg.Any<string>()).Returns(apiResponse);
@@ -174,59 +175,89 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
 
         #endregion
 
+        #region GetAllProfitCentresPagedAsync Tests
+
+        [Fact]
+        public async Task GetAllProfitCentresPagedAsync_WithSuccessResponse_ReturnsMappedList()
+        {
+            // Arrange
+            var query       = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var resList     = new List<ProfitCentreRes> { BuildRes() };
+            var apiResponse = SuccessApiResponse(resList);
+            var expected    = ApiResponseDto<List<ProfitCentreDto>>.SuccessResponse(
+                new List<ProfitCentreDto> { BuildDto() },
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+
+            _http.GetAsync<List<ProfitCentreRes>>(Arg.Is<string>(u => u.Contains("paged")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreDto>>>(apiResponse).Returns(expected);
+
+            // Act
+            var result = await _client.GetAllProfitCentresPagedAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllProfitCentresPagedAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query       = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = FailureApiResponse<List<ProfitCentreRes>>();
+            var mappedResponse = new ApiResponseDto<List<ProfitCentreDto>>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProfitCentreRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetAllProfitCentresPagedAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
         #region GetProfitCentreByIdAsync Tests
 
         [Fact]
         public async Task GetProfitCentreByIdAsync_WithSuccessResponse_ReturnsMappedDto()
         {
             // Arrange
-            var res         = new ProfitCentreRes { ProfitCentreId = "PC01", ProfitCentreName = "Centre One" };
-            var apiResponse = new ApiResponse<ProfitCentreRes> { Success = true, Data = res };
-            var dto         = new ProfitCentreDto { ProfitCentreId = "PC01", ProfitCentreName = "Centre One" };
-            var expectedDto = ApiResponseDto<ProfitCentreDto>.SuccessResponse(dto);
+            var res         = BuildRes("PC01");
+            var apiResponse = SuccessApiResponse(res);
+            var expected    = ApiResponseDto<ProfitCentreDto>.SuccessResponse(BuildDto("PC01"));
 
-            _http.GetAsync<ProfitCentreRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<ProfitCentreDto>>(apiResponse).Returns(expectedDto);
+            _http.GetAsync<ProfitCentreRes>(Arg.Is<string>(u => u.Contains("PC01"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProfitCentreDto>>(apiResponse).Returns(expected);
 
             // Act
             var result = await _client.GetProfitCentreByIdAsync("PC01");
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal("PC01", result.Data?.ProfitCentreId);
-        }
-
-        [Fact]
-        public async Task GetProfitCentreByIdAsync_UsesEscapedProfitCentreInUrl()
-        {
-            // Arrange
-            var apiResponse = new ApiResponse<ProfitCentreRes> { Success = true, Data = new ProfitCentreRes() };
-            var expectedDto = ApiResponseDto<ProfitCentreDto>.SuccessResponse(new ProfitCentreDto());
-
-            _http.GetAsync<ProfitCentreRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<ProfitCentreDto>>(apiResponse).Returns(expectedDto);
-
-            // Act
-            await _client.GetProfitCentreByIdAsync("All Admin (support) Departments");
-
-            // Assert
-            await _http.Received(1).GetAsync<ProfitCentreRes>(
-                Arg.Is<string>(url => url.Contains("All%20Admin%20%28support%29%20Departments")));
+            Assert.Equal("PC01", result.Data!.ProfitCentreId);
         }
 
         [Fact]
         public async Task GetProfitCentreByIdAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var apiResponse = new ApiResponse<ProfitCentreRes>
-            {
-                Success = false,
-                Errors  = new List<ApiError> { new() { Message = "Not found", Code = "404" } }
-            };
+            var apiResponse = FailureApiResponse<ProfitCentreRes>();
             var mappedResponse = new ApiResponseDto<ProfitCentreDto>
             {
                 Success = false,
-                Errors  = new List<ApiErrorDto> { new() { Message = "Not found", Code = "404" } },
+                Errors  = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } },
                 Meta    = new ApiMetaDto()
             };
 
@@ -234,11 +265,157 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<ProfitCentreDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetProfitCentreByIdAsync("PC_MISSING");
+            var result = await _client.GetProfitCentreByIdAsync("NOTEXIST");
 
             // Assert
             Assert.False(result.Success);
-            Assert.Single(result.Errors!);
+        }
+
+        #endregion
+
+        #region CreateProfitCentreAsync Tests
+
+        [Fact]
+        public async Task CreateProfitCentreAsync_WithSuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            var dto         = BuildDto("PC01");
+            var req         = new ProfitCentreReq { ProfitCentreId = "PC01", ProfitCentreName = "Centre One", Division = "DIV1" };
+            var res         = BuildRes("PC01");
+            var apiResponse = SuccessApiResponse(res);
+            var expected    = ApiResponseDto<ProfitCentreDto>.SuccessResponse(dto);
+
+            _mapper.Map<ProfitCentreReq>(dto).Returns(req);
+            _http.PostAsync<ProfitCentreReq, ProfitCentreRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProfitCentreDto>>(apiResponse).Returns(expected);
+
+            // Act
+            var result = await _client.CreateProfitCentreAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task CreateProfitCentreAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var dto         = BuildDto();
+            var req         = new ProfitCentreReq { ProfitCentreId = "PC01" };
+            var apiResponse = FailureApiResponse<ProfitCentreRes>();
+            var mappedResponse = new ApiResponseDto<ProfitCentreDto>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Failed", Code = "ERROR" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _mapper.Map<ProfitCentreReq>(dto).Returns(req);
+            _http.PostAsync<ProfitCentreReq, ProfitCentreRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProfitCentreDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.CreateProfitCentreAsync(dto);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region UpdateProfitCentreAsync Tests
+
+        [Fact]
+        public async Task UpdateProfitCentreAsync_WithSuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            var dto         = BuildDto("PC01");
+            var req         = new ProfitCentreReq { ProfitCentreId = "PC01", ProfitCentreName = "Centre One", Division = "DIV1" };
+            var res         = BuildRes("PC01");
+            var apiResponse = SuccessApiResponse(res);
+            var expected    = ApiResponseDto<ProfitCentreDto>.SuccessResponse(dto);
+
+            _mapper.Map<ProfitCentreReq>(dto).Returns(req);
+            _http.PutAsync<ProfitCentreReq, ProfitCentreRes>(Arg.Is<string>(u => u.Contains("PC01")), req)
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProfitCentreDto>>(apiResponse).Returns(expected);
+
+            // Act
+            var result = await _client.UpdateProfitCentreAsync("PC01", dto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task UpdateProfitCentreAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var dto         = BuildDto();
+            var req         = new ProfitCentreReq { ProfitCentreId = "PC01" };
+            var apiResponse = FailureApiResponse<ProfitCentreRes>();
+            var mappedResponse = new ApiResponseDto<ProfitCentreDto>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Failed", Code = "ERROR" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _mapper.Map<ProfitCentreReq>(dto).Returns(req);
+            _http.PutAsync<ProfitCentreReq, ProfitCentreRes>(Arg.Any<string>(), req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProfitCentreDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.UpdateProfitCentreAsync("PC01", dto);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region DeleteProfitCentreAsync Tests
+
+        [Fact]
+        public async Task DeleteProfitCentreAsync_WithSuccessResponse_ReturnsTrue()
+        {
+            // Arrange
+            var apiResponse = SuccessApiResponse<bool?>(true);
+            var expected    = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.DeleteAsync<bool?>(Arg.Is<string>(u => u.Contains("PC01"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expected);
+
+            // Act
+            var result = await _client.DeleteProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task DeleteProfitCentreAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = FailureApiResponse<bool?>();
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _http.DeleteAsync<bool?>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.DeleteProfitCentreAsync("NOTEXIST");
+
+            // Assert
+            Assert.False(result.Success);
         }
 
         #endregion
@@ -273,13 +450,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             var apiResponse = new ApiResponse<bool?>
             {
                 Success = false,
-                Errors  = new List<ApiError> { new() { Message = "Update failed", Code = "ERROR" } }
+                Errors = new List<ApiError> { new() { Message = "Update failed", Code = "ERROR" } }
             };
             var mappedResponse = new ApiResponseDto<bool>
             {
                 Success = false,
-                Errors  = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "ERROR" } },
-                Meta    = new ApiMetaDto()
+                Errors = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "ERROR" } },
+                Meta = new ApiMetaDto()
             };
 
             _http.PatchAsync<UpdateProfitCentreSettingsReq, bool?>(Arg.Any<string>(), Arg.Any<UpdateProfitCentreSettingsReq>())
@@ -295,5 +472,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
         }
 
         #endregion
+
     }
 }

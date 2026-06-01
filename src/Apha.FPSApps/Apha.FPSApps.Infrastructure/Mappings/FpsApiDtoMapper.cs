@@ -1,6 +1,5 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
-using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -23,7 +22,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<StaffWorkgroupLookupDto, StaffWorkgroupLookupRes>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobReq>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();
-            CreateMap<ProgramDto,ProgramReq>().ReverseMap();
+            CreateMap<ProgramDto, ProgramReq>().ReverseMap();
             CreateMap<ProgramDto, ProgramRes>().ReverseMap();
             CreateMap<ManagerDto, ManagerRes>().ReverseMap();
             CreateMap<EmployeeDto, EmployeeReq>().ReverseMap();
@@ -40,7 +39,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ContractDto, ContractRes>().ReverseMap();
             CreateMap<ProjectGroupDto, ProjectGroupRes>().ReverseMap();
 
-           
+
 
             // FPS Animal Plan
             CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
@@ -63,6 +62,11 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionDto, DivisionRes>().ReverseMap();
             CreateMap<DivisionDto, DivisionReq>().ReverseMap();
 
+            // Division Grade
+            CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
+            CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
+
+           
             // Agency
             CreateMap<AgencyDto, AgencyRes>().ReverseMap();
 
@@ -84,10 +88,17 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Resource Set-Up
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
+            CreateMap<ProfitCentreDto, ProfitCentreReq>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
+
+            // ProjectProfitability
+            CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
+
+            // Staff Plan view
+            CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
         }
     }
 }

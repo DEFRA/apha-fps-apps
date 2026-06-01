@@ -1,5 +1,6 @@
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
+using Apha.Costbook.Core.Pagination;
 using Apha.Costbook.DataAccess.Data;
 using Apha.Costbook.DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -7,17 +8,16 @@ using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
-public class AdditionalCostRepository : IAdditionalCostRepository
+public class AdditionalCostRepository : RepositoryBase<AdditionalCost>, IAdditionalCostRepository
 {
-    private readonly CostbookDbContext _context;
+    public AdditionalCostRepository(CostbookDbContext context) : base(context) { }
 
-    public AdditionalCostRepository(CostbookDbContext context) => _context = context;
-
-    public async Task<IEnumerable<AdditionalCostDetailView>> GetAdditionalCostsByProjectYearAsync(string project, int year)
+    public async Task<PagedData<AdditionalCostDetailView>> GetAdditionalCostsByProjectYearAsync(
+        string project, int year, PaginationParameters<string> query)
     {
         var decodedProject = HttpUtility.UrlDecode(project);
 
-        return await _context.AdditionalCosts
+        var baseQuery = _context.AdditionalCosts
             .AsNoTracking()
             .Where(ac => ac.Project == decodedProject && ac.Year == year)
             .GroupJoin(
@@ -40,9 +40,12 @@ public class AdditionalCostRepository : IAdditionalCostRepository
                     Programme    = p != null ? p.Programme : null,
                     EuroConvRate = p != null ? p.Euroconvrate : null
                 })
-            .Distinct()
-            .OrderBy(ac => ac.Description)
-            .ToListAsync();
+            .Distinct();
+
+        baseQuery = ApplySorting(baseQuery, query.SortBy, query.Descending);
+
+        var result = await baseQuery.ToListAsync();
+        return ApplyPaging(result, query.Page, query.PageSize);
     }
 
     public async Task<AdditionalCost> AddAdditionalCostAsync(AdditionalCost additionalCost)
@@ -88,5 +91,35 @@ public class AdditionalCostRepository : IAdditionalCostRepository
                 .Select(x => new AccountCategoryLookup(x.AccShortName, x.UseInflation));
 
         return results;
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private static IQueryable<AdditionalCostDetailView> ApplySorting(
+        IQueryable<AdditionalCostDetailView> query, string? sortBy, bool descending)
+    {
+        if (string.IsNullOrEmpty(sortBy))
+            return query.OrderBy(ac => ac.Description);
+
+        return sortBy.ToLower() switch
+        {
+            "acidentity"  => ApplyOrder(query, ac => ac.AcIdentity, descending),
+            "project"     => ApplyOrder(query, ac => ac.Project, descending),
+            "year"        => ApplyOrder(query, ac => ac.Year, descending),
+            "description" => ApplyOrder(query, ac => ac.Description, descending),
+            "itemcost"    => ApplyOrder(query, ac => ac.ItemCost, descending),
+            "costentered" => ApplyOrder(query, ac => ac.CostEntered, descending),
+            "accountcat"  => ApplyOrder(query, ac => ac.AccountCat, descending),
+            "freq"        => ApplyOrder(query, ac => ac.Freq, descending),
+            _             => query.OrderBy(ac => ac.Description)
+        };
+    }
+
+    private static IQueryable<AdditionalCostDetailView> ApplyOrder<TKey>(
+        IQueryable<AdditionalCostDetailView> query,
+        System.Linq.Expressions.Expression<Func<AdditionalCostDetailView, TKey>> keySelector,
+        bool descending)
+    {
+        return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
     }
 }

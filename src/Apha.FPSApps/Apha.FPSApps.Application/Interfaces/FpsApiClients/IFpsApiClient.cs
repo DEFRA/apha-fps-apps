@@ -19,5 +19,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsProfitCentreGradeApiClient FpsProfitCentreGrade { get; }
         IFpsWorkGroupGradeApiClient FpsWorkGroupGrade { get; }
         IFpsWorkGroupEmployeeApiClient FpsWorkGroupEmployee { get; }
+        IFpsDivisionGradeApiClient FpsMaintDG { get; }
+        IFpsProjectStaffPlanApiClient FpsProjectStaffPlan { get; }
     }
 }

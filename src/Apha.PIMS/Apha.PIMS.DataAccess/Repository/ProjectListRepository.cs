@@ -127,20 +127,6 @@ namespace Apha.PIMS.DataAccess.Repository
             return ApplyPaging(result, queryFilter.Page, queryFilter.PageSize);
         }
 
-        public async Task<Project?> GetFpsProjectByIdAsync(string parentproject)
-        {
-            return await _context.Projects
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Parentproject == parentproject);
-        }
-
-        public async Task<ProposedProject?> GetProposedProjectByIdAsync(string parentproject)
-        {
-            return await _context.ProposedProjects
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Parentproject == parentproject);
-        }
-
         public async Task<List<Projects>> GetYearlyDetailsByProjectAsync(string parentproject)
         {
             return await _context.MyTlkpProjects
@@ -148,13 +134,6 @@ namespace Apha.PIMS.DataAccess.Repository
                 .Where(p => p.Parentproject == parentproject)
                 .OrderByDescending(p => p.Year)
                 .ToListAsync();
-        }
-
-        public async Task<ProposedProject> AddProjectAsync(ProposedProject entity)
-        {
-            _context.ProposedProjects.Add(entity);
-            await _context.SaveChangesAsync();
-            return entity;
         }
 
         private static IQueryable<ProjectListView> ApplyFilter(IQueryable<ProjectListView> query, string? filter)

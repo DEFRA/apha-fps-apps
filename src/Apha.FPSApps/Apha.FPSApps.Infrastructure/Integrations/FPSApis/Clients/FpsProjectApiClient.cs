@@ -259,6 +259,21 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var dto = _mapper.Map<ApiResponseDto<List<SubAccountDto>>>(response);
             return ApiResponseDto<List<SubAccountDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(
+            QueryParameters<string> query, string programNo, string workTypeFilter)
+        {
+            var baseUrl = string.Format(FpsApiEndpoints.GetProjectProfitability, Uri.EscapeDataString(programNo));
+            var url = QueryStringHelper.AddQueryString(baseUrl, query);
+            url += (url.Contains('?') ? "&" : "?") + $"workTypeFilter={Uri.EscapeDataString(workTypeFilter)}";
+
+            var response = await _http.GetAsync<List<ProjectProfitabilityRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectProfitabilityDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectProfitabilityDto>>>(response);
+            return ApiResponseDto<List<ProjectProfitabilityDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }
 

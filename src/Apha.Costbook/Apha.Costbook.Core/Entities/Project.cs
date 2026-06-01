@@ -19,9 +19,10 @@ namespace Apha.Costbook.Core.Entities
         public string? Programme { get; set; }
 
         public string? ProjectWorkgroup { get; set; }
+
         public double? ContractPrice { get; set; }
 
-        public DateOnly? StartDate { get; set; }
+        public DateTime? StartDate { get; set; }
 
         public string? Disease { get; set; }
 
@@ -34,7 +35,7 @@ namespace Apha.Costbook.Core.Entities
 
         public string? SubmittedByLName { get; set; }
 
-        public DateOnly? DateOfSubmission { get; set; }
+        public DateTime? DateOfSubmission { get; set; }
 
         public string? PreparedBy { get; set; }
 
@@ -45,7 +46,6 @@ namespace Apha.Costbook.Core.Entities
         public string? Notes { get; set; }
 
         public double? Euroconvrate { get; set; }
-
         public short? IsDefraProject { get; set; }
     }
 }

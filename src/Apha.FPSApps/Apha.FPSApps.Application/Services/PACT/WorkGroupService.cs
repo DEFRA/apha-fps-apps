@@ -55,6 +55,13 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactApiClient.PactWorkGroup.UpdateWorkGroupEmailAsync(workGroupName, sendEmail, emailRecipient);
         }
 
+        public async Task<ApiResponseDto<WgSummarisedStaffTimeUsageDto>> GetWgSummarisedStaffTimeUsageAsync(
+            QueryParameters<string> query, string workGroup)
+        {
+            ValidateWorkGroup(workGroup);
+            return await _pactApiClient.PactWorkGroup.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
+        }
+
         private static void ValidateWorkGroup(string workGroup)
         {
             var errors = new List<BusinessValidationError>();

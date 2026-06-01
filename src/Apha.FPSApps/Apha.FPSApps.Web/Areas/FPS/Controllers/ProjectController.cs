@@ -155,8 +155,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
-        // POST: ProgrammeNewProject/ChangeCode
+        // POST: ProgrammeNewProject/ChangeCode — FPSAdmin only
         [HttpPost]
+        [Authorize(Roles = "FPSAdmin")]
         public async Task<IActionResult> ChangeCode(string oldCode, string newCode)
         {
             if (string.IsNullOrWhiteSpace(oldCode) || string.IsNullOrWhiteSpace(newCode))
@@ -272,16 +273,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 .Select(p => new SelectListItem($"{p.ProgramNo} | {p.ProgramName ?? string.Empty}", p.ProgramNo, p.ProgramNo == model.Program))
                 .Prepend(new SelectListItem("", ""))
                 .ToList();
-
-            model.ProgrammeList = programs
-                .Where(p => !string.IsNullOrEmpty(p.ProgramNo))
-                .Select(p => new SelectListItem
-                {
-                    Value = p.ProgramNo,
-                    Text = $"{p.ProgramNo} - {p.ProgramName ?? string.Empty}"
-                })
-                .ToList();
-            model.SelectedProgramNo = model.Program ?? string.Empty;
 
             model.IsDefraProjectList = new List<SelectListItem>
             {

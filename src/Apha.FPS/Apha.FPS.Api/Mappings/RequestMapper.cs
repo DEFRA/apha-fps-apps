@@ -46,6 +46,8 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<YearMasterRes, YearMasterDto>().ReverseMap();
             CreateMap<DivisionReq, DivisionDto>().ReverseMap();
             CreateMap<DivisionRes, DivisionDto>().ReverseMap();
+            CreateMap<DivisionGradeReq, DivisionGradeDto>().ReverseMap();
+            CreateMap<DivisionGradeRes, DivisionGradeDto>().ReverseMap();
             CreateMap<AgencyRes, AgencyDto>().ReverseMap();
 
             // ProgrammeNewProject mappings
@@ -66,10 +68,14 @@ namespace Apha.FPS.Api.Mappings
 
             // ResourceSetUp
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
+            CreateMap<ProfitCentreReq, ProfitCentreDto>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
+            CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
+
+            CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
         }
     }
 }

@@ -76,7 +76,7 @@ namespace Apha.FPS.Api.Controllers
                 throw new ArgumentException("Both old and new project codes are required.");
             var existing = await _projectService.GetProjectByIdAsync(request.OldCode);
             if (existing == null)
-                throw new ArgumentException($"Project record with code: {request.OldCode} not found", nameof(request.OldCode));
+                throw new ArgumentException($"Project record with code: {request.OldCode} not found");
             await _projectService.ChangeProjectCodeAsync(request.OldCode, request.NewCode);
             return Ok(true);
         }
@@ -132,7 +132,7 @@ namespace Apha.FPS.Api.Controllers
             var projectDto = _mapper.Map<ProjectDto>(request);
             var updated = await _projectService.UpdatePactProjectDetailsAsync(projectDto);
             if (updated == null)
-                throw new ArgumentException($"Project record with ID: {request.ParentProject} not found", nameof(request.ParentProject));
+                throw new ArgumentException($"Project record with ID: {request.ParentProject} not found");
             return Ok(_mapper.Map<ProjectRes>(updated));
         }
 
@@ -142,7 +142,7 @@ namespace Apha.FPS.Api.Controllers
             var projectDto = _mapper.Map<ProjectDto>(request);
             var updated = await _projectService.UpdatePactPortfolioDetailsAsync(projectDto);
             if (updated == null)
-                throw new ArgumentException($"Project record with ID: {request.ParentProject} not found", nameof(request.ParentProject));
+                throw new ArgumentException($"Project record with ID: {request.ParentProject} not found");
             return Ok(_mapper.Map<ProjectRes>(updated));
         }
 
@@ -161,8 +161,26 @@ namespace Apha.FPS.Api.Controllers
                 throw new ArgumentException("Parent project cannot be empty.", nameof(parentProject));
             var deleted = await _projectService.DeleteProjectAsync(parentProject);
             if (!deleted)
-                throw new ArgumentException($"Project record with ID: {parentProject} not found", nameof(parentProject));
+                throw new ArgumentException($"Project record with ID: {parentProject} not found");
             return Ok(deleted);
+        }
+
+        /// <summary>
+        /// Returns paginated project profitability rows for the given programme.
+        /// workTypeFilter: "all" (default) | "approved" | "not-approved"
+        /// </summary>
+        [HttpGet("profitability/{programNo}")]
+        public async Task<IActionResult> GetProjectProfitabilityAsync(
+            [FromQuery] PaginationReq<string> query,
+            string programNo,            
+            [FromQuery] string workTypeFilter = "all")
+        {
+            if (string.IsNullOrWhiteSpace(programNo))
+                throw new ArgumentException("programNo is required.");
+
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _projectService.GetProjectProfitabilityAsync(filter, programNo, workTypeFilter);
+            return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityRes>>(result));
         }
     }
 

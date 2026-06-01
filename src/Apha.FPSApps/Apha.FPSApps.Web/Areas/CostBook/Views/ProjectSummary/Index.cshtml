@@ -1,0 +1,256 @@
+﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectSummaryViewModel
+@{
+    ViewData["Title"] = "Project Summary";
+    var projectId = Model.ProjectHeaderDto.ProjectId;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/costbook_styles/styles.css" />
+}
+
+<div class="govuk-template__body govuk-frontend-supported project-requirement-page">
+    <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
+                Project Summary
+                <a asp-area="CostBook" asp-controller="YearlyDetails" asp-action="Index"
+                   asp-route-projectId="@projectId" class="govuk-back-link sup_align_right">Back</a>
+            </h1>
+        </div>
+    </div>
+
+    <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
+        <div class="govuk-grid-column-full">
+            <div class="row">
+                <div class="container project-layout-container">
+                    <div class="project-layout-row">
+
+                        <!-- Side navigation -->
+                        @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.CostBook.Models.YearlyDetailsViewModel
+                        {
+                            ProjectHeaderDto = Model.ProjectHeaderDto
+                        })
+
+                        <!-- Main content -->
+                        <div class="project-main-column">
+
+                            <!-- Header summary bar (read-only) -->
+                            <footer class="financial-summary project-financial-summary">
+                                <div class="summary-row project-summary-row">
+                                    <div class="summary-item d-flex">
+                                        <label class="text-AlignRight govuk-label" for="summary-code">Code:</label>
+                                        <input id="summary-code" type="text" readonly class="govuk-input"
+                                               value="@Model.ProjectHeaderDto.ProjectId">
+                                    </div>
+                                    <div class="summary-item d-flex">
+                                        <label class="text-AlignRight govuk-label" for="summary-year-type">Year Type:</label>
+                                        <select id="summary-year-type" class="govuk-select" disabled>
+                                            @if (Model.ProjectHeaderDto.FinancialYears == -1)
+                                            {
+                                                <option value="-1" selected>Financial Years</option>
+                                                <option value="0">Project Years</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="-1">Financial Years</option>
+                                                <option value="0" selected>Project Years</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="summary-item d-flex">
+                                        <label class="govuk-label text-AlignRight" for="summary-start-date">Start Date:</label>
+                                        <input id="summary-start-date" type="text" readonly class="govuk-input"
+                                               value="@Model.ProjectHeaderDto.StartDate">
+                                    </div>
+                                    <div class="summary-item d-flex ms-3">
+                                        <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                                            <div class="govuk-checkboxes__item">
+                                                <input id="summary-inflation" type="checkbox" class="govuk-checkboxes__input" disabled
+                                                       @(Model.ProjectHeaderDto.Inflation == -1 ? "checked" : null)>
+                                                <label class="govuk-label govuk-checkboxes__label" for="summary-inflation">Inflation?</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="summary-item d-flex project-summary-flag">
+                                        <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                                            <div class="govuk-checkboxes__item">
+                                                <input id="summary-defra" type="checkbox" class="govuk-checkboxes__input" disabled
+                                                       @(Model.ProjectHeaderDto.IsDefraProject == -1 ? "checked" : null)>
+                                                <label class="govuk-label govuk-checkboxes__label" for="summary-defra">Defra?</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="summary-row project-summary-row">
+                                    <div class="summary-item d-flex">
+                                        <label class="text-AlignRight govuk-label" for="summary-title">Title:</label>
+                                        <input id="summary-title" type="text" readonly class="govuk-input"
+                                               value="@Model.ProjectHeaderDto.ProjectTitle">
+                                    </div>
+                                    <div class="summary-item d-flex">
+                                        <label class="govuk-label text-AlignRight" for="summary-year">Year:</label>
+                                        <input id="summary-year" type="text" readonly class="govuk-input"
+                                               value="@Model.ProjectHeaderDto.StartFYear">
+                                    </div>
+                                    <div class="summary-item d-flex">
+                                        <label class="govuk-label text-AlignRight" for="summary-rate-used">Rate Used (£):</label>
+                                        <input id="summary-rate-used" type="text" readonly class="govuk-input"
+                                               value="@Model.ProjectHeaderDto.EuroConvRate">
+                                    </div>
+                                </div>
+                            </footer>
+
+                            <!-- Year costs shell -->
+                            <div class="project-year-costs-shell" style="margin:1px; overflow:auto;">
+
+                                <!-- Project Summary table -->
+                                <div class="form-header project-year-costs-header">
+                                    <h3 class="govuk-heading-s">Project Summary</h3>
+                                </div>
+
+                                <div class="project-summary-table-wrap">
+                                    <table class="custom-table" id="summaryTable">
+                                        <thead class="govuk-table__head">
+                                            <tr>
+                                                <th class="govuk-table__header govuk-!-font-size-16"
+                                                    data-column="0" data-type="string" aria-sort="none">
+                                                    Financial Year <span class="sort-indicator"></span>
+                                                </th>
+                                                <th class="govuk-table__header govuk-table__header--numeric govuk-!-font-size-16"
+                                                    data-column="1" data-type="currency" aria-sort="none">
+                                                    Additional Costs (£) <span class="sort-indicator"></span>
+                                                </th>
+                                                <th class="govuk-table__header govuk-table__header--numeric govuk-!-font-size-16"
+                                                    data-column="2" data-type="currency" aria-sort="none">
+                                                    Staff Costs (£) <span class="sort-indicator"></span>
+                                                </th>
+                                                <th class="govuk-table__header govuk-table__header--numeric govuk-!-font-size-16"
+                                                    data-column="3" data-type="currency" aria-sort="none">
+                                                    Test Costs (£) <span class="sort-indicator"></span>
+                                                </th>
+                                                <th class="govuk-table__header govuk-table__header--numeric govuk-!-font-size-16"
+                                                    data-column="4" data-type="currency" aria-sort="none">
+                                                    Animal Costs (£) <span class="sort-indicator"></span>
+                                                </th>
+                                                <th class="govuk-table__header govuk-table__header--numeric govuk-!-font-size-16"
+                                                    data-column="5" data-type="currency" aria-sort="none">
+                                                    Total Year Costs (£) <span class="sort-indicator"></span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="govuk-table__body" id="summaryTableBody">
+                                            @foreach (var row in Model.Rows)
+                                            {
+                                                <tr class="govuk-table__row">
+                                                    <td class="govuk-table__cell govuk-!-font-size-16">@row.FinancialYearDisplay</td>
+                                                    <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-size-16">@row.AdditionalCost.ToString("£#,##0.00")</td>
+                                                    <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-size-16">@row.StaffCost.ToString("£#,##0.00")</td>
+                                                    <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-size-16">@row.TestCost.ToString("£#,##0.00")</td>
+                                                    <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-size-16">@row.AnimalCost.ToString("£#,##0.00")</td>
+                                                    <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-size-16">@row.GrandTotal.ToString("£#,##0.00")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <div class="sup_pagination_footer sup_border">
+                                    <div class="sup_pagination_wrapper">
+                                        <div class="sup_margin_top_bottom_5_10">
+                                            <label class="pagination-label" for="recordsPerPage">Records per page</label>
+                                            <select id="recordsPerPage" class="govuk-select sup_select_pagination_width">
+                                                <option value="5" selected>5</option>
+                                                <option value="10">10</option>
+                                                <option value="15">15</option>
+                                                <option value="20">20</option>
+                                                <option value="25">25</option>
+                                                <option value="30">30</option>
+                                            </select>
+                                        </div>
+                                        <nav class="govuk-!-margin-bottom-0 govuk-pagination" aria-label="Pagination">
+                                            <ul class="govuk-pagination__list" id="pagination"></ul>
+                                        </nav>
+                                    </div>
+                                </div>
+
+                                <!-- Totals footer (below pagination) -->
+                                <div class="project-summary-table-wrap">
+                                    <table class="govuk-table fps-sr-themed-table" style="margin-bottom:0;">
+                                        <tfoot class="ps-tfoot" id="summaryTableFootBtm">
+                                            <!-- Row 1: column totals -->
+                                            <tr class="ps-tfoot__row">
+                                                <td class="ps-tfoot__label" colspan="2">
+                                                    <label for="total-additional-costs-btm">Total Additional Costs</label>
+                                                    <input id="total-additional-costs-btm" type="text" readonly
+                                                           class="govuk-input ps-tfoot__input"
+                                                           value="@Model.TotalAdditionalCosts.ToString("£#,##0.00")"
+                                                           aria-label="Total Additional Costs">
+                                                </td>
+                                                <td class="ps-tfoot__label">
+                                                    <label for="total-staff-costs-btm">Total Staff Costs</label>
+                                                    <input id="total-staff-costs-btm" type="text" readonly
+                                                           class="govuk-input ps-tfoot__input"
+                                                           value="@Model.TotalStaffCosts.ToString("£#,##0.00")"
+                                                           aria-label="Total Staff Costs">
+                                                </td>
+                                                <td class="ps-tfoot__label">
+                                                    <label for="total-test-costs-btm">Total Test Costs</label>
+                                                    <input id="total-test-costs-btm" type="text" readonly
+                                                           class="govuk-input ps-tfoot__input"
+                                                           value="@Model.TotalTestCosts.ToString("£#,##0.00")"
+                                                           aria-label="Total Test Costs">
+                                                </td>
+                                                <td class="ps-tfoot__label">
+                                                    <label for="total-animal-costs-btm">Total Animal Costs</label>
+                                                    <input id="total-animal-costs-btm" type="text" readonly
+                                                           class="govuk-input ps-tfoot__input"
+                                                           value="@Model.TotalAnimalCosts.ToString("£#,##0.00")"
+                                                           aria-label="Total Animal Costs">
+                                                </td>
+                                                <td class="ps-tfoot__label">
+                                                    <label for="total-costs-btm">Total Costs</label>
+                                                    <input id="total-costs-btm" type="text" readonly
+                                                           class="govuk-input ps-tfoot__input"
+                                                           value="@Model.TotalCosts.ToString("£#,##0.00")"
+                                                           aria-label="Total Costs">
+                                                </td>
+                                            </tr>
+                                            @if (Model.ShowInclProfit)
+                                            {
+                                                <!-- Row 2: Incl Profit — visible when Programme == "Comm" -->
+                                                <tr class="ps-tfoot__row">
+                                                    <td colspan="5" class="ps-tfoot__label ps-tfoot__label--right">
+                                                        <label for="incl-profit-btm">Incl Profit:</label>
+                                                    </td>
+                                                    <td class="ps-tfoot__value">
+                                                        <input id="incl-profit-btm" type="text" readonly
+                                                               class="govuk-input ps-tfoot__input"
+                                                               value="@Model.InclProfit.ToString("£#,##0.00")"
+                                                               aria-label="Incl Profit">
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                            </div><!-- /.project-year-costs-shell -->
+
+                        </div><!-- /.project-main-column -->
+                    </div><!-- /.project-layout-row -->
+                </div><!-- /.container -->
+            </div><!-- /.row -->
+        </div>
+    </div>
+</div>
+
+@section Scripts {    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof tuInitResize === "function") {
+                tuInitResize("summaryTable");
+            }
+        });
+    </script>
+}

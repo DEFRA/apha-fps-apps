@@ -152,12 +152,11 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
         {
             var viewModel = new ProjectCreateEditViewModel
             {
-                ProjectId = string.Empty, 
-                ProjectTitle = string.Empty, 
+                ProjectId = string.Empty,
+                ProjectTitle = string.Empty,
                 ContractNumber = string.Empty,
                 StartDate = null,
-                Status = "Active",
-                CreatedDate = DateTime.Now
+                Inflation = -1
             };
 
             await PopulateDropdownsAsync(viewModel);
@@ -364,12 +363,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
 
         private async Task<bool> ValidateProjectBusinessRules(ProjectDto project)
         {
-            if (project.EndDate.HasValue && project.StartDate.HasValue &&
-                DateOnly.FromDateTime(project.EndDate.Value) < project.StartDate.Value)
-            {
-                ModelState.AddModelError("EndDate", "End date cannot be earlier than start date.");
-                return false;
-            }
+            
 
             if (project.BudgetAmount.HasValue && project.BudgetAmount < 0)
             {

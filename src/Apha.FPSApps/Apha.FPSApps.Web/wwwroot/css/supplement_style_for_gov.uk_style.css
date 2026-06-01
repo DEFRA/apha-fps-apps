@@ -1,6 +1,4 @@
-﻿﻿/*pupose: This file is to supply additional css classes over the default style of gov.uk NOT TO OVERRIDE, to reduce alignment issues, text overflow issues which imapact basic alignment for eg checkbox label.*/
-
-
+﻿﻿ /*pupose: This file is to supply additional css classes over the default style of gov.uk NOT TO OVERRIDE, to reduce alignment issues, text overflow issues which imapact basic alignment for eg checkbox label.*/
 /* for reference only, */
 /* :root {
     --govuk-breakpoint-mobile: 20rem;
@@ -28,7 +26,6 @@
     --govuk-surface-text-colour: #0b0c0c;
     --govuk-surface-border-colour: #8eb8dc;
 } */
-
 :root {
     --tint-25: #5694ca;
     --tint-50: #8eb8dc;
@@ -42,6 +39,8 @@
     --black-tint-95: #f3f3f3;
     --black-tint-80: #cecece;
     --black-tint-95: #f3f3f3;
+    --blue-tint-80: #d2e2f1;
+    --blue-tint-50: #8eb8dc;
 
 }
 
@@ -88,6 +87,10 @@ a {
     width: 50% !important;
 }
 
+.sup_width_15 {
+    width: 15% !important;
+}
+
 .sup_margin_0 {
     margin: 0 !important;
 }
@@ -106,6 +109,10 @@ a {
 
 .sup_margin_top_10 {
     margin-top: 10px;
+}
+
+.sup_margin_top_neg_10{
+    margin-top: -10px;
 }
 
 .sup_margin_tb_5 {
@@ -133,7 +140,7 @@ a {
 }
 
 .sup_margin_bottom_0 {
-    margin-bottom: 0px;
+    margin-bottom: 0px !important;
 }
 
 
@@ -145,8 +152,8 @@ a {
     margin-top: 25px;
 }
 
-.sup_margin_top_25 {
-    margin-top: 25px;
+.sup_margin_top_72 {
+    margin-top: 72px;
 }
 
 .sup_margin_bottom_20 {
@@ -171,6 +178,10 @@ a {
     float: right;
 }
 
+.sup_margin_right_0 {
+    margin-right: 0 !important;
+}
+
 .sup_text_align_right {
     text-align: right;
 }
@@ -182,6 +193,14 @@ a {
 
 .sup_justify_content {
     justify-content: space-between !important;
+}
+
+.sup_justify_space_evenly {
+    justify-content: space-evenly !important;
+}
+
+.sup_width_280 {
+    width: 280px;
 }
 
 .sup_border {
@@ -303,12 +322,36 @@ a {
     padding-left: 6px;
 }
 
+.sup_padding_right_7 {
+    padding-right: 7px;
+}
+
 .sup_padding_left_0 {
     padding-left: 0px !important;
 }
 
-.sup_padding_left_6 {
-    padding-left: 6px;
+.sup_padding_left_10 {
+    padding-left: 10px;
+}
+
+.sup_padding_right_22 {
+    padding-right: 22px;
+}
+
+.sup_padding_right_20 {
+    padding-right: 20px;
+}
+
+.sup_padding_left_10 {
+    padding-left: 10px;
+}
+
+.sup_padding_right_22 {
+    padding-right: 22px;
+}
+
+.sup_padding_right_20 {
+    padding-right: 20px;
 }
 
 .sup_business_area_wrapper {
@@ -354,7 +397,7 @@ a {
 }
 
 .sup_margin_bottom_20 {
-    margin-bottom: 20px;
+    margin-bottom: 20px !important;
 }
 
 .sup_decrease_font_size_s {
@@ -392,6 +435,11 @@ a {
 .sup_flex_row {
     display: flex;
     flex-direction: row;
+}
+
+.sup_flex_gap_10 {
+    display: flex;
+    gap: 10px;
 }
 
 .sup_padding_bottom_10 {
@@ -457,15 +505,8 @@ a {
     display: flex;
 }
 
-.sup_flex_end_center {
+.sup_flex_align_center {
     display: flex;
-    justify-content: flex-end;
-    align-items: center;
-}
-
-.sup_flex_end_center {
-    display: flex;
-    justify-content: flex-end;
     align-items: center;
 }
 
@@ -568,6 +609,10 @@ a {
     margin-bottom: 12px;
 }
 
+.sup_margin_bottom_15 {
+    margin-bottom: 15px;
+}
+
 .sup_search_panel {
     border: 1px solid var(--govuk-border-colour);
     margin: 0;
@@ -580,8 +625,22 @@ a {
 }
 
 
+.sup_bold_100 {
+    width: 100%;
+    font-weight: bold;
+}
+
+.sup_bold_100 {
+    width: 100%;
+    font-weight: bold;
+}
+
 .sup_gap_8 {
     gap: 8px;
+}
+
+.sup_gap_16 {
+    gap: 16px;
 }
 
 .sup_pagination_footer {
@@ -611,6 +670,14 @@ a {
 
 .sup_height_250 {
     height: 250px !important;
+}
+
+.sup_height_300 {
+    height: 300px !important;
+}
+
+.sup_max_height_100 {
+    max-height: 100% !important;
 }
 
 .sup_min_height_460 {
@@ -701,17 +768,17 @@ a {
     height: 34px;
 }
 
-.govuk-checkboxes--small .govuk-checkboxes__item:hover .govuk-checkboxes__input:focus+.govuk-checkboxes__label:before {
+.govuk-checkboxes--small .govuk-checkboxes__item:hover .govuk-checkboxes__input:focus + .govuk-checkboxes__label:before {
     box-shadow: 0 0 0 3px var(--govuk-focus-colour, #fd0), 0 0 0 6px var(--govuk-hover-colour, #cecece);
 }
 
-.govuk-checkboxes--small .govuk-checkboxes__item:hover .govuk-checkboxes__input:not(:disabled)+.govuk-checkboxes__label:before {
+.govuk-checkboxes--small .govuk-checkboxes__item:hover .govuk-checkboxes__input:not(:disabled) + .govuk-checkboxes__label:before {
     outline: 3px dashed transparent;
     outline-offset: 1px;
     box-shadow: 0 0 0 6px var(--govuk-hover-colour, #cecece);
 }
 
-.govuk-checkboxes__input:focus+.govuk-checkboxes__label:before {
+.govuk-checkboxes__input:focus + .govuk-checkboxes__label:before {
     border-width: 4px;
     outline: 3px solid transparent;
     outline-offset: 1px;
@@ -723,20 +790,20 @@ a {
     font-weight: 600;
 }
 
-.govuk-checkboxes--small .govuk-checkboxes__label:before {
-    top: 5px;
-    left: 0;
-    width: 24px;
-    height: 24px;
-}
+    .govuk-checkboxes--small .govuk-checkboxes__label:before {
+        top: 5px;
+        left: 0;
+        width: 24px;
+        height: 24px;
+    }
 
-.govuk-checkboxes--small .govuk-checkboxes__label:after {
-    top: 12px;
-    left: 6px;
-    width: 12px;
-    height: 6.5px;
-    border-width: 0 0 3px 3px;
-}
+    .govuk-checkboxes--small .govuk-checkboxes__label:after {
+        top: 12px;
+        left: 6px;
+        width: 12px;
+        height: 6.5px;
+        border-width: 0 0 3px 3px;
+    }
 
 .govuk-table__cell,
 .govuk-table__header {
@@ -760,51 +827,8 @@ a {
     min-width: 3.3em !important;
 }
 
-.govuk-table__head>tr>th {
+.govuk-table__head > tr > th {
     text-align: center !important;
-}
-
-.govuk-tabs__list {
-    display: flex;
-    padding-left: 0;
-    list-style: none;
-}
-
-.govuk-tabs__list-item {
-    border: 1px solid var(--govuk-border-colour);
-    margin-right: 5px;
-    border-bottom: 1px solid #ffffff;
-}
-
-.govuk-tabs__tab {
-    display: block;
-    text-decoration: none;
-    border: 0;
-    border-bottom: none;
-    color: #0b0c0c;
-}
-
-.govuk-tabs__list-item--selected .govuk-tabs__tab {
-    font-weight: normal;
-    background-color: var(--govuk-focus-colour, #fd0);
-}
-
-.govuk-tabs__panel {
-    border: 1px solid var(--govuk-border-colour);
-    padding: 15px;
-}
-
-.govuk-tabs__panel--hidden {
-    display: none;
-}
-
-.govuk-tabs__list-item--selected,
-.govuk-tabs__list-item {
-    padding: 5px !important;
-}
-
-.govuk-tabs__list-item:before {
-    display: none;
 }
 
 .sup_gov_yellow_bg {
@@ -843,6 +867,10 @@ a {
 
 .sup_padding_bottom_10 {
     padding-bottom: 10px;
+}
+
+.sup_padding_bottom_5 {
+    padding-bottom: 5px;
 }
 
 .sup_padding_right_10 {
@@ -889,8 +917,16 @@ a {
     padding-top: 1em !important;
 }
 
+.sup_padding_top_5 {
+    padding-top: 5px !important;
+}
+
 .sup_padding_top_0 {
     padding-top: 0 !important;
+}
+
+.sup_padding_top_10 {
+    padding-top: 10px !important;
 }
 
 .sup-pad-left-10px {
@@ -1018,6 +1054,7 @@ a {
     width: 0px !important;
 }
 
+
 .tableselectdropdown {
     position: relative;
     z-index: 930;
@@ -1052,58 +1089,58 @@ a {
     width: 100%;
 }
 
-.multicolumn-dropdown-panel .search-box-wrapper {
-    position: sticky;
-    top: 0;
-    background: #fff;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid var(--govuk-border-colour);
-}
+    .multicolumn-dropdown-panel .search-box-wrapper {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid var(--govuk-border-colour);
+    }
 
-.multicolumn-dropdown-panel .search-box {
-    width: 100%;
-    padding: 8px;
-    border: none;
-    outline: none;
-    box-sizing: border-box;
-}
+    .multicolumn-dropdown-panel .search-box {
+        width: 100%;
+        padding: 8px;
+        border: none;
+        outline: none;
+        box-sizing: border-box;
+    }
 
-.multicolumn-dropdown-panel .clear-search-btn {
-    padding: 4px 12px;
-    margin: 4px;
-    min-width: auto;
-    display: none;
-}
+    .multicolumn-dropdown-panel .clear-search-btn {
+        padding: 4px 12px;
+        margin: 4px;
+        min-width: auto;
+        display: none;
+    }
 
-.multicolumn-dropdown-panel table {
-    width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
-}
+    .multicolumn-dropdown-panel table {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
 
-.multicolumn-dropdown-panel tbody tr {
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
+    .multicolumn-dropdown-panel tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
 
-.multicolumn-dropdown-panel tbody tr:hover {
-    background-color: #f3f2f1;
-}
+        .multicolumn-dropdown-panel tbody tr:hover {
+            background-color: #f3f2f1;
+        }
 
-.multicolumn-dropdown-panel tbody td {
-    padding: 8px;
-    border-bottom: 1px solid var(--govuk-border-colour);
-}
+    .multicolumn-dropdown-panel tbody td {
+        padding: 8px;
+        border-bottom: 1px solid var(--govuk-border-colour);
+    }
 
-.multicolumn-dropdown-panel thead th {
-    padding: 8px;
-    background-color: #f3f2f1;
-    border-bottom: 2px solid var(--govuk-border-colour);
-    font-weight: bold;
-    text-align: left;
-}
+    .multicolumn-dropdown-panel thead th {
+        padding: 8px;
+        background-color: #f3f2f1;
+        border-bottom: 2px solid var(--govuk-border-colour);
+        font-weight: bold;
+        text-align: left;
+    }
 
 .tbl-dropdown-panel table {
     width: 100%;
@@ -1112,12 +1149,12 @@ a {
     font-weight: normal;
 }
 
-.tbl-dropdown-panel>table>tbody>tr>td {
+.tbl-dropdown-panel > table > tbody > tr > td {
     border-bottom: 1px solid var(--govuk-border-colour);
     padding: 5px;
 }
 
-table#tblMonthPeriod>tbody>tr>td {
+table#tblMonthPeriod > tbody > tr > td {
     padding: 6px 5px !important;
     border-bottom: 1px solid var(--govuk-border-colour);
     margin: 0;
@@ -1161,8 +1198,9 @@ table#tblMonthPeriod>tbody>tr>td {
     padding: 16px;
 }
 
-.sup_overflow_hidden {
-    overflow: hidden;
+.sup_overflow_y_400 {
+    overflow-y: auto;
+    max-height: 400px;
 }
 
 .sup_flex_row_gap_10 {
@@ -1367,16 +1405,16 @@ table#tblMonthPeriod>tbody>tr>td {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.tbl-dropdown-panel>div>table>tbody>tr>td {
-    cursor: pointer;
-}
+    .tbl-dropdown-panel > div > table > tbody > tr > td {
+        cursor: pointer;
+    }
 
 .sup_max_height_none {
     max-height: none;
 }
 
 
-.add-td-width>table>tbody>tr>td:nth-child(2) {
+.add-td-width > table > tbody > tr > td:nth-child(2) {
     min-width: 260px;
 }
 
@@ -1386,18 +1424,19 @@ table#tblMonthPeriod>tbody>tr>td {
     top: 3px;
     right: 3px;
     border: 1px solid var(--govuk-border-colour);
-    height: 28px;
+    height: 24px;
     margin: 0;
+    padding: 8px;
     text-align: center;
     display: flex;
-    width: 32px;
+    width: 28px;
     text-align: center;
     z-index: 1;
 }
 
-.clear-search-btn span {
-    line-height: 10px !important;
-}
+    .clear-search-btn span {
+        line-height: 10px !important;
+    }
 
 .multicolumn-dropdown-panel {
     position: absolute;
@@ -1414,58 +1453,58 @@ table#tblMonthPeriod>tbody>tr>td {
     width: 100%;
 }
 
-.multicolumn-dropdown-panel .search-box-wrapper {
-    position: sticky;
-    top: 0;
-    background: #fff;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid var(--govuk-border-colour);
-}
+    .multicolumn-dropdown-panel .search-box-wrapper {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid var(--govuk-border-colour);
+    }
 
-.multicolumn-dropdown-panel .search-box {
-    width: 100%;
-    padding: 8px;
-    border: none;
-    outline: none;
-    box-sizing: border-box;
-}
+    .multicolumn-dropdown-panel .search-box {
+        width: 100%;
+        padding: 8px;
+        border: none;
+        outline: none;
+        box-sizing: border-box;
+    }
 
-.multicolumn-dropdown-panel .clear-search-btn {
-    padding: 4px 12px;
-    margin: 4px;
-    min-width: auto;
-    display: none;
-}
+    .multicolumn-dropdown-panel .clear-search-btn {
+        padding: 4px 12px;
+        margin: 4px;
+        min-width: auto;
+        display: none;
+    }
 
-.multicolumn-dropdown-panel table {
-    width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
-}
+    .multicolumn-dropdown-panel table {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
 
-.multicolumn-dropdown-panel tbody tr {
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
+    .multicolumn-dropdown-panel tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
 
-.multicolumn-dropdown-panel tbody tr:hover {
-    background-color: #f3f2f1;
-}
+        .multicolumn-dropdown-panel tbody tr:hover {
+            background-color: #f3f2f1;
+        }
 
-.multicolumn-dropdown-panel tbody td {
-    padding: 8px;
-    border-bottom: 1px solid var(--govuk-border-colour);
-}
+    .multicolumn-dropdown-panel tbody td {
+        padding: 8px;
+        border-bottom: 1px solid var(--govuk-border-colour);
+    }
 
-.multicolumn-dropdown-panel thead th {
-    padding: 8px;
-    background-color: #f3f2f1;
-    border-bottom: 2px solid var(--govuk-border-colour);
-    font-weight: bold;
-    text-align: left;
-}
+    .multicolumn-dropdown-panel thead th {
+        padding: 8px;
+        background-color: #f3f2f1;
+        border-bottom: 2px solid var(--govuk-border-colour);
+        font-weight: bold;
+        text-align: left;
+    }
 
 .tbl-dropdown-panel table {
     width: 100%;
@@ -1473,12 +1512,12 @@ table#tblMonthPeriod>tbody>tr>td {
     border-spacing: 0;
 }
 
-.tbl-dropdown-panel>table>tbody>tr>td {
+.tbl-dropdown-panel > table > tbody > tr > td {
     border-bottom: 1px solid var(--govuk-border-colour);
     padding: 5px;
 }
 
-table#tblMonthPeriod>tbody>tr>td {
+table#tblMonthPeriod > tbody > tr > td {
     padding: 6px 5px !important;
     border-bottom: 1px solid var(--govuk-border-colour);
     margin: 0;
@@ -1494,11 +1533,11 @@ table#tblMonthPeriod>tbody>tr>td {
     display: block;
 }
 
-.tbl-dropdown-panel>.select-search-box {
+.tbl-dropdown-panel > .select-search-box {
     position: relative;
 }
 
-.tbl-dropdown-panel>.clear-search-btn {
+.tbl-dropdown-panel > .clear-search-btn {
     position: absolute;
 }
 
@@ -1528,7 +1567,16 @@ table#tblMonthPeriod>tbody>tr>td {
 }
 
 .sup_overflow_visible {
-    overflow: visible;
+    overflow: visible !important;
+}
+
+.sup_z-index_1 {
+    z-index: 1;
+}
+
+/* Row selection styling */
+.sup_row-selected-blue {
+    background-color: var(--blue-tint-80, #d2e2f1) !important;
 }
 
 /* ---------------------------------------------------------------
@@ -1557,6 +1605,14 @@ table#tblMonthPeriod>tbody>tr>td {
     padding: 10px;
 }
 
+/* Centred column layout for standalone form pages */
+.sup_flex_column_center {
+    padding: 8px 16px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 /* =====================================================
    Generic Form Validation — app-form / app-required /
    app-mandatory-note / app-note / app-db-error / app-error-inline
@@ -1568,6 +1624,7 @@ table#tblMonthPeriod>tbody>tr>td {
     color: #d4351c;
     font-weight: 700;
     margin-left: 2px;
+    text-decoration: none;
 }
 
 /* "* Mandatory Fields" note — right-aligned above form fields */
@@ -1586,4 +1643,50 @@ table#tblMonthPeriod>tbody>tr>td {
 
 .govuk-error-message {
     font-size: 14px;
+}
+
+
+/* ============================================================
+   43. COLUMN TOTALS CONTAINER
+   ============================================================ */
+.column-totals-container {
+    position: relative;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border: 1px solid var(--govuk-border-colour);
+    background-color: var(--govuk-surface-background-colour, #fff);
+    font-weight: bold;
+    font-size: 14px;
+    padding: 0;
+    min-height: 36px;
+}
+
+.column-total-label {
+    position: absolute;
+    padding: 8px;
+    text-align: left;
+    top: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.column-total {
+    position: absolute;
+    padding: 8px;
+    text-align: right;
+    top: 0;
+    min-height: 35px;
+    border-left: 1px solid var(--govuk-border-colour);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Ensure all column total container parents handle overflow */
+#columnTotalsContainer,
+#columnStandardHoursContainer,
+#columnStndHrsAllocatedContainer {
+    display: inline-flex; /* Make containers only as wide as content */
 }

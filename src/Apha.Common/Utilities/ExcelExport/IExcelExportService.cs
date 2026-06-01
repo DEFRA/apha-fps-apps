@@ -15,6 +15,8 @@
         byte[] BuildOutputSheetExcel(
             string workGroupName,
             short monthNumber,
-            IEnumerable<WorkGroupOutputSheetRow> rows);
+            IEnumerable<WorkGroupOutputSheetRow> rows);        
+
+        byte[] ExportToExcelMultiSheet(IEnumerable<ExcelSheetDefinition> sheets);
     }
 }

@@ -32,6 +32,7 @@ namespace Apha.Common.Constants
         public const string GetAllWorkGroups = "api/v1/workgroup";
         public const string GetPagedWorkGroupTimeCodes = "api/v1/workgroup/paged/timecodes";
         public const string GetPagedWorkGroupValidTimeCodes = "api/v1/workgroup/paged/validtimecodes";
+        public const string GetWgSummarisedStaffTimeUsage = "api/v1/workgroup/timeusage";
         public const string GetPagedWorkGroupsByProfitCentre = "api/v1/workgroup/profitcentre";
         public const string SetSendEmailForProfitCentreWorkGroups = "api/v1/workgroup/setsendemail/profitcentre";
         public const string SetSendEmailForAllWorkGroups = "api/v1/workgroup/setsendemail/all";

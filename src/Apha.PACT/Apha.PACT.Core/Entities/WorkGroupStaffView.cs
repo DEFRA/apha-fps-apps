@@ -1,6 +1,6 @@
 ﻿namespace Apha.PACT.Core.Entities
 {
-    public partial class PactStaffView
+    public partial class WorkGroupStaffView
     {
         public string? PactId { get; set; }
         public string? SpNumber { get; set; }
