@@ -9,19 +9,35 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class WorkGroupRepository : BaseRepository, IWorkGroupRepository
     {
+
         public WorkGroupRepository(FpsDbContext context) : base(context)
         {
+
         }
 
         private const string WorkGroupColumn     = "WorkGroup";
         private const string ParentProjectColumn = "ParentProject";
         private const string TimeCodeColumn      = "TimeCode";
+        private const string PactStaffIdColumn   = "PACTStaffID";
+        private const string NameColumn          = "Name";
+        private const string MonthColumn         = "Month";
+        private const string HoursColumn         = "Hours";
+        private const string ManagerColumn       = "Manager";
 
         public async Task<IEnumerable<WorkGroup>> GetAllWorkGroupsAsync()
         {
             return await _context.WorkGroups
                 .AsNoTracking()
                 .OrderBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<SummarisedWgTimeView>> GetSummarisedWorkgroupTimeAsync(
+            string workGroup)
+        {
+            return await _context.SummarisedWgTimeViews
+                .AsNoTracking()
+                .Where(e => e.WorkGroup == workGroup)
                 .ToListAsync();
         }
 
@@ -60,18 +76,18 @@ namespace Apha.PACT.DataAccess.Repository
             if (!string.IsNullOrWhiteSpace(query.SortBy))
                 baseQuery = (query.SortBy, query.Descending) switch
                 {
-                    ("PACTStaffID",   true)  => baseQuery.OrderByDescending(e => e.PACTStaffID),
-                    ("PACTStaffID",   false) => baseQuery.OrderBy(e => e.PACTStaffID),
+                    (PactStaffIdColumn, true)  => baseQuery.OrderByDescending(e => e.PACTStaffID),
+                    (PactStaffIdColumn, false) => baseQuery.OrderBy(e => e.PACTStaffID),
                     (WorkGroupColumn,      true)  => baseQuery.OrderByDescending(e => e.WorkGroup),
                     (WorkGroupColumn,      false) => baseQuery.OrderBy(e => e.WorkGroup),
                     (ParentProjectColumn,  true)  => baseQuery.OrderByDescending(e => e.ParentProject),
                     (ParentProjectColumn,  false) => baseQuery.OrderBy(e => e.ParentProject),
                     (TimeCodeColumn,       true)  => baseQuery.OrderByDescending(e => e.TimeCode),
                     (TimeCodeColumn,       false) => baseQuery.OrderBy(e => e.TimeCode),
-                    ("Month",         true)  => baseQuery.OrderByDescending(e => e.Month),
-                    ("Month",         false) => baseQuery.OrderBy(e => e.Month),
-                    ("Hours",         true)  => baseQuery.OrderByDescending(e => e.Hours),
-                    ("Hours",         false) => baseQuery.OrderBy(e => e.Hours),
+                    (MonthColumn,     true)  => baseQuery.OrderByDescending(e => e.Month),
+                    (MonthColumn,     false) => baseQuery.OrderBy(e => e.Month),
+                    (HoursColumn,     true)  => baseQuery.OrderByDescending(e => e.Hours),
+                    (HoursColumn,     false) => baseQuery.OrderBy(e => e.Hours),
                     (_,               true)  => baseQuery.OrderByDescending(e => e.Name),
                     _                        => baseQuery.OrderBy(e => e.Name),
                 };
@@ -113,8 +129,8 @@ namespace Apha.PACT.DataAccess.Repository
                     (TimeCodeColumn,       false) => baseQuery.OrderBy(e => e.TimeCode),
                     (ParentProjectColumn,  true)  => baseQuery.OrderByDescending(e => e.ParentProject),
                     (ParentProjectColumn,  false) => baseQuery.OrderBy(e => e.ParentProject),
-                    ("Manager",            true)  => baseQuery.OrderByDescending(e => e.Manager),
-                    ("Manager",            false) => baseQuery.OrderBy(e => e.Manager),
+                    (ManagerColumn,        true)  => baseQuery.OrderByDescending(e => e.Manager),
+                    (ManagerColumn,        false) => baseQuery.OrderBy(e => e.Manager),
                     (_,                    true)  => baseQuery.OrderByDescending(e => e.ParentProject),
                     _                             => baseQuery.OrderBy(e => e.ParentProject),
                 };
@@ -151,7 +167,7 @@ namespace Apha.PACT.DataAccess.Repository
             if (filters.TryGetValue(ParentProjectColumn, out var parentProject) && !string.IsNullOrWhiteSpace(parentProject))
                 query = query.Where(e => EF.Functions.ILike(e.ParentProject, $"%{parentProject}%"));
 
-            if (filters.TryGetValue("Manager", out var manager) && !string.IsNullOrWhiteSpace(manager))
+            if (filters.TryGetValue(ManagerColumn, out var manager) && !string.IsNullOrWhiteSpace(manager))
                 query = query.Where(e => EF.Functions.ILike(e.Manager!, $"%{manager}%"));
 
             return query;
@@ -165,10 +181,10 @@ namespace Apha.PACT.DataAccess.Repository
             var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
             if (filters is null) return query;
 
-            if (filters.TryGetValue("PACTStaffID", out var pactStaffId) && !string.IsNullOrWhiteSpace(pactStaffId))
+            if (filters.TryGetValue(PactStaffIdColumn, out var pactStaffId) && !string.IsNullOrWhiteSpace(pactStaffId))
                 query = query.Where(e => EF.Functions.ILike(e.PACTStaffID, $"%{pactStaffId}%"));
 
-            if (filters.TryGetValue("Name", out var name) && !string.IsNullOrWhiteSpace(name))
+            if (filters.TryGetValue(NameColumn, out var name) && !string.IsNullOrWhiteSpace(name))
                 query = query.Where(e => EF.Functions.ILike(e.Name!, $"%{name}%"));
 
             if (filters.TryGetValue(WorkGroupColumn, out var workGroupFilter) && !string.IsNullOrWhiteSpace(workGroupFilter))
