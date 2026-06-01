@@ -93,7 +93,7 @@ namespace Apha.PACT.Api.Controllers
         /// <c>200 OK</c> with a <see cref="WgSummarisedStaffTimeUsageRes"/> containing paged rows and
         /// pre-computed footer summary.
         /// </returns>
-        [HttpGet("timeusage")]
+        [HttpGet("staff/paged/summarisedtimeusage")]
         public async Task<IActionResult> GetWgSummarisedStaffTimeUsage(
             [FromQuery] QueryParameters<string> query,
             [FromQuery] string workGroup)
@@ -113,7 +113,7 @@ namespace Apha.PACT.Api.Controllers
         /// <c>200 OK</c> with a <see cref="SummarisedWgTimePivotRes"/> containing the summarised workgroup time data
         /// with dynamic month columns and pagination metadata.
         /// </returns>
-        [HttpGet("paged/summarisedtime")]
+        [HttpGet("paged/summarisedtimeusage")]
         public async Task<IActionResult> GetPagedSummarisedWorkgroupTime(
             [FromQuery] QueryParameters<string> query,
             [FromQuery] string workGroup)
