@@ -29,23 +29,23 @@
             </button>
             <div class="sub-dropdown-menu" id="pm-review-plans">
                 <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectProfitability" asp-action="Index">Project Profitability</a>
-                <a class="dropdown-item" href="#">Staff Plan Pivot</a>
+                            <a class="dropdown-item" asp-area="FPS" asp-controller="StaffPlan" asp-action="Index">Staff Plan Pivot</a>
+                        </div>
+                    </div>
+                    <div class="sub-dropdown">
+                        <button class="sub-dropdown-toggle" data-subdropdown="summary-printouts">
+                            Summary Printouts
+                            <img src="~/images/right-arrow.png" class="sub-right-arrow" alt="expand" width="14" />
+                        </button>
+                        <div class="sub-dropdown-menu" id="summary-printouts">
+                            <a class="dropdown-item" href="#">Programme Profitability Report</a>
+                            <a class="dropdown-item" href="#">Summarized by Disease</a>
+                            <a class="dropdown-item" href="#">Summarized by Customer</a>
+                            <a class="dropdown-item" href="#">Project Specifics</a>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="sub-dropdown">
-            <button class="sub-dropdown-toggle" data-subdropdown="summary-printouts">
-                Summary Printouts
-                <img src="~/images/right-arrow.png" class="sub-right-arrow" alt="expand" width="14" />
-            </button>
-            <div class="sub-dropdown-menu" id="summary-printouts">
-                <a class="dropdown-item" href="#">Programme Profitability Report</a>
-                <a class="dropdown-item" href="#">Summarized by Disease</a>
-                <a class="dropdown-item" href="#">Summarized by Customer</a>
-                <a class="dropdown-item" href="#">Project Specifics</a>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Resource Management -->
 <div class="nav-item dropdown">

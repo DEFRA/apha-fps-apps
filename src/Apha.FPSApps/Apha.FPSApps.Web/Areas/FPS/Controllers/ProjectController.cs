@@ -274,16 +274,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 .Prepend(new SelectListItem("", ""))
                 .ToList();
 
-            model.ProgrammeList = programs
-                .Where(p => !string.IsNullOrEmpty(p.ProgramNo))
-                .Select(p => new SelectListItem
-                {
-                    Value = p.ProgramNo,
-                    Text = $"{p.ProgramNo} - {p.ProgramName ?? string.Empty}"
-                })
-                .ToList();
-            model.SelectedProgramNo = model.Program ?? string.Empty;
-
             model.IsDefraProjectList = new List<SelectListItem>
             {
                 new("", ""),

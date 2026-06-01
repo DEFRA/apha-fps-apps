@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.FPS
 {
@@ -17,6 +18,31 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<ProfitCentreDto>>> GetProfitCentresAsync()
         {
             return await _fpsClient.FpsProfitCentre.GetProfitCentresAsync();
+        }
+
+        public async Task<ApiResponseDto<List<ProfitCentreDto>>> GetAllProfitCentresPagedAsync(QueryParameters<string> query)
+        {
+            return await _fpsClient.FpsProfitCentre.GetAllProfitCentresPagedAsync(query);
+        }
+
+        public async Task<ApiResponseDto<ProfitCentreDto>> GetProfitCentreByIdAsync(string profitCentreId)
+        {
+            return await _fpsClient.FpsProfitCentre.GetProfitCentreByIdAsync(profitCentreId);
+        }
+
+        public async Task<ApiResponseDto<ProfitCentreDto>> CreateProfitCentreAsync(ProfitCentreDto profitCentreDto)
+        {
+            return await _fpsClient.FpsProfitCentre.CreateProfitCentreAsync(profitCentreDto);
+        }
+
+        public async Task<ApiResponseDto<ProfitCentreDto>> UpdateProfitCentreAsync(string profitCentreId, ProfitCentreDto profitCentreDto)
+        {
+            return await _fpsClient.FpsProfitCentre.UpdateProfitCentreAsync(profitCentreId, profitCentreDto);
+        }
+
+        public async Task<ApiResponseDto<bool>> DeleteProfitCentreAsync(string profitCentreId)
+        {
+            return await _fpsClient.FpsProfitCentre.DeleteProfitCentreAsync(profitCentreId);
         }
     }
 }

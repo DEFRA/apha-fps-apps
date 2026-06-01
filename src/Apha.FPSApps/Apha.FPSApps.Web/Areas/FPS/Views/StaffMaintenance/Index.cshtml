@@ -1,27 +1,12 @@
-﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.StaffMaintenanceViewModel
 
 @{
-    ViewData["Title"] = "2025-2026 : Staff Maintenance";
+    ViewData["Title"] = "Staff Maintenance";
 }
 
 <main id="main-content">
     <div class="container-fluid">
-        <!-- Breadcrumb section -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                        <div class="col-md-6">
-                            <nav aria-label="Breadcrumb">
-                                <a class="" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; MAB &gt; Maintenance Menu &gt;  Maintain Staff
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Title section -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
@@ -230,7 +215,7 @@
                 contentType: 'application/json',
                 success: function(response) {
                     if (response.success) {
-                        alert(response.message);
+                        showGovukAlert(response.message);
                         closeModal();
                         getGridManager().reloadGrid({ page: 1 });
                     } else {
@@ -242,7 +227,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        alert('An error occurred while saving.');
+                        showGovukAlert('An error occurred while saving.');
                     }
                 }
             });
