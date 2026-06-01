@@ -3,114 +3,397 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Apha BatchJobs Trigger UI</title>
+    <title>BatchJobs Trigger Demo Console</title>
     <style>
+        :root {
+            --bg-0: #f6f8fb;
+            --bg-1: #ebf1fa;
+            --surface: #ffffff;
+            --ink-1: #102234;
+            --ink-2: #496074;
+            --line: #c7d3e6;
+            --accent: #005fb8;
+            --accent-2: #0084ff;
+            --ok-bg: #e9f8ef;
+            --ok-ink: #17673a;
+            --warn-bg: #fff3dd;
+            --warn-ink: #805100;
+            --bad-bg: #fdecef;
+            --bad-ink: #9f1d2f;
+            --pending-bg: #edf4ff;
+            --pending-ink: #154f96;
+            --run-bg: #e8f9f8;
+            --run-ink: #0a6464;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Segoe UI, Tahoma, sans-serif;
             margin: 0;
-            background: #f4f7fb;
-            color: #1e2a3a;
+            color: var(--ink-1);
+            font-family: "Trebuchet MS", "Segoe UI", "Tahoma", sans-serif;
+            background:
+                radial-gradient(circle at 16% 4%, #d9ebff 0%, transparent 40%),
+                radial-gradient(circle at 84% 0%, #ffe8c6 0%, transparent 34%),
+                linear-gradient(180deg, var(--bg-1), var(--bg-0));
+            min-height: 100vh;
+            padding: 24px 16px 28px;
         }
+
         .page {
-            max-width: 1050px;
-            margin: 20px auto;
-            background: #fff;
-            padding: 24px;
-            border: 1px solid #d7deea;
+            max-width: 1180px;
+            margin: 0 auto;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 16px 40px rgba(18, 47, 83, 0.09);
+        }
+
+        .hero {
+            padding: 20px 20px 14px;
+            background: linear-gradient(130deg, #f3f8ff 0%, #f9f2e7 100%);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: 30px;
+            letter-spacing: 0.2px;
+        }
+
+        .hero .sub {
+            margin: 8px 0 0;
+            color: var(--ink-2);
+            font-size: 15px;
+        }
+
+        .controls {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 12px;
+        }
+
+        .control-card {
+            background: #ffffffc9;
+            border: 1px solid var(--line);
             border-radius: 10px;
+            padding: 10px 12px;
         }
-        h1 {
-            margin: 0 0 6px;
-            font-size: 26px;
+
+        .control-row {
+            display: grid;
+            grid-template-columns: 110px 1fr;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
         }
-        .sub {
-            margin: 0 0 20px;
-            color: #5f6b7a;
+
+        .control-row:last-child {
+            margin-bottom: 0;
         }
+
+        label {
+            font-size: 13px;
+            color: var(--ink-2);
+            font-weight: 700;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #b9c9df;
+            font-size: 14px;
+            color: var(--ink-1);
+            background: #fff;
+        }
+
+        .policy {
+            font-size: 13px;
+            color: var(--ink-2);
+            line-height: 1.35;
+        }
+
+        .policy strong {
+            color: var(--ink-1);
+        }
+
+        .main {
+            padding: 16px 20px 18px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 14px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
         }
+
         th, td {
-            border: 1px solid #d7deea;
             padding: 10px;
+            border-bottom: 1px solid var(--line);
             text-align: left;
-            vertical-align: middle;
-        }
-        th {
-            background: #eef3fb;
-        }
-        input, select, button {
-            padding: 8px 10px;
-            border-radius: 6px;
-            border: 1px solid #b9c4d8;
+            vertical-align: top;
             font-size: 14px;
         }
-        button {
-            background: #1f6feb;
-            color: #fff;
-            border: none;
-            cursor: pointer;
+
+        tr:last-child td {
+            border-bottom: 0;
         }
-        button:disabled {
-            background: #9aa7ba;
+
+        th {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #304256;
+            background: #edf4fe;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .status-ready {
+            background: #eff5ff;
+            color: #28589b;
+            border-color: #c8dbfa;
+        }
+
+        .status-submitting {
+            background: var(--pending-bg);
+            color: var(--pending-ink);
+            border-color: #b8d4fb;
+        }
+
+        .status-accepted,
+        .status-pending {
+            background: var(--warn-bg);
+            color: var(--warn-ink);
+            border-color: #f1d59d;
+        }
+
+        .status-running {
+            background: var(--run-bg);
+            color: var(--run-ink);
+            border-color: #a6e5df;
+        }
+
+        .status-completed {
+            background: var(--ok-bg);
+            color: var(--ok-ink);
+            border-color: #b7e6c7;
+        }
+
+        .status-failed,
+        .status-timeout,
+        .status-delivery {
+            background: var(--bad-bg);
+            color: var(--bad-ink);
+            border-color: #efbdc6;
+        }
+
+        button {
+            border: 1px solid transparent;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-weight: 700;
+            font-size: 13px;
+            color: #fff;
+            background: linear-gradient(120deg, var(--accent), var(--accent-2));
+            cursor: pointer;
+            min-width: 122px;
+        }
+
+        button[disabled] {
+            opacity: 0.6;
             cursor: not-allowed;
         }
-        .note {
-            margin-top: 18px;
-            background: #fff4dc;
-            border-left: 4px solid #e8a100;
-            padding: 12px;
+
+        .button-scheduled {
+            background: #8e9caf;
         }
-        pre {
-            margin-top: 16px;
-            background: #0f172a;
-            color: #dbeafe;
-            padding: 14px;
-            border-radius: 8px;
-            min-height: 70px;
+
+        .meta {
+            font-size: 12px;
+            color: var(--ink-2);
+            margin-top: 4px;
+            line-height: 1.35;
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fbfdff;
+        }
+
+        .panel-title {
+            padding: 9px 10px;
+            background: #edf4fe;
+            border-bottom: 1px solid var(--line);
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #2d445d;
+        }
+
+        .panel pre {
+            margin: 0;
+            max-height: 240px;
+            overflow: auto;
+            padding: 10px;
+            background: #091525;
+            color: #dbe7f8;
+            font-size: 12px;
+            line-height: 1.35;
             white-space: pre-wrap;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .legend .status-pill {
+            font-size: 11px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border: 2px solid currentColor;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            margin-right: 6px;
+            flex-shrink: 0;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 940px) {
+            .controls,
+            .split {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 24px;
+            }
+
+            th, td {
+                font-size: 13px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="page">
-        <h1>BatchJobs EventBridge Trigger Console</h1>
-        <p class="sub">End-to-end sample flow inside Apha.BatchJobs using dedicated FPS/PACT trigger APIs.</p>
+        <section class="hero">
+            <h1>PACT API Trigger Demo for RecreateSummaries</h1>
+            <p class="sub">State-driven UI aligned to the agreed transition model: TriggerAccepted -> PendingStart -> Running -> Completed/Failed with startup timeout handling.</p>
 
-        <label for="requestedBy">Requested By:</label>
-        <input id="requestedBy" type="text" value="sample-ui@local" />
+            <div class="controls">
+                <div class="control-card">
+                    <div class="control-row">
+                        <label for="requestedBy">Requested By</label>
+                        <input id="requestedBy" type="text" value="sample-ui@local" />
+                    </div>
+                    <div class="control-row">
+                        <label for="preferredApi">Neutral Job API</label>
+                        <select id="preferredApi">
+                            <option value="fps">FPS API</option>
+                            <option value="pact" selected>PACT API</option>
+                        </select>
+                    </div>
+                </div>
 
-        <label for="preferredApi" style="margin-left: 12px;">Preferred API for neutral jobs:</label>
-        <select id="preferredApi">
-            <option value="fps">FPS API</option>
-            <option value="pact" selected>PACT API</option>
-        </select>
+                <div class="control-card policy">
+                    <div><strong>Agreed timing policy</strong></div>
+                    <div>Startup deadline: AcceptedAt + 10 minutes</div>
+                    <div>Polling backoff: 2s, 3s, 5s, then 5s</div>
+                    <div>UI prevents duplicate trigger while active</div>
+                </div>
+            </div>
+        </section>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Job</th>
-                    <th>Mapping</th>
-                    <th>Description</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="jobRows"></tbody>
-        </table>
+        <section class="main">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Job</th>
+                        <th>Route</th>
+                        <th>Description</th>
+                        <th>UI State</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="jobRows"></tbody>
+            </table>
 
-        <div class="note">
-            Mapping enforced: RecreateSummaries -> PACT API, FECProcess/YearEndProcess -> FPS API,
-            MABArchive -> Scheduled only, HealthCheck -> Neutral.
-        </div>
+            <div class="legend" id="legend"></div>
 
-        <pre id="result">Ready.</pre>
+            <div class="split">
+                <div class="panel">
+                    <div class="panel-title">UI Timeline</div>
+                    <pre id="uiTimeline">Ready.</pre>
+                </div>
+                <div class="panel">
+                    <div class="panel-title">PACT API Raw Response</div>
+                    <pre id="apiResponse">No trigger yet.</pre>
+                </div>
+            </div>
+        </section>
     </div>
 
     <script>
-        const result = document.getElementById("result");
         const rows = document.getElementById("jobRows");
+        const timelineEl = document.getElementById("uiTimeline");
+        const apiResponseEl = document.getElementById("apiResponse");
+        const legendEl = document.getElementById("legend");
+
+        const POLL_INTERVALS_MS = [4000, 7000, 10000, 10000];
+        const STARTUP_WINDOW_MS = 10 * 60 * 1000;
+
+        const JOB_STATES = {
+            ready:      { label: "Ready",                          css: "status-ready",      button: "Trigger",      disabled: false, spinner: false },
+            submitting: { label: "Submitting",                     css: "status-submitting", button: "Submitting...", disabled: true,  spinner: true  },
+            accepted:   { label: "TriggerAccepted",                css: "status-accepted",   button: "Accepted",     disabled: true,  spinner: true  },
+            pending:    { label: "PendingStart",                   css: "status-pending",    button: "Pending Start",disabled: true,  spinner: true  },
+            running:    { label: "Running",                        css: "status-running",    button: "Running...",   disabled: true,  spinner: true  },
+            completed:  { label: "Completed",                      css: "status-completed",  button: "Re-trigger",   disabled: false, spinner: false },
+            failed:     { label: "Failed",                         css: "status-failed",     button: "Retry",        disabled: false, spinner: false },
+            timeout:    { label: "StartFailedTimeout",             css: "status-timeout",    button: "Retry",        disabled: false, spinner: false },
+            delivery:   { label: "StartFailedDeliveryExhausted",   css: "status-delivery",   button: "Retry",        disabled: false, spinner: false }
+        };
+
+        const uiByJob = new Map();
 
         function mapLabel(routeKind) {
             switch (routeKind) {
@@ -121,52 +404,222 @@
             }
         }
 
+        function appendTimeline(message) {
+            const now = new Date();
+            const ts = now.toISOString().substring(11, 19);
+            timelineEl.textContent = `[${ts}] ${message}\n` + timelineEl.textContent;
+        }
+
+        function renderLegend() {
+            const entries = ["ready", "accepted", "pending", "running", "completed", "failed", "timeout"];
+            legendEl.innerHTML = entries
+                .map(k => `<span class="status-pill ${JOB_STATES[k].css}">${JOB_STATES[k].label}</span>`)
+                .join("");
+        }
+
+        function resetTimers(jobName) {
+            const ui = uiByJob.get(jobName);
+            if (!ui) return;
+            ui.timers.forEach(t => clearTimeout(t));
+            ui.timers = [];
+        }
+
+        function parseUtc(value, fallback) {
+            if (!value) return fallback;
+            const parsed = Date.parse(value);
+            return Number.isNaN(parsed) ? fallback : parsed;
+        }
+
+        function updateJobState(jobName, key, detailText) {
+            const ui = uiByJob.get(jobName);
+            if (!ui) return;
+
+            const state = JOB_STATES[key] || JOB_STATES.failed;
+            ui.stateEl.className = `status-pill ${state.css}`;
+            ui.stateEl.innerHTML = state.spinner
+                ? `<span class="spinner"></span>${state.label}`
+                : state.label;
+            ui.detailEl.textContent = detailText || "";
+
+            if (ui.isScheduledOnly) {
+                ui.button.textContent = "Scheduled";
+                ui.button.disabled = true;
+                ui.button.classList.add("button-scheduled");
+                return;
+            }
+
+            ui.button.textContent = state.button;
+            ui.button.disabled = state.disabled;
+            ui.button.classList.remove("button-scheduled");
+        }
+
+        function setApiResponse(statusCode, payloadText) {
+            apiResponseEl.textContent = `HTTP ${statusCode}\n${payloadText}`;
+        }
+
+        function schedule(jobName, ms, action) {
+            const ui = uiByJob.get(jobName);
+            if (!ui) return;
+            const timer = setTimeout(action, ms);
+            ui.timers.push(timer);
+        }
+
+        function startPendingLifecycle(jobName, acceptedAtMs, startupDeadlineMs, initialAttempt) {
+            let attempt = initialAttempt;
+            updateJobState(jobName, "pending", `Accepted at ${new Date(acceptedAtMs).toLocaleTimeString()} | Deadline ${new Date(startupDeadlineMs).toLocaleTimeString()}`);
+            appendTimeline(`${jobName}: status projected to PendingStart`);
+
+            const tick = () => {
+                const now = Date.now();
+                if (now >= startupDeadlineMs) {
+                    updateJobState(jobName, "timeout", "Worker start not observed before startup deadline.");
+                    appendTimeline(`${jobName}: status projected to StartFailedTimeout`);
+                    return;
+                }
+
+                const delay = POLL_INTERVALS_MS[Math.min(attempt, POLL_INTERVALS_MS.length - 1)];
+                attempt += 1;
+                const remainingSec = Math.max(0, Math.floor((startupDeadlineMs - now) / 1000));
+                updateJobState(jobName, "pending", `Polling every ${Math.floor(delay / 1000)}s (attempt ${attempt}) | ${remainingSec}s until timeout`);
+                appendTimeline(`${jobName}: polling status (attempt ${attempt}, next ${Math.floor(delay / 1000)}s)`);
+                schedule(jobName, delay, tick);
+            };
+
+            const firstDelay = POLL_INTERVALS_MS[Math.min(attempt, POLL_INTERVALS_MS.length - 1)];
+            schedule(jobName, firstDelay, tick);
+        }
+
+        function startLocalWorkerDemo(jobName) {
+            updateJobState(jobName, "running", "Local worker process started by PACT API.");
+            appendTimeline(`${jobName}: local worker observed, moving to Running`);
+
+            schedule(jobName, 15000, () => {
+                updateJobState(jobName, "completed", "Demo completion projection for local run.");
+                appendTimeline(`${jobName}: projected to Completed for demo walkthrough`);
+            });
+        }
+
+        async function triggerJob(job) {
+            const jobName = job.jobName;
+            const requestedBy = document.getElementById("requestedBy").value || "sample-ui@local";
+            const preferredApi = document.getElementById("preferredApi").value;
+
+            resetTimers(jobName);
+            updateJobState(jobName, "submitting", "Sending trigger request to Sample UI backend...");
+            appendTimeline(`${jobName}: trigger submitted by ${requestedBy}`);
+
+            let response;
+            let bodyText = "";
+            let payload = null;
+
+            try {
+                response = await fetch("/api/trigger?preferredApi=" + encodeURIComponent(preferredApi), {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ jobName, requestedBy })
+                });
+
+                bodyText = await response.text();
+                setApiResponse(response.status, bodyText);
+
+                try {
+                    payload = bodyText ? JSON.parse(bodyText) : null;
+                } catch {
+                    payload = null;
+                }
+            } catch (err) {
+                const errorText = err && err.message ? err.message : "Network request failed.";
+                setApiResponse(0, errorText);
+                updateJobState(jobName, "failed", errorText);
+                appendTimeline(`${jobName}: request failed before API response (${errorText})`);
+                return;
+            }
+
+            if (!response.ok || !payload || payload.accepted === false) {
+                const reason = payload && payload.reason ? payload.reason : "Trigger request was not accepted.";
+                updateJobState(jobName, "failed", reason);
+                appendTimeline(`${jobName}: API did not accept trigger (${reason})`);
+                return;
+            }
+
+            const acceptedAtMs = parseUtc(payload.acceptedAtUtc, Date.now());
+            const startupDeadlineMs = parseUtc(payload.startupDeadlineUtc, acceptedAtMs + STARTUP_WINDOW_MS);
+
+            updateJobState(jobName, "accepted", `ExecutionId ${payload.jobExecutionId || "n/a"}`);
+            appendTimeline(`${jobName}: trigger accepted with status ${payload.status || "TriggerAccepted"}`);
+
+            const isLocalWorker = payload.workerProcessLaunched === true || payload.status === "WorkerProcessStarted";
+
+            schedule(jobName, 2500, () => {
+                if (isLocalWorker) {
+                    startLocalWorkerDemo(jobName);
+                    return;
+                }
+
+                startPendingLifecycle(jobName, acceptedAtMs, startupDeadlineMs, 0);
+            });
+        }
+
         async function loadJobs() {
+            rows.innerHTML = "";
+
             const response = await fetch("/api/jobs");
             const jobs = await response.json();
-            rows.innerHTML = "";
 
             jobs.forEach(job => {
                 const tr = document.createElement("tr");
-                const scheduledOnly = job.routeKind === "ScheduledOnly";
+                const isScheduledOnly = job.routeKind === "ScheduledOnly";
+                const isRecreateSummaries = job.jobName === "RecreateSummaries";
+
+                const stateTd = document.createElement("td");
+                const stateSpan = document.createElement("span");
+                stateSpan.className = "status-pill status-ready";
+                stateSpan.textContent = "Ready";
+                const meta = document.createElement("div");
+                meta.className = "meta";
+                meta.textContent = isRecreateSummaries
+                    ? "PACT demo path uses trigger lifecycle projection."
+                    : "State changes shown for consistency with trigger model.";
+                stateTd.appendChild(stateSpan);
+                stateTd.appendChild(meta);
+
+                const actionTd = document.createElement("td");
+                const button = document.createElement("button");
+                button.textContent = isScheduledOnly ? "Scheduled" : "Trigger";
+                button.disabled = isScheduledOnly;
+                if (isScheduledOnly) {
+                    button.classList.add("button-scheduled");
+                }
+
+                if (!isScheduledOnly) {
+                    button.addEventListener("click", async () => triggerJob(job));
+                }
+
+                actionTd.appendChild(button);
+
                 tr.innerHTML = `
                     <td>${job.jobName}</td>
                     <td>${mapLabel(job.routeKind)}</td>
                     <td>${job.description}</td>
-                    <td>
-                        <button ${scheduledOnly ? "disabled" : ""} data-job="${job.jobName}">
-                            ${scheduledOnly ? "Scheduled" : "Trigger"}
-                        </button>
-                    </td>
                 `;
 
-                const button = tr.querySelector("button");
-                if (!scheduledOnly) {
-                    button.addEventListener("click", async () => {
-                        await triggerJob(job.jobName);
-                    });
-                }
-
+                tr.appendChild(stateTd);
+                tr.appendChild(actionTd);
                 rows.appendChild(tr);
-            });
-        }
 
-        async function triggerJob(jobName) {
-            const requestedBy = document.getElementById("requestedBy").value || "sample-ui@local";
-            const preferredApi = document.getElementById("preferredApi").value;
-
-            result.textContent = `Triggering ${jobName}...`;
-
-            const response = await fetch("/api/trigger?preferredApi=" + encodeURIComponent(preferredApi), {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ jobName, requestedBy })
+                uiByJob.set(job.jobName, {
+                    stateEl: stateSpan,
+                    detailEl: meta,
+                    button,
+                    timers: [],
+                    isScheduledOnly
+                });
             });
 
-            const bodyText = await response.text();
-            result.textContent = `HTTP ${response.status}\n${bodyText}`;
+            appendTimeline("Job catalog loaded. RecreateSummaries is routed to PACT API.");
         }
 
+        renderLegend();
         loadJobs();
     </script>
 </body>
