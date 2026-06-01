@@ -1,4 +1,5 @@
-﻿using Apha.PACT.Application.Dtos;
+﻿using Apha.Common.Contracts.PACT;
+using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Pagination;
@@ -33,6 +34,9 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<WorkGroupTimeCode, WorkGroupTimeCodeDto>().ReverseMap();
             CreateMap<WorkGroupValidTimeCode, WorkGroupValidTimeCodeDto>().ReverseMap();
             CreateMap<WgSummarisedStaffTimeUsageView, WgSummarisedStaffTimeUsageEntryDto>();
+            CreateMap<SummarisedWgTimeView, SummarisedWgTimeDto>().ReverseMap();
+            CreateMap<SummarisedWgTimeView, SummarisedWgTimeEntryDto>();
+            CreateMap<SummarisedWgTimeDto, SummarisedWgTimeRes>().ReverseMap();
             CreateMap<RecreateSummariesLog, RecreateSummariesLogDto>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName));
         }
