@@ -15,13 +15,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
     public class WorkGroupGradeMaintenanceControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly IWorkgroupGradeService _wgGradeService;
+        private readonly IWorkGroupGradeService _wgGradeService;
         private readonly WorkGroupGradeMaintenanceController _controller;
 
         public WorkGroupGradeMaintenanceControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _wgGradeService = Substitute.For<IWorkgroupGradeService>();
+            _wgGradeService = Substitute.For<IWorkGroupGradeService>();
             _controller = new WorkGroupGradeMaintenanceController(_mapper, _wgGradeService);
         }
 

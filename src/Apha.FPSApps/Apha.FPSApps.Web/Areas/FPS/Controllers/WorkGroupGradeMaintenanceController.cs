@@ -21,9 +21,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class WorkGroupGradeMaintenanceController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IWorkgroupGradeService _wgGradeService;
+        private readonly IWorkGroupGradeService _wgGradeService;
 
-        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkgroupGradeService wgGradeService)
+        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkGroupGradeService wgGradeService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _wgGradeService = wgGradeService ?? throw new ArgumentNullException(nameof(wgGradeService));

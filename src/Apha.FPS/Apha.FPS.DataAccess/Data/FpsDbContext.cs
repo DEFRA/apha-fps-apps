@@ -82,8 +82,6 @@ namespace Apha.FPS.DataAccess.Data
 
         public virtual DbSet<Division> Divisions { get; set; }
         public virtual DbSet<Agency> Agencies { get; set; }
-        public virtual DbSet<Grade> Grades { get; set; }
-
 
         public virtual DbSet<AdditionalCostView> AdditionalCostViews { get; set; }
         public virtual DbSet<AccountCategory> AccountCategories { get; set; }
