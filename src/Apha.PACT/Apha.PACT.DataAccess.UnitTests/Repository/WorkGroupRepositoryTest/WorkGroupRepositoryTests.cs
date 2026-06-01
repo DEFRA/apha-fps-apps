@@ -2124,6 +2124,132 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             Assert.Empty(result.Data);
         }
 
+        // ────────────────────────────────────────────────────────────────────
+        // ApplyWorkGroupFilter (private) — exercised via GetWorkGroupsByProfitCentreAsync.
+        // EF.Property<T> used in the sort step throws on LINQ-to-Objects when rows exist,
+        // so each test ensures the filter reduces the result to zero rows before sorting.
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_NullFilter_ReturnsEmpty()
+        {
+            var repo  = CreateWorkGroupsByPcRepository([]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_EmptyJsonFilter_ReturnsEmpty()
+        {
+            var repo  = CreateWorkGroupsByPcRepository([]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{}" };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_NullDeserializedFilter_ReturnsEmpty()
+        {
+            var repo  = CreateWorkGroupsByPcRepository([]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "null" };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FilterWithBlankWorkGroupName_IsIgnored()
+        {
+            var repo  = CreateWorkGroupsByPcRepository([]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"WorkGroupName\":\"   \"}"
+            };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FilterWithBlankEmailRecipient_IsIgnored()
+        {
+            var repo  = CreateWorkGroupsByPcRepository([]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"EmailRecipient\":\"   \"}"
+            };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FilterByWorkGroupName_NoMatch_ReturnsEmpty()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "Alpha", ProfitCentre = "PC1", FpsYear = 2024 }
+            };
+            var repo  = CreateWorkGroupsByPcRepository(workGroups);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"WorkGroupName\":\"NOMATCH\"}"
+            };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FilterByEmailRecipient_NoMatch_ReturnsEmpty()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "Alpha", ProfitCentre = "PC1", FpsYear = 2024, EmailRecipient = "test@example.com" }
+            };
+            var repo  = CreateWorkGroupsByPcRepository(workGroups);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"EmailRecipient\":\"NOMATCH\"}"
+            };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FilterByEmailRecipient_NullRecipient_ReturnsEmpty()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "Alpha", ProfitCentre = "PC1", FpsYear = 2024, EmailRecipient = null }
+            };
+            var repo  = CreateWorkGroupsByPcRepository(workGroups);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"EmailRecipient\":\"test\"}"
+            };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
         #endregion
 
         // ════════════════════════════════════════════════════════════════════
@@ -2754,6 +2880,306 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var result = await repo.GetOutputSheetTemplateAsync("WG1", month: 5);
 
             Assert.Empty(result);
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // GetSummarisedWorkgroupTimeAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        private static SummarisedWgTimeView SummarisedWgTimeRow(
+            string? workGroup     = "WG1",
+            string? profitCentre  = "PC1",
+            string? monthName     = "April",
+            string? parentProject = "PP1",
+            string? projectTitle  = "Project One",
+            double? totalTime     = 10.0,
+            double? totalCost     = 500.0,
+            int?    fpsYear       = 2024) =>
+            new()
+            {
+                WorkGroup     = workGroup,
+                ProfitCentre  = profitCentre,
+                MonthName     = monthName,
+                ParentProject = parentProject,
+                ProjectTitle  = projectTitle,
+                TotalTime     = totalTime,
+                TotalCost     = totalCost,
+                FpsYear       = fpsYear
+            };
+
+        private static WorkGroupRepository CreateSummarisedWgTimeRepository(
+            IEnumerable<SummarisedWgTimeView> rows)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            var mockContext       = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            var rowSet       = RepositoryTestHelper.CreateMockDbSet(rows);
+            var workGroupSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroup>());
+
+            mockContext.Setup(x => x.SummarisedWgTimeViews).Returns(rowSet.Object);
+            mockContext.Setup(x => x.WorkGroups).Returns(workGroupSet.Object);
+
+            return new WorkGroupRepository(mockContext.Object);
+        }
+
+        #region GetSummarisedWorkgroupTimeAsync — basic retrieval
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_MatchingWorkGroup_ReturnsRows()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", monthName: "April"),
+                SummarisedWgTimeRow(workGroup: "WG1", monthName: "May")
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, r => Assert.Equal("WG1", r.WorkGroup));
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NoMatchingWorkGroup_ReturnsEmpty()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1")
+            ]);
+
+            var result = await repo.GetSummarisedWorkgroupTimeAsync("WG_MISSING");
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_EmptyView_ReturnsEmpty()
+        {
+            var repo = CreateSummarisedWgTimeRepository([]);
+
+            var result = await repo.GetSummarisedWorkgroupTimeAsync("WG1");
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_SingleRow_AllFieldsMappedCorrectly()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(
+                    workGroup:     "WG1",
+                    profitCentre:  "PC1",
+                    monthName:     "April",
+                    parentProject: "PROJ_A",
+                    projectTitle:  "Alpha Project",
+                    totalTime:     8.5,
+                    totalCost:     425.0,
+                    fpsYear:       2024)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            var row = result[0];
+            Assert.Equal("WG1",           row.WorkGroup);
+            Assert.Equal("PC1",           row.ProfitCentre);
+            Assert.Equal("April",         row.MonthName);
+            Assert.Equal("PROJ_A",        row.ParentProject);
+            Assert.Equal("Alpha Project", row.ProjectTitle);
+            Assert.Equal(8.5,             row.TotalTime);
+            Assert.Equal(425.0,           row.TotalCost);
+            Assert.Equal(2024,            row.FpsYear);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_MultipleWorkGroups_ReturnsOnlyMatchingWorkGroup()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP1"),
+                SummarisedWgTimeRow(workGroup: "WG2", parentProject: "PP2"),
+                SummarisedWgTimeRow(workGroup: "WG3", parentProject: "PP3")
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG2")).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("WG2", result[0].WorkGroup);
+            Assert.Equal("PP2", result[0].ParentProject);
+        }
+
+        #endregion
+
+        #region GetSummarisedWorkgroupTimeAsync — nullable fields
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullTotalTime_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", totalTime: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].TotalTime);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullTotalCost_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", totalCost: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].TotalCost);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullProfitCentre_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", profitCentre: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullProjectTitle_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", projectTitle: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].ProjectTitle);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullMonthName_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", monthName: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].MonthName);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullFpsYear_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", fpsYear: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].FpsYear);
+        }
+
+        #endregion
+
+        #region GetSummarisedWorkgroupTimeAsync — multiple rows
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_AllTwelveMonths_ReturnsAllRows()
+        {
+            var months = new[] { "April", "May", "June", "July", "August", "September",
+                                 "October", "November", "December", "January", "February", "March" };
+            var rows = months.Select(m => SummarisedWgTimeRow(workGroup: "WG1", monthName: m));
+            var repo = CreateSummarisedWgTimeRepository(rows);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Equal(12, result.Count);
+            Assert.All(result, r => Assert.Equal("WG1", r.WorkGroup));
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_MultipleParentProjects_ReturnsAllRows()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP_A", monthName: "April"),
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP_B", monthName: "April"),
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP_C", monthName: "April")
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Equal(3, result.Count);
+            Assert.Contains(result, r => r.ParentProject == "PP_A");
+            Assert.Contains(result, r => r.ParentProject == "PP_B");
+            Assert.Contains(result, r => r.ParentProject == "PP_C");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_ZeroTotalTimeAndCost_ReturnedCorrectly()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", totalTime: 0.0, totalCost: 0.0)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Equal(0.0, result[0].TotalTime);
+            Assert.Equal(0.0, result[0].TotalCost);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_MixedWorkGroups_FiltersCorrectly()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP1"),
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP2"),
+                SummarisedWgTimeRow(workGroup: "WG2", parentProject: "PP3"),
+                SummarisedWgTimeRow(workGroup: "WG3", parentProject: "PP4")
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, r => Assert.Equal("WG1", r.WorkGroup));
+            Assert.Contains(result, r => r.ParentProject == "PP1");
+            Assert.Contains(result, r => r.ParentProject == "PP2");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_LargeDataset_ReturnsAllMatchingRows()
+        {
+            const int totalRows = 100;
+            var rows = Enumerable.Range(1, totalRows)
+                .Select(i => SummarisedWgTimeRow(workGroup: "WG1", parentProject: $"PP{i}"));
+            var repo = CreateSummarisedWgTimeRepository(rows);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Equal(totalRows, result.Count);
         }
 
         #endregion
