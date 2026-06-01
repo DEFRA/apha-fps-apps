@@ -181,7 +181,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal(0, result.Data.TotalCount);
+            Assert.Equal(0, result.Data!.TotalCount);
             Assert.Equal(TestPageNumber, result.Data.PageNumber);
             Assert.Equal(TestPageSize, result.Data.PageSize);
         }

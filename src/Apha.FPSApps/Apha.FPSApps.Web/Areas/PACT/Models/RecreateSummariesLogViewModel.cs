@@ -5,7 +5,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
     public class RecreateSummariesLogViewModel
     {
-        public DataGridConfig<RecreateSummariesLogItem> LogsGrid { get; set; }
+        public required DataGridConfig<RecreateSummariesLogItem> LogsGrid { get; set; }
     }
 
     public class RecreateSummariesLogItem
