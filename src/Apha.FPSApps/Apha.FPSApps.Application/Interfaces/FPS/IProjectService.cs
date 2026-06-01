@@ -23,6 +23,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<List<ContractDto>>> GetContractsByUserAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);
         Task<ApiResponseDto<List<ProjectGroupDto>>> GetAllProjectGroupsAsync();
+        Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup);
 
         // Merged from IProgrammeNewProjectService
         Task<ApiResponseDto<ProjectDto>> GetProgrammeNewProjectByIdAsync(string parentProject);
