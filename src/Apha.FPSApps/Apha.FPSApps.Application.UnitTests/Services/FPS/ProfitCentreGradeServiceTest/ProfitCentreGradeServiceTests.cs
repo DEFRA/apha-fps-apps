@@ -93,5 +93,63 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreGradeServi
         }
 
         #endregion
+
+        #region GetAllPcGradesAsync Tests
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_WithSuccessResponse_ReturnsGradeList()
+        {
+            // Arrange
+            var grades = new List<string> { "G001", "G002" };
+            var expectedResponse = ApiResponseDto<List<string>>.SuccessResponse(grades);
+
+            _fpsRcGradeApiClient.GetAllPcGradesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetAllPcGradesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsRcGradeApiClient.Received(1).GetAllPcGradesAsync();
+        }
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<string>>.SuccessResponse(new List<string>());
+
+            _fpsRcGradeApiClient.GetAllPcGradesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetAllPcGradesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<string>>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsRcGradeApiClient.GetAllPcGradesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetAllPcGradesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+        }
+
+        #endregion
     }
 }

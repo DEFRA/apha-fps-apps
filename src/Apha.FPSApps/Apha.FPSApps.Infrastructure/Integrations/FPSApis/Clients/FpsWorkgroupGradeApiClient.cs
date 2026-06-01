@@ -175,24 +175,5 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<List<string>>> GetAllWorkgroupNamesAsync()
-        {
-            try
-            {
-                var response = await _http.GetAsync<List<string>>(FpsApiEndpoints.GetAllWorkgroupNames);
-
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<string>>>(response);
-
-                var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
-                return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<string>>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve Workgroup names", Code = InternalCodeError } },
-                    new ApiMetaDto());
             }
         }
-    }
-}

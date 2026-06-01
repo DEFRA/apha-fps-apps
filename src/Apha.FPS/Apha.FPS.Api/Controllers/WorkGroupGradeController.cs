@@ -100,14 +100,6 @@ namespace Apha.FPS.Api.Controllers
             return Ok(deleted);
         }
 
-        /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
-        [HttpGet("pcgrades")]
-        public async Task<ActionResult<List<string>>> GetAllPcGradesAsync()
-        {
-            var result = await _WorkGroupGradeService.GetAllPcGradesAsync();
-            return Ok(result);
-        }
-
         /// <summary>Returns all Grade codes for dropdown population.</summary>
         [HttpGet("gradecodes")]
         public async Task<ActionResult<List<string>>> GetAllGradeCodesAsync()
@@ -116,13 +108,5 @@ namespace Apha.FPS.Api.Controllers
             return Ok(result);
         }
 
-        /// <summary>Returns all Workgroup names for dropdown population.</summary>
-        [HttpGet("workgroups")]
-        public async Task<ActionResult<List<string>>> GetAllWorkgroupNamesAsync()
-        {
-            var result = await _WorkGroupGradeService.GetAllWorkgroupNamesAsync();
-            return Ok(result);
+            }
         }
-
-    }
-}

@@ -210,6 +210,73 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
 
         #endregion
 
+        #region HasAssociatedStaffAsync Tests
+
+        [Fact]
+        public async Task HasAssociatedStaffAsync_WithMatchingWgGrade_ReturnsTrue()
+        {
+            // Arrange
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var repo = CreateRepository(employees);
+
+            // Act
+            var result = await repo.HasAssociatedStaffAsync(DefaultWgGrade);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedStaffAsync_WithNoMatchingWgGrade_ReturnsFalse()
+        {
+            // Arrange
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = "OTHER", PersonStatus = "A" }
+            };
+            var repo = CreateRepository(employees);
+
+            // Act
+            var result = await repo.HasAssociatedStaffAsync(DefaultWgGrade);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedStaffAsync_WithEmptyRepository_ReturnsFalse()
+        {
+            // Arrange
+            var repo = CreateRepository(new List<WorkGroupEmployee>());
+
+            // Act
+            var result = await repo.HasAssociatedStaffAsync(DefaultWgGrade);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData(null)]
+        public async Task HasAssociatedStaffAsync_WithNullOrWhitespaceWgGrade_ReturnsFalse(string? wgGrade)
+        {
+            // Arrange
+            var repo = CreateRepository(new List<WorkGroupEmployee>());
+
+            // Act
+            var result = await repo.HasAssociatedStaffAsync(wgGrade!);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        #endregion
+
         #region DeleteWorkGroupEmployeeAsync Tests
 
         [Fact]

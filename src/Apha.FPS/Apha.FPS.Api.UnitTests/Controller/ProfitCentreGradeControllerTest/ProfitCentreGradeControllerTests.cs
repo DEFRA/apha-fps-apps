@@ -94,5 +94,52 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreGradeControllerTest
         }
 
         #endregion
+
+        #region GetAllPcGradesAsync Tests
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_WithSuccessResponse_ReturnsOk()
+        {
+            // Arrange
+            var grades = new List<string> { "G001", "G002", "G003" };
+            _serviceMock.GetAllPcGradesAsync().Returns(grades);
+
+            // Act
+            var result = await _controller.GetAllPcGradesAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(grades, okResult.Value);
+            await _serviceMock.Received(1).GetAllPcGradesAsync();
+        }
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_WithEmptyResult_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            _serviceMock.GetAllPcGradesAsync().Returns(new List<string>());
+
+            // Act
+            var result = await _controller.GetAllPcGradesAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var data = Assert.IsType<List<string>>(okResult.Value);
+            Assert.Empty(data);
+        }
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.GetAllPcGradesAsync()
+                .ThrowsAsync(new InvalidOperationException("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _controller.GetAllPcGradesAsync());
+        }
+
+        #endregion
     }
 }

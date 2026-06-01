@@ -44,6 +44,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
+            services.AddScoped<IWorkgroupService, WorkgroupService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
@@ -76,6 +77,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProfitCentreRepository, ProfitCentreRepository>();
             services.AddScoped<IProfitCentreGradeRepository, ProfitCentreGradeRepository>();
             services.AddScoped<IWorkGroupGradeRepository, WorkGroupGradeRepository>();
+            services.AddScoped<IWorkgroupRepository, WorkgroupRepository>();
             services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
             services.AddScoped<IDivisionGradeRepository, DivisionGradeRepository>();
             services.AddScoped<IProjectStaffPlanRepository, ProjectStaffPlanRepository>();

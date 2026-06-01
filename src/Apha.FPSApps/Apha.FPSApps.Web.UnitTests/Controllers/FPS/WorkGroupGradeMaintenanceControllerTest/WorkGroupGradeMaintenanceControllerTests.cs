@@ -17,6 +17,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
         private readonly IMapper _mapper;
         private readonly IWorkGroupGradeService _wgGradeService;
         private readonly IProfitCentreGradeService _pcGradeService;
+        private readonly IWorkgroupService _workgroupService;
         private readonly WorkGroupGradeMaintenanceController _controller;
 
         public WorkGroupGradeMaintenanceControllerTests()
@@ -24,7 +25,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
             _mapper = Substitute.For<IMapper>();
             _wgGradeService = Substitute.For<IWorkGroupGradeService>();
             _pcGradeService = Substitute.For<IProfitCentreGradeService>();
-            _controller = new WorkGroupGradeMaintenanceController(_mapper, _wgGradeService, _pcGradeService);
+            _workgroupService = Substitute.For<IWorkgroupService>();
+            _controller = new WorkGroupGradeMaintenanceController(_mapper, _wgGradeService, _pcGradeService, _workgroupService);
         }
 
         private static T? GetJsonResultValue<T>(JsonResult jsonResult)
@@ -38,13 +40,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
         [Fact]
         public void Constructor_NullMapper_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => new WorkGroupGradeMaintenanceController(null!, _wgGradeService, _pcGradeService));
+            Assert.Throws<ArgumentNullException>(() => new WorkGroupGradeMaintenanceController(null!, _wgGradeService, _pcGradeService, _workgroupService));
         }
 
         [Fact]
         public void Constructor_NullService_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => new WorkGroupGradeMaintenanceController(_mapper, null!, _pcGradeService));
+            Assert.Throws<ArgumentNullException>(() => new WorkGroupGradeMaintenanceController(_mapper, null!, _pcGradeService, _workgroupService));
         }
 
         #endregion
@@ -517,7 +519,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
         public async Task GetWorkgroups_WithSuccessResponse_ReturnsSuccessJson()
         {
             var apiResponse = ApiResponseDto<List<string>>.SuccessResponse(new List<string> { "IT", "HR" });
-            _wgGradeService.GetAllWorkgroupNamesAsync().Returns(apiResponse);
+            _workgroupService.GetAllWorkgroupNamesAsync().Returns(apiResponse);
 
             var result = await _controller.GetWorkgroups();
 
@@ -531,7 +533,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
         {
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
             var apiResponse = ApiResponseDto<List<string>>.FailureResponse(errors, new ApiMetaDto());
-            _wgGradeService.GetAllWorkgroupNamesAsync().Returns(apiResponse);
+            _workgroupService.GetAllWorkgroupNamesAsync().Returns(apiResponse);
 
             var result = await _controller.GetWorkgroups();
 

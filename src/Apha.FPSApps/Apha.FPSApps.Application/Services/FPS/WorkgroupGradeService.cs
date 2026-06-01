@@ -43,7 +43,5 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<string>>> GetAllGradeCodesAsync()
             => await _fpsClient.FpsWorkGroupGrade.GetAllGradeCodesAsync();
 
-        public async Task<ApiResponseDto<List<string>>> GetAllWorkgroupNamesAsync()
-            => await _fpsClient.FpsWorkGroupGrade.GetAllWorkgroupNamesAsync();
-    }
-}
+            }
+        }
