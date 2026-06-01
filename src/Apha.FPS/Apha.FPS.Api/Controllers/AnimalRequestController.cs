@@ -16,18 +16,18 @@ namespace Apha.FPS.Api.Controllers
     [ApiController]
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/animal")]
-    public class AnimalController : ControllerBase
+    [Route("api/v{version:apiVersion}/animalrequest")]
+    public class AnimalRequestController : ControllerBase
     {
         private readonly IAnimalService _animalService;
         private readonly IMapper _mapper;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AnimalController"/> class.
+        /// Initializes a new instance of the <see cref="AnimalRequestController"/> class.
         /// </summary>
         /// <param name="animalService">The animal service.</param>
         /// <param name="mapper">The AutoMapper instance.</param>
-        public AnimalController(
+        public AnimalRequestController(
                         IAnimalService animalService,
                         IMapper mapper)
         {

@@ -11,17 +11,17 @@ using NSubstitute.ExceptionExtensions;
 
 namespace Apha.FPS.Api.UnitTests.Controller.AnimalControllerTest
 {
-    public class AnimalControllerTests
+    public class AnimalRequestControllerTests
     {
         private readonly IAnimalService _serviceMock;
         private readonly IMapper _mapperMock;
-        private readonly AnimalController _controller;
+        private readonly AnimalRequestController _controller;
 
-        public AnimalControllerTests()
+        public AnimalRequestControllerTests()
         {
             _serviceMock = Substitute.For<IAnimalService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new AnimalController(_serviceMock, _mapperMock);
+            _controller = new AnimalRequestController(_serviceMock, _mapperMock);
         }
 
         #region GetAnimalCostAsync
