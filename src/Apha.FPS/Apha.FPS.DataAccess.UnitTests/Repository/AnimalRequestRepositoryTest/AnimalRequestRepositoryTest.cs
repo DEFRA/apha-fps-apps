@@ -6,9 +6,9 @@ using Apha.FPS.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
-namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
+namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRequestRepositoryTest
 {
-    public class AnimalRepositoryTest
+    public class AnimalRequestRepositoryTest
     {
         private const int DefaultFpsYear = 2024;
         private const int DefaultUserId  = 42;
