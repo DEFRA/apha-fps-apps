@@ -71,6 +71,16 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 Task<DataGridConfig<StaffCostActualItem>> staffActualsGridTask =
                     BuildStaffActualsGridAsync(resolvedProject, resolvedYear, defaultRequest);
 
+                // Plan tab grids — served with empty data; lazy-loaded on first tab click
+                DataGridConfig<StaffCostPlanItem> planStaffGrid =
+                    BuildEmptyGrid<StaffCostPlanItem>("planStaffGrid", "Staff Plan", "WgGrade", "/PIMS/ProjectYearCosts/LoadPlanStaffGrid");
+                DataGridConfig<TestCostPlanItem> planTestGrid =
+                    BuildEmptyGrid<TestCostPlanItem>("planTestGrid", "Test Plan", "TestCode", "/PIMS/ProjectYearCosts/LoadPlanTestGrid");
+                DataGridConfig<AnimalCostPlanItem> planAnimalGrid =
+                    BuildEmptyGrid<AnimalCostPlanItem>("planAnimalGrid", "Animal Plan", "AnimalType", "/PIMS/ProjectYearCosts/LoadPlanAnimalGrid");
+                DataGridConfig<AdditionalCostPlanItem> planAdditionalGrid =
+                    BuildEmptyGrid<AdditionalCostPlanItem>("planAdditionalGrid", "Additional Cost Plan", "Account", "/PIMS/ProjectYearCosts/LoadPlanAdditionalGrid");
+
                 await Task.WhenAll(plansGridTask, actualsGridTask, animalPlansGridTask, animalActualsGridTask,
                     testPlansGridTask, testActualsGridTask, staffPlansGridTask, staffActualsGridTask);
 
@@ -87,7 +97,11 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 TestPlansGrid = testPlansGridTask.Result,
                 TestActualsGrid = testActualsGridTask.Result,
                 StaffPlansGrid = staffPlansGridTask.Result,
-                StaffActualsGrid = staffActualsGridTask.Result
+                StaffActualsGrid = staffActualsGridTask.Result,
+                PlanStaffGrid = planStaffGrid,
+                PlanTestGrid = planTestGrid,
+                PlanAnimalGrid = planAnimalGrid,
+                PlanAdditionalGrid = planAdditionalGrid
             });
         }
 
@@ -116,6 +130,28 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         }
 
         // ── grid builders ────────────────────────────────────────────────
+
+        private static DataGridConfig<T> BuildEmptyGrid<T>(
+            string gridId, string title, string keyProperty, string bindUrl) where T : class, new()
+        {
+            return new DataGridConfig<T>
+            {
+                GridId = gridId,
+                Title = title,
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = keyProperty,
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = bindUrl,
+                Data = [],
+                Columns = GridDataProvider.GetColumnsDefination<T>(null),
+                Pagination = new PaginationModel()
+            };
+        }
 
         private async Task<DataGridConfig<AdditionalCostPlanItem>> BuildAdditionalPlansGridAsync(
             string project, short year, PaginationFilter<string> request)
@@ -473,6 +509,230 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 BindGridUrl = "/PIMS/ProjectYearCosts/LoadStaffActualsGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<StaffCostActualItem>(null),
+                Pagination = pagination
+            };
+        }
+
+        // ── Plan tab ─────────────────────────────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> GetPlanTotals(string project, short year)
+        {
+            QueryParameters<string> allRecords = new() { Page = 1, PageSize = int.MaxValue };
+
+            Task<ApiResponseDto<List<StaffCostDto>>> staffTask =
+                _yearCostsService.GetStaffPlansAsync(project, year, allRecords);
+            Task<ApiResponseDto<List<TestCostDto>>> testTask =
+                _yearCostsService.GetTestPlansAsync(project, year, allRecords);
+            Task<ApiResponseDto<List<AnimalCostDto>>> animalTask =
+                _yearCostsService.GetAnimalPlansAsync(project, year, allRecords);
+            Task<ApiResponseDto<List<AdditionalCostDto>>> additionalTask =
+                _yearCostsService.GetAdditionalPlansAsync(project, year, allRecords);
+
+            await Task.WhenAll(staffTask, testTask, animalTask, additionalTask);
+
+            decimal staffTotal      = (staffTask.Result.Data      ?? []).Sum(x => x.Cost      ?? 0m);
+            decimal testTotal       = (testTask.Result.Data       ?? []).Sum(x => x.Cost      ?? 0m);
+            decimal animalTotal     = (animalTask.Result.Data     ?? []).Sum(x => (decimal)(x.Cost ?? 0d));
+            decimal additionalTotal = (additionalTask.Result.Data ?? []).Sum(x => x.ItemCost  ?? 0m);
+
+            return Json(new
+            {
+                staffTotal      = staffTotal.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-GB")),
+                testTotal       = testTotal.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-GB")),
+                animalTotal     = animalTotal.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-GB")),
+                additionalTotal = additionalTotal.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-GB"))
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadPlanStaffGrid(
+            PaginationFilter<string> request, string project, short year)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request" });
+
+            DataGridConfig<StaffCostPlanItem> grid =
+                await BuildPlanStaffGridAsync(project, year, request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadPlanTestGrid(
+            PaginationFilter<string> request, string project, short year)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request" });
+
+            DataGridConfig<TestCostPlanItem> grid =
+                await BuildPlanTestGridAsync(project, year, request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadPlanAnimalGrid(
+            PaginationFilter<string> request, string project, short year)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request" });
+
+            DataGridConfig<AnimalCostPlanItem> grid =
+                await BuildPlanAnimalGridAsync(project, year, request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadPlanAdditionalGrid(
+            PaginationFilter<string> request, string project, short year)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request" });
+
+            DataGridConfig<AdditionalCostPlanItem> grid =
+                await BuildPlanAdditionalGridAsync(project, year, request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        private async Task<DataGridConfig<StaffCostPlanItem>> BuildPlanStaffGridAsync(
+            string project, short year, PaginationFilter<string> request)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<StaffCostDto>> response =
+                await _yearCostsService.GetStaffPlansAsync(project, year, queryParameters);
+
+            List<StaffCostPlanItem> items = response.Success && response.Data != null
+                ? _mapper.Map<List<StaffCostPlanItem>>(response.Data)
+                : [];
+
+            PaginationModel pagination = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<StaffCostPlanItem>
+            {
+                GridId = "planStaffGrid",
+                Title = "Staff Plan",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "WgGrade",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = "/PIMS/ProjectYearCosts/LoadPlanStaffGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<StaffCostPlanItem>(null),
+                Pagination = pagination
+            };
+        }
+
+        private async Task<DataGridConfig<TestCostPlanItem>> BuildPlanTestGridAsync(
+            string project, short year, PaginationFilter<string> request)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<TestCostDto>> response =
+                await _yearCostsService.GetTestPlansAsync(project, year, queryParameters);
+
+            List<TestCostPlanItem> items = response.Success && response.Data != null
+                ? _mapper.Map<List<TestCostPlanItem>>(response.Data)
+                : [];
+
+            PaginationModel pagination = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<TestCostPlanItem>
+            {
+                GridId = "planTestGrid",
+                Title = "Test Plan",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "TestCode",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = "/PIMS/ProjectYearCosts/LoadPlanTestGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<TestCostPlanItem>(null),
+                Pagination = pagination
+            };
+        }
+
+        private async Task<DataGridConfig<AnimalCostPlanItem>> BuildPlanAnimalGridAsync(
+            string project, short year, PaginationFilter<string> request)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<AnimalCostDto>> response =
+                await _yearCostsService.GetAnimalPlansAsync(project, year, queryParameters);
+
+            List<AnimalCostPlanItem> items = response.Success && response.Data != null
+                ? _mapper.Map<List<AnimalCostPlanItem>>(response.Data)
+                : [];
+
+            PaginationModel pagination = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<AnimalCostPlanItem>
+            {
+                GridId = "planAnimalGrid",
+                Title = "Animal Plan",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "AnimalType",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = "/PIMS/ProjectYearCosts/LoadPlanAnimalGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<AnimalCostPlanItem>(null),
+                Pagination = pagination
+            };
+        }
+
+        private async Task<DataGridConfig<AdditionalCostPlanItem>> BuildPlanAdditionalGridAsync(
+            string project, short year, PaginationFilter<string> request)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<AdditionalCostDto>> response =
+                await _yearCostsService.GetAdditionalPlansAsync(project, year, queryParameters);
+
+            List<AdditionalCostPlanItem> items = response.Success && response.Data != null
+                ? _mapper.Map<List<AdditionalCostPlanItem>>(response.Data)
+                : [];
+
+            PaginationModel pagination = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<AdditionalCostPlanItem>
+            {
+                GridId = "planAdditionalGrid",
+                Title = "Additional Cost Plan",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "Account",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = "/PIMS/ProjectYearCosts/LoadPlanAdditionalGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<AdditionalCostPlanItem>(null),
                 Pagination = pagination
             };
         }

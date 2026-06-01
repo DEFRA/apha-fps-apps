@@ -19,5 +19,11 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         public DataGridConfig<TestCostActualItem> TestActualsGrid { get; set; } = new();
         public DataGridConfig<StaffCostPlanItem> StaffPlansGrid { get; set; } = new();
         public DataGridConfig<StaffCostActualItem> StaffActualsGrid { get; set; } = new();
+
+        // Plan tab (lazy-loaded — all four plan grids in one panel)
+        public DataGridConfig<StaffCostPlanItem> PlanStaffGrid { get; set; } = new();
+        public DataGridConfig<TestCostPlanItem> PlanTestGrid { get; set; } = new();
+        public DataGridConfig<AnimalCostPlanItem> PlanAnimalGrid { get; set; } = new();
+        public DataGridConfig<AdditionalCostPlanItem> PlanAdditionalGrid { get; set; } = new();
     }
 }

@@ -155,9 +155,70 @@
                      id="nav-project-details" role="tabpanel" aria-labelledby="tab_nav-project-details">
                     <p class="govuk-body govuk-hint">Project Details — coming soon.</p>
                 </div>
-                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
+
+                <!-- ── Plan tab ──────────────────────────────────────────────────────────
+                     Lazy-loaded: grids are rendered with empty data sets.
+                     JS calls reloadGrid on first click and on filter change.          -->
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
                      id="nav-plan" role="tabpanel" aria-labelledby="tab_nav-plan">
-                    <p class="govuk-body govuk-hint">Plan — coming soon.</p>
+                    <div class="govuk-grid-row govuk-!-margin-bottom-3">
+
+                        <!-- Staff Plan (top-left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.PlanStaffGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.PlanStaffGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="planStaffGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Test Plan (top-right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.PlanTestGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.PlanTestGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="planTestGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="govuk-grid-row">
+
+                        <!-- Animal Plan (bottom-left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.PlanAnimalGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.PlanAnimalGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="planAnimalGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Cost Plan (bottom-right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.PlanAdditionalGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.PlanAdditionalGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="planAdditionalGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
                 <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
                      id="nav-staff-plan" role="tabpanel"
@@ -275,14 +336,18 @@
 
 @section Scripts {
 <script>
-    var plansGridId         = '@Model.AdditionalPlansGrid.GridId';
-    var actualsGridId       = '@Model.AdditionalActualsGrid.GridId';
-    var animalPlansGridId   = '@Model.AnimalPlansGrid.GridId';
-    var animalActualsGridId = '@Model.AnimalActualsGrid.GridId';
-    var testPlansGridId     = '@Model.TestPlansGrid.GridId';
-    var testActualsGridId   = '@Model.TestActualsGrid.GridId';
-    var staffPlansGridId    = '@Model.StaffPlansGrid.GridId';
-    var staffActualsGridId  = '@Model.StaffActualsGrid.GridId';
+    var plansGridId            = '@Model.AdditionalPlansGrid.GridId';
+    var actualsGridId          = '@Model.AdditionalActualsGrid.GridId';
+    var animalPlansGridId      = '@Model.AnimalPlansGrid.GridId';
+    var animalActualsGridId    = '@Model.AnimalActualsGrid.GridId';
+    var testPlansGridId        = '@Model.TestPlansGrid.GridId';
+    var testActualsGridId      = '@Model.TestActualsGrid.GridId';
+    var staffPlansGridId       = '@Model.StaffPlansGrid.GridId';
+    var staffActualsGridId     = '@Model.StaffActualsGrid.GridId';
+    var planStaffGridId        = '@Model.PlanStaffGrid.GridId';
+    var planTestGridId         = '@Model.PlanTestGrid.GridId';
+    var planAnimalGridId       = '@Model.PlanAnimalGrid.GridId';
+    var planAdditionalGridId   = '@Model.PlanAdditionalGrid.GridId';
 
     // ── Sidebar ──────────────────────────────────────────────────────
     function toggleSidebar() {
@@ -296,14 +361,32 @@
         };
     }
 
-    function getPlansGridManager()         { return window['gridManager_' + plansGridId]; }
-    function getActualsGridManager()       { return window['gridManager_' + actualsGridId]; }
-    function getAnimalPlansGridManager()   { return window['gridManager_' + animalPlansGridId]; }
-    function getAnimalActualsGridManager() { return window['gridManager_' + animalActualsGridId]; }
-    function getTestPlansGridManager()     { return window['gridManager_' + testPlansGridId]; }
-    function getTestActualsGridManager()   { return window['gridManager_' + testActualsGridId]; }
-    function getStaffPlansGridManager()    { return window['gridManager_' + staffPlansGridId]; }
-    function getStaffActualsGridManager()  { return window['gridManager_' + staffActualsGridId]; }
+    function getPlansGridManager()          { return window['gridManager_' + plansGridId]; }
+    function getActualsGridManager()        { return window['gridManager_' + actualsGridId]; }
+    function getAnimalPlansGridManager()    { return window['gridManager_' + animalPlansGridId]; }
+    function getAnimalActualsGridManager()  { return window['gridManager_' + animalActualsGridId]; }
+    function getTestPlansGridManager()      { return window['gridManager_' + testPlansGridId]; }
+    function getTestActualsGridManager()    { return window['gridManager_' + testActualsGridId]; }
+    function getStaffPlansGridManager()     { return window['gridManager_' + staffPlansGridId]; }
+    function getStaffActualsGridManager()   { return window['gridManager_' + staffActualsGridId]; }
+    function getPlanStaffGridManager()      { return window['gridManager_' + planStaffGridId]; }
+    function getPlanTestGridManager()       { return window['gridManager_' + planTestGridId]; }
+    function getPlanAnimalGridManager()     { return window['gridManager_' + planAnimalGridId]; }
+    function getPlanAdditionalGridManager() { return window['gridManager_' + planAdditionalGridId]; }
+
+    function refreshPlanTotals() {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) return;
+
+        $.get('/PIMS/ProjectYearCosts/GetPlanTotals', { project: project, year: year })
+            .done(function (data) {
+                document.getElementById('planStaffGridTotalDisplay').textContent      = data.staffTotal;
+                document.getElementById('planTestGridTotalDisplay').textContent       = data.testTotal;
+                document.getElementById('planAnimalGridTotalDisplay').textContent     = data.animalTotal;
+                document.getElementById('planAdditionalGridTotalDisplay').textContent = data.additionalTotal;
+            });
+    }
 
     // Server-rendered tabs — mark as loaded so filter-change reloads them
     var loadedTabs = {
@@ -365,6 +448,16 @@
             var staffActualsGm = getStaffActualsGridManager();
             if (staffPlansGm)   staffPlansGm.reloadGrid({ page: 1 });
             if (staffActualsGm) staffActualsGm.reloadGrid({ page: 1 });
+        } else if (tabId === 'nav-plan') {
+            var planStaffGm      = getPlanStaffGridManager();
+            var planTestGm       = getPlanTestGridManager();
+            var planAnimalGm     = getPlanAnimalGridManager();
+            var planAdditionalGm = getPlanAdditionalGridManager();
+            if (planStaffGm)      planStaffGm.reloadGrid({ page: 1 });
+            if (planTestGm)       planTestGm.reloadGrid({ page: 1 });
+            if (planAnimalGm)     planAnimalGm.reloadGrid({ page: 1 });
+            if (planAdditionalGm) planAdditionalGm.reloadGrid({ page: 1 });
+            refreshPlanTotals();
         }
     }
 
@@ -379,9 +472,11 @@
 
                 showPanel(panelId);
 
-                if (loadedTabs[panelId]) {
-                    refreshTabById(panelId);
+                // Mark as loaded on first visit so filter changes also refresh it
+                if (!loadedTabs[panelId]) {
+                    loadedTabs[panelId] = true;
                 }
+                refreshTabById(panelId);
             });
         });
 
