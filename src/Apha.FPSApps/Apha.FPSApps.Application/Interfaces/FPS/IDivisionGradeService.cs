@@ -12,5 +12,6 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<DivisionGradeDto>> UpdateAsync(string originalCode, DivisionGradeDto dto);
         Task<ApiResponseDto<bool>> DeleteAsync(string divisionGradeCode);
         Task<ApiResponseDto<List<string>>> GetAllGradeCodesAsync();
+        Task<ApiResponseDto<List<string>>> GetAllDivisionGradeCodesAsync();
     }
 }

@@ -45,6 +45,7 @@ namespace Apha.Common.Constants
         public const string UpdateDivisionGrade = "api/v1/DivisionGrade/{0}";
         public const string DeleteDivisionGrade = "api/v1/DivisionGrade/{0}";
         public const string GetAllDivisionGrades = "api/v1/DivisionGrade/grades";
+        public const string GetAllDivisionGradeCodes = "api/v1/DivisionGrade/divisiongrades";
 
         // Program
         public const string GetAllPrograms = "api/v1/program";
@@ -122,6 +123,14 @@ namespace Apha.Common.Constants
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";
+        public const string GetPagedPcGrades = "api/v1/pcgrades/paged";
+        public const string GetPcGradeById = "api/v1/pcgrades/{0}";
+        public const string CreatePcGrade = "api/v1/pcgrades";
+        public const string UpdatePcGrade = "api/v1/pcgrades/{0}";
+        public const string DeletePcGrade = "api/v1/pcgrades/{0}";
+        public const string GetPcGradeDivisionGrades = "api/v1/pcgrades/divisiongrades";
+        public const string GetPcGradeGradeCodes = "api/v1/pcgrades/gradecodes";
+        public const string GetPcGradeProfitCentres = "api/v1/pcgrades/profitcentres";
 
         // Resource Set-Up — WG Grades
         public const string GetWgGrades = "api/v1/wggrades?pcGrade={0}";

@@ -1,6 +1,6 @@
-namespace Apha.FPS.Application.Dtos
+namespace Apha.Common.Contracts.FPS
 {
-    public class ProfitCentreGradeDto
+    public class ProfitCentreGradeReq
     {
         public string PcGrade { get; set; } = null!;
         public string DivisionGrade { get; set; } = null!;
