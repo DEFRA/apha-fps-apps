@@ -114,6 +114,66 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
 
         #endregion
 
+        #region GetAllProfitCentres Tests
+
+        [Fact]
+        public async Task GetAllProfitCentres_WithValidData_ReturnsOkWithMappedList()
+        {
+            // Arrange
+            var dtos = new List<ProfitCentreDto>
+            {
+                new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One" },
+                new() { ProfitCentreId = "PC02", ProfitCentreName = "Centre Two" }
+            };
+            var mapped = new List<ProfitCentreRes>
+            {
+                new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One" },
+                new() { ProfitCentreId = "PC02", ProfitCentreName = "Centre Two" }
+            };
+
+            _serviceMock.GetAllProfitCentresAsync().Returns(dtos);
+            _mapperMock.Map<IEnumerable<ProfitCentreRes>>(dtos).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetAllProfitCentres();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().Be(mapped);
+            await _serviceMock.Received(1).GetAllProfitCentresAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProfitCentres_WithEmptyList_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            var dtos = new List<ProfitCentreDto>();
+            var mapped = new List<ProfitCentreRes>();
+
+            _serviceMock.GetAllProfitCentresAsync().Returns(dtos);
+            _mapperMock.Map<IEnumerable<ProfitCentreRes>>(dtos).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetAllProfitCentres();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().BeEquivalentTo(mapped);
+        }
+
+        [Fact]
+        public async Task GetAllProfitCentres_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.GetAllProfitCentresAsync()
+                .ThrowsAsync(new InvalidOperationException("Service failure"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetAllProfitCentres());
+        }
+
+        #endregion
+
         #region GetAllProfitCentresPagedAsync Tests
 
         [Fact]
@@ -350,5 +410,72 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
 
         #endregion
 
-            }
+        #region PatchSettings Tests
+
+        [Fact]
+        public async Task PatchSettings_WithValidRequest_ReturnsOkWithTrue()
+        {
+            // Arrange
+            var request = new UpdateProfitCentreSettingsReq
+            {
+                ProfitCentre = "PC01",
+                Timesheet = -1,
+                Outputsheet = -1,
+                TimesheetLayout = 1
+            };
+
+            _serviceMock.UpdateProfitCentreSettingsAsync("PC01", -1, -1, 1).Returns(true);
+
+            // Act
+            var result = await _controller.PatchSettings(request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+            await _serviceMock.Received(1).UpdateProfitCentreSettingsAsync("PC01", -1, -1, 1);
         }
+
+        [Fact]
+        public async Task PatchSettings_WithNullOrEmptyProfitCentre_ReturnsBadRequest()
+        {
+            // Arrange
+            var request = new UpdateProfitCentreSettingsReq { ProfitCentre = "" };
+
+            // Act
+            var result = await _controller.PatchSettings(request);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+            await _serviceMock.DidNotReceive()
+                .UpdateProfitCentreSettingsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<short>());
+        }
+
+        [Fact]
+        public async Task PatchSettings_WithWhitespaceProfitCentre_ReturnsBadRequest()
+        {
+            // Arrange
+            var request = new UpdateProfitCentreSettingsReq { ProfitCentre = "   " };
+
+            // Act
+            var result = await _controller.PatchSettings(request);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task PatchSettings_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var request = new UpdateProfitCentreSettingsReq { ProfitCentre = "PC01" };
+            _serviceMock.UpdateProfitCentreSettingsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<short>())
+                .ThrowsAsync(new InvalidOperationException("Service failure"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.PatchSettings(request));
+        }
+
+        #endregion
+
+    }
+}

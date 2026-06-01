@@ -1,12 +1,15 @@
-﻿using Apha.PACT.Api.Filters;
+﻿using Apha.Common.Contracts.Email;
+using Apha.PACT.Api.Filters;
 using Apha.PACT.Api.Mappings;
 using Apha.PACT.Api.Middleware;
 using Apha.PACT.Application.Mappings;
 using Apha.PACT.DataAccess.Data;
 using Asp.Versioning;
+using Azure.Identity;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Graph;
 using Microsoft.OpenApi;
 using System.Globalization;
 
@@ -14,6 +17,8 @@ namespace Apha.PACT.Api.Extensions
 {
     public static class ProgramExtension
     {
+        private static readonly string[] GraphScopes = ["https://graph.microsoft.com/.default"];
+
         public static void ConfigureServices(this WebApplicationBuilder builder)
         {
             var services = builder.Services;
@@ -30,7 +35,7 @@ namespace Apha.PACT.Api.Extensions
                                  maxRetryDelay: TimeSpan.FromSeconds(10),
                                  errorCodesToAdd: null);
                              // Structural safeguard: avoid hanging commands under load
-                             npgsqlOptions.CommandTimeout(30);                             
+                             npgsqlOptions.CommandTimeout(30);
                          }
                         ), ServiceLifetime.Scoped);
 
@@ -75,7 +80,33 @@ namespace Apha.PACT.Api.Extensions
                 options.SubstituteApiVersionInUrl = true;
             });
 
+            // MS Graph Email
+            var graphSettings = configuration.GetRequiredSection("GraphEmailSettings").Get<GraphEmailSettings>()
+                ?? throw new InvalidOperationException("GraphEmailSettings configuration section is missing or could not be bound.");
+
+            if (string.IsNullOrWhiteSpace(graphSettings.TenantId))
+                throw new InvalidOperationException("GraphEmailSettings:TenantId is required but was not configured.");
+            if (string.IsNullOrWhiteSpace(graphSettings.ClientId))
+                throw new InvalidOperationException("GraphEmailSettings:ClientId is required but was not configured.");
+            if (string.IsNullOrWhiteSpace(graphSettings.ClientSecret))
+                throw new InvalidOperationException("GraphEmailSettings:ClientSecret is required but was not configured.");
+
+            services.AddSingleton<GraphServiceClient>(_ =>
+            {
+                var credential = new ClientSecretCredential(
+                    graphSettings.TenantId,
+                    graphSettings.ClientId,
+                    graphSettings.ClientSecret);
+
+                return new GraphServiceClient(
+                    credential,
+                    GraphScopes);
+            });
+
             // Application services
+            services.AddOptions<WorkGroupReportEmailSettings>()
+                .Bind(configuration.GetRequiredSection(WorkGroupReportEmailSettings.SectionName))
+                .ValidateOnStart();
             services.AddApplicationServices();
 
             // Authentication
@@ -130,7 +161,7 @@ namespace Apha.PACT.Api.Extensions
                 {
                     options.SwaggerEndpoint("/swagger/v1/swagger.json", "PACT API v1");
                 });
-            }            
+            }
 
             app.UseHsts();
             app.UseHttpsRedirection();

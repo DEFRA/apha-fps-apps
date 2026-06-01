@@ -24,6 +24,12 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<List<ProfitCentreDto>>(result);
         }
 
+        public async Task<IEnumerable<ProfitCentreDto>> GetAllProfitCentresAsync()
+        {
+            var views = await _repository.GetAllProfitCentresAsync();
+            return _mapper.Map<IEnumerable<ProfitCentreDto>>(views);
+        }
+
         public async Task<PaginatedResult<ProfitCentreDto>> GetAllProfitCentresPagedAsync(QueryParameters<string> query)
         {
             ArgumentNullException.ThrowIfNull(query);
@@ -79,6 +85,11 @@ namespace Apha.FPS.Application.Services
                 throw new InvalidOperationException("Cannot delete profit centre: it is referenced by work group records.");
 
             return await _repository.DeleteProfitCentreAsync(profitCentreId);
+        }
+
+        public async Task<bool> UpdateProfitCentreSettingsAsync(string profitCentre, int timesheet, int outputsheet, short timesheetlayout)
+        {
+            return await _repository.UpdateProfitCentreSettingsAsync(profitCentre, timesheet, outputsheet, timesheetlayout);
         }
     }
 }

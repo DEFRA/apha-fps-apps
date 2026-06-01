@@ -1,4 +1,5 @@
-﻿using Apha.Common.Utilities.ExcelExport;
+﻿using Apha.Common.Utilities.Email;
+using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.PACT.Api.Context;
 using Apha.PACT.Application.Interfaces;
@@ -23,8 +24,9 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IJobCodeService, JobCodeService>();
             services.AddScoped<ITimeCodeValidService, TimeCodeValidService>();
-            services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<IWorkGroupService, WorkGroupService>();            
             services.AddScoped<IMonthService, MonthService>();
+            services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
@@ -32,6 +34,9 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
+            services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();            
+            services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
+            services.AddSingleton<IGraphEmailService, GraphEmailService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
@@ -43,8 +48,9 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
             services.AddScoped<IJobCodeRepository, JobCodeRepository>();
             services.AddScoped<ITimeCodeValidRepository, TimeCodeValidRepository>();
-            services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();
+            services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();            
             services.AddScoped<IMonthRepository, MonthRepository>();
+            services.AddScoped<ICalenderMonthRepository, CalenderMonthRepository>();
             services.AddScoped<IProjectInvoiceRepository, ProjectInvoiceRepository>();
             services.AddScoped<IProjectSubContractRepository, ProjectSubContractRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
