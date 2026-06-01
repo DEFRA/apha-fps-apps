@@ -1,7 +1,10 @@
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
@@ -13,27 +16,85 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
     public class RecreateSummariesLogController : Controller
     {
+        private readonly IMapper _mapper;
         private readonly IRecreateSummariesLogService _logService;
 
-        public RecreateSummariesLogController(
-            IRecreateSummariesLogService logService)
+        /// <summary>
+        /// Initialises a new instance of <see cref="RecreateSummariesLogController"/>.
+        /// </summary>
+        /// <param name="mapper">AutoMapper instance used to map pagination filters and row collections to their corresponding view-model types.</param>
+        /// <param name="logService">Application service that retrieves recreate summaries log data from the PACT API.</param>
+        public RecreateSummariesLogController(IMapper mapper, IRecreateSummariesLogService logService)
         {
+            _mapper = mapper;
             _logService = logService;
         }
 
+        /// <summary>
+        /// Renders the Recreate Summaries Log page.
+        /// Fetches the full recreate summaries log dataset, builds the initial data-grid
+        /// configuration with no sort applied, and returns the view.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="ViewResult"/> containing a <see cref="RecreateSummariesLogViewModel"/>
+        /// with the populated grid.
+        /// </returns>
         public async Task<IActionResult> Index()
         {
+            var query = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
             var response = await _logService.GetAllLogsAsync();
-            var viewModel = new RecreateSummariesLogViewModel
+
+            return View(new RecreateSummariesLogViewModel
             {
-                LogsGrid = BuildLogsGrid(response.Data?.ToList() ?? new List<RecreateSummariesLogDto>())
-            };
-            return View(viewModel);
+                LogsGrid = MapToGridConfig(response, sortBy: null, descending: false)
+            });
         }
 
-        private DataGridConfig<RecreateSummariesLogItem> BuildLogsGrid(List<RecreateSummariesLogDto> logs)
+        /// <summary>
+        /// Handles partial-page grid refreshes triggered by the client-side data-grid component
+        /// (<c>_DataGrid.cshtml</c>) whenever the user pages, sorts, or filters the grid.
+        /// Maps the incoming pagination/filter/sort request to query parameters, fetches an updated
+        /// page of recreate summaries log data, and returns only the <c>_DataGrid</c> partial
+        /// view so the page can be updated in-place without a full reload.
+        /// </summary>
+        /// <param name="request">Pagination, sort, and column-filter parameters submitted by the grid via AJAX POST.</param>
+        /// <returns>
+        /// A <see cref="PartialViewResult"/> rendering the <c>_DataGrid</c> partial with an updated
+        /// <see cref="DataGridConfig{RecreateSummariesLogItem}"/> model.
+        /// </returns>
+        [HttpPost]
+        public async Task<IActionResult> LoadRecreateSummariesLogGrid(PaginationFilter<string> request)
         {
-            var items = logs.Select(log => new RecreateSummariesLogItem
+            var query = _mapper.Map<QueryParameters<string>>(request);
+            var response = await _logService.GetAllLogsAsync();
+
+            return PartialView("_DataGrid", MapToGridConfig(response, request.SortBy, request.Descending));
+        }
+
+        /// <summary>
+        /// Builds a <see cref="DataGridConfig{RecreateSummariesLogItem}"/> from the service response.
+        /// When the response indicates failure or contains no data the default empty grid configuration
+        /// is returned immediately. On success, the response rows are mapped to view-model rows and the
+        /// pagination model is populated from the response metadata together with the supplied sort state.
+        /// </summary>
+        /// <param name="response">The API response containing log rows and pagination metadata.</param>
+        /// <param name="sortBy">The column name to sort by, or <see langword="null"/> if no sort is active.</param>
+        /// <param name="descending"><see langword="true"/> for a descending sort; <see langword="false"/> for ascending.</param>
+        /// <returns>
+        /// A fully populated <see cref="DataGridConfig{RecreateSummariesLogItem}"/>, or a default
+        /// empty configuration when <paramref name="response"/> is unsuccessful or has no data.
+        /// </returns>
+        private DataGridConfig<RecreateSummariesLogItem> MapToGridConfig(
+            ApiResponseDto<List<RecreateSummariesLogDto>> response,
+            string? sortBy,
+            bool descending)
+        {
+            var grid = RecreateSummariesLogGridConfig();
+
+            if (!response.Success || response.Data is null)
+                return grid;
+
+            grid.Data = response.Data.Select(log => new RecreateSummariesLogItem
             {
                 Id = log.Id,
                 DateDone = log.DateDone?.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -42,25 +103,39 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 Period = log.Period
             }).ToList();
 
-            var pagination = new PaginationModel
+            grid.Pagination = new PaginationModel
             {
+                TotalRecords = response.Data.Count,
                 PageNumber = 1,
                 PageSize = 20,
-                TotalRecords = items.Count
+                SortColumn = sortBy,
+                SortDirection = descending
             };
 
-            return new DataGridConfig<RecreateSummariesLogItem>
-            {
-                GridId = "releaseLogsGrid",
-                Title = string.Empty,
-                Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<RecreateSummariesLogItem>(),
-                Pagination = pagination,
-                AllowAdd = false,
-                AllowEdit = false,
-                AllowDelete = false,
-                AllowExport = false
-            };
+            return grid;
         }
+
+        /// <summary>
+        /// Returns the static <see cref="DataGridConfig{RecreateSummariesLogItem}"/> skeleton shared by
+        /// both <see cref="Index"/> and <see cref="LoadRecreateSummariesLogGrid"/>.
+        /// The configuration defines the grid identity, bound AJAX URL, column definitions,
+        /// and interaction flags; it intentionally contains no data or pagination state so
+        /// callers can populate those fields independently after calling this method.
+        /// </summary>
+        /// <returns>A new <see cref="DataGridConfig{RecreateSummariesLogItem}"/> with static configuration applied.</returns>
+        private static DataGridConfig<RecreateSummariesLogItem> RecreateSummariesLogGridConfig() => new()
+        {
+            GridId = "releaseLogsGrid",
+            Title = string.Empty,
+            BindGridUrl = "/PACT/RecreateSummariesLog/LoadRecreateSummariesLogGrid",
+            ShowCheckboxColumn = false,
+            AllowAdd = false,
+            AllowEdit = false,
+            AllowDelete = false,
+            AllowExport = false,
+            AllowRowSelection = false,
+            ShowPagination = true,
+            Columns = GridDataProvider.GetColumnsDefination<RecreateSummariesLogItem>()
+        };
     }
 }
