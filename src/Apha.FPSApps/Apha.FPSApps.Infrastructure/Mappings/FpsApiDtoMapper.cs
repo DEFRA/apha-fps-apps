@@ -48,7 +48,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();
 
             // FPS Animal Master
-            CreateMap<AnimalDto, AnimalMasterReq>().ReverseMap();
+            CreateMap<AnimalDto, AnimalReq>().ReverseMap();
 
             // YEar Master
             CreateMap<YearMasterDto, YearMasterRes>().ReverseMap();

@@ -56,7 +56,7 @@ namespace Apha.FPS.Api.Controllers
 
         /// <summary>Creates a new animal master record.</summary>
         [HttpPost]
-        public async Task<ActionResult<AnimalRes>> CreateAnimal([FromBody] AnimalMasterReq req)
+        public async Task<ActionResult<AnimalRes>> CreateAnimal([FromBody] AnimalReq req)
         {
             var dto = _mapper.Map<AnimalDto>(req);
             var added = await _animalService.AddAnimalAsync(dto);
@@ -65,7 +65,7 @@ namespace Apha.FPS.Api.Controllers
 
         /// <summary>Updates an existing animal master record.</summary>
         [HttpPut]
-        public async Task<ActionResult<AnimalRes>> UpdateAnimal([FromBody] AnimalMasterReq req)
+        public async Task<ActionResult<AnimalRes>> UpdateAnimal([FromBody] AnimalReq req)
         {
             var dto = _mapper.Map<AnimalDto>(req);
             var updated = await _animalService.UpdateAnimalAsync(dto);

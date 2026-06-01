@@ -1,6 +1,6 @@
 namespace Apha.Common.Contracts.FPS
 {
-    public class AnimalMasterReq
+    public class AnimalReq
     {
         public string AnimalType { get; set; } = null!;
 

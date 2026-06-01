@@ -29,7 +29,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
         private static AnimalDto BuildDto(string animalType = "CATTLE") =>
             new() { AnimalType = animalType, Species = "Bovine", SecurityLevel = "L1", DailyRate = 50m };
 
-        private static AnimalMasterReq BuildReq(string animalType = "CATTLE") =>
+        private static AnimalReq BuildReq(string animalType = "CATTLE") =>
             new() { AnimalType = animalType, Species = "Bovine", SecurityLevel = "L1", DailyRate = 50m };
 
         private static AnimalRes BuildRes(string animalType = "CATTLE") =>
