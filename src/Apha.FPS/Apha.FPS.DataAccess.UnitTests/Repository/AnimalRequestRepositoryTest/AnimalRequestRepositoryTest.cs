@@ -8,7 +8,7 @@ using Moq;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
 {
-    public class AnimalRepositoryTest
+    public class AnimalRequestRepositoryTest
     {
         private const int DefaultFpsYear = 2024;
         private const int DefaultUserId  = 42;
