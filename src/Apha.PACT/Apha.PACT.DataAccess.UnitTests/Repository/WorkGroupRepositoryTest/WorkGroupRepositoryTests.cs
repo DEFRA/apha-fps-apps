@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+﻿    using Apha.Common.Helpers.Repository;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -2073,6 +2073,1109 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var repo = CreateTimeUsageRepository(rows);
 
             var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
+
+            Assert.Equal(totalRows, result.Count);
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // GetWorkGroupsByProfitCentreAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        private static WorkGroupRepository CreateWorkGroupsByPcRepository(
+            IEnumerable<WorkGroup> workGroups,
+            int fpsYear = 2024)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(workGroups);
+            mockContext.Setup(x => x.WorkGroups).Returns(mockSet.Object);
+
+            return new WorkGroupRepository(mockContext.Object);
+        }
+
+        #region GetWorkGroupsByProfitCentreAsync
+
+        // NOTE: GetWorkGroupsByProfitCentreAsync uses EF.Property<T> for dynamic sorting.
+        // EF.Property<T> is only valid inside a real EF provider query and throws
+        // InvalidOperationException when evaluated by LINQ-to-Objects (mock DbSet).
+        // Only the empty-result case (WHERE filters out all rows before sort) is testable
+        // under the mock-only constraint. All other cases require an integration test.
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_NoMatchingProfitCentre_ReturnsEmpty()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC01", FpsYear = 2024 }
+            };
+            var repo = CreateWorkGroupsByPcRepository(workGroups);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC_MISSING");
+
+            Assert.Empty(result.Data);
+        }
+
+        // ────────────────────────────────────────────────────────────────────
+        // ApplyWorkGroupFilter (private) — exercised via GetWorkGroupsByProfitCentreAsync.
+        // EF.Property<T> used in the sort step throws on LINQ-to-Objects when rows exist,
+        // so each test ensures the filter reduces the result to zero rows before sorting.
+        // ────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_NullFilter_ReturnsEmpty()
+        {
+            var repo  = CreateWorkGroupsByPcRepository([]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_EmptyJsonFilter_ReturnsEmpty()
+        {
+            var repo  = CreateWorkGroupsByPcRepository([]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{}" };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_NullDeserializedFilter_ReturnsEmpty()
+        {
+            var repo  = CreateWorkGroupsByPcRepository([]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "null" };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FilterWithBlankWorkGroupName_IsIgnored()
+        {
+            var repo  = CreateWorkGroupsByPcRepository([]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"WorkGroupName\":\"   \"}"
+            };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FilterWithBlankEmailRecipient_IsIgnored()
+        {
+            var repo  = CreateWorkGroupsByPcRepository([]);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"EmailRecipient\":\"   \"}"
+            };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FilterByWorkGroupName_NoMatch_ReturnsEmpty()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "Alpha", ProfitCentre = "PC1", FpsYear = 2024 }
+            };
+            var repo  = CreateWorkGroupsByPcRepository(workGroups);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"WorkGroupName\":\"NOMATCH\"}"
+            };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FilterByEmailRecipient_NoMatch_ReturnsEmpty()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "Alpha", ProfitCentre = "PC1", FpsYear = 2024, EmailRecipient = "test@example.com" }
+            };
+            var repo  = CreateWorkGroupsByPcRepository(workGroups);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"EmailRecipient\":\"NOMATCH\"}"
+            };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FilterByEmailRecipient_NullRecipient_ReturnsEmpty()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "Alpha", ProfitCentre = "PC1", FpsYear = 2024, EmailRecipient = null }
+            };
+            var repo  = CreateWorkGroupsByPcRepository(workGroups);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"EmailRecipient\":\"test\"}"
+            };
+
+            var result = await repo.GetWorkGroupsByProfitCentreAsync(query, "PC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // SetSendEmailForProfitCentreWorkGroupsAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        private static WorkGroupRepository CreateSendEmailRepository(
+            IEnumerable<WorkGroup> workGroups,
+            IEnumerable<ProfitCentre> profitCentres,
+            int fpsYear = 2024)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            var wgSet = RepositoryTestHelper.CreateMockDbSet(workGroups);
+            var pcSet = RepositoryTestHelper.CreateMockDbSet(profitCentres);
+
+            mockContext.Setup(x => x.WorkGroups).Returns(wgSet.Object);
+            mockContext.Setup(x => x.ProfitCentres).Returns(pcSet.Object);
+
+            return new WorkGroupRepository(mockContext.Object);
+        }
+
+        #region SetSendEmailForProfitCentreWorkGroupsAsync
+
+        // NOTE: SetSendEmailForProfitCentreWorkGroupsAsync uses ExecuteUpdateAsync (EF Core bulk update),
+        // which is not supported by LINQ-to-Objects mock IQueryable. Integration tests with a real
+        // EF provider are required to cover this method.
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // SetSendEmailForAllWorkGroupsAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        #region SetSendEmailForAllWorkGroupsAsync
+
+        // NOTE: SetSendEmailForAllWorkGroupsAsync uses ExecuteUpdateAsync (EF Core bulk update),
+        // which is not supported by LINQ-to-Objects mock IQueryable. Integration tests with a real
+        // EF provider are required to cover this method.
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // UpdateWorkGroupEmailAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        #region UpdateWorkGroupEmailAsync
+
+        // NOTE: UpdateWorkGroupEmailAsync uses ExecuteUpdateAsync (EF Core bulk update),
+        // which is not supported by LINQ-to-Objects mock IQueryable. Integration tests with a real
+        // EF provider are required to cover this method.
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // GetProfitCentreAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        private static WorkGroupRepository CreateProfitCentreViewRepository(
+            IEnumerable<PactProfitCentreView>? profitCentreViews = null,
+            IEnumerable<WorkGroup>? workGroups = null,
+            IEnumerable<TimeCodeValid>? timeCodeValids = null,
+            IEnumerable<PactWorkGroupGradeView>? workGroupGradeViews = null,
+            IEnumerable<WorkGroupStaffView>? workGroupStaffViews = null,
+            IEnumerable<JobCode>? jobCodes = null,
+            IEnumerable<TestorProduct>? testorProducts = null,
+            IEnumerable<TestCapability>? testCapabilities = null,
+            IEnumerable<TestRequirement>? testRequirements = null)
+        {
+            var fpsYearContext = Substitute.For<IFpsRequestContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsYearContext);
+
+            mockContext.Setup(x => x.PactProfitCentreViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(profitCentreViews ?? []).Object);
+            mockContext.Setup(x => x.WorkGroups)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(workGroups ?? []).Object);
+            mockContext.Setup(x => x.TimeCodeValids)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(timeCodeValids ?? []).Object);
+            mockContext.Setup(x => x.PactWorkGroupGradeViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(workGroupGradeViews ?? []).Object);
+            mockContext.Setup(x => x.PactStaffViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(workGroupStaffViews ?? []).Object);
+            mockContext.Setup(x => x.JobCodes)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(jobCodes ?? []).Object);
+            mockContext.Setup(x => x.TestorProducts)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(testorProducts ?? []).Object);
+            mockContext.Setup(x => x.TestCapabilities)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(testCapabilities ?? []).Object);
+            mockContext.Setup(x => x.TestRequirements)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(testRequirements ?? []).Object);
+
+            return new WorkGroupRepository(mockContext.Object);
+        }
+
+        #region GetProfitCentreAsync
+
+        [Fact]
+        public async Task GetProfitCentreAsync_MatchingProfitCentre_ReturnsEntity()
+        {
+            var views = new List<PactProfitCentreView>
+            {
+                new() { ProfitCentre = "PC1", ProfitCentreName = "Centre One" },
+                new() { ProfitCentre = "PC2", ProfitCentreName = "Centre Two" }
+            };
+            var repo = CreateProfitCentreViewRepository(profitCentreViews: views);
+
+            var result = await repo.GetProfitCentreAsync("PC1");
+
+            Assert.NotNull(result);
+            Assert.Equal("PC1", result.ProfitCentre);
+            Assert.Equal("Centre One", result.ProfitCentreName);
+        }
+
+        [Fact]
+        public async Task GetProfitCentreAsync_NoMatchingProfitCentre_ReturnsNull()
+        {
+            var views = new List<PactProfitCentreView>
+            {
+                new() { ProfitCentre = "PC1" }
+            };
+            var repo = CreateProfitCentreViewRepository(profitCentreViews: views);
+
+            var result = await repo.GetProfitCentreAsync("MISSING");
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetProfitCentreAsync_EmptyData_ReturnsNull()
+        {
+            var repo = CreateProfitCentreViewRepository(profitCentreViews: []);
+
+            var result = await repo.GetProfitCentreAsync("PC1");
+
+            Assert.Null(result);
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // GetWorkGroupsForEmailAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        #region GetWorkGroupsForEmailAsync
+
+        [Fact]
+        public async Task GetWorkGroupsForEmailAsync_FiltersBySendEmailAndProfitCentre_ReturnsMatchingOrderedList()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "ZWG", ProfitCentre = "PC1", SendEmail = 1 },
+                new() { WorkGroupName = "AWG", ProfitCentre = "PC1", SendEmail = 1 },
+                new() { WorkGroupName = "MWG", ProfitCentre = "PC1", SendEmail = 0 },
+                new() { WorkGroupName = "BWG", ProfitCentre = "PC2", SendEmail = 1 }
+            };
+            var repo = CreateProfitCentreViewRepository(workGroups: workGroups);
+
+            var result = (await repo.GetWorkGroupsForEmailAsync("PC1")).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal("AWG", result[0].WorkGroupName);
+            Assert.Equal("ZWG", result[1].WorkGroupName);
+            Assert.All(result, wg => Assert.Equal("PC1", wg.ProfitCentre));
+            Assert.All(result, wg => Assert.Equal((short)1, wg.SendEmail));
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsForEmailAsync_NoSendEmailWorkGroups_ReturnsEmptyList()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1", SendEmail = 0 },
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC1", SendEmail = 0 }
+            };
+            var repo = CreateProfitCentreViewRepository(workGroups: workGroups);
+
+            var result = await repo.GetWorkGroupsForEmailAsync("PC1");
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsForEmailAsync_NoProfitCentreMatch_ReturnsEmptyList()
+        {
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC2", SendEmail = 1 }
+            };
+            var repo = CreateProfitCentreViewRepository(workGroups: workGroups);
+
+            var result = await repo.GetWorkGroupsForEmailAsync("PC1");
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsForEmailAsync_EmptyData_ReturnsEmptyList()
+        {
+            var repo = CreateProfitCentreViewRepository(workGroups: []);
+
+            var result = await repo.GetWorkGroupsForEmailAsync("PC1");
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // GetTimeSheetTemplateAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        #region GetTimeSheetTemplateAsync — Layout 1 (Flat-file)
+
+        [Fact]
+        public async Task GetTimeSheetTemplateAsync_Layout1_ReturnsOneRowPerStaffTimeCodeParentProject()
+        {
+            var timeCodeValids = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", Active = true, FpsYear = 2024 }
+            };
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                new() { WorkGroup = "WG1", WgGrade = "GR1" }
+            };
+            var workGroupStaffViews = new List<WorkGroupStaffView>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                timeCodeValids: timeCodeValids,
+                workGroupGradeViews: gradeViews,
+                workGroupStaffViews: workGroupStaffViews);
+
+            var result = (await repo.GetTimeSheetTemplateAsync("WG1", 3, layout: 1)).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("Alice", result[0].StaffName);
+            Assert.Equal("TC1", result[0].TimeCode);
+            Assert.Equal("PRJ1", result[0].ParentProject);
+            Assert.Equal((short)3, result[0].Month);
+            Assert.Null(result[0].Hours);
+        }
+
+        [Fact]
+        public async Task GetTimeSheetTemplateAsync_Layout1_ExcludesInactiveTimeCodes()
+        {
+            var timeCodeValids = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", Active = true,  FpsYear = 2024 },
+                new() { TimeCode = "TC2", WorkGroup = "WG1", ParentProject = "PRJ1", Active = false, FpsYear = 2024 }
+            };
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                new() { WorkGroup = "WG1", WgGrade = "GR1" }
+            };
+            var workGroupStaffViews = new List<WorkGroupStaffView>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                timeCodeValids: timeCodeValids,
+                workGroupGradeViews: gradeViews,
+                workGroupStaffViews: workGroupStaffViews);
+
+            var result = (await repo.GetTimeSheetTemplateAsync("WG1", 3, layout: 1)).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("TC1", result[0].TimeCode);
+        }
+
+        [Fact]
+        public async Task GetTimeSheetTemplateAsync_Layout1_NoMatchingWorkGroup_ReturnsEmptyList()
+        {
+            var timeCodeValids = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG2", ParentProject = "PRJ1", Active = true, FpsYear = 2024 }
+            };
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                new() { WorkGroup = "WG2", WgGrade = "GR1" }
+            };
+            var workGroupStaffViews = new List<WorkGroupStaffView>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                timeCodeValids: timeCodeValids,
+                workGroupGradeViews: gradeViews,
+                workGroupStaffViews: workGroupStaffViews);
+
+            var result = await repo.GetTimeSheetTemplateAsync("WG1", 3, layout: 1);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetTimeSheetTemplateAsync_Layout1_MultipleStaffSameTimeCode_ReturnsRowPerStaff()
+        {
+            var timeCodeValids = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", Active = true, FpsYear = 2024 }
+            };
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                new() { WorkGroup = "WG1", WgGrade = "GR1" },
+                new() { WorkGroup = "WG1", WgGrade = "GR2" }
+            };
+            var workGroupStaffViews = new List<WorkGroupStaffView>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" },
+                new() { Name = "Bob",   WorkGroupGrade = "GR2", PersonStatus = "A" }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                timeCodeValids: timeCodeValids,
+                workGroupGradeViews: gradeViews,
+                workGroupStaffViews: workGroupStaffViews);
+
+            var result = (await repo.GetTimeSheetTemplateAsync("WG1", 3, layout: 1)).ToList();
+
+            Assert.Equal(2, result.Count);
+        }
+
+        #endregion
+
+        #region GetTimeSheetTemplateAsync — Layout 2 (Cross-tab)
+
+        [Fact]
+        public async Task GetTimeSheetTemplateAsync_Layout2_ReturnsGroupedRowPerTimeCodeParentProject()
+        {
+            var timeCodeValids = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", Active = true, FpsYear = 2024 }
+            };
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                new() { WorkGroup = "WG1", WgGrade = "GR1" }
+            };
+            var workGroupStaffViews = new List<WorkGroupStaffView>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
+            };
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", JobCodeName = "Job One", FpsYear = 2024 }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                timeCodeValids: timeCodeValids,
+                workGroupGradeViews: gradeViews,
+                workGroupStaffViews: workGroupStaffViews,
+                jobCodes: jobCodes);
+
+            var result = (await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2)).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("TC1", result[0].TimeCode);
+            Assert.Equal("PRJ1", result[0].ParentProject);
+            Assert.Equal((short)4, result[0].Month);
+            Assert.Null(result[0].Hours);
+        }
+
+        [Fact]
+        public async Task GetTimeSheetTemplateAsync_Layout2_ExcludesInactiveStaff()
+        {
+            var timeCodeValids = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", Active = true, FpsYear = 2024 }
+            };
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                new() { WorkGroup = "WG1", WgGrade = "GR1" },
+                new() { WorkGroup = "WG1", WgGrade = "GR2" }
+            };
+            var workGroupStaffViews = new List<WorkGroupStaffView>
+            {
+                new() { Name = "Alice",    WorkGroupGrade = "GR1", PersonStatus = "A" },
+                new() { Name = "Inactive", WorkGroupGrade = "GR2", PersonStatus = "I" }
+            };
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", JobCodeName = "Job One", FpsYear = 2024 }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                timeCodeValids: timeCodeValids,
+                workGroupGradeViews: gradeViews,
+                workGroupStaffViews: workGroupStaffViews,
+                jobCodes: jobCodes);
+
+            var result = (await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2)).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("Alice", result[0].StaffName);
+        }
+
+        [Fact]
+        public async Task GetTimeSheetTemplateAsync_Layout2_MultipleStaffSameTimeCode_GroupsIntoOneRowWithCommaNames()
+        {
+            var timeCodeValids = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", Active = true, FpsYear = 2024 }
+            };
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                new() { WorkGroup = "WG1", WgGrade = "GR1" },
+                new() { WorkGroup = "WG1", WgGrade = "GR2" }
+            };
+            var workGroupStaffViews = new List<WorkGroupStaffView>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" },
+                new() { Name = "Bob",   WorkGroupGrade = "GR2", PersonStatus = "A" }
+            };
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", JobCodeName = "Job One", FpsYear = 2024 }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                timeCodeValids: timeCodeValids,
+                workGroupGradeViews: gradeViews,
+                workGroupStaffViews: workGroupStaffViews,
+                jobCodes: jobCodes);
+
+            var result = (await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2)).ToList();
+
+            Assert.Single(result);
+            Assert.Contains("Alice", result[0].StaffName);
+            Assert.Contains("Bob", result[0].StaffName);
+        }
+
+        [Fact]
+        public async Task GetTimeSheetTemplateAsync_Layout2_UsesJobCodeNameWhenJobCodePresent()
+        {
+            var timeCodeValids = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", JobCode = "JC1", Active = true, FpsYear = 2024 }
+            };
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                new() { WorkGroup = "WG1", WgGrade = "GR1" }
+            };
+            var workGroupStaffViews = new List<WorkGroupStaffView>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
+            };
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", JobCodeName = "Job One", FpsYear = 2024 }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                timeCodeValids: timeCodeValids,
+                workGroupGradeViews: gradeViews,
+                workGroupStaffViews: workGroupStaffViews,
+                jobCodes: jobCodes);
+
+            var result = (await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2)).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("Job One", result[0].Description);
+        }
+
+        [Fact]
+        public async Task GetTimeSheetTemplateAsync_Layout2_UsesItemDescriptionWhenNoJobCode()
+        {
+            var timeCodeValids = new List<TimeCodeValid>
+            {
+                new() { TimeCode = "TC1", WorkGroup = "WG1", ParentProject = "PRJ1", TestCode = "TST1", Active = true, FpsYear = 2024 }
+            };
+            var gradeViews = new List<PactWorkGroupGradeView>
+            {
+                new() { WorkGroup = "WG1", WgGrade = "GR1" }
+            };
+            var workGroupStaffViews = new List<WorkGroupStaffView>
+            {
+                new() { Name = "Alice", WorkGroupGrade = "GR1", PersonStatus = "A" }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TST1", ItemDescription = "Blood Test" }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                timeCodeValids: timeCodeValids,
+                workGroupGradeViews: gradeViews,
+                workGroupStaffViews: workGroupStaffViews,
+                testorProducts: testorProducts);
+
+            var result = (await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2)).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("Blood Test", result[0].Description);
+        }
+
+        [Fact]
+        public async Task GetTimeSheetTemplateAsync_Layout2_EmptyData_ReturnsEmptyList()
+        {
+            var repo = CreateProfitCentreViewRepository();
+
+            var result = await repo.GetTimeSheetTemplateAsync("WG1", 4, layout: 2);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // GetOutputSheetTemplateAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        #region GetOutputSheetTemplateAsync
+
+        [Fact]
+        public async Task GetOutputSheetTemplateAsync_MatchingWorkGroup_ReturnsOrderedRows()
+        {
+            var testCapabilities = new List<TestCapability>
+            {
+                new() { TestCode = "B", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = 2024 },
+                new() { TestCode = "A", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = 2024 }
+            };
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { TestCode = "B", Buyer = "BuyerB", Active = 1, FpsYear = 2024 },
+                new() { TestCode = "A", Buyer = "BuyerA", Active = 1, FpsYear = 2024 }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "B", ItemDescription = "Blood Test" },
+                new() { ItemCode = "A", ItemDescription = "Anthrax Test" }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                testCapabilities: testCapabilities,
+                testRequirements: testRequirements,
+                testorProducts: testorProducts);
+
+            var result = (await repo.GetOutputSheetTemplateAsync("WG1", month: 5)).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal("A", result[0].TestCode);
+            Assert.Equal("B", result[1].TestCode);
+        }
+
+        [Fact]
+        public async Task GetOutputSheetTemplateAsync_FiltersOutInactiveTestRequirements()
+        {
+            var testCapabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = 2024 },
+                new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = 2024 }
+            };
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { TestCode = "TC1", Buyer = "B1", Active = 1, FpsYear = 2024 },
+                new() { TestCode = "TC2", Buyer = "B2", Active = 0, FpsYear = 2024 }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Test 1" },
+                new() { ItemCode = "TC2", ItemDescription = "Test 2" }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                testCapabilities: testCapabilities,
+                testRequirements: testRequirements,
+                testorProducts: testorProducts);
+
+            var result = (await repo.GetOutputSheetTemplateAsync("WG1", month: 5)).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("TC1", result[0].TestCode);
+        }
+
+        [Fact]
+        public async Task GetOutputSheetTemplateAsync_SetsMonthAndNullVolume()
+        {
+            var testCapabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = 2024 }
+            };
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { TestCode = "TC1", Buyer = "B1", Active = 1, FpsYear = 2024 }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Test 1" }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                testCapabilities: testCapabilities,
+                testRequirements: testRequirements,
+                testorProducts: testorProducts);
+
+            var result = (await repo.GetOutputSheetTemplateAsync("WG1", month: 7)).ToList();
+
+            Assert.Single(result);
+            Assert.Equal((short)7, result[0].Month);
+            Assert.Null(result[0].Volume);
+        }
+
+        [Fact]
+        public async Task GetOutputSheetTemplateAsync_NoMatchingWorkGroup_ReturnsEmptyList()
+        {
+            var testCapabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG2", PlanPortfolio = "PP1", FpsYear = 2024 }
+            };
+            var testRequirements = new List<TestRequirement>
+            {
+                new() { TestCode = "TC1", Buyer = "B1", Active = 1, FpsYear = 2024 }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Test 1" }
+            };
+            var repo = CreateProfitCentreViewRepository(
+                testCapabilities: testCapabilities,
+                testRequirements: testRequirements,
+                testorProducts: testorProducts);
+
+            var result = await repo.GetOutputSheetTemplateAsync("WG1", month: 5);
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetOutputSheetTemplateAsync_EmptyData_ReturnsEmptyList()
+        {
+            var repo = CreateProfitCentreViewRepository();
+
+            var result = await repo.GetOutputSheetTemplateAsync("WG1", month: 5);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // GetSummarisedWorkgroupTimeAsync
+        // ════════════════════════════════════════════════════════════════════
+
+        private static SummarisedWgTimeView SummarisedWgTimeRow(
+            string? workGroup     = "WG1",
+            string? profitCentre  = "PC1",
+            string? monthName     = "April",
+            string? parentProject = "PP1",
+            string? projectTitle  = "Project One",
+            double? totalTime     = 10.0,
+            double? totalCost     = 500.0,
+            int?    fpsYear       = 2024) =>
+            new()
+            {
+                WorkGroup     = workGroup,
+                ProfitCentre  = profitCentre,
+                MonthName     = monthName,
+                ParentProject = parentProject,
+                ProjectTitle  = projectTitle,
+                TotalTime     = totalTime,
+                TotalCost     = totalCost,
+                FpsYear       = fpsYear
+            };
+
+        private static WorkGroupRepository CreateSummarisedWgTimeRepository(
+            IEnumerable<SummarisedWgTimeView> rows)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            var mockContext       = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            var rowSet       = RepositoryTestHelper.CreateMockDbSet(rows);
+            var workGroupSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroup>());
+
+            mockContext.Setup(x => x.SummarisedWgTimeViews).Returns(rowSet.Object);
+            mockContext.Setup(x => x.WorkGroups).Returns(workGroupSet.Object);
+
+            return new WorkGroupRepository(mockContext.Object);
+        }
+
+        #region GetSummarisedWorkgroupTimeAsync — basic retrieval
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_MatchingWorkGroup_ReturnsRows()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", monthName: "April"),
+                SummarisedWgTimeRow(workGroup: "WG1", monthName: "May")
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, r => Assert.Equal("WG1", r.WorkGroup));
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NoMatchingWorkGroup_ReturnsEmpty()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1")
+            ]);
+
+            var result = await repo.GetSummarisedWorkgroupTimeAsync("WG_MISSING");
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_EmptyView_ReturnsEmpty()
+        {
+            var repo = CreateSummarisedWgTimeRepository([]);
+
+            var result = await repo.GetSummarisedWorkgroupTimeAsync("WG1");
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_SingleRow_AllFieldsMappedCorrectly()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(
+                    workGroup:     "WG1",
+                    profitCentre:  "PC1",
+                    monthName:     "April",
+                    parentProject: "PROJ_A",
+                    projectTitle:  "Alpha Project",
+                    totalTime:     8.5,
+                    totalCost:     425.0,
+                    fpsYear:       2024)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            var row = result[0];
+            Assert.Equal("WG1",           row.WorkGroup);
+            Assert.Equal("PC1",           row.ProfitCentre);
+            Assert.Equal("April",         row.MonthName);
+            Assert.Equal("PROJ_A",        row.ParentProject);
+            Assert.Equal("Alpha Project", row.ProjectTitle);
+            Assert.Equal(8.5,             row.TotalTime);
+            Assert.Equal(425.0,           row.TotalCost);
+            Assert.Equal(2024,            row.FpsYear);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_MultipleWorkGroups_ReturnsOnlyMatchingWorkGroup()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP1"),
+                SummarisedWgTimeRow(workGroup: "WG2", parentProject: "PP2"),
+                SummarisedWgTimeRow(workGroup: "WG3", parentProject: "PP3")
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG2")).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("WG2", result[0].WorkGroup);
+            Assert.Equal("PP2", result[0].ParentProject);
+        }
+
+        #endregion
+
+        #region GetSummarisedWorkgroupTimeAsync — nullable fields
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullTotalTime_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", totalTime: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].TotalTime);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullTotalCost_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", totalCost: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].TotalCost);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullProfitCentre_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", profitCentre: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullProjectTitle_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", projectTitle: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].ProjectTitle);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullMonthName_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", monthName: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].MonthName);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_NullFpsYear_ReturnedAsNull()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", fpsYear: null)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Null(result[0].FpsYear);
+        }
+
+        #endregion
+
+        #region GetSummarisedWorkgroupTimeAsync — multiple rows
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_AllTwelveMonths_ReturnsAllRows()
+        {
+            var months = new[] { "April", "May", "June", "July", "August", "September",
+                                 "October", "November", "December", "January", "February", "March" };
+            var rows = months.Select(m => SummarisedWgTimeRow(workGroup: "WG1", monthName: m));
+            var repo = CreateSummarisedWgTimeRepository(rows);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Equal(12, result.Count);
+            Assert.All(result, r => Assert.Equal("WG1", r.WorkGroup));
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_MultipleParentProjects_ReturnsAllRows()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP_A", monthName: "April"),
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP_B", monthName: "April"),
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP_C", monthName: "April")
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Equal(3, result.Count);
+            Assert.Contains(result, r => r.ParentProject == "PP_A");
+            Assert.Contains(result, r => r.ParentProject == "PP_B");
+            Assert.Contains(result, r => r.ParentProject == "PP_C");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_ZeroTotalTimeAndCost_ReturnedCorrectly()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", totalTime: 0.0, totalCost: 0.0)
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Single(result);
+            Assert.Equal(0.0, result[0].TotalTime);
+            Assert.Equal(0.0, result[0].TotalCost);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_MixedWorkGroups_FiltersCorrectly()
+        {
+            var repo = CreateSummarisedWgTimeRepository(
+            [
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP1"),
+                SummarisedWgTimeRow(workGroup: "WG1", parentProject: "PP2"),
+                SummarisedWgTimeRow(workGroup: "WG2", parentProject: "PP3"),
+                SummarisedWgTimeRow(workGroup: "WG3", parentProject: "PP4")
+            ]);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, r => Assert.Equal("WG1", r.WorkGroup));
+            Assert.Contains(result, r => r.ParentProject == "PP1");
+            Assert.Contains(result, r => r.ParentProject == "PP2");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeAsync_LargeDataset_ReturnsAllMatchingRows()
+        {
+            const int totalRows = 100;
+            var rows = Enumerable.Range(1, totalRows)
+                .Select(i => SummarisedWgTimeRow(workGroup: "WG1", parentProject: $"PP{i}"));
+            var repo = CreateSummarisedWgTimeRepository(rows);
+
+            var result = (await repo.GetSummarisedWorkgroupTimeAsync("WG1")).ToList();
 
             Assert.Equal(totalRows, result.Count);
         }

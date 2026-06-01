@@ -66,18 +66,18 @@ namespace Apha.PACT.Application.Services
             allRows = ApplySortToWgStaffTimeRows(allRows, query.SortBy, query.Descending);
 
             // Paginate rows after summary is computed
-            var page     = Math.Max(1, query.Page);
+            var page = Math.Max(1, query.Page);
             var pageSize = Math.Max(1, query.PageSize);
             var totalRecords = allRows.Count;
-            var totalPages   = (int)Math.Ceiling(totalRecords / (double)pageSize);
-            var pagedRows    = allRows
+            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var pagedRows = allRows
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
             return new WgSummarisedStaffTimeUsageDto
             {
-                Rows    = pagedRows,
+                Rows = pagedRows,
                 Summary = summary,
                 HrsPaid = hrsPaid,
                 JobTitleLookup = entries
@@ -85,16 +85,16 @@ namespace Apha.PACT.Application.Services
                     .DistinctBy(r => r.JobCode)
                     .Select(r => new JobTitleLookupItem
                     {
-                        JobCode  = r.JobCode!,
+                        JobCode = r.JobCode!,
                         JobTitle = string.IsNullOrWhiteSpace(r.JobTitle) ? string.Empty : r.JobTitle
                     })
                     .ToList(),
                 Pagination = new PaginationDto
                 {
-                    PageNumber   = page,
-                    PageSize     = pageSize,
+                    PageNumber = page,
+                    PageSize = pageSize,
                     TotalRecords = totalRecords,
-                    TotalPages   = totalPages
+                    TotalPages = totalPages
                 }
             };
         }
@@ -144,6 +144,29 @@ namespace Apha.PACT.Application.Services
                     })
                     .ToList()
             };
+        }
+
+        public async Task<PaginatedResult<WorkGroupDto>> GetWorkGroupsByProfitCentreAsync(
+            QueryParameters<string> query, string profitCentre)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetWorkGroupsByProfitCentreAsync(parameters, profitCentre);
+            return _mapper.Map<PaginatedResult<WorkGroupDto>>(pagedData);
+        }
+
+        public async Task<bool> SetSendEmailForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
+        {
+            return await _repository.SetSendEmailForProfitCentreWorkGroupsAsync(profitCentre, flag);
+        }
+
+        public async Task<bool> SetSendEmailForAllWorkGroupsAsync(short flag)
+        {
+            return await _repository.SetSendEmailForAllWorkGroupsAsync(flag);
+        }
+
+        public async Task<bool> UpdateWorkGroupEmailAsync(string workGroupName, short sendEmail, string? emailRecipient)
+        {
+            return await _repository.UpdateWorkGroupEmailAsync(workGroupName, sendEmail, emailRecipient);
         }
 
         private static List<WgSummarisedStaffTimeUsageRowDto> BuildRows(
@@ -291,7 +314,6 @@ namespace Apha.PACT.Application.Services
                 throw new BusinessValidationErrorException(errors);
         }
 
-
         private static List<SummarisedWgTimeRowDto> ApplySortToWgSummarisedTimeRows(
             List<SummarisedWgTimeRowDto> rows,
             string? sortBy,
@@ -303,20 +325,20 @@ namespace Apha.PACT.Application.Services
             Func<SummarisedWgTimeRowDto, object> keySelector = sortBy switch
             {
                 nameof(SummarisedWgTimeRowDto.ParentProject) => r => (object)(r.ParentProject ?? string.Empty),
-                nameof(SummarisedWgTimeRowDto.April)         => r => r.April,
-                nameof(SummarisedWgTimeRowDto.May)           => r => r.May,
-                nameof(SummarisedWgTimeRowDto.June)          => r => r.June,
-                nameof(SummarisedWgTimeRowDto.July)          => r => r.July,
-                nameof(SummarisedWgTimeRowDto.August)        => r => r.August,
-                nameof(SummarisedWgTimeRowDto.September)     => r => r.September,
-                nameof(SummarisedWgTimeRowDto.October)       => r => r.October,
-                nameof(SummarisedWgTimeRowDto.November)      => r => r.November,
-                nameof(SummarisedWgTimeRowDto.December)      => r => r.December,
-                nameof(SummarisedWgTimeRowDto.January)       => r => r.January,
-                nameof(SummarisedWgTimeRowDto.February)      => r => r.February,
-                nameof(SummarisedWgTimeRowDto.March)         => r => r.March,
-                nameof(SummarisedWgTimeRowDto.TotalTime)     => r => r.TotalTime,
-                nameof(SummarisedWgTimeRowDto.TotalCost)     => r => r.TotalCost,
+                nameof(SummarisedWgTimeRowDto.April) => r => r.April,
+                nameof(SummarisedWgTimeRowDto.May) => r => r.May,
+                nameof(SummarisedWgTimeRowDto.June) => r => r.June,
+                nameof(SummarisedWgTimeRowDto.July) => r => r.July,
+                nameof(SummarisedWgTimeRowDto.August) => r => r.August,
+                nameof(SummarisedWgTimeRowDto.September) => r => r.September,
+                nameof(SummarisedWgTimeRowDto.October) => r => r.October,
+                nameof(SummarisedWgTimeRowDto.November) => r => r.November,
+                nameof(SummarisedWgTimeRowDto.December) => r => r.December,
+                nameof(SummarisedWgTimeRowDto.January) => r => r.January,
+                nameof(SummarisedWgTimeRowDto.February) => r => r.February,
+                nameof(SummarisedWgTimeRowDto.March) => r => r.March,
+                nameof(SummarisedWgTimeRowDto.TotalTime) => r => r.TotalTime,
+                nameof(SummarisedWgTimeRowDto.TotalCost) => r => r.TotalCost,
                 _ => r => (object)(r.ParentProject ?? string.Empty)
             };
 
@@ -336,21 +358,21 @@ namespace Apha.PACT.Application.Services
             Func<WgSummarisedStaffTimeUsageRowDto, object> keySelector = sortBy switch
             {
                 nameof(WgSummarisedStaffTimeUsageRowDto.ParentProject) => r => (object)(r.ParentProject ?? string.Empty),
-                nameof(WgSummarisedStaffTimeUsageRowDto.JobCode)       => r => (object)(r.JobCode       ?? string.Empty),
-                nameof(WgSummarisedStaffTimeUsageRowDto.April)         => r => r.April,
-                nameof(WgSummarisedStaffTimeUsageRowDto.May)           => r => r.May,
-                nameof(WgSummarisedStaffTimeUsageRowDto.June)          => r => r.June,
-                nameof(WgSummarisedStaffTimeUsageRowDto.July)          => r => r.July,
-                nameof(WgSummarisedStaffTimeUsageRowDto.August)        => r => r.August,
-                nameof(WgSummarisedStaffTimeUsageRowDto.September)     => r => r.September,
-                nameof(WgSummarisedStaffTimeUsageRowDto.October)       => r => r.October,
-                nameof(WgSummarisedStaffTimeUsageRowDto.November)      => r => r.November,
-                nameof(WgSummarisedStaffTimeUsageRowDto.December)      => r => r.December,
-                nameof(WgSummarisedStaffTimeUsageRowDto.January)       => r => r.January,
-                nameof(WgSummarisedStaffTimeUsageRowDto.February)      => r => r.February,
-                nameof(WgSummarisedStaffTimeUsageRowDto.March)         => r => r.March,
-                nameof(WgSummarisedStaffTimeUsageRowDto.TotalTime)     => r => r.TotalTime,
-                nameof(WgSummarisedStaffTimeUsageRowDto.TotalCost)     => r => r.TotalCost,
+                nameof(WgSummarisedStaffTimeUsageRowDto.JobCode) => r => (object)(r.JobCode ?? string.Empty),
+                nameof(WgSummarisedStaffTimeUsageRowDto.April) => r => r.April,
+                nameof(WgSummarisedStaffTimeUsageRowDto.May) => r => r.May,
+                nameof(WgSummarisedStaffTimeUsageRowDto.June) => r => r.June,
+                nameof(WgSummarisedStaffTimeUsageRowDto.July) => r => r.July,
+                nameof(WgSummarisedStaffTimeUsageRowDto.August) => r => r.August,
+                nameof(WgSummarisedStaffTimeUsageRowDto.September) => r => r.September,
+                nameof(WgSummarisedStaffTimeUsageRowDto.October) => r => r.October,
+                nameof(WgSummarisedStaffTimeUsageRowDto.November) => r => r.November,
+                nameof(WgSummarisedStaffTimeUsageRowDto.December) => r => r.December,
+                nameof(WgSummarisedStaffTimeUsageRowDto.January) => r => r.January,
+                nameof(WgSummarisedStaffTimeUsageRowDto.February) => r => r.February,
+                nameof(WgSummarisedStaffTimeUsageRowDto.March) => r => r.March,
+                nameof(WgSummarisedStaffTimeUsageRowDto.TotalTime) => r => r.TotalTime,
+                nameof(WgSummarisedStaffTimeUsageRowDto.TotalCost) => r => r.TotalCost,
                 _ => r => (object)(r.ParentProject ?? string.Empty)
             };
 
@@ -414,6 +436,5 @@ namespace Apha.PACT.Application.Services
                 GrandTotalCost = rows.Sum(r => r.TotalCost)
             };
         }
-
     }
 }

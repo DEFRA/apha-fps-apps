@@ -123,6 +123,58 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
 
         #endregion
 
+        #region GetAllProfitCentresAsync Tests
+
+        [Fact]
+        public async Task GetAllProfitCentresAsync_WithSuccessResponse_ReturnsMappedEnumerable()
+        {
+            // Arrange
+            var resList = new List<ProfitCentreRes> { new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One" } };
+            var apiResponse = new ApiResponse<IEnumerable<ProfitCentreRes>> { Success = true, Data = resList };
+            var dtoList = new List<ProfitCentreDto> { new() { ProfitCentreId = "PC01", ProfitCentreName = "Centre One" } };
+            var expectedDto = ApiResponseDto<IEnumerable<ProfitCentreDto>>.SuccessResponse(dtoList);
+
+            _http.GetAsync<IEnumerable<ProfitCentreRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<IEnumerable<ProfitCentreDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetAllProfitCentresAsync();
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _http.Received(1).GetAsync<IEnumerable<ProfitCentreRes>>(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetAllProfitCentresAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<IEnumerable<ProfitCentreRes>>
+            {
+                Success = false,
+                Errors = new List<ApiError> { new() { Message = "API Error", Code = "ERROR" } }
+            };
+            var mappedResponse = new ApiResponseDto<IEnumerable<ProfitCentreDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<IEnumerable<ProfitCentreRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<IEnumerable<ProfitCentreDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetAllProfitCentresAsync();
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+        }
+
+        #endregion
+
         #region GetAllProfitCentresPagedAsync Tests
 
         [Fact]
@@ -368,5 +420,58 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
 
         #endregion
 
-            }
+        #region UpdateProfitCentreSettingsAsync Tests
+
+        [Fact]
+        public async Task UpdateProfitCentreSettingsAsync_WithSuccessResponse_ReturnsTrue()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.PatchAsync<UpdateProfitCentreSettingsReq, bool?>(Arg.Any<string>(), Arg.Any<UpdateProfitCentreSettingsReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.UpdateProfitCentreSettingsAsync("PC01", -1, -1, 1);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _http.Received(1).PatchAsync<UpdateProfitCentreSettingsReq, bool?>(
+                Arg.Any<string>(), Arg.Any<UpdateProfitCentreSettingsReq>());
         }
+
+        [Fact]
+        public async Task UpdateProfitCentreSettingsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?>
+            {
+                Success = false,
+                Errors = new List<ApiError> { new() { Message = "Update failed", Code = "ERROR" } }
+            };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PatchAsync<UpdateProfitCentreSettingsReq, bool?>(Arg.Any<string>(), Arg.Any<UpdateProfitCentreSettingsReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.UpdateProfitCentreSettingsAsync("PC01", -1, -1, 1);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+        }
+
+        #endregion
+
+    }
+}
