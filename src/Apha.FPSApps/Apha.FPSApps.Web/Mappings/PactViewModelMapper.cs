@@ -56,6 +56,9 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeItem>().ReverseMap();
             CreateMap<WgSummarisedStaffTimeUsageRowDto, WgSummarisedStaffTimeUsageRow>().ReverseMap();
             CreateMap<WgSummarisedStaffTimeUsageSummaryDto, WgSummarisedStaffTimeUsageSummary>().ReverseMap();
+
+            CreateMap<SummarisedWgTimeDto, SummarisedWgTimePivotRow>();
+            CreateMap<SummarisedWgTimeSummaryDto, SummarisedWgTimeSummary>();
         }
     }
 }

@@ -87,7 +87,6 @@ namespace Apha.PACT.Api.Controllers
 
         /// <summary>
         /// Retrieves work group time usage rows pivoted across the 12 fiscal-year months (April – March).
-        /// Mirrors the legacy MS-Access form frmCluedo1 (qryfrmCluedo1).
         /// </summary>
         /// <param name="query">Pagination and sort parameters.</param>
         /// <param name="workGroup">Work group name to filter results by.</param>
@@ -95,13 +94,33 @@ namespace Apha.PACT.Api.Controllers
         /// <c>200 OK</c> with a <see cref="WgSummarisedStaffTimeUsageRes"/> containing paged rows and
         /// pre-computed footer summary.
         /// </returns>
-        [HttpGet("timeusage")]
+        [HttpGet("staff/paged/summarisedtimeusage")]
         public async Task<IActionResult> GetWgSummarisedStaffTimeUsage(
             [FromQuery] QueryParameters<string> query,
             [FromQuery] string workGroup)
         {
             var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
             return Ok(_mapper.Map<WgSummarisedStaffTimeUsageRes>(result));
+        }
+
+        /// <summary>
+        /// Retrieves a paged and sorted list of summarised workgroup time data,
+        /// optionally filtered by work group name. Returns pivoted monthly time allocations
+        /// along with computed totals and budget information.
+        /// </summary>
+        /// <param name="query">Pagination, sorting, and column filter parameters for the request.</param>
+        /// <param name="workGroup">Optional work group name to restrict results to a specific work group.</param>
+        /// <returns>
+        /// <c>200 OK</c> with a <see cref="SummarisedWgTimePivotRes"/> containing the summarised workgroup time data
+        /// with dynamic month columns and pagination metadata.
+        /// </returns>
+        [HttpGet("paged/summarisedtimeusage")]
+        public async Task<IActionResult> GetPagedSummarisedWorkgroupTime(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string workGroup)
+        {
+            var result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
+            return Ok(_mapper.Map<SummarisedWgTimePivotRes>(result));
         }
 
         /// <summary>
