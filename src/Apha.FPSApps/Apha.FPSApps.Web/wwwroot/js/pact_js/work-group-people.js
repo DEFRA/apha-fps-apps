@@ -302,7 +302,7 @@ function initWorkGroupPeoplePage() {
         }
         $input.removeClass('govuk-input--error');
         $error.hide();
-        var url = '/PACT/WorkGroupSummarisedStaffTimeUsage?workGroup=' + encodeURIComponent(currentWorkGroup) + '&personName=' + encodeURIComponent(currentPersonName || '');
+        var url = '/PACT/WorkGroupSummarisedStaffTimeUsage?workGroup=' + encodeURIComponent(currentWorkGroup) + '&staffName=' + encodeURIComponent(currentPersonName || '');
         window.fpsNavigateTo(url);
     });
 
