@@ -6,7 +6,7 @@ using Apha.FPS.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
-namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
+namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRequestRepositoryTest
 {
     public class AnimalRequestRepositoryTest
     {

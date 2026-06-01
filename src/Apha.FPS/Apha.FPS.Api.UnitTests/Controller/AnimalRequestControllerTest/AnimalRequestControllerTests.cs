@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.FPS.Api.UnitTests.Controller.AnimalControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.AnimalRequestControllerTest
 {
     public class AnimalRequestControllerTests
     {
