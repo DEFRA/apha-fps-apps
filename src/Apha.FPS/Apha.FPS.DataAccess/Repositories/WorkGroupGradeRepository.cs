@@ -90,40 +90,12 @@ namespace Apha.FPS.DataAccess.Repositories
             return deleted > 0;
         }
 
-        public async Task<bool> HasAssociatedStaffAsync(string wgGrade, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(wgGrade))
-                return false;
-
-            return await _dbContext.WorkGroupEmployees
-                .AnyAsync(e => e.WorkGroupGrade == wgGrade, cancellationToken);
-        }
-
-        public async Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default)
-        {
-            return await _dbContext.ProfitCentreGrades
-                .AsNoTracking()
-                .Select(e => e.PcGrade)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToListAsync(cancellationToken);
-        }
-
         public async Task<List<string>> GetAllGradeCodesAsync(CancellationToken cancellationToken = default)
         {
             return await _dbContext.WorkgroupGrades
                 .AsNoTracking()
                 .Select(e => e.GradeCode)
                 .Distinct()
-                .OrderBy(x => x)
-                .ToListAsync(cancellationToken);
-        }
-
-        public async Task<List<string>> GetAllWorkgroupNamesAsync(CancellationToken cancellationToken = default)
-        {
-            return await _dbContext.Workgroups
-                .AsNoTracking()
-                .Select(e => e.WorkgroupName)
                 .OrderBy(x => x)
                 .ToListAsync(cancellationToken);
         }

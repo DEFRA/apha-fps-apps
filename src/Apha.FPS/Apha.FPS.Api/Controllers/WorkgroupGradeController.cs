@@ -108,13 +108,5 @@ namespace Apha.FPS.Api.Controllers
             return Ok(result);
         }
 
-        /// <summary>Returns all Workgroup names for dropdown population.</summary>
-        [HttpGet("workgroups")]
-        public async Task<ActionResult<List<string>>> GetAllWorkgroupNamesAsync()
-        {
-            var result = await _WorkGroupGradeService.GetAllWorkgroupNamesAsync();
-            return Ok(result);
+            }
         }
-
-    }
-}

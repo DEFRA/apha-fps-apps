@@ -15,11 +15,13 @@ namespace Apha.FPS.Application.Services
     public class WorkGroupGradeService : IWorkGroupGradeService
     {
         private readonly IWorkGroupGradeRepository _repository;
+        private readonly IWorkGroupEmployeeRepository _employeeRepository;
         private readonly IMapper _mapper;
 
-        public WorkGroupGradeService(IWorkGroupGradeRepository repository, IMapper mapper)
+        public WorkGroupGradeService(IWorkGroupGradeRepository repository, IWorkGroupEmployeeRepository employeeRepository, IMapper mapper)
         {
             _repository = repository;
+            _employeeRepository = employeeRepository;
             _mapper = mapper;
         }
 
@@ -93,7 +95,7 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
-            var hasAssociations = await _repository.HasAssociatedStaffAsync(wgGrade, cancellationToken);
+            var hasAssociations = await _employeeRepository.HasAssociatedStaffAsync(wgGrade, cancellationToken);
             if (hasAssociations)
             {
                 throw new BusinessValidationErrorException(
@@ -107,14 +109,8 @@ namespace Apha.FPS.Application.Services
             return await _repository.DeleteAsync(wgGrade, cancellationToken);
         }
 
-        public async Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default)
-            => await _repository.GetAllPcGradesAsync(cancellationToken);
-
         public async Task<List<string>> GetAllGradeCodesAsync(CancellationToken cancellationToken = default)
             => await _repository.GetAllGradeCodesAsync(cancellationToken);
-
-        public async Task<List<string>> GetAllWorkgroupNamesAsync(CancellationToken cancellationToken = default)
-            => await _repository.GetAllWorkgroupNamesAsync(cancellationToken);
 
         // Existing methods for backward compatibility
         public async Task<PaginatedResult<WorkgroupGradeDto>> GetWorkGroupGradeAsync(QueryParameters<string> query, string profitCentreGrade)

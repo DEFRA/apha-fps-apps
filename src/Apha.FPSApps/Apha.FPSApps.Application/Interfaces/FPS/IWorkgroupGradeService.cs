@@ -14,6 +14,5 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<WorkgroupGradeDto>> UpdateAsync(string wgGrade, WorkgroupGradeDto dto);
         Task<ApiResponseDto<bool>> DeleteAsync(string wgGrade);
         Task<ApiResponseDto<List<string>>> GetAllGradeCodesAsync();
-        Task<ApiResponseDto<List<string>>> GetAllWorkgroupNamesAsync();
-    }
-}
+            }
+        }
