@@ -17,13 +17,13 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
     {
         private readonly IAnimalService _serviceMock;
         private readonly IMapper _mapperMock;
-        private readonly AnimalMasterController _controller;
+        private readonly AnimalController _controller;
 
         public AnimalMasterControllerTests()
         {
             _serviceMock = Substitute.For<IAnimalService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new AnimalMasterController(_serviceMock, _mapperMock);
+            _controller = new AnimalController(_serviceMock, _mapperMock);
         }
 
         private static AnimalDto BuildDto(string animalType = "CATTLE") =>
@@ -41,14 +41,14 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
         public void Constructor_ThrowsArgumentNullException_WhenServiceIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new AnimalMasterController(null!, _mapperMock));
+                new AnimalController(null!, _mapperMock));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new AnimalMasterController(_serviceMock, null!));
+                new AnimalController(_serviceMock, null!));
         }
 
         #endregion
@@ -58,7 +58,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
         [Fact]
         public void Controller_HasAuthorizeAttribute_WithExpectedRoles()
         {
-            var attrs = typeof(AnimalMasterController)
+            var attrs = typeof(AnimalController)
                 .GetCustomAttributes(typeof(AuthorizeAttribute), true);
             Assert.NotEmpty(attrs);
             var auth = (AuthorizeAttribute)attrs[0];
@@ -68,7 +68,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
         [Fact]
         public void GetAllAnimalsAsync_HasHttpGetAttribute()
         {
-            var method = typeof(AnimalMasterController).GetMethod(nameof(AnimalMasterController.GetAllAnimalsAsync));
+            var method = typeof(AnimalController).GetMethod(nameof(AnimalController.GetAllAnimalsAsync));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpGetAttribute), true);
             Assert.NotEmpty(attr);
@@ -77,7 +77,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
         [Fact]
         public void GetAllAnimalsPagedAsync_HasHttpGetAttribute_WithPagedRoute()
         {
-            var method = typeof(AnimalMasterController).GetMethod(nameof(AnimalMasterController.GetAllAnimalsPagedAsync));
+            var method = typeof(AnimalController).GetMethod(nameof(AnimalController.GetAllAnimalsPagedAsync));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpGetAttribute), true)
                 .Cast<HttpGetAttribute>().FirstOrDefault();
@@ -88,7 +88,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
         [Fact]
         public void CreateAnimal_HasHttpPostAttribute()
         {
-            var method = typeof(AnimalMasterController).GetMethod(nameof(AnimalMasterController.CreateAnimal));
+            var method = typeof(AnimalController).GetMethod(nameof(AnimalController.CreateAnimal));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpPostAttribute), true);
             Assert.NotEmpty(attr);
@@ -97,7 +97,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
         [Fact]
         public void UpdateAnimal_HasHttpPutAttribute()
         {
-            var method = typeof(AnimalMasterController).GetMethod(nameof(AnimalMasterController.UpdateAnimal));
+            var method = typeof(AnimalController).GetMethod(nameof(AnimalController.UpdateAnimal));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpPutAttribute), true);
             Assert.NotEmpty(attr);
@@ -106,7 +106,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
         [Fact]
         public void DeleteAnimal_HasHttpDeleteAttribute()
         {
-            var method = typeof(AnimalMasterController).GetMethod(nameof(AnimalMasterController.DeleteAnimal));
+            var method = typeof(AnimalController).GetMethod(nameof(AnimalController.DeleteAnimal));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpDeleteAttribute), true);
             Assert.NotEmpty(attr);

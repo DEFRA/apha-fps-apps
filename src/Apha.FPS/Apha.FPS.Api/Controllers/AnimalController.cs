@@ -14,15 +14,15 @@ namespace Apha.FPS.Api.Controllers
     /// Controller for managing Animal Master (tblAnimals_MAP) CRUD operations.
     /// </summary>
     [Authorize(Roles = "API-FPSAdmin")]
-    [Route("api/v{version:apiVersion}/animalmaster")]
+    [Route("api/v{version:apiVersion}/animal")]
     [ApiController]
     [ApiVersion("1.0")]
-    public class AnimalMasterController : ControllerBase
+    public class AnimalController : ControllerBase
     {
         private readonly IAnimalService _animalService;
         private readonly IMapper _mapper;
 
-        public AnimalMasterController(IAnimalService animalService, IMapper mapper)
+        public AnimalController(IAnimalService animalService, IMapper mapper)
         {
             _animalService = animalService ?? throw new ArgumentNullException(nameof(animalService));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
