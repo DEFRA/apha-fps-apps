@@ -107,9 +107,6 @@ namespace Apha.FPS.Application.Services
             return await _repository.DeleteAsync(wgGrade, cancellationToken);
         }
 
-        public async Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default)
-            => await _repository.GetAllPcGradesAsync(cancellationToken);
-
         public async Task<List<string>> GetAllGradeCodesAsync(CancellationToken cancellationToken = default)
             => await _repository.GetAllGradeCodesAsync(cancellationToken);
 

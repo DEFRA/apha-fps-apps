@@ -13,5 +13,8 @@ namespace Apha.FPS.Core.Interfaces
         Task<PagedData<ProfitCentreGrade>> GetProfitCentreGradesAsync(
             PaginationParameters<string> query,
             string profitCentre);
+
+        /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
+        Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default);
     }
 }

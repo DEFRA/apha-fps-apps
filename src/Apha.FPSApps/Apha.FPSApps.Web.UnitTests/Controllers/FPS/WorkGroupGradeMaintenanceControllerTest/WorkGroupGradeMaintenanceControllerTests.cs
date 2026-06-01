@@ -16,13 +16,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
     {
         private readonly IMapper _mapper;
         private readonly IWorkGroupGradeService _wgGradeService;
+        private readonly IProfitCentreGradeService _pcGradeService;
         private readonly WorkGroupGradeMaintenanceController _controller;
 
         public WorkGroupGradeMaintenanceControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
             _wgGradeService = Substitute.For<IWorkGroupGradeService>();
-            _controller = new WorkGroupGradeMaintenanceController(_mapper, _wgGradeService);
+            _pcGradeService = Substitute.For<IProfitCentreGradeService>();
+            _controller = new WorkGroupGradeMaintenanceController(_mapper, _wgGradeService, _pcGradeService);
         }
 
         private static T? GetJsonResultValue<T>(JsonResult jsonResult)
@@ -36,13 +38,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
         [Fact]
         public void Constructor_NullMapper_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => new WorkGroupGradeMaintenanceController(null!, _wgGradeService));
+            Assert.Throws<ArgumentNullException>(() => new WorkGroupGradeMaintenanceController(null!, _wgGradeService, _pcGradeService));
         }
 
         [Fact]
         public void Constructor_NullService_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => new WorkGroupGradeMaintenanceController(_mapper, null!));
+            Assert.Throws<ArgumentNullException>(() => new WorkGroupGradeMaintenanceController(_mapper, null!, _pcGradeService));
         }
 
         #endregion
@@ -453,7 +455,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
         public async Task GetPcGrades_WithSuccessResponse_ReturnsSuccessJson()
         {
             var apiResponse = ApiResponseDto<List<string>>.SuccessResponse(new List<string> { "PC01", "PC02" });
-            _wgGradeService.GetAllPcGradesAsync().Returns(apiResponse);
+            _pcGradeService.GetAllPcGradesAsync().Returns(apiResponse);
 
             var result = await _controller.GetPcGrades();
 
@@ -467,7 +469,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
         {
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
             var apiResponse = ApiResponseDto<List<string>>.FailureResponse(errors, new ApiMetaDto());
-            _wgGradeService.GetAllPcGradesAsync().Returns(apiResponse);
+            _pcGradeService.GetAllPcGradesAsync().Returns(apiResponse);
 
             var result = await _controller.GetPcGrades();
 

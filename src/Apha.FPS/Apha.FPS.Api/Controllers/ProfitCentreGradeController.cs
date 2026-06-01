@@ -39,5 +39,13 @@ namespace Apha.FPS.Api.Controllers
             var result = await _ProfitCentreGradeService.GetProfitCentreGradesAsync(filter, profitCentre);
             return Ok(_mapper.Map<PaginationRes<ProfitCentreGradeRes>>(result));
         }
+
+        /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
+        [HttpGet("allpcgrades")]
+        public async Task<ActionResult<List<string>>> GetAllPcGradesAsync()
+        {
+            var result = await _ProfitCentreGradeService.GetAllPcGradesAsync();
+            return Ok(result);
+        }
     }
 }

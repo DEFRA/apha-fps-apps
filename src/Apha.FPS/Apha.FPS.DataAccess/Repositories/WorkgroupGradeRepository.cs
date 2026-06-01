@@ -99,16 +99,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(e => e.WorkGroupGrade == wgGrade, cancellationToken);
         }
 
-        public async Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default)
-        {
-            return await _dbContext.ProfitCentreGrades
-                .AsNoTracking()
-                .Select(e => e.PcGrade)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToListAsync(cancellationToken);
-        }
-
         public async Task<List<string>> GetAllGradeCodesAsync(CancellationToken cancellationToken = default)
         {
             return await _dbContext.WorkgroupGrades

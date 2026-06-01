@@ -19,5 +19,8 @@ namespace Apha.FPSApps.Application.Services.FPS
         {
             return await _fpsClient.FpsProfitCentreGrade.GetProfitCentreGradesAsync(new QueryParameters<string>(), profitCentre);
         }
+
+        public async Task<ApiResponseDto<List<string>>> GetAllPcGradesAsync()
+            => await _fpsClient.FpsProfitCentreGrade.GetAllPcGradesAsync();
     }
 }

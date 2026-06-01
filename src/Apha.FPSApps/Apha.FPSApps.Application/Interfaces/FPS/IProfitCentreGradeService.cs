@@ -6,5 +6,6 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
     public interface IProfitCentreGradeService
     {
         Task<ApiResponseDto<List<ProfitCentreGradeDto>>> GetProfitCentreGradesAsync(string profitCentre);
+        Task<ApiResponseDto<List<string>>> GetAllPcGradesAsync();
     }
 }

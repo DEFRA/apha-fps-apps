@@ -7,5 +7,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
     public interface IFpsProfitCentreGradeApiClient
     {
         Task<ApiResponseDto<List<ProfitCentreGradeDto>>> GetProfitCentreGradesAsync(QueryParameters<string> query, string profitCentre);
+        Task<ApiResponseDto<List<string>>> GetAllPcGradesAsync();
     }
 }

@@ -145,7 +145,7 @@
                 contentType: 'application/json',
                 success: function (response) {
                     if (response.success) {
-                        alert(response.message);
+                        showGovukAlert(response.message);
                         closeModal();
                         getGridManager().reloadGrid({ page: 1 });
                     } else {
@@ -156,7 +156,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        alert('An error occurred while saving.');
+                        showGovukAlert('An error occurred while saving.');
                     }
                 }
             });

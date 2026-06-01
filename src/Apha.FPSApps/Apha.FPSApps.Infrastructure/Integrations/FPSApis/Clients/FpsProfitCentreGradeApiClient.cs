@@ -36,5 +36,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 return ApiResponseDto<List<ProfitCentreGradeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
+
+        public async Task<ApiResponseDto<List<string>>> GetAllPcGradesAsync()
+        {
+            var response = await _http.GetAsync<List<string>>(FpsApiEndpoints.GetAllPcGrades);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<string>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+            return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }

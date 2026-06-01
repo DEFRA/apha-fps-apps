@@ -22,11 +22,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IWorkGroupGradeService _wgGradeService;
+        private readonly IProfitCentreGradeService _pcGradeService;
 
-        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkGroupGradeService wgGradeService)
+        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkGroupGradeService wgGradeService, IProfitCentreGradeService pcGradeService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _wgGradeService = wgGradeService ?? throw new ArgumentNullException(nameof(wgGradeService));
+            _pcGradeService = pcGradeService ?? throw new ArgumentNullException(nameof(pcGradeService));
         }
 
         /// <summary>Displays the WorkgroupGrade maintenance page with DataGrid.</summary>
@@ -190,7 +192,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPcGrades()
         {
-            var result = await _wgGradeService.GetAllPcGradesAsync();
+            var result = await _pcGradeService.GetAllPcGradesAsync();
             return result.Success
                 ? Json(new { success = true, data = result.Data })
                 : Json(new { success = false, message = "Failed to load PC Grades" });

@@ -48,5 +48,15 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return ApplyPaging(all, query.Page, query.PageSize);
         }
+
+        public async Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.ProfitCentreGrades
+                .AsNoTracking()
+                .Select(e => e.PcGrade)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync(cancellationToken);
+        }
     }
 }
