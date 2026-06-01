@@ -4,7 +4,7 @@
  */
 
 var currentWorkGroup  = currentWorkGroup  || null;
-var currentPersonName = currentPersonName || null;
+var currentStaffName  = currentStaffName  || null;
 var jobTitleLookup    = jobTitleLookup    || {};
 
 /**
@@ -25,7 +25,7 @@ function getJobTitleByJobCode(jobCode) {
  * Called by the _DataGrid partial via the ExtraFilterMethod hook.
  */
 function getWorkGroupTimeByJobCodeExtraFilters() {
-    return { workGroup: currentWorkGroup, personName: currentPersonName };
+    return {staffName: currentStaffName };
 }
 
 /**

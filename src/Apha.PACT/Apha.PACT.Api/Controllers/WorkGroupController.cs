@@ -96,9 +96,9 @@ namespace Apha.PACT.Api.Controllers
         [HttpGet("staff/paged/summarisedtimeusage")]
         public async Task<IActionResult> GetWgSummarisedStaffTimeUsage(
             [FromQuery] QueryParameters<string> query,
-            [FromQuery] string workGroup)
+            [FromQuery] string staffName)
         {
-            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
+            var result = await _service.GetWgSummarisedStaffTimeUsageAsync(query, staffName);
             return Ok(_mapper.Map<WgSummarisedStaffTimeUsageRes>(result));
         }
 

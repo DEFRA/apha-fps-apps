@@ -514,8 +514,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
                 () => _service.GetWgSummarisedStaffTimeUsageAsync(query, null!));
 
             Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
-            Assert.Equal("WorkGroup is required", ex.Errors[0].Message);
+            Assert.Equal("STAFFNAME_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("Staff Name is required", ex.Errors[0].Message);
             await _pactWorkGroupApiClient.DidNotReceive()
                 .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
@@ -531,7 +531,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
                 () => _service.GetWgSummarisedStaffTimeUsageAsync(query, ""));
 
             Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("STAFFNAME_REQUIRED", ex.Errors[0].Code);
             await _pactWorkGroupApiClient.DidNotReceive()
                 .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
@@ -547,7 +547,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
                 () => _service.GetWgSummarisedStaffTimeUsageAsync(query, "   "));
 
             Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("STAFFNAME_REQUIRED", ex.Errors[0].Code);
             await _pactWorkGroupApiClient.DidNotReceive()
                 .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }

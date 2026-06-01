@@ -1805,10 +1805,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 TimeUsageRow(workGroup: "WG1", name: "Alice", monthName: "May")
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Equal(2, result.Count);
-            Assert.All(result, r => Assert.Equal("WG1", r.WorkGroup));
+            Assert.All(result, r => Assert.Equal("Alice", r.Name));
         }
 
         [Fact]
@@ -1819,7 +1819,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 TimeUsageRow(workGroup: "WG1")
             ]);
 
-            var result = await repo.GetWgSummarisedStaffTimeUsageAsync("WG_MISSING");
+            var result = await repo.GetWgSummarisedStaffTimeUsageAsync("STAFF_MISSING");
 
             Assert.Empty(result);
         }
@@ -1829,7 +1829,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         {
             var repo = CreateTimeUsageRepository([]);
 
-            var result = await repo.GetWgSummarisedStaffTimeUsageAsync("WG1");
+            var result = await repo.GetWgSummarisedStaffTimeUsageAsync("Alice");
 
             Assert.Empty(result);
         }
@@ -1844,7 +1844,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 TimeUsageRow(workGroup: "WG3", name: "Carol")
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Single(result);
             Assert.Equal("WG1",   result[0].WorkGroup);
@@ -1869,7 +1869,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                     fpsYear:       2024)
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Single(result);
             var row = result[0];
@@ -1899,7 +1899,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 TimeUsageRow(workGroup: "WG1", hrsPaid: null)
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Single(result);
             Assert.Null(result[0].HrsPaid);
@@ -1913,7 +1913,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 TimeUsageRow(workGroup: "WG1", totalTime: null)
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Single(result);
             Assert.Null(result[0].TotalTime);
@@ -1927,7 +1927,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 TimeUsageRow(workGroup: "WG1", totalCost: null)
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Single(result);
             Assert.Null(result[0].TotalCost);
@@ -1941,7 +1941,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 new WgSummarisedStaffTimeUsageView { WorkGroup = "WG1", Name = null, MonthName = "April" }
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync(null!)).ToList();
 
             Assert.Single(result);
             Assert.Null(result[0].Name);
@@ -1952,10 +1952,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         {
             var repo = CreateTimeUsageRepository(
             [
-                new WgSummarisedStaffTimeUsageView { WorkGroup = "WG1", JobCode = null }
+                new WgSummarisedStaffTimeUsageView { WorkGroup = "WG1", Name = "Alice", JobCode = null }
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Single(result);
             Assert.Null(result[0].JobCode);
@@ -1966,10 +1966,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         {
             var repo = CreateTimeUsageRepository(
             [
-                new WgSummarisedStaffTimeUsageView { WorkGroup = "WG1", JobTitle = null }
+                new WgSummarisedStaffTimeUsageView { WorkGroup = "WG1", Name = "Alice", JobTitle = null }
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Single(result);
             Assert.Null(result[0].JobTitle);
@@ -1987,16 +1987,15 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var repo = CreateTimeUsageRepository(
             [
                 TimeUsageRow(workGroup: "WG1", name: "Alice", monthName: "April"),
-                TimeUsageRow(workGroup: "WG1", name: "Bob",   monthName: "April"),
-                TimeUsageRow(workGroup: "WG1", name: "Carol", monthName: "April")
+                TimeUsageRow(workGroup: "WG1", name: "Alice", monthName: "May"),
+                TimeUsageRow(workGroup: "WG1", name: "Alice", monthName: "June"),
+                TimeUsageRow(workGroup: "WG2", name: "Bob",   monthName: "April")
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Equal(3, result.Count);
-            Assert.Contains(result, r => r.Name == "Alice");
-            Assert.Contains(result, r => r.Name == "Bob");
-            Assert.Contains(result, r => r.Name == "Carol");
+            Assert.All(result, r => Assert.Equal("Alice", r.Name));
         }
 
         [Fact]
@@ -2007,7 +2006,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var rows = months.Select(m => TimeUsageRow(workGroup: "WG1", name: "Alice", monthName: m));
             var repo = CreateTimeUsageRepository(rows);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Equal(12, result.Count);
             Assert.All(result, r => Assert.Equal("Alice", r.Name));
@@ -2023,7 +2022,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 TimeUsageRow(workGroup: "WG1", name: "Alice", jobCode: "JC_C", monthName: "April")
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Equal(3, result.Count);
             Assert.Contains(result, r => r.JobCode == "JC_A");
@@ -2037,18 +2036,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var repo = CreateTimeUsageRepository(
             [
                 TimeUsageRow(workGroup: "WG1", name: "Alice",  monthName: "April"),
-                TimeUsageRow(workGroup: "WG1", name: "Bob",    monthName: "May"),
+                TimeUsageRow(workGroup: "WG1", name: "Alice",  monthName: "May"),
                 TimeUsageRow(workGroup: "WG2", name: "Carol",  monthName: "April"),
-                TimeUsageRow(workGroup: "WG2", name: "Dave",   monthName: "May"),
+                TimeUsageRow(workGroup: "WG2", name: "Carol",  monthName: "May"),
                 TimeUsageRow(workGroup: "WG3", name: "Eve",    monthName: "April")
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG2")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Carol")).ToList();
 
             Assert.Equal(2, result.Count);
-            Assert.All(result, r => Assert.Equal("WG2", r.WorkGroup));
-            Assert.Contains(result, r => r.Name == "Carol");
-            Assert.Contains(result, r => r.Name == "Dave");
+            Assert.All(result, r => Assert.Equal("Carol", r.Name));
+            Assert.All(result, r => Assert.Equal("WG2",   r.WorkGroup));
         }
 
         [Fact]
@@ -2059,7 +2057,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
                 TimeUsageRow(workGroup: "WG1", totalTime: 0.0, totalCost: 0.0)
             ]);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Single(result);
             Assert.Equal(0.0, result[0].TotalTime);
@@ -2071,10 +2069,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         {
             const int totalRows = 100;
             var rows = Enumerable.Range(1, totalRows)
-                .Select(i => TimeUsageRow(workGroup: "WG1", name: $"Staff{i}", monthName: "April"));
+                .Select(i => TimeUsageRow(workGroup: "WG1", name: "Alice", monthName: $"Month{i}"));
             var repo = CreateTimeUsageRepository(rows);
 
-            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("WG1")).ToList();
+            var result = (await repo.GetWgSummarisedStaffTimeUsageAsync("Alice")).ToList();
 
             Assert.Equal(totalRows, result.Count);
         }

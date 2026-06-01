@@ -64,10 +64,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         }
 
         public async Task<ApiResponseDto<WgSummarisedStaffTimeUsageDto>> GetWgSummarisedStaffTimeUsageAsync(
-            QueryParameters<string> query, string workGroup)
+            QueryParameters<string> query, string staffName)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetWgSummarisedStaffTimeUsage, query);
-            url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
+            url += $"&staffName={Uri.EscapeDataString(staffName)}";
 
             var response = await _http.GetAsync<WgSummarisedStaffTimeUsageRes>(url);
             if (response.Success)
