@@ -42,6 +42,187 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<PaginatedResult<WorkGroupValidTimeCodeDto>>(pagedData);
         }
 
+        public async Task<WgSummarisedStaffTimeUsageDto> GetWgSummarisedStaffTimeUsageAsync(
+            QueryParameters<string> query, string workGroup)
+        {
+            ValidateWorkGroup(workGroup);
+
+            var rawEntries = await _repository.GetWgSummarisedStaffTimeUsageAsync(workGroup);
+            var entries = _mapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(rawEntries);
+
+            // Derive HrsPaid: sum across all distinct people in the work group
+            var hrsPaid = entries
+                .GroupBy(e => e.Name)
+                .Select(g => g.First())
+                .Sum(e => e.HrsPaid ?? 0);
+
+            var standardHoursPerMonth = hrsPaid > 0 ? hrsPaid / 12.0 : 0;
+
+            // Build ALL rows first — summary must reflect the full dataset, not just the current page
+            var allRows = BuildRows(entries);
+            var summary = BuildSummary(allRows, standardHoursPerMonth);
+
+            // Paginate rows after summary is computed
+            var page     = Math.Max(1, query.Page);
+            var pageSize = Math.Max(1, query.PageSize);
+            var totalRecords = allRows.Count;
+            var totalPages   = (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var pagedRows    = allRows
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new WgSummarisedStaffTimeUsageDto
+            {
+                Rows    = pagedRows,
+                Summary = summary,
+                HrsPaid = hrsPaid,
+                JobTitleLookup = entries
+                    .Where(r => !string.IsNullOrWhiteSpace(r.JobCode))
+                    .DistinctBy(r => r.JobCode)
+                    .Select(r => new JobTitleLookupItem
+                    {
+                        JobCode  = r.JobCode!,
+                        JobTitle = string.IsNullOrWhiteSpace(r.JobTitle) ? string.Empty : r.JobTitle
+                    })
+                    .ToList(),
+                Pagination = new PaginationDto
+                {
+                    PageNumber   = page,
+                    PageSize     = pageSize,
+                    TotalRecords = totalRecords,
+                    TotalPages   = totalPages
+                }
+            };
+        }
+
+        private static List<WgSummarisedStaffTimeUsageRowDto> BuildRows(
+            IEnumerable<WgSummarisedStaffTimeUsageEntryDto> staffTimeUsageEntries)
+        {
+            return staffTimeUsageEntries
+                .GroupBy(e => new { e.ParentProject, e.JobCode })
+                .Select(g =>
+                {
+                    double HoursForMonth(string monthName) =>
+                        g.Where(e => e.MonthName!.Equals(monthName, StringComparison.CurrentCultureIgnoreCase)).Sum(e => e.TotalTime ?? 0);
+
+                    return new WgSummarisedStaffTimeUsageRowDto
+                    {
+                        ParentProject = g.Key.ParentProject,
+                        JobCode = g.Key.JobCode,
+                        JobTitle = string.IsNullOrWhiteSpace(g.First().JobTitle) ? string.Empty : g.First().JobTitle,
+                        April = HoursForMonth("April"),
+                        May = HoursForMonth("May"),
+                        June = HoursForMonth("June"),
+                        July = HoursForMonth("July"),
+                        August = HoursForMonth("August"),
+                        September = HoursForMonth("September"),
+                        October = HoursForMonth("October"),
+                        November = HoursForMonth("November"),
+                        December = HoursForMonth("December"),
+                        January = HoursForMonth("January"),
+                        February = HoursForMonth("February"),
+                        March = HoursForMonth("March"),
+                        TotalTime = g.Sum(e => e.TotalTime ?? 0),
+                        TotalCost = g.Sum(e => e.TotalCost ?? 0)
+                    };
+                })
+                .OrderBy(r => r.ParentProject)
+                .ThenBy(r => r.JobCode)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Builds the three-row footer that appeared at the botton.
+        /// </summary>
+        private static WgSummarisedStaffTimeUsageSummaryDto BuildSummary(
+            IReadOnlyList<WgSummarisedStaffTimeUsageRowDto> rows, double standardHoursPerMonth)
+        {
+            var totalHoursApril = rows.Sum(r => r.April);
+            var totalHoursMay = rows.Sum(r => r.May);
+            var totalHoursJune = rows.Sum(r => r.June);
+            var totalHoursJuly = rows.Sum(r => r.July);
+            var totalHoursAugust = rows.Sum(r => r.August);
+            var totalHoursSeptember = rows.Sum(r => r.September);
+            var totalHoursOctober = rows.Sum(r => r.October);
+            var totalHoursNovember = rows.Sum(r => r.November);
+            var totalHoursDecember = rows.Sum(r => r.December);
+            var totalHoursJanuary = rows.Sum(r => r.January);
+            var totalHoursFebruary = rows.Sum(r => r.February);
+            var totalHoursMarch = rows.Sum(r => r.March);
+            var grandTotalTime = rows.Sum(r => r.TotalTime);
+
+            // Returns the standard hours allowance for a month
+            double StandardHoursFor(double totalHoursInMonth)
+            {
+                return totalHoursInMonth == 0 ? 0 : standardHoursPerMonth;
+            }
+
+            // Percentage of recorded hours against the standard hours allowance for a single month, rounded to one decimal place;
+            double PercentAllocated(double totalHoursInMonth, double standardHours)
+            {
+                return standardHours == 0 ? 0 : Math.Round(totalHoursInMonth / standardHours * 100, 1);
+            }
+
+            return new WgSummarisedStaffTimeUsageSummaryDto
+            {
+                TotalApril = totalHoursApril,
+                TotalMay = totalHoursMay,
+                TotalJune = totalHoursJune,
+                TotalJuly = totalHoursJuly,
+                TotalAugust = totalHoursAugust,
+                TotalSeptember = totalHoursSeptember,
+                TotalOctober = totalHoursOctober,
+                TotalNovember = totalHoursNovember,
+                TotalDecember = totalHoursDecember,
+                TotalJanuary = totalHoursJanuary,
+                TotalFebruary = totalHoursFebruary,
+                TotalMarch = totalHoursMarch,
+                GrandTotalTime = grandTotalTime,
+                GrandTotalCost = rows.Sum(r => r.TotalCost),
+                StandardHoursPerMonth = standardHoursPerMonth,
+
+                // Sum of the standard hours allowance for each month that had recorded activity;
+                TotalStandardHours =
+                    StandardHoursFor(totalHoursApril)     + StandardHoursFor(totalHoursMay)      +
+                    StandardHoursFor(totalHoursJune)      + StandardHoursFor(totalHoursJuly)     +
+                    StandardHoursFor(totalHoursAugust)    + StandardHoursFor(totalHoursSeptember)+
+                    StandardHoursFor(totalHoursOctober)   + StandardHoursFor(totalHoursNovember) +
+                    StandardHoursFor(totalHoursDecember)  + StandardHoursFor(totalHoursJanuary)  +
+                    StandardHoursFor(totalHoursFebruary)  + StandardHoursFor(totalHoursMarch),
+
+                // Percentage of total recorded hours against the sum of standard hours for all months that had activity;
+                GrandTotalPercentAllocated = (
+                    StandardHoursFor(totalHoursApril)      + StandardHoursFor(totalHoursMay)       +
+                    StandardHoursFor(totalHoursJune)       + StandardHoursFor(totalHoursJuly)      +
+                    StandardHoursFor(totalHoursAugust)     + StandardHoursFor(totalHoursSeptember) +
+                    StandardHoursFor(totalHoursOctober)    + StandardHoursFor(totalHoursNovember)  +
+                    StandardHoursFor(totalHoursDecember)   + StandardHoursFor(totalHoursJanuary)   +
+                    StandardHoursFor(totalHoursFebruary)   + StandardHoursFor(totalHoursMarch)) > 0
+                        ? Math.Round(grandTotalTime /
+                            (StandardHoursFor(totalHoursApril)      + StandardHoursFor(totalHoursMay)       +
+                             StandardHoursFor(totalHoursJune)       + StandardHoursFor(totalHoursJuly)      +
+                             StandardHoursFor(totalHoursAugust)     + StandardHoursFor(totalHoursSeptember) +
+                             StandardHoursFor(totalHoursOctober)    + StandardHoursFor(totalHoursNovember)  +
+                             StandardHoursFor(totalHoursDecember)   + StandardHoursFor(totalHoursJanuary)   +
+                             StandardHoursFor(totalHoursFebruary)   + StandardHoursFor(totalHoursMarch)) * 100, 1)
+                        : 0,
+
+                PercentAllocatedApril = PercentAllocated(totalHoursApril, StandardHoursFor(totalHoursApril)),
+                PercentAllocatedMay = PercentAllocated(totalHoursMay, StandardHoursFor(totalHoursMay)),
+                PercentAllocatedJune = PercentAllocated(totalHoursJune, StandardHoursFor(totalHoursJune)),
+                PercentAllocatedJuly = PercentAllocated(totalHoursJuly, StandardHoursFor(totalHoursJuly)),
+                PercentAllocatedAugust = PercentAllocated(totalHoursAugust, StandardHoursFor(totalHoursAugust)),
+                PercentAllocatedSeptember = PercentAllocated(totalHoursSeptember, StandardHoursFor(totalHoursSeptember)),
+                PercentAllocatedOctober = PercentAllocated(totalHoursOctober, StandardHoursFor(totalHoursOctober)),
+                PercentAllocatedNovember = PercentAllocated(totalHoursNovember, StandardHoursFor(totalHoursNovember)),
+                PercentAllocatedDecember = PercentAllocated(totalHoursDecember, StandardHoursFor(totalHoursDecember)),
+                PercentAllocatedJanuary = PercentAllocated(totalHoursJanuary, StandardHoursFor(totalHoursJanuary)),
+                PercentAllocatedFebruary = PercentAllocated(totalHoursFebruary, StandardHoursFor(totalHoursFebruary)),
+                PercentAllocatedMarch = PercentAllocated(totalHoursMarch, StandardHoursFor(totalHoursMarch))
+            };
+        }
+
         private static void ValidateWorkGroup(string workGroup)
         {
             var errors = new List<BusinessValidationError>();

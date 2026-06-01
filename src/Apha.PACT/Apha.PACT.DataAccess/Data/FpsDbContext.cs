@@ -37,6 +37,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<CalenderMonth> CalenderMonths { get; set; }
         public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
         public virtual DbSet<WorkGroupStaffView> WorkGroupStaffViews { get; set; }
+        public virtual DbSet<WgSummarisedStaffTimeUsageView> WgSummarisedStaffTimeUsageViews { get; set; }
         public virtual DbSet<RecreateSummariesLog> RecreateSummariesLogs { get; set; }
         public virtual DbSet<TblUser> TblUsers { get; set; }
 
