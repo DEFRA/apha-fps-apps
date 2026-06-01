@@ -142,11 +142,11 @@ namespace Apha.PACT.DataAccess.Repository
         }
 
         public async Task<IEnumerable<WgSummarisedStaffTimeUsageView>> GetWgSummarisedStaffTimeUsageAsync(
-            string workGroup)
+            string staffName)
         {
             return await _context.WgSummarisedStaffTimeUsageViews
                 .AsNoTracking()
-                .Where(e => e.WorkGroup == workGroup)
+                .Where(e => e.Name == staffName)
                 .ToListAsync();
         }
 

@@ -478,8 +478,8 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
                 () => _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), null!));
 
             Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
-            Assert.Equal("WorkGroup is required", ex.Errors[0].Message);
+            Assert.Equal("STAFFNane_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("Staff Name is required", ex.Errors[0].Message);
             await _mockRepository.DidNotReceive()
                 .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<string>());
         }
@@ -491,7 +491,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
                 () => _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), ""));
 
             Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("STAFFNane_REQUIRED", ex.Errors[0].Code);
             await _mockRepository.DidNotReceive()
                 .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<string>());
         }
@@ -503,7 +503,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
                 () => _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "   "));
 
             Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("STAFFNane_REQUIRED", ex.Errors[0].Code);
             await _mockRepository.DidNotReceive()
                 .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<string>());
         }

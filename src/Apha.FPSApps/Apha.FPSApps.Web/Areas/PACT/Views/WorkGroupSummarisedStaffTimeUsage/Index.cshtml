@@ -115,7 +115,7 @@
 
 <script>
     var currentWorkGroup   = '@Html.Raw(Model.SelectedWorkGroup ?? "")';
-    var currentPersonName  = '@Html.Raw(Model.SelectedPersonName ?? "")';
+    var currentStaffName   = '@Html.Raw(Model.SelectedPersonName ?? "")';
     var jobTitleLookup     = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.JobTitleLookup ?? new Dictionary<string, string>()))
 </script>
 

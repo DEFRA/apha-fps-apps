@@ -56,10 +56,10 @@ namespace Apha.FPSApps.Application.Services.PACT
         }
 
         public async Task<ApiResponseDto<WgSummarisedStaffTimeUsageDto>> GetWgSummarisedStaffTimeUsageAsync(
-            QueryParameters<string> query, string workGroup)
+            QueryParameters<string> query, string staffName)
         {
-            ValidateWorkGroup(workGroup);
-            return await _pactApiClient.PactWorkGroup.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
+            ValidateStaffName(staffName);
+            return await _pactApiClient.PactWorkGroup.GetWgSummarisedStaffTimeUsageAsync(query, staffName);
         }
 
         private static void ValidateWorkGroup(string workGroup)
@@ -67,6 +67,15 @@ namespace Apha.FPSApps.Application.Services.PACT
             var errors = new List<BusinessValidationError>();
             if (string.IsNullOrWhiteSpace(workGroup))
                 errors.Add(new BusinessValidationError("WorkGroup is required", "WORKGROUP_REQUIRED"));
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+        }
+
+        private static void ValidateStaffName(string satffName)
+        {
+            var errors = new List<BusinessValidationError>();
+            if (string.IsNullOrWhiteSpace(satffName))
+                errors.Add(new BusinessValidationError("Staff Name is required", "STAFFNAME_REQUIRED"));
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
         }

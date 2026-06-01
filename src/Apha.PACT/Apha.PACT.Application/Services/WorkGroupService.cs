@@ -43,11 +43,11 @@ namespace Apha.PACT.Application.Services
         }
 
         public async Task<WgSummarisedStaffTimeUsageDto> GetWgSummarisedStaffTimeUsageAsync(
-            QueryParameters<string> query, string workGroup)
+            QueryParameters<string> query, string staffName)
         {
-            ValidateWorkGroup(workGroup);
+            ValidateStaffName(staffName);
 
-            var rawEntries = await _repository.GetWgSummarisedStaffTimeUsageAsync(workGroup);
+            var rawEntries = await _repository.GetWgSummarisedStaffTimeUsageAsync(staffName);
             var entries = _mapper.Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(rawEntries);
 
             // Derive HrsPaid: sum across all distinct people in the work group
@@ -294,6 +294,15 @@ namespace Apha.PACT.Application.Services
                 PercentAllocatedFebruary = PercentAllocated(totalHoursFebruary, StandardHoursFor(totalHoursFebruary)),
                 PercentAllocatedMarch = PercentAllocated(totalHoursMarch, StandardHoursFor(totalHoursMarch))
             };
+        }
+
+        private static void ValidateStaffName(string staffName)
+        {
+            var errors = new List<BusinessValidationError>();
+            if (string.IsNullOrWhiteSpace(staffName))
+                errors.Add(new BusinessValidationError("Staff Name is required", "STAFFNane_REQUIRED"));
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
         }
 
         private static void ValidateWorkGroup(string workGroup)
