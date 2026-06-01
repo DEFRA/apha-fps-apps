@@ -127,5 +127,234 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupGradeServiceT
         }
 
         #endregion
+
+        #region GetAllWorkgroupGradesPagedAsync Tests
+
+        [Fact]
+        public async Task GetAllWorkgroupGradesPagedAsync_WithSuccessResponse_ReturnsGradeList()
+        {
+            // Arrange
+            var grades = new List<WorkgroupGradeDto> { new() { WgGrade = DefaultWgGrade } };
+            var expectedResponse = ApiResponseDto<List<WorkgroupGradeDto>>.SuccessResponse(grades);
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _fpsWgGradeApiClient.GetAllWorkgroupGradesPagedAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetAllWorkgroupGradesPagedAsync(query);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _fpsWgGradeApiClient.Received(1).GetAllWorkgroupGradesPagedAsync(query);
+        }
+
+        [Fact]
+        public async Task GetAllWorkgroupGradesPagedAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
+            var expectedResponse = ApiResponseDto<List<WorkgroupGradeDto>>.FailureResponse(errors, new ApiMetaDto());
+            var query = new QueryParameters<string>();
+
+            _fpsWgGradeApiClient.GetAllWorkgroupGradesPagedAsync(query).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetAllWorkgroupGradesPagedAsync(query);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetByWgGradeAsync Tests
+
+        [Fact]
+        public async Task GetByWgGradeAsync_WithSuccessResponse_ReturnsGrade()
+        {
+            // Arrange
+            var grade = new WorkgroupGradeDto { WgGrade = DefaultWgGrade };
+            var expectedResponse = ApiResponseDto<WorkgroupGradeDto>.SuccessResponse(grade);
+
+            _fpsWgGradeApiClient.GetByWgGradeAsync(DefaultWgGrade).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetByWgGradeAsync(DefaultWgGrade);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal(DefaultWgGrade, result.Data!.WgGrade);
+            await _fpsWgGradeApiClient.Received(1).GetByWgGradeAsync(DefaultWgGrade);
+        }
+
+        [Fact]
+        public async Task GetByWgGradeAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
+            var expectedResponse = ApiResponseDto<WorkgroupGradeDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsWgGradeApiClient.GetByWgGradeAsync(DefaultWgGrade).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetByWgGradeAsync(DefaultWgGrade);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region CreateAsync Tests
+
+        [Fact]
+        public async Task CreateAsync_WithValidDto_ReturnsCreatedGrade()
+        {
+            // Arrange
+            var dto = new WorkgroupGradeDto { WgGrade = DefaultWgGrade };
+            var expectedResponse = ApiResponseDto<WorkgroupGradeDto>.SuccessResponse(dto);
+
+            _fpsWgGradeApiClient.CreateAsync(dto).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.CreateAsync(dto);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal(DefaultWgGrade, result.Data!.WgGrade);
+            await _fpsWgGradeApiClient.Received(1).CreateAsync(dto);
+        }
+
+        [Fact]
+        public async Task CreateAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var dto = new WorkgroupGradeDto { WgGrade = DefaultWgGrade };
+            var errors = new List<ApiErrorDto> { new() { Message = "Conflict", Code = "CONFLICT" } };
+            var expectedResponse = ApiResponseDto<WorkgroupGradeDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsWgGradeApiClient.CreateAsync(dto).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.CreateAsync(dto);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region UpdateAsync Tests
+
+        [Fact]
+        public async Task UpdateAsync_WithValidDto_ReturnsUpdatedGrade()
+        {
+            // Arrange
+            var dto = new WorkgroupGradeDto { WgGrade = DefaultWgGrade };
+            var expectedResponse = ApiResponseDto<WorkgroupGradeDto>.SuccessResponse(dto);
+
+            _fpsWgGradeApiClient.UpdateAsync(DefaultWgGrade, dto).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.UpdateAsync(DefaultWgGrade, dto);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsWgGradeApiClient.Received(1).UpdateAsync(DefaultWgGrade, dto);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var dto = new WorkgroupGradeDto { WgGrade = DefaultWgGrade };
+            var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
+            var expectedResponse = ApiResponseDto<WorkgroupGradeDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsWgGradeApiClient.UpdateAsync(DefaultWgGrade, dto).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.UpdateAsync(DefaultWgGrade, dto);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region DeleteAsync Tests
+
+        [Fact]
+        public async Task DeleteAsync_WithSuccessResponse_ReturnsSuccess()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _fpsWgGradeApiClient.DeleteAsync(DefaultWgGrade).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.DeleteAsync(DefaultWgGrade);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsWgGradeApiClient.Received(1).DeleteAsync(DefaultWgGrade);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsWgGradeApiClient.DeleteAsync(DefaultWgGrade).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.DeleteAsync(DefaultWgGrade);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetAllGradeCodesAsync Tests
+
+        [Fact]
+        public async Task GetAllGradeCodesAsync_WithSuccessResponse_ReturnsGradeCodes()
+        {
+            // Arrange
+            var codes = new List<string> { "A", "B", "C" };
+            var expectedResponse = ApiResponseDto<List<string>>.SuccessResponse(codes);
+
+            _fpsWgGradeApiClient.GetAllGradeCodesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetAllGradeCodesAsync();
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal(3, result.Data!.Count);
+            await _fpsWgGradeApiClient.Received(1).GetAllGradeCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetAllGradeCodesAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
+            var expectedResponse = ApiResponseDto<List<string>>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsWgGradeApiClient.GetAllGradeCodesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetAllGradeCodesAsync();
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
     }
 }
