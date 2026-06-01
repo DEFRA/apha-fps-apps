@@ -91,6 +91,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Resource Set-Up
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
+            CreateMap<ProfitCentreDto, ProfitCentreReq>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
@@ -98,6 +99,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
+
+            // Staff Plan view
+            CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
         }
     }
 }

@@ -11,14 +11,14 @@ namespace Apha.Common.Constants
         public const string DeleteAnimalMaster = "api/v1/animalmaster/{0}";
 
         // Animal
-        public const string GetAnimalCosts = "api/v1/animal?jobCode={0}";
-        public const string GetAnimalLookup = "api/v1/animal/lookup";
-        public const string GetAnimalRate = "api/v1/animal/rate?animalType={0}&jobCode={1}";
-        public const string CreateAnimalCost = "api/v1/animal";
-        public const string UpdateAnimalCost = "api/v1/animal";
-        public const string DeleteAnimalCost = "api/v1/animal?indCounter={0}";
-        public const string GetTotalAnimalCost = "api/v1/animal/totalanimalcost?jobCode={0}";
-        public const string GetAnimalCostViewById = "api/v1/animal/view?indCounter={0}&jobCode={1}";
+        public const string GetAnimalCosts = "api/v1/animalrequest?jobCode={0}";
+        public const string GetAnimalLookup = "api/v1/animalrequest/lookup";
+        public const string GetAnimalRate = "api/v1/animalrequest/rate?animalType={0}&jobCode={1}";
+        public const string CreateAnimalCost = "api/v1/animalrequest";
+        public const string UpdateAnimalCost = "api/v1/animalrequest";
+        public const string DeleteAnimalCost = "api/v1/animalrequest?indCounter={0}";
+        public const string GetTotalAnimalCost = "api/v1/animalrequest/totalanimalcost?jobCode={0}";
+        public const string GetAnimalCostViewById = "api/v1/animalrequest/view?indCounter={0}&jobCode={1}";
 
         // Employee
         public const string GetFilteredEmployees = "api/v1/employee/paginated?filterOption={0}";
@@ -95,6 +95,9 @@ namespace Apha.Common.Constants
         // Setting
         public const string GetHoursPerDay = "api/v1/setting/hoursperday";
 
+        // Project Staff Plan
+        public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
+
         // Staff Job
         public const string GetAllStaffJobs = "api/v1/staffjob?jobCode={0}";
         public const string GetStaffWorkgroupLookup = "api/v1/staffjob/workgrouplookup";
@@ -125,8 +128,15 @@ namespace Apha.Common.Constants
         public const string GetMonthlyOutputTotalsByProject = "api/v1/MonthlyOutput/totals?projectCode={0}";
         public const string DeleteMonthlyOutput = "api/v1/MonthlyOutput";
 
-        // Resource Set-Up — Profit Centres
+        // Resource Set-Up – Profit Centres
         public const string GetProfitCentres = "api/v1/profitcentres";
+        public const string GetPagedProfitCentres = "api/v1/profitcentres/paged";
+        public const string GetProfitCentreById = "api/v1/profitcentres/{0}";
+        public const string CreateProfitCentre = "api/v1/profitcentres";
+        public const string UpdateProfitCentre = "api/v1/profitcentres/{0}";
+        public const string DeleteProfitCentre = "api/v1/profitcentres/{0}";                    
+        public const string GetAllProfitCentres = "api/v1/profitcentres/all";        
+        public const string PatchProfitCentreSettings = "api/v1/profitcentres/settings";
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";

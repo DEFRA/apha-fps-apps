@@ -284,30 +284,52 @@ public class YearlyDetailsServiceTests
     public async Task GetTestRequirementsAsync_MapsFieldsCorrectly()
     {
         // Arrange
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
         var rows = new List<TestRequirementDetailView>
         {
             new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = 100, NumberOfTests = 5, TestCost = 500, TestDescription = "Blood Test" }
         };
-        _testRepo.GetTestRequirementsByProjectYearAsync("2024/001", 2024).Returns(rows);
+        var repoResult = new PagedData<TestRequirementDetailView>
+        {
+            Data = rows,
+            PaginationData = new PaginationData { TotalRecords = 1, PageNumber = 1, PageSize = 10, TotalPages = 1 }
+        };
+        var paginationDto = new PaginationDto { TotalRecords = 1, PageNumber = 1, PageSize = 10, TotalPages = 1 };
+
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _testRepo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(repoResult.PaginationData).Returns(paginationDto);
 
         // Act
-        var result = (await _sut.GetTestRequirementsAsync("2024/001", 2024)).ToList();
+        var result = await _sut.GetTestRequirementsAsync("2024/001", 2024, query);
 
         // Assert
-        Assert.Single(result);
-        Assert.Equal("TC001", result[0].TestCode);
-        Assert.Equal(500.0, result[0].TestCost);
-        Assert.Equal("Blood Test", result[0].TestDescription);
+        Assert.Single(result.Data);
+        Assert.Equal("TC001", result.Data.First().TestCode);
+        Assert.Equal(500.0, result.Data.First().TestCost);
+        Assert.Equal("Blood Test", result.Data.First().TestDescription);
+        Assert.Equal(1, result.PaginationData.TotalRecords);
     }
 
     [Fact]
     public async Task GetTestRequirementsAsync_ReturnsEmptyList_WhenNoData()
     {
-        _testRepo.GetTestRequirementsByProjectYearAsync("2024/001", 2024).Returns(new List<TestRequirementDetailView>());
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<TestRequirementDetailView>
+        {
+            Data = new List<TestRequirementDetailView>(),
+            PaginationData = new PaginationData { TotalRecords = 0 }
+        };
 
-        var result = await _sut.GetTestRequirementsAsync("2024/001", 2024);
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _testRepo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(repoResult.PaginationData).Returns(new PaginationDto());
 
-        Assert.Empty(result);
+        var result = await _sut.GetTestRequirementsAsync("2024/001", 2024, query);
+
+        Assert.Empty(result.Data);
     }
 
     #endregion
@@ -371,17 +393,28 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetAnimalRequirementsAsync_MapsFieldsCorrectly()
     {
-        var rows = new List<AnimalRequirementDetailView>
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<AnimalRequirementDetailView>
         {
-            new() { ArIdentity = 1, Project = "2024/001", Year = 2024, AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = 3, DailyRate = 10, AnimalCost = 150 }
+            Data = new List<AnimalRequirementDetailView>
+            {
+                new() { ArIdentity = 1, Project = "2024/001", Year = 2024, AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = 3, DailyRate = 10, AnimalCost = 150 }
+            },
+            PaginationData = new PaginationData { TotalRecords = 1, PageNumber = 1, PageSize = 10, TotalPages = 1 }
         };
-        _animalRepo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024).Returns(rows);
+        var paginationDto = new PaginationDto { TotalRecords = 1, PageNumber = 1, PageSize = 10, TotalPages = 1 };
 
-        var result = (await _sut.GetAnimalRequirementsAsync("2024/001", 2024)).ToList();
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _animalRepo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(repoResult.PaginationData).Returns(paginationDto);
 
-        Assert.Single(result);
-        Assert.Equal("CAT", result[0].AnimalType);
-        Assert.Equal(150.0, result[0].AnimalCost);
+        var result = await _sut.GetAnimalRequirementsAsync("2024/001", 2024, query);
+
+        Assert.Single(result.Data);
+        Assert.Equal("CAT", result.Data.First().AnimalType);
+        Assert.Equal(150.0, result.Data.First().AnimalCost);
+        Assert.Equal(1, result.PaginationData.TotalRecords);
     }
 
     #endregion
@@ -458,17 +491,28 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetAdditionalCostsAsync_MapsFieldsCorrectly()
     {
-        var rows = new List<AdditionalCostDetailView>
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<AdditionalCostDetailView>
         {
-            new() { AcIdentity = 1, Project = "2024/001", Year = 2024, AccountCat = "TRAVEL", Description = "Travel", ItemCost = 500, CostEntered = 500, Freq = "Annual" }
+            Data = new List<AdditionalCostDetailView>
+            {
+                new() { AcIdentity = 1, Project = "2024/001", Year = 2024, AccountCat = "TRAVEL", Description = "Travel", ItemCost = 500, CostEntered = 500, Freq = "Annual" }
+            },
+            PaginationData = new PaginationData { TotalRecords = 1, PageNumber = 1, PageSize = 10, TotalPages = 1 }
         };
-        _additionalCostRepo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024).Returns(rows);
+        var paginationDto = new PaginationDto { TotalRecords = 1, PageNumber = 1, PageSize = 10, TotalPages = 1 };
 
-        var result = (await _sut.GetAdditionalCostsAsync("2024/001", 2024)).ToList();
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _additionalCostRepo.GetAdditionalCostsByProjectYearAsync("2024/001", 2024, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(repoResult.PaginationData).Returns(paginationDto);
 
-        Assert.Single(result);
-        Assert.Equal("TRAVEL", result[0].AccountCat);
-        Assert.Equal(500.0, result[0].CostEntered);
+        var result = await _sut.GetAdditionalCostsAsync("2024/001", 2024, query);
+
+        Assert.Single(result.Data);
+        Assert.Equal("TRAVEL", result.Data.First().AccountCat);
+        Assert.Equal(500.0, result.Data.First().CostEntered);
+        Assert.Equal(1, result.PaginationData.TotalRecords);
     }
 
     #endregion
@@ -537,16 +581,16 @@ public class YearlyDetailsServiceTests
     {
         var rates = new List<PayRateLookup>
         {
-            new("HEO", 45.50, 30.0, 5.0, 10.0)
+            new() { WgGrade = "HEO", ChargeRate = 45.50m, PayRate = 30.0m, Npr = 5.0m, Ohr = 10.0m }
         };
-        _projectYearRepo.GetPayRatesAsync(false).Returns(rates);
+        _projectYearRepo.GetPayRatesAsync("2024/001", 2024, false).Returns(rates);
 
-        var result = (await _sut.GetPayRatesAsync(false)).ToList();
+        var result = (await _sut.GetPayRatesAsync("2024/001", 2024, false)).ToList();
 
         Assert.Single(result);
         Assert.Equal("HEO", result[0].WgGrade);
-        Assert.Equal(45.50, result[0].ChargeRate);
-        Assert.Equal(30.0, result[0].PayRate);
+        Assert.Equal(45.50m, result[0].ChargeRate);
+        Assert.Equal(30.0m, result[0].PayRate);
     }
 
     #endregion
@@ -558,15 +602,15 @@ public class YearlyDetailsServiceTests
     {
         var rates = new List<AnimalRateLookup>
         {
-            new("CAT", 10.50)
+            new() { AnimalType = "CAT", DailyRate = 10.50m }
         };
-        _animalRepo.GetAnimalRatesAsync(true).Returns(rates);
+        _animalRepo.GetAnimalRatesAsync("2024/001", 2024, true).Returns(rates);
 
-        var result = (await _sut.GetAnimalRatesAsync(true)).ToList();
+        var result = (await _sut.GetAnimalRatesAsync("2024/001", 2024, true)).ToList();
 
         Assert.Single(result);
         Assert.Equal("CAT", result[0].AnimalType);
-        Assert.Equal(10.50, result[0].DailyRate);
+        Assert.Equal(10.50m, result[0].DailyRate);
     }
 
     #endregion
@@ -598,11 +642,11 @@ public class YearlyDetailsServiceTests
     {
         var lookups = new List<TestCodeLookup>
         {
-            new("TC001", "Blood Test", 100m)
+            new() { ItemCode = "TC001", ItemDescription = "Blood Test", UnitPrice = 100m }
         };
-        _testRepo.GetTestCodeLookupsAsync(false).Returns(lookups);
+        _testRepo.GetTestCodeLookupsAsync("2024/001", 2024, false).Returns(lookups);
 
-        var result = (await _sut.GetTestCodeLookupsAsync(false)).ToList();
+        var result = (await _sut.GetTestCodeLookupsAsync("2024/001", 2024, false)).ToList();
 
         Assert.Single(result);
         Assert.Equal("TC001", result[0].ItemCode);
@@ -846,29 +890,47 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetTestRequirementsAsync_TestCostIsNull_WhenUnitPriceIsNull()
     {
-        var rows = new List<TestRequirementDetailView>
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<TestRequirementDetailView>
         {
-            new() { Project = "P1", Year = 1, TestCode = "TC001", UnitPrice = null, NumberOfTests = 5, TestCost = null }
+            Data = new List<TestRequirementDetailView>
+            {
+                new() { Project = "P1", Year = 1, TestCode = "TC001", UnitPrice = null, NumberOfTests = 5, TestCost = null }
+            },
+            PaginationData = new PaginationData()
         };
-        _testRepo.GetTestRequirementsByProjectYearAsync("P1", 1).Returns(rows);
 
-        var result = (await _sut.GetTestRequirementsAsync("P1", 1)).ToList();
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _testRepo.GetTestRequirementsByProjectYearAsync("P1", 1, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(Arg.Any<PaginationData>()).Returns(new PaginationDto());
 
-        Assert.Null(result[0].TestCost);
+        var result = await _sut.GetTestRequirementsAsync("P1", 1, query);
+
+        Assert.Null(result.Data.First().TestCost);
     }
 
     [Fact]
     public async Task GetTestRequirementsAsync_TestCostIsNull_WhenNumberOfTestsIsNull()
     {
-        var rows = new List<TestRequirementDetailView>
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<TestRequirementDetailView>
         {
-            new() { Project = "P1", Year = 1, TestCode = "TC001", UnitPrice = 100, NumberOfTests = null, TestCost = null }
+            Data = new List<TestRequirementDetailView>
+            {
+                new() { Project = "P1", Year = 1, TestCode = "TC001", UnitPrice = 100, NumberOfTests = null, TestCost = null }
+            },
+            PaginationData = new PaginationData()
         };
-        _testRepo.GetTestRequirementsByProjectYearAsync("P1", 1).Returns(rows);
 
-        var result = (await _sut.GetTestRequirementsAsync("P1", 1)).ToList();
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _testRepo.GetTestRequirementsByProjectYearAsync("P1", 1, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(Arg.Any<PaginationData>()).Returns(new PaginationDto());
 
-        Assert.Null(result[0].TestCost);
+        var result = await _sut.GetTestRequirementsAsync("P1", 1, query);
+
+        Assert.Null(result.Data.First().TestCost);
     }
 
     #endregion
@@ -1037,22 +1099,32 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetAdditionalCostsAsync_MapsAllFields()
     {
-        var rows = new List<AdditionalCostDetailView>
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<AdditionalCostDetailView>
         {
-            new() { AcIdentity = 5, Project = "P1", Year = 2, AccountCat = "EQUIP", Description = "Equipment", ItemCost = 200, CostEntered = 150, Freq = "Monthly" }
+            Data = new List<AdditionalCostDetailView>
+            {
+                new() { AcIdentity = 5, Project = "P1", Year = 2, AccountCat = "EQUIP", Description = "Equipment", ItemCost = 200, CostEntered = 150, Freq = "Monthly" }
+            },
+            PaginationData = new PaginationData()
         };
-        _additionalCostRepo.GetAdditionalCostsByProjectYearAsync("P1", 2).Returns(rows);
 
-        var result = (await _sut.GetAdditionalCostsAsync("P1", 2)).ToList();
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _additionalCostRepo.GetAdditionalCostsByProjectYearAsync("P1", 2, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(Arg.Any<PaginationData>()).Returns(new PaginationDto());
 
-        Assert.Equal(5, result[0].AcIdentity);
-        Assert.Equal("P1", result[0].Project);
-        Assert.Equal(2, result[0].Year);
-        Assert.Equal("EQUIP", result[0].AccountCat);
-        Assert.Equal("Equipment", result[0].Description);
-        Assert.Equal(200.0, result[0].ItemCost);
-        Assert.Equal(150.0, result[0].CostEntered);
-        Assert.Equal("Monthly", result[0].Freq);
+        var result = await _sut.GetAdditionalCostsAsync("P1", 2, query);
+        var item = result.Data.First();
+
+        Assert.Equal(5, item.AcIdentity);
+        Assert.Equal("P1", item.Project);
+        Assert.Equal(2, item.Year);
+        Assert.Equal("EQUIP", item.AccountCat);
+        Assert.Equal("Equipment", item.Description);
+        Assert.Equal(200.0, item.ItemCost);
+        Assert.Equal(150.0, item.CostEntered);
+        Assert.Equal("Monthly", item.Freq);
     }
 
     #endregion
@@ -1062,22 +1134,32 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetAnimalRequirementsAsync_MapsAllFields()
     {
-        var rows = new List<AnimalRequirementDetailView>
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<AnimalRequirementDetailView>
         {
-            new() { ArIdentity = 3, Project = "P1", Year = 2, AnimalType = "DOG", NumberOfDays = 7, NumberOfAnimals = 2, DailyRate = 15, AnimalCost = 210 }
+            Data = new List<AnimalRequirementDetailView>
+            {
+                new() { ArIdentity = 3, Project = "P1", Year = 2, AnimalType = "DOG", NumberOfDays = 7, NumberOfAnimals = 2, DailyRate = 15, AnimalCost = 210 }
+            },
+            PaginationData = new PaginationData()
         };
-        _animalRepo.GetAnimalRequirementsByProjectYearAsync("P1", 2).Returns(rows);
 
-        var result = (await _sut.GetAnimalRequirementsAsync("P1", 2)).ToList();
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _animalRepo.GetAnimalRequirementsByProjectYearAsync("P1", 2, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(Arg.Any<PaginationData>()).Returns(new PaginationDto());
 
-        Assert.Equal(3, result[0].ArIdentity);
-        Assert.Equal("P1", result[0].Project);
-        Assert.Equal(2, result[0].Year);
-        Assert.Equal("DOG", result[0].AnimalType);
-        Assert.Equal(7.0, result[0].NumberOfDays);
-        Assert.Equal(2.0, result[0].NumberOfAnimals);
-        Assert.Equal(15.0, result[0].DailyRate);
-        Assert.Equal(210.0, result[0].AnimalCost);
+        var result = await _sut.GetAnimalRequirementsAsync("P1", 2, query);
+        var item = result.Data.First();
+
+        Assert.Equal(3, item.ArIdentity);
+        Assert.Equal("P1", item.Project);
+        Assert.Equal(2, item.Year);
+        Assert.Equal("DOG", item.AnimalType);
+        Assert.Equal(7.0, item.NumberOfDays);
+        Assert.Equal(2.0, item.NumberOfAnimals);
+        Assert.Equal(15.0, item.DailyRate);
+        Assert.Equal(210.0, item.AnimalCost);
     }
 
     #endregion
@@ -1317,11 +1399,21 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetAdditionalCostsAsync_ReturnsEmpty_WhenNoData()
     {
-        _additionalCostRepo.GetAdditionalCostsByProjectYearAsync("P1", 1).Returns(new List<AdditionalCostDetailView>());
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<AdditionalCostDetailView>
+        {
+            Data = new List<AdditionalCostDetailView>(),
+            PaginationData = new PaginationData { TotalRecords = 0 }
+        };
 
-        var result = await _sut.GetAdditionalCostsAsync("P1", 1);
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _additionalCostRepo.GetAdditionalCostsByProjectYearAsync("P1", 1, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(Arg.Any<PaginationData>()).Returns(new PaginationDto());
 
-        Assert.Empty(result);
+        var result = await _sut.GetAdditionalCostsAsync("P1", 1, query);
+
+        Assert.Empty(result.Data);
     }
 
     #endregion
@@ -1331,11 +1423,21 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetAnimalRequirementsAsync_ReturnsEmpty_WhenNoData()
     {
-        _animalRepo.GetAnimalRequirementsByProjectYearAsync("P1", 1).Returns(new List<AnimalRequirementDetailView>());
+        var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+        var filter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+        var repoResult = new PagedData<AnimalRequirementDetailView>
+        {
+            Data = new List<AnimalRequirementDetailView>(),
+            PaginationData = new PaginationData { TotalRecords = 0 }
+        };
 
-        var result = await _sut.GetAnimalRequirementsAsync("P1", 1);
+        _mapper.Map<PaginationParameters<string>>(query).Returns(filter);
+        _animalRepo.GetAnimalRequirementsByProjectYearAsync("P1", 1, filter).Returns(repoResult);
+        _mapper.Map<PaginationDto>(Arg.Any<PaginationData>()).Returns(new PaginationDto());
 
-        Assert.Empty(result);
+        var result = await _sut.GetAnimalRequirementsAsync("P1", 1, query);
+
+        Assert.Empty(result.Data);
     }
 
     #endregion
@@ -1345,22 +1447,22 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetPayRatesAsync_ReturnsRates_WhenIsDefraTrue()
     {
-        var rates = new List<PayRateLookup> { new("SEO", 55.0, 40.0, 6.0, 12.0) };
-        _projectYearRepo.GetPayRatesAsync(true).Returns(rates);
+        var rates = new List<PayRateLookup> { new() { WgGrade = "SEO", ChargeRate = 55.0m, PayRate = 40.0m, Npr = 6.0m, Ohr = 12.0m } };
+        _projectYearRepo.GetPayRatesAsync("2024/001", 2024, true).Returns(rates);
 
-        var result = (await _sut.GetPayRatesAsync(true)).ToList();
+        var result = (await _sut.GetPayRatesAsync("2024/001", 2024, true)).ToList();
 
         Assert.Single(result);
         Assert.Equal("SEO", result[0].WgGrade);
-        await _projectYearRepo.Received(1).GetPayRatesAsync(true);
+        await _projectYearRepo.Received(1).GetPayRatesAsync("2024/001", 2024, true);
     }
 
     [Fact]
     public async Task GetPayRatesAsync_ReturnsEmpty_WhenNoRatesExist()
     {
-        _projectYearRepo.GetPayRatesAsync(false).Returns(new List<PayRateLookup>());
+        _projectYearRepo.GetPayRatesAsync("2024/001", 2024, false).Returns(new List<PayRateLookup>());
 
-        var result = await _sut.GetPayRatesAsync(false);
+        var result = await _sut.GetPayRatesAsync("2024/001", 2024, false);
 
         Assert.Empty(result);
     }
@@ -1372,23 +1474,23 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetAnimalRatesAsync_ReturnsRates_WhenIsDefraFalse()
     {
-        var rates = new List<AnimalRateLookup> { new("DOG", 8.50) };
-        _animalRepo.GetAnimalRatesAsync(false).Returns(rates);
+        var rates = new List<AnimalRateLookup> { new() { AnimalType = "DOG", DailyRate = 8.50m } };
+        _animalRepo.GetAnimalRatesAsync("2024/001", 2024, false).Returns(rates);
 
-        var result = (await _sut.GetAnimalRatesAsync(false)).ToList();
+        var result = (await _sut.GetAnimalRatesAsync("2024/001", 2024, false)).ToList();
 
         Assert.Single(result);
         Assert.Equal("DOG", result[0].AnimalType);
-        Assert.Equal(8.50, result[0].DailyRate);
-        await _animalRepo.Received(1).GetAnimalRatesAsync(false);
+        Assert.Equal(8.50m, result[0].DailyRate);
+        await _animalRepo.Received(1).GetAnimalRatesAsync("2024/001", 2024, false);
     }
 
     [Fact]
     public async Task GetAnimalRatesAsync_ReturnsEmpty_WhenNoRatesExist()
     {
-        _animalRepo.GetAnimalRatesAsync(true).Returns(new List<AnimalRateLookup>());
+        _animalRepo.GetAnimalRatesAsync("2024/001", 2024, true).Returns(new List<AnimalRateLookup>());
 
-        var result = await _sut.GetAnimalRatesAsync(true);
+        var result = await _sut.GetAnimalRatesAsync("2024/001", 2024, true);
 
         Assert.Empty(result);
     }
@@ -1414,22 +1516,22 @@ public class YearlyDetailsServiceTests
     [Fact]
     public async Task GetTestCodeLookupsAsync_ReturnsLookups_WhenIsDefraTrue()
     {
-        var lookups = new List<TestCodeLookup> { new("TC002", "Virus Screen", 200m) };
-        _testRepo.GetTestCodeLookupsAsync(true).Returns(lookups);
+        var lookups = new List<TestCodeLookup> { new() { ItemCode = "TC002", ItemDescription = "Virus Screen", UnitPrice = 200m } };
+        _testRepo.GetTestCodeLookupsAsync("2024/001", 2024, true).Returns(lookups);
 
-        var result = (await _sut.GetTestCodeLookupsAsync(true)).ToList();
+        var result = (await _sut.GetTestCodeLookupsAsync("2024/001", 2024, true)).ToList();
 
         Assert.Single(result);
         Assert.Equal("TC002", result[0].ItemCode);
-        await _testRepo.Received(1).GetTestCodeLookupsAsync(true);
+        await _testRepo.Received(1).GetTestCodeLookupsAsync("2024/001", 2024, true);
     }
 
     [Fact]
     public async Task GetTestCodeLookupsAsync_ReturnsEmpty_WhenNoLookups()
     {
-        _testRepo.GetTestCodeLookupsAsync(false).Returns(new List<TestCodeLookup>());
+        _testRepo.GetTestCodeLookupsAsync("2024/001", 2024, false).Returns(new List<TestCodeLookup>());
 
-        var result = await _sut.GetTestCodeLookupsAsync(false);
+        var result = await _sut.GetTestCodeLookupsAsync("2024/001", 2024, false);
 
         Assert.Empty(result);
     }

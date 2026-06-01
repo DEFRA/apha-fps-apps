@@ -66,6 +66,8 @@ public class ProjectYearRepositoryTests
         RepositoryTestHelper.SetupSaveChanges(mockContext);
 
         var mockSettingsRepo = new Mock<ISettingsRepository>();
+        mockSettingsRepo.Setup(x => x.GetSettingValueByIdAsync("CurrentYear"))
+            .ReturnsAsync(DefaultFpsYear.ToString());
         if (settings != null)
         {
             foreach (var kvp in settings)
@@ -75,7 +77,11 @@ public class ProjectYearRepositoryTests
             }
         }
 
-        var repo = new ProjectYearRepository(mockContext.Object, mockSettingsRepo.Object);
+        var mockProjectRepo = new Mock<IProjectRepository>();
+        mockProjectRepo.Setup(x => x.GetInflationFactorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(1.0);
+
+        var repo = new ProjectYearRepository(mockContext.Object, mockSettingsRepo.Object, mockProjectRepo.Object);
         return (repo, projectYearsMockSet, mockContext, mockSettingsRepo);
     }
 
@@ -455,7 +461,7 @@ public class ProjectYearRepositoryTests
         var (repo, _, _, _) = CreateRepository();
 
         // Act
-        var result = await repo.GetPayRatesAsync(isDefra: false);
+        var result = await repo.GetPayRatesAsync("2024/001", 2024, isDefra: false);
 
         // Assert
         Assert.NotNull(result);
@@ -477,15 +483,15 @@ public class ProjectYearRepositoryTests
         var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
 
         // Act
-        var result = (await repo.GetPayRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
         Assert.Equal("HEO", result[0].WgGrade);
-        Assert.Equal(45.50, result[0].ChargeRate);
-        Assert.Equal(30.0, result[0].PayRate);
-        Assert.Equal(5.0, result[0].Npr);
-        Assert.Equal(10.0, result[0].Ohr);
+        Assert.Equal(45.50m, result[0].ChargeRate);
+        Assert.Equal(30.0m, result[0].PayRate);
+        Assert.Equal(5.0m, result[0].Npr);
+        Assert.Equal(10.0m, result[0].Ohr);
     }
 
     [Fact]
@@ -503,11 +509,11 @@ public class ProjectYearRepositoryTests
         var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
 
         // Act
-        var result = (await repo.GetPayRatesAsync(isDefra: true)).ToList();
+        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: true)).ToList();
 
         // Assert
         Assert.Single(result);
-        Assert.Equal(55.00, result[0].ChargeRate);
+        Assert.Equal(55.00m, result[0].ChargeRate);
     }
 
     [Fact]
@@ -527,7 +533,7 @@ public class ProjectYearRepositoryTests
         var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
 
         // Act
-        var result = (await repo.GetPayRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -551,7 +557,7 @@ public class ProjectYearRepositoryTests
         var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
 
         // Act
-        var result = (await repo.GetPayRatesAsync(isDefra: true)).ToList();
+        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: true)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -813,7 +819,7 @@ public class ProjectYearRepositoryTests
         };
         var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
 
-        var result = (await repo.GetPayRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         Assert.Equal(2, result.Count);
     }
@@ -831,7 +837,7 @@ public class ProjectYearRepositoryTests
         };
         var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
 
-        var result = (await repo.GetPayRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         Assert.Empty(result);
     }
