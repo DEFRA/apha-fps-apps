@@ -1,10 +1,11 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PACT
 {
     public interface IRecreateSummariesLogService
     {
-        Task<ApiResponseDto<List<RecreateSummariesLogDto>>> GetAllLogsAsync();
+        Task<ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>> GetAllRecreateSummariesLogsAsync(QueryParameters<string> query);
     }
 }

@@ -42,7 +42,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> Index()
         {
             var query = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
-            var response = await _logService.GetAllLogsAsync();
+            var response = await _logService.GetAllRecreateSummariesLogsAsync(query);
 
             return View(new RecreateSummariesLogViewModel
             {
@@ -66,7 +66,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> LoadRecreateSummariesLogGrid(PaginationFilter<string> request)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _logService.GetAllLogsAsync();
+            var response = await _logService.GetAllRecreateSummariesLogsAsync(query);
 
             return PartialView("_DataGrid", MapToGridConfig(response, request.SortBy, request.Descending));
         }
@@ -85,7 +85,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// empty configuration when <paramref name="response"/> is unsuccessful or has no data.
         /// </returns>
         private DataGridConfig<RecreateSummariesLogItem> MapToGridConfig(
-            ApiResponseDto<List<RecreateSummariesLogDto>> response,
+            ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>> response,
             string? sortBy,
             bool descending)
         {
@@ -94,7 +94,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!response.Success || response.Data is null)
                 return grid;
 
-            grid.Data = response.Data.Select(log => new RecreateSummariesLogItem
+            grid.Data = response.Data.data.Select(log => new RecreateSummariesLogItem
             {
                 Id = log.Id,
                 DateDone = log.DateDone?.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -105,9 +105,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             grid.Pagination = new PaginationModel
             {
-                TotalRecords = response.Data.Count,
-                PageNumber = 1,
-                PageSize = 20,
+                TotalRecords = response.Data.TotalCount,
+                PageNumber = response.Data.PageNumber,
+                PageSize = response.Data.PageSize,
                 SortColumn = sortBy,
                 SortDirection = descending
             };

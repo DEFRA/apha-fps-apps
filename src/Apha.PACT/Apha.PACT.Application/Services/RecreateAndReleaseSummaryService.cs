@@ -1,6 +1,8 @@
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
+using Apha.PACT.Application.Pagination;
 using Apha.PACT.Core.Interfaces;
+using Apha.PACT.Core.Pagination;
 using AutoMapper;
 
 namespace Apha.PACT.Application.Services
@@ -16,10 +18,11 @@ namespace Apha.PACT.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<IEnumerable<RecreateSummariesLogDto>> GetAllLogsAsync()
+        public async Task<PaginatedResult<RecreateSummariesLogDto>> GetRecreateSummariesAllLogsAsync(QueryParameters<string> query)
         {
-            var logs = await _repository.GetAllLogsAsync();
-            return _mapper.Map<IEnumerable<RecreateSummariesLogDto>>(logs);
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetRecreateSummariesAllLogsAsync(parameters);
+            return _mapper.Map<PaginatedResult<RecreateSummariesLogDto>>(pagedData);
         }
     }
 }

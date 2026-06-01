@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
+using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.PACT
 {
@@ -14,7 +15,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             _pactClient = pactClient;
         }
 
-        public async Task<ApiResponseDto<List<RecreateSummariesLogDto>>> GetAllLogsAsync()
-            => await _pactClient.PactRecreateSummariesLog.GetAllLogsAsync();
+        public async Task<ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>> GetAllRecreateSummariesLogsAsync(QueryParameters<string> query)
+            => await _pactClient.PactRecreateSummariesLog.GetAllRecreateSummariesLogsAsync(query);
     }
 }

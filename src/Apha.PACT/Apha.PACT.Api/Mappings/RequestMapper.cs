@@ -14,6 +14,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();
 
             CreateMap<Pagination, PaginationDto>().ReverseMap();
+            CreateMap<Apha.PACT.Core.Pagination.PaginationData, Pagination>().ReverseMap();
 
             CreateMap<JobCodeReq, JobCodeDto>().ReverseMap();
             CreateMap<JobCodeRes, JobCodeDto>().ReverseMap();

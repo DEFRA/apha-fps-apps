@@ -1,7 +1,7 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
-using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
+using Apha.PACT.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -31,16 +31,17 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves all recreate summaries logs from the system.
+        /// Retrieves all recreate summaries logs from the system with pagination and sorting support.
         /// </summary>
+        /// <param name="query">Pagination and sorting parameters from FPSApps client.</param>
         /// <returns>
-        /// <c>200 OK</c> with an <see cref="IEnumerable{RecreateSummariesLogRes}"/> containing all logs.
+        /// <c>200 OK</c> with a <see cref="PaginationRes{T}"/> containing the logs and pagination metadata.
         /// </returns>
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetRecreateSummariesAllLogs([FromQuery] QueryParameters<string> query)
         {
-            var items = await _service.GetAllLogsAsync();
-            return Ok(_mapper.Map<IEnumerable<RecreateSummariesLogRes>>(items));
+            var result = await _service.GetRecreateSummariesAllLogsAsync(query);
+            return Ok(_mapper.Map<PaginationRes<RecreateSummariesLogRes>>(result));
         }
     }
 }
