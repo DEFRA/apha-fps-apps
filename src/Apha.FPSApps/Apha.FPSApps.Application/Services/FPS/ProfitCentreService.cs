@@ -20,6 +20,11 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsProfitCentre.GetProfitCentresAsync();
         }
 
+        public async Task<ApiResponseDto<IEnumerable<ProfitCentreDto>>> GetAllProfitCentresAsync()
+        {
+            return await _fpsClient.FpsProfitCentre.GetAllProfitCentresAsync();
+        }
+
         public async Task<ApiResponseDto<List<ProfitCentreDto>>> GetAllProfitCentresPagedAsync(QueryParameters<string> query)
         {
             return await _fpsClient.FpsProfitCentre.GetAllProfitCentresPagedAsync(query);
@@ -43,6 +48,13 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<bool>> DeleteProfitCentreAsync(string profitCentreId)
         {
             return await _fpsClient.FpsProfitCentre.DeleteProfitCentreAsync(profitCentreId);
+        }
+
+        public async Task<ApiResponseDto<bool>> UpdateProfitCentreSettingsAsync(
+            string profitCentre, int timesheet, int outputsheet, short timesheetLayout)
+        {
+            return await _fpsClient.FpsProfitCentre.UpdateProfitCentreSettingsAsync(
+                profitCentre, timesheet, outputsheet, timesheetLayout);
         }
     }
 }

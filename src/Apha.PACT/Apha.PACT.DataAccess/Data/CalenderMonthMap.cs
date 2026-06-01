@@ -1,4 +1,4 @@
-using Apha.PACT.Core.Entities;
+﻿using Apha.PACT.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -13,7 +13,7 @@ namespace Apha.PACT.DataAccess.Data
                  .ToTable("tlkpmonth", "fps");
 
             entity.Property(e => e.AccntsPeriod).HasColumnName("accntsperiod");
-            entity.Property(e => e.FQuarter).HasColumnName("fquarter");
+            entity.Property(e => e.Fquarter).HasColumnName("fquarter");
             entity.Property(e => e.MonthName)
                 .HasMaxLength(50)
                 .HasColumnName("monthname");

@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace Apha.Common.Utilities.ExcelExport
 {
-    public class ExcelExportService : IExcelExportService
+    public partial class ExcelExportService : IExcelExportService
     {
         public byte[] ExportToExcel<T>(
         IEnumerable<T> data,
@@ -37,7 +37,7 @@ namespace Apha.Common.Utilities.ExcelExport
             workbook.SaveAs(stream);
 
             return stream.ToArray();
-        }
+        }        
 
         public byte[] ExportToExcelMultiSheet(IEnumerable<ExcelSheetDefinition> sheets)
         {

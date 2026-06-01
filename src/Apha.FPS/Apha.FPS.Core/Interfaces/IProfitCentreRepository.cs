@@ -14,5 +14,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> ProfitCentreExistsAsync(string profitCentreId);
         Task<bool> HasLinkedGradesAsync(string profitCentreId);
         Task<bool> HasLinkedWorkgroupsAsync(string profitCentreId);
+        Task<IEnumerable<ProfitCentre>> GetAllProfitCentresAsync();        
+        Task<bool> UpdateProfitCentreSettingsAsync(string profitCentre, int timesheet, int outputsheet, short timesheetlayout);
     }
 }
