@@ -98,7 +98,7 @@ public sealed class CreateTimeCostCalcsStepTests
         Assert.Equal(10m, row.ChargeRate); // IsDefraProject = 0
         Assert.Equal("Charge", row.Class);
         Assert.Equal(8d, row.Time);
-        Assert.Equal(8d * 10m, (decimal)row.Cost);
+        Assert.Equal(8d * 10d, row.Cost ?? 0d);
         Assert.Equal("DivA", row.Division);
         Assert.Equal(8m * 5m, row.Pay);
         Assert.Equal(8m * 2m, row.NonPay);

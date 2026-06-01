@@ -1,17 +1,5 @@
 {
   "profiles": {
-    "BatchJobs NoDb FirstPass": {
-      "commandName": "Project",
-      "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development",
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "BATCH_JOB_NAME": "HealthCheck",
-        "BATCH_RUN_MODE": "AdHoc",
-        "BATCH_JOBQUEUE_ID": "00000000-0000-0000-0000-000000000001",
-        "BATCH_USER_ID": "local-debug-user",
-        "BatchJobs__EnableDatabase": "false"
-      }
-    },
     "BatchJobs WithDb": {
       "commandName": "Project",
       "environmentVariables": {
@@ -21,19 +9,6 @@
         "BATCH_RUN_MODE": "AdHoc",
         "BATCH_JOBQUEUE_ID": "00000000-0000-0000-0000-000000000002",
         "BATCH_USER_ID": "local-debug-user",
-        "BatchJobs__EnableDatabase": "true"
-      }
-    },
-    "BatchJobs WithDb LocalPostgres": {
-      "commandName": "Project",
-      "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development",
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "BATCH_JOB_NAME": "HealthCheck",
-        "BATCH_RUN_MODE": "AdHoc",
-        "BATCH_JOBQUEUE_ID": "00000000-0000-0000-0000-000000000003",
-        "BATCH_USER_ID": "local-debug-user",
-        "ConnectionStrings__BatchJobsConnectionString": "Host=localhost;Port=5432;Username=postgres;Password=admin123;Database=batch_jobs_foundation_db",
         "BatchJobs__EnableDatabase": "true"
       }
     }

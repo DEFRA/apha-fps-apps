@@ -68,11 +68,11 @@ public sealed class RefreshPeriodMoStepTests
         Assert.Equal("SAC1", row.SubAccountCode);
         Assert.Equal("No", row.IsDefraProject);
         Assert.Equal("PC1", row.Opc);
-        Assert.Equal("CC1", row.Occ);
+        Assert.Equal(1d, row.Occ ?? 0d);
         Assert.Equal(1, row.Month);
         Assert.Equal("PC1", row.Spc);
         Assert.Equal("WG1", row.WorkGroup);
-        Assert.Equal("CC1", row.Scc);
+        Assert.Equal(1d, row.Scc ?? 0d);
         Assert.Equal("T1", row.TestCode);
         Assert.Equal(5, row.Volume);
         Assert.Equal(10m, row.TestPrice);

@@ -1,6 +1,7 @@
 using Amazon.EventBridge;
 using Apha.BatchJobs.Triggering.Options;
 using Apha.BatchJobs.Triggering.Services;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "BatchJobs FPS API",
+        Version = "v1",
+        Description = "Batch jobs trigger API for FPS routes"
+    });
+});
 builder.Services.Configure<EventBridgePublisherOptions>(builder.Configuration.GetSection("EventBridge"));
 builder.Services.AddAWSService<IAmazonEventBridge>();
 builder.Services.AddScoped<IEventBridgePublisher, EventBridgePublisher>();
@@ -19,6 +30,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "BatchJobs FPS API v1");
+    });
 }
 
 app.UseHttpsRedirection();

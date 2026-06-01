@@ -29,9 +29,7 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
             throw new FileNotFoundException($"Worker project not found at '{workerProjectPath}'.");
         }
 
-        var shouldPauseForDebugger =
-            _options.LocalWorker.WaitForDebuggerAttach &&
-            detail.JobName.Equals("RecreateSummaries", StringComparison.OrdinalIgnoreCase);
+        var shouldPauseForDebugger = _options.LocalWorker.WaitForDebuggerAttach;
 
         var workingDirectory = ResolveWorkingDirectory(workerProjectPath);
         var startInfo = new ProcessStartInfo
@@ -84,6 +82,18 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
         if (Path.IsPathRooted(relativePath))
         {
             return relativePath;
+        }
+
+        var probeRoot = new DirectoryInfo(_environment.ContentRootPath);
+        while (probeRoot is not null)
+        {
+            var candidatePath = Path.GetFullPath(relativePath, probeRoot.FullName);
+            if (File.Exists(candidatePath))
+            {
+                return candidatePath;
+            }
+
+            probeRoot = probeRoot.Parent;
         }
 
         return Path.GetFullPath(relativePath, _environment.ContentRootPath);

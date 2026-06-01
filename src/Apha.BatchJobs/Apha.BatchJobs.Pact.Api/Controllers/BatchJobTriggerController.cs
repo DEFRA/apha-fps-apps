@@ -72,11 +72,18 @@ public sealed class BatchJobTriggerController : ControllerBase
             eventId);
 
         int? workerPid = null;
+        var workerProcessLaunched = false;
         if (eventId.StartsWith("localproc-", StringComparison.OrdinalIgnoreCase)
             && int.TryParse(eventId["localproc-".Length..], out var parsedWorkerPid))
         {
             workerPid = parsedWorkerPid;
+            workerProcessLaunched = true;
         }
+
+        var status = workerProcessLaunched ? "WorkerProcessStarted" : "TriggerAccepted";
+        var message = workerProcessLaunched
+            ? "Trigger accepted and local worker process launched. Attach debugger to workerPid."
+            : "Trigger accepted for dispatch.";
 
         return Accepted(new
         {
@@ -86,9 +93,10 @@ public sealed class BatchJobTriggerController : ControllerBase
             jobExecutionId,
             eventId,
             workerPid,
-            status = "TriggerAccepted",
+            workerProcessLaunched,
+            status,
             acceptedAtUtc,
-            message = "Trigger accepted for dispatch."
+            message
         });
     }
 }

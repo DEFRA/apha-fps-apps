@@ -78,10 +78,10 @@ public sealed class RefreshPeriodTccStepTests
         Assert.Equal("SAC1", row.SubAccountCode);
         Assert.Equal(1, row.Month);
         Assert.Equal("No", row.DefraProject);
-        Assert.Equal("CC1", row.Occ);
+        Assert.Equal(1d, row.Occ ?? 0d);
         Assert.Equal("PC1", row.Opc);
         Assert.Equal("PC1", row.Spc);
-        Assert.Equal("CC1", row.Scc);
+        Assert.Equal(1d, row.Scc ?? 0d);
         Assert.Equal("Staff1", row.Name);
         Assert.Equal("GC1", row.GradeCode);
         Assert.Equal("SP123", row.SpNumber);

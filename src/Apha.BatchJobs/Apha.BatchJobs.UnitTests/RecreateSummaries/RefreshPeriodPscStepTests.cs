@@ -59,7 +59,7 @@ public sealed class RefreshPeriodPscStepTests
         Assert.Equal("SAC1", row.SubAccountCode);
         Assert.Equal("No", row.IsDefraProject);
         Assert.Equal("PC1", row.Opc);
-        Assert.Equal("CC1", row.Occ);
+        Assert.Equal(1d, row.Occ ?? 0d);
         Assert.Equal(1, row.Month);
         Assert.Equal(100m, row.Amount);
         Assert.Equal("A1", row.AcctCode);

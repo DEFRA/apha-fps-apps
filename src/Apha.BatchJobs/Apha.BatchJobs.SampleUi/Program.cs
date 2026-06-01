@@ -132,5 +132,5 @@ public sealed class DownstreamApisOptions
 {
 	public string FpsBaseUrl { get; init; } = "http://localhost:5160";
 
-	public string PactBaseUrl { get; init; } = "http://localhost:5089";
+	public string PactBaseUrl { get; init; } = "http://localhost:5189";
 }

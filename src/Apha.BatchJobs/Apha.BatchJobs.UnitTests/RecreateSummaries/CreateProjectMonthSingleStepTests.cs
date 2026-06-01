@@ -104,6 +104,6 @@ public sealed class CreateProjectMonthSingleStepTests
         Assert.Equal(1d, row.DueDone);
         Assert.Equal(1d, row.OnTime);
         Assert.Equal(8d, row.TotalHours);
-        Assert.Equal(4m, row.PayCosts);
+        Assert.Equal(4d, row.PayCosts ?? 0d);
     }
 }
