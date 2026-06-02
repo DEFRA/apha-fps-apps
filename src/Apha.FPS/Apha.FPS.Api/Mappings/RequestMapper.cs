@@ -71,6 +71,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
             CreateMap<ProfitCentreReq, ProfitCentreDto>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
+            CreateMap<ProfitCentreGradeReq, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();

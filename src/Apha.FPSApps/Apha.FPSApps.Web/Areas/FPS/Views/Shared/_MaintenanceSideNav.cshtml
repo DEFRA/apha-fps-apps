@@ -58,7 +58,8 @@
         </li>
       
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "ProfitCentreGradeMaint" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="ProfitCentreGradeMaint" asp-action="Index">
                 Maintain RC Grades (Defra)
             </a>
         </li>
