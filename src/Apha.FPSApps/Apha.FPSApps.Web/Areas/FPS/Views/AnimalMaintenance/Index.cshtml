@@ -82,8 +82,8 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message || 'Animal data created successfully.');
                         closeModal();
+                        showGovukAlert(result.message || 'Animal data created successfully.');
                         window['gridManager_animalMasterGrid'].reloadGrid({ page: 1 });
                     }
                     else {
@@ -125,8 +125,8 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message || 'Animal data updated successfully.');
                         closeModal();
+                        showGovukAlert(result.message || 'Animal data updated successfully.');
                         window['gridManager_animalMasterGrid'].reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
