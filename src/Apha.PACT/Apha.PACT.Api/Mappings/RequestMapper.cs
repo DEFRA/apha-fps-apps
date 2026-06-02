@@ -58,6 +58,7 @@ namespace Apha.PACT.Api.Mappings
                 .ForMember(dest => dest.SumOfCost, opt => opt.MapFrom(src => src.TotalCost));
             CreateMap<WorkGroupReportEmailResultDto, WorkGroupReportEmailResultRes>().ReverseMap();            
             CreateMap<RecreateSummariesLogRes, RecreateSummariesLogDto>().ReverseMap();
+            CreateMap<ReleasePeriodRes, ReleasePeriodDto>().ReverseMap();
         }
     }
 }

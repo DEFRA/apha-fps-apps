@@ -24,5 +24,17 @@ namespace Apha.PACT.Application.Services
             var pagedData = await _repository.GetRecreateSummariesAllLogsAsync(parameters);
             return _mapper.Map<PaginatedResult<RecreateSummariesLogDto>>(pagedData);
         }
+
+        public async Task<IReadOnlyList<ReleasePeriodDto>> GetReleaseSummariesAsync()
+        {
+            var periods = await _repository.GetReleaseSummariesAsync();
+            return _mapper.Map<IReadOnlyList<ReleasePeriodDto>>(periods);
+        }
+
+        public async Task<ReleasePeriodDto?> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun)
+        {
+            var period = await _repository.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+            return _mapper.Map<ReleasePeriodDto?>(period);
+        }
     }
 }

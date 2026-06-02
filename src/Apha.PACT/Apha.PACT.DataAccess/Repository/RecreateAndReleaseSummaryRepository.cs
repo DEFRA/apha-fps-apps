@@ -68,5 +68,27 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
+
+        public async Task<IReadOnlyList<ReleasePeriod>> GetReleaseSummariesAsync()
+        {
+            return await _context.ReleasePeriods
+                .AsNoTracking()
+                .OrderBy(p => p.EndPeriod)
+                .ToListAsync();
+        }
+
+        public async Task<ReleasePeriod?> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun)
+        {
+            var fpsYear = _context.FilterFpsYear;
+            var period = await _context.ReleasePeriods.FindAsync(periodName, fpsYear);
+
+            if (period is not null)
+            {
+                period.FinalSummariesRun = finalSummariesRun;
+                await _context.SaveChangesAsync();
+            }
+
+            return period;
+        }
     }
 }

@@ -12,7 +12,7 @@ namespace Apha.PACT.Api.Controllers
     [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/recreatesummarieslog")]
+    [Route("api/v{version:apiVersion}/recreatereleasesummary")]
     public class RecreateAndReleaseSummaryController : ControllerBase
     {
         private readonly IRecreateAndReleaseSummaryService _service;
@@ -22,7 +22,7 @@ namespace Apha.PACT.Api.Controllers
         /// Initialises a new instance of <see cref="RecreateAndReleaseSummaryController"/> with the required
         /// service and AutoMapper dependencies.
         /// </summary>
-        /// <param name="service">Application service used to retrieve recreate summaries log data.</param>
+        /// <param name="service">Application service used to retrieve recreate summaries log and release summary data.</param>
         /// <param name="mapper">AutoMapper instance used to project application DTOs to API response contracts.</param>
         public RecreateAndReleaseSummaryController(IRecreateAndReleaseSummaryService service, IMapper mapper)
         {
@@ -42,6 +42,30 @@ namespace Apha.PACT.Api.Controllers
         {
             var result = await _service.GetRecreateSummariesAllLogsAsync(query);
             return Ok(_mapper.Map<PaginationRes<RecreateSummariesLogRes>>(result));
+        }
+
+        /// <summary>
+        /// Retrieves all release summary periods from <c>tblPeriod</c>.
+        /// </summary>
+        /// <returns><c>200 OK</c> with a list of <see cref="ReleasePeriodRes"/>.</returns>
+        [HttpGet("/api/v{version:apiVersion}/releasesummary")]
+        public async Task<IActionResult> GetReleaseSummaries()
+        {
+            var result = await _service.GetReleaseSummariesAsync();
+            return Ok(_mapper.Map<IReadOnlyList<ReleasePeriodRes>>(result));
+        }
+
+        /// <summary>
+        /// Updates the <c>FinalSummariesRun</c> flag for the specified release period.
+        /// </summary>
+        /// <param name="request">The period name and new flag value.</param>
+        /// <returns><c>200 OK</c> with the updated <see cref="ReleasePeriodRes"/> on success; <c>404 Not Found</c> if the period does not exist.</returns>
+        [HttpPut("/api/v{version:apiVersion}/releasesummary/finalrun")]
+        public async Task<IActionResult> SetFinalSummaryRun([FromBody] ReleasePeriodReq request)
+        {
+            var result = await _service.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun);
+           
+            return Ok(_mapper.Map<ReleasePeriodRes>(result));
         }
     }
 }

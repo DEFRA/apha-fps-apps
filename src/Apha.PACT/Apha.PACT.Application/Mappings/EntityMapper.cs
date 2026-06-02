@@ -40,6 +40,8 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimeRes>().ReverseMap();
             CreateMap<RecreateSummariesLog, RecreateSummariesLogDto>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName));
+
+            CreateMap<ReleasePeriod, ReleasePeriodDto>().ReverseMap();
         }
     }
 }

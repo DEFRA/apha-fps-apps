@@ -1,0 +1,11 @@
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.PACT;
+
+namespace Apha.FPSApps.Application.Interfaces.PACT
+{
+    public interface IReleaseSummaryService
+    {
+        Task<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>> GetReleaseSummariesAsync();
+        Task<ApiResponseDto<short>> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun);
+    }
+}

@@ -1,0 +1,150 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.ReleaseSummaryViewModel
+
+@{
+    ViewData["Title"] = "Release Summaries";
+}
+
+<style>
+    #gridContainer_releaseSummariesGrid .govuk-checkboxes__item {
+        pointer-events: auto !important;
+        cursor: pointer;
+    }
+</style>
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+    <div class="govuk-grid-column-full sup_flex_center_start sup_border-bottom sup_margin_bottom_10">
+        <h1 class="sup_margin_bottom_10">Release Summaries </h1>
+        <div class="govuk-grid-column-one-third sup_margin_top_neg_10">
+            <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0">
+                <div class="govuk-checkboxes__item">
+
+                    <input class="govuk-checkboxes__input govuk-!-font-size-16" id="chkdefraproject" name="chkdefraproject" type="checkbox" value="defraproject">
+                    <label class="govuk-label govuk-checkboxes__label govuk-!-font-weight-bold sup_label_auto_width" for="chkdefraproject">
+                        Send Report Emails?
+                    </label>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+        <div id="gridContainer_releaseSummariesGrid">
+            @await Html.PartialAsync("_DataGrid", Model.ReleaseSummaryGrid)
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+
+        var GRID_SELECTOR = '#gridContainer_releaseSummariesGrid';
+        var ROW_SELECTOR = GRID_SELECTOR + ' tbody tr';
+        var CHECKBOX_CLASS = '.grid-checkbox';
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        function getGridRows() {
+            return $(ROW_SELECTOR);
+        }
+
+        function getRowCheckbox($row) {
+            return $row.find(CHECKBOX_CLASS);
+        }
+
+        /**
+         * Returns the index of the last checked row, or -1 if none are checked.
+         */
+        function getLastCheckedIndex() {
+            var lastCheckedIndex = -1;
+            getGridRows().each(function (index) {
+                if (getRowCheckbox($(this)).is(':checked')) {
+                    lastCheckedIndex = index;
+                }
+            });
+            return lastCheckedIndex;
+        }
+
+        /**
+         * Returns the index of the last checked row, excluding the given row index.
+         */
+        function getLastCheckedIndexExcluding(excludeIndex) {
+            var lastCheckedIndex = -1;
+            getGridRows().each(function (index) {
+                if (index !== excludeIndex && getRowCheckbox($(this)).is(':checked')) {
+                    lastCheckedIndex = index;
+                }
+            });
+            return lastCheckedIndex;
+        }
+
+        /**
+         * Disables checkboxes that appear before the last checked row.
+         * The last checked row stays enabled so it can be unchecked.
+         */
+        function updateCheckboxStates() {
+            var lastCheckedIndex = getLastCheckedIndex();
+            getGridRows().each(function (index) {
+                var $checkbox = getRowCheckbox($(this));
+                $checkbox.prop('disabled', lastCheckedIndex !== -1 && index < lastCheckedIndex);
+            });
+        }
+
+        /**
+         * Validates that the row being checked is the next sequential row.
+         * Returns true if the check is allowed, false otherwise.
+         */
+        function isSequentialCheckAllowed(currentIndex) {
+            var lastCheckedIndex = getLastCheckedIndexExcluding(currentIndex);
+            var expectedNextIndex = lastCheckedIndex + 1;
+            return currentIndex === expectedNextIndex;
+        }
+
+        /**
+         * Sends the updated finalSummariesRun value to the server.
+         */
+        function saveFinalSummaryRun(periodName, finalSummariesRun, $row, $checkbox, isChecked) {
+            $.ajax({
+                url: '@Url.Action("SetFinalSummaryRun", "ReleaseSummary", new { area = "PACT" })',
+                type: 'POST',
+                data: { periodName: periodName, finalSummariesRun: finalSummariesRun },
+                success: function () {
+                    $row.css('background-color', '#ffffcc');
+                    updateCheckboxStates();
+                },
+                error: function () {
+                    showGovukAlert('Failed to update Final Summaries Run for period: ' + periodName);
+                    $checkbox.prop('checked', !isChecked);
+                    updateCheckboxStates();
+                }
+            });
+        }
+
+        // ── Event handler ─────────────────────────────────────────────────────
+
+        function onCheckboxChange() {
+            var $checkbox = $(this);
+            var $row = $checkbox.closest('tr');
+            var periodName = $row.data('id');
+            var isChecked = $checkbox.is(':checked');
+            var currentIndex = getGridRows().index($row);
+
+            if (isChecked && !isSequentialCheckAllowed(currentIndex)) {
+                showGovukAlert('Please check checkboxes sequentially. You cannot skip rows.');
+                $checkbox.prop('checked', false);
+                updateCheckboxStates();
+                return;
+            }
+
+            saveFinalSummaryRun(periodName, isChecked ? 1 : 0, $row, $checkbox, isChecked);
+        }
+
+        // ── Initialise ────────────────────────────────────────────────────────
+
+        updateCheckboxStates();
+        $(GRID_SELECTOR).on('change', CHECKBOX_CLASS, onCheckboxChange);
+    });
+</script>
