@@ -12,7 +12,7 @@ namespace Apha.PACT.Api.Controllers
     [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/recreatesummarieslog")]
+    [Route("api/v{version:apiVersion}/recreatereleasesummary")]
     public class RecreateAndReleaseSummaryController : ControllerBase
     {
         private readonly IRecreateAndReleaseSummaryService _service;

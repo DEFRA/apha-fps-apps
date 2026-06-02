@@ -11,7 +11,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 {
     public class RecreateAndReleaseSummaryServiceTests
     {
-        private readonly IRecreateSummariesLogRepository _mockRepository;
+        private readonly IRecreateAndReleaseSummaryRepository _mockRepository;
         private readonly IMapper _mockMapper;
         private readonly RecreateAndReleaseSummaryService _service;
 
@@ -21,7 +21,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
         public RecreateAndReleaseSummaryServiceTests()
         {
-            _mockRepository = Substitute.For<IRecreateSummariesLogRepository>();
+            _mockRepository = Substitute.For<IRecreateAndReleaseSummaryRepository>();
             _mockMapper = Substitute.For<IMapper>();
             _service = new RecreateAndReleaseSummaryService(_mockRepository, _mockMapper);
         }

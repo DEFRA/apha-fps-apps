@@ -9,10 +9,10 @@ namespace Apha.PACT.Application.Services
 {
     public class RecreateAndReleaseSummaryService : IRecreateAndReleaseSummaryService
     {
-        private readonly IRecreateSummariesLogRepository _repository;
+        private readonly IRecreateAndReleaseSummaryRepository _repository;
         private readonly IMapper _mapper;
 
-        public RecreateAndReleaseSummaryService(IRecreateSummariesLogRepository repository, IMapper mapper)
+        public RecreateAndReleaseSummaryService(IRecreateAndReleaseSummaryRepository repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
