@@ -342,11 +342,11 @@ curl -X POST "http://localhost:5189/api/v1/batch-jobs/trigger" \
 ### 9.2 Poll job status
 
 ```bash
-curl "http://localhost:5160/api/batch-jobs/RecreateSummaries/status"
+curl "http://localhost:5261/api/batch-jobs/RecreateSummaries/status"
 ```
 
 ### 9.3 Pre-check can-run
 
 ```bash
-curl "http://localhost:5160/api/batch-jobs/RecreateSummaries/can-run"
+curl "http://localhost:5261/api/batch-jobs/RecreateSummaries/can-run"
 ```
