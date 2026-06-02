@@ -9,12 +9,12 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
-    public class FpsAnimalMasterApiClient : IFpsAnimalMasterApiClient
+    public class FpsAnimalApiClient : IFpsAnimalApiClient
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        public FpsAnimalMasterApiClient(IFpsHttpExecutor http, IMapper mapper)
+        public FpsAnimalApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http ?? throw new ArgumentNullException(nameof(http));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));

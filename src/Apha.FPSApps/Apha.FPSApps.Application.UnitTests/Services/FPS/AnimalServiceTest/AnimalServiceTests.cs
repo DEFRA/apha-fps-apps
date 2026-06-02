@@ -6,20 +6,20 @@ using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Application.UnitTests.Services.FPS.AnimalMasterServiceTest
+namespace Apha.FPSApps.Application.UnitTests.Services.FPS.AnimalServiceTest
 {
-    public class AnimalMasterServiceTests
+    public class AnimalServiceTests
     {
         private readonly IFpsApiClient _mockFpsClient;
-        private readonly IFpsAnimalMasterApiClient _mockApiClient;
-        private readonly AnimalMasterService _sut;
+        private readonly IFpsAnimalApiClient _mockApiClient;
+        private readonly AnimalService _sut;
 
-        public AnimalMasterServiceTests()
+        public AnimalServiceTests()
         {
             _mockFpsClient = Substitute.For<IFpsApiClient>();
-            _mockApiClient = Substitute.For<IFpsAnimalMasterApiClient>();
+            _mockApiClient = Substitute.For<IFpsAnimalApiClient>();
             _mockFpsClient.FpsAnimalMaster.Returns(_mockApiClient);
-            _sut = new AnimalMasterService(_mockFpsClient);
+            _sut = new AnimalService(_mockFpsClient);
         }
 
         private static AnimalDto BuildDto(string animalType = "CATTLE") =>
@@ -30,7 +30,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.AnimalMasterServiceTes
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenFpsClientIsNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new AnimalMasterService(null!));
+            Assert.Throws<ArgumentNullException>(() => new AnimalService(null!));
         }
 
         #endregion

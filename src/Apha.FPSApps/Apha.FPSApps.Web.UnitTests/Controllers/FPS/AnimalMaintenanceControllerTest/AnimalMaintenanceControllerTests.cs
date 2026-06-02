@@ -18,13 +18,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.AnimalMasterControllerTest
     public class AnimalMaintenanceControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly IAnimalMasterService _animalMasterService;
+        private readonly IAnimalService _animalMasterService;
         private readonly AnimalMaintenanceController _controller;
 
         public AnimalMaintenanceControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _animalMasterService = Substitute.For<IAnimalMasterService>();
+            _animalMasterService = Substitute.For<IAnimalService>();
             _controller = new AnimalMaintenanceController(_mapper, _animalMasterService);
         }
 

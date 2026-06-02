@@ -4,7 +4,7 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
-    public interface IFpsAnimalMasterApiClient
+    public interface IFpsAnimalApiClient
     {
         Task<ApiResponseDto<IEnumerable<AnimalDto>>> GetAllAnimalsAsync();
         Task<ApiResponseDto<List<AnimalDto>>> GetAllAnimalsAsync(QueryParameters<string> query);

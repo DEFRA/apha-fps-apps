@@ -9,19 +9,19 @@ using AutoMapper;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalMasterApiClientTest
+namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalApiClientTest
 {
-    public class FpsAnimalMasterApiClientTests
+    public class FpsAnimalApiClientTests
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
-        private readonly FpsAnimalMasterApiClient _client;
+        private readonly FpsAnimalApiClient _client;
 
-        public FpsAnimalMasterApiClientTests()
+        public FpsAnimalApiClientTests()
         {
             _http = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new FpsAnimalMasterApiClient(_http, _mapper);
+            _client = new FpsAnimalApiClient(_http, _mapper);
         }
 
         private static AnimalDto BuildDto(string animalType = "CATTLE") =>
@@ -43,14 +43,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalMasterApiCl
         public void Constructor_ThrowsArgumentNullException_WhenHttpIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new FpsAnimalMasterApiClient(null!, _mapper));
+                new FpsAnimalApiClient(null!, _mapper));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new FpsAnimalMasterApiClient(_http, null!));
+                new FpsAnimalApiClient(_http, null!));
         }
 
         #endregion
