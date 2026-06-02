@@ -26,7 +26,9 @@ internal sealed class RefreshPeriodTccStep : RecreateSummariesExecutionStepBase
             from tcc in db.RsTimeCostCalcs.AsNoTracking()
             join wg in db.RsWorkGroup.AsNoTracking() on tcc.WorkGroup equals wg.WorkGroup
             join p in db.RsTlkpProject.AsNoTracking() on tcc.Project equals p.ParentProject
-            join cc0 in db.RsCostCentre.AsNoTracking() on p.CostCentre equals cc0.CostCentre into cc1
+            join cc0 in db.RsCostCentre.AsNoTracking()
+                on new { CostCentre = p.CostCentre, p.FpsYear }
+                equals new { CostCentre = (double?)cc0.CostCentre, cc0.FpsYear } into cc1
             from cc in cc1.DefaultIfEmpty()
             join emp in db.RsTblWgEmployee.AsNoTracking() on tcc.StaffId equals emp.PactId
             select new RsPeriodTimeCostCalcsTable

@@ -1580,6 +1580,7 @@ public class BatchJobsDbContext : DbContext
             entity.HasKey(e => e.CostCentre);
             entity.Property(e => e.CostCentre).HasColumnName("costcentre");
             entity.Property(e => e.ProfitCentre).HasColumnName("profitcentre");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
         modelBuilder.Entity<RsWorkGroupTable>(entity =>
@@ -1635,12 +1636,13 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsProjSubContractTable>(entity =>
         {
             entity.ToTable("proj_subcontract", schema: "fps");
-            entity.HasKey(e => e.SubContCounter);
+            entity.HasKey(e => new { e.SubContCounter, e.FpsYear });
             entity.Property(e => e.SubContCounter).HasColumnName("subcontcounter");
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.Month).HasColumnName("month").HasConversion<double>();
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.AcctCode).HasColumnName("acctcode");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
         modelBuilder.Entity<RsPeriodProjSubContractTable>(entity =>

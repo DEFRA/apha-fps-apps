@@ -24,8 +24,12 @@ internal sealed class RefreshPeriodPscStep : RecreateSummariesExecutionStepBase
 
         var rows = await (
             from psc in db.RsProjSubContract.AsNoTracking()
-            join p in db.RsTlkpProject.AsNoTracking() on psc.Project equals p.ParentProject
-            join cc0 in db.RsCostCentre.AsNoTracking() on p.CostCentre equals cc0.CostCentre into cc1
+            join p in db.RsTlkpProject.AsNoTracking()
+                on new { Project = psc.Project, psc.FpsYear }
+                equals new { Project = p.ParentProject, p.FpsYear }
+            join cc0 in db.RsCostCentre.AsNoTracking()
+                on new { CostCentre = p.CostCentre, p.FpsYear }
+                equals new { CostCentre = (double?)cc0.CostCentre, cc0.FpsYear } into cc1
             from cc in cc1.DefaultIfEmpty()
             select new RsPeriodProjSubContractTable
             {

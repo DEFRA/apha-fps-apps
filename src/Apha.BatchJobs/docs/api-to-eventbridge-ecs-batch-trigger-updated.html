@@ -80,6 +80,20 @@
       </tbody>
     </table>
     <p><strong>Last updated:</strong> May 2026 (canonical execution identity model).</p>
+
+    <h2>Consolidation Risk Handoff (June 2026)</h2>
+    <p><strong>Important:</strong> RecreateSummaries validation on consolidated PostgreSQL identified schema/data integrity risks that require DBA remediation before production cutover.</p>
+    <ul>
+      <li><strong>Engineering completed:</strong> application-side safeguards and parity-preserving fixes.</li>
+      <li><strong>DBA required:</strong> null <code>fpsyear</code> backfill strategy, key alignment for multi-year tables, and residual data cleanup.</li>
+    </ul>
+    <p>
+      Full handoff document:
+      <a href="database/RECREATESUMMARIES-CONSOLIDATION-DBA-HANDOFF-2026-06-02.md">
+        RECREATESUMMARIES-CONSOLIDATION-DBA-HANDOFF-2026-06-02.md
+      </a>
+    </p>
+
     <p>If you are not redirected automatically, use the link above.</p>
   </div>
 </body>

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Xunit;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Apha.BatchJobs.Infrastructure.Data;
+using Apha.BatchJobs.Domain.Enums;
 using Npgsql;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
@@ -14,17 +15,15 @@ public sealed class DeleteTimeCostCalcsStepTests
     [Fact]
     public async Task ExecuteCoreAsync_SuccessPath()
     {
-        // Arrange: In-memory EF Core context
-        var options = new DbContextOptionsBuilder<BatchJobsDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        using var db = new BatchJobsDbContext(options);
+        await using var harness = await RecreateSummariesPostgresTestHarness.CreateAsync();
+        var db = harness.DbContext;
+        var project = harness.Id("P1");
 
         // Seed RsTimeCostCalcs
         db.RsTimeCostCalcs.Add(new RsTimeCostCalcsTable {
             WorkGroup = "WG1",
             JobCode = "JC1",
-            Project = "P1",
+            Project = project,
             Month = 1,
             StaffId = "S1"
         });
@@ -36,6 +35,7 @@ public sealed class DeleteTimeCostCalcsStepTests
         var result = await step.ExecuteAsync(context, CancellationToken.None);
         // Assert
         Assert.Equal("DeleteTimeCostCalcs", result.StepName);
-        Assert.Empty(db.RsTimeCostCalcs);
+        Assert.Equal(StepStatus.Success, result.Status);
+        Assert.False(await db.RsTimeCostCalcs.AsNoTracking().AnyAsync(x => x.Project == project));
     }
 }

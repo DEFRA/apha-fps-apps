@@ -85,7 +85,7 @@ internal sealed class RsProjectMonthTable
     public required string Project { get; set; }
     public int MonthNo { get; set; }
     public decimal? CostProfile { get; set; }
-    public int FpsYear { get; set; }
+    public int? FpsYear { get; set; }
 }
 
 internal sealed class RsTimeCostCalcsTable
@@ -342,6 +342,7 @@ internal sealed class RsCostCentreTable
 {
     public double CostCentre { get; set; }
     public string? ProfitCentre { get; set; }
+    public int FpsYear { get; set; }
 }
 
 internal sealed class RsMonthlyOutputTable
@@ -393,6 +394,7 @@ internal sealed class RsProjSubContractTable
     public int Month { get; set; }
     public decimal? Amount { get; set; }
     public string? AcctCode { get; set; }
+    public int FpsYear { get; set; }
 }
 
 internal sealed class RsPeriodProjSubContractTable

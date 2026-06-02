@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Xunit;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Apha.BatchJobs.Infrastructure.Data;
+using Apha.BatchJobs.Domain.Enums;
 using Npgsql;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
@@ -14,15 +15,13 @@ public sealed class DeleteProjectMonthCaseworkStepTests
     [Fact]
     public async Task ExecuteCoreAsync_SuccessPath()
     {
-        // Arrange: In-memory EF Core context
-        var options = new DbContextOptionsBuilder<BatchJobsDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        using var db = new BatchJobsDbContext(options);
+        await using var harness = await RecreateSummariesPostgresTestHarness.CreateAsync();
+        var db = harness.DbContext;
+        var project = harness.Id("P1");
 
         // Seed RsProjectMonthCasework
         db.RsProjectMonthCasework.Add(new RsProjectMonthCaseworkTable {
-            Project = "P1",
+            Project = project,
             MonthNo = 1,
             CwDebit = 1d,
             CwCredit = 2d
@@ -35,6 +34,7 @@ public sealed class DeleteProjectMonthCaseworkStepTests
         var result = await step.ExecuteAsync(context, CancellationToken.None);
         // Assert
         Assert.Equal("DeleteProjectMonthCasework", result.StepName);
-        Assert.Empty(db.RsProjectMonthCasework);
+        Assert.Equal(StepStatus.Success, result.Status);
+        Assert.False(await db.RsProjectMonthCasework.AsNoTracking().AnyAsync(x => x.Project == project));
     }
 }

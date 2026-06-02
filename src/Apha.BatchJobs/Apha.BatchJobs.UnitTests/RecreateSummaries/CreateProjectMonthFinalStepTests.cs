@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Xunit;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Apha.BatchJobs.Infrastructure.Data;
+using Apha.BatchJobs.Domain.Enums;
 using Npgsql;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
@@ -47,6 +48,7 @@ public sealed class CreateProjectMonthFinalStepTests
             EndPeriod = 1,
             PeriodName = "2026-01",
             Project = "P1",
+            FpsYear = 2026,
             CumCost = 35m,
             CumInvoices = 15m,
             CumCoiw = 7m,
@@ -78,6 +80,7 @@ public sealed class CreateProjectMonthFinalStepTests
         var result = await step.ExecuteAsync(context, CancellationToken.None);
         // Assert
         Assert.Equal("CreateProjectMonthFinal", result.StepName);
+        Assert.Equal(StepStatus.Success, result.Status);
 
         // Validate output in RsProjectMonthFinal
         var rows = await db.RsProjectMonthFinal.ToListAsync();

@@ -21,7 +21,12 @@ internal abstract class RecreateSummariesExecutionStepBase : IRecreateSummariesE
         }
         catch (Exception ex)
         {
-            return new StepResult(StepName, 0, start, DateTime.UtcNow, StepStatus.Failed, ex.Message);
+            var root = ex.GetBaseException();
+            var message = ReferenceEquals(root, ex)
+                ? ex.Message
+                : $"{ex.Message} | Root: {root.Message}";
+
+            return new StepResult(StepName, 0, start, DateTime.UtcNow, StepStatus.Failed, message);
         }
     }
 

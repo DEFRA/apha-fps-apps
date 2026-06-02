@@ -11,6 +11,15 @@ internal sealed class CreateProjectMonthSingleStep : RecreateSummariesExecutionS
     {
         var db = context.DbContext;
 
+        var hasNullFpsYear = await db.RsProjectMonth
+            .AsNoTracking()
+            .AnyAsync(pm => pm.FpsYear == null, cancellationToken);
+
+        if (hasNullFpsYear)
+        {
+            throw new InvalidOperationException("projectmonth contains rows with null fpsyear. This violates consolidated multi-year integrity requirements.");
+        }
+
         // Two-step: fetch raw nullable values first (avoid COALESCE on PostgreSQL money columns),
         // then apply defaults in C#.
         var rawRows = await (
@@ -40,7 +49,7 @@ internal sealed class CreateProjectMonthSingleStep : RecreateSummariesExecutionS
             {
                 Project = pm.Project,
                 MonthNo = pm.MonthNo,
-                FpsYear = pm.FpsYear,
+                FpsYear = pm.FpsYear!.Value,
                 CostProfile = pm.CostProfile,
                 ScTotal = sc.Total,
                 ScAnimals = sc.Animals,
