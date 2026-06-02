@@ -130,8 +130,8 @@
                 contentType: 'application/json',
                 success: function (response) {
                     if (response.success) {
-                        showGovukAlert(response.message);
                         closeModal();
+                        showGovukAlert(response.message);
                         getGridManager().reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');

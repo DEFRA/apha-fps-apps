@@ -24,7 +24,7 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         public async Task<PagedData<WorkgroupGrade>> GetAllWorkgroupGradesPagedAsync(
-            PaginationParameters<string> query, CancellationToken cancellationToken = default)
+            PaginationParameters<string> query)
         {
             ArgumentNullException.ThrowIfNull(query);
 
@@ -35,36 +35,36 @@ namespace Apha.FPS.DataAccess.Repositories
             baseQuery = ApplyWorkgroupGradeFilter(baseQuery, query.Filter);
             baseQuery = (IQueryable<WorkgroupGrade>)ApplySorting(baseQuery, query.SortBy, query.Descending);
 
-            var result = await baseQuery.ToListAsync(cancellationToken);
+            var result = await baseQuery.ToListAsync();
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<WorkgroupGrade?> GetByWgGradeAsync(string wgGrade, CancellationToken cancellationToken = default)
+        public async Task<WorkgroupGrade?> GetByWgGradeAsync(string wgGrade)
         {
             if (string.IsNullOrWhiteSpace(wgGrade))
                 return null;
 
             return await _dbContext.WorkgroupGrades
                 .AsNoTracking()
-                .FirstOrDefaultAsync(e => e.WgGrade == wgGrade, cancellationToken);
+                .FirstOrDefaultAsync(e => e.WgGrade == wgGrade);
         }
 
-        public async Task<WorkgroupGrade> CreateAsync(WorkgroupGrade entity, CancellationToken cancellationToken = default)
+        public async Task<WorkgroupGrade> CreateAsync(WorkgroupGrade entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
 
             entity.FpsYear = _requestContext.FpsYear;
             _dbContext.WorkgroupGrades.Add(entity);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync();
             return entity;
         }
 
-        public async Task<WorkgroupGrade> UpdateAsync(WorkgroupGrade entity, CancellationToken cancellationToken = default)
+        public async Task<WorkgroupGrade> UpdateAsync(WorkgroupGrade entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
 
             var existing = await _dbContext.WorkgroupGrades
-                .FirstOrDefaultAsync(e => e.WgGrade == entity.WgGrade, cancellationToken);
+                .FirstOrDefaultAsync(e => e.WgGrade == entity.WgGrade);
 
             if (existing is null)
                 throw new KeyNotFoundException($"WorkgroupGrade '{entity.WgGrade}' not found.");
@@ -74,30 +74,30 @@ namespace Apha.FPS.DataAccess.Repositories
             existing.Workgroup = entity.Workgroup;
             existing.FpsYear = _requestContext.FpsYear;
 
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync();
             return existing;
         }
 
-        public async Task<bool> DeleteAsync(string wgGrade, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(string wgGrade)
         {
             if (string.IsNullOrWhiteSpace(wgGrade))
                 return false;
 
             var deleted = await _dbContext.WorkgroupGrades
                 .Where(e => e.WgGrade == wgGrade)
-                .ExecuteDeleteAsync(cancellationToken);
+                .ExecuteDeleteAsync();
 
             return deleted > 0;
         }
 
-        public async Task<List<string>> GetAllGradeCodesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<string>> GetAllGradeCodesAsync()
         {
             return await _dbContext.WorkgroupGrades
                 .AsNoTracking()
                 .Select(e => e.GradeCode)
                 .Distinct()
                 .OrderBy(x => x)
-                .ToListAsync(cancellationToken);
+                .ToListAsync();
         }
 
         // ─── Sorting ──────────────────────────────────────────────────────────────

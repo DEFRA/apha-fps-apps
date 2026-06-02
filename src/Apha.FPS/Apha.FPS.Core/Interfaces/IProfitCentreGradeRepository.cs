@@ -15,6 +15,6 @@ namespace Apha.FPS.Core.Interfaces
             string profitCentre);
 
         /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
-        Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default);
+        Task<List<string>> GetAllPcGradesAsync();
     }
 }

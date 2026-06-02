@@ -26,7 +26,7 @@ namespace Apha.FPS.Application.Services
         }
 
         public async Task<PaginatedResult<WorkgroupGradeDto>> GetAllWorkgroupGradesPagedAsync(
-            QueryParameters<string> query, CancellationToken cancellationToken = default)
+            QueryParameters<string> query)
         {
             if (query is null)
             {
@@ -37,11 +37,11 @@ namespace Apha.FPS.Application.Services
             }
 
             var filter = _mapper.Map<PaginationParameters<string>>(query);
-            var result = await _repository.GetAllWorkgroupGradesPagedAsync(filter, cancellationToken);
+            var result = await _repository.GetAllWorkgroupGradesPagedAsync(filter);
             return _mapper.Map<PaginatedResult<WorkgroupGradeDto>>(result);
         }
 
-        public async Task<WorkgroupGradeDto?> GetByWgGradeAsync(string wgGrade, CancellationToken cancellationToken = default)
+        public async Task<WorkgroupGradeDto?> GetByWgGradeAsync(string wgGrade)
         {
             if (string.IsNullOrWhiteSpace(wgGrade))
             {
@@ -51,11 +51,11 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
-            var entity = await _repository.GetByWgGradeAsync(wgGrade, cancellationToken);
+            var entity = await _repository.GetByWgGradeAsync(wgGrade);
             return entity is null ? null : _mapper.Map<WorkgroupGradeDto>(entity);
         }
 
-        public async Task<WorkgroupGradeDto> CreateAsync(WorkgroupGradeDto dto, CancellationToken cancellationToken = default)
+        public async Task<WorkgroupGradeDto> CreateAsync(WorkgroupGradeDto dto)
         {
             if (dto is null)
             {
@@ -66,11 +66,11 @@ namespace Apha.FPS.Application.Services
             }
 
             var entity = _mapper.Map<WorkgroupGrade>(dto);
-            var created = await _repository.CreateAsync(entity, cancellationToken);
+            var created = await _repository.CreateAsync(entity);
             return _mapper.Map<WorkgroupGradeDto>(created);
         }
 
-        public async Task<WorkgroupGradeDto> UpdateAsync(WorkgroupGradeDto dto, CancellationToken cancellationToken = default)
+        public async Task<WorkgroupGradeDto> UpdateAsync(WorkgroupGradeDto dto)
         {
             if (dto is null)
             {
@@ -81,11 +81,11 @@ namespace Apha.FPS.Application.Services
             }
 
             var entity = _mapper.Map<WorkgroupGrade>(dto);
-            var updated = await _repository.UpdateAsync(entity, cancellationToken);
+            var updated = await _repository.UpdateAsync(entity);
             return _mapper.Map<WorkgroupGradeDto>(updated);
         }
 
-        public async Task<bool> DeleteAsync(string wgGrade, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(string wgGrade)
         {
             if (string.IsNullOrWhiteSpace(wgGrade))
             {
@@ -95,7 +95,7 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
-            var hasAssociations = await _employeeRepository.HasAssociatedStaffAsync(wgGrade, cancellationToken);
+            var hasAssociations = await _employeeRepository.HasAssociatedStaffAsync(wgGrade);
             if (hasAssociations)
             {
                 throw new BusinessValidationErrorException(
@@ -106,11 +106,11 @@ namespace Apha.FPS.Application.Services
                 ]);
             }
 
-            return await _repository.DeleteAsync(wgGrade, cancellationToken);
+            return await _repository.DeleteAsync(wgGrade);
         }
 
-        public async Task<List<string>> GetAllGradeCodesAsync(CancellationToken cancellationToken = default)
-            => await _repository.GetAllGradeCodesAsync(cancellationToken);
+        public async Task<List<string>> GetAllGradeCodesAsync()
+            => await _repository.GetAllGradeCodesAsync();
 
         // Existing methods for backward compatibility
         public async Task<PaginatedResult<WorkgroupGradeDto>> GetWorkGroupGradeAsync(QueryParameters<string> query, string profitCentreGrade)

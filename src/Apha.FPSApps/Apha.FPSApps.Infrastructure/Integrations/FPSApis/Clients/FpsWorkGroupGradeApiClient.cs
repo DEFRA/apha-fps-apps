@@ -14,7 +14,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
-        private const string InternalCodeError = "INTERNAL_ERROR";
 
         public FpsWorkGroupGradeApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -54,126 +53,72 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetAllWorkgroupGradesPagedAsync(QueryParameters<string> query)
         {
-            try
-            {
-                var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedWorkgroupGrades, query);
-                var response = await _http.GetAsync<List<WorkgroupGradeRes>>(url);
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedWorkgroupGrades, query);
+            var response = await _http.GetAsync<List<WorkgroupGradeRes>>(url);
 
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<WorkgroupGradeDto>>>(response);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<WorkgroupGradeDto>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<WorkgroupGradeDto>>>(response);
-                return ApiResponseDto<List<WorkgroupGradeDto>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<WorkgroupGradeDto>>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve WorkgroupGrade data", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<List<WorkgroupGradeDto>>>(response);
+            return ApiResponseDto<List<WorkgroupGradeDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<WorkgroupGradeDto>> GetByWgGradeAsync(string wgGrade)
         {
-            try
-            {
-                var response = await _http.GetAsync<WorkgroupGradeRes>(string.Format(FpsApiEndpoints.GetWorkgroupGradeByCode, wgGrade));
+            var response = await _http.GetAsync<WorkgroupGradeRes>(string.Format(FpsApiEndpoints.GetWorkgroupGradeByCode, wgGrade));
 
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
-                return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve WorkgroupGrade record", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+            return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<WorkgroupGradeDto>> CreateAsync(WorkgroupGradeDto dto)
         {
-            try
-            {
-                var request = _mapper.Map<WorkgroupGradeReq>(dto);
-                var response = await _http.PostAsync<WorkgroupGradeReq, WorkgroupGradeRes>(FpsApiEndpoints.CreateWorkgroupGrade, request);
+            var request = _mapper.Map<WorkgroupGradeReq>(dto);
+            var response = await _http.PostAsync<WorkgroupGradeReq, WorkgroupGradeRes>(FpsApiEndpoints.CreateWorkgroupGrade, request);
 
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
-                return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to create WorkgroupGrade record", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+            return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<WorkgroupGradeDto>> UpdateAsync(string wgGrade, WorkgroupGradeDto dto)
         {
-            try
-            {
-                var request = _mapper.Map<WorkgroupGradeReq>(dto);
-                var response = await _http.PutAsync<WorkgroupGradeReq, WorkgroupGradeRes>(string.Format(FpsApiEndpoints.UpdateWorkgroupGrade, wgGrade), request);
+            var request = _mapper.Map<WorkgroupGradeReq>(dto);
+            var response = await _http.PutAsync<WorkgroupGradeReq, WorkgroupGradeRes>(string.Format(FpsApiEndpoints.UpdateWorkgroupGrade, wgGrade), request);
 
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
-                return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to update WorkgroupGrade record", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+            return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(string wgGrade)
         {
-            try
-            {
-                var response = await _http.DeleteAsync<bool>(string.Format(FpsApiEndpoints.DeleteWorkgroupGrade, wgGrade));
+            var response = await _http.DeleteAsync<bool>(string.Format(FpsApiEndpoints.DeleteWorkgroupGrade, wgGrade));
 
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<bool>>(response);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<bool>>(response);
-                return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<bool>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to delete WorkgroupGrade record", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<string>>> GetAllGradeCodesAsync()
         {
-            try
-            {
-                var response = await _http.GetAsync<List<string>>(FpsApiEndpoints.GetAllGradeCodes);
+            var response = await _http.GetAsync<List<string>>(FpsApiEndpoints.GetAllGradeCodes);
 
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<string>>>(response);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<string>>>(response);
 
-                var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
-                return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<string>>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve Grade codes", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+            return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-            }
-        }
+    }
+}

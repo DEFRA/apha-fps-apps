@@ -8,6 +8,6 @@ namespace Apha.FPS.Application.Interfaces
         Task<PaginatedResult<ProfitCentreGradeDto>> GetProfitCentreGradesAsync(QueryParameters<string> query, string profitCentre);
 
         /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
-        Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default);
+        Task<List<string>> GetAllPcGradesAsync();
     }
 }

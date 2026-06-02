@@ -25,7 +25,7 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<PaginatedResult<ProfitCentreGradeDto>>(pagedData);
         }
 
-        public async Task<List<string>> GetAllPcGradesAsync(CancellationToken cancellationToken = default)
-            => await _repository.GetAllPcGradesAsync(cancellationToken);
+        public async Task<List<string>> GetAllPcGradesAsync()
+            => await _repository.GetAllPcGradesAsync();
     }
 }

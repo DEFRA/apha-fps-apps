@@ -120,13 +120,13 @@ namespace Apha.FPS.DataAccess.Repositories
             return true;
         }
 
-        public async Task<bool> HasAssociatedStaffAsync(string wgGrade, CancellationToken cancellationToken = default)
+        public async Task<bool> HasAssociatedStaffAsync(string wgGrade)
         {
             if (string.IsNullOrWhiteSpace(wgGrade))
                 return false;
 
             return await _dbContext.WorkGroupEmployees
-                .AnyAsync(e => e.WorkGroupGrade == wgGrade, cancellationToken);
+                .AnyAsync(e => e.WorkGroupGrade == wgGrade);
         }
 
         private static IQueryable<WorkGroupEmployeeView> ApplyFilter(IQueryable<WorkGroupEmployeeView> query, string? filter)

@@ -131,9 +131,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var dto = _mapper.Map<WorkgroupGradeDto>(item);
             var result = await _wgGradeService.CreateAsync(dto);
 
-            return result.Success
-                ? Json(new { success = true, message = "WorkgroupGrade created successfully" })
-                : Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to create WorkgroupGrade.", errors = result.Errors });
+            if (result.Success)
+                return Json(new { success = true, message = "WorkgroupGrade created successfully" });
+
+            return Json(new
+            {
+                success = false,
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to create WorkgroupGrade.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         /// <summary>Displays the Edit WGGrade modal partial.</summary>
@@ -171,9 +181,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var dto = _mapper.Map<WorkgroupGradeDto>(item);
             var result = await _wgGradeService.UpdateAsync(item.WgGrade, dto);
 
-            return result.Success
-                ? Json(new { success = true, message = "WorkgroupGrade updated successfully" })
-                : Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update WorkgroupGrade.", errors = result.Errors });
+            if (result.Success)
+                return Json(new { success = true, message = "WorkgroupGrade updated successfully" });
+
+            return Json(new
+            {
+                success = false,
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update WorkgroupGrade.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         /// <summary>Deletes a WorkgroupGrade record by WgGrade code.</summary>
@@ -185,9 +205,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var result = await _wgGradeService.DeleteAsync(wgGrade);
 
-            return result.Success
-                ? Json(new { success = true, message = "WorkgroupGrade deleted successfully" })
-                : Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete WorkgroupGrade.", errors = result.Errors });
+            if (result.Success)
+                return Json(new { success = true, message = "WorkgroupGrade deleted successfully" });
+
+            return Json(new
+            {
+                success = false,
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete WorkgroupGrade.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
         }
 
         /// <summary>Returns all PC Grade codes for dropdown population in the modal.</summary>
