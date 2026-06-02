@@ -10,5 +10,5 @@ public partial class RecreateSummariesLog
     public short? Period { get; set; }
     public DateTime? DateDone { get; set; }
     public int FpsYear { get; set; }
-    public virtual TblUser User { get; set; }
+    public required virtual TblUser User { get; set; }
 }
