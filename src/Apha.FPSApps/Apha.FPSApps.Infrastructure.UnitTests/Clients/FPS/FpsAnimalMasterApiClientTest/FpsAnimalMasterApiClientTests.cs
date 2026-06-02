@@ -108,7 +108,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalMasterApiCl
             var expected = ApiResponseDto<List<AnimalDto>>.SuccessResponse(dtos,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
-            _http.GetAsync<List<AnimalDto>>(Arg.Is<string>(u => u.Contains("animalmaster/paged")))
+            _http.GetAsync<List<AnimalDto>>(Arg.Is<string>(u => u.Contains("animal/paged")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<AnimalDto>>>(apiResponse).Returns(expected);
 
@@ -150,7 +150,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalMasterApiCl
             var apiResponse = SuccessApiResponse<AnimalDto>(dto);
             var expected = ApiResponseDto<AnimalDto?>.SuccessResponse(dto);
 
-            _http.GetAsync<AnimalDto>(Arg.Is<string>(u => u.Contains("animalmaster/CATTLE")))
+            _http.GetAsync<AnimalDto>(Arg.Is<string>(u => u.Contains("animal/CATTLE")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<AnimalDto?>>(apiResponse).Returns(expected);
 
@@ -271,7 +271,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsAnimalMasterApiCl
             var apiResponse = SuccessApiResponse<bool?>(true);
             var expected = ApiResponseDto<bool>.SuccessResponse(true);
 
-            _http.DeleteAsync<bool?>(Arg.Is<string>(u => u.Contains("animalmaster/CATTLE"))).Returns(apiResponse);
+            _http.DeleteAsync<bool?>(Arg.Is<string>(u => u.Contains("animal/CATTLE"))).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expected);
 
             var result = await _client.DeleteAnimalAsync("CATTLE");
