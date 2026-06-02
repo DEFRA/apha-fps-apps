@@ -25,13 +25,11 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<CommentTopic, CommentTopicDto>().ReverseMap();
             CreateMap<MyProjSubContract, AdditionalCostDto>().ReverseMap();
             CreateMap<MyTblAdditionalCosts, AdditionalCostDto>().ReverseMap();
-            CreateMap<MyProjSubContract, AnimalCostDto>()
-                .ForMember(dest => dest.DailyRate,  opt => opt.MapFrom(src => src.Dailyrate))
-                .ForMember(dest => dest.AnimalDays, opt => opt.MapFrom(src => src.Animaldays))
-                .ReverseMap();
+            CreateMap<MyProjSubContract, AnimalCostDto>().ReverseMap();
             CreateMap<MyProjectAnimalPlan, AnimalCostDto>().ReverseMap();
             CreateMap<MyProjectStaffPlan, StaffCostDto>().ReverseMap();
             CreateMap<MyTimeCostCalcs, StaffCostDto>().ReverseMap();
+            CreateMap<Projects, ProjectYearDetailsDto>().ReverseMap();
         }
     }
 }

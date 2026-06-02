@@ -58,6 +58,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Staff Cost
             CreateMap<StaffCostRes, StaffCostDto>().ReverseMap();
+
+            // Project Year Details
+            CreateMap<ProjectYearDetailsRes, ProjectYearDetailsDto>().ReverseMap();
         }
     }
 }

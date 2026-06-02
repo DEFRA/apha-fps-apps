@@ -197,5 +197,26 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<ProjectYearDetailsDto>> GetProjectYearDetailsAsync(
+            string project, short year)
+        {
+            try
+            {
+                string url = string.Format(PimsApiEndpoints.GetProjectYearDetails, project, year);
+                var response = await _http.GetAsync<ProjectYearDetailsRes>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<ProjectYearDetailsDto>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<ProjectYearDetailsDto>>(response);
+                return ApiResponseDto<ProjectYearDetailsDto>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<ProjectYearDetailsDto>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve project year details", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }

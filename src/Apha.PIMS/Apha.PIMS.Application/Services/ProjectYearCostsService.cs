@@ -133,5 +133,11 @@ namespace Apha.PIMS.Application.Services
             }).ToList();
             return BuildResult(items, paged.PaginationData);
         }
+
+        public async Task<ProjectYearDetailsDto> GetProjectYearDetailsAsync(string project, short year)
+        {
+            Projects? entity = await _repository.GetProjectYearDetailsAsync(project, year);
+            return entity is null ? new ProjectYearDetailsDto() : _mapper.Map<ProjectYearDetailsDto>(entity);
+        }
     }
 }

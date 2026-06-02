@@ -20,8 +20,8 @@ namespace Apha.PIMS.DataAccess.Data
             entity.Property(e => e.Amount)
                 .HasColumnType("money")
                 .HasColumnName("amount");
-            entity.Property(e => e.Animaldays).HasColumnName("animaldays");
-            entity.Property(e => e.Dailyrate)
+            entity.Property(e => e.AnimalDays).HasColumnName("animaldays");
+            entity.Property(e => e.DailyRate)
                 .HasColumnType("money")
                 .HasColumnName("dailyrate");
             entity.Property(e => e.Description)

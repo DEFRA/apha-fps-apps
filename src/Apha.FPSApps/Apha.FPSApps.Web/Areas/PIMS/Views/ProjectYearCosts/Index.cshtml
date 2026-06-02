@@ -152,8 +152,107 @@
                     <p class="govuk-body govuk-hint">Pact Pay — coming soon.</p>
                 </div>
                 <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
-                     id="nav-project-details" role="tabpanel" aria-labelledby="tab_nav-project-details">
-                    <p class="govuk-body govuk-hint">Project Details — coming soon.</p>
+                     id="nav-project-details" role="tabpanel" aria-labelledby="tab_nav-project-details"
+                     style="overflow-y: auto; max-height: 500px;">
+                    <form class="govuk-form" style="width: 100%; display: flex;">
+                        <fieldset class="govuk-fieldset"
+                                  style="width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; grid-auto-flow: dense;">
+
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-year">Year</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-year" name="year" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-disease">Disease</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-disease" name="disease" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-project">Project</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-project" name="project" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-contract">Contract</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-contract" name="contract" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-manager">Manager</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-manager" name="manager" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-finished">Finished</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-finished" name="finished" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-transferincome">Transfer Income</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-transferincome" name="transferincome" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-custincome">Cust Income</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-custincome" name="custincome" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-feecost">FE Cost</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-feecost" name="feecost" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-profit">Profit</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-profit" name="profit" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-carryover">Carry Over</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-carryover" name="carryover" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-budgetcvl">Budget CVL</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-budgetcvl" name="budgetcvl" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-caseworksub">Casework Sub</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-caseworksub" name="caseworksub" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-costcentre">Cost Centre</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-costcentre" name="costcentre" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-pvsincome">PVS Income</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-pvsincome" name="pvsincome" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-oracleproject">Oracle Project</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-oracleproject" name="oracleproject" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-plancasework">Plan Casework</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-plancasework" name="plancasework" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-subaccountcod">Sub Account</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-subaccountcod" name="subaccountcod" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-source">Source</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-source" name="source" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-project-group">Project Group</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-project-group" name="projectgroup" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <div class="govuk-checkboxes govuk-checkboxes--small">
+                                    <div class="govuk-checkboxes__item">
+                                        <input class="govuk-checkboxes__input" id="pd-defraproject" name="defraproject" type="checkbox" disabled>
+                                        <label class="govuk-label govuk-!-font-size-16 govuk-checkboxes__label" for="pd-defraproject">Defra Project</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="govuk-form-group" style="grid-column: span 3;">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-comments">Comments</label>
+                                <textarea class="govuk-textarea govuk-!-font-size-16" id="pd-comments" name="comments" rows="2" readonly></textarea>
+                            </div>
+
+                        </fieldset>
+                    </form>
                 </div>
 
                 <!-- ── Plan tab ──────────────────────────────────────────────────────────
@@ -395,7 +494,6 @@
         'nav-test-plan':       true,
         'nav-staff-plan':      true
     };
-
     // ── Panel visibility ──────────────────────────────────────────────────
     function showPanel(panelId) {
         document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
@@ -423,12 +521,44 @@
         refreshTabById(activePanel.id);
     }
 
+    function loadProjectDetails(project, year) {
+        if (!project || !year) return;
+        $.get('/PIMS/ProjectYearCosts/GetProjectYearDetails', { project: project, year: year })
+            .done(function (r) {
+                document.getElementById('pd-year').value           = r.year              ?? '';
+                document.getElementById('pd-project').value        = r.parentproject     ?? '';
+                document.getElementById('pd-manager').value        = r.manager           ?? '';
+                document.getElementById('pd-disease').value        = r.disease           ?? '';
+                document.getElementById('pd-contract').value       = r.contract          ?? '';
+                document.getElementById('pd-finished').value       = r.finished          ?? '';
+                document.getElementById('pd-transferincome').value = r.transferincome    ?? '';
+                document.getElementById('pd-custincome').value     = r.custincome        ?? '';
+                document.getElementById('pd-feecost').value        = r.feccost           ?? '';
+                document.getElementById('pd-profit').value         = r.profit            ?? '';
+                document.getElementById('pd-carryover').value      = r.carryover         ?? '';
+                document.getElementById('pd-budgetcvl').value      = r.budgetcvl         ?? '';
+                document.getElementById('pd-caseworksub').value    = r.caseworksub       ?? '';
+                document.getElementById('pd-costcentre').value     = r.costcentre        ?? '';
+                document.getElementById('pd-pvsincome').value      = r.pvsincome         ?? '';
+                document.getElementById('pd-oracleproject').value  = r.oracleprojectcode ?? '';
+                document.getElementById('pd-plancasework').value   = r.plancaseworkdebit ?? '';
+                document.getElementById('pd-subaccountcod').value  = r.subaccountcode    ?? '';
+                document.getElementById('pd-source').value         = r.source            ?? '';
+                document.getElementById('pd-project-group').value  = r.projectgroup      ?? '';
+                // Access Yes/No stores -1 for True, 0 for False (smallint)
+                document.getElementById('pd-defraproject').checked = r.isdefraproject === -1;
+                document.getElementById('pd-comments').value       = r.comments          ?? '';
+            });
+    }
+
     function refreshTabById(tabId) {
         var project = document.getElementById('dpprojectSelect').value;
         var year    = document.getElementById('dpyear').value;
         if (!project || !year) return;
 
-        if (tabId === 'nav-additional-cost') {
+        if (tabId === 'nav-project-details') {
+            loadProjectDetails(project, year);
+        } else if (tabId === 'nav-additional-cost') {
             var plansGm   = getPlansGridManager();
             var actualsGm = getActualsGridManager();
             if (plansGm)   plansGm.reloadGrid({ page: 1 });

@@ -292,5 +292,13 @@ namespace Apha.PIMS.DataAccess.Repository
             List<MyTimeCostCalcs> all = await query.ToListAsync();
             return ApplyPaging(all, paging.Page, paging.PageSize);
         }
+
+        public async Task<Projects?> GetProjectYearDetailsAsync(string project, short year)
+        {
+            return await _context.MyTlkpProjects
+                .AsNoTracking()
+                .Where(p => p.Parentproject == project && p.Year == year)
+                .FirstOrDefaultAsync();
+        }
     }
 }

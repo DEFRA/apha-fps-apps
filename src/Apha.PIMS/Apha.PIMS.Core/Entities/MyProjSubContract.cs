@@ -24,8 +24,8 @@ namespace Apha.PIMS.Core.Entities
 
         public int? Suppliernumber { get; set; }
 
-        public decimal? Dailyrate { get; set; }
+        public decimal? DailyRate { get; set; }
 
-        public int? Animaldays { get; set; }
+        public int? AnimalDays { get; set; }
     }
 }

@@ -538,10 +538,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             return Json(new
             {
-                staffTotal      = staffTotal.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-GB")),
-                testTotal       = testTotal.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-GB")),
-                animalTotal     = animalTotal.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-GB")),
-                additionalTotal = additionalTotal.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-GB"))
+                staffTotal      = staffTotal.ToString("C"),
+                testTotal       = testTotal.ToString("C"),
+                animalTotal     = animalTotal.ToString("C"),
+                additionalTotal = additionalTotal.ToString("C")
             });
         }
 
@@ -735,6 +735,41 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 Columns = GridDataProvider.GetColumnsDefination<AdditionalCostPlanItem>(null),
                 Pagination = pagination
             };
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetProjectYearDetails(string project, short year)
+        {
+            ApiResponseDto<ProjectYearDetailsDto> response =
+                await _yearCostsService.GetProjectYearDetailsAsync(project, year);
+
+            ProjectYearDetailsDto d = response.Data ?? new ProjectYearDetailsDto();
+
+            return Json(new
+            {
+                year              = d.Year,
+                parentproject     = d.Parentproject,
+                manager           = d.Manager,
+                disease           = d.Disease,
+                contract          = d.Contract,
+                finished          = d.Finished,
+                transferincome    = d.Transferincome?.ToString("C"),
+                custincome        = d.Custincome?.ToString("C"),
+                feccost           = d.Feccost?.ToString("C"),
+                profit            = d.Profit?.ToString("C"),
+                carryover         = d.Carryover?.ToString("C"),
+                budgetcvl         = d.BudgetCvl?.ToString("C"),
+                caseworksub       = d.Caseworksub?.ToString("C"),
+                costcentre        = d.Costcentre.HasValue ? ((long)d.Costcentre.Value).ToString() : null,
+                pvsincome         = d.Pvsincome?.ToString("C"),
+                oracleprojectcode = d.Oracleprojectcode,
+                plancaseworkdebit = d.Plancaseworkdebit?.ToString("C"),
+                subaccountcode    = d.Subaccountcode,
+                source            = d.Source,
+                projectgroup      = d.Projectgroup,
+                isdefraproject    = d.Isdefraproject,
+                comments          = d.Comments
+            });
         }
     }
 }

@@ -14,5 +14,6 @@ namespace Apha.FPSApps.Application.Interfaces.PIMS
         Task<ApiResponseDto<List<TestCostDto>>> GetTestActualsAsync(string project, short year, QueryParameters<string> query);
         Task<ApiResponseDto<List<StaffCostDto>>> GetStaffPlansAsync(string project, short year, QueryParameters<string> query);
         Task<ApiResponseDto<List<StaffCostDto>>> GetStaffActualsAsync(string project, short year, QueryParameters<string> query);
+        Task<ApiResponseDto<ProjectYearDetailsDto>> GetProjectYearDetailsAsync(string project, short year);
     }
 }
