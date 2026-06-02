@@ -13,13 +13,13 @@ using Xunit;
 
 namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
 {
-    public class AnimalMasterControllerTests
+    public class AnimalControllerTests
     {
         private readonly IAnimalService _serviceMock;
         private readonly IMapper _mapperMock;
         private readonly AnimalController _controller;
 
-        public AnimalMasterControllerTests()
+        public AnimalControllerTests()
         {
             _serviceMock = Substitute.For<IAnimalService>();
             _mapperMock = Substitute.For<IMapper>();

@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
-namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalMasterRepositoryTest
+namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
 {
-    public class AnimalMasterRepositoryTests
+    public class AnimalRepositoryTests
     {
         private const int DefaultFpsYear = 2025;
         private const string DefaultUserEmail = "test@example.com";
