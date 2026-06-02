@@ -45,7 +45,12 @@ namespace Apha.FPS.Application.Services
         public async Task<ProfitCentreGradeDto> CreateAsync(ProfitCentreGradeDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
-
+            var entityPcGrade = await _repository.GetByIdAsync(dto.PcGrade);
+            if (entityPcGrade != null)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot insert ProfitCentreGrade because RC Grade '{dto.PcGrade}' already exists.");
+            }
             // Converted trigger tI_ProfitCentreGrade — FK guard: ProfitCentre must exist in tblkpprofitcentre
             bool profitCentreExists = await _repository.ProfitCentreExistsAsync(dto.ProfitCentre);
             if (!profitCentreExists)

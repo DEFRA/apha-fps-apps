@@ -87,37 +87,21 @@ namespace Apha.FPS.DataAccess.Repositories
 
             entity.FpsYear = _dbContext.FilterFpsYear;
 
-            if (!originalPcGrade.Equals(entity.PcGrade, StringComparison.OrdinalIgnoreCase))
-            {
-                // PK is changing — delete old row and insert new one
-                var existing = await _dbContext.ProfitCentreGrades
+            var existing = await _dbContext.ProfitCentreGrades
                     .FirstOrDefaultAsync(x => x.PcGrade == originalPcGrade);
 
-                _dbContext.ProfitCentreGrades.Remove(existing!);
-                await _dbContext.SaveChangesAsync();
+            existing!.DivisionGrade  = entity.DivisionGrade;
+            existing.GradeCode      = entity.GradeCode;
+            existing.ProfitCentre   = entity.ProfitCentre;
+            existing.ChargeRate     = entity.ChargeRate;
+            existing.DirectRate     = entity.DirectRate;
+            existing.PayRate        = entity.PayRate;
+            existing.NPR            = entity.NPR;
+            existing.OHR            = entity.OHR;
+            existing.HrsAvailable   = entity.HrsAvailable;
 
-                _dbContext.ProfitCentreGrades.Add(entity);
-                await _dbContext.SaveChangesAsync();
-                return entity;
-            }
-            else
-            {
-                var existing = await _dbContext.ProfitCentreGrades
-                    .FirstOrDefaultAsync(x => x.PcGrade == originalPcGrade);
-
-                existing!.DivisionGrade  = entity.DivisionGrade;
-                existing.GradeCode      = entity.GradeCode;
-                existing.ProfitCentre   = entity.ProfitCentre;
-                existing.ChargeRate     = entity.ChargeRate;
-                existing.DirectRate     = entity.DirectRate;
-                existing.PayRate        = entity.PayRate;
-                existing.NPR            = entity.NPR;
-                existing.OHR            = entity.OHR;
-                existing.HrsAvailable   = entity.HrsAvailable;
-
-                await _dbContext.SaveChangesAsync();
-                return existing;
-            }
+            await _dbContext.SaveChangesAsync();
+            return existing;
         }
 
         public async Task<bool> DeleteAsync(string pcGrade)

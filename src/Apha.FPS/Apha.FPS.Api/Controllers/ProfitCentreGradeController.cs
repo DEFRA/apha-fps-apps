@@ -60,7 +60,9 @@ namespace Apha.FPS.Api.Controllers
         {
             var result = await _profitCentreGradeService.GetByIdAsync(pcGrade);
             if (result is null)
-                return NotFound($"Profit centre grade '{pcGrade}' not found.");
+            {
+                throw new ArgumentException($"Profit Centre grade record '{pcGrade}' not found");
+            }
             return Ok(_mapper.Map<ProfitCentreGradeRes>(result));
         }
 
@@ -71,15 +73,8 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> CreateAsync([FromBody] ProfitCentreGradeReq request)
         {
             var dto = _mapper.Map<ProfitCentreGradeDto>(request);
-            try
-            {
-                var created = await _profitCentreGradeService.CreateAsync(dto);
-                return Ok(_mapper.Map<ProfitCentreGradeRes>(created));
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var created = await _profitCentreGradeService.CreateAsync(dto);
+            return Ok(_mapper.Map<ProfitCentreGradeRes>(created));
         }
 
         /// <summary>
@@ -89,15 +84,8 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> UpdateAsync(string pcGrade, [FromBody] ProfitCentreGradeReq request)
         {
             var dto = _mapper.Map<ProfitCentreGradeDto>(request);
-            try
-            {
-                var updated = await _profitCentreGradeService.UpdateAsync(pcGrade, dto);
-                return Ok(_mapper.Map<ProfitCentreGradeRes>(updated));
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var updated = await _profitCentreGradeService.UpdateAsync(pcGrade, dto);
+            return Ok(_mapper.Map<ProfitCentreGradeRes>(updated));
         }
 
         /// <summary>
@@ -108,7 +96,9 @@ namespace Apha.FPS.Api.Controllers
         {
             var deleted = await _profitCentreGradeService.DeleteAsync(pcGrade);
             if (!deleted)
-                return NotFound($"Profit centre grade '{pcGrade}' not found.");
+            {
+                throw new ArgumentException($"Profit centre grade {pcGrade} not found");
+            }
             return Ok(new { success = true });
         }
 
