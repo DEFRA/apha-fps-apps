@@ -61,6 +61,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Project Year Details
             CreateMap<ProjectYearDetailsRes, ProjectYearDetailsDto>().ReverseMap();
+
+            // Pact Pay
+            CreateMap<PactPayRes, PactPayDto>().ReverseMap();
         }
     }
 }

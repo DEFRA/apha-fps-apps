@@ -300,5 +300,39 @@ namespace Apha.PIMS.DataAccess.Repository
                 .Where(p => p.Parentproject == project && p.Year == year)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<PagedData<PactPayCalc>> GetPactPayAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            // Mirror qryProjectTimeCostCalcs: GROUP BY Year, Project, Month
+            // SUM(Pay), SUM(NonPay), SUM(Cost) AS StaffCosts, SUM(Overhead)
+            IQueryable<PactPayCalc> query = _context.MyTimeCostCalcs
+                .AsNoTracking()
+                .Where(s => s.Project == project && s.Year == year)
+                .GroupBy(s => new { s.Year, s.Project, s.Month })
+                .Select(g => new PactPayCalc
+                {
+                    Year       = g.Key.Year,
+                    Project    = g.Key.Project,
+                    Month      = g.Key.Month,
+                    Pay        = g.Sum(x => x.Pay        ?? 0m),
+                    NonPay     = g.Sum(x => x.Nonpay     ?? 0m),
+                    StaffCosts = (decimal)g.Sum(x => x.Cost     ?? 0d),
+                    Overhead   = g.Sum(x => x.Overhead   ?? 0m)
+                });
+
+            query = (paging.SortBy?.ToLower()) switch
+            {
+                "month"      => ApplyOrder(query, x => x.Month,      paging.Descending),
+                "pay"        => ApplyOrder(query, x => x.Pay,        paging.Descending),
+                "nonpay"     => ApplyOrder(query, x => x.NonPay,     paging.Descending),
+                "staffcosts" => ApplyOrder(query, x => x.StaffCosts, paging.Descending),
+                "overhead"   => ApplyOrder(query, x => x.Overhead,   paging.Descending),
+                _            => query.OrderBy(x => x.Month)
+            };
+
+            List<PactPayCalc> all = await query.ToListAsync();
+            return ApplyPaging(all, paging.Page, paging.PageSize);
+        }
     }
 }

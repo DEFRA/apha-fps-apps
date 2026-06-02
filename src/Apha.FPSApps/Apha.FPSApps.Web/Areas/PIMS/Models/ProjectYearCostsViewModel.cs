@@ -25,5 +25,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         public DataGridConfig<TestCostPlanItem> PlanTestGrid { get; set; } = new();
         public DataGridConfig<AnimalCostPlanItem> PlanAnimalGrid { get; set; } = new();
         public DataGridConfig<AdditionalCostPlanItem> PlanAdditionalGrid { get; set; } = new();
+
+        // Pact Pay tab (lazy-loaded)
+        public DataGridConfig<PactPayItem> PactPayGrid { get; set; } = new();
     }
 }

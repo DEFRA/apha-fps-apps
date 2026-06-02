@@ -218,5 +218,27 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<PactPayDto>>> GetPactPayAsync(
+            string project, short year, QueryParameters<string> query)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(
+                    string.Format(PimsApiEndpoints.GetPactPay, project, year), query);
+                var response = await _http.GetAsync<List<PactPayRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<PactPayDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<PactPayDto>>>(response);
+                return ApiResponseDto<List<PactPayDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<PactPayDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve pact pay data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }

@@ -43,6 +43,14 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Staff Actuals grid item
             CreateMap<StaffCostDto, StaffCostActualItem>().ReverseMap();
+
+            // Pact Pay grid item — derive MonthName from Month number (abbreviated, e.g. "Jan")
+            CreateMap<PactPayDto, PactPayItem>()
+                .ForMember(dest => dest.MonthName,
+                    opt => opt.MapFrom(src => src.Month >= 1 && src.Month <= 12
+                        ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat
+                            .GetAbbreviatedMonthName((int)src.Month)
+                        : src.Month.ToString()));
         }
     }
 }

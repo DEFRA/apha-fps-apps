@@ -81,6 +81,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 DataGridConfig<AdditionalCostPlanItem> planAdditionalGrid =
                     BuildEmptyGrid<AdditionalCostPlanItem>("planAdditionalGrid", "Additional Cost Plan", "Account", "/PIMS/ProjectYearCosts/LoadPlanAdditionalGrid");
 
+                // Pact Pay tab grid — lazy-loaded on first tab click
+                DataGridConfig<PactPayItem> pactPayGrid =
+                    BuildEmptyGrid<PactPayItem>("pactPayGrid", "Pact Pay", "Month", "/PIMS/ProjectYearCosts/LoadPactPayGrid");
+
                 await Task.WhenAll(plansGridTask, actualsGridTask, animalPlansGridTask, animalActualsGridTask,
                     testPlansGridTask, testActualsGridTask, staffPlansGridTask, staffActualsGridTask);
 
@@ -101,7 +105,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 PlanStaffGrid = planStaffGrid,
                 PlanTestGrid = planTestGrid,
                 PlanAnimalGrid = planAnimalGrid,
-                PlanAdditionalGrid = planAdditionalGrid
+                PlanAdditionalGrid = planAdditionalGrid,
+                PactPayGrid = pactPayGrid
             });
         }
 
@@ -733,6 +738,70 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 BindGridUrl = "/PIMS/ProjectYearCosts/LoadPlanAdditionalGrid",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<AdditionalCostPlanItem>(null),
+                Pagination = pagination
+            };
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadPactPayGrid(
+            PaginationFilter<string> request, string project, short year)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request" });
+
+            DataGridConfig<PactPayItem> grid = await BuildPactPayGridAsync(project, year, request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPactPayTotals(string project, short year)
+        {
+            QueryParameters<string> allRecords = new() { Page = 1, PageSize = int.MaxValue };
+            ApiResponseDto<List<PactPayDto>> response =
+                await _yearCostsService.GetPactPayAsync(project, year, allRecords);
+
+            List<PactPayDto> data = response.Data ?? [];
+            return Json(new
+            {
+                payTotal        = data.Sum(x => x.Pay).ToString("C"),
+                nonPayTotal     = data.Sum(x => x.NonPay).ToString("C"),
+                overheadTotal   = data.Sum(x => x.Overhead).ToString("C"),
+                staffCostsTotal = data.Sum(x => x.StaffCosts).ToString("C")
+            });
+        }
+
+        private async Task<DataGridConfig<PactPayItem>> BuildPactPayGridAsync(
+            string project, short year, PaginationFilter<string> request)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<PactPayDto>> response =
+                await _yearCostsService.GetPactPayAsync(project, year, queryParameters);
+
+            List<PactPayItem> items = response.Success && response.Data != null
+                ? _mapper.Map<List<PactPayItem>>(response.Data)
+                : [];
+
+            PaginationModel pagination = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<PactPayItem>
+            {
+                GridId = "pactPayGrid",
+                Title = "Pact Pay",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "Month",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = "/PIMS/ProjectYearCosts/LoadPactPayGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<PactPayItem>(null),
                 Pagination = pagination
             };
         }

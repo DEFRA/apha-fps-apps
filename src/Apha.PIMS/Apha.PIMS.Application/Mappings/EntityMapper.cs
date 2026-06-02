@@ -30,6 +30,7 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<MyProjectStaffPlan, StaffCostDto>().ReverseMap();
             CreateMap<MyTimeCostCalcs, StaffCostDto>().ReverseMap();
             CreateMap<Projects, ProjectYearDetailsDto>().ReverseMap();
+            CreateMap<PactPayCalc, PactPayDto>().ReverseMap();
         }
     }
 }

@@ -114,5 +114,15 @@ namespace Apha.PIMS.Api.Controllers
             ProjectYearDetailsDto result = await _service.GetProjectYearDetailsAsync(project, year);
             return Ok(_mapper.Map<ProjectYearDetailsRes>(result));
         }
+
+        /// <summary>Returns paginated Pact Pay data (qryProjectTimeCostCalcs) for a given project and year.</summary>
+        [HttpGet("{project}/{year}/pactpay")]
+        public async Task<IActionResult> GetPactPay(
+            string project, short year, [FromQuery] PaginationReq<string> query)
+        {
+            PaginationParameters<string> paging = _mapper.Map<PaginationParameters<string>>(query);
+            PaginatedResult<PactPayDto> result = await _service.GetPactPayAsync(project, year, paging);
+            return Ok(_mapper.Map<PaginationRes<PactPayRes>>(result));
+        }
     }
 }

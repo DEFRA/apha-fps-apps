@@ -139,5 +139,12 @@ namespace Apha.PIMS.Application.Services
             Projects? entity = await _repository.GetProjectYearDetailsAsync(project, year);
             return entity is null ? new ProjectYearDetailsDto() : _mapper.Map<ProjectYearDetailsDto>(entity);
         }
+
+        public async Task<PaginatedResult<PactPayDto>> GetPactPayAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            PagedData<PactPayCalc> paged = await _repository.GetPactPayAsync(project, year, paging);
+            return BuildResult(_mapper.Map<List<PactPayDto>>(paged.Data), paged.PaginationData);
+        }
     }
 }
