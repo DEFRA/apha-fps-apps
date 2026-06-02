@@ -674,5 +674,109 @@ namespace Apha.FPS.Application.UnitTests.Services.AnimalServiceTest
         }
 
         #endregion
+
+        #region AddAnimalAsync
+
+        [Fact]
+        public async Task AddAnimalAsync_WhenAnimalDoesNotExist_ReturnsCreatedDto()
+        {
+            // Arrange
+            var inputDto = new AnimalDto { AnimalType = "CAT", Species = "Domestic", DailyRate = 50.00m };
+            var mappedEntity = new Animal { AnimalType = "CAT", Species = "Domestic", DailyRate = 50.00m };
+            var savedEntity = new Animal { AnimalType = "CAT", Species = "Domestic", DailyRate = 50.00m };
+            var expectedDto = new AnimalDto { AnimalType = "CAT", Species = "Domestic", DailyRate = 50.00m };
+
+            _mockRepository.GetAnimalByIdAsync(inputDto.AnimalType).Returns(Task.FromResult<Animal?>(null));
+            _mockMapper.Map<Animal>(inputDto).Returns(mappedEntity);
+            _mockRepository.AddAnimalAsync(mappedEntity).Returns(savedEntity);
+            _mockMapper.Map<AnimalDto>(savedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.AddAnimalAsync(inputDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.AnimalType.Should().Be("CAT");
+            result.DailyRate.Should().Be(50.00m);
+
+            await _mockRepository.Received(1).GetAnimalByIdAsync(inputDto.AnimalType);
+            _mockMapper.Received(1).Map<Animal>(inputDto);
+            await _mockRepository.Received(1).AddAnimalAsync(mappedEntity);
+            _mockMapper.Received(1).Map<AnimalDto>(savedEntity);
+        }
+
+        [Fact]
+        public async Task AddAnimalAsync_WhenAnimalAlreadyExists_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var inputDto = new AnimalDto { AnimalType = "CAT", Species = "Domestic", DailyRate = 50.00m };
+            var existingEntity = new Animal { AnimalType = "CAT", Species = "Domestic", DailyRate = 50.00m };
+
+            _mockRepository.GetAnimalByIdAsync(inputDto.AnimalType).Returns(Task.FromResult<Animal?>(existingEntity));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _sut.AddAnimalAsync(inputDto)
+            );
+
+            exception.Message.Should().Be($"Animal '{inputDto.AnimalType}' already exists.");
+
+            await _mockRepository.Received(1).GetAnimalByIdAsync(inputDto.AnimalType);
+            await _mockRepository.DidNotReceive().AddAnimalAsync(Arg.Any<Animal>());
+            _mockMapper.DidNotReceive().Map<Animal>(Arg.Any<AnimalDto>());
+        }
+
+        [Fact]
+        public async Task AddAnimalAsync_WhenDtoIsNull_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(
+                async () => await _sut.AddAnimalAsync(null!)
+            );
+
+            await _mockRepository.DidNotReceive().GetAnimalByIdAsync(Arg.Any<string>());
+            await _mockRepository.DidNotReceive().AddAnimalAsync(Arg.Any<Animal>());
+        }
+
+        [Fact]
+        public async Task AddAnimalAsync_WhenAnimalTypeIsEmpty_ThrowsArgumentException()
+        {
+            // Arrange
+            var inputDto = new AnimalDto { AnimalType = "", Species = "Domestic", DailyRate = 50.00m };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(
+                async () => await _sut.AddAnimalAsync(inputDto)
+            );
+
+            await _mockRepository.DidNotReceive().GetAnimalByIdAsync(Arg.Any<string>());
+            await _mockRepository.DidNotReceive().AddAnimalAsync(Arg.Any<Animal>());
+        }
+
+        [Fact]
+        public async Task AddAnimalAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var inputDto = new AnimalDto { AnimalType = "CAT", Species = "Domestic", DailyRate = 50.00m };
+            var mappedEntity = new Animal { AnimalType = "CAT", Species = "Domestic", DailyRate = 50.00m };
+
+            _mockRepository.GetAnimalByIdAsync(inputDto.AnimalType).Returns(Task.FromResult<Animal?>(null));
+            _mockMapper.Map<Animal>(inputDto).Returns(mappedEntity);
+            _mockRepository.AddAnimalAsync(mappedEntity)
+                .ThrowsAsync(new Exception("Database connection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.AddAnimalAsync(inputDto)
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+
+            await _mockRepository.Received(1).GetAnimalByIdAsync(inputDto.AnimalType);
+            await _mockRepository.Received(1).AddAnimalAsync(mappedEntity);
+            _mockMapper.DidNotReceive().Map<AnimalDto>(Arg.Any<Animal>());
+        }
+
+        #endregion
     }
 }

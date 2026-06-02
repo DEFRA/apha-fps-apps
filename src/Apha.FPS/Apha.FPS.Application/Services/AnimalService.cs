@@ -48,6 +48,10 @@ namespace Apha.FPS.Application.Services
             if (string.IsNullOrWhiteSpace(animalDto.AnimalType))
                 throw new ArgumentException("Animal type is required.");
 
+            var existing = await _animalRepository.GetAnimalByIdAsync(animalDto.AnimalType);
+            if (existing != null)
+                throw new InvalidOperationException($"Animal '{animalDto.AnimalType}' already exists.");
+
             var entity = _mapper.Map<Animal>(animalDto);
             var added = await _animalRepository.AddAnimalAsync(entity);
             return _mapper.Map<AnimalDto>(added);
