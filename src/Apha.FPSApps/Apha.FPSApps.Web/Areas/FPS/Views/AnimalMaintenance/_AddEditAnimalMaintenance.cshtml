@@ -62,8 +62,12 @@
                 <span asp-validation-for="DefraDailyRate" class="govuk-error-message" style="display:none;"></span>
             </div>
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="PlanByWeek">Plan Full Weeks</label>
-                <input type="checkbox" asp-for="PlanByWeek" class="govuk-checkboxes" />
+                <div class="govuk-checkboxes govuk-checkboxes--small">
+                    <div class="govuk-checkboxes__item">
+                        <input type="checkbox" asp-for="PlanByWeek" class="govuk-checkboxes__input" id="PlanByWeek" />
+                        <label class="govuk-label govuk-checkboxes__label govuk-!-font-size-16 govuk-!-margin-top-0" for="PlanByWeek">Plan Full Weeks</label>
+                    </div>
+                </div>
                 <span asp-validation-for="PlanByWeek" class="govuk-error-message" style="display:none;"></span>
             </div>
         </form>
