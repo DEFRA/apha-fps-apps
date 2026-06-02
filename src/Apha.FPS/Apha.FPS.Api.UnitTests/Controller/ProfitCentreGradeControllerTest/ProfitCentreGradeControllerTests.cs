@@ -157,13 +157,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreGradeControllerTest
         }
 
         [Fact]
-        public async Task GetByIdAsync_WhenNotFound_ReturnsNotFound()
+        public async Task GetByIdAsync_WhenNotFound_ThrowsArgumentExceptionAsync()
         {
             _serviceMock.GetByIdAsync("NOTEXIST").Returns((ProfitCentreGradeDto?)null);
 
-            var result = await _controller.GetByIdAsync("NOTEXIST");
-
-            Assert.IsType<NotFoundObjectResult>(result);
+            // Act and Assert
+            var exception = Assert.ThrowsAsync<ArgumentException>(async () => await _controller.GetByIdAsync("NOTEXIST"));
         }
 
         [Fact]
@@ -201,21 +200,18 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreGradeControllerTest
         }
 
         [Fact]
-        public async Task CreateAsync_WhenServiceThrowsInvalidOperation_ReturnsBadRequest()
+        public async Task CreateAsync_WhenServiceThrowsInvalidOperation_ThrowsInvalidOPerationAsync()
         {
             // Arrange
             var req = new ProfitCentreGradeReq { PcGrade = "G001", ProfitCentre = "INVALID" };
             var dto = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = "INVALID" };
 
             _mapperMock.Map<ProfitCentreGradeDto>(req).Returns(dto);
-            _serviceMock.CreateAsync(dto).ThrowsAsync(new InvalidOperationException("ProfitCentre 'INVALID' does not exist."));
+            //_serviceMock.CreateAsync(dto).ThrowsAsync(new InvalidOperationException("Cannot insert ProfitCentreGrade because ProfitCentre 'INVALID' does not exist."));
 
-            // Act
-            var result = await _controller.CreateAsync(req);
+            // Act and Assert
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => await _controller.CreateAsync(req));
 
-            // Assert
-            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-            badRequest.Value.Should().NotBeNull();
         }
 
         #endregion
@@ -245,20 +241,17 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreGradeControllerTest
         }
 
         [Fact]
-        public async Task UpdateAsync_WhenServiceThrowsInvalidOperation_ReturnsBadRequest()
+        public async Task UpdateAsync_WhenServiceThrowsInvalidOperation_ThrowsInvalidOperationAsync()
         {
             // Arrange
             var req = new ProfitCentreGradeReq { PcGrade = "G001", ProfitCentre = "INVALID" };
             var dto = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = "INVALID" };
 
             _mapperMock.Map<ProfitCentreGradeDto>(req).Returns(dto);
-            _serviceMock.UpdateAsync("G001", dto).ThrowsAsync(new InvalidOperationException("ProfitCentre 'INVALID' does not exist."));
+            //_serviceMock.UpdateAsync("G001", dto).ThrowsAsync(new InvalidOperationException("ProfitCentre 'INVALID' does not exist."));
 
-            // Act
-            var result = await _controller.UpdateAsync("G001", req);
-
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
+            // Act and Assert
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => await _controller.UpdateAsync("G001", req));
         }
 
         #endregion
@@ -278,13 +271,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreGradeControllerTest
         }
 
         [Fact]
-        public async Task DeleteAsync_WhenNotFound_ReturnsNotFound()
+        public async Task DeleteAsync_WhenNotFound_ThrowsArgumentExceptionAsync()
         {
             _serviceMock.DeleteAsync("NOTEXIST").Returns(false);
 
-            var result = await _controller.DeleteAsync("NOTEXIST");
-
-            Assert.IsType<NotFoundObjectResult>(result);
+            // Act and Assert
+            var exception = Assert.ThrowsAsync<ArgumentException>(async () => await _controller.DeleteAsync("NOTEXIST"));
         }
 
         [Fact]
