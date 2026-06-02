@@ -85,6 +85,7 @@ internal sealed class RsProjectMonthTable
     public required string Project { get; set; }
     public int MonthNo { get; set; }
     public decimal? CostProfile { get; set; }
+    public int FpsYear { get; set; }
 }
 
 internal sealed class RsTimeCostCalcsTable
@@ -200,6 +201,7 @@ internal sealed class RsProjectMonth3Table
     public int EndPeriod { get; set; }
     public string? PeriodName { get; set; }
     public required string Project { get; set; }
+    public int FpsYear { get; set; }
     public decimal? CumCost { get; set; }
     public decimal? CumInvoices { get; set; }
     public decimal? CumCoiw { get; set; }
@@ -263,6 +265,7 @@ internal sealed class RsTblPeriodTable
     public int EndPeriod { get; set; }
     public string? PeriodName { get; set; }
     public int? PeriodLocked { get; set; }
+    public int FpsYear { get; set; }
 }
 
 internal sealed class RsTblkPeriodMonthTable
@@ -328,9 +331,11 @@ internal sealed class RsQryJobMonthTotProfileView
 
 internal sealed class RsRecreateSummariesLogTable
 {
+    public int Id { get; set; }
     public required string UserId { get; set; }
     public int Period { get; set; }
     public DateTime DateDone { get; set; }
+    public int FpsYear { get; set; }
 }
 
 internal sealed class RsCostCentreTable

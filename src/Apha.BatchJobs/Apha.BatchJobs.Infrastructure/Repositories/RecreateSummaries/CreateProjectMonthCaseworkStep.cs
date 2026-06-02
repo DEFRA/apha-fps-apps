@@ -18,8 +18,8 @@ internal sealed class CreateProjectMonthCaseworkStep : RecreateSummariesExecutio
             {
                 Project = x.Project,
                 MonthNo = x.MonthNo,
-                CwDebit = x.CwDebit ?? 0m,
-                CwCredit = x.CwCredit ?? 0m
+                CwDebit = x.CwDebit,
+                CwCredit = x.CwCredit
             })
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -28,8 +28,8 @@ internal sealed class CreateProjectMonthCaseworkStep : RecreateSummariesExecutio
         {
             Project = x.Project,
             MonthNo = x.MonthNo,
-            CwDebit = (double)x.CwDebit,
-            CwCredit = (double)x.CwCredit
+            CwDebit = (double)(x.CwDebit ?? 0m),
+            CwCredit = (double)(x.CwCredit ?? 0m)
         }).ToList();
 
         await db.RsProjectMonthCasework.AddRangeAsync(rows, cancellationToken);

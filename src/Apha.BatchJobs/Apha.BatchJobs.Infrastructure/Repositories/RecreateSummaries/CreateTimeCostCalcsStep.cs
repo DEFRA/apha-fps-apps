@@ -32,11 +32,13 @@ internal sealed class CreateTimeCostCalcsStep : RecreateSummariesExecutionStepBa
                 Name = vps.Name ?? string.Empty,
                 IsCharge = prg.SectorName == "Charge",
                 Hours = mt.Hours ?? 0d,
-                ChargeRate = (p.IsDefraProject ?? 0) == 0 ? (pcg.ChargeRate ?? 0m) : (pcg.DefraChargeRate ?? 0m),
+                IsDefraProject = p.IsDefraProject,
+                ChargeRate = pcg.ChargeRate,
+                DefraChargeRate = pcg.DefraChargeRate,
                 Division = pc.Division ?? string.Empty,
-                PayRate = pcg.PayRate ?? 0m,
-                Npr = pcg.Npr ?? 0m,
-                Ohr = pcg.Ohr ?? 0m,
+                PayRate = pcg.PayRate,
+                Npr = pcg.Npr,
+                Ohr = pcg.Ohr,
                 FpsYear = p.FpsYear
             })
             .ToListAsync(cancellationToken);
@@ -50,14 +52,14 @@ internal sealed class CreateTimeCostCalcsStep : RecreateSummariesExecutionStepBa
             StaffId = r.StaffId,
             GradeCode = r.GradeCode,
             Name = r.Name,
-            ChargeRate = r.ChargeRate,
+            ChargeRate = (r.IsDefraProject ?? 0) == 0 ? (r.ChargeRate ?? 0m) : (r.DefraChargeRate ?? 0m),
             Class = r.IsCharge ? "Charge" : "Free",
             Time = r.Hours,
-            Cost = r.IsCharge ? r.Hours * (double)r.ChargeRate : 0d,
+            Cost = r.IsCharge ? r.Hours * (double)((r.IsDefraProject ?? 0) == 0 ? (r.ChargeRate ?? 0m) : (r.DefraChargeRate ?? 0m)) : 0d,
             Division = r.Division,
-            Pay = (decimal)r.Hours * r.PayRate,
-            NonPay = (decimal)r.Hours * r.Npr,
-            Overhead = (decimal)r.Hours * r.Ohr,
+            Pay = (decimal)r.Hours * (r.PayRate ?? 0m),
+            NonPay = (decimal)r.Hours * (r.Npr ?? 0m),
+            Overhead = (decimal)r.Hours * (r.Ohr ?? 0m),
             FpsYear = r.FpsYear
         }).ToList();
 

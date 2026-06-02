@@ -123,21 +123,21 @@ internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
             select new
             {
                 ParentProject = p.ParentProject,
-                Program = p.Program ?? string.Empty,
-                TotalAdditionalCosts = add.TotalAdditionalCosts ?? 0m,
-                TotalAnimalCosts = (double?)(ani.TotalAnimalCosts ?? 0m),
-                TotalStaffCosts = (double?)(stf.TotalStaffCosts ?? 0m),
-                TotalTestCosts = (double?)(tst.TotalTestCosts ?? 0m),
-                PlanCaseworkDebit = p.PlanCaseworkDebit ?? 0m,
-                CustIncome = p.CustIncome ?? 0m,
-                TransferIncome = p.TransferIncome ?? 0m,
-                BudgetCvl = p.BudgetCvl ?? 0m,
-                RequiredProfit = p.Profit ?? 0m,
-                Manager = p.Manager ?? string.Empty,
-                Customer = p.Customer ?? string.Empty,
-                ProjectStatus = p.ProjectStatus ?? string.Empty,
-                PvsIncome = p.PvsIncome ?? 0m,
-                TotalPayCosts = (double?)(stf.TotalPayCosts ?? 0m),
+                Program = p.Program,
+                TotalAdditionalCosts = add.TotalAdditionalCosts,
+                TotalAnimalCosts = ani.TotalAnimalCosts,
+                TotalStaffCosts = stf.TotalStaffCosts,
+                TotalTestCosts = tst.TotalTestCosts,
+                PlanCaseworkDebit = p.PlanCaseworkDebit,
+                CustIncome = p.CustIncome,
+                TransferIncome = p.TransferIncome,
+                BudgetCvl = p.BudgetCvl,
+                RequiredProfit = p.Profit,
+                Manager = p.Manager,
+                Customer = p.Customer,
+                ProjectStatus = p.ProjectStatus,
+                PvsIncome = p.PvsIncome,
+                TotalPayCosts = stf.TotalPayCosts,
                 FpsYear = p.FpsYear
             })
             .ToListAsync(cancellationToken);
@@ -145,27 +145,27 @@ internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
         var rows = rawRows.Select(r => new RsFpsYearTotalsTable
         {
             ParentProject = r.ParentProject,
-            Program = r.Program,
-            TotalAdditionalCosts = r.TotalAdditionalCosts,
-            TotalAnimalCosts = r.TotalAnimalCosts,
-            TotalStaffCosts = r.TotalStaffCosts,
-            TotalTestCosts = r.TotalTestCosts,
-            TotalCosts = (double)r.TotalAdditionalCosts
-                + r.TotalAnimalCosts
-                + r.TotalStaffCosts
-                + r.TotalTestCosts
-                + (double)r.PlanCaseworkDebit,
-            CustIncome = r.CustIncome,
-            TransferIncome = r.TransferIncome,
-            TotalIncome = r.CustIncome + r.TransferIncome,
-            BudgetCvl = r.BudgetCvl,
-            RequiredProfit = r.RequiredProfit,
-            Manager = r.Manager,
-            Customer = r.Customer,
-            ProjectStatus = r.ProjectStatus,
-            PvsIncome = r.PvsIncome,
-            PlanCaseworkDebit = r.PlanCaseworkDebit,
-            TotalPayCosts = r.TotalPayCosts,
+            Program = r.Program ?? string.Empty,
+            TotalAdditionalCosts = r.TotalAdditionalCosts ?? 0m,
+            TotalAnimalCosts = (double?)(r.TotalAnimalCosts ?? 0m),
+            TotalStaffCosts = (double?)(r.TotalStaffCosts ?? 0m),
+            TotalTestCosts = (double?)(r.TotalTestCosts ?? 0m),
+            TotalCosts = (double)(r.TotalAdditionalCosts ?? 0m)
+                + (double)(r.TotalAnimalCosts ?? 0m)
+                + (double)(r.TotalStaffCosts ?? 0m)
+                + (double)(r.TotalTestCosts ?? 0m)
+                + (double)(r.PlanCaseworkDebit ?? 0m),
+            CustIncome = r.CustIncome ?? 0m,
+            TransferIncome = r.TransferIncome ?? 0m,
+            TotalIncome = (r.CustIncome ?? 0m) + (r.TransferIncome ?? 0m),
+            BudgetCvl = r.BudgetCvl ?? 0m,
+            RequiredProfit = r.RequiredProfit ?? 0m,
+            Manager = r.Manager ?? string.Empty,
+            Customer = r.Customer ?? string.Empty,
+            ProjectStatus = r.ProjectStatus ?? string.Empty,
+            PvsIncome = r.PvsIncome ?? 0m,
+            PlanCaseworkDebit = r.PlanCaseworkDebit ?? 0m,
+            TotalPayCosts = (double?)(r.TotalPayCosts ?? 0m),
             FpsYear = r.FpsYear
         })
         // Enforce uniqueness (parentproject + fpsyear)

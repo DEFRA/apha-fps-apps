@@ -40,6 +40,7 @@ internal sealed class CreateProjectMonthSingleStep : RecreateSummariesExecutionS
             {
                 Project = pm.Project,
                 MonthNo = pm.MonthNo,
+                FpsYear = pm.FpsYear,
                 CostProfile = pm.CostProfile,
                 ScTotal = sc.Total,
                 ScAnimals = sc.Animals,
@@ -56,12 +57,14 @@ internal sealed class CreateProjectMonthSingleStep : RecreateSummariesExecutionS
                 TmSumOfHours = tm.SumOfHours,
                 TmSumOfPayRate = tm.SumOfPayRate
             })
+            .Distinct()
             .ToListAsync(cancellationToken);
 
         var rows = rawRows.Select(r => new RsProjectMonth2Table
         {
             Project = r.Project,
             MonthNo = r.MonthNo,
+            FpsYear = r.FpsYear,
             CostProfile = r.CostProfile,
             SubContracts = r.ScTotal ?? 0m,
             Animals = r.ScAnimals ?? 0m,
@@ -80,7 +83,10 @@ internal sealed class CreateProjectMonthSingleStep : RecreateSummariesExecutionS
             OnTime = r.MsOnTime,
             TotalHours = r.TmSumOfHours ?? 0d,
             PayCosts = (double?)(r.TmSumOfPayRate) ?? 0d
-        }).ToList();
+        })
+        .GroupBy(x => new { x.Project, x.MonthNo, x.FpsYear })
+        .Select(g => g.First())
+        .ToList();
 
         await db.RsProjectMonth2.AddRangeAsync(rows, cancellationToken);
         return await db.SaveChangesAsync(cancellationToken);

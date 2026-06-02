@@ -1374,6 +1374,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.MonthNo).HasColumnName("monthno");
             entity.Property(e => e.CostProfile).HasColumnName("costprofile");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
         modelBuilder.Entity<RsTimeCostCalcsTable>(entity =>
@@ -1387,7 +1388,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.StaffId).HasColumnName("staffid");
             entity.Property(e => e.GradeCode).HasColumnName("gradecode");
             entity.Property(e => e.Name).HasColumnName("name");
-            entity.Property(e => e.ChargeRate).HasColumnName("chargerate");
+            entity.Property(e => e.ChargeRate).HasColumnName("chargerate").HasColumnType("money");
             entity.Property(e => e.Class).HasColumnName("class");
             entity.Property(e => e.Time).HasColumnName("time");
             entity.Property(e => e.Cost).HasColumnName("cost");
@@ -1411,21 +1412,21 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsProjectMonth2Table>(entity =>
         {
             entity.ToTable("projectmonth2", schema: "fps");
-            entity.HasKey(e => new { e.Project, e.MonthNo });
+            entity.HasKey(e => new { e.Project, e.MonthNo, e.FpsYear });
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.MonthNo).HasColumnName("monthno").HasConversion<double>();
-            entity.Property(e => e.CostProfile).HasColumnName("costprofile");
-            entity.Property(e => e.SubContracts).HasColumnName("subcontracts");
-            entity.Property(e => e.Animals).HasColumnName("animals");
-            entity.Property(e => e.NonAnimal).HasColumnName("nonanimal");
+            entity.Property(e => e.CostProfile).HasColumnName("costprofile").HasColumnType("money");
+            entity.Property(e => e.SubContracts).HasColumnName("subcontracts").HasColumnType("money");
+            entity.Property(e => e.Animals).HasColumnName("animals").HasColumnType("money");
+            entity.Property(e => e.NonAnimal).HasColumnName("nonanimal").HasColumnType("money");
             entity.Property(e => e.TimeCosts).HasColumnName("timecosts");
             entity.Property(e => e.TransferCosts).HasColumnName("transfercosts");
-            entity.Property(e => e.TotalCost).HasColumnName("totalcost");
-            entity.Property(e => e.Invoices).HasColumnName("invoices");
-            entity.Property(e => e.Coiw).HasColumnName("coiw");
+            entity.Property(e => e.TotalCost).HasColumnName("totalcost").HasColumnType("money");
+            entity.Property(e => e.Invoices).HasColumnName("invoices").HasColumnType("money");
+            entity.Property(e => e.Coiw).HasColumnName("coiw").HasColumnType("money");
             entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile").HasColumnType("money");
             entity.Property(e => e.PortSales).HasColumnName("portsales");
-            entity.Property(e => e.MstoneDue).HasColumnName("mstonedue");
+            entity.Property(e => e.MstoneDue).HasColumnName("mstonedue").HasConversion<int?>();
             entity.Property(e => e.DueDone).HasColumnName("due__done");
             entity.Property(e => e.OnTime).HasColumnName("ontime");
             entity.Property(e => e.TotalHours).HasColumnName("totalhours");
@@ -1436,61 +1437,62 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsProjectMonth3Table>(entity =>
         {
             entity.ToTable("projectmonth3", schema: "fps");
-            entity.HasKey(e => new { e.Project, e.EndPeriod });
+            entity.HasKey(e => new { e.Project, e.EndPeriod, e.FpsYear });
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.EndPeriod).HasColumnName("endperiod").HasConversion<double>();
             entity.Property(e => e.PeriodName).HasColumnName("periodname");
-            entity.Property(e => e.CumCost).HasColumnName("cumcost");
-            entity.Property(e => e.CumInvoices).HasColumnName("cuminvoices");
-            entity.Property(e => e.CumCoiw).HasColumnName("cumcoiw");
+            entity.Property(e => e.CumCost).HasColumnName("cumcost").HasColumnType("money");
+            entity.Property(e => e.CumInvoices).HasColumnName("cuminvoices").HasColumnType("money");
+            entity.Property(e => e.CumCoiw).HasColumnName("cumcoiw").HasColumnType("money");
             entity.Property(e => e.CumPortSales).HasColumnName("cumportsales").HasConversion<double?>();
-            entity.Property(e => e.CumProfile).HasColumnName("cumprofile");
+            entity.Property(e => e.CumProfile).HasColumnName("cumprofile").HasColumnType("money");
             entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile").HasColumnType("money");
             entity.Property(e => e.SumOfMstoneDue).HasColumnName("sumofmstonedue");
             entity.Property(e => e.SumOfDueDone).HasColumnName("sumofdue__done");
             entity.Property(e => e.SumOfOnTime).HasColumnName("sumofontime");
-            entity.Property(e => e.CumCwDebit).HasColumnName("cumcwdebit");
-            entity.Property(e => e.CumCwCredit).HasColumnName("cumcwcredit");
+            entity.Property(e => e.CumCwDebit).HasColumnName("cumcwdebit").HasColumnType("money");
+            entity.Property(e => e.CumCwCredit).HasColumnName("cumcwcredit").HasColumnType("money");
             entity.Property(e => e.CumTotalHours).HasColumnName("cumtotalhours");
             entity.Property(e => e.CumSubContracts).HasColumnName("cumsubcontracts");
             entity.Property(e => e.CumTestCosts).HasColumnName("cumtestcosts");
             entity.Property(e => e.CumPayCosts).HasColumnName("cumpaycosts");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
         modelBuilder.Entity<RsProjectMonthFinalTable>(entity =>
         {
             entity.ToTable("projectmonthfinal", schema: "fps");
-            entity.HasKey(e => new { e.Project, e.MonthNo });
+            entity.HasKey(e => new { e.Project, e.MonthNo, e.FpsYear });
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.MonthNo).HasColumnName("monthno").HasConversion<double>();
-            entity.Property(e => e.CostProfile).HasColumnName("costprofile");
-            entity.Property(e => e.SubContracts).HasColumnName("subcontracts");
-            entity.Property(e => e.Animals).HasColumnName("animals");
-            entity.Property(e => e.NonAnimals).HasColumnName("nonanimals");
-            entity.Property(e => e.TimeCosts).HasColumnName("timecosts");
-            entity.Property(e => e.TransferCosts).HasColumnName("transfercosts");
-            entity.Property(e => e.TotalCost).HasColumnName("totalcost");
-            entity.Property(e => e.Invoices).HasColumnName("invoices");
-            entity.Property(e => e.Coiw).HasColumnName("coiw");
-            entity.Property(e => e.PortSales).HasColumnName("portsales");
-            entity.Property(e => e.CumCost).HasColumnName("cumcost");
-            entity.Property(e => e.CumProfile).HasColumnName("cumprofile");
+            entity.Property(e => e.CostProfile).HasColumnName("costprofile").HasColumnType("money");
+            entity.Property(e => e.SubContracts).HasColumnName("subcontracts").HasColumnType("money");
+            entity.Property(e => e.Animals).HasColumnName("animals").HasColumnType("money");
+            entity.Property(e => e.NonAnimals).HasColumnName("nonanimals").HasColumnType("money");
+            entity.Property(e => e.TimeCosts).HasColumnName("timecosts").HasColumnType("money");
+            entity.Property(e => e.TransferCosts).HasColumnName("transfercosts").HasColumnType("money");
+            entity.Property(e => e.TotalCost).HasColumnName("totalcost").HasColumnType("money");
+            entity.Property(e => e.Invoices).HasColumnName("invoices").HasColumnType("money");
+            entity.Property(e => e.Coiw).HasColumnName("coiw").HasColumnType("money");
+            entity.Property(e => e.PortSales).HasColumnName("portsales").HasColumnType("money");
+            entity.Property(e => e.CumCost).HasColumnName("cumcost").HasColumnType("money");
+            entity.Property(e => e.CumProfile).HasColumnName("cumprofile").HasColumnType("money");
             entity.Property(e => e.PeriodName).HasColumnName("periodname");
             entity.Property(e => e.SumOfCostProfile).HasColumnName("sumofcostprofile").HasColumnType("money");
-            entity.Property(e => e.CumInvoices).HasColumnName("cuminvoices");
-            entity.Property(e => e.CumCoiw).HasColumnName("cumcoiw");
-            entity.Property(e => e.CumPortSales).HasColumnName("cumportsales");
-            entity.Property(e => e.MstoneDue).HasColumnName("mstonedue");
+            entity.Property(e => e.CumInvoices).HasColumnName("cuminvoices").HasColumnType("money");
+            entity.Property(e => e.CumCoiw).HasColumnName("cumcoiw").HasColumnType("money");
+            entity.Property(e => e.CumPortSales).HasColumnName("cumportsales").HasColumnType("money");
+            entity.Property(e => e.MstoneDue).HasColumnName("mstonedue").HasConversion<int?>();
             entity.Property(e => e.DueDone).HasColumnName("due__done");
             entity.Property(e => e.OnTime).HasColumnName("ontime");
             entity.Property(e => e.SumOfMstoneDue).HasColumnName("sumofmstonedue");
             entity.Property(e => e.SumOfDueDone).HasColumnName("sumofdue__done");
             entity.Property(e => e.SumOfOnTime).HasColumnName("sumofontime");
             entity.Property(e => e.CumFlag).HasColumnName("cumflag").HasConversion<double?>();
-            entity.Property(e => e.CwDebit).HasColumnName("cwdebit");
-            entity.Property(e => e.CwCredit).HasColumnName("cwcredit");
-            entity.Property(e => e.CumCwDebit).HasColumnName("cumcwdebit");
-            entity.Property(e => e.CumCwCredit).HasColumnName("cumcwcredit");
+            entity.Property(e => e.CwDebit).HasColumnName("cwdebit").HasColumnType("money");
+            entity.Property(e => e.CwCredit).HasColumnName("cwcredit").HasColumnType("money");
+            entity.Property(e => e.CumCwDebit).HasColumnName("cumcwdebit").HasColumnType("money");
+            entity.Property(e => e.CumCwCredit).HasColumnName("cumcwcredit").HasColumnType("money");
             entity.Property(e => e.TotalHours).HasColumnName("totalhours");
             entity.Property(e => e.CumTotalHours).HasColumnName("cumtotalhours");
             entity.Property(e => e.CumSubContracts).HasColumnName("cumsubcontracts");
@@ -1504,9 +1506,10 @@ public class BatchJobsDbContext : DbContext
         {
             entity.ToTable("tblperiod", schema: "fps");
             entity.HasKey(e => e.EndPeriod);
-            entity.Property(e => e.EndPeriod).HasColumnName("endperiod");
+            entity.Property(e => e.EndPeriod).HasColumnName("endperiod").HasConversion<double>();
             entity.Property(e => e.PeriodName).HasColumnName("periodname");
             entity.Property(e => e.PeriodLocked).HasColumnName("periodlocked");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
         modelBuilder.Entity<RsTblkPeriodMonthTable>(entity =>
@@ -1514,7 +1517,7 @@ public class BatchJobsDbContext : DbContext
             entity.ToTable("tblkperiodmonth", schema: "fps");
             entity.HasKey(e => new { e.PeriodName, e.MonthNo });
             entity.Property(e => e.PeriodName).HasColumnName("periodname");
-            entity.Property(e => e.MonthNo).HasColumnName("monthno");
+            entity.Property(e => e.MonthNo).HasColumnName("monthno").HasConversion<double>();
         });
 
         modelBuilder.Entity<RsTblkpProfitCentreTable>(entity =>
@@ -1693,10 +1696,12 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsRecreateSummariesLogTable>(entity =>
         {
             entity.ToTable("recreatesummaries_log", schema: "fps");
-            entity.HasKey(e => new { e.UserId, e.Period, e.DateDone });
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
             entity.Property(e => e.UserId).HasColumnName("userid");
-            entity.Property(e => e.Period).HasColumnName("period");
+            entity.Property(e => e.Period).HasColumnName("period").HasConversion<short>();
             entity.Property(e => e.DateDone).HasColumnName("datedone");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
         // Views consumed by RecreateSummaries

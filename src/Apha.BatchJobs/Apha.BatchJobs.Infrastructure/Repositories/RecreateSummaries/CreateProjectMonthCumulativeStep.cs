@@ -26,7 +26,7 @@ internal sealed class CreateProjectMonthCumulativeStep : RecreateSummariesExecut
                 tp.EndPeriod,
                 tp.PeriodName,
                 pm2.Project,
-                pm2.SumOfCostProfile,
+                pm2.FpsYear,
                 pm2.TotalCost,
                 pm2.Invoices,
                 pm2.Coiw,
@@ -44,20 +44,21 @@ internal sealed class CreateProjectMonthCumulativeStep : RecreateSummariesExecut
             })
             .ToListAsync(cancellationToken);
 
-        var rows = rawRows
-            .GroupBy(r => new { r.EndPeriod, r.PeriodName, r.Project, r.SumOfCostProfile })
+        var grouped = rawRows
+            .GroupBy(r => new { r.EndPeriod, r.PeriodName, r.Project, r.FpsYear })
             .Select(g => new RsProjectMonth3Table
             {
                 EndPeriod = g.Key.EndPeriod,
                 PeriodName = g.Key.PeriodName,
                 Project = g.Key.Project,
+                FpsYear = g.Key.FpsYear,
                 CumCost = g.Sum(x => x.TotalCost) ?? 0m,
                 CumInvoices = g.Sum(x => x.Invoices) ?? 0m,
                 CumCoiw = g.Sum(x => x.Coiw) ?? 0m,
                 CumPortSales = (decimal?)g.Sum(x => x.PortSales ?? 0d),
                 CumProfile = g.Sum(x => x.CostProfile) ?? 0m,
-                SumOfCostProfile = g.Key.SumOfCostProfile,
-                SumOfMstoneDue = g.Sum(x => x.MstoneDue ?? 0d),
+                SumOfCostProfile = g.Sum(x => x.CostProfile) ?? 0m,
+                SumOfMstoneDue = g.Sum(x => (double)(x.MstoneDue ?? 0)),
                 SumOfDueDone = g.Sum(x => x.DueDone ?? 0d),
                 SumOfOnTime = g.Sum(x => x.OnTime ?? 0d),
                 CumCwDebit = (decimal?)g.Sum(x => x.CwDebit ?? 0d),
@@ -67,7 +68,12 @@ internal sealed class CreateProjectMonthCumulativeStep : RecreateSummariesExecut
                 CumTestCosts = g.Sum(x => x.TransferCosts ?? 0d),
                 CumPayCosts = g.Sum(x => x.PayCosts ?? 0d)
             })
-            .Distinct()
+            .ToList();
+
+        // Dedup on PK {Project, EndPeriod, FpsYear} to prevent EF tracking collisions
+        var rows = grouped
+            .GroupBy(x => new { x.Project, x.EndPeriod, x.FpsYear })
+            .Select(g => g.First())
             .ToList();
 
         await db.RsProjectMonth3.AddRangeAsync(rows, cancellationToken);

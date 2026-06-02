@@ -21,7 +21,7 @@ internal sealed class CreateProjectMonthFinalStep : RecreateSummariesExecutionSt
         var rows = await (
             from pm2 in db.RsProjectMonth2.AsNoTracking()
             join pm3 in db.RsProjectMonth3.AsNoTracking()
-                on new { pm2.Project, EndPeriod = pm2.MonthNo } equals new { pm3.Project, pm3.EndPeriod }
+                on new { pm2.Project, EndPeriod = pm2.MonthNo, pm2.FpsYear } equals new { pm3.Project, pm3.EndPeriod, pm3.FpsYear }
             join pmcw in db.RsProjectMonthCasework.AsNoTracking()
                 on new { pm2.Project, pm2.MonthNo } equals new { pmcw.Project, pmcw.MonthNo }
             select new RsProjectMonthFinalTable

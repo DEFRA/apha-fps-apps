@@ -16,9 +16,12 @@ internal sealed class InsertMissingProjectsStep : RecreateSummariesExecutionStep
         {
             var missingProjects = await (
                 from p in db.RsTlkpProject.AsNoTracking()
-                where !db.RsProjectMonth.AsNoTracking().Any(pm => pm.Project == p.ParentProject && pm.MonthNo == month)
+                where !db.RsProjectMonth.AsNoTracking().Any(pm =>
+                    pm.Project == p.ParentProject &&
+                    pm.MonthNo == month &&
+                    pm.FpsYear == p.FpsYear)
                 orderby p.ParentProject
-                select p.ParentProject)
+                select new { p.ParentProject, p.FpsYear })
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
@@ -29,8 +32,9 @@ internal sealed class InsertMissingProjectsStep : RecreateSummariesExecutionStep
 
             var inserts = missingProjects.Select(project => new RsProjectMonthTable
             {
-                Project = project,
-                MonthNo = month
+                Project = project.ParentProject,
+                MonthNo = month,
+                FpsYear = project.FpsYear
             });
 
             await db.RsProjectMonth.AddRangeAsync(inserts, cancellationToken);

@@ -1,4 +1,5 @@
 using Apha.BatchJobs.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
@@ -17,14 +18,23 @@ internal sealed class LogRecreateSummariesStep : RecreateSummariesExecutionStepB
 
     protected override async Task<int> ExecuteCoreAsync(RecreateSummariesExecutionContext context, CancellationToken cancellationToken)
     {
-        await context.DbContext.RsRecreateSummariesLog.AddAsync(new RsRecreateSummariesLogTable
+        var db = context.DbContext;
+
+        var fpsYear = await db.RsTblPeriod
+            .AsNoTracking()
+            .Where(p => p.EndPeriod == _month)
+            .Select(p => p.FpsYear)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        await db.RsRecreateSummariesLog.AddAsync(new RsRecreateSummariesLogTable
         {
             UserId = NormalizeTriggeredBy(_triggeredBy),
             Period = _month,
-            DateDone = DateTime.UtcNow
+            DateDone = DateTime.UtcNow,
+            FpsYear = fpsYear
         }, cancellationToken);
 
-        return await context.DbContext.SaveChangesAsync(cancellationToken);
+        return await db.SaveChangesAsync(cancellationToken);
     }
 
     private static string NormalizeTriggeredBy(string triggeredBy)
