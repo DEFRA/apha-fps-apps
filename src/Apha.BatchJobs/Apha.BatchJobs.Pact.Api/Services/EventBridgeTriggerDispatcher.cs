@@ -1,17 +1,16 @@
-using Apha.BatchJobs.Triggering.Models;
-using Apha.BatchJobs.Triggering.Services;
+using Apha.BatchJobs.Pact.Api.Models;
 
 namespace Apha.BatchJobs.Pact.Api.Services;
 
 public sealed class EventBridgeTriggerDispatcher : ITriggerDispatcher
 {
-    private readonly IEventBridgePublisher _eventBridgePublisher;
+    private readonly IEventPublisher _eventPublisher;
 
-    public EventBridgeTriggerDispatcher(IEventBridgePublisher eventBridgePublisher)
+    public EventBridgeTriggerDispatcher(IEventPublisher eventPublisher)
     {
-        _eventBridgePublisher = eventBridgePublisher;
+        _eventPublisher = eventPublisher;
     }
 
     public Task<string> DispatchAsync(BatchTriggerEventDetail detail, CancellationToken cancellationToken = default)
-        => _eventBridgePublisher.PublishAsync(detail, cancellationToken);
+        => _eventPublisher.PublishAsync(detail, cancellationToken);
 }

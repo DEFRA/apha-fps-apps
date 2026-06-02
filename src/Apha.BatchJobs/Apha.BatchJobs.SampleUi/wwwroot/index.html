@@ -140,6 +140,34 @@
             min-width: 180px;
         }
 
+        .action-secondary {
+            border: 1px solid #9bb8dd;
+            background: #eff5ff;
+            color: #1f4e86;
+            font-weight: 700;
+            font-size: 14px;
+            border-radius: 8px;
+            padding: 9px 14px;
+            cursor: pointer;
+            min-width: 180px;
+        }
+
+        .scenario-wrap {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        select {
+            width: 100%;
+            border: 1px solid #bcd;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 14px;
+            background: #fff;
+        }
+
         .action[disabled] { opacity: 0.6; cursor: not-allowed; }
 
         .meta {
@@ -223,6 +251,17 @@
                     <button id="triggerBtn" class="action">Trigger RecreateSummaries</button>
                 </div>
 
+                <div class="scenario-wrap">
+                    <select id="scenarioSelect" aria-label="Select scenario to preview">
+                        <option value="failed">Failed</option>
+                        <option value="timeout">StartFailedTimeout</option>
+                        <option value="delivery">StartFailedDeliveryExhausted</option>
+                        <option value="running">Running</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <button id="scenarioBtn" class="action-secondary">Show Scenario</button>
+                </div>
+
                 <div id="statusMeta" class="meta">Ready to trigger via PACT API.</div>
             </div>
 
@@ -248,6 +287,8 @@
         const statusPill = document.getElementById("statusPill");
         const statusMeta = document.getElementById("statusMeta");
         const triggerBtn = document.getElementById("triggerBtn");
+        const scenarioBtn = document.getElementById("scenarioBtn");
+        const scenarioSelect = document.getElementById("scenarioSelect");
 
         const timers = [];
 
@@ -295,6 +336,29 @@
             if (!value) return fallback;
             const dt = Date.parse(value);
             return Number.isNaN(dt) ? fallback : dt;
+        }
+
+        function previewScenario() {
+            clearTimers();
+
+            const key = scenarioSelect.value;
+            const scenarioPayload = {
+                status: STATES[key]?.label || "Unknown",
+                source: "demo-scenario",
+                jobName: JOB_NAME,
+                timestampUtc: new Date().toISOString(),
+                message: key === "failed"
+                    ? "Simulated failure scenario for demo."
+                    : key === "timeout"
+                        ? "Simulated startup timeout before worker became visible."
+                        : key === "delivery"
+                            ? "Simulated exhausted delivery attempts to downstream queue."
+                            : `Simulated ${STATES[key]?.label || key} scenario.`
+            };
+
+            setState(key, scenarioPayload.message);
+            setRaw(200, JSON.stringify(scenarioPayload, null, 2));
+            addTimeline(`Scenario preview: ${scenarioPayload.status}`);
         }
 
         async function triggerRecreateSummaries() {
@@ -364,6 +428,7 @@
         }
 
         triggerBtn.addEventListener("click", triggerRecreateSummaries);
+        scenarioBtn.addEventListener("click", previewScenario);
     </script>
 </body>
 </html>

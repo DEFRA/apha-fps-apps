@@ -1,6 +1,6 @@
-using Apha.BatchJobs.Triggering.Models;
-using Apha.BatchJobs.Triggering.Policy;
-using Apha.BatchJobs.Triggering.Services;
+using Apha.BatchJobs.Fps.Api.Models;
+using Apha.BatchJobs.Fps.Api.Policy;
+using Apha.BatchJobs.Fps.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.BatchJobs.Fps.Api.Controllers;
@@ -9,12 +9,12 @@ namespace Apha.BatchJobs.Fps.Api.Controllers;
 [Route("api/v1/batch-jobs")]
 public sealed class BatchJobTriggerController : ControllerBase
 {
-    private readonly IEventBridgePublisher _eventBridgePublisher;
+    private readonly IEventPublisher _eventPublisher;
     private readonly ILogger<BatchJobTriggerController> _logger;
 
-    public BatchJobTriggerController(IEventBridgePublisher eventBridgePublisher, ILogger<BatchJobTriggerController> logger)
+    public BatchJobTriggerController(IEventPublisher eventPublisher, ILogger<BatchJobTriggerController> logger)
     {
-        _eventBridgePublisher = eventBridgePublisher;
+        _eventPublisher = eventPublisher;
         _logger = logger;
     }
 
@@ -56,7 +56,7 @@ public sealed class BatchJobTriggerController : ControllerBase
         var acceptedAtUtc = DateTime.UtcNow;
         var requestedBy = string.IsNullOrWhiteSpace(request.RequestedBy) ? "fps.api@local" : request.RequestedBy;
 
-        var eventId = await _eventBridgePublisher.PublishAsync(
+        var eventId = await _eventPublisher.PublishAsync(
             new BatchTriggerEventDetail(
                 jobExecutionId,
                 normalizedJobName,

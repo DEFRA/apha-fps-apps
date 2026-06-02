@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Triggering.Models;
+using Apha.BatchJobs.Pact.Api.Models;
 
 namespace Apha.BatchJobs.Pact.Api.Services;
 

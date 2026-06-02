@@ -1,6 +1,6 @@
 using System.Diagnostics;
+using Apha.BatchJobs.Pact.Api.Models;
 using Apha.BatchJobs.Pact.Api.Options;
-using Apha.BatchJobs.Triggering.Models;
 using Microsoft.Extensions.Options;
 
 namespace Apha.BatchJobs.Pact.Api.Services;

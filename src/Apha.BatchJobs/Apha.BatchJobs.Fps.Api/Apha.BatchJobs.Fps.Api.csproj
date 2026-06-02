@@ -13,8 +13,4 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Apha.BatchJobs.Triggering\Apha.BatchJobs.Triggering.csproj" />
-  </ItemGroup>
-
 </Project>

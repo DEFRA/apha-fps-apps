@@ -31,3 +31,4 @@ This folder is consolidated to a short operational summary.
 - ../Apha.BatchJobs.Worker/README.md
 - ../database/README.md
 - ./CODESPACES_PRODUCTION_PARITY_AND_AWS_FLOW.md
+- ./PACT-BATCHJOBS-HANDOFF-EVENTGRID.md

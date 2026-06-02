@@ -1,8 +1,6 @@
 using Amazon.EventBridge;
 using Apha.BatchJobs.Pact.Api.Options;
 using Apha.BatchJobs.Pact.Api.Services;
-using Apha.BatchJobs.Triggering.Options;
-using Apha.BatchJobs.Triggering.Services;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,10 +23,10 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Batch jobs trigger API for PACT routes"
     });
 });
-builder.Services.Configure<EventBridgePublisherOptions>(builder.Configuration.GetSection("EventBridge"));
+builder.Services.Configure<EventPublisherOptions>(builder.Configuration.GetSection("EventBridge"));
 builder.Services.Configure<TriggerDispatchOptions>(builder.Configuration.GetSection("TriggerDispatch"));
 builder.Services.AddAWSService<IAmazonEventBridge>();
-builder.Services.AddScoped<IEventBridgePublisher, EventBridgePublisher>();
+builder.Services.AddScoped<IEventPublisher, EventBridgePublisher>();
 builder.Services.AddScoped<EventBridgeTriggerDispatcher>();
 builder.Services.AddScoped<LocalWorkerProcessTriggerDispatcher>();
 builder.Services.AddScoped<ITriggerDispatcher>(serviceProvider =>

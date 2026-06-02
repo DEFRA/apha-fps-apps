@@ -1,6 +1,6 @@
 using Amazon.EventBridge;
-using Apha.BatchJobs.Triggering.Options;
-using Apha.BatchJobs.Triggering.Services;
+using Apha.BatchJobs.Fps.Api.Options;
+using Apha.BatchJobs.Fps.Api.Services;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,9 +20,9 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Batch jobs trigger API for FPS routes"
     });
 });
-builder.Services.Configure<EventBridgePublisherOptions>(builder.Configuration.GetSection("EventBridge"));
+builder.Services.Configure<EventPublisherOptions>(builder.Configuration.GetSection("EventBridge"));
 builder.Services.AddAWSService<IAmazonEventBridge>();
-builder.Services.AddScoped<IEventBridgePublisher, EventBridgePublisher>();
+builder.Services.AddScoped<IEventPublisher, EventBridgePublisher>();
 
 var app = builder.Build();
 

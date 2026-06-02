@@ -1,5 +1,5 @@
-using Apha.BatchJobs.Triggering.Models;
-using Apha.BatchJobs.Triggering.Policy;
+using Apha.BatchJobs.Pact.Api.Models;
+using Apha.BatchJobs.Pact.Api.Policy;
 using Apha.BatchJobs.Pact.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
