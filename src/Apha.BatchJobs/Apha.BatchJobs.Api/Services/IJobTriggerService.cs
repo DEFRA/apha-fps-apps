@@ -6,7 +6,7 @@ namespace Apha.BatchJobs.Api.Services;
 public interface IJobTriggerService
 {
     /// <summary>
-    /// Queues a job run and returns an operation identifier immediately.
+    /// Queues a job run and returns a job execution identifier immediately.
     /// </summary>
     Task<TriggerResult> TriggerAsync(string jobName, CancellationToken cancellationToken = default);
 }
@@ -14,4 +14,4 @@ public interface IJobTriggerService
 /// <summary>
 /// Result returned after accepting a trigger request.
 /// </summary>
-public sealed record TriggerResult(string OperationId, DateTime AcceptedAtUtc);
+public sealed record TriggerResult(string JobExecutionId, DateTime AcceptedAtUtc);

@@ -3,524 +3,320 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BatchJobs Trigger Demo Console</title>
+    <title>RecreateSummaries Demo UI</title>
     <style>
         :root {
-            --bg-0: #f6f8fb;
-            --bg-1: #ebf1fa;
-            --surface: #ffffff;
-            --ink-1: #102234;
-            --ink-2: #496074;
-            --line: #c7d3e6;
-            --accent: #005fb8;
-            --accent-2: #0084ff;
+            --bg-a: #edf3ff;
+            --bg-b: #f8f2e9;
+            --card: #ffffff;
+            --ink-1: #132235;
+            --ink-2: #506579;
+            --line: #cdd8e8;
+            --accent-a: #005dc1;
+            --accent-b: #0077f0;
+            --ready-bg: #eef5ff;
+            --ready-ink: #2a5b9d;
+            --active-bg: #edf4ff;
+            --active-ink: #1b549f;
+            --running-bg: #e8faf5;
+            --running-ink: #0d6a52;
             --ok-bg: #e9f8ef;
-            --ok-ink: #17673a;
-            --warn-bg: #fff3dd;
-            --warn-ink: #805100;
+            --ok-ink: #16693c;
             --bad-bg: #fdecef;
             --bad-ink: #9f1d2f;
-            --pending-bg: #edf4ff;
-            --pending-ink: #154f96;
-            --run-bg: #e8f9f8;
-            --run-ink: #0a6464;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
+            font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
             color: var(--ink-1);
-            font-family: "Trebuchet MS", "Segoe UI", "Tahoma", sans-serif;
             background:
-                radial-gradient(circle at 16% 4%, #d9ebff 0%, transparent 40%),
-                radial-gradient(circle at 84% 0%, #ffe8c6 0%, transparent 34%),
-                linear-gradient(180deg, var(--bg-1), var(--bg-0));
+                radial-gradient(circle at 8% 6%, #dceafe 0%, transparent 35%),
+                radial-gradient(circle at 92% 10%, #ffe7c7 0%, transparent 30%),
+                linear-gradient(180deg, var(--bg-a), var(--bg-b));
             min-height: 100vh;
-            padding: 24px 16px 28px;
+            padding: 24px 14px;
         }
 
         .page {
-            max-width: 1180px;
+            max-width: 980px;
             margin: 0 auto;
-            background: var(--surface);
+            background: var(--card);
             border: 1px solid var(--line);
             border-radius: 14px;
+            box-shadow: 0 16px 36px rgba(16, 45, 80, 0.11);
             overflow: hidden;
-            box-shadow: 0 16px 40px rgba(18, 47, 83, 0.09);
         }
 
         .hero {
-            padding: 20px 20px 14px;
-            background: linear-gradient(130deg, #f3f8ff 0%, #f9f2e7 100%);
+            padding: 22px 20px;
             border-bottom: 1px solid var(--line);
+            background: linear-gradient(120deg, #f3f8ff 0%, #f8f2e6 100%);
         }
 
-        .hero h1 {
+        h1 {
             margin: 0;
             font-size: 30px;
-            letter-spacing: 0.2px;
         }
 
-        .hero .sub {
+        .sub {
             margin: 8px 0 0;
             color: var(--ink-2);
             font-size: 15px;
         }
 
-        .controls {
-            margin-top: 14px;
+        .main {
+            padding: 18px 20px 20px;
             display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
             gap: 12px;
         }
 
-        .control-card {
-            background: #ffffffc9;
+        .card {
             border: 1px solid var(--line);
             border-radius: 10px;
-            padding: 10px 12px;
+            background: #fcfdff;
+            padding: 12px;
         }
 
-        .control-row {
+        .row {
             display: grid;
-            grid-template-columns: 110px 1fr;
+            grid-template-columns: 120px 1fr;
             align-items: center;
             gap: 8px;
             margin-bottom: 8px;
         }
 
-        .control-row:last-child {
-            margin-bottom: 0;
-        }
+        .row:last-child { margin-bottom: 0; }
 
         label {
-            font-size: 13px;
             color: var(--ink-2);
+            font-size: 13px;
             font-weight: 700;
         }
 
-        input, select {
+        input {
             width: 100%;
-            padding: 8px 10px;
+            border: 1px solid #bcd;
             border-radius: 8px;
-            border: 1px solid #b9c9df;
-            font-size: 14px;
-            color: var(--ink-1);
-            background: #fff;
-        }
-
-        .policy {
-            font-size: 13px;
-            color: var(--ink-2);
-            line-height: 1.35;
-        }
-
-        .policy strong {
-            color: var(--ink-1);
-        }
-
-        .main {
-            padding: 16px 20px 18px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid var(--line);
-            text-align: left;
-            vertical-align: top;
+            padding: 8px 10px;
             font-size: 14px;
         }
 
-        tr:last-child td {
-            border-bottom: 0;
-        }
-
-        th {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #304256;
-            background: #edf4fe;
+        .status-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .status-pill {
             display: inline-flex;
             align-items: center;
             border-radius: 999px;
-            padding: 4px 10px;
             font-size: 12px;
             font-weight: 700;
+            padding: 5px 10px;
             border: 1px solid transparent;
-            white-space: nowrap;
         }
 
-        .status-ready {
-            background: #eff5ff;
-            color: #28589b;
-            border-color: #c8dbfa;
-        }
+        .state-ready { background: var(--ready-bg); color: var(--ready-ink); border-color: #c9ddfd; }
+        .state-submitting, .state-accepted { background: var(--active-bg); color: var(--active-ink); border-color: #b9d3fa; }
+        .state-running { background: var(--running-bg); color: var(--running-ink); border-color: #b3ebdd; }
+        .state-completed { background: var(--ok-bg); color: var(--ok-ink); border-color: #bfe8cd; }
+        .state-failed, .state-timeout, .state-delivery { background: var(--bad-bg); color: var(--bad-ink); border-color: #f1c2cc; }
 
-        .status-submitting {
-            background: var(--pending-bg);
-            color: var(--pending-ink);
-            border-color: #b8d4fb;
-        }
-
-        .status-accepted,
-        .status-pending {
-            background: var(--warn-bg);
-            color: var(--warn-ink);
-            border-color: #f1d59d;
-        }
-
-        .status-running {
-            background: var(--run-bg);
-            color: var(--run-ink);
-            border-color: #a6e5df;
-        }
-
-        .status-completed {
-            background: var(--ok-bg);
-            color: var(--ok-ink);
-            border-color: #b7e6c7;
-        }
-
-        .status-failed,
-        .status-timeout,
-        .status-delivery {
-            background: var(--bad-bg);
-            color: var(--bad-ink);
-            border-color: #efbdc6;
-        }
-
-        button {
+        .action {
             border: 1px solid transparent;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-weight: 700;
-            font-size: 13px;
+            background: linear-gradient(120deg, var(--accent-a), var(--accent-b));
             color: #fff;
-            background: linear-gradient(120deg, var(--accent), var(--accent-2));
+            font-weight: 700;
+            font-size: 14px;
+            border-radius: 8px;
+            padding: 9px 14px;
             cursor: pointer;
-            min-width: 122px;
+            min-width: 180px;
         }
 
-        button[disabled] {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .button-scheduled {
-            background: #8e9caf;
-        }
+        .action[disabled] { opacity: 0.6; cursor: not-allowed; }
 
         .meta {
-            font-size: 12px;
+            margin-top: 8px;
             color: var(--ink-2);
-            margin-top: 4px;
-            line-height: 1.35;
+            font-size: 13px;
         }
 
-        .split {
+        .panels {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-top: 14px;
         }
 
         .panel {
             border: 1px solid var(--line);
             border-radius: 10px;
             overflow: hidden;
-            background: #fbfdff;
         }
 
         .panel-title {
-            padding: 9px 10px;
-            background: #edf4fe;
+            background: #eff5ff;
             border-bottom: 1px solid var(--line);
-            font-weight: 700;
+            color: #2a4560;
             font-size: 13px;
-            text-transform: uppercase;
+            font-weight: 700;
             letter-spacing: 0.4px;
-            color: #2d445d;
+            padding: 9px 10px;
+            text-transform: uppercase;
         }
 
-        .panel pre {
+        pre {
             margin: 0;
-            max-height: 240px;
-            overflow: auto;
-            padding: 10px;
             background: #091525;
-            color: #dbe7f8;
+            color: #dce8fa;
+            padding: 10px;
+            min-height: 180px;
+            max-height: 260px;
+            overflow: auto;
+            white-space: pre-wrap;
             font-size: 12px;
             line-height: 1.35;
-            white-space: pre-wrap;
         }
 
-        .legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .legend .status-pill {
-            font-size: 11px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .spinner {
-            display: inline-block;
             width: 11px;
             height: 11px;
             border: 2px solid currentColor;
             border-top-color: transparent;
             border-radius: 50%;
-            animation: spin 0.75s linear infinite;
             margin-right: 6px;
-            flex-shrink: 0;
-            vertical-align: middle;
+            animation: spin 0.75s linear infinite;
         }
 
-        @media (max-width: 940px) {
-            .controls,
-            .split {
-                grid-template-columns: 1fr;
-            }
-
-            .hero h1 {
-                font-size: 24px;
-            }
-
-            th, td {
-                font-size: 13px;
-            }
+        @media (max-width: 900px) {
+            h1 { font-size: 24px; }
+            .panels { grid-template-columns: 1fr; }
+            .row { grid-template-columns: 1fr; }
+            .action { width: 100%; }
         }
     </style>
 </head>
 <body>
     <div class="page">
         <section class="hero">
-            <h1>PACT API Trigger Demo for RecreateSummaries</h1>
-            <p class="sub">State-driven UI aligned to the agreed transition model: TriggerAccepted -> PendingStart -> Running -> Completed/Failed with startup timeout handling.</p>
-
-            <div class="controls">
-                <div class="control-card">
-                    <div class="control-row">
-                        <label for="requestedBy">Requested By</label>
-                        <input id="requestedBy" type="text" value="sample-ui@local" />
-                    </div>
-                    <div class="control-row">
-                        <label for="preferredApi">Neutral Job API</label>
-                        <select id="preferredApi">
-                            <option value="fps">FPS API</option>
-                            <option value="pact" selected>PACT API</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="control-card policy">
-                    <div><strong>Agreed timing policy</strong></div>
-                    <div>Startup deadline: AcceptedAt + 10 minutes</div>
-                    <div>Polling backoff: 2s, 3s, 5s, then 5s</div>
-                    <div>UI prevents duplicate trigger while active</div>
-                </div>
-            </div>
+            <h1>RecreateSummaries Demo Console</h1>
+            <p class="sub">Dedicated demo UI for RecreateSummaries only. Main UX shows run-level status (Running/Completed/Failed), not per-step state.</p>
         </section>
 
         <section class="main">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Job</th>
-                        <th>Route</th>
-                        <th>Description</th>
-                        <th>UI State</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="jobRows"></tbody>
-            </table>
+            <div class="card">
+                <div class="row">
+                    <label for="requestedBy">Requested By</label>
+                    <input id="requestedBy" value="sample-ui@local" />
+                </div>
 
-            <div class="legend" id="legend"></div>
+                <div class="status-wrap">
+                    <span id="statusPill" class="status-pill state-ready">Ready</span>
+                    <button id="triggerBtn" class="action">Trigger RecreateSummaries</button>
+                </div>
 
-            <div class="split">
+                <div id="statusMeta" class="meta">Ready to trigger via PACT API.</div>
+            </div>
+
+            <div class="panels">
                 <div class="panel">
                     <div class="panel-title">UI Timeline</div>
-                    <pre id="uiTimeline">Ready.</pre>
+                    <pre id="timeline">Ready.</pre>
                 </div>
                 <div class="panel">
                     <div class="panel-title">PACT API Raw Response</div>
-                    <pre id="apiResponse">No trigger yet.</pre>
+                    <pre id="raw">No trigger yet.</pre>
                 </div>
             </div>
         </section>
     </div>
 
     <script>
-        const rows = document.getElementById("jobRows");
-        const timelineEl = document.getElementById("uiTimeline");
-        const apiResponseEl = document.getElementById("apiResponse");
-        const legendEl = document.getElementById("legend");
-
-        const POLL_INTERVALS_MS = [4000, 7000, 10000, 10000];
+        const JOB_NAME = "RecreateSummaries";
         const STARTUP_WINDOW_MS = 10 * 60 * 1000;
 
-        const JOB_STATES = {
-            ready:      { label: "Ready",                          css: "status-ready",      button: "Trigger",      disabled: false, spinner: false },
-            submitting: { label: "Submitting",                     css: "status-submitting", button: "Submitting...", disabled: true,  spinner: true  },
-            accepted:   { label: "TriggerAccepted",                css: "status-accepted",   button: "Accepted",     disabled: true,  spinner: true  },
-            pending:    { label: "PendingStart",                   css: "status-pending",    button: "Pending Start",disabled: true,  spinner: true  },
-            running:    { label: "Running",                        css: "status-running",    button: "Running...",   disabled: true,  spinner: true  },
-            completed:  { label: "Completed",                      css: "status-completed",  button: "Re-trigger",   disabled: false, spinner: false },
-            failed:     { label: "Failed",                         css: "status-failed",     button: "Retry",        disabled: false, spinner: false },
-            timeout:    { label: "StartFailedTimeout",             css: "status-timeout",    button: "Retry",        disabled: false, spinner: false },
-            delivery:   { label: "StartFailedDeliveryExhausted",   css: "status-delivery",   button: "Retry",        disabled: false, spinner: false }
+        const timelineEl = document.getElementById("timeline");
+        const rawEl = document.getElementById("raw");
+        const statusPill = document.getElementById("statusPill");
+        const statusMeta = document.getElementById("statusMeta");
+        const triggerBtn = document.getElementById("triggerBtn");
+
+        const timers = [];
+
+        const STATES = {
+            ready: { label: "Ready", cls: "state-ready", btn: "Trigger RecreateSummaries", disabled: false, spinning: false },
+            submitting: { label: "Submitting", cls: "state-submitting", btn: "Submitting...", disabled: true, spinning: true },
+            accepted: { label: "TriggerAccepted", cls: "state-accepted", btn: "Accepted", disabled: true, spinning: true },
+            running: { label: "Running", cls: "state-running", btn: "Running...", disabled: true, spinning: true },
+            completed: { label: "Completed", cls: "state-completed", btn: "Re-trigger RecreateSummaries", disabled: false, spinning: false },
+            failed: { label: "Failed", cls: "state-failed", btn: "Retry RecreateSummaries", disabled: false, spinning: false },
+            timeout: { label: "StartFailedTimeout", cls: "state-timeout", btn: "Retry RecreateSummaries", disabled: false, spinning: false },
+            delivery: { label: "StartFailedDeliveryExhausted", cls: "state-delivery", btn: "Retry RecreateSummaries", disabled: false, spinning: false }
         };
 
-        const uiByJob = new Map();
+        function addTimeline(text) {
+            const ts = new Date().toISOString().substring(11, 19);
+            timelineEl.textContent = `[${ts}] ${text}\n` + timelineEl.textContent;
+        }
 
-        function mapLabel(routeKind) {
-            switch (routeKind) {
-                case "FpsApi": return "FPS API";
-                case "PactApi": return "PACT API";
-                case "ScheduledOnly": return "Scheduled only";
-                default: return "Neutral";
+        function clearTimers() {
+            while (timers.length) {
+                clearTimeout(timers.pop());
             }
         }
 
-        function appendTimeline(message) {
-            const now = new Date();
-            const ts = now.toISOString().substring(11, 19);
-            timelineEl.textContent = `[${ts}] ${message}\n` + timelineEl.textContent;
+        function later(ms, fn) {
+            const t = setTimeout(fn, ms);
+            timers.push(t);
         }
 
-        function renderLegend() {
-            const entries = ["ready", "accepted", "pending", "running", "completed", "failed", "timeout"];
-            legendEl.innerHTML = entries
-                .map(k => `<span class="status-pill ${JOB_STATES[k].css}">${JOB_STATES[k].label}</span>`)
-                .join("");
+        function setState(key, metaText) {
+            const s = STATES[key] || STATES.failed;
+            statusPill.className = `status-pill ${s.cls}`;
+            statusPill.innerHTML = s.spinning ? `<span class="spinner"></span>${s.label}` : s.label;
+            triggerBtn.textContent = s.btn;
+            triggerBtn.disabled = s.disabled;
+            statusMeta.textContent = metaText || "";
         }
 
-        function resetTimers(jobName) {
-            const ui = uiByJob.get(jobName);
-            if (!ui) return;
-            ui.timers.forEach(t => clearTimeout(t));
-            ui.timers = [];
+        function setRaw(statusCode, bodyText) {
+            rawEl.textContent = `HTTP ${statusCode}\n${bodyText}`;
         }
 
         function parseUtc(value, fallback) {
             if (!value) return fallback;
-            const parsed = Date.parse(value);
-            return Number.isNaN(parsed) ? fallback : parsed;
+            const dt = Date.parse(value);
+            return Number.isNaN(dt) ? fallback : dt;
         }
 
-        function updateJobState(jobName, key, detailText) {
-            const ui = uiByJob.get(jobName);
-            if (!ui) return;
+        async function triggerRecreateSummaries() {
+            clearTimers();
 
-            const state = JOB_STATES[key] || JOB_STATES.failed;
-            ui.stateEl.className = `status-pill ${state.css}`;
-            ui.stateEl.innerHTML = state.spinner
-                ? `<span class="spinner"></span>${state.label}`
-                : state.label;
-            ui.detailEl.textContent = detailText || "";
-
-            if (ui.isScheduledOnly) {
-                ui.button.textContent = "Scheduled";
-                ui.button.disabled = true;
-                ui.button.classList.add("button-scheduled");
-                return;
-            }
-
-            ui.button.textContent = state.button;
-            ui.button.disabled = state.disabled;
-            ui.button.classList.remove("button-scheduled");
-        }
-
-        function setApiResponse(statusCode, payloadText) {
-            apiResponseEl.textContent = `HTTP ${statusCode}\n${payloadText}`;
-        }
-
-        function schedule(jobName, ms, action) {
-            const ui = uiByJob.get(jobName);
-            if (!ui) return;
-            const timer = setTimeout(action, ms);
-            ui.timers.push(timer);
-        }
-
-        function startPendingLifecycle(jobName, acceptedAtMs, startupDeadlineMs, initialAttempt) {
-            let attempt = initialAttempt;
-            updateJobState(jobName, "pending", `Accepted at ${new Date(acceptedAtMs).toLocaleTimeString()} | Deadline ${new Date(startupDeadlineMs).toLocaleTimeString()}`);
-            appendTimeline(`${jobName}: status projected to PendingStart`);
-
-            const tick = () => {
-                const now = Date.now();
-                if (now >= startupDeadlineMs) {
-                    updateJobState(jobName, "timeout", "Worker start not observed before startup deadline.");
-                    appendTimeline(`${jobName}: status projected to StartFailedTimeout`);
-                    return;
-                }
-
-                const delay = POLL_INTERVALS_MS[Math.min(attempt, POLL_INTERVALS_MS.length - 1)];
-                attempt += 1;
-                const remainingSec = Math.max(0, Math.floor((startupDeadlineMs - now) / 1000));
-                updateJobState(jobName, "pending", `Polling every ${Math.floor(delay / 1000)}s (attempt ${attempt}) | ${remainingSec}s until timeout`);
-                appendTimeline(`${jobName}: polling status (attempt ${attempt}, next ${Math.floor(delay / 1000)}s)`);
-                schedule(jobName, delay, tick);
-            };
-
-            const firstDelay = POLL_INTERVALS_MS[Math.min(attempt, POLL_INTERVALS_MS.length - 1)];
-            schedule(jobName, firstDelay, tick);
-        }
-
-        function startLocalWorkerDemo(jobName) {
-            updateJobState(jobName, "running", "Local worker process started by PACT API.");
-            appendTimeline(`${jobName}: local worker observed, moving to Running`);
-
-            schedule(jobName, 15000, () => {
-                updateJobState(jobName, "completed", "Demo completion projection for local run.");
-                appendTimeline(`${jobName}: projected to Completed for demo walkthrough`);
-            });
-        }
-
-        async function triggerJob(job) {
-            const jobName = job.jobName;
-            const requestedBy = document.getElementById("requestedBy").value || "sample-ui@local";
-            const preferredApi = document.getElementById("preferredApi").value;
-
-            resetTimers(jobName);
-            updateJobState(jobName, "submitting", "Sending trigger request to Sample UI backend...");
-            appendTimeline(`${jobName}: trigger submitted by ${requestedBy}`);
+            const requestedBy = (document.getElementById("requestedBy").value || "sample-ui@local").trim();
+            setState("submitting", "Submitting trigger request to Sample UI backend...");
+            addTimeline(`Trigger submitted for ${JOB_NAME} by ${requestedBy}`);
 
             let response;
             let bodyText = "";
             let payload = null;
 
             try {
-                response = await fetch("/api/trigger?preferredApi=" + encodeURIComponent(preferredApi), {
+                response = await fetch("/api/trigger?preferredApi=pact", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ jobName, requestedBy })
+                    body: JSON.stringify({ jobName: JOB_NAME, requestedBy })
                 });
 
                 bodyText = await response.text();
-                setApiResponse(response.status, bodyText);
+                setRaw(response.status, bodyText);
 
                 try {
                     payload = bodyText ? JSON.parse(bodyText) : null;
@@ -528,99 +324,46 @@
                     payload = null;
                 }
             } catch (err) {
-                const errorText = err && err.message ? err.message : "Network request failed.";
-                setApiResponse(0, errorText);
-                updateJobState(jobName, "failed", errorText);
-                appendTimeline(`${jobName}: request failed before API response (${errorText})`);
+                const msg = err && err.message ? err.message : "Network request failed.";
+                setRaw(0, msg);
+                setState("failed", msg);
+                addTimeline(`Request failed before API response (${msg})`);
                 return;
             }
 
             if (!response.ok || !payload || payload.accepted === false) {
                 const reason = payload && payload.reason ? payload.reason : "Trigger request was not accepted.";
-                updateJobState(jobName, "failed", reason);
-                appendTimeline(`${jobName}: API did not accept trigger (${reason})`);
+                setState("failed", reason);
+                addTimeline(`Trigger not accepted (${reason})`);
                 return;
             }
 
             const acceptedAtMs = parseUtc(payload.acceptedAtUtc, Date.now());
             const startupDeadlineMs = parseUtc(payload.startupDeadlineUtc, acceptedAtMs + STARTUP_WINDOW_MS);
 
-            updateJobState(jobName, "accepted", `ExecutionId ${payload.jobExecutionId || "n/a"}`);
-            appendTimeline(`${jobName}: trigger accepted with status ${payload.status || "TriggerAccepted"}`);
+            setState("accepted", `ExecutionId ${payload.jobExecutionId || "n/a"}`);
+            addTimeline(`Trigger accepted (${payload.status || "TriggerAccepted"})`);
 
-            const isLocalWorker = payload.workerProcessLaunched === true || payload.status === "WorkerProcessStarted";
+            later(2500, () => {
+                setState("running", "Execution in progress. UI shows run-level status only.");
+                addTimeline("Status moved to Running");
 
-            schedule(jobName, 2500, () => {
-                if (isLocalWorker) {
-                    startLocalWorkerDemo(jobName);
+                const now = Date.now();
+                if (now >= startupDeadlineMs) {
+                    setState("timeout", "Worker start not observed before startup deadline.");
+                    addTimeline("Status moved to StartFailedTimeout");
                     return;
                 }
 
-                startPendingLifecycle(jobName, acceptedAtMs, startupDeadlineMs, 0);
-            });
-        }
-
-        async function loadJobs() {
-            rows.innerHTML = "";
-
-            const response = await fetch("/api/jobs");
-            const jobs = await response.json();
-
-            jobs.forEach(job => {
-                const tr = document.createElement("tr");
-                const isScheduledOnly = job.routeKind === "ScheduledOnly";
-                const isRecreateSummaries = job.jobName === "RecreateSummaries";
-
-                const stateTd = document.createElement("td");
-                const stateSpan = document.createElement("span");
-                stateSpan.className = "status-pill status-ready";
-                stateSpan.textContent = "Ready";
-                const meta = document.createElement("div");
-                meta.className = "meta";
-                meta.textContent = isRecreateSummaries
-                    ? "PACT demo path uses trigger lifecycle projection."
-                    : "State changes shown for consistency with trigger model.";
-                stateTd.appendChild(stateSpan);
-                stateTd.appendChild(meta);
-
-                const actionTd = document.createElement("td");
-                const button = document.createElement("button");
-                button.textContent = isScheduledOnly ? "Scheduled" : "Trigger";
-                button.disabled = isScheduledOnly;
-                if (isScheduledOnly) {
-                    button.classList.add("button-scheduled");
-                }
-
-                if (!isScheduledOnly) {
-                    button.addEventListener("click", async () => triggerJob(job));
-                }
-
-                actionTd.appendChild(button);
-
-                tr.innerHTML = `
-                    <td>${job.jobName}</td>
-                    <td>${mapLabel(job.routeKind)}</td>
-                    <td>${job.description}</td>
-                `;
-
-                tr.appendChild(stateTd);
-                tr.appendChild(actionTd);
-                rows.appendChild(tr);
-
-                uiByJob.set(job.jobName, {
-                    stateEl: stateSpan,
-                    detailEl: meta,
-                    button,
-                    timers: [],
-                    isScheduledOnly
+                // Demo projection for local walkthrough.
+                later(15000, () => {
+                    setState("completed", "Completed. This demo does not display per-step statuses.");
+                    addTimeline("Status moved to Completed");
                 });
             });
-
-            appendTimeline("Job catalog loaded. RecreateSummaries is routed to PACT API.");
         }
 
-        renderLegend();
-        loadJobs();
+        triggerBtn.addEventListener("click", triggerRecreateSummaries);
     </script>
 </body>
 </html>

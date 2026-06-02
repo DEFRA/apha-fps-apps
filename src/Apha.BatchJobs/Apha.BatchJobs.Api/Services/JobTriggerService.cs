@@ -33,13 +33,13 @@ public sealed class JobTriggerService : IJobTriggerService
 
     public global::System.Threading.Tasks.Task<TriggerResult> TriggerAsync(string jobName, CancellationToken cancellationToken = default)
     {
-        var operationId = Guid.NewGuid().ToString("N");
+        var jobExecutionId = Guid.NewGuid().ToString("N");
         var acceptedAtUtc = DateTime.UtcNow;
-        var request = BuildRunTaskRequest(jobName, operationId);
+        var request = BuildRunTaskRequest(jobName, jobExecutionId);
 
         _logger.LogInformation(
-            "Prepared ECS RunTask request | OperationId={OperationId} | Cluster={Cluster} | TaskDefinition={TaskDefinition} | JobName={JobName}",
-            operationId,
+            "Prepared ECS RunTask request | JobExecutionId={JobExecutionId} | Cluster={Cluster} | TaskDefinition={TaskDefinition} | JobName={JobName}",
+            jobExecutionId,
             request.Cluster,
             request.TaskDefinition,
             jobName);
@@ -51,26 +51,26 @@ public sealed class JobTriggerService : IJobTriggerService
                 // Production call path (kept intentionally commented while AWS execution is disabled).
                 // var ecsResponse = await _ecsClient.RunTaskAsync(request, cancellationToken);
                 // _logger.LogInformation(
-                //     "Cloud trigger started | OperationId={OperationId} | Tasks={TaskCount}",
-                //     operationId,
+                //     "Cloud trigger started | JobExecutionId={JobExecutionId} | Tasks={TaskCount}",
+                //     jobExecutionId,
                 //     ecsResponse.Tasks.Count);
 
-                await RunPowerShellFallbackAsync(jobName, operationId, cancellationToken);
+                await RunPowerShellFallbackAsync(jobName, jobExecutionId, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Accepted trigger failed | OperationId={OperationId} | JobName={JobName}",
-                    operationId,
+                    "Accepted trigger failed | JobExecutionId={JobExecutionId} | JobName={JobName}",
+                    jobExecutionId,
                     jobName);
             }
         }, CancellationToken.None);
 
-        return global::System.Threading.Tasks.Task.FromResult(new TriggerResult(operationId, acceptedAtUtc));
+        return global::System.Threading.Tasks.Task.FromResult(new TriggerResult(jobExecutionId, acceptedAtUtc));
     }
 
-    private RunTaskRequest BuildRunTaskRequest(string jobName, string operationId)
+    private RunTaskRequest BuildRunTaskRequest(string jobName, string jobExecutionId)
     {
         var launchType = ParseLaunchType(_options.LaunchType);
         var assignPublicIp = _options.AssignPublicIp ? AssignPublicIp.ENABLED : AssignPublicIp.DISABLED;
@@ -102,7 +102,7 @@ public sealed class JobTriggerService : IJobTriggerService
                         [
                             new Amazon.ECS.Model.KeyValuePair { Name = "BATCH_JOB_NAME", Value = jobName },
                             new Amazon.ECS.Model.KeyValuePair { Name = "BATCH_RUN_MODE", Value = "Manual" },
-                            new Amazon.ECS.Model.KeyValuePair { Name = "BATCH_OPERATION_ID", Value = operationId }
+                            new Amazon.ECS.Model.KeyValuePair { Name = "BATCH_JOB_EXECUTION_ID", Value = jobExecutionId }
                         ]
                     }
                 ]
@@ -110,15 +110,15 @@ public sealed class JobTriggerService : IJobTriggerService
         };
     }
 
-    private async global::System.Threading.Tasks.Task RunPowerShellFallbackAsync(string jobName, string operationId, CancellationToken cancellationToken)
+    private async global::System.Threading.Tasks.Task RunPowerShellFallbackAsync(string jobName, string jobExecutionId, CancellationToken cancellationToken)
     {
         var scriptPath = Path.GetFullPath(Path.Combine(_hostEnvironment.ContentRootPath, "..", _options.PowerShellScriptPath));
         var executable = _options.PowerShellExecutable;
         var arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -JobName \"{jobName}\"";
 
         _logger.LogInformation(
-            "Running PowerShell fallback trigger | OperationId={OperationId} | Script={ScriptPath} | JobName={JobName}",
-            operationId,
+            "Running PowerShell fallback trigger | JobExecutionId={JobExecutionId} | Script={ScriptPath} | JobName={JobName}",
+            jobExecutionId,
             scriptPath,
             jobName);
 
@@ -141,7 +141,7 @@ public sealed class JobTriggerService : IJobTriggerService
         startInfo.Environment["DOTNET_ENVIRONMENT"] = _hostEnvironment.EnvironmentName;
         startInfo.Environment["BATCH_JOB_NAME"] = jobName;
         startInfo.Environment["BATCH_RUN_MODE"] = "Manual";
-        startInfo.Environment["BATCH_OPERATION_ID"] = operationId;
+        startInfo.Environment["BATCH_JOB_EXECUTION_ID"] = jobExecutionId;
 
         using var process = new Process { StartInfo = startInfo };
         process.Start();
@@ -157,8 +157,8 @@ public sealed class JobTriggerService : IJobTriggerService
         if (process.ExitCode == 0)
         {
             _logger.LogInformation(
-                "PowerShell fallback completed | OperationId={OperationId} | JobName={JobName} | ExitCode={ExitCode} | StdOut={StdOut}",
-                operationId,
+                "PowerShell fallback completed | JobExecutionId={JobExecutionId} | JobName={JobName} | ExitCode={ExitCode} | StdOut={StdOut}",
+                jobExecutionId,
                 jobName,
                 process.ExitCode,
                 stdOut);

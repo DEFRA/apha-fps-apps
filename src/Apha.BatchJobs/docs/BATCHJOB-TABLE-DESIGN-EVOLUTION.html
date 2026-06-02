@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BatchJobs Table Design Evolution and Locking Recommendation</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #1f2937;
+      background: #f5f7fa;
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 24px auto;
+      background: #ffffff;
+      border: 1px solid #d7dde8;
+      padding: 28px 34px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      color: #111827;
+    }
+
+    h2 {
+      margin-top: 30px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e5e7eb;
+      font-size: 21px;
+      color: #111827;
+    }
+
+    h3 {
+      margin-top: 22px;
+      font-size: 17px;
+      color: #1f2937;
+    }
+
+    .subtitle {
+      color: #4b5563;
+      margin: 0 0 18px;
+    }
+
+    .note {
+      background: #eef6ff;
+      border-left: 4px solid #2563eb;
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+
+    .success {
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+
+    .warning {
+      background: #fff7ed;
+      border-left: 4px solid #ea580c;
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 12px 0 20px;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border: 1px solid #d1d5db;
+      padding: 8px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 12px 14px;
+      overflow-x: auto;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>BatchJobs Table Design Evolution and Locking Recommendation</h1>
+    <p class="subtitle">
+      Captures the design journey from the original 4-table model to the current implementation,
+      including the rationale for introducing <code>fps.job_lock</code>.
+    </p>
+
+    <div class="note">
+      <strong>Scope:</strong> This document focuses on execution tracking and concurrency control for jobs such as
+      <code>RecreateSummaries</code> and <code>MABArchive</code>.
+    </div>
+
+    <h2>1. Original Table Design (Baseline)</h2>
+    <p>
+      The original model introduced four operational tables for job definition, status standardization,
+      queueing, and run audit trail.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Purpose</th>
+          <th>Exact Columns (Original Design)</th>
+          <th>Design Intention</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>tbljobmaster</code></td>
+          <td>Job definitions</td>
+          <td><code>jobid</code>, <code>jobname</code>, <code>frequency</code>, <code>note</code>, <code>timetolive</code></td>
+          <td>One row per job type (for example, MABArchive, RecreateSummaries).</td>
+        </tr>
+        <tr>
+          <td><code>tbljobstatus</code></td>
+          <td>Status catalog</td>
+          <td><code>statusid</code>, <code>jobid</code>, <code>status</code></td>
+          <td>Controlled list of transitions used by queue and log tables.</td>
+        </tr>
+        <tr>
+          <td><code>tbljobqueue</code></td>
+          <td>Execution instance header</td>
+          <td><code>jobqueueid</code>, <code>jobid</code>, <code>statusid</code>, <code>startdatetime</code>, <code>enddatetime</code>, <code>errormessage</code></td>
+          <td>Single row per run containing latest status and runtime metadata.</td>
+        </tr>
+        <tr>
+          <td><code>tbljobqueue_log</code></td>
+          <td>Execution audit trail</td>
+          <td><code>jobqueuelogid</code>, <code>jobqueueid</code>, <code>statusid</code>, <code>performedby</code>, <code>logtime</code>, <code>note</code></td>
+          <td>Chronological state history for each queue row.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="success">
+      <strong>Conclusion on sufficiency:</strong> These four tables are sufficient for tracking and audit.
+      They are not sufficient by themselves to guarantee single-run concurrency per job.
+    </div>
+
+    <h2>2. Current Implementation Mapping</h2>
+    <p>
+      The implementation retains the same conceptual model in the <code>fps</code> schema and adds practical
+      fields used by API/UI trigger flow.
+    </p>
+
+    <div class="note">
+      <strong>Source of truth for local schema:</strong> current EF Core mapping in <code>BatchJobsDbContext</code>.
+      The exact columns below are taken from the local code configuration.
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Concept</th>
+          <th>Implemented Table</th>
+          <th>Exact Columns (Current Local)</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Job master</td>
+          <td><code>fps.job_master</code></td>
+          <td><code>jobid</code>, <code>jobname</code>, <code>frequency</code>, <code>note</code>, <code>timetolive</code>, <code>created_at</code>, <code>updated_at</code></td>
+          <td>Equivalent to baseline <code>tbljobmaster</code>.</td>
+        </tr>
+        <tr>
+          <td>Status master</td>
+          <td><code>fps.job_status</code></td>
+          <td><code>statusid</code>, <code>jobid</code>, <code>status</code>, <code>created_at</code></td>
+          <td>Equivalent to baseline <code>tbljobstatus</code>.</td>
+        </tr>
+        <tr>
+          <td>Queue header</td>
+          <td><code>fps.job_queue</code></td>
+          <td><code>jobqueueid</code>, <code>jobexecutionid</code>, <code>jobid</code>, <code>statusid</code>, <code>requestedby</code>, <code>startdatetime</code>, <code>enddatetime</code>, <code>errormessage</code>, <code>created_at</code>, <code>updated_at</code></td>
+          <td>Extended to support external trigger correlation and requester identity (<code>requestedby</code>).</td>
+        </tr>
+        <tr>
+          <td>Queue logs</td>
+          <td><code>fps.job_queue_log</code></td>
+          <td><code>jobqueuelogid</code>, <code>jobqueueid</code>, <code>statusid</code>, <code>performedby</code>, <code>logtime</code>, <code>note</code></td>
+          <td>Equivalent audit design.</td>
+        </tr>
+        <tr>
+          <td>Concurrency lock</td>
+          <td><code>fps.job_lock</code></td>
+          <td><code>lock_id</code>, <code>job_name</code>, <code>acquired_at</code>, <code>expires_at</code>, <code>jobqueueid</code>, <code>is_active</code></td>
+          <td>Added to enforce one active run per job atomically.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2.1 Additional Runtime Identity Clarification</h3>
+    <ul>
+      <li><code>jobExecutionId</code>: external correlation id generated by API/scheduler trigger path.</li>
+      <li><code>jobQueueId</code>: internal per-run worker identity generated in orchestrator.</li>
+    </ul>
+
+    <p>
+      These identifiers improve traceability but do not enforce mutual exclusion by themselves.
+    </p>
+
+    <h3>2.2 Current Local Constraint and Index Notes</h3>
+    <ul>
+      <li><code>fps.job_master</code>: unique index on <code>jobname</code>.</li>
+      <li><code>fps.job_status</code>: unique index on <code>(jobid, status)</code>.</li>
+      <li><code>fps.job_queue</code>: unique index on <code>jobexecutionid</code>, index on <code>requestedby</code>.</li>
+      <li><code>fps.job_lock</code>: indexes on <code>job_name</code>, <code>(job_name, is_active)</code>, and <code>expires_at</code>.</li>
+    </ul>
+
+    <h2>2A. Original vs Current: Mismatch and Justification Matrix</h2>
+    <p>
+      This section explicitly compares the original design text to the current implementation and explains
+      why each deviation was introduced.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Change Area</th>
+          <th>Original Design</th>
+          <th>Current Implementation</th>
+          <th>Why the Change Was Made</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Table naming convention</td>
+          <td><code>tbljobmaster</code>, <code>tbljobstatus</code>, <code>tbljobqueue</code>, <code>tbljobqueue_log</code></td>
+          <td><code>fps.job_master</code>, <code>fps.job_status</code>, <code>fps.job_queue</code>, <code>fps.job_queue_log</code></td>
+          <td>Aligned with PostgreSQL schema-qualified naming and existing FPS operational style for consistency, migration hygiene, and easier DBA operations.</td>
+        </tr>
+        <tr>
+          <td>Audit timestamps on master/queue tables</td>
+          <td>Not explicitly present in the original 4-table definitions.</td>
+          <td>Added <code>created_at</code>/<code>updated_at</code> on <code>job_master</code> and <code>job_queue</code>, and <code>created_at</code> on <code>job_status</code>.</td>
+          <td>Required for operational auditability, troubleshooting, and support diagnostics without relying only on queue logs.</td>
+        </tr>
+        <tr>
+          <td>External correlation id on queue</td>
+          <td><code>jobqueueid</code> treated as run correlation id.</td>
+          <td><code>jobqueueid</code> retained as internal run id; added <code>jobexecutionid</code> (unique) for external API/UI correlation.</td>
+          <td>Separates worker-owned runtime identity from caller-owned tracking identity so API status polling and user-visible traceability remain stable.</td>
+        </tr>
+        <tr>
+          <td>Requester identity capture</td>
+          <td>No requester column in <code>tbljobqueue</code>.</td>
+          <td>Added <code>requestedby</code> (NOT NULL) in <code>fps.job_queue</code>.</td>
+          <td>Supports full audit chain (who requested what), authorization evidence, and easier incident triage for manual triggers.</td>
+        </tr>
+        <tr>
+          <td>Timezone precision</td>
+          <td>Original text says <code>timestamp</code>.</td>
+          <td>Implemented as <code>timestamp with time zone</code> for runtime time columns.</td>
+          <td>Prevents ambiguity across environments/time zones and improves correctness for distributed systems and cloud operations.</td>
+        </tr>
+        <tr>
+          <td>Concurrency control model</td>
+          <td>No dedicated lock table in original 4-table set.</td>
+          <td>Added <code>fps.job_lock</code> with <code>job_name</code>, <code>acquired_at</code>, <code>expires_at</code>, <code>jobqueueid</code>, <code>is_active</code>.</td>
+          <td>Original queue/status model tracks execution but cannot atomically prevent duplicate concurrent starts for the same job during race conditions.</td>
+        </tr>
+        <tr>
+          <td>Active-run uniqueness enforcement</td>
+          <td>No explicit uniqueness rule for one active run per job.</td>
+          <td>Lock repository acquires lock atomically using insert-conflict strategy and lock indexes.</td>
+          <td>Guarantees one active instance per job name while allowing different jobs (for example, MABArchive + RecreateSummaries) to run in parallel.</td>
+        </tr>
+        <tr>
+          <td>Queue constraints/indexing</td>
+          <td>FKs described at conceptual level.</td>
+          <td>Added concrete indexes and constraints, including unique <code>jobexecutionid</code> and indexed <code>requestedby</code>.</td>
+          <td>Improves query performance for status lookups and preserves correlation integrity in trigger/status APIs.</td>
+        </tr>
+        <tr>
+          <td>Queue log naming correction</td>
+          <td>Review notes flagged underscore naming and final name as <code>tbljobqueue_log</code>.</td>
+          <td>Implemented as <code>fps.job_queue_log</code>.</td>
+          <td>Carries forward the same naming intent (underscore separation) within schema-qualified PostgreSQL naming standards.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <strong>Key justification summary:</strong> The original design was strong for execution tracking and auditing.
+      The current implementation extends it for production-grade distributed triggering: identity separation
+      (<code>jobexecutionid</code> vs <code>jobqueueid</code>), requester accountability (<code>requestedby</code>),
+      explicit audit timestamps, and atomic concurrency safety (<code>job_lock</code>).
+    </div>
+
+    <h3>2B. Datatype and Nullability Comparison (Original vs Current)</h3>
+    <p>
+      This matrix shows explicit datatype alignment or change against the original table specification,
+      plus nullability differences where applicable.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Table.Column</th>
+          <th>Original Spec</th>
+          <th>Current (batch_jobs_foundation_db)</th>
+          <th>Change</th>
+          <th>Justification</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>job_master.jobid</code></td><td>integer, PK, NOT NULL</td><td>integer, PK, NOT NULL</td><td>No</td><td>Matches original design.</td></tr>
+        <tr><td><code>job_master.jobname</code></td><td>varchar(100), NOT NULL, UNIQUE</td><td>character varying, NOT NULL, UNIQUE</td><td>No (logical)</td><td>PostgreSQL displays varchar as character varying.</td></tr>
+        <tr><td><code>job_master.frequency</code></td><td>varchar(50), NULL</td><td>character varying, NULL</td><td>No (logical)</td><td>Same intent and nullability.</td></tr>
+        <tr><td><code>job_master.note</code></td><td>varchar(250), NULL</td><td>character varying, NULL</td><td>No (logical)</td><td>Same intent and nullability.</td></tr>
+        <tr><td><code>job_master.timetolive</code></td><td>integer, NOT NULL</td><td>integer, NOT NULL</td><td>No</td><td>Matches original design.</td></tr>
+        <tr><td><code>job_master.created_at</code></td><td>Not defined</td><td>timestamp with time zone, NOT NULL</td><td>Added</td><td>System audit timestamp for row creation.</td></tr>
+        <tr><td><code>job_master.updated_at</code></td><td>Not defined</td><td>timestamp with time zone, NOT NULL</td><td>Added</td><td>System audit timestamp for row updates.</td></tr>
+
+        <tr><td><code>job_status.statusid</code></td><td>integer, PK, NOT NULL</td><td>integer, PK, NOT NULL</td><td>No</td><td>Matches original design.</td></tr>
+        <tr><td><code>job_status.jobid</code></td><td>integer, FK, NOT NULL</td><td>integer, FK, NOT NULL</td><td>No</td><td>Matches original design.</td></tr>
+        <tr><td><code>job_status.status</code></td><td>varchar(100), NOT NULL</td><td>character varying, NOT NULL</td><td>No (logical)</td><td>PostgreSQL varchar representation difference only.</td></tr>
+        <tr><td><code>job_status.created_at</code></td><td>Not defined</td><td>timestamp with time zone, NOT NULL</td><td>Added</td><td>Supports auditability and catalog lifecycle trace.</td></tr>
+
+        <tr><td><code>job_queue.jobqueueid</code></td><td>GUID, PK, NOT NULL</td><td>uuid, PK, NOT NULL</td><td>No (logical)</td><td>GUID in design maps to PostgreSQL uuid.</td></tr>
+        <tr><td><code>job_queue.jobid</code></td><td>integer, FK, NOT NULL</td><td>integer, FK, NOT NULL</td><td>No</td><td>Matches original design.</td></tr>
+        <tr><td><code>job_queue.statusid</code></td><td>integer, FK, NOT NULL</td><td>integer, FK, NOT NULL</td><td>No</td><td>Matches original design.</td></tr>
+        <tr><td><code>job_queue.startdatetime</code></td><td>timestamp, NOT NULL</td><td>timestamp with time zone, NOT NULL</td><td>Yes</td><td>Timezone-aware timestamp avoids cross-region ambiguity.</td></tr>
+        <tr><td><code>job_queue.enddatetime</code></td><td>timestamp, NULL</td><td>timestamp with time zone, NULL</td><td>Yes</td><td>Timezone-aware completion time for distributed tracing.</td></tr>
+        <tr><td><code>job_queue.errormessage</code></td><td>varchar(1000), NULL</td><td>character varying, NULL</td><td>No (logical)</td><td>Same intent; database reports generic character varying.</td></tr>
+        <tr><td><code>job_queue.jobexecutionid</code></td><td>Not defined</td><td>uuid, NOT NULL, UNIQUE</td><td>Added</td><td>External API/UI correlation key distinct from internal queue id.</td></tr>
+        <tr><td><code>job_queue.requestedby</code></td><td>Not defined</td><td>character varying, NOT NULL</td><td>Added</td><td>Requester audit and traceability requirement.</td></tr>
+        <tr><td><code>job_queue.created_at</code></td><td>Not defined</td><td>timestamp with time zone, NOT NULL</td><td>Added</td><td>Operational audit timestamp.</td></tr>
+        <tr><td><code>job_queue.updated_at</code></td><td>Not defined</td><td>timestamp with time zone, NOT NULL</td><td>Added</td><td>Operational update tracking.</td></tr>
+
+        <tr><td><code>job_queue_log.jobqueuelogid</code></td><td>integer, PK, NOT NULL</td><td>integer, PK, NOT NULL</td><td>No</td><td>Matches original design.</td></tr>
+        <tr><td><code>job_queue_log.jobqueueid</code></td><td>GUID, FK, NOT NULL</td><td>uuid, FK, NOT NULL</td><td>No (logical)</td><td>GUID in design maps to PostgreSQL uuid.</td></tr>
+        <tr><td><code>job_queue_log.statusid</code></td><td>integer, FK, NOT NULL</td><td>integer, FK, NOT NULL</td><td>No</td><td>Matches original design.</td></tr>
+        <tr><td><code>job_queue_log.performedby</code></td><td>varchar(100), NOT NULL</td><td>character varying, NOT NULL</td><td>No (logical)</td><td>PostgreSQL varchar representation difference only.</td></tr>
+        <tr><td><code>job_queue_log.logtime</code></td><td>timestamp, NOT NULL</td><td>timestamp with time zone, NOT NULL</td><td>Yes</td><td>Timezone-aware audit timeline.</td></tr>
+        <tr><td><code>job_queue_log.note</code></td><td>varchar(500), NULL</td><td>character varying, NULL</td><td>No (logical)</td><td>Same intent and nullability.</td></tr>
+
+        <tr><td><code>job_lock.lock_id</code></td><td>Not defined</td><td>integer, PK, NOT NULL</td><td>Added</td><td>Dedicated lock record identifier for concurrency control.</td></tr>
+        <tr><td><code>job_lock.job_name</code></td><td>Not defined</td><td>character varying, NOT NULL</td><td>Added</td><td>Lock key ensuring one active run per job name.</td></tr>
+        <tr><td><code>job_lock.acquired_at</code></td><td>Not defined</td><td>timestamp with time zone, NOT NULL</td><td>Added</td><td>Lock lifecycle audit start time.</td></tr>
+        <tr><td><code>job_lock.expires_at</code></td><td>Not defined</td><td>timestamp with time zone, NOT NULL</td><td>Added</td><td>Stale-lock recovery via timeout.</td></tr>
+        <tr><td><code>job_lock.is_active</code></td><td>Not defined</td><td>boolean, NOT NULL</td><td>Added</td><td>Supports active-lock uniqueness and lock lifecycle state.</td></tr>
+        <tr><td><code>job_lock.jobqueueid</code></td><td>Not defined</td><td>uuid, NOT NULL</td><td>Added</td><td>Ties lock ownership to a specific worker queue run.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warning">
+      <strong>Datatype interpretation note:</strong> many "changes" are representation-level (
+      <code>GUID</code> -> <code>uuid</code>, <code>varchar</code> -> <code>character varying</code>) and are logically equivalent in PostgreSQL.
+      The true functional changes are added columns, timezone-aware timestamps, and the new lock table.
+    </div>
+
+    <h3>2.3 Live DB Validation (batch_jobs_foundation_db)</h3>
+    <p>
+      The following schema details were validated directly from <code>information_schema.columns</code>
+      in database <code>batch_jobs_foundation_db</code> (schema <code>fps</code>).
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Column</th>
+          <th>Data Type</th>
+          <th>Nullable</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>fps.job_master</code></td><td><code>jobid</code></td><td>integer</td><td>NO</td></tr>
+        <tr><td><code>fps.job_master</code></td><td><code>jobname</code></td><td>character varying</td><td>NO</td></tr>
+        <tr><td><code>fps.job_master</code></td><td><code>frequency</code></td><td>character varying</td><td>YES</td></tr>
+        <tr><td><code>fps.job_master</code></td><td><code>note</code></td><td>character varying</td><td>YES</td></tr>
+        <tr><td><code>fps.job_master</code></td><td><code>timetolive</code></td><td>integer</td><td>NO</td></tr>
+        <tr><td><code>fps.job_master</code></td><td><code>created_at</code></td><td>timestamp with time zone</td><td>NO</td></tr>
+        <tr><td><code>fps.job_master</code></td><td><code>updated_at</code></td><td>timestamp with time zone</td><td>NO</td></tr>
+
+        <tr><td><code>fps.job_status</code></td><td><code>statusid</code></td><td>integer</td><td>NO</td></tr>
+        <tr><td><code>fps.job_status</code></td><td><code>jobid</code></td><td>integer</td><td>NO</td></tr>
+        <tr><td><code>fps.job_status</code></td><td><code>status</code></td><td>character varying</td><td>NO</td></tr>
+        <tr><td><code>fps.job_status</code></td><td><code>created_at</code></td><td>timestamp with time zone</td><td>NO</td></tr>
+
+        <tr><td><code>fps.job_queue</code></td><td><code>jobqueueid</code></td><td>uuid</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue</code></td><td><code>jobid</code></td><td>integer</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue</code></td><td><code>statusid</code></td><td>integer</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue</code></td><td><code>startdatetime</code></td><td>timestamp with time zone</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue</code></td><td><code>enddatetime</code></td><td>timestamp with time zone</td><td>YES</td></tr>
+        <tr><td><code>fps.job_queue</code></td><td><code>errormessage</code></td><td>character varying</td><td>YES</td></tr>
+        <tr><td><code>fps.job_queue</code></td><td><code>created_at</code></td><td>timestamp with time zone</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue</code></td><td><code>updated_at</code></td><td>timestamp with time zone</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue</code></td><td><code>jobexecutionid</code></td><td>uuid</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue</code></td><td><code>requestedby</code></td><td>character varying</td><td>NO</td></tr>
+
+        <tr><td><code>fps.job_queue_log</code></td><td><code>jobqueuelogid</code></td><td>integer</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue_log</code></td><td><code>jobqueueid</code></td><td>uuid</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue_log</code></td><td><code>statusid</code></td><td>integer</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue_log</code></td><td><code>performedby</code></td><td>character varying</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue_log</code></td><td><code>logtime</code></td><td>timestamp with time zone</td><td>NO</td></tr>
+        <tr><td><code>fps.job_queue_log</code></td><td><code>note</code></td><td>character varying</td><td>YES</td></tr>
+
+        <tr><td><code>fps.job_lock</code></td><td><code>lock_id</code></td><td>integer</td><td>NO</td></tr>
+        <tr><td><code>fps.job_lock</code></td><td><code>job_name</code></td><td>character varying</td><td>NO</td></tr>
+        <tr><td><code>fps.job_lock</code></td><td><code>acquired_at</code></td><td>timestamp with time zone</td><td>NO</td></tr>
+        <tr><td><code>fps.job_lock</code></td><td><code>expires_at</code></td><td>timestamp with time zone</td><td>NO</td></tr>
+        <tr><td><code>fps.job_lock</code></td><td><code>is_active</code></td><td>boolean</td><td>NO</td></tr>
+        <tr><td><code>fps.job_lock</code></td><td><code>jobqueueid</code></td><td>uuid</td><td>NO</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.4 Sample Data (Illustrative)</h3>
+    <p>
+      The sample rows below show one realistic execution path: a manual <code>RecreateSummaries</code>
+      trigger accepted by API, executed by worker, and completed successfully.
+    </p>
+
+    <h3>Sample: fps.job_master</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>jobid</th>
+          <th>jobname</th>
+          <th>frequency</th>
+          <th>note</th>
+          <th>timetolive</th>
+          <th>created_at</th>
+          <th>updated_at</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>RecreateSummaries</td>
+          <td>OnDemand</td>
+          <td>Triggered from PACT API</td>
+          <td>3600</td>
+          <td>2026-06-02 09:00:00+00</td>
+          <td>2026-06-02 09:00:00+00</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>MABArchive</td>
+          <td>Scheduled</td>
+          <td>Year derived from execution date</td>
+          <td>5400</td>
+          <td>2026-06-02 09:00:00+00</td>
+          <td>2026-06-02 09:00:00+00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Sample: fps.job_status</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>statusid</th>
+          <th>jobid</th>
+          <th>status</th>
+          <th>created_at</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>10</td><td>1</td><td>Running</td><td>2026-06-02 09:00:00+00</td></tr>
+        <tr><td>11</td><td>1</td><td>Completed</td><td>2026-06-02 09:00:00+00</td></tr>
+        <tr><td>12</td><td>1</td><td>Failed</td><td>2026-06-02 09:00:00+00</td></tr>
+        <tr><td>20</td><td>2</td><td>Running</td><td>2026-06-02 09:00:00+00</td></tr>
+        <tr><td>21</td><td>2</td><td>Completed</td><td>2026-06-02 09:00:00+00</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Sample: fps.job_queue</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>jobqueueid</th>
+          <th>jobexecutionid</th>
+          <th>jobid</th>
+          <th>statusid</th>
+          <th>requestedby</th>
+          <th>startdatetime</th>
+          <th>enddatetime</th>
+          <th>errormessage</th>
+          <th>created_at</th>
+          <th>updated_at</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>8d8e7307-a8c2-4a5b-a9f1-3dc1b54a1c8b</td>
+          <td>6c3b54a7-397b-4eb7-959f-77dc023517bb</td>
+          <td>1</td>
+          <td>11</td>
+          <td>sample-ui@local</td>
+          <td>2026-06-02 09:15:03+00</td>
+          <td>2026-06-02 09:15:48+00</td>
+          <td></td>
+          <td>2026-06-02 09:15:03+00</td>
+          <td>2026-06-02 09:15:48+00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Sample: fps.job_queue_log</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>jobqueuelogid</th>
+          <th>jobqueueid</th>
+          <th>statusid</th>
+          <th>performedby</th>
+          <th>logtime</th>
+          <th>note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1001</td>
+          <td>8d8e7307-a8c2-4a5b-a9f1-3dc1b54a1c8b</td>
+          <td>10</td>
+          <td>sample-ui@local</td>
+          <td>2026-06-02 09:15:03+00</td>
+          <td>Execution started</td>
+        </tr>
+        <tr>
+          <td>1002</td>
+          <td>8d8e7307-a8c2-4a5b-a9f1-3dc1b54a1c8b</td>
+          <td>11</td>
+          <td>batch.worker</td>
+          <td>2026-06-02 09:15:48+00</td>
+          <td>Execution completed</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Sample: fps.job_lock</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>lock_id</th>
+          <th>job_name</th>
+          <th>acquired_at</th>
+          <th>expires_at</th>
+          <th>is_active</th>
+          <th>jobqueueid</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>501</td>
+          <td>RecreateSummaries</td>
+          <td>2026-06-02 09:15:03+00</td>
+          <td>2026-06-02 10:15:03+00</td>
+          <td>true</td>
+          <td>8d8e7307-a8c2-4a5b-a9f1-3dc1b54a1c8b</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2.5 Readability Join View (How the tables connect)</h3>
+    <pre>
+job_master (jobid=1, jobname=RecreateSummaries)
+   -> job_status (statusid=10 Running, statusid=11 Completed)
+   -> job_queue (jobqueueid=8d8e..., jobexecutionid=6c3b..., requestedby=sample-ui@local)
+      -> job_queue_log (1001 Running, 1002 Completed)
+      -> job_lock (lock_id=501 while run is active)
+    </pre>
+
+    <h2>3. Why Duplicate Runs Can Still Happen Without Lock</h2>
+    <p>
+      Foreign keys and unique run ids validate relationships and uniqueness of each run record,
+      but they do not express the rule: "only one active run per job name at a time".
+    </p>
+
+    <h3>3.1 Example Race (No Lock)</h3>
+    <pre>
+T0: Trigger A starts RecreateSummaries
+T0+5ms: Trigger B starts RecreateSummaries
+
+A checks queue for Running rows: none visible yet
+B checks queue for Running rows: none visible yet
+
+A inserts queue row with jobqueueid=A1, status=Running
+B inserts queue row with jobqueueid=B1, status=Running
+
+Result: two concurrent RecreateSummaries instances
+    </pre>
+
+    <div class="warning">
+      <strong>Risk:</strong> overlapping instances may process the same dataset concurrently,
+      causing duplicate writes, non-deterministic outcomes, lock contention, or deadlocks,
+      depending on job step implementation.
+    </div>
+
+    <h2>4. Lock Table Introduction and Value</h2>
+    <p>
+      To enforce single active run per job atomically, the implementation introduces a dedicated lock table:
+      <code>fps.job_lock</code>.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Purpose</th>
+          <th>Important Fields</th>
+          <th>Enforcement Pattern</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>fps.job_lock</code></td>
+          <td>Distributed mutex per job</td>
+          <td><code>job_name</code>, <code>jobqueueid</code>, <code>acquired_at</code>, <code>expires_at</code>, <code>is_active</code></td>
+          <td>Atomic acquire via insert with conflict handling against active lock uniqueness.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>4.1 Atomic Acquire Pattern</h3>
+    <pre>
+INSERT INTO fps.job_lock(acquired_at, expires_at, job_name, jobqueueid, is_active)
+VALUES(now_utc, now_utc + timeout, 'RecreateSummaries', :jobqueueid, TRUE)
+ON CONFLICT DO NOTHING;
+
+rows_affected = 1 -> lock acquired -> execute
+rows_affected = 0 -> another run active -> skip/reject
+    </pre>
+
+    <h3>4.2 Why This Is Better Than Queue Status Check</h3>
+    <ul>
+      <li>Single atomic DB statement; no check-then-insert race window.</li>
+      <li>Explicit lock lifecycle separated from audit lifecycle.</li>
+      <li>Supports stale lock recovery using <code>expires_at</code>.</li>
+    </ul>
+
+    <h2>5. Job-Level Concurrency Behavior (Desired State)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Case</th>
+          <th>Expected Behavior</th>
+          <th>With Lock</th>
+          <th>Without Lock</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>RecreateSummaries + RecreateSummaries</td>
+          <td>Second should not run concurrently</td>
+          <td>Guaranteed (second acquire fails)</td>
+          <td>Not guaranteed (race can start both)</td>
+        </tr>
+        <tr>
+          <td>MABArchive + MABArchive</td>
+          <td>Second should not run concurrently</td>
+          <td>Guaranteed</td>
+          <td>Not guaranteed</td>
+        </tr>
+        <tr>
+          <td>RecreateSummaries + MABArchive</td>
+          <td>Allowed concurrently</td>
+          <td>Allowed (different lock key)</td>
+          <td>Allowed</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>6. Final Recommendation</h2>
+    <div class="success">
+      Keep the original four tables for execution definition, queueing, status, and audit,
+      and retain <code>fps.job_lock</code> as a required concurrency-control table.
+    </div>
+
+    <h3>6.1 Recommended Canonical Set</h3>
+    <ol>
+      <li><code>fps.job_master</code> - job metadata</li>
+      <li><code>fps.job_status</code> - valid state catalog</li>
+      <li><code>fps.job_queue</code> - one row per run (latest state)</li>
+      <li><code>fps.job_queue_log</code> - state transition history</li>
+      <li><code>fps.job_lock</code> - one-active-run-per-job guard</li>
+    </ol>
+
+    <h3>6.2 Documentation Update Guidance</h3>
+    <ul>
+      <li>Present <code>job_lock</code> as an intentional architectural addition, not an accidental table.</li>
+      <li>Clarify that GUID-based correlation and locking solve different problems.</li>
+      <li>Record lock timeout policy and stale-lock cleanup behavior.</li>
+      <li>State expected concurrency rule explicitly: one active instance per job name.</li>
+    </ul>
+
+    <h2>7. Operational Scenarios (Happy Path to Worst Path)</h2>
+    <p>
+      The following scenarios document expected runtime behavior with current controls:
+      API trigger acceptance, worker retries, lock acquisition, transaction rollback, and DLQ handling.
+    </p>
+
+    <h3>7.1 Happy Path (Single Click, Normal Startup, Success)</h3>
+    <ol>
+      <li>User clicks <code>RecreateSummaries</code> once.</li>
+      <li>Trigger API accepts request and publishes event.</li>
+      <li>Worker container starts and orchestrator acquires <code>fps.job_lock</code>.</li>
+      <li>Job execution row is created in <code>fps.job_queue</code> with status Running.</li>
+      <li>All steps execute in one transaction and commit.</li>
+      <li>Final job status updates to Completed and lock is released.</li>
+    </ol>
+    <div class="success">
+      <strong>Outcome:</strong> one successful committed run, clean queue and queue-log history.
+    </div>
+
+    <h3>7.2 Step Failure Inside RecreateSummaries Transaction</h3>
+    <ol>
+      <li>A mandatory or refresh step returns failure/throws exception.</li>
+      <li>Orchestrator rolls back the entire transaction.</li>
+      <li>No partial business data changes are committed.</li>
+      <li>Job status updates to Failed; lock is released (or eventually expires if release path fails).</li>
+    </ol>
+    <div class="warning">
+      <strong>Outcome:</strong> run fails atomically; UI should show Failed + rollback message, not partial success.
+    </div>
+
+    <h3>7.3 Transient Failure with Retry (Try/Catch + Retry Policy)</h3>
+    <ol>
+      <li>Worker/orchestrator encounters retryable infrastructure exception (for example timeout, network, DB transient).</li>
+      <li>Configured retry policy applies delay/jitter and re-attempts within configured limits.</li>
+      <li>If a later attempt succeeds, final status becomes Completed.</li>
+      <li>If all attempts fail, final status becomes Failed and error is recorded.</li>
+    </ol>
+    <div class="note">
+      <strong>Outcome:</strong> retries increase resilience without changing one-run-at-a-time lock semantics.
+    </div>
+
+    <h3>7.4 Trigger Accepted but Container Startup Delayed</h3>
+    <ol>
+      <li>API accepts event, but ECS/container startup is delayed.</li>
+      <li>UI/browser may be closed and reopened before worker starts.</li>
+      <li>User may click trigger again, producing another accepted event.</li>
+      <li>When workers start, lock ensures only one active execution runs; extra run is skipped at lock stage.</li>
+    </ol>
+    <div class="warning">
+      <strong>Outcome:</strong> execution safety is preserved, but duplicate accepted triggers can still occur pre-lock.
+    </div>
+
+    <h3>7.5 Lock Contention Scenario</h3>
+    <ol>
+      <li>Two worker instances attempt the same job concurrently.</li>
+      <li>First instance acquires lock and runs.</li>
+      <li>Second instance cannot acquire lock and is marked Skipped (or equivalent non-run outcome).</li>
+    </ol>
+    <div class="success">
+      <strong>Outcome:</strong> prevents concurrent duplicate execution of the same job while allowing different jobs in parallel.
+    </div>
+
+    <h3>7.6 Worst Path (Repeated Delivery Failure -> DLQ)</h3>
+    <ol>
+      <li>Event delivery/start repeatedly fails (infra issue, permissions, task launch failures, etc.).</li>
+      <li>Retries are exhausted by the messaging/dispatch layer.</li>
+      <li>Message transitions to DLQ for manual/automated remediation.</li>
+      <li>User-visible status should map to <code>StartFailedDeliveryExhausted</code> (or equivalent failure terminal state).</li>
+    </ol>
+    <div class="warning">
+      <strong>Outcome:</strong> no run is executed; incident response must inspect DLQ payload and replay/fix cause.
+    </div>
+
+    <h3>7.7 Worst Path (Worker Crashes Mid-Run)</h3>
+    <ol>
+      <li>Worker acquires lock and starts execution.</li>
+      <li>Worker crashes before clean lock release.</li>
+      <li>Lock persists until <code>expires_at</code>; next run waits until expiry or cleanup.</li>
+    </ol>
+    <div class="note">
+      <strong>Outcome:</strong> stale-lock timeout prevents permanent deadlock but can delay next valid run.
+    </div>
+
+    <h2>8. Best Practices and Recommendations</h2>
+
+    <h3>8.1 UI Behavior Recommendations</h3>
+    <ul>
+      <li>Default UI should display run-level status only: Accepted, Running, Completed, Failed, Timeout, DeliveryFailed.</li>
+      <li>If a run fails in-transaction, show explicit message: "Run failed and was fully rolled back; no partial data committed."</li>
+      <li>On page load, restore current in-flight state from API/server instead of resetting to a clickable default.</li>
+      <li>Disable trigger button when server reports active pending/running execution for the same job.</li>
+    </ul>
+
+    <h3>8.2 Trigger Deduplication Recommendations</h3>
+    <ul>
+      <li>Add server-side dedupe window (for example 5-10 minutes) keyed by job name + requester + business context.</li>
+      <li>Support idempotency key in trigger API requests and reject duplicate keys within TTL.</li>
+      <li>Expose a "latest accepted execution" endpoint so UI can rehydrate state after browser reopen.</li>
+    </ul>
+
+    <h4>8.2.1 Recommended Trigger API Contract</h4>
+    <p>Include the following fields in trigger requests and responses for deterministic dedupe behavior:</p>
+    <ul>
+      <li><strong>Request:</strong> <code>jobName</code>, <code>requestedBy</code>, <code>businessContext</code>, optional <code>idempotencyKey</code>.</li>
+      <li><strong>Computed server value:</strong> <code>businessContextHash</code> from normalized context payload.</li>
+      <li><strong>Response:</strong> <code>executionId</code>, <code>acceptedAtUtc</code>, <code>startupDeadlineUtc</code>, <code>status</code>, <code>isDuplicate</code>, <code>duplicateOfExecutionId</code>.</li>
+    </ul>
+
+    <h4>8.2.2 Dedupe Decision Order (Server)</h4>
+    <ol>
+      <li>Validate request and normalize business context (stable key ordering and trimming).</li>
+      <li>If <code>idempotencyKey</code> is present, check key replay first within idempotency TTL.</li>
+      <li>Then evaluate semantic dedupe window using <code>jobName + requestedBy + businessContextHash</code>.</li>
+      <li>If duplicate found, return existing execution metadata; do not publish another trigger event.</li>
+      <li>If no duplicate found, create new accepted execution and publish event once.</li>
+    </ol>
+
+    <h4>8.2.3 Suggested HTTP Status Behavior</h4>
+    <ul>
+      <li><strong>202 Accepted:</strong> new trigger accepted and event published.</li>
+      <li><strong>200 OK:</strong> duplicate replay detected; existing execution returned.</li>
+      <li><strong>409 Conflict:</strong> same idempotency key reused with different payload fingerprint.</li>
+      <li><strong>400 Bad Request:</strong> invalid business context or unsupported key format.</li>
+    </ul>
+
+    <h4>8.2.4 Time Windows and TTL Defaults</h4>
+    <ul>
+      <li><strong>Semantic dedupe window:</strong> 5 minutes default, 10 minutes when startup delays are common.</li>
+      <li><strong>Idempotency TTL:</strong> 24 hours default for manual UI-triggered operations.</li>
+      <li><strong>Latest execution lookup horizon:</strong> at least dedupe window + expected startup SLA.</li>
+    </ul>
+
+    <h4>8.2.5 Latest Accepted Execution Endpoint</h4>
+    <p>Provide a lightweight read API for UI state rehydration after refresh/browser reopen:</p>
+    <pre><code>GET /api/trigger/latest?jobName=RecreateSummaries&amp;requestedBy=jane.doe&amp;contextHash=abc123
+200 OK
+{
+  "executionId": "...",
+  "status": "Accepted",
+  "acceptedAtUtc": "2026-06-02T10:00:00Z",
+  "startupDeadlineUtc": "2026-06-02T10:02:00Z",
+  "workerProcessLaunched": false,
+  "isDuplicate": false
+}</code></pre>
+
+    <h4>8.2.6 Suggested Persistence Model (Documentation-First)</h4>
+    <p>
+      To keep current execution tables stable, implement dedupe/idempotency in a separate trigger-intent store
+      (new table or dedicated persistence model) rather than overloading <code>fps.job_queue</code>.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>intent_id</td>
+          <td>UUID</td>
+          <td>Primary key for trigger intent row</td>
+        </tr>
+        <tr>
+          <td>job_name</td>
+          <td>text</td>
+          <td>Batch job identifier</td>
+        </tr>
+        <tr>
+          <td>requested_by</td>
+          <td>text</td>
+          <td>Caller identity used in dedupe key</td>
+        </tr>
+        <tr>
+          <td>business_context_hash</td>
+          <td>text</td>
+          <td>Semantic dedupe key component</td>
+        </tr>
+        <tr>
+          <td>idempotency_key</td>
+          <td>text</td>
+          <td>Client replay safety key</td>
+        </tr>
+        <tr>
+          <td>payload_fingerprint</td>
+          <td>text</td>
+          <td>Reject same key with different payload</td>
+        </tr>
+        <tr>
+          <td>execution_id</td>
+          <td>UUID</td>
+          <td>Linked accepted execution identifier</td>
+        </tr>
+        <tr>
+          <td>accepted_at_utc</td>
+          <td>timestamp with time zone</td>
+          <td>Ordering and dedupe-window anchor</td>
+        </tr>
+        <tr>
+          <td>expires_at_utc</td>
+          <td>timestamp with time zone</td>
+          <td>TTL expiry for idempotency and dedupe entries</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>8.2.7 Concurrency and Race Condition Guardrails</h4>
+    <ul>
+      <li>Perform dedupe check and trigger-intent insert in one transaction.</li>
+      <li>Use unique index patterns to enforce idempotency and dedupe safety under parallel requests.</li>
+      <li>Keep worker lock flow unchanged; dedupe prevents duplicate accepted triggers before lock stage.</li>
+    </ul>
+
+    <h4>8.2.8 Two-Stage Insert Model (Explicit Clarification)</h4>
+    <p>
+      The recommendation is to keep two distinct inserts at different lifecycle stages, each solving a different problem.
+      This is additive architecture, not a replacement of the current lock table behavior.
+    </p>
+    <ol>
+      <li><strong>Stage A (Trigger API, pre-worker):</strong> insert/update trigger-intent row for dedupe/idempotency.</li>
+      <li><strong>Stage B (Worker runtime):</strong> acquire/insert lock in <code>fps.job_lock</code> before execution.</li>
+    </ol>
+    <div class="note">
+      <strong>Important:</strong> Stage A reduces duplicate accepted triggers; Stage B still enforces one-active-run execution safety.
+    </div>
+
+    <h3>8.3 Retry and DLQ Recommendations</h3>
+    <ul>
+      <li>Keep retry list strict to transient exceptions only (already aligned in orchestrator logic).</li>
+      <li>Instrument retry count, final error type, and elapsed retry window in logs/metrics.</li>
+      <li>Operationalize DLQ with runbook: root-cause classification, safe replay steps, and notification routing.</li>
+    </ul>
+
+    <h3>8.4 Step-Status Persistence Recommendation</h3>
+    <ul>
+      <li>For business UI only, extra step table is not required.</li>
+      <li>For support/engineering diagnostics, persist step telemetry in a dedicated table outside the business transaction, or rely on structured logs/APM traces.</li>
+    </ul>
+
+    <h2>9. Executive Summary (for Review Meetings)</h2>
+    <p>
+      The original design was correct for tracking, audit, and monitoring. As implementation matured,
+      distributed runtime concurrency risk became explicit. The additional <code>job_lock</code> table closes that gap
+      by enforcing single active run per job atomically, while still allowing different jobs to run in parallel.
+      This is the latest recommended and implemented model.
+    </p>
+
+    <p class="small">Last updated: June 2026</p>
+  </div>
+</body>
+</html>
