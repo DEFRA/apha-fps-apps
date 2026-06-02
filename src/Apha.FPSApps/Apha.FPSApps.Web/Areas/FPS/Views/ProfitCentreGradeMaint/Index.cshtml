@@ -95,17 +95,9 @@
             });
         }
 
-        function saveMaintPCGrade() {
-            clearValidationErrors('#modaPopupBody');
-            var form = $('#addMaintPCGradeForm');
-
-            if (!isFormValid(form)) {
-                displayClientValidationErrors(form, '#modaPopupBody');
-                return;
-            }
-
-            var dto = {
-                PcGrade: $('#PcGrade').val(),
+        function buildMaintPCGradeDto(pcGrade) {
+            return {
+                PcGrade: pcGrade,
                 DivisionGrade: $('#DivisionGrade').val() || null,
                 GradeCode: $('#GradeCode').val() || null,
                 ProfitCentre: $('#ProfitCentre').val() || null,
@@ -116,11 +108,29 @@
                 OHR: parseDecimalOrNull($('#OHR').val()),
                 HrsAvailable: parseDecimalOrNull($('#HrsAvailable').val())
             };
+        }
+
+        function handleMaintPCGradeSaveError(xhr) {
+            if (xhr.status === 400 && xhr.responseJSON) {
+                displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+            } else {
+                showGovukAlert('An error occurred while saving.');
+            }
+        }
+
+        function saveMaintPCGrade() {
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#addMaintPCGradeForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
 
             $.ajax({
                 url: '/FPS/ProfitCentreGradeMaint/Create',
                 type: 'POST',
-                data: JSON.stringify(dto),
+                data: JSON.stringify(buildMaintPCGradeDto($('#PcGrade').val())),
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
@@ -131,13 +141,7 @@
                         displayServerValidationErrors(data.errors, data.message, '#modaPopupBody');
                     }
                 },
-                error: function (xhr) {
-                    if (xhr.status === 400 && xhr.responseJSON) {
-                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
-                    } else {
-                        showGovukAlert('An error occurred while saving.');
-                    }
-                }
+                error: handleMaintPCGradeSaveError
             });
         }
 
@@ -152,23 +156,10 @@
 
             var originalPcGrade = $('#hdnOriginalPcGrade').val();
 
-            var dto = {
-                PcGrade: originalPcGrade,
-                DivisionGrade: $('#DivisionGrade').val() || null,
-                GradeCode: $('#GradeCode').val() || null,
-                ProfitCentre: $('#ProfitCentre').val() || null,
-                ChargeRate: parseDecimalOrNull($('#ChargeRate').val()),
-                DirectRate: parseDecimalOrNull($('#DirectRate').val()),
-                PayRate: parseDecimalOrNull($('#PayRate').val()),
-                NPR: parseDecimalOrNull($('#NPR').val()),
-                OHR: parseDecimalOrNull($('#OHR').val()),
-                HrsAvailable: parseDecimalOrNull($('#HrsAvailable').val())
-            };
-
             $.ajax({
                 url: '/FPS/ProfitCentreGradeMaint/Edit?id=' + encodeURIComponent(originalPcGrade),
                 type: 'POST',
-                data: JSON.stringify(dto),
+                data: JSON.stringify(buildMaintPCGradeDto(originalPcGrade)),
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
@@ -179,13 +170,7 @@
                         displayServerValidationErrors(data.errors, data.message, '#modaPopupBody');
                     }
                 },
-                error: function (xhr) {
-                    if (xhr.status === 400 && xhr.responseJSON) {
-                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
-                    } else {
-                        showGovukAlert('An error occurred while saving.');
-                    }
-                }
+                error: handleMaintPCGradeSaveError
             });
         }
 
