@@ -36,6 +36,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
+        public async Task<ApiResponseDto<IEnumerable<ProfitCentreDto>>> GetAllProfitCentresAsync()
+        {
+            var response = await _http.GetAsync<IEnumerable<ProfitCentreRes>>(FpsApiEndpoints.GetAllProfitCentres);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<IEnumerable<ProfitCentreDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<IEnumerable<ProfitCentreDto>>>(response);
+            return ApiResponseDto<IEnumerable<ProfitCentreDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<ProfitCentreDto>>> GetAllProfitCentresPagedAsync(QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProfitCentres, query);
@@ -112,6 +122,26 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
                 return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
+        }
+
+        public async Task<ApiResponseDto<bool>> UpdateProfitCentreSettingsAsync(
+            string profitCentre, int timesheet, int outputsheet, short timesheetLayout)
+        {
+            var request = new UpdateProfitCentreSettingsReq
+            {
+                ProfitCentre = profitCentre,
+                Timesheet = timesheet,
+                Outputsheet = outputsheet,
+                TimesheetLayout = timesheetLayout
+            };
+            var response = await _http.PatchAsync<UpdateProfitCentreSettingsReq, bool?>(
+                FpsApiEndpoints.PatchProfitCentreSettings, request);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var failureDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(failureDto.Errors, failureDto.Meta);
         }
     }
 }

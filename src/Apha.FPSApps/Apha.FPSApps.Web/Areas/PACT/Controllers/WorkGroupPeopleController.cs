@@ -39,7 +39,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> Index(string workGroup = "")
         {
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
-            var peopleGrid = await BuildPeopleGridAsync(defaultRequest, string.IsNullOrWhiteSpace(workGroup) ? null : workGroup, null);
+            var peopleGrid = await BuildPeopleGridAsync(defaultRequest, string.IsNullOrWhiteSpace(workGroup) ? null : workGroup);
             var workGroupOptions = await GetWorkGroupSelectListAsync();
             var personOptions = await GetPersonSelectListAsync();
 
@@ -58,14 +58,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         /// <summary>
         /// Handles the AJAX POST request to reload the people data grid.
-        /// Accepts pagination, sorting, filtering parameters along with optional
-        /// work group and person name filters, and returns a rendered <c>_DataGrid</c> partial view.
+        /// Accepts pagination, sorting, and filtering parameters along with an optional
+        /// work group filter, and returns a rendered <c>_DataGrid</c> partial view.
         /// </summary>
         /// <param name="request">Pagination, sort, and filter parameters from the grid.</param>
         /// <param name="workGroup">Optional work group name to filter results by.</param>
-        /// <param name="personName">Optional person name to filter results by.</param>
         [HttpPost]
-        public async Task<IActionResult> LoadPeopleGrid(PaginationFilter<string> request, string? workGroup, string? personName)
+        public async Task<IActionResult> LoadPeopleGrid(PaginationFilter<string> request, string? workGroup)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -75,8 +74,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
 
-
-            var gridConfig = await BuildPeopleGridAsync(request, workGroup, personName);
+            var gridConfig = await BuildPeopleGridAsync(request, workGroup);
             return PartialView("_DataGrid", gridConfig);
         }
 
@@ -89,16 +87,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </summary>
         /// <param name="request">Pagination, sort, and filter parameters.</param>
         /// <param name="workGroup">Optional work group name filter.</param>
-        /// <param name="personName">Optional person name filter.</param>
         private async Task<DataGridConfig<WorkGroupPeopleItem>> BuildPeopleGridAsync(
-            PaginationFilter<string> request, string? workGroup, string? personName = null)
+            PaginationFilter<string> request, string? workGroup)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
 
             var query = _mapper.Map<QueryParameters<string>>(request);
 
-            var (items, pagination) = await FetchPeopleDataAsync(query, workGroup, personName);
+            var (items, pagination) = await FetchPeopleDataAsync(query, workGroup);
 
             pagination.SortColumn = request.SortBy;
             pagination.SortDirection = request.Descending;
@@ -108,7 +105,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 GridId = "peopleGrid",
                 Title = "Work Group People",
                 ShowCheckboxColumn = false,
-                AllowAdd= false,
+                AllowAdd = false,
                 AllowEdit = false,
                 AllowDelete = false,
                 ShowPagination = true,
@@ -127,22 +124,19 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Determines the appropriate fetch strategy based on the provided filters and
         /// returns the matching list of people items along with their pagination metadata.
-        /// Prioritises work group filter, then person name filter, then returns all staff.
+        /// Prioritises work group filter, then returns all staff.
         /// </summary>
         /// <param name="query">Mapped query parameters including page, sort, and filter.</param>
         /// <param name="workGroup">Optional work group name filter.</param>
-        /// <param name="personName">Optional person name filter.</param>
         private async Task<(List<WorkGroupPeopleItem> Items, PaginationModel Pagination)> FetchPeopleDataAsync(
-            QueryParameters<string> query, string? workGroup, string? personName)
+            QueryParameters<string> query, string? workGroup)
         {
             if (!string.IsNullOrWhiteSpace(workGroup))
                 return await FetchByWorkGroupAsync(query, workGroup);
 
-            if (!string.IsNullOrWhiteSpace(personName))
-                return await FetchByPersonNameAsync(query, personName);
-
             return await FetchAllWorkGroupPeoplesAsync(query);
         }
+
 
         /// <summary>
         /// Fetches a paginated, filtered, and sorted list of people belonging to the
@@ -159,32 +153,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             return (
                 _mapper.Map<List<WorkGroupPeopleItem>>(response.Data.data),
-                new PaginationModel
-                {
-                    TotalRecords = response.Data.TotalCount,
-                    PageNumber   = response.Data.PageNumber,
-                    PageSize     = response.Data.PageSize
-                }
-            );
-        }
-
-        /// <summary>
-        /// Fetches all work group people and filters the result to those whose
-        /// <c>Name</c> exactly matches the specified person name.
-        /// </summary>
-        /// <param name="query">Query parameters including pagination, sort, and filter.</param>
-        /// <param name="personName">The person name to match against.</param>
-        private async Task<(List<WorkGroupPeopleItem>, PaginationModel)> FetchByPersonNameAsync(
-            QueryParameters<string> query, string personName)
-        {
-            query.Search = personName;
-            var response = await _employeeService.GetWorkGroupStaffAsync(query);
-            if (!response.Success || response.Data == null)
-                return ([], new PaginationModel());
-
-            var filtered = response.Data.data.Where(p => p.Name == personName).ToList();
-            return (
-                _mapper.Map<List<WorkGroupPeopleItem>>(filtered),
                 new PaginationModel
                 {
                     TotalRecords = response.Data.TotalCount,

@@ -110,7 +110,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupSummarisedStaffTi
             SetupMapperRows();
             SetupMapperSummary();
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
-                    Arg.Any<QueryParameters<string>>(), "WG1")
+                    Arg.Any<QueryParameters<string>>(), "Alice")
                 .Returns(SuccessResponse());
 
             // Act
@@ -130,7 +130,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupSummarisedStaffTi
             SetupMapperRows();
             SetupMapperSummary();
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
-                    Arg.Any<QueryParameters<string>>(), "WG1")
+                    Arg.Any<QueryParameters<string>>(), "Alice")
                 .Returns(SuccessResponse());
 
             // Act
@@ -150,7 +150,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupSummarisedStaffTi
             SetupMapperSummary();
             var dto = new WgSummarisedStaffTimeUsageDto { HrsPaid = 120.0 };
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
-                    Arg.Any<QueryParameters<string>>(), "WG1")
+                    Arg.Any<QueryParameters<string>>(), "Alice")
                 .Returns(SuccessResponse(dto));
 
             // Act
@@ -208,7 +208,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupSummarisedStaffTi
             SetupMapperRows();
             SetupMapperSummary();
             _workGroupService.GetWgSummarisedStaffTimeUsageAsync(
-                    Arg.Any<QueryParameters<string>>(), "WG1")
+                    Arg.Any<QueryParameters<string>>(), "Alice")
                 .Returns(SuccessResponse());
 
             // Act
@@ -216,7 +216,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupSummarisedStaffTi
 
             // Assert
             await _workGroupService.Received(1)
-                .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<QueryParameters<string>>(), "WG1");
+                .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<QueryParameters<string>>(), "Alice");
         }
 
         [Fact]
