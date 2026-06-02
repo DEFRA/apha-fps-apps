@@ -293,6 +293,31 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreGradeRepositoryTe
             Assert.Equal(2024,              item.FpsYear);
         }
 
+        [Fact]
+        public async Task GetProfitCentreGradesAsync_MapsNullFpsYearToZero()
+        {
+            // Arrange
+            var grades = new List<ProfitCentreGradeView>
+            {
+                new()
+                {
+                    PcGrade      = "G001",
+                    ProfitCentre = DefaultProfitCentre,
+                    ChargeRate   = 100m,
+                    UserEmail    = DefaultUserEmail,
+                    FpsYear      = null
+                }
+            };
+            var repo = CreateViewRepository(grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetProfitCentreGradesAsync(query, DefaultProfitCentre);
+
+            // Assert
+            Assert.Equal(0, result.Data.First().FpsYear);
+        }
+
         #endregion
 
         #region GetAllPagedAsync Tests
@@ -447,6 +472,145 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreGradeRepositoryTe
             Assert.Equal(first,  actualFirst);
             Assert.Equal(second, actualSecond);
             Assert.Equal(third,  actualThird);
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_SortsByGradeCodeAscending()
+        {
+            var grades = new List<ProfitCentreGrade>
+            {
+                BuildGrade("G003", gradeCode: "GCC"),
+                BuildGrade("G001", gradeCode: "GCA"),
+                BuildGrade("G002", gradeCode: "GCB")
+            };
+            var repo = CreateRepository(grades: grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "gradecode", Descending = false };
+            var result = await repo.GetAllPagedAsync(query);
+            var list = result.Data.ToList();
+            Assert.Equal("GCA", list[0].GradeCode);
+            Assert.Equal("GCB", list[1].GradeCode);
+            Assert.Equal("GCC", list[2].GradeCode);
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_SortsByGradeCodeDescending()
+        {
+            var grades = new List<ProfitCentreGrade>
+            {
+                BuildGrade("G001", gradeCode: "GCA"),
+                BuildGrade("G002", gradeCode: "GCB"),
+                BuildGrade("G003", gradeCode: "GCC")
+            };
+            var repo = CreateRepository(grades: grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "gradecode", Descending = true };
+            var result = await repo.GetAllPagedAsync(query);
+            var list = result.Data.ToList();
+            Assert.Equal("GCC", list[0].GradeCode);
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_SortsByProfitCentreAscending()
+        {
+            var grades = new List<ProfitCentreGrade>
+            {
+                BuildGrade("G003", profitCentre: "PC03"),
+                BuildGrade("G001", profitCentre: "PC01"),
+                BuildGrade("G002", profitCentre: "PC02")
+            };
+            var repo = CreateRepository(grades: grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "profitcentre", Descending = false };
+            var result = await repo.GetAllPagedAsync(query);
+            var list = result.Data.ToList();
+            Assert.Equal("PC01", list[0].ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_SortsByProfitCentreDescending()
+        {
+            var grades = new List<ProfitCentreGrade>
+            {
+                BuildGrade("G001", profitCentre: "PC01"),
+                BuildGrade("G002", profitCentre: "PC02"),
+                BuildGrade("G003", profitCentre: "PC03")
+            };
+            var repo = CreateRepository(grades: grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "profitcentre", Descending = true };
+            var result = await repo.GetAllPagedAsync(query);
+            var list = result.Data.ToList();
+            Assert.Equal("PC03", list[0].ProfitCentre);
+        }
+
+        [Theory]
+        [InlineData("chargerate", false)]
+        [InlineData("chargerate", true)]
+        [InlineData("directrate", false)]
+        [InlineData("directrate", true)]
+        [InlineData("payrate",    false)]
+        [InlineData("payrate",    true)]
+        [InlineData("npr",        false)]
+        [InlineData("npr",        true)]
+        [InlineData("ohr",        false)]
+        [InlineData("ohr",        true)]
+        [InlineData("hrsavailable", false)]
+        [InlineData("hrsavailable", true)]
+        public async Task GetAllPagedAsync_SortsByNumericColumn(string sortBy, bool descending)
+        {
+            var grades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "G002", ProfitCentre = DefaultProfitCentre, DivisionGrade = "DG1", GradeCode = "GC1",
+                        ChargeRate = 200m, DirectRate = 200m, PayRate = 200m, NPR = 20m, OHR = 20m, HrsAvailable = 20.0 },
+                new() { PcGrade = "G001", ProfitCentre = DefaultProfitCentre, DivisionGrade = "DG1", GradeCode = "GC1",
+                        ChargeRate = 100m, DirectRate = 100m, PayRate = 100m, NPR = 10m, OHR = 10m, HrsAvailable = 10.0 },
+                new() { PcGrade = "G003", ProfitCentre = DefaultProfitCentre, DivisionGrade = "DG1", GradeCode = "GC1",
+                        ChargeRate = 300m, DirectRate = 300m, PayRate = 300m, NPR = 30m, OHR = 30m, HrsAvailable = 30.0 }
+            };
+            var repo = CreateRepository(grades: grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+            var result = await repo.GetAllPagedAsync(query);
+            var list = result.Data.ToList();
+
+            // Verify ordering direction is correct by checking first vs last
+            var firstVal = sortBy switch
+            {
+                "chargerate"   => list[0].ChargeRate,
+                "directrate"   => list[0].DirectRate,
+                "payrate"      => list[0].PayRate,
+                "npr"          => list[0].NPR,
+                "ohr"          => list[0].OHR,
+                "hrsavailable" => (decimal?)list[0].HrsAvailable,
+                _              => null
+            };
+            var lastVal = sortBy switch
+            {
+                "chargerate"   => list[2].ChargeRate,
+                "directrate"   => list[2].DirectRate,
+                "payrate"      => list[2].PayRate,
+                "npr"          => list[2].NPR,
+                "ohr"          => list[2].OHR,
+                "hrsavailable" => (decimal?)list[2].HrsAvailable,
+                _              => null
+            };
+
+            if (descending)
+                Assert.True(firstVal > lastVal);
+            else
+                Assert.True(firstVal < lastVal);
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_UnknownSortByDefaultsToPcGradeAscending()
+        {
+            var grades = new List<ProfitCentreGrade>
+            {
+                BuildGrade("C001"),
+                BuildGrade("A001"),
+                BuildGrade("B001")
+            };
+            var repo = CreateRepository(grades: grades);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "unknown_column" };
+            var result = await repo.GetAllPagedAsync(query);
+            var list = result.Data.ToList();
+            Assert.Equal("A001", list[0].PcGrade);
         }
 
         #endregion
