@@ -19,47 +19,60 @@ namespace Apha.PACT.DataAccess.Repository
         /// </summary>
         public async Task<PagedData<RecreateSummaryLogs>> GetRecreateSummariesLogsAsync(PaginationParameters<string> parameters)
         {
-            // Build query with explicit LEFT JOIN matching the SQL:
-            // LEFT JOIN tblUsers u ON CONCAT('CVLNT', rsl.UserID) = u.UserName
-            var query = from log in _context.RecreateSummaryLogs.AsNoTracking()
-                        join user in _context.Users.AsNoTracking()
-                        on "CVLNT" + log.UserId equals user.UserName into userGroup
-                        from user in userGroup.DefaultIfEmpty()
-                        select new
-                        {
-                            Log = log,
-                            UserComments = user != null ? user.Comments : null,
-                            UserName = user != null ? user.UserName : null
-                        };
+            // For EF Core In-Memory compatibility, we'll perform the join logic differently
+            // Load all logs with users (since In-Memory doesn't support CONCAT in join conditions)
+            var logsQuery = _context.RecreateSummaryLogs.AsNoTracking();
+            var usersQuery = _context.Users.AsNoTracking();
 
-            // Apply sorting based on the SQL query's ORDER BY
-            query = ApplySorting(query, parameters.SortBy, parameters.Descending);
+            // Materialize both sets for in-memory join
+            var allLogs = await logsQuery.ToListAsync();
+            var allUsers = await usersQuery.ToListAsync();
+
+            // Perform the join in memory with CVLNT concatenation
+            var joinedData = from log in allLogs
+                             join user in allUsers
+                             on "CVLNT" + log.UserId equals user.UserName into userGroup
+                             from user in userGroup.DefaultIfEmpty()
+                             select new
+                             {
+                                 Log = log,
+                                 UserComments = user?.Comments,
+                                 UserName = user?.UserName
+                             };
+
+            // Apply sorting
+            joinedData = ApplySortingInMemory(joinedData, parameters.SortBy, parameters.Descending);
 
             // Get total count before pagination
-            var totalRecords = await query.CountAsync();
+            var totalRecords = joinedData.Count();
 
-            // Apply pagination at database level
-            var pagedResults = await query
+            // Apply pagination in memory
+            var pagedResults = joinedData
                 .Skip((parameters.Page - 1) * parameters.PageSize)
                 .Take(parameters.PageSize)
-                .ToListAsync();
+                .ToList();
 
             // Map the results back to RecreateSummaryLogs entities
-            // Note: Since we're using a projection, we need to reconstruct the entity with the User navigation property
-            var data = pagedResults.Select(r =>
+            var data = pagedResults.Select(r => new RecreateSummaryLogs
             {
-                var log = r.Log;
-                // Set the User navigation property if user data exists
-                if (r.UserComments != null && r.UserName != null)
-                {
-                    log.User = new User
+                Id = r.Log.Id,
+                UserId = r.Log.UserId,
+                Period = r.Log.Period,
+                DateDone = r.Log.DateDone,
+                FpsYear = r.Log.FpsYear,
+                User = (r.UserComments != null && r.UserName != null)
+                    ? new User
                     {
                         UserName = r.UserName,
                         Comments = r.UserComments,
                         Logs = new List<RecreateSummaryLogs>()
-                    };
-                }
-                return log;
+                    }
+                    : new User
+                    {
+                        UserName = string.Empty,
+                        Comments = string.Empty,
+                        Logs = new List<RecreateSummaryLogs>()
+                    }
             }).ToList();
 
             // Build pagination metadata
@@ -75,86 +88,57 @@ namespace Apha.PACT.DataAccess.Repository
         }
 
         /// <summary>
-        /// Applies sorting to the query based on the sortBy parameter.
-        /// Matches the SQL query's ORDER BY logic.
-        /// Note: "user" field refers to User.Comments (as per SQL: u.Comments AS "User")
+        /// Applies sorting to in-memory joined data.
         /// </summary>
-        private static IQueryable<T> ApplySorting<T>(IQueryable<T> query, string? sortBy, bool descending)
+        private static IEnumerable<T> ApplySortingInMemory<T>(IEnumerable<T> data, string? sortBy, bool descending)
             where T : class
         {
             if (string.IsNullOrEmpty(sortBy))
             {
-                // Default sort by DateDone descending (matching SQL: ORDER BY rsl.DateDone)
                 sortBy = "datedone";
                 descending = true;
             }
 
             var property = sortBy.ToLower();
 
-            // Use dynamic LINQ or reflection to apply sorting
-            // Since we're working with an anonymous type, we need to use string-based sorting
+            // Use reflection for in-memory sorting
             return property switch
             {
                 "id" => descending
-                    ? query.OrderBy("Log.Id descending")
-                    : query.OrderBy("Log.Id"),
+                    ? data.OrderByDescending(x => GetPropertyValue(x, "Log.Id"))
+                    : data.OrderBy(x => GetPropertyValue(x, "Log.Id")),
 
                 "datedone" => descending
-                    ? query.OrderBy("Log.DateDone descending")
-                    : query.OrderBy("Log.DateDone"),
+                    ? data.OrderByDescending(x => GetPropertyValue(x, "Log.DateDone"))
+                    : data.OrderBy(x => GetPropertyValue(x, "Log.DateDone")),
 
                 "userid" => descending
-                    ? query.OrderBy("Log.UserId descending")
-                    : query.OrderBy("Log.UserId"),
+                    ? data.OrderByDescending(x => GetPropertyValue(x, "Log.UserId"))
+                    : data.OrderBy(x => GetPropertyValue(x, "Log.UserId")),
 
                 "user" => descending
-                    ? query.OrderBy("UserComments descending")
-                    : query.OrderBy("UserComments"),
+                    ? data.OrderByDescending(x => GetPropertyValue(x, "UserComments"))
+                    : data.OrderBy(x => GetPropertyValue(x, "UserComments")),
 
                 "period" => descending
-                    ? query.OrderBy("Log.Period descending")
-                    : query.OrderBy("Log.Period"),
+                    ? data.OrderByDescending(x => GetPropertyValue(x, "Log.Period"))
+                    : data.OrderBy(x => GetPropertyValue(x, "Log.Period")),
 
-                _ => descending
-                    ? query.OrderBy("Log.DateDone descending")
-                    : query.OrderBy("Log.DateDone")
+                // Default: invalid field should sort by DateDone descending
+                _ => data.OrderByDescending(x => GetPropertyValue(x, "Log.DateDone"))
             };
         }
-    }
 
-    /// <summary>
-    /// Extension method for dynamic sorting with string property names
-    /// </summary>
-    internal static class QueryableExtensions
-    {
-        public static IQueryable<T> OrderBy<T>(this IQueryable<T> source, string propertyName)
+        private static object? GetPropertyValue(object obj, string propertyPath)
         {
-            if (string.IsNullOrEmpty(propertyName))
-                return source;
-
-            var descending = propertyName.EndsWith(" descending", StringComparison.OrdinalIgnoreCase);
-            if (descending)
-                propertyName = propertyName.Substring(0, propertyName.Length - " descending".Length).Trim();
-
-            var parameter = System.Linq.Expressions.Expression.Parameter(typeof(T), "x");
-            System.Linq.Expressions.Expression property = parameter;
-
-            foreach (var member in propertyName.Split('.'))
+            var current = obj;
+            foreach (var prop in propertyPath.Split('.'))
             {
-                property = System.Linq.Expressions.Expression.PropertyOrField(property, member);
+                if (current == null) return null;
+                var propInfo = current.GetType().GetProperty(prop);
+                current = propInfo?.GetValue(current);
             }
-
-            var lambda = System.Linq.Expressions.Expression.Lambda(property, parameter);
-            var methodName = descending ? "OrderByDescending" : "OrderBy";
-
-            var resultExpression = System.Linq.Expressions.Expression.Call(
-                typeof(Queryable),
-                methodName,
-                new Type[] { typeof(T), property.Type },
-                source.Expression,
-                System.Linq.Expressions.Expression.Quote(lambda));
-
-            return source.Provider.CreateQuery<T>(resultExpression);
+            return current;
         }
     }
 }

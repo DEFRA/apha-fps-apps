@@ -85,7 +85,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
 
-            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
+            // Create user with UserName that matches CVLNT + UserId pattern
+            var user = new User { UserName = "CVLNT" + TestUserId, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
+            await context.Users.AddAsync(user);
 
             var log = new RecreateSummaryLogs
             { 
@@ -93,7 +95,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
                 Period = TestPeriod, 
                 DateDone = DateTime.UtcNow, 
                 FpsYear = TestFpsYear,
-                User = user
+                User = null! // Will be populated by repository join logic
             };
 
             await context.RecreateSummaryLogs.AddAsync(log);
@@ -109,7 +111,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Assert
             Assert.NotNull(firstLog);
             Assert.NotNull(firstLog.User);
-            Assert.Equal(TestUserName, firstLog.User.UserName);
+            Assert.Equal("CVLNT" + TestUserId, firstLog.User.UserName);
         }
 
         #endregion
@@ -326,15 +328,19 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var userA = new User { UserName = "Charlie", Comments = "Comment C", Logs = new List<RecreateSummaryLogs>() };
-            var userB = new User { UserName = "Alice", Comments = "Comment A", Logs = new List<RecreateSummaryLogs>() };
-            var userC = new User { UserName = "Bob", Comments = "Comment B", Logs = new List<RecreateSummaryLogs>() };
+
+            // Create users with UserName matching CVLNT + UserId pattern
+            var userA = new User { UserName = "CVLNTUser3", Comments = "Comment C", Logs = new List<RecreateSummaryLogs>() };
+            var userB = new User { UserName = "CVLNTUser1", Comments = "Comment A", Logs = new List<RecreateSummaryLogs>() };
+            var userC = new User { UserName = "CVLNTUser2", Comments = "Comment B", Logs = new List<RecreateSummaryLogs>() };
+
+            await context.Users.AddRangeAsync(new[] { userA, userB, userC });
 
             var logs = new List<RecreateSummaryLogs>
             {
-                new() { UserId = "User3", Period = 1, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = userA },
-                new() { UserId = "User1", Period = 2, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = userB },
-                new() { UserId = "User2", Period = 3, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = userC }
+                new() { UserId = "User3", Period = 1, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = null! },
+                new() { UserId = "User1", Period = 2, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = null! },
+                new() { UserId = "User2", Period = 3, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = null! }
             };
 
             await context.RecreateSummaryLogs.AddRangeAsync(logs);
@@ -350,9 +356,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Assert
             Assert.NotNull(result);
             Assert.Equal(3, resultList.Count);
-            Assert.Equal("Alice", resultList[0].User.UserName);
-            Assert.Equal("Bob", resultList[1].User.UserName);
-            Assert.Equal("Charlie", resultList[2].User.UserName);
+            Assert.Equal("Comment A", resultList[0].User.Comments);
+            Assert.Equal("Comment B", resultList[1].User.Comments);
+            Assert.Equal("Comment C", resultList[2].User.Comments);
         }
 
         [Fact]
@@ -391,13 +397,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
+            var user = new User { UserName = "CVLNT" + TestUserId, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
+            await context.Users.AddAsync(user);
 
             var logs = new List<RecreateSummaryLogs>
             {
-                new() { UserId = TestUserId, Period = 1, DateDone = new DateTime(2024, 1, 10), FpsYear = TestFpsYear, User = user },
-                new() { UserId = TestUserId, Period = 2, DateDone = new DateTime(2024, 3, 15), FpsYear = TestFpsYear, User = user },
-                new() { UserId = TestUserId, Period = 3, DateDone = new DateTime(2024, 2, 20), FpsYear = TestFpsYear, User = user }
+                new() { UserId = TestUserId, Period = 1, DateDone = new DateTime(2024, 1, 10), FpsYear = TestFpsYear, User = null! },
+                new() { UserId = TestUserId, Period = 2, DateDone = new DateTime(2024, 3, 15), FpsYear = TestFpsYear, User = null! },
+                new() { UserId = TestUserId, Period = 3, DateDone = new DateTime(2024, 2, 20), FpsYear = TestFpsYear, User = null! }
             };
 
             await context.RecreateSummaryLogs.AddRangeAsync(logs);
