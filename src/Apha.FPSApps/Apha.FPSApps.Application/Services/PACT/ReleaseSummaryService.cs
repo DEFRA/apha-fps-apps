@@ -19,7 +19,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactClient.PactReleaseSummary.GetReleaseSummariesAsync();
         }
 
-        public async Task<ApiResponseDto<short>> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun)
+        public async Task<ApiResponseDto<ReleasePeriodDto>> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun)
         {
             return await _pactClient.PactReleaseSummary.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
         }

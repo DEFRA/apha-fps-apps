@@ -489,5 +489,306 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         #endregion
+
+        #region GetReleaseSummariesAsync
+
+        [Fact]
+        public async Task GetReleaseSummariesAsync_WithExistingPeriods_ReturnsAllPeriodsOrderedByEndPeriodAscending()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var periods = new List<ReleasePeriod>
+            {
+                new() { PeriodName = "Period3", EndPeriod = 3.0, StartPeriod = 2.5, FpsYear = TestFpsYear },
+                new() { PeriodName = "Period1", EndPeriod = 1.0, StartPeriod = 0.5, FpsYear = TestFpsYear },
+                new() { PeriodName = "Period2", EndPeriod = 2.0, StartPeriod = 1.5, FpsYear = TestFpsYear }
+            };
+
+            await context.ReleasePeriods.AddRangeAsync(periods);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act
+            var result = await repository.GetReleaseSummariesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(3, result.Count);
+            Assert.Equal("Period1", result[0].PeriodName);
+            Assert.Equal("Period2", result[1].PeriodName);
+            Assert.Equal("Period3", result[2].PeriodName);
+        }
+
+        [Fact]
+        public async Task GetReleaseSummariesAsync_WithNoPeriods_ReturnsEmptyCollection()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act
+            var result = await repository.GetReleaseSummariesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetReleaseSummariesAsync_WithNullEndPeriod_ReturnsPeriodsWithNullEndPeriodFirst()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var periods = new List<ReleasePeriod>
+            {
+                new() { PeriodName = "PeriodB", EndPeriod = 2.0, StartPeriod = 1.5, FpsYear = TestFpsYear },
+                new() { PeriodName = "PeriodA", EndPeriod = null, StartPeriod = null, FpsYear = TestFpsYear }
+            };
+
+            await context.ReleasePeriods.AddRangeAsync(periods);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act
+            var result = await repository.GetReleaseSummariesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+            Assert.Null(result[0].EndPeriod);
+            Assert.Equal(2.0, result[1].EndPeriod);
+        }
+
+        [Fact]
+        public async Task GetReleaseSummariesAsync_OnlyReturnsPeriodsBelongingToCurrentFpsYear()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var periodsCurrentYear = new List<ReleasePeriod>
+            {
+                new() { PeriodName = "Current1", EndPeriod = 1.0, StartPeriod = 0.5, FpsYear = TestFpsYear },
+                new() { PeriodName = "Current2", EndPeriod = 2.0, StartPeriod = 1.5, FpsYear = TestFpsYear }
+            };
+
+            var periodsOtherYear = new List<ReleasePeriod>
+            {
+                new() { PeriodName = "Other1", EndPeriod = 1.0, StartPeriod = 0.5, FpsYear = TestFpsYear + 1 }
+            };
+
+            await context.ReleasePeriods.AddRangeAsync(periodsCurrentYear);
+            await context.ReleasePeriods.AddRangeAsync(periodsOtherYear);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act
+            var result = await repository.GetReleaseSummariesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+            Assert.All(result, p => Assert.Equal(TestFpsYear, p.FpsYear));
+        }
+
+        [Fact]
+        public async Task GetReleaseSummariesAsync_ReturnsReadOnlyList()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var period = new ReleasePeriod
+            {
+                PeriodName = "Period1",
+                EndPeriod = 1.0,
+                StartPeriod = 0.5,
+                FpsYear = TestFpsYear
+            };
+
+            await context.ReleasePeriods.AddAsync(period);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act
+            var result = await repository.GetReleaseSummariesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsAssignableFrom<IReadOnlyList<ReleasePeriod>>(result);
+        }
+
+        #endregion
+
+        #region SetFinalSummaryRunAsync
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WithExistingPeriod_UpdatesFinalSummariesRunAndReturnsPeriod()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var period = new ReleasePeriod
+            {
+                PeriodName = "TestPeriod",
+                FpsYear = TestFpsYear,
+                FinalSummariesRun = 0,
+                EndPeriod = 1.0
+            };
+
+            await context.ReleasePeriods.AddAsync(period);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act
+            var result = await repository.SetFinalSummaryRunAsync("TestPeriod", 1);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("TestPeriod", result.PeriodName);
+            Assert.Equal((short)1, result.FinalSummariesRun);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WithExistingPeriod_PersistsUpdatedValueToDatabase()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var period = new ReleasePeriod
+            {
+                PeriodName = "PersistPeriod",
+                FpsYear = TestFpsYear,
+                FinalSummariesRun = 0,
+                EndPeriod = 5.0
+            };
+
+            await context.ReleasePeriods.AddAsync(period);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+            const short newFinalSummariesRun = 3;
+
+            // Act
+            await repository.SetFinalSummaryRunAsync("PersistPeriod", newFinalSummariesRun);
+
+            // Assert — clear tracker and reload to confirm SaveChangesAsync was called
+            context.ChangeTracker.Clear();
+            var reloaded = await context.ReleasePeriods.FindAsync("PersistPeriod", TestFpsYear);
+            Assert.NotNull(reloaded);
+            Assert.Equal(newFinalSummariesRun, reloaded.FinalSummariesRun);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WithNonExistingPeriod_ReturnsNull()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act
+            var result = await repository.SetFinalSummaryRunAsync("NonExistentPeriod", 1);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WithNonExistingPeriod_DoesNotSaveChangesToDatabase()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var period = new ReleasePeriod
+            {
+                PeriodName = "ExistingPeriod",
+                FpsYear = TestFpsYear,
+                FinalSummariesRun = 5,
+                EndPeriod = 1.0
+            };
+
+            await context.ReleasePeriods.AddAsync(period);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act
+            var result = await repository.SetFinalSummaryRunAsync("NonExistentPeriod", 99);
+
+            // Assert — existing period must remain unchanged
+            Assert.Null(result);
+
+            context.ChangeTracker.Clear();
+            var unchanged = await context.ReleasePeriods.FindAsync("ExistingPeriod", TestFpsYear);
+            Assert.NotNull(unchanged);
+            Assert.Equal((short)5, unchanged.FinalSummariesRun);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WithPeriodFromDifferentFpsYear_ReturnsNull()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var period = new ReleasePeriod
+            {
+                PeriodName = "TestPeriod",
+                FpsYear = TestFpsYear + 1,
+                FinalSummariesRun = 0,
+                EndPeriod = 1.0
+            };
+
+            await context.ReleasePeriods.AddAsync(period);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act — context is configured for TestFpsYear, so FindAsync(periodName, TestFpsYear) will not find a period saved under TestFpsYear + 1
+            var result = await repository.SetFinalSummaryRunAsync("TestPeriod", 1);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WithExistingPeriod_UpdatesOnlyFinalSummariesRunField()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            var period = new ReleasePeriod
+            {
+                PeriodName = "FieldCheckPeriod",
+                FpsYear = TestFpsYear,
+                FinalSummariesRun = 0,
+                StartPeriod = 1.5,
+                EndPeriod = 2.5,
+                PeriodType = "Month",
+                PeriodLocked = 0
+            };
+
+            await context.ReleasePeriods.AddAsync(period);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+
+            // Act
+            var result = await repository.SetFinalSummaryRunAsync("FieldCheckPeriod", 2);
+
+            // Assert — only FinalSummariesRun must change; all other fields remain intact
+            Assert.NotNull(result);
+            Assert.Equal((short)2, result.FinalSummariesRun);
+            Assert.Equal(1.5, result.StartPeriod);
+            Assert.Equal(2.5, result.EndPeriod);
+            Assert.Equal("Month", result.PeriodType);
+            Assert.Equal((short)0, result.PeriodLocked);
+        }
+
+        #endregion
     }
 }

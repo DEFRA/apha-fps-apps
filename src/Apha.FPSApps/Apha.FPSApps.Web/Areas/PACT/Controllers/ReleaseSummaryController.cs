@@ -63,7 +63,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             var response = await _releaseSummaryService.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
             if (response.Success)
-                return Ok(response.Data);
+                return Ok(response.Data?.FinalSummariesRun);
 
             return BadRequest(response.Errors);
         }

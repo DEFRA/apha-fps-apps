@@ -347,5 +347,299 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
         }
 
         #endregion
+
+        #region GetReleaseSummariesAsync
+
+        [Fact]
+        public async Task GetReleaseSummariesAsync_WithExistingPeriods_ReturnsMappedDtos()
+        {
+            // Arrange
+            var entities = new List<ReleasePeriod>
+            {
+                new() { PeriodName = "Period1", PeriodType = "Month", StartPeriod = 0.5, EndPeriod = 1.0, FinalSummariesRun = 0, PeriodLocked = 0 },
+                new() { PeriodName = "Period2", PeriodType = "Month", StartPeriod = 1.5, EndPeriod = 2.0, FinalSummariesRun = 1, PeriodLocked = 0 }
+            };
+
+            var dtos = new List<ReleasePeriodDto>
+            {
+                new() { PeriodName = "Period1", PeriodType = "Month", StartPeriod = 0.5, EndPeriod = 1.0, FinalSummariesRun = 0, PeriodLocked = 0 },
+                new() { PeriodName = "Period2", PeriodType = "Month", StartPeriod = 1.5, EndPeriod = 2.0, FinalSummariesRun = 1, PeriodLocked = 0 }
+            };
+
+            _mockRepository.GetReleaseSummariesAsync().Returns(entities.AsReadOnly());
+            _mockMapper.Map<IReadOnlyList<ReleasePeriodDto>>(Arg.Any<IReadOnlyList<ReleasePeriod>>()).Returns(dtos.AsReadOnly());
+
+            // Act
+            var result = await _service.GetReleaseSummariesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+            Assert.Equal("Period1", result[0].PeriodName);
+            Assert.Equal("Period2", result[1].PeriodName);
+
+            await _mockRepository.Received(1).GetReleaseSummariesAsync();
+            _mockMapper.Received(1).Map<IReadOnlyList<ReleasePeriodDto>>(Arg.Any<IReadOnlyList<ReleasePeriod>>());
+        }
+
+        [Fact]
+        public async Task GetReleaseSummariesAsync_WithNoPeriods_ReturnsEmptyList()
+        {
+            // Arrange
+            var emptyEntities = new List<ReleasePeriod>().AsReadOnly();
+            var emptyDtos = new List<ReleasePeriodDto>().AsReadOnly();
+
+            _mockRepository.GetReleaseSummariesAsync().Returns(emptyEntities);
+            _mockMapper.Map<IReadOnlyList<ReleasePeriodDto>>(emptyEntities).Returns(emptyDtos);
+
+            // Act
+            var result = await _service.GetReleaseSummariesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+
+            await _mockRepository.Received(1).GetReleaseSummariesAsync();
+            _mockMapper.Received(1).Map<IReadOnlyList<ReleasePeriodDto>>(Arg.Any<IReadOnlyList<ReleasePeriod>>());
+        }
+
+        [Fact]
+        public async Task GetReleaseSummariesAsync_MapsAllFieldsCorrectly()
+        {
+            // Arrange
+            var entities = new List<ReleasePeriod>
+            {
+                new()
+                {
+                    PeriodName = "P1",
+                    PeriodType = "Quarter",
+                    StartPeriod = 1.0,
+                    EndPeriod = 3.0,
+                    FinalSummariesRun = 2,
+                    PeriodLocked = 1
+                }
+            };
+
+            var expectedDto = new ReleasePeriodDto
+            {
+                PeriodName = "P1",
+                PeriodType = "Quarter",
+                StartPeriod = 1.0,
+                EndPeriod = 3.0,
+                FinalSummariesRun = 2,
+                PeriodLocked = 1
+            };
+
+            var dtos = new List<ReleasePeriodDto> { expectedDto }.AsReadOnly();
+
+            _mockRepository.GetReleaseSummariesAsync().Returns(entities.AsReadOnly());
+            _mockMapper.Map<IReadOnlyList<ReleasePeriodDto>>(Arg.Any<IReadOnlyList<ReleasePeriod>>()).Returns(dtos);
+
+            // Act
+            var result = await _service.GetReleaseSummariesAsync();
+
+            // Assert
+            Assert.Single(result);
+            var dto = result[0];
+            Assert.Equal("P1", dto.PeriodName);
+            Assert.Equal("Quarter", dto.PeriodType);
+            Assert.Equal(1.0, dto.StartPeriod);
+            Assert.Equal(3.0, dto.EndPeriod);
+            Assert.Equal((short)2, dto.FinalSummariesRun);
+            Assert.Equal((short)1, dto.PeriodLocked);
+        }
+
+        [Fact]
+        public async Task GetReleaseSummariesAsync_RepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            _mockRepository.GetReleaseSummariesAsync()
+                .Returns(Task.FromException<IReadOnlyList<ReleasePeriod>>(new InvalidOperationException("Database error")));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetReleaseSummariesAsync());
+
+            await _mockRepository.Received(1).GetReleaseSummariesAsync();
+        }
+
+        [Fact]
+        public async Task GetReleaseSummariesAsync_MapperThrowsException_PropagatesException()
+        {
+            // Arrange
+            var entities = new List<ReleasePeriod>
+            {
+                new() { PeriodName = "Period1", FpsYear = 2024 }
+            }.AsReadOnly();
+
+            _mockRepository.GetReleaseSummariesAsync().Returns(entities);
+            _mockMapper.When(m => m.Map<IReadOnlyList<ReleasePeriodDto>>(Arg.Any<IReadOnlyList<ReleasePeriod>>()))
+                .Do(_ => throw new AutoMapperMappingException("Mapper error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _service.GetReleaseSummariesAsync());
+        }
+
+        #endregion
+
+        #region SetFinalSummaryRunAsync
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WithExistingPeriod_ReturnsMappedDto()
+        {
+            // Arrange
+            const string periodName = "TestPeriod";
+            const short finalSummariesRun = 1;
+
+            var entity = new ReleasePeriod
+            {
+                PeriodName = periodName,
+                FinalSummariesRun = finalSummariesRun,
+                EndPeriod = 1.0
+            };
+
+            var expectedDto = new ReleasePeriodDto
+            {
+                PeriodName = periodName,
+                FinalSummariesRun = finalSummariesRun,
+                EndPeriod = 1.0
+            };
+
+            _mockRepository.SetFinalSummaryRunAsync(periodName, finalSummariesRun).Returns(entity);
+            _mockMapper.Map<ReleasePeriodDto?>(entity).Returns(expectedDto);
+
+            // Act
+            var result = await _service.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(periodName, result.PeriodName);
+            Assert.Equal(finalSummariesRun, result.FinalSummariesRun);
+
+            await _mockRepository.Received(1).SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+            _mockMapper.Received(1).Map<ReleasePeriodDto?>(entity);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_WithNonExistingPeriod_ReturnsNull()
+        {
+            // Arrange
+            const string periodName = "NonExistentPeriod";
+            const short finalSummariesRun = 1;
+
+            _mockRepository.SetFinalSummaryRunAsync(periodName, finalSummariesRun).Returns((ReleasePeriod?)null);
+            _mockMapper.Map<ReleasePeriodDto?>(null).Returns((ReleasePeriodDto?)null);
+
+            // Act
+            var result = await _service.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+
+            // Assert
+            Assert.Null(result);
+
+            await _mockRepository.Received(1).SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+            _mockMapper.Received(1).Map<ReleasePeriodDto?>((ReleasePeriod?)null);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_PassesCorrectArgumentsToRepository()
+        {
+            // Arrange
+            const string periodName = "ArgCheckPeriod";
+            const short finalSummariesRun = 3;
+
+            var entity = new ReleasePeriod { PeriodName = periodName, FinalSummariesRun = finalSummariesRun };
+            var dto = new ReleasePeriodDto { PeriodName = periodName, FinalSummariesRun = finalSummariesRun };
+
+            _mockRepository.SetFinalSummaryRunAsync(periodName, finalSummariesRun).Returns(entity);
+            _mockMapper.Map<ReleasePeriodDto?>(entity).Returns(dto);
+
+            // Act
+            await _service.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+
+            // Assert
+            await _mockRepository.Received(1).SetFinalSummaryRunAsync(
+                Arg.Is<string>(p => p == periodName),
+                Arg.Is<short>(f => f == finalSummariesRun)
+            );
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_MapsAllFieldsFromEntityToDto()
+        {
+            // Arrange
+            const string periodName = "FieldMapPeriod";
+            const short finalSummariesRun = 2;
+
+            var entity = new ReleasePeriod
+            {
+                PeriodName = periodName,
+                PeriodType = "Month",
+                StartPeriod = 1.5,
+                EndPeriod = 2.5,
+                FinalSummariesRun = finalSummariesRun,
+                PeriodLocked = 0
+            };
+
+            var expectedDto = new ReleasePeriodDto
+            {
+                PeriodName = periodName,
+                PeriodType = "Month",
+                StartPeriod = 1.5,
+                EndPeriod = 2.5,
+                FinalSummariesRun = finalSummariesRun,
+                PeriodLocked = 0
+            };
+
+            _mockRepository.SetFinalSummaryRunAsync(periodName, finalSummariesRun).Returns(entity);
+            _mockMapper.Map<ReleasePeriodDto?>(entity).Returns(expectedDto);
+
+            // Act
+            var result = await _service.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(periodName, result.PeriodName);
+            Assert.Equal("Month", result.PeriodType);
+            Assert.Equal(1.5, result.StartPeriod);
+            Assert.Equal(2.5, result.EndPeriod);
+            Assert.Equal(finalSummariesRun, result.FinalSummariesRun);
+            Assert.Equal((short)0, result.PeriodLocked);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_RepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            const string periodName = "ErrorPeriod";
+            const short finalSummariesRun = 1;
+
+            _mockRepository.SetFinalSummaryRunAsync(periodName, finalSummariesRun)
+                .Returns(Task.FromException<ReleasePeriod?>(new InvalidOperationException("Database error")));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _service.SetFinalSummaryRunAsync(periodName, finalSummariesRun));
+
+            await _mockRepository.Received(1).SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+        }
+
+        [Fact]
+        public async Task SetFinalSummaryRunAsync_MapperThrowsException_PropagatesException()
+        {
+            // Arrange
+            const string periodName = "MapperErrorPeriod";
+            const short finalSummariesRun = 1;
+
+            var entity = new ReleasePeriod { PeriodName = periodName, FinalSummariesRun = finalSummariesRun };
+
+            _mockRepository.SetFinalSummaryRunAsync(periodName, finalSummariesRun).Returns(entity);
+            _mockMapper.When(m => m.Map<ReleasePeriodDto?>(entity))
+                .Do(_ => throw new AutoMapperMappingException("Mapper error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(
+                () => _service.SetFinalSummaryRunAsync(periodName, finalSummariesRun));
+        }
+
+        #endregion
     }
 }

@@ -43,6 +43,28 @@ namespace Apha.PACT.DataAccess.Repository
             return new PagedData<RecreateSummariesLog>(data.AsReadOnly(), paginationData);
         }
 
+        public async Task<IReadOnlyList<ReleasePeriod>> GetReleaseSummariesAsync()
+        {
+            return await _context.ReleasePeriods
+                .AsNoTracking()
+                .OrderBy(p => p.EndPeriod)
+                .ToListAsync();
+        }
+
+        public async Task<ReleasePeriod?> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun)
+        {
+            var fpsYear = _context.FilterFpsYear;
+            var releasePeriod = await _context.ReleasePeriods.FindAsync(periodName, fpsYear);
+
+            if (releasePeriod is not null)
+            {
+                releasePeriod.FinalSummariesRun = finalSummariesRun;
+                await _context.SaveChangesAsync();
+            }
+
+            return releasePeriod;
+        }
+
         private static IQueryable<RecreateSummariesLog> ApplySorting(IQueryable<RecreateSummariesLog> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
@@ -67,28 +89,6 @@ namespace Apha.PACT.DataAccess.Repository
         private static IQueryable<RecreateSummariesLog> ApplyOrder<T>(IQueryable<RecreateSummariesLog> query, Expression<Func<RecreateSummariesLog, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
-        }
-
-        public async Task<IReadOnlyList<ReleasePeriod>> GetReleaseSummariesAsync()
-        {
-            return await _context.ReleasePeriods
-                .AsNoTracking()
-                .OrderBy(p => p.EndPeriod)
-                .ToListAsync();
-        }
-
-        public async Task<ReleasePeriod?> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun)
-        {
-            var fpsYear = _context.FilterFpsYear;
-            var period = await _context.ReleasePeriods.FindAsync(periodName, fpsYear);
-
-            if (period is not null)
-            {
-                period.FinalSummariesRun = finalSummariesRun;
-                await _context.SaveChangesAsync();
-            }
-
-            return period;
         }
     }
 }

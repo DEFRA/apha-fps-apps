@@ -33,16 +33,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<short>> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun)
+        public async Task<ApiResponseDto<ReleasePeriodDto>> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun)
         {
             var request = new ReleasePeriodReq { PeriodName = periodName, FinalSummariesRun = finalSummariesRun };
             var response = await _http.PutAsync<ReleasePeriodReq, ReleasePeriodRes>(PactApiEndpoints.SetFinalSummaryRun, request);
 
             if (response.Success && response.Data is not null)
-                return ApiResponseDto<short>.SuccessResponse(response.Data.FinalSummariesRun ?? 0);
+                return ApiResponseDto<ReleasePeriodDto>.SuccessResponse(_mapper.Map<ReleasePeriodDto>(response.Data));
 
-            var failDto = _mapper.Map<ApiResponseDto<short>>(response);
-            return ApiResponseDto<short>.FailureResponse(failDto.Errors, failDto.Meta);
+            var failDto = _mapper.Map<ApiResponseDto<ReleasePeriodDto>>(response);
+            return ApiResponseDto<ReleasePeriodDto>.FailureResponse(failDto.Errors, failDto.Meta);
         }
     }
 }
