@@ -4,6 +4,7 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.TestSupplierRepositoryTest
@@ -38,6 +39,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestSupplierRepositoryTest
             if (testRequirements != null)
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(testRequirements);
+                RepositoryTestHelper.SetupDbSetOperations(mockSet);
                 dbContext.Setup(x => x.TestRequirements).Returns(mockSet.Object);
             }
 
@@ -71,8 +73,52 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestSupplierRepositoryTest
                 dbContext.Setup(x => x.TestRequirementLogs).Returns(mockSet.Object);
             }
 
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
             return new TestSupplierRepository(dbContext.Object);
         }
+
+        /// <summary>
+        /// Returns the repo plus all relevant mock sets for mutation tests (Add/Update/Delete).
+        /// </summary>
+        private static (
+            TestSupplierRepository Repo,
+            Mock<DbSet<TestRequirement>> RequirementsSet,
+            Mock<DbSet<TestRequirementLog>> LogsSet,
+            Mock<FpsDbContext> Context)
+            CreateRepositoryWithMocks(IEnumerable<TestRequirement>? requirements = null)
+        {
+            var mockYearContext = CreateMockFpsYearContext();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockYearContext.Object);
+
+            var requirementsSet = RepositoryTestHelper.CreateMockDbSet(requirements ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(requirementsSet);
+            mockContext.Setup(x => x.TestRequirements).Returns(requirementsSet.Object);
+
+            var logsSet = RepositoryTestHelper.CreateMockDbSet(new List<TestRequirementLog>());
+            mockContext.Setup(x => x.TestRequirementLogs).Returns(logsSet.Object);
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            return (new TestSupplierRepository(mockContext.Object), requirementsSet, logsSet, mockContext);
+        }
+
+        // ── Shared test data ─────────────────────────────────────────────────
+
+        private static List<TestRequirement> TwoRequirements() =>
+        [
+            new() { TestCode = DefaultTestCode, Buyer = "BUYER_A", NoRequired = 2.0, UnitPrice = 10m, FpsYear = DefaultFpsYear },
+            new() { TestCode = DefaultTestCode, Buyer = "BUYER_B", NoRequired = 3.0, UnitPrice = 5m,  FpsYear = DefaultFpsYear }
+        ];
+
+        private static List<Project> TwoProjects() =>
+        [
+            new() { ParentProject = "BUYER_A", Manager = "Alice", ProjectStatus = "active",   FpsYear = DefaultFpsYear },
+            new() { ParentProject = "BUYER_B", Manager = "Bob",   ProjectStatus = "rejected", FpsYear = DefaultFpsYear }
+        ];
+
+        private static PaginationParameters<string> DefaultPage(string? sortBy = null, bool desc = false) =>
+            new() { Page = 1, PageSize = 10, SortBy = sortBy, Descending = desc };
 
         #region GetByIdAsync
 
@@ -114,6 +160,261 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestSupplierRepositoryTest
             var result = await repo.GetByIdAsync(DefaultTestCode, DefaultBuyer);
 
             Assert.Null(result);
+        }
+
+        #endregion
+
+        #region GetPagedByTestCodeAsync
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_ShowRejectedTrue_IncludesRejectedRows()
+        {
+            var repo = CreateRepository(testRequirements: TwoRequirements(), projects: TwoProjects());
+
+            var result = await repo.GetPagedByTestCodeAsync(DefaultPage(), DefaultTestCode, showRejected: true);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_ShowRejectedFalse_ExcludesRejectedRows()
+        {
+            var repo = CreateRepository(testRequirements: TwoRequirements(), projects: TwoProjects());
+
+            var result = await repo.GetPagedByTestCodeAsync(DefaultPage(), DefaultTestCode, showRejected: false);
+
+            Assert.Single(result.Data);
+            Assert.DoesNotContain(result.Data, v => v.ProjectStatus == "rejected");
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_CalculatesTestCostCorrectly()
+        {
+            var repo = CreateRepository(testRequirements: TwoRequirements(), projects: TwoProjects());
+
+            var result = await repo.GetPagedByTestCodeAsync(DefaultPage(), DefaultTestCode, showRejected: true);
+
+            var viewA = result.Data.First(v => v.JobCode == "BUYER_A");
+            Assert.Equal(20m, viewA.TestCost); // (decimal)2.0 * 10m
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_NoMatchingTestCode_ReturnsEmptyData()
+        {
+            var repo = CreateRepository(testRequirements: TwoRequirements(), projects: TwoProjects());
+
+            var result = await repo.GetPagedByTestCodeAsync(DefaultPage(), "UNKNOWN", showRejected: true);
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_MapsViewFieldsCorrectly()
+        {
+            var repo = CreateRepository(testRequirements: TwoRequirements(), projects: TwoProjects());
+
+            var result = await repo.GetPagedByTestCodeAsync(DefaultPage(), DefaultTestCode, showRejected: true);
+
+            var viewA = result.Data.First(v => v.JobCode == "BUYER_A");
+            Assert.Equal(DefaultTestCode, viewA.TestCode);
+            Assert.Equal("Alice", viewA.ProjectManager);
+            Assert.Equal(2.0, viewA.NoTests);
+            Assert.Equal(10m, viewA.TestPrice);
+            Assert.Equal("active", viewA.ProjectStatus);
+        }
+
+        [Theory]
+        [InlineData("testcode",      false)]
+        [InlineData("testcode",      true)]
+        [InlineData("jobcode",       false)]
+        [InlineData("jobcode",       true)]
+        [InlineData("projectmanager",false)]
+        [InlineData("projectmanager",true)]
+        [InlineData("notests",       false)]
+        [InlineData("notests",       true)]
+        [InlineData("testprice",     false)]
+        [InlineData("testprice",     true)]
+        [InlineData("testcost",      false)]
+        [InlineData("testcost",      true)]
+        [InlineData("projectstatus", false)]
+        [InlineData("projectstatus", true)]
+        [InlineData(null,            false)]
+        [InlineData("unknown_col",   false)]
+        public async Task GetPagedByTestCodeAsync_WithSortBy_DoesNotThrow(string? sortBy, bool desc)
+        {
+            var repo = CreateRepository(testRequirements: TwoRequirements(), projects: TwoProjects());
+            var query = DefaultPage(sortBy, desc);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: true);
+
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_NullNoRequiredAndUnitPrice_TestCostIsZero()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                new() { TestCode = DefaultTestCode, Buyer = "BUYER_A", NoRequired = null, UnitPrice = null, FpsYear = DefaultFpsYear }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "BUYER_A", Manager = "Alice", ProjectStatus = "active", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(testRequirements: requirements, projects: projects);
+
+            var result = await repo.GetPagedByTestCodeAsync(DefaultPage(), DefaultTestCode, showRejected: true);
+
+            Assert.Single(result.Data);
+            Assert.Equal(0m, result.Data.First().TestCost);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_Paging_ReturnsCorrectPage()
+        {
+            var requirements = Enumerable.Range(1, 5).Select(i => new TestRequirement
+            {
+                TestCode = DefaultTestCode, Buyer = $"BUYER_{i:D2}", NoRequired = 1.0, UnitPrice = 1m, FpsYear = DefaultFpsYear
+            }).ToList();
+            var projects = Enumerable.Range(1, 5).Select(i => new Project
+            {
+                ParentProject = $"BUYER_{i:D2}", Manager = "Mgr", ProjectStatus = "active", FpsYear = DefaultFpsYear
+            }).ToList();
+
+            var repo = CreateRepository(testRequirements: requirements, projects: projects);
+            var query = new PaginationParameters<string> { Page = 2, PageSize = 2 };
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: true);
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(5, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.PageNumber);
+        }
+
+        #endregion
+
+        #region AddAsync
+
+        [Fact]
+        public async Task AddAsync_AddsEntityAndLog_AndReturnsEntity()
+        {
+            var (repo, requirementsSet, logsSet, mockContext) = CreateRepositoryWithMocks();
+            var entity = new TestRequirement
+            {
+                TestCode = DefaultTestCode, Buyer = DefaultBuyer,
+                NoRequired = 2.0, UnitPrice = 5m, Active = 1, FpsYear = DefaultFpsYear
+            };
+
+            var result = await repo.AddAsync(entity);
+
+            Assert.Same(entity, result);
+            requirementsSet.Verify(x => x.Add(It.Is<TestRequirement>(e => e.TestCode == DefaultTestCode)), Times.Once);
+            logsSet.Verify(x => x.Add(It.Is<TestRequirementLog>(l =>
+                l.TestCode == DefaultTestCode &&
+                l.Buyer == DefaultBuyer &&
+                l.InsertDelete == "I")), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
+        }
+
+        [Fact]
+        public async Task AddAsync_LogEntry_ContainsCorrectFieldValues()
+        {
+            var (repo, _, logsSet, _) = CreateRepositoryWithMocks();
+            var entity = new TestRequirement
+            {
+                TestCode = DefaultTestCode, Buyer = DefaultBuyer,
+                UnitPrice = 12.50m, NoRequired = 3.0,
+                ProjectBuyerCode = "PBC", TestBuyerCode = "TBC",
+                Active = 1, FpsYear = DefaultFpsYear
+            };
+
+            await repo.AddAsync(entity);
+
+            logsSet.Verify(x => x.Add(It.Is<TestRequirementLog>(l =>
+                l.UnitPrice == 12.50m &&
+                l.NoRequired == 3.0 &&
+                l.ProjectBuyerCode == "PBC" &&
+                l.TestBuyerCode == "TBC" &&
+                l.Active == 1 &&
+                l.FpsYear == DefaultFpsYear)), Times.Once);
+        }
+
+        #endregion
+
+        #region UpdateAsync
+
+        [Fact]
+        public async Task UpdateAsync_UpdatesEntityAndLog_AndReturnsEntity()
+        {
+            var (repo, requirementsSet, logsSet, mockContext) = CreateRepositoryWithMocks();
+            var entity = new TestRequirement
+            {
+                TestCode = DefaultTestCode, Buyer = DefaultBuyer,
+                NoRequired = 4.0, UnitPrice = 8m, Active = 1, FpsYear = DefaultFpsYear
+            };
+
+            var result = await repo.UpdateAsync(entity);
+
+            Assert.Same(entity, result);
+            requirementsSet.Verify(x => x.Update(It.Is<TestRequirement>(e => e.TestCode == DefaultTestCode)), Times.Once);
+            logsSet.Verify(x => x.Add(It.Is<TestRequirementLog>(l =>
+                l.TestCode == DefaultTestCode &&
+                l.Buyer == DefaultBuyer &&
+                l.InsertDelete == "I")), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
+        }
+
+        #endregion
+
+        #region DeleteAsync
+
+        [Fact]
+        public async Task DeleteAsync_WhenEntityExists_RemovesEntityAndAddsLog_ReturnsTrue()
+        {
+            var existing = new TestRequirement
+            {
+                TestCode = DefaultTestCode, Buyer = DefaultBuyer, FpsYear = DefaultFpsYear
+            };
+            var (repo, requirementsSet, logsSet, mockContext) = CreateRepositoryWithMocks([existing]);
+
+            var result = await repo.DeleteAsync(DefaultTestCode, DefaultBuyer);
+
+            Assert.True(result);
+            requirementsSet.Verify(x => x.Remove(It.Is<TestRequirement>(e =>
+                e.TestCode == DefaultTestCode && e.Buyer == DefaultBuyer)), Times.Once);
+            logsSet.Verify(x => x.Add(It.Is<TestRequirementLog>(l =>
+                l.TestCode == DefaultTestCode &&
+                l.Buyer == DefaultBuyer &&
+                l.InsertDelete == "D")), Times.Once);
+            RepositoryTestHelper.VerifySaveChanges(mockContext);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenEntityDoesNotExist_ReturnsFalse()
+        {
+            var (repo, requirementsSet, logsSet, mockContext) = CreateRepositoryWithMocks([]);
+
+            var result = await repo.DeleteAsync(DefaultTestCode, DefaultBuyer);
+
+            Assert.False(result);
+            requirementsSet.Verify(x => x.Remove(It.IsAny<TestRequirement>()), Times.Never);
+            logsSet.Verify(x => x.Add(It.IsAny<TestRequirementLog>()), Times.Never);
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 0);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenBuyerDoesNotMatch_ReturnsFalse()
+        {
+            var existing = new TestRequirement
+            {
+                TestCode = DefaultTestCode, Buyer = "DIFFERENT_BUYER", FpsYear = DefaultFpsYear
+            };
+            var (repo, _, _, _) = CreateRepositoryWithMocks([existing]);
+
+            var result = await repo.DeleteAsync(DefaultTestCode, DefaultBuyer);
+
+            Assert.False(result);
         }
 
         #endregion
