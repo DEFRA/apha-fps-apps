@@ -47,7 +47,8 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
         startInfo.ArgumentList.Add("--project");
         startInfo.ArgumentList.Add(workerProjectPath);
 
-        startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+        // Force the worker into demo mode so local trigger flows do not require PostgreSQL.
+        startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Demo";
         startInfo.Environment["BATCH_JOB_NAME"] = detail.JobName;
         startInfo.Environment["BATCH_RUN_MODE"] = detail.RunMode;
         startInfo.Environment["BATCH_JOB_EXECUTION_ID"] = detail.JobExecutionId;
