@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 
 namespace Apha.PACT.DataAccess.Repository
 {
-    public class RecreateAndReleaseSummaryRepository : BaseRepository, IRecreateSummariesLogRepository
+    public class RecreateAndReleaseSummaryRepository : BaseRepository, IRecreateAndReleaseSummaryRepository
     {
         public RecreateAndReleaseSummaryRepository(FpsDbContext context) : base(context)
         {

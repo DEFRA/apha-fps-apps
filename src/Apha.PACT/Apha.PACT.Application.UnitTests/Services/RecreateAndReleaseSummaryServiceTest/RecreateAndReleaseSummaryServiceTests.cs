@@ -11,7 +11,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 {
     public class RecreateAndReleaseSummaryServiceTests
     {
-        private readonly IRecreateSummariesLogRepository _mockRepository;
+        private readonly IRecreateAndReleaseSummaryRepository _mockRepository;
         private readonly IMapper _mockMapper;
         private readonly RecreateAndReleaseSummaryService _service;
 
@@ -21,7 +21,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
         public RecreateAndReleaseSummaryServiceTests()
         {
-            _mockRepository = Substitute.For<IRecreateSummariesLogRepository>();
+            _mockRepository = Substitute.For<IRecreateAndReleaseSummaryRepository>();
             _mockMapper = Substitute.For<IMapper>();
             _service = new RecreateAndReleaseSummaryService(_mockRepository, _mockMapper);
         }
@@ -42,10 +42,17 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "datedone", descending: true);
 
+            var user = new TblUser 
+            { 
+                UserName = TestUserName, 
+                Comments = "Test Comment",
+                Logs = new List<RecreateSummariesLog>()
+            };
+
             var entities = new List<RecreateSummariesLog>
             {
-                new() { Id = 1, UserId = TestUserId, Period = TestPeriod, DateDone = DateTime.UtcNow, FpsYear = 2024 },
-                new() { Id = 2, UserId = TestUserId, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1), FpsYear = 2024 }
+                new() { Id = 1, UserId = TestUserId, Period = TestPeriod, DateDone = DateTime.UtcNow, FpsYear = 2024, User = user },
+                new() { Id = 2, UserId = TestUserId, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1), FpsYear = 2024, User = user }
             };
 
             var paginationData = new PaginationData
@@ -197,6 +204,13 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var parameters = new PaginationParameters<string>(page: 2, pageSize: 5, sortBy: "period", descending: false);
 
+            var user = new TblUser 
+            { 
+                UserName = TestUserName, 
+                Comments = "Test Comment",
+                Logs = new List<RecreateSummariesLog>()
+            };
+
             var entities = Enumerable.Range(6, 5)
                 .Select(i => new RecreateSummariesLog
                 {
@@ -204,7 +218,8 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                     UserId = TestUserId,
                     Period = (short)i,
                     DateDone = DateTime.UtcNow.AddDays(-i),
-                    FpsYear = 2024
+                    FpsYear = 2024,
+                    User = user
                 })
                 .ToList();
 
@@ -267,10 +282,23 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "userid", descending: false);
 
+            var userA = new TblUser 
+            { 
+                UserName = "User A", 
+                Comments = "Comment A",
+                Logs = new List<RecreateSummariesLog>()
+            };
+            var userB = new TblUser 
+            { 
+                UserName = "User B", 
+                Comments = "Comment B",
+                Logs = new List<RecreateSummariesLog>()
+            };
+
             var entities = new List<RecreateSummariesLog>
             {
-                new() { Id = 1, UserId = "UserA", Period = 1, DateDone = DateTime.UtcNow, FpsYear = 2024 },
-                new() { Id = 2, UserId = "UserB", Period = 2, DateDone = DateTime.UtcNow, FpsYear = 2024 }
+                new() { Id = 1, UserId = "UserA", Period = 1, DateDone = DateTime.UtcNow, FpsYear = 2024, User = userA },
+                new() { Id = 2, UserId = "UserB", Period = 2, DateDone = DateTime.UtcNow, FpsYear = 2024, User = userB }
             };
 
             var paginationData = new PaginationData

@@ -3,7 +3,7 @@ using Apha.PACT.Core.Pagination;
 
 namespace Apha.PACT.Core.Interfaces
 {
-    public interface IRecreateSummariesLogRepository
+    public interface IRecreateAndReleaseSummaryRepository
     {
         Task<PagedData<RecreateSummariesLog>> GetRecreateSummariesAllLogsAsync(PaginationParameters<string> parameters);
         Task<IReadOnlyList<ReleasePeriod>> GetReleaseSummariesAsync();

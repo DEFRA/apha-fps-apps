@@ -35,7 +35,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
 
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
             var logs = new List<RecreateSummariesLog>
             {
@@ -85,9 +85,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
 
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
-            var log = new RecreateSummariesLog 
+            var log = new RecreateSummariesLog
             { 
                 UserId = TestUserId, 
                 Period = TestPeriod, 
@@ -121,7 +121,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
             var logs = Enumerable.Range(1, 25)
                 .Select(i => new RecreateSummariesLog
@@ -156,7 +156,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
             var logs = Enumerable.Range(1, 25)
                 .Select(i => new RecreateSummariesLog
@@ -189,7 +189,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
             var logs = Enumerable.Range(1, 5)
                 .Select(i => new RecreateSummariesLog
@@ -226,7 +226,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
             var logs = new List<RecreateSummariesLog>
             {
@@ -258,7 +258,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
             var logs = new List<RecreateSummariesLog>
             {
@@ -292,9 +292,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
 
             // UserId is mapped to TblUser.UserName, so UserName must match UserId
-            var user1 = new TblUser { UserName = "UserC", Comments = "Comment C" };
-            var user2 = new TblUser { UserName = "UserA", Comments = "Comment A" };
-            var user3 = new TblUser { UserName = "UserB", Comments = "Comment B" };
+            var user1 = new TblUser { UserName = "UserC", Comments = "Comment C", Logs = new List<RecreateSummariesLog>() };
+            var user2 = new TblUser { UserName = "UserA", Comments = "Comment A", Logs = new List<RecreateSummariesLog>() };
+            var user3 = new TblUser { UserName = "UserB", Comments = "Comment B", Logs = new List<RecreateSummariesLog>() };
 
             var logs = new List<RecreateSummariesLog>
             {
@@ -326,9 +326,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var userA = new TblUser { UserName = "Charlie", Comments = "Comment C" };
-            var userB = new TblUser { UserName = "Alice", Comments = "Comment A" };
-            var userC = new TblUser { UserName = "Bob", Comments = "Comment B" };
+            var userA = new TblUser { UserName = "Charlie", Comments = "Comment C", Logs = new List<RecreateSummariesLog>() };
+            var userB = new TblUser { UserName = "Alice", Comments = "Comment A", Logs = new List<RecreateSummariesLog>() };
+            var userC = new TblUser { UserName = "Bob", Comments = "Comment B", Logs = new List<RecreateSummariesLog>() };
 
             var logs = new List<RecreateSummariesLog>
             {
@@ -360,7 +360,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
             var logs = new List<RecreateSummariesLog>
             {
@@ -391,7 +391,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
             var logs = new List<RecreateSummariesLog>
             {
@@ -423,7 +423,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
             var logs = new List<RecreateSummariesLog>
             {
@@ -459,7 +459,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment" };
+            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
 
             var logs = Enumerable.Range(1, 42)
                 .Select(i => new RecreateSummariesLog

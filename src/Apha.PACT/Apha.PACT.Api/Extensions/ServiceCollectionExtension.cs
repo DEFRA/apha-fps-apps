@@ -62,7 +62,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IProjectProfileRepository, ProjectProfileRepository>();
             services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
             services.AddScoped<ICalenderMonthRepository, CalenderMonthRepository>();
-            services.AddScoped<IRecreateSummariesLogRepository, RecreateAndReleaseSummaryRepository>();
+            services.AddScoped<IRecreateAndReleaseSummaryRepository, RecreateAndReleaseSummaryRepository>();
 
             return services;
         }
