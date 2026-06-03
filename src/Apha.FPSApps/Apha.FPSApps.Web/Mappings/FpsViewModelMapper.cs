@@ -15,6 +15,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<StaffJobItemViewModel, StaffJobViewDto>().ReverseMap();
             CreateMap<PaginationModel, PaginationDto>().ReverseMap();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
+            CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
@@ -39,6 +40,9 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Resource Set-Up
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
+
+            // ProfitCentreGradeMaint
+            CreateMap<ProfitCentreGradeMaintItem, ProfitCentreGradeDto>().ReverseMap();
 
             // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityItem>().ReverseMap();

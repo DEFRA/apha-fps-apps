@@ -44,5 +44,10 @@ namespace Apha.FPSApps.Application.Services.FPS
         {
             return await _fpsClient.FpsMaintDG.GetAllGradeCodesAsync();
         }
+
+        public async Task<ApiResponseDto<List<string>>> GetAllDivisionGradeCodesAsync()
+        {
+            return await _fpsClient.FpsMaintDG.GetAllDivisionGradeCodesAsync();
+        }
     }
 }

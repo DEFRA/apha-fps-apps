@@ -1,0 +1,211 @@
+@using Apha.FPSApps.Web.Areas.FPS.Models
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model DataGridConfig<AnimalMaintenanceViewModel>
+
+<main id="main-content">
+    <div class="container-fluid">
+        <!-- Title section -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Animal Maintenance</h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <main class="main-content" style="padding:0;">
+                    <div class="container-fluid" style="padding: 0;">
+                        <div class="row">
+                            <div class="container-fluid" style="padding-left:0px;">
+                                <div style="display: flex; flex-direction: row; align-items: flex-start;">
+                                    <!-- Side nav -->
+                                    @await Html.PartialAsync("_MaintenanceSideNav", "AnimalMaster")
+                                    <div style="display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin: 0 0px 5px 8px;">
+                                        <!-- Grid Container -->
+                                        <div class="govuk-grid-row">
+                                            <div class="govuk-grid-column-full mt-2">
+                                                <div id="@($"gridContainer_{Model.GridId}")">
+                                                    @await Html.PartialAsync("_DataGrid", Model)
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        function addAnimalMaster(btn) {
+            $.ajax({
+        url: '/FPS/AnimalMaintenance/Create',
+                type: 'GET',
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass("show");
+                },
+                error: function () {
+                    showGovukAlert('An error occurred while loading the form');
+                }
+            });
+        }
+
+        function saveAnimalMaster() {
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#addAnimalMasterForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            var data = {
+                AnimalType:     form.find('[name="AnimalType"]').val(),
+                Species:        form.find('[name="Species"]').val(),
+                SecurityLevel:  form.find('[name="SecurityLevel"]').val(),
+                DailyRate:      parseDecimalOrNull(form.find('[name="DailyRate"]').val()),
+                DefraDailyRate: parseDecimalOrNull(form.find('[name="DefraDailyRate"]').val()),
+                PlanByWeek:     form.find('[name="PlanByWeek"]').is(':checked')
+            };
+
+            $.ajax({
+            url: '@Url.Action("Create", "AnimalMaintenance", new { area = "FPS" })',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    if (result.success) {
+                        closeModal();
+                        showGovukAlert(result.message || 'Animal data created successfully.');
+                        window['gridManager_animalMasterGrid'].reloadGrid({ page: 1 });
+                    }
+                    else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        showGovukAlert('An error occurred while saving');
+                    }
+                }
+            });
+        }
+
+        function updateAnimalMaster() {
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#editAnimalMasterForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            var data = {
+                AnimalType:     form.find('[name="AnimalType"]').val(),
+                Species:        form.find('[name="Species"]').val(),
+                SecurityLevel:  form.find('[name="SecurityLevel"]').val(),
+                DailyRate:      parseDecimalOrNull(form.find('[name="DailyRate"]').val()),
+                DefraDailyRate: parseDecimalOrNull(form.find('[name="DefraDailyRate"]').val()),
+                PlanByWeek:     form.find('[name="PlanByWeek"]').is(':checked')
+            };
+
+            $.ajax({
+            url: '@Url.Action("Edit", "AnimalMaintenance", new { area = "FPS" })',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    if (result.success) {
+                        closeModal();
+                        showGovukAlert(result.message || 'Animal data updated successfully.');
+                        window['gridManager_animalMasterGrid'].reloadGrid({ page: 1 });
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        showGovukAlert('An error occurred while saving.');
+                    }
+                }
+            });
+        }
+
+        function editAnimalMaster(btn) {
+            var animalType = $(btn).data('id');
+            $.ajax({
+            url: '/FPS/AnimalMaintenance/Edit',
+                type: 'GET',
+                data: { animalType: animalType },
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass("show");
+                },
+                error: function () {
+                    showGovukAlert('An error occurred while editing record');
+                }
+            });
+        }
+
+        function deleteAnimalMaster(btn) {
+            var animalType = $(btn).data('id');
+            showGovukConfirm('Are you sure you want to delete this record?').then(function (result) {
+                if (!result) return;
+                $.ajax({
+                url: '/FPS/AnimalMaintenance/Delete',
+                    type: 'DELETE',
+                    data: { animalType: animalType },
+                    success: function (response) {
+                        if (response.success) {
+                            showGovukAlert('Deleted successfully').then(function () {
+                                window['gridManager_animalMasterGrid'].reloadGrid({ page: 1 });
+                            });
+                        } else {
+                            showGovukAlert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting');
+                    }
+                });
+            });
+        }
+
+        function closeModal() {
+            clearValidationErrors('#modaPopupBody');
+            $('#modaPopupBody').html("");
+            $('#modalPopup').removeClass("show");
+        }
+
+        function isFormValid(form) {
+            var isValid = true;
+            form.find('[required]').each(function () {
+                if (!$(this).val() || $(this).val().trim() === '') {
+                    isValid = false;
+                    return false;
+                }
+            });
+            return isValid;
+        }
+
+        function parseDecimalOrNull(val) {
+            var cleaned = (val || '').replace(/[£,]/g, '').trim();
+            return cleaned !== '' ? parseFloat(cleaned) : null;
+        }
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
