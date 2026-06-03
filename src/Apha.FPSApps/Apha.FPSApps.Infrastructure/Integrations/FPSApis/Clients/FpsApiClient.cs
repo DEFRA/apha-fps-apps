@@ -28,6 +28,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsWorkGroupEmployeeApiClient FpsWorkGroupEmployee { get; }
         public IFpsProjectStaffPlanApiClient FpsProjectStaffPlan { get; }
         public IFpsTestSupplierApiClient FpsTestSupplier { get; }
+        public IFpsProjectGroupApiClient FpsProjectGroup { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -52,6 +53,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsProjectStaffPlan = new FpsProjectStaffPlanApiClient(http, mapper);
             FpsAnimalMaster = new FpsAnimalApiClient(http, mapper);
             FpsTestSupplier = new FpsTestSupplierApiClient(http, mapper);
+            FpsProjectGroup = new FpsProjectGroupApiClient(http, mapper);
         }
     }
 }

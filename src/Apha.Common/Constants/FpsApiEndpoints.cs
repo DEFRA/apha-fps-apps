@@ -75,6 +75,7 @@ namespace Apha.Common.Constants
         public const string UpdatePactPortfolio = "api/v1/project/external/portfolio";
         public const string DeleteProject = "api/v1/project/{0}";
         public const string GetProjectsByProgram = "api/v1/project/paged?programNo={0}";
+        public const string GetProjectsByProjectGroup = "api/v1/project/paged/by-project-group?projectGroup={0}";
 
         // Project Group
         public const string GetAllProjectGroups = "api/v1/projectgroup";
