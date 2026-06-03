@@ -39,8 +39,8 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<PortfolioTimeCodeViewModel, TimeCodeValidDto>().ReverseMap();
 
-            CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
-            CreateMap<TestPurchaseRequirementItem, TestRequirementDto>().ReverseMap();
+            CreateMap<TestRequirementItem, Apha.FPSApps.Application.Dtos.PACT.TestRequirementDto>().ReverseMap();
+            CreateMap<TestPurchaseRequirementItem, Apha.FPSApps.Application.Dtos.PACT.TestRequirementDto>().ReverseMap();
 
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<ProgramProjectItem, ProjectDto>().ReverseMap();

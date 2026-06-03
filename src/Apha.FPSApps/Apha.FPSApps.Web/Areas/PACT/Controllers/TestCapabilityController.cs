@@ -256,7 +256,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                         }))
                 });
 
-            var dto = _mapper.Map<TestRequirementDto>(model);
+            var dto = _mapper.Map<Apha.FPSApps.Application.Dtos.PACT.TestRequirementDto>(model);
             var result = await _testReqmtService.CreateTestReqmtAsync(dto);
 
             return result.Success
@@ -300,7 +300,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                         }))
                 });
 
-            var dto = _mapper.Map<TestRequirementDto>(model);
+            var dto = _mapper.Map<Apha.FPSApps.Application.Dtos.PACT.TestRequirementDto>(model);
             var result = await _testReqmtService.UpdateTestReqmtAsync(dto);
 
             return result.Success

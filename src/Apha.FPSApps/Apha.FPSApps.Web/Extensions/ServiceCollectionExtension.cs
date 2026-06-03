@@ -78,6 +78,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
+            services.AddScoped<ITestSupplierService, TestSupplierService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

@@ -1,5 +1,4 @@
 ﻿using Apha.Common.Contracts;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
@@ -15,22 +14,22 @@ namespace Apha.FPSApps.Infrastructure.Integrations.HttpExecutor
         public static async Task<ApiResponse<T>> ToApiResponse<T>(
          this HttpResponseMessage response)
         {
-            // Handle 404 Not Found - throw exception to let middleware handle it
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                throw new KeyNotFoundException("The requested resource was not found.");
-            }
-
             try
             {
-                var apiResponse =
-                    await response.Content.ReadFromJsonAsync<ApiResponse<T>>(JsonOptions);
+                var content = await response.Content.ReadAsStringAsync();
 
-                if (apiResponse != null)
-                    return apiResponse;
-            }           
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    var apiResponse = JsonSerializer.Deserialize<ApiResponse<T>>(content, JsonOptions);
+                    if (apiResponse != null)
+                        return apiResponse;
+                }
+
+                if (response.IsSuccessStatusCode)
+                    return new ApiResponse<T> { Success = true };
+            }
             catch (Exception ex)
-            {                
+            {
                 throw new InvalidOperationException("An unexpected error occurred while processing the response.", ex);
             }
 

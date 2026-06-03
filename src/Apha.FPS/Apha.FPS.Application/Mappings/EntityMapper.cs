@@ -65,6 +65,9 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<WorkGroupEmployee, WorkGroupEmployeeDto>().ReverseMap();
             CreateMap<WorkGroupEmployeeView, WorkGroupEmployeeDto>().ReverseMap();
             CreateMap<ProjectProfitabilityView, ProjectProfitabilityDto>().ReverseMap();
+            CreateMap<TestSupplierView, TestSupplierViewDto>().ReverseMap();
+            CreateMap<TestRequirement, TestRequirementDto>().ReverseMap();
+            CreateMap<TestOrProduct, TestOrProductDto>().ReverseMap();
         }
     }
 }

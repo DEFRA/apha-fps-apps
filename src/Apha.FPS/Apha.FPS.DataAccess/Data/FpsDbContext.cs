@@ -64,6 +64,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<TestRequirementLog> TestRequirementLogs { get; set; }
         public virtual DbSet<SurvFFSubmission> SurvFFSubmissions { get; set; }
         public virtual DbSet<ProjectLog> ProjectLogs { get; set; }
+        public virtual DbSet<TestOrProduct> TestOrProducts { get; set; }
         public virtual DbSet<TestRequirement> TestRequirements { get; set; }
         public virtual DbSet<AdditionalCost> AdditionalCosts { get; set; }
         public virtual DbSet<TestCapability> TestCapabilities { get; set; }
@@ -236,6 +237,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new AdditionalCostMap());
             modelBuilder.Entity<AdditionalCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TestOrProductMap());
+            modelBuilder.Entity<TestOrProduct>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new TestCapabilityMap());
             modelBuilder.Entity<TestCapability>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);

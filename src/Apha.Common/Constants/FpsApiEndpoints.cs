@@ -162,5 +162,13 @@ namespace Apha.Common.Constants
 
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
+
+        // Test Supplier View (frmTestSupplier)
+        public const string GetPagedTestSupplier = "api/v1/testsupplier";
+        public const string GetTestSupplierById = "api/v1/testsupplier/{0}/{1}";
+        public const string CreateTestSupplier = "api/v1/testsupplier";
+        public const string UpdateTestSupplier = "api/v1/testsupplier";
+        public const string DeleteTestSupplier = "api/v1/testsupplier/{0}/{1}";
+        public const string GetAllTestOrProducts = "api/v1/testsupplier/testorproducts";
     }
 }

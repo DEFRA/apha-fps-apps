@@ -1,0 +1,234 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.TestSupplierViewModel
+@{
+    ViewData["Title"] = "Test Suppliers View";
+}
+
+<style type="text/css">
+    #gridContainer_testSupplierGrid .grid-scroll-container {
+        height: 300px;
+        max-height: 300px;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Title -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Test Suppliers View (Who is Buying TestX?)
+            </h1>
+        </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
+                <div style="display: flex; font-size: 14px; align-items: center; gap: 12px;">
+                    <label class="fw-bold mt-2" for="test-code-input">Choose a Test:</label>
+                    <div style="position: relative;">
+                        <input type="text"
+                               id="test-code-input"
+                               placeholder="Type or select..."
+                               class="govuk-input"
+                               style="width: 280px;"
+                               autocomplete="off" />
+                        <input type="hidden" id="test-code-value" asp-for="SelectedTestCode" />
+                        <div id="test-code-panel"
+                             style="display:none; position:absolute; z-index:1000; background:#fff; border:1px solid #b4b4b4; width:420px; max-height:250px; overflow-y:auto;">
+                            <table class="govuk-table govuk-!-font-size-16" style="margin-bottom:0;">
+                                <thead class="govuk-table__head">
+                                    <tr class="govuk-table__row">
+                                        <th class="govuk-table__header" style="width:120px;">Item Code</th>
+                                        <th class="govuk-table__header">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="test-code-rows" class="govuk-table__body">
+                                    @foreach (var item in Model.TestCodeOptions)
+                                    {
+                                        <tr class="govuk-table__row test-code-row" style="cursor:pointer;"
+                                            data-value="@item.Value" data-label="@item.Text">
+                                            <td class="govuk-table__cell">@item.Value</td>
+                                            <td class="govuk-table__cell">@item.Text.Replace(item.Value + " - ", "")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full mt-2">
+            <div id="gridContainer_@Model.TestSupplierGrid.GridId" style="padding: 5px;">
+                @await Html.PartialAsync("_DataGrid", Model.TestSupplierGrid)
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer totals -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div class="financial-summary mt-2">
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <label class="govuk-label--s" for="totalTests">Total No. Tests:</label>
+                        <input type="text" id="totalTests" readonly
+                               class="govuk-input text-AlignRight" style="width:100px;"
+                               value="@Model.TotalNoTests.ToString("N0")" />
+                    </div>
+                    <div class="summary-item">
+                        <label class="govuk-label--s" for="totalTestCost">Total Test Cost:</label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input type="text" id="totalTestCost" readonly
+                                   class="govuk-input text-AlignRight" style="width:120px;"
+                                   value="@Model.TotalTestCosts.ToString("N2")" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Add/Edit -->
+<div class="modal fade" id="testSupplierModal" tabindex="-1" aria-labelledby="testSupplierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="testSupplierModalContent">
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        var selectedTestCode = '';
+
+        // ── Dropdown behaviour ────────────────────────────────────────────────
+        document.getElementById('test-code-input').addEventListener('focus', function () {
+            filterTestCodeRows('');
+            document.getElementById('test-code-panel').style.display = 'block';
+        });
+
+        document.getElementById('test-code-input').addEventListener('input', function () {
+            filterTestCodeRows(this.value.toLowerCase());
+            document.getElementById('test-code-panel').style.display = 'block';
+        });
+
+        document.addEventListener('click', function (e) {
+            var panel = document.getElementById('test-code-panel');
+            if (!document.getElementById('test-code-input').contains(e.target) && !panel.contains(e.target)) {
+                panel.style.display = 'none';
+            }
+        });
+
+        document.querySelectorAll('.test-code-row').forEach(function (row) {
+            row.addEventListener('click', function () {
+                selectedTestCode = this.getAttribute('data-value');
+                document.getElementById('test-code-input').value = this.getAttribute('data-label');
+                document.getElementById('test-code-value').value = selectedTestCode;
+                document.getElementById('test-code-panel').style.display = 'none';
+                reloadTestSupplierGrid();
+            });
+        });
+
+        function filterTestCodeRows(term) {
+            document.querySelectorAll('.test-code-row').forEach(function (row) {
+                var label = row.getAttribute('data-label').toLowerCase();
+                row.style.display = label.includes(term) ? '' : 'none';
+            });
+        }
+
+        // ── Extra filters for grid ────────────────────────────────────────────
+        function getTestSupplierExtraFilters() {
+            return {
+                testCode: selectedTestCode
+            };
+        }
+
+        function reloadTestSupplierGrid() {
+            var gm = window['gridManager_testSupplierGrid'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }
+
+        // ── CRUD ──────────────────────────────────────────────────────────────
+        function editTestSupplier(key) {
+            var testCode = selectedTestCode;
+            var buyer = $(key).data('id');
+            $.ajax({
+                url: '/FPS/TestSupplier/Edit?testCode=' + encodeURIComponent(testCode) + '&buyer=' + encodeURIComponent(buyer),
+                method: 'GET',
+                success: function (html) {
+                    $('#testSupplierModalContent').html(html);
+                    $('#testSupplierModal').modal('show');
+                }
+            });
+        }
+
+        function deleteTestSupplier(key) {
+            if (!confirm('Are you sure you want to delete this test supplier record?')) return;
+            var testCode = selectedTestCode;
+            var buyer = $(key).data('id');
+            $.ajax({
+                url: '/FPS/TestSupplier/Delete?testCode=' + encodeURIComponent(testCode) + '&buyer=' + encodeURIComponent(buyer),
+                method: 'DELETE',
+                success: function (result) {
+                    if (result.success) {
+                        reloadTestSupplierGrid();
+                    } else {
+                        alert(result.message || 'Failed to delete.');
+                    }
+                },
+                error: function (xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message)
+                        ? xhr.responseJSON.message
+                        : 'Failed to delete the test supplier record.';
+                    alert(msg);
+                }
+            });
+        }
+
+        function saveTestSupplier() {
+            var data = {
+                testCode: $('#hdnTestCode').val() || selectedTestCode,
+                buyer: $('#Buyer').val(),
+                unitPrice: parseFloat($('#TestPrice').val()) || null,
+                projectBuyerCode: $('#hdnProjectBuyerCode').val() || null,
+                testBuyerCode: $('#hdnTestBuyerCode').val() || null
+            };
+
+            $.ajax({
+                url: '/FPS/TestSupplier/Edit',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (result) {
+                    if (result.success) {
+                        closeModal();
+                        reloadTestSupplierGrid();
+                    } else {
+                        showFormErrors(result.errors);
+                    }
+                }
+            });
+        }
+
+        function closeModal() {
+            $('#testSupplierModal').modal('hide');
+        }
+
+        // Update totals from grid data after load
+        function updateTestSupplierTotals(items) {
+            if (!items) return;
+            var totalTests = items.reduce(function (sum, item) { return sum + (parseFloat(item.NoTests) || 0); }, 0);
+            var totalCost = items.reduce(function (sum, item) { return sum + (parseFloat(item.TestCost) || 0); }, 0);
+            document.getElementById('totalTests').value = Math.round(totalTests).toLocaleString('en-GB');
+            document.getElementById('totalTestCost').value = totalCost.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    </script>
+}
