@@ -210,26 +210,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<CostCentreWorkgroupDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsAsync()
-        {
-            var response = await _http.GetAsync<List<ProjectGroupRes>>(FpsApiEndpoints.GetProgrammeNewProjectProjectGroups);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
-
-            var dto = _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
-            return ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
-        }
-
-        public async Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsByUserAsync()
-        {
-            var response = await _http.GetAsync<List<ProjectGroupRes>>(FpsApiEndpoints.GetProjectGroupsByUser);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
-
-            var dto = _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
-            return ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
-        }
-
         public async Task<ApiResponseDto<List<ContractDto>>> GetContractsByUserAsync()
         {
             var response = await _http.GetAsync<List<ContractRes>>(FpsApiEndpoints.GetContractsByUser);

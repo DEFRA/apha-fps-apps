@@ -4,5 +4,6 @@ namespace Apha.FPSApps.Web.Constants
     {
         internal const string SelectedProgramNo  = "SelectedProgramNo";
         internal const string SelectedProjectCode = "SelectedProjectCode";
+        internal const string SelectedProjectGroup = "SelectedProjectGroup";
     }
 }
