@@ -4,8 +4,8 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.PactApiClients
 {
-    public interface IPactRecreateSummariesLogApiClient
+    public interface IPactRecreateAndReleaseSummaryLogApiClient
     {
-        Task<ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>> GetAllRecreateSummariesLogsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetAllRecreateSummariesLogsAsync(QueryParameters<string> query);
     }
 }

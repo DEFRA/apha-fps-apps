@@ -14,7 +14,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
     {
         private readonly IPactHttpExecutor _mockHttp;
         private readonly IMapper _mockMapper;
-        private readonly PactRecreateSummariesLogApiClient _client;
+        private readonly PactRecreateAndReleaseSummaryLogApiClient _client;
 
         private const string TestUserId = "TestUser1";
         private const string TestUserName = "Test User";
@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
         {
             _mockHttp = Substitute.For<IPactHttpExecutor>();
             _mockMapper = Substitute.For<IMapper>();
-            _client = new PactRecreateSummariesLogApiClient(_mockHttp, _mockMapper);
+            _client = new PactRecreateAndReleaseSummaryLogApiClient(_mockHttp, _mockMapper);
         }
 
         #region GetAllRecreateSummariesLogsAsync
@@ -59,14 +59,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
                 }
             };
 
-            var mappedDtos = new List<RecreateSummariesLogDto>
+            var mappedDtos = new List<RecreateSummaryLogDto>
             {
                 new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
             };
 
             _mockHttp.GetAsync<List<RecreateSummariesLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
-            _mockMapper.Map<ApiResponseDto<List<RecreateSummariesLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
-                .Returns(new ApiResponseDto<List<RecreateSummariesLogDto>> { Success = true, Data = mappedDtos });
+            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
+                .Returns(new ApiResponseDto<List<RecreateSummaryLogDto>> { Success = true, Data = mappedDtos });
 
             // Act
             var result = await _client.GetAllRecreateSummariesLogsAsync(query);
@@ -99,8 +99,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
             };
 
             _mockHttp.GetAsync<List<RecreateSummariesLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
-            _mockMapper.Map<ApiResponseDto<List<RecreateSummariesLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
-                .Returns(new ApiResponseDto<List<RecreateSummariesLogDto>> 
+            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
+                .Returns(new ApiResponseDto<List<RecreateSummaryLogDto>> 
                 { 
                     Success = false, 
                     Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERR001" } }
@@ -141,8 +141,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
             };
 
             _mockHttp.GetAsync<List<RecreateSummariesLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
-            _mockMapper.Map<ApiResponseDto<List<RecreateSummariesLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
-                .Returns(new ApiResponseDto<List<RecreateSummariesLogDto>> { Success = true, Data = null });
+            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
+                .Returns(new ApiResponseDto<List<RecreateSummaryLogDto>> { Success = true, Data = null });
 
             // Act
             var result = await _client.GetAllRecreateSummariesLogsAsync(query);
@@ -173,8 +173,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
             };
 
             _mockHttp.GetAsync<List<RecreateSummariesLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
-            _mockMapper.Map<ApiResponseDto<List<RecreateSummariesLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
-                .Returns(new ApiResponseDto<List<RecreateSummariesLogDto>> { Success = true, Data = new List<RecreateSummariesLogDto>() });
+            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
+                .Returns(new ApiResponseDto<List<RecreateSummaryLogDto>> { Success = true, Data = new List<RecreateSummaryLogDto>() });
 
             // Act
             var result = await _client.GetAllRecreateSummariesLogsAsync(query);

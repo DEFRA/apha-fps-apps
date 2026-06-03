@@ -27,31 +27,31 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             return new FpsDbContext(options, mockFpsRequestContext);
         }
 
-        #region GetRecreateSummariesAllLogsAsync - Basic Retrieval
+        #region GetRecreateSummariesLogsAsync - Basic Retrieval
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithExistingLogs_ReturnsAllLogsOrderedByDateDoneDescending()
+        public async Task GetRecreateSummariesLogsAsync_WithExistingLogs_ReturnsAllLogsOrderedByDateDoneDescending()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
 
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
-            var logs = new List<RecreateSummariesLog>
+            var logs = new List<RecreateSummaryLogs>
             {
                 new() { UserId = TestUserId, Period = 1, DateDone = DateTime.UtcNow.AddDays(-2), FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1), FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 3, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user }
             };
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
             var resultList = result.Data.ToList();
 
             // Assert
@@ -62,7 +62,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithNoLogs_ReturnsEmptyCollection()
+        public async Task GetRecreateSummariesLogsAsync_WithNoLogs_ReturnsEmptyCollection()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
@@ -70,7 +70,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
 
             // Assert
             Assert.NotNull(result);
@@ -80,14 +80,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_IncludesUserNavigation_ReturnsLogsWithUserData()
+        public async Task GetRecreateSummariesLogsAsync_IncludesUserNavigation_ReturnsLogsWithUserData()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
 
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
-            var log = new RecreateSummariesLog
+            var log = new RecreateSummaryLogs
             { 
                 UserId = TestUserId, 
                 Period = TestPeriod, 
@@ -96,14 +96,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
                 User = user
             };
 
-            await context.RecreateSummariesLogs.AddAsync(log);
+            await context.RecreateSummaryLogs.AddAsync(log);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
             var firstLog = result.Data.FirstOrDefault();
 
             // Assert
@@ -114,17 +114,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
         #endregion
 
-        #region GetRecreateSummariesAllLogsAsync - Pagination
+        #region GetRecreateSummariesLogsAsync - Pagination
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithPagination_ReturnsCorrectPage()
+        public async Task GetRecreateSummariesLogsAsync_WithPagination_ReturnsCorrectPage()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
             var logs = Enumerable.Range(1, 25)
-                .Select(i => new RecreateSummariesLog
+                .Select(i => new RecreateSummaryLogs
                 {
                     UserId = TestUserId,
                     Period = (short)i,
@@ -133,14 +133,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
                     User = user
                 }).ToList();
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 2, pageSize: 10);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
 
             // Assert
             Assert.NotNull(result);
@@ -152,14 +152,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithPaginationLastPage_ReturnsRemainingRecords()
+        public async Task GetRecreateSummariesLogsAsync_WithPaginationLastPage_ReturnsRemainingRecords()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
             var logs = Enumerable.Range(1, 25)
-                .Select(i => new RecreateSummariesLog
+                .Select(i => new RecreateSummaryLogs
                 {
                     UserId = TestUserId,
                     Period = (short)i,
@@ -168,14 +168,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
                     User = user
                 }).ToList();
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 3, pageSize: 10);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
 
             // Assert
             Assert.NotNull(result);
@@ -185,14 +185,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithPageBeyondLimit_ReturnsEmptyData()
+        public async Task GetRecreateSummariesLogsAsync_WithPageBeyondLimit_ReturnsEmptyData()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
             var logs = Enumerable.Range(1, 5)
-                .Select(i => new RecreateSummariesLog
+                .Select(i => new RecreateSummaryLogs
                 {
                     UserId = TestUserId,
                     Period = (short)i,
@@ -201,14 +201,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
                     User = user
                 }).ToList();
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 10, pageSize: 10);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
 
             // Assert
             Assert.NotNull(result);
@@ -219,30 +219,30 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
         #endregion
 
-        #region GetRecreateSummariesAllLogsAsync - Sorting
+        #region GetRecreateSummariesLogsAsync - Sorting
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_SortByDateDoneAscending_ReturnsSortedData()
+        public async Task GetRecreateSummariesLogsAsync_SortByDateDoneAscending_ReturnsSortedData()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
-            var logs = new List<RecreateSummariesLog>
+            var logs = new List<RecreateSummaryLogs>
             {
                 new() { UserId = TestUserId, Period = 1, DateDone = new DateTime(2024, 3, 15), FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 2, DateDone = new DateTime(2024, 1, 10), FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 3, DateDone = new DateTime(2024, 2, 20), FpsYear = TestFpsYear, User = user }
             };
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "datedone", descending: false);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
             var resultList = result.Data.ToList();
 
             // Assert
@@ -254,27 +254,27 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_SortByPeriodDescending_ReturnsSortedData()
+        public async Task GetRecreateSummariesLogsAsync_SortByPeriodDescending_ReturnsSortedData()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
-            var logs = new List<RecreateSummariesLog>
+            var logs = new List<RecreateSummaryLogs>
             {
                 new() { UserId = TestUserId, Period = 5, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 2, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 8, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user }
             };
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "period", descending: true);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
             var resultList = result.Data.ToList();
 
             // Assert
@@ -286,31 +286,31 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_SortByUserIdAscending_ReturnsSortedData()
+        public async Task GetRecreateSummariesLogsAsync_SortByUserIdAscending_ReturnsSortedData()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
 
             // UserId is mapped to TblUser.UserName, so UserName must match UserId
-            var user1 = new TblUser { UserName = "UserC", Comments = "Comment C", Logs = new List<RecreateSummariesLog>() };
-            var user2 = new TblUser { UserName = "UserA", Comments = "Comment A", Logs = new List<RecreateSummariesLog>() };
-            var user3 = new TblUser { UserName = "UserB", Comments = "Comment B", Logs = new List<RecreateSummariesLog>() };
+            var user1 = new User { UserName = "UserC", Comments = "Comment C", Logs = new List<RecreateSummaryLogs>() };
+            var user2 = new User { UserName = "UserA", Comments = "Comment A", Logs = new List<RecreateSummaryLogs>() };
+            var user3 = new User { UserName = "UserB", Comments = "Comment B", Logs = new List<RecreateSummaryLogs>() };
 
-            var logs = new List<RecreateSummariesLog>
+            var logs = new List<RecreateSummaryLogs>
             {
                 new() { UserId = "UserC", Period = 1, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user1 },
                 new() { UserId = "UserA", Period = 2, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user2 },
                 new() { UserId = "UserB", Period = 3, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user3 }
             };
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "userid", descending: false);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
             var resultList = result.Data.ToList();
 
             // Assert
@@ -322,29 +322,29 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_SortByUserNameAscending_ReturnsSortedData()
+        public async Task GetRecreateSummariesLogsAsync_SortByUserNameAscending_ReturnsSortedData()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var userA = new TblUser { UserName = "Charlie", Comments = "Comment C", Logs = new List<RecreateSummariesLog>() };
-            var userB = new TblUser { UserName = "Alice", Comments = "Comment A", Logs = new List<RecreateSummariesLog>() };
-            var userC = new TblUser { UserName = "Bob", Comments = "Comment B", Logs = new List<RecreateSummariesLog>() };
+            var userA = new User { UserName = "Charlie", Comments = "Comment C", Logs = new List<RecreateSummaryLogs>() };
+            var userB = new User { UserName = "Alice", Comments = "Comment A", Logs = new List<RecreateSummaryLogs>() };
+            var userC = new User { UserName = "Bob", Comments = "Comment B", Logs = new List<RecreateSummaryLogs>() };
 
-            var logs = new List<RecreateSummariesLog>
+            var logs = new List<RecreateSummaryLogs>
             {
                 new() { UserId = "User3", Period = 1, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = userA },
                 new() { UserId = "User1", Period = 2, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = userB },
                 new() { UserId = "User2", Period = 3, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = userC }
             };
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "user", descending: false);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
             var resultList = result.Data.ToList();
 
             // Assert
@@ -356,27 +356,27 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_SortByIdDescending_ReturnsSortedData()
+        public async Task GetRecreateSummariesLogsAsync_SortByIdDescending_ReturnsSortedData()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
-            var logs = new List<RecreateSummariesLog>
+            var logs = new List<RecreateSummaryLogs>
             {
                 new() { UserId = TestUserId, Period = 1, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 2, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 3, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user }
             };
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "id", descending: true);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
             var resultList = result.Data.ToList();
 
             // Assert
@@ -387,27 +387,27 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithInvalidSortBy_DefaultsToDateDoneDescending()
+        public async Task GetRecreateSummariesLogsAsync_WithInvalidSortBy_DefaultsToDateDoneDescending()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
-            var logs = new List<RecreateSummariesLog>
+            var logs = new List<RecreateSummaryLogs>
             {
                 new() { UserId = TestUserId, Period = 1, DateDone = new DateTime(2024, 1, 10), FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 2, DateDone = new DateTime(2024, 3, 15), FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 3, DateDone = new DateTime(2024, 2, 20), FpsYear = TestFpsYear, User = user }
             };
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "invalidfield", descending: false);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
             var resultList = result.Data.ToList();
 
             // Assert
@@ -419,27 +419,27 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithNullSortBy_DefaultsToDateDoneDescending()
+        public async Task GetRecreateSummariesLogsAsync_WithNullSortBy_DefaultsToDateDoneDescending()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
-            var logs = new List<RecreateSummariesLog>
+            var logs = new List<RecreateSummaryLogs>
             {
                 new() { UserId = TestUserId, Period = 1, DateDone = new DateTime(2024, 1, 10), FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 2, DateDone = new DateTime(2024, 3, 15), FpsYear = TestFpsYear, User = user },
                 new() { UserId = TestUserId, Period = 3, DateDone = new DateTime(2024, 2, 20), FpsYear = TestFpsYear, User = user }
             };
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: null, descending: false);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
             var resultList = result.Data.ToList();
 
             // Assert
@@ -452,17 +452,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
         #endregion
 
-        #region GetRecreateSummariesAllLogsAsync - Pagination Metadata
+        #region GetRecreateSummariesLogsAsync - Pagination Metadata
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_ReturnsPaginationMetadata_WithCorrectValues()
+        public async Task GetRecreateSummariesLogsAsync_ReturnsPaginationMetadata_WithCorrectValues()
         {
             // Arrange
             await using var context = CreateTestContext(Guid.NewGuid().ToString());
-            var user = new TblUser { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummariesLog>() };
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
 
             var logs = Enumerable.Range(1, 42)
-                .Select(i => new RecreateSummariesLog
+                .Select(i => new RecreateSummaryLogs
                 {
                     UserId = TestUserId,
                     Period = (short)i,
@@ -471,14 +471,14 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
                     User = user
                 }).ToList();
 
-            await context.RecreateSummariesLogs.AddRangeAsync(logs);
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
             await context.SaveChangesAsync();
 
             var repository = new RecreateAndReleaseSummaryRepository(context);
             var parameters = new PaginationParameters<string>(page: 3, pageSize: 15);
 
             // Act
-            var result = await repository.GetRecreateSummariesAllLogsAsync(parameters);
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
 
             // Assert
             Assert.NotNull(result.PaginationData);

@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
-    public class RecreateSummariesLogViewModel
+    public class RecreateSummaryLogViewModel
     {
-        public required DataGridConfig<RecreateSummariesLogItem> LogsGrid { get; set; }
+        public required DataGridConfig<RecreateSummaryLogItem> LogsGrid { get; set; }
     }
 
-    public class RecreateSummariesLogItem
+    public class RecreateSummaryLogItem
     {
         [Display(Name = "ID")]
         [GridColumn(Order = 1, Width = 80, Type = GridColumnType.Text)]

@@ -1,6 +1,6 @@
-namespace Apha.PACT.Application.Dtos
+namespace Apha.FPSApps.Application.Dtos.PACT
 {
-    public class RecreateSummariesLogDto
+    public class RecreateSummaryLogDto
     {
         public int Id { get; set; }
         public string? UserId { get; set; }

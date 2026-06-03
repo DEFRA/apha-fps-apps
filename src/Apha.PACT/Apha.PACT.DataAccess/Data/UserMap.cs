@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PACT.DataAccess.Data
 {
-    public class TblUserMap : IEntityTypeConfiguration<TblUser>
+    public class UserMap : IEntityTypeConfiguration<User>
     {
-        public void Configure(EntityTypeBuilder<TblUser> entity)
+        public void Configure(EntityTypeBuilder<User> entity)
         {
             entity.HasKey(e => e.UserName);
 
             entity.ToTable("tblusers", "fps");
-
+            entity.HasKey(e => e.UserName);
             entity.Property(e => e.UserName)
                 .HasMaxLength(100)
                 .HasColumnName("username");

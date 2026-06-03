@@ -10,36 +10,36 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 {
-    public class PactRecreateSummariesLogApiClient : IPactRecreateSummariesLogApiClient
+    public class PactRecreateAndReleaseSummaryLogApiClient : IPactRecreateAndReleaseSummaryLogApiClient
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        public PactRecreateSummariesLogApiClient(IPactHttpExecutor http, IMapper mapper)
+        public PactRecreateAndReleaseSummaryLogApiClient(IPactHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>> GetAllRecreateSummariesLogsAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetAllRecreateSummariesLogsAsync(QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetAllRecreateSummariesLogs, query);
             var response = await _http.GetAsync<List<RecreateSummariesLogRes>>(url);
 
             if (response.Success)
             {
-                var dto = _mapper.Map<ApiResponseDto<List<RecreateSummariesLogDto>>>(response);
+                var dto = _mapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(response);
                 var pagination = response.Pagination;
-                var result = new PaginatedResult<RecreateSummariesLogDto>(
-                    dto.Data ?? new List<RecreateSummariesLogDto>(),
+                var result = new PaginatedResult<RecreateSummaryLogDto>(
+                    dto.Data ?? new List<RecreateSummaryLogDto>(),
                     pagination?.TotalRecords ?? 0,
                     pagination?.PageNumber ?? query.Page,
                     pagination?.PageSize ?? query.PageSize);
-                return ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>.SuccessResponse(result);
+                return ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>.SuccessResponse(result);
             }
 
-            var failDto = _mapper.Map<ApiResponseDto<List<RecreateSummariesLogDto>>>(response);
-            return ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>.FailureResponse(failDto.Errors, failDto.Meta);
+            var failDto = _mapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(response);
+            return ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>.FailureResponse(failDto.Errors, failDto.Meta);
         }
     }
 }

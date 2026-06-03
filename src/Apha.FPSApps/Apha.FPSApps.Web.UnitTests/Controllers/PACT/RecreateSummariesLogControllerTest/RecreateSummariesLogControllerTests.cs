@@ -14,8 +14,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
     public class RecreateSummariesLogControllerTests
     {
         private readonly IMapper _mockMapper;
-        private readonly IRecreateSummariesLogService _mockLogService;
-        private readonly RecreateSummariesLogController _controller;
+        private readonly IRecreateAndReleaseSummaryService _mockLogService;
+        private readonly RecreateSummaryLogController _controller;
 
         private const string TestUserId = "TestUser1";
         private const string TestUserName = "Test User";
@@ -27,8 +27,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
         public RecreateSummariesLogControllerTests()
         {
             _mockMapper = Substitute.For<IMapper>();
-            _mockLogService = Substitute.For<IRecreateSummariesLogService>();
-            _controller = new RecreateSummariesLogController(_mockMapper, _mockLogService);
+            _mockLogService = Substitute.For<IRecreateAndReleaseSummaryService>();
+            _controller = new RecreateSummaryLogController(_mockMapper, _mockLogService);
         }
 
         #region Index
@@ -40,11 +40,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             var paginationFilter = new PaginationFilter<string> { Filter = "{}" };
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
 
-            var apiResponse = new ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>
+            var apiResponse = new ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>
             {
                 Success = true,
-                Data = new PaginatedResult<RecreateSummariesLogDto>(
-                    new List<RecreateSummariesLogDto>
+                Data = new PaginatedResult<RecreateSummaryLogDto>(
+                    new List<RecreateSummaryLogDto>
                     {
                         new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
                     },
@@ -61,7 +61,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<RecreateSummariesLogViewModel>(viewResult.Model);
+            var model = Assert.IsType<RecreateSummaryLogViewModel>(viewResult.Model);
             Assert.NotNull(model.LogsGrid);
             await _mockLogService.Received(1).GetAllRecreateSummariesLogsAsync(Arg.Any<QueryParameters<string>>());
         }
@@ -72,7 +72,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
 
-            var apiResponse = new ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>
+            var apiResponse = new ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>
             {
                 Success = false,
                 Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERR001" } }
@@ -86,7 +86,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<RecreateSummariesLogViewModel>(viewResult.Model);
+            var model = Assert.IsType<RecreateSummaryLogViewModel>(viewResult.Model);
             Assert.NotNull(model.LogsGrid);
             Assert.Empty(model.LogsGrid.Data);
         }
@@ -97,7 +97,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 20 };
 
-            var apiResponse = new ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>
+            var apiResponse = new ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>
             {
                 Success = true,
                 Data = null
@@ -111,7 +111,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<RecreateSummariesLogViewModel>(viewResult.Model);
+            var model = Assert.IsType<RecreateSummaryLogViewModel>(viewResult.Model);
             Assert.NotNull(model.LogsGrid);
             Assert.Empty(model.LogsGrid.Data);
         }
@@ -135,11 +135,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
 
             var query = new QueryParameters<string> { Page = TestPage, PageSize = TestPageSize };
 
-            var apiResponse = new ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>
+            var apiResponse = new ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>
             {
                 Success = true,
-                Data = new PaginatedResult<RecreateSummariesLogDto>(
-                    new List<RecreateSummariesLogDto>
+                Data = new PaginatedResult<RecreateSummaryLogDto>(
+                    new List<RecreateSummaryLogDto>
                     {
                         new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
                     },
@@ -157,7 +157,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partialViewResult.ViewName);
-            var model = Assert.IsType<DataGridConfig<RecreateSummariesLogItem>>(partialViewResult.Model);
+            var model = Assert.IsType<DataGridConfig<RecreateSummaryLogItem>>(partialViewResult.Model);
             Assert.NotNull(model);
             await _mockLogService.Received(1).GetAllRecreateSummariesLogsAsync(query);
         }
@@ -175,7 +175,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
 
             var query = new QueryParameters<string> { Page = TestPage, PageSize = TestPageSize };
 
-            var apiResponse = new ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>
+            var apiResponse = new ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>
             {
                 Success = false,
                 Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERR001" } }
@@ -189,7 +189,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<DataGridConfig<RecreateSummariesLogItem>>(partialViewResult.Model);
+            var model = Assert.IsType<DataGridConfig<RecreateSummaryLogItem>>(partialViewResult.Model);
             Assert.Empty(model.Data);
         }
 
@@ -208,7 +208,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
 
             _mockMapper.Map<QueryParameters<string>>(request).Returns(query);
             _mockLogService.GetAllRecreateSummariesLogsAsync(query)
-                .Returns(Task.FromException<ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>>(
+                .Returns(Task.FromException<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>>(
                     new InvalidOperationException("Service error")));
 
             // Act & Assert

@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PACT.DataAccess.Data
 {
-    public class RecreateSummariesLogMap : IEntityTypeConfiguration<RecreateSummariesLog>
+    public class RecreateSummaryLogMap : IEntityTypeConfiguration<RecreateSummaryLogs>
     {
-        public void Configure(EntityTypeBuilder<RecreateSummariesLog> entity)
+        public void Configure(EntityTypeBuilder<RecreateSummaryLogs> entity)
         {
             entity.HasKey(e => e.Id);
 

@@ -10,8 +10,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
     public class RecreateSummariesLogServiceTests
     {
         private readonly IPactApiClient _mockPactClient;
-        private readonly IPactRecreateSummariesLogApiClient _mockLogApiClient;
-        private readonly RecreateSummariesLogService _service;
+        private readonly IPactRecreateAndReleaseSummaryLogApiClient _mockLogApiClient;
+        private readonly RecreateAndReleaseSummaryService _service;
 
         private const string TestUserId = "TestUser1";
         private const string TestUserName = "Test User";
@@ -23,9 +23,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
         public RecreateSummariesLogServiceTests()
         {
             _mockPactClient = Substitute.For<IPactApiClient>();
-            _mockLogApiClient = Substitute.For<IPactRecreateSummariesLogApiClient>();
+            _mockLogApiClient = Substitute.For<IPactRecreateAndReleaseSummaryLogApiClient>();
             _mockPactClient.PactRecreateSummariesLog.Returns(_mockLogApiClient);
-            _service = new RecreateSummariesLogService(_mockPactClient);
+            _service = new RecreateAndReleaseSummaryService(_mockPactClient);
         }
 
         #region GetAllRecreateSummariesLogsAsync
@@ -41,11 +41,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
                 Filter = "{}"
             };
 
-            var expectedResponse = new ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>
+            var expectedResponse = new ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>
             {
                 Success = true,
-                Data = new PaginatedResult<RecreateSummariesLogDto>(
-                    new List<RecreateSummariesLogDto>
+                Data = new PaginatedResult<RecreateSummaryLogDto>(
+                    new List<RecreateSummaryLogDto>
                     {
                         new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
                     },
@@ -79,7 +79,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
                 Filter = "{}"
             };
 
-            var expectedResponse = new ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>
+            var expectedResponse = new ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>
             {
                 Success = false,
                 Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERR001" } }
@@ -108,11 +108,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
                 Filter = "{}"
             };
 
-            var expectedResponse = new ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>
+            var expectedResponse = new ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>
             {
                 Success = true,
-                Data = new PaginatedResult<RecreateSummariesLogDto>(
-                    new List<RecreateSummariesLogDto>(),
+                Data = new PaginatedResult<RecreateSummaryLogDto>(
+                    new List<RecreateSummaryLogDto>(),
                     0,
                     TestPageNumber,
                     TestPageSize)
@@ -143,7 +143,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
             };
 
             _mockLogApiClient.GetAllRecreateSummariesLogsAsync(query)
-                .Returns(Task.FromException<ApiResponseDto<PaginatedResult<RecreateSummariesLogDto>>>(
+                .Returns(Task.FromException<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>>(
                     new InvalidOperationException("API Client error")));
 
             // Act & Assert
