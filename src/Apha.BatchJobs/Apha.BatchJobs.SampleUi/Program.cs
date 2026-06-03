@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using Apha.BatchJobs.Triggering.Models;
 using Apha.BatchJobs.Triggering.Policy;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,11 +10,76 @@ builder.Services.AddHttpClient("triggering", client =>
 {
 	client.Timeout = TimeSpan.FromMinutes(10);
 });
+builder.Services.AddHttpClient("status-proxy", client =>
+{
+	client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
+app.MapGet("/api/batch-jobs/{jobName}/can-run", async (
+	string jobName,
+	IHttpClientFactory clientFactory,
+	IConfiguration configuration,
+	CancellationToken cancellationToken) =>
+{
+	var baseUrl = configuration["DownstreamApis:PactBaseUrl"];
+	if (string.IsNullOrWhiteSpace(baseUrl))
+		return Results.Problem("PACT API base URL is not configured.", statusCode: StatusCodes.Status500InternalServerError);
+
+	var client = clientFactory.CreateClient("status-proxy");
+	try
+	{
+		var response = await client.GetAsync(
+			$"{baseUrl.TrimEnd('/')}/api/batch-jobs/{Uri.EscapeDataString(jobName)}/can-run",
+			cancellationToken);
+
+		var body = await response.Content.ReadAsStringAsync(cancellationToken);
+		return Results.Content(body, "application/json", statusCode: (int)response.StatusCode);
+	}
+	catch (Exception ex)
+	{
+		return Results.Problem($"Failed to check can-run status: {ex.Message}", statusCode: StatusCodes.Status503ServiceUnavailable);
+	}
+});
+
+app.MapGet("/api/batch-jobs/{jobName}/status", async (
+	string jobName,
+	[FromQuery] string? jobExecutionId,
+	[FromQuery] DateTime? acceptedAtUtc,
+	IHttpClientFactory clientFactory,
+	IConfiguration configuration,
+	CancellationToken cancellationToken) =>
+{
+	var baseUrl = configuration["DownstreamApis:PactBaseUrl"];
+	if (string.IsNullOrWhiteSpace(baseUrl))
+		return Results.Problem("PACT API base URL is not configured.", statusCode: StatusCodes.Status500InternalServerError);
+
+	var client = clientFactory.CreateClient("status-proxy");
+	try
+	{
+		var queryParts = new List<string>();
+		if (!string.IsNullOrWhiteSpace(jobExecutionId))
+			queryParts.Add($"jobExecutionId={Uri.EscapeDataString(jobExecutionId)}");
+		if (acceptedAtUtc.HasValue)
+			queryParts.Add($"acceptedAtUtc={Uri.EscapeDataString(acceptedAtUtc.Value.ToString("O"))}");
+
+		var queryString = queryParts.Count > 0 ? "?" + string.Join("&", queryParts) : "";
+		var response = await client.GetAsync(
+			$"{baseUrl.TrimEnd('/')}/api/batch-jobs/{Uri.EscapeDataString(jobName)}/status{queryString}",
+			cancellationToken);
+
+		var body = await response.Content.ReadAsStringAsync(cancellationToken);
+		return Results.Content(body, "application/json", statusCode: (int)response.StatusCode);
+	}
+	catch (Exception ex)
+	{
+		return Results.Problem($"Failed to fetch status: {ex.Message}", statusCode: StatusCodes.Status503ServiceUnavailable);
+	}
+});
 
 app.MapGet("/api/jobs", () =>
 {

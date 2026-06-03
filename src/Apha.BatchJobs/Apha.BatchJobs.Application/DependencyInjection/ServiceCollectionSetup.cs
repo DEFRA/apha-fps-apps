@@ -186,6 +186,9 @@ public static class ServiceCollectionSetup
 
         public Task<JobExecutionRecord?> GetLastExecutionAsync(string jobName, CancellationToken cancellationToken = default)
             => Task.FromResult<JobExecutionRecord?>(null);
+
+        public Task<JobExecutionRecord?> GetExecutionByJobExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
+            => Task.FromResult<JobExecutionRecord?>(null);
     }
 
     private static void RegisterBatchJobs(IServiceCollection services)

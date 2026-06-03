@@ -1,0 +1,343 @@
+openapi: 3.0.0
+info:
+  title: BatchJobs PACT API
+  description: |
+    Formal API contract between BatchJobs (execution layer) and PACT (trigger/status layer).
+    
+    This API handles batch job triggering and real-time status polling during the startup window.
+    All persistent state is managed by BatchJobs; PACT provides transient watchdog projections.
+  version: 1.0.0
+  contact:
+    name: BatchJobs Team
+  x-contractVersion: "1.0"
+  x-audience: "PACT API Team"
+
+servers:
+  - url: "http://localhost:5189"
+    description: "Local Development"
+  - url: "https://pact-api.apha.local"
+    description: "Production"
+
+paths:
+  /api/v1/batch-jobs/trigger:
+    post:
+      summary: Trigger a batch job
+      description: |
+        Accept a batch job trigger request and dispatch to worker queue.
+        
+        Returns HTTP 202 (Accepted) on success with a jobExecutionId for correlation.
+        Returns HTTP 409 (Conflict) if job already running (lock collision).
+        Returns HTTP 400 (Bad Request) if job name invalid.
+      operationId: triggerBatchJob
+      tags:
+        - Trigger
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TriggerRequest"
+            example:
+              jobName: "RecreateSummaries"
+              requestedBy: "user@example.com"
+      responses:
+        "202":
+          description: Job trigger accepted and queued for processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TriggerAcceptedResponse"
+              example:
+                eventId: "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c"
+                acceptedAtUtc: "2026-06-03T14:30:00.123Z"
+                jobName: "RecreateSummaries"
+                message: "Batch job trigger accepted"
+        "409":
+          description: Job already running (concurrent execution detected)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConflictError"
+              example:
+                error: "Job 'RecreateSummaries' is already running"
+                currentExecution:
+                  jobQueueId: "550e8400-e29b-41d4-a716-446655440000"
+                  startedAt: "2026-06-03T14:00:00.000Z"
+        "400":
+          description: Invalid job name
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: "Job 'InvalidName' not found"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/batch-jobs/{jobName}/status:
+    get:
+      summary: Get batch job execution status
+      description: |
+        Query the current status of a batch job including:
+        - Last execution state from database (source of truth)
+        - Transient watchdog projections during startup window
+        - Correlation ID for end-to-end tracing
+        
+        This endpoint is designed for polling clients (UI, schedulers, etc.).
+        
+        **Polling Strategy**:
+        - Startup phase (0-180s): Poll every 2-5 seconds, watch for Pending/Running/timeout
+        - Running phase: Poll every 15-30 seconds
+        - Terminal state: Stop polling
+      operationId: getJobStatus
+      tags:
+        - Status
+      parameters:
+        - name: jobName
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "RecreateSummaries"
+          description: Name of the batch job
+      responses:
+        "200":
+          description: Current job execution status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatusResponse"
+              example:
+                jobName: "RecreateSummaries"
+                isRunning: true
+                sourceOfTruth: "BatchJobs"
+                correlatedJobExecutionId: "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c"
+                lastExecution:
+                  jobQueueId: "550e8400-e29b-41d4-a716-446655440000"
+                  jobExecutionId: "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c"
+                  currentState: "Running"
+                  stateTimestamp: "2026-06-03T14:30:45.123Z"
+                  startDateTime: "2026-06-03T14:30:00.000Z"
+                  endDateTime: null
+                  requestedBy: "user@example.com"
+                  errorMessage: null
+                startupWatchdog:
+                  isWatchdogActive: true
+                  triggerAcceptedAtUtc: "2026-06-03T14:30:00.000Z"
+                  startupDeadlineUtc: "2026-06-03T14:35:00.000Z"
+                  projectedState: "TriggerAccepted"
+                  evaluatedAtUtc: "2026-06-03T14:30:30.000Z"
+                  startupSlaSeconds: 300
+                  deliveryExhaustionConfirmed: false
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: "Job 'InvalidName' not found in system"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    TriggerRequest:
+      type: object
+      required:
+        - jobName
+        - requestedBy
+      properties:
+        jobName:
+          type: string
+          description: "Name of the batch job to trigger (e.g., 'RecreateSummaries')"
+          example: "RecreateSummaries"
+        requestedBy:
+          type: string
+          description: "User ID or email initiating the trigger"
+          example: "user@example.com"
+
+    TriggerAcceptedResponse:
+      type: object
+      required:
+        - eventId
+        - acceptedAtUtc
+        - jobName
+        - message
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: "Unique execution ID for correlation (also called jobExecutionId)"
+          example: "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c"
+        acceptedAtUtc:
+          type: string
+          format: date-time
+          description: "Timestamp when trigger was accepted by PACT API"
+          example: "2026-06-03T14:30:00.123Z"
+        jobName:
+          type: string
+          description: "Echo of requested job name"
+          example: "RecreateSummaries"
+        message:
+          type: string
+          description: "Human-readable confirmation message"
+          example: "Batch job trigger accepted"
+
+    JobStatusResponse:
+      type: object
+      required:
+        - jobName
+        - isRunning
+        - sourceOfTruth
+        - correlatedJobExecutionId
+      properties:
+        jobName:
+          type: string
+          description: "Name of the job"
+          example: "RecreateSummaries"
+        isRunning:
+          type: boolean
+          description: "Convenience field: true if currentState == 'Running'"
+        sourceOfTruth:
+          type: string
+          enum: ["BatchJobs"]
+          description: "Authority for persistent state (reserved for future multi-source)"
+        correlatedJobExecutionId:
+          type: string
+          format: uuid
+          description: "Execution ID from trigger acceptance"
+        lastExecution:
+          $ref: "#/components/schemas/ExecutionSnapshot"
+          description: "Current execution snapshot from BatchJobs database"
+        startupWatchdog:
+          $ref: "#/components/schemas/StartupWatchdogProjection"
+          description: "Transient projections during startup window (null if not active)"
+
+    ExecutionSnapshot:
+      type: object
+      required:
+        - jobQueueId
+        - jobExecutionId
+        - currentState
+        - stateTimestamp
+        - startDateTime
+        - requestedBy
+      properties:
+        jobQueueId:
+          type: string
+          format: uuid
+          description: "Unique execution instance ID in BatchJobs database"
+        jobExecutionId:
+          type: string
+          format: uuid
+          description: "Correlation ID from initial trigger"
+        currentState:
+          type: string
+          enum: ["Pending", "Running", "Completed", "Failed", "Cancelled", "Retry", "Skipped"]
+          description: "Current state from fps.job_queue.statusid (authoritative)"
+          example: "Running"
+        stateTimestamp:
+          type: string
+          format: date-time
+          description: "When the current state was set"
+        startDateTime:
+          type: string
+          format: date-time
+          description: "When execution started"
+        endDateTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: "When execution ended (null if still running)"
+        requestedBy:
+          type: string
+          description: "User who triggered this execution"
+        errorMessage:
+          type: string
+          nullable: true
+          description: "Error details if state is Failed or Cancelled with error"
+
+    StartupWatchdogProjection:
+      type: object
+      required:
+        - isWatchdogActive
+        - triggerAcceptedAtUtc
+        - startupDeadlineUtc
+        - projectedState
+        - evaluatedAtUtc
+        - startupSlaSeconds
+        - deliveryExhaustionConfirmed
+      properties:
+        isWatchdogActive:
+          type: boolean
+          description: "true if within startup window and no DB execution record yet"
+        triggerAcceptedAtUtc:
+          type: string
+          format: date-time
+          description: "When PACT API accepted the trigger"
+        startupDeadlineUtc:
+          type: string
+          format: date-time
+          description: "SLA deadline for worker to write Pending state"
+        projectedState:
+          type: string
+          enum: ["TriggerAccepted", "WorkerProcessStarted", "StartFailedTimeout"]
+          description: "Computed state for UX feedback during startup"
+        evaluatedAtUtc:
+          type: string
+          format: date-time
+          description: "When watchdog evaluation occurred"
+        startupSlaSeconds:
+          type: integer
+          minimum: 60
+          maximum: 3600
+          description: "SLA window for startup (180s dev, 600s prod)"
+        deliveryExhaustionConfirmed:
+          type: boolean
+          description: "Reserved for future: confirms delivery retries exhausted"
+
+    ConflictError:
+      type: object
+      required:
+        - error
+        - currentExecution
+      properties:
+        error:
+          type: string
+          description: "Error message describing the conflict"
+        currentExecution:
+          type: object
+          required:
+            - jobQueueId
+            - startedAt
+          properties:
+            jobQueueId:
+              type: string
+              format: uuid
+            startedAt:
+              type: string
+              format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: "Error message"
+
+tags:
+  - name: Trigger
+    description: "Batch job trigger operations"
+  - name: Status
+    description: "Batch job status queries and polling"

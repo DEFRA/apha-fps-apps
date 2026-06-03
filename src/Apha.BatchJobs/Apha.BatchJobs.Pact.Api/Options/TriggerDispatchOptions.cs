@@ -15,6 +15,10 @@ public sealed class LocalWorkerOptions
     // Relative to PACT API content root by default.
     public string WorkerProjectPath { get; init; } = "..\\Apha.BatchJobs.Worker\\Apha.BatchJobs.Worker.csproj";
 
+    // Optional environment name for spawned worker process.
+    // If omitted, PACT API environment name is reused.
+    public string? WorkerEnvironmentName { get; init; }
+
     public string? WorkingDirectory { get; init; }
 
     public bool WaitForDebuggerAttach { get; init; }

@@ -47,6 +47,12 @@
     <p>This page has moved to <a href="index.html">index.html</a>.</p>
     <p><strong>Canonical naming:</strong> API payload fields use <code>jobExecutionId</code> and <code>requestedBy</code>; database columns use <code>jobexecutionid</code> and <code>requestedby</code>.</p>
     <p><strong>Generation ownership:</strong> API (manual flow) or scheduler/triggering API (scheduled flow) must generate <code>jobExecutionId</code>. Worker uses it as correlation id and only generates a fallback GUID when missing/invalid.</p>
+    <p><strong>PACT hand-off alignment (June 2026):</strong> use correlated polling by <code>jobExecutionId</code>, enforce single execution per job name, and keep BatchJobs DB as the source of truth for execution outcomes.</p>
+    <p><strong>Startup watchdog policy:</strong> timeout projection is API-owned from <code>acceptedAtUtc</code>; delivery exhaustion is transport-reconciler-owned and must not be inferred from timeout alone.</p>
+    <p>
+      Updated hand-off:
+      <a href="PACT-BATCHJOBS-HANDOFF-EVENTGRID.md">PACT-BATCHJOBS-HANDOFF-EVENTGRID.md</a>
+    </p>
     <p><strong>Canonical table design (summary):</strong></p>
     <table>
       <thead>

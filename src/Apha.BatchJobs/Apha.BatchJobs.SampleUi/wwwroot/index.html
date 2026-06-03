@@ -500,6 +500,7 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
         const STARTUP_POLL_MAX_MS = 5000;
         const RUNNING_POLL_MS = 15000;
         const MAX_SILENT_RETRIES = 3;
+        const UI_WATCHDOG_MAX_WAIT_MS = 30000;
 
         const timelineEl = document.getElementById("timeline");
         const rawEl = document.getElementById("raw");
@@ -510,18 +511,17 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
         const timers = [];
         let isRunning = false;
         let currentJobExecutionId = null;
-        let workerLaunchHint = false;
         let pollFailureCount = 0;
 
         const STATES = {
             ready: { label: "Ready", cls: "state-ready", btn: "Trigger RecreateSummaries", disabled: false, spinning: false },
-            submitting: { label: "Submitting", cls: "state-submitting", btn: "Submitting...", disabled: true, spinning: true },
-            accepted: { label: "TriggerAccepted", cls: "state-accepted", btn: "Polling...", disabled: true, spinning: true },
-            pending: { label: "Pending", cls: "state-pending", btn: "Polling...", disabled: true, spinning: true },
-            running: { label: "Running", cls: "state-running", btn: "Polling...", disabled: true, spinning: true },
+            submitting: { label: "Submitting", cls: "state-submitting", btn: "Please wait...", disabled: true, spinning: true },
+            accepted: { label: "Starting", cls: "state-accepted", btn: "Please wait...", disabled: true, spinning: true },
+            pending: { label: "Pending", cls: "state-pending", btn: "Please wait...", disabled: true, spinning: true },
+            running: { label: "Running", cls: "state-running", btn: "Please wait...", disabled: true, spinning: true },
             completed: { label: "Completed", cls: "state-completed", btn: "Re-trigger RecreateSummaries", disabled: false, spinning: false },
             failed: { label: "Failed", cls: "state-failed", btn: "Retry RecreateSummaries", disabled: false, spinning: false },
-            retry: { label: "Retry", cls: "state-retry", btn: "Polling...", disabled: true, spinning: true },
+            retry: { label: "Retry", cls: "state-retry", btn: "Please wait...", disabled: true, spinning: true },
             cancelled: { label: "Cancelled", cls: "state-cancelled", btn: "Re-trigger RecreateSummaries", disabled: false, spinning: false },
             skipped: { label: "Skipped", cls: "state-skipped", btn: "Re-trigger RecreateSummaries", disabled: false, spinning: false },
             timeout: { label: "StartFailedTimeout", cls: "state-timeout", btn: "Retry RecreateSummaries", disabled: false, spinning: false }
@@ -611,16 +611,36 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                 // Transient watchdog states (when execution not yet visible in DB)
                 if (watchdog && watchdog.projectedState && !lastExec) {
                     const projectedState = watchdog.projectedState;
+                    const acceptedAt = watchdog.acceptedAtUtc ? new Date(watchdog.acceptedAtUtc).getTime() : null;
+                    const uiWaitExceeded = acceptedAt ? (Date.now() - acceptedAt) > UI_WATCHDOG_MAX_WAIT_MS : false;
+
                     if (projectedState === "StartFailedTimeout") {
                         setState("timeout", `Startup SLA exceeded (${watchdog.startupSlaSeconds}s). Worker did not start in time.`);
                         isRunning = false;
                         addTimeline("Status: StartFailedTimeout (watchdog)");
                         return;
+                    } else if (projectedState === "WorkerProcessExited") {
+                        setState("failed", "Worker process exited before DB status became visible. Please retry.");
+                        isRunning = false;
+                        addTimeline("Status: WorkerProcessExited (watchdog)");
+                        return;
                     } else if (projectedState === "TriggerAccepted") {
+                        if (uiWaitExceeded) {
+                            setState("timeout", "Still waiting for startup visibility. Please retry.");
+                            isRunning = false;
+                            addTimeline("Status: UI startup wait ceiling reached (TriggerAccepted)");
+                            return;
+                        }
                         setState("accepted", "Accepted by PACT. Waiting for worker to write Pending state...");
                         addTimeline("Status: TriggerAccepted (watchdog, awaiting Pending)");
                     } else if (projectedState === "WorkerProcessStarted") {
-                        setState("accepted", "Worker process started. Waiting for status visibility in DB...");
+                        if (uiWaitExceeded) {
+                            setState("timeout", "Worker started but DB status is delayed. Please retry.");
+                            isRunning = false;
+                            addTimeline("Status: UI startup wait ceiling reached (WorkerProcessStarted)");
+                            return;
+                        }
+                        setState("running", "Worker process started. Waiting for DB status visibility...");
                         addTimeline("Status: WorkerProcessStarted (watchdog)");
                     }
                 }
@@ -679,7 +699,10 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             }
 
             if (isRunning) {
-                const interval = payload.isRunning ? RUNNING_POLL_MS : STARTUP_POLL_MIN_MS + Math.random() * (STARTUP_POLL_MAX_MS - STARTUP_POLL_MIN_MS);
+                const isStartupWatchdogPhase = payload.sourceOfTruth === "StartupWatchdog";
+                const interval = (!payload.isRunning || isStartupWatchdogPhase)
+                    ? STARTUP_POLL_MIN_MS + Math.random() * (STARTUP_POLL_MAX_MS - STARTUP_POLL_MIN_MS)
+                    : RUNNING_POLL_MS;
                 later(interval, pollStatus);
             }
         }
@@ -693,6 +716,7 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             clearTimers();
             isRunning = true;
             pollFailureCount = 0;
+            currentJobExecutionId = null;  // reset so no stale ID leaks into first poll
 
             const requestedBy = (document.getElementById("requestedBy").value || "sample-ui@local").trim();
             setState("submitting", "Submitting trigger request...");
@@ -735,15 +759,8 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             }
 
             currentJobExecutionId = payload.jobExecutionId;
-            workerLaunchHint = payload.workerProcessLaunched === true || payload.status === "WorkerProcessStarted";
-
-            if (workerLaunchHint) {
-                setState("running", `ExecutionId: ${currentJobExecutionId || "n/a"}`);
-                addTimeline(`Trigger accepted (${payload.status || "WorkerProcessStarted"})`);
-            } else {
-                setState("accepted", `ExecutionId: ${currentJobExecutionId || "n/a"}`);
-                addTimeline(`Trigger accepted (${payload.status || "TriggerAccepted"})`);
-            }
+            setState("accepted", `ExecutionId: ${currentJobExecutionId || "n/a"}`);
+            addTimeline(`Trigger accepted (${payload.status || "TriggerAccepted"})`);
 
             later(1000, pollStatus);
         }

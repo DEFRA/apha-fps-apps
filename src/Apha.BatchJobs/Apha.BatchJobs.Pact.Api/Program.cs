@@ -9,6 +9,7 @@ using Apha.BatchJobs.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -218,13 +219,31 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
         if (execution is null && triggerAttempt is not null)
         {
             var now = DateTime.UtcNow;
-            var startupSlaSeconds = environment.IsProduction() ? 600 : 180;
+            var startupSlaSeconds = environment.IsProduction() ? 600 : 30;
             var startupDeadlineUtc = triggerAttempt.AcceptedAtUtc.AddSeconds(startupSlaSeconds);
-            var projectedState = now > startupDeadlineUtc
-                ? "StartFailedTimeout"
-                : triggerAttempt.WorkerProcessLaunched
-                    ? "WorkerProcessStarted"
-                    : "TriggerAccepted";
+            var workerProcessExited = false;
+
+            if (triggerAttempt.EventId.StartsWith("localproc-", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(triggerAttempt.EventId["localproc-".Length..], out var workerPid))
+            {
+                try
+                {
+                    var process = Process.GetProcessById(workerPid);
+                    workerProcessExited = process.HasExited;
+                }
+                catch
+                {
+                    workerProcessExited = true;
+                }
+            }
+
+            var projectedState = workerProcessExited
+                ? "WorkerProcessExited"
+                : now > startupDeadlineUtc
+                    ? "StartFailedTimeout"
+                    : triggerAttempt.WorkerProcessLaunched
+                        ? "WorkerProcessStarted"
+                        : "TriggerAccepted";
 
             startupWatchdog = new
             {
@@ -239,7 +258,7 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
                 triggerStore = "PactInMemoryCache"
             };
 
-            isRunning = projectedState != "StartFailedTimeout";
+            isRunning = projectedState != "StartFailedTimeout" && projectedState != "WorkerProcessExited";
             sourceOfTruth = "StartupWatchdog";
         }
         else if (execution is not null)

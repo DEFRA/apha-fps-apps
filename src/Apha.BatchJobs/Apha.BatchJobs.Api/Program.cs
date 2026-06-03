@@ -14,6 +14,7 @@ builder.Configuration
 ServiceCollectionSetup.ConfigureBatchJobServices(builder.Services, builder.Configuration);
 
 builder.Services.Configure<EventBridgeDispatchOptions>(builder.Configuration.GetSection("EventBridgeDispatch"));
+builder.Services.Configure<StartupWatchdogOptions>(builder.Configuration.GetSection("StartupWatchdog"));
 builder.Services.AddScoped<IJobStatusService, JobStatusService>();
 builder.Services.AddAWSService<IAmazonEventBridge>();
 builder.Services.AddScoped<IJobDispatchService, EventBridgeJobDispatcher>();

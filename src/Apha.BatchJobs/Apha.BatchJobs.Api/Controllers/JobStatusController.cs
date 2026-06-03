@@ -47,16 +47,51 @@ public sealed class JobStatusController : ControllerBase
     [HttpGet("{jobName}/status")]
     [ProducesResponseType(typeof(JobStatusResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetStatus(string jobName, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetStatus(
+        string jobName,
+        [FromQuery] string? jobExecutionId,
+        [FromQuery] DateTime? acceptedAtUtc,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(jobName))
             return BadRequest(new { error = "Job name is required." });
 
-        _logger.LogInformation("Status check requested for job: {JobName}", jobName);
+        Guid? correlatedExecutionId = null;
+        if (!string.IsNullOrWhiteSpace(jobExecutionId))
+        {
+            if (!Guid.TryParse(jobExecutionId, out var parsedExecutionId))
+            {
+                return BadRequest(new { error = "jobExecutionId must be a valid GUID." });
+            }
+
+            correlatedExecutionId = parsedExecutionId;
+        }
+
+        _logger.LogInformation(
+            "Status check requested for job: {JobName} | JobExecutionId={JobExecutionId} | AcceptedAtUtc={AcceptedAtUtc}",
+            jobName,
+            correlatedExecutionId?.ToString("D") ?? "n/a",
+            acceptedAtUtc?.ToString("O") ?? "n/a");
 
         try
         {
-            var result = await _statusService.GetStatusAsync(jobName, cancellationToken);
+            var result = await _statusService.GetStatusAsync(jobName, correlatedExecutionId, acceptedAtUtc, cancellationToken);
+
+            if (correlatedExecutionId.HasValue && result.LastExecution is null)
+            {
+                if (result.StartupWatchdog is not null)
+                {
+                    return Ok(result);
+                }
+
+                return NotFound(new
+                {
+                    error = $"Execution '{correlatedExecutionId.Value:D}' was not found for job '{jobName}'.",
+                    jobName,
+                    jobExecutionId = correlatedExecutionId.Value
+                });
+            }
+
             return Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -64,6 +99,30 @@ public sealed class JobStatusController : ControllerBase
             _logger.LogWarning("Unknown job requested: {JobName} | {Message}", jobName, ex.Message);
             return NotFound(new { error = $"Job '{jobName}' is not registered.", jobName });
         }
+    }
+
+    /// <summary>
+    /// GET api/batch-jobs/executions/{jobExecutionId}
+    /// Returns current status for a single execution correlated by jobExecutionId.
+    /// </summary>
+    [HttpGet("executions/{jobExecutionId:guid}")]
+    [ProducesResponseType(typeof(JobStatusResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetStatusByExecution(Guid jobExecutionId, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Execution status requested | JobExecutionId={JobExecutionId}", jobExecutionId);
+
+        var result = await _statusService.GetStatusByExecutionIdAsync(jobExecutionId, cancellationToken);
+        if (result is null)
+        {
+            return NotFound(new
+            {
+                error = $"Execution '{jobExecutionId:D}' was not found.",
+                jobExecutionId
+            });
+        }
+
+        return Ok(result);
     }
 
     /// <summary>
@@ -82,7 +141,7 @@ public sealed class JobStatusController : ControllerBase
 
         try
         {
-            var status = await _statusService.GetStatusAsync(jobName, cancellationToken);
+            var status = await _statusService.GetStatusAsync(jobName, null, null, cancellationToken);
 
             if (status.IsRunning)
             {
@@ -124,7 +183,7 @@ public sealed class JobStatusController : ControllerBase
         JobStatusResult status;
         try
         {
-            status = await _statusService.GetStatusAsync(jobName, cancellationToken);
+            status = await _statusService.GetStatusAsync(jobName, null, null, cancellationToken);
         }
         catch (InvalidOperationException ex)
         {

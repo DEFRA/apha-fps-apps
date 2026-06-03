@@ -195,6 +195,55 @@ public class JobExecutionRepository : IJobExecutionRepository
         };
     }
 
+    /// <inheritdoc />
+    public async Task<JobExecutionRecord?> GetExecutionByJobExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
+    {
+        var execution = await (
+            from q in _context.TblJobQueue
+            join m in _context.TblJobMaster on q.JobId equals m.JobId
+            join s in _context.TblJobStatus on q.StatusId equals s.StatusId
+            where q.JobExecutionId == jobExecutionId
+            orderby q.StartDateTime descending
+            select new
+            {
+                m.JobName,
+                q.JobExecutionId,
+                q.JobQueueId,
+                q.RequestedBy,
+                q.StartDateTime,
+                q.EndDateTime,
+                s.Status,
+                q.ErrorMessage
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (execution == null)
+            return null;
+
+        var parsedStatus = Enum.TryParse<JobStatus>(execution.Status, true, out var status)
+            ? status
+            : JobStatus.Failed;
+
+        return new JobExecutionRecord
+        {
+            ExecutionId = 0,
+            JobName = execution.JobName,
+            JobExecutionId = execution.JobExecutionId,
+            JobQueueId = execution.JobQueueId,
+            UserId = execution.RequestedBy,
+            JobType = JobType.Unknown,
+            RunMode = RunMode.Manual,
+            Status = parsedStatus,
+            StartedAt = execution.StartDateTime,
+            CompletedAt = execution.EndDateTime,
+            DurationSeconds = execution.EndDateTime.HasValue
+                ? (int)(execution.EndDateTime.Value - execution.StartDateTime).TotalSeconds
+                : null,
+            ErrorMessage = execution.ErrorMessage,
+            RetryAttempts = 0
+        };
+    }
+
     private async Task<int> EnsureJobMasterAsync(string jobName, CancellationToken cancellationToken)
     {
         var existing = await _context.TblJobMaster

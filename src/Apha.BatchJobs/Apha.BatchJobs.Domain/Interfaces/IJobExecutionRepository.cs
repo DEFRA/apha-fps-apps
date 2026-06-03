@@ -28,4 +28,11 @@ public interface IJobExecutionRepository
     /// <param name="jobName">The name of the job.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task<JobExecutionRecord?> GetLastExecutionAsync(string jobName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets an execution record by its external execution identifier.
+    /// </summary>
+    /// <param name="jobExecutionId">External job execution id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<JobExecutionRecord?> GetExecutionByJobExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
 }

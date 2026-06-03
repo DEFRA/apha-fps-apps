@@ -2,6 +2,33 @@
 
 Short reference for running, testing, and operating the Batch Jobs foundation.
 
+## 📋 Master Implementation Guide (START HERE!)
+
+**Consolidated single document for team briefings:**
+
+- **[MASTER-IMPLEMENTATION-GUIDE.md](docs/MASTER-IMPLEMENTATION-GUIDE.md)** ⭐ **READ THIS FIRST**
+  - Complete architecture overview
+  - 7-state machine specification with design rationale
+  - Both API endpoints with full request/response examples
+  - Watchdog algorithm with pseudocode
+  - Design decision explanations for architects (Q&A format)
+  - Deployment guide (local → staging → production)
+  - Team responsibilities matrix
+  - Implementation checklist
+  - Sign-off section
+  - **One document, everything you need**
+
+## 📚 Detailed Reference Documents (As Needed)
+
+**For specific deep-dives:**
+
+- **[BATCHJOBS-STATE-MACHINE-CONTRACT.md](docs/BATCHJOBS-STATE-MACHINE-CONTRACT.md)** – Formal contract (sign-off required)
+- **[PACT-API-OPENAPI.yaml](docs/PACT-API-OPENAPI.yaml)** – OpenAPI 3.0 spec (import to Postman/IDE)
+- **[DEMO-END-TO-END-FLOW.md](docs/DEMO-END-TO-END-FLOW.md)** – Demo scenarios with timelines
+- **[PACT-BATCHJOBS-HANDOFF-EVENTGRID.md](docs/PACT-BATCHJOBS-HANDOFF-EVENTGRID.md)** – Architecture details
+- **[EVENTBRIDGE-ALIGNMENT-GUIDE.md](docs/EVENTBRIDGE-ALIGNMENT-GUIDE.md)** – Production EventBridge setup
+- **[PACT-API-QUICK-REFERENCE.md](docs/PACT-API-QUICK-REFERENCE.md)** – Developer cheat sheet (bookmark!)
+
 ## What This Module Contains
 
 - Apha.BatchJobs.Api: trigger/status API endpoints.

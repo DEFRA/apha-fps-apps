@@ -47,8 +47,11 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
         startInfo.ArgumentList.Add("--project");
         startInfo.ArgumentList.Add(workerProjectPath);
 
-        // Force the worker into demo mode so local trigger flows do not require PostgreSQL.
-        startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Demo";
+        var workerEnvironment = string.IsNullOrWhiteSpace(_options.LocalWorker.WorkerEnvironmentName)
+            ? _environment.EnvironmentName
+            : _options.LocalWorker.WorkerEnvironmentName;
+
+        startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = workerEnvironment;
         startInfo.Environment["BATCH_JOB_NAME"] = detail.JobName;
         startInfo.Environment["BATCH_RUN_MODE"] = detail.RunMode;
         startInfo.Environment["BATCH_JOB_EXECUTION_ID"] = detail.JobExecutionId;
@@ -67,11 +70,12 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
             ?? throw new InvalidOperationException("Failed to start local worker process.");
 
         _logger.LogInformation(
-            "Local worker dispatch started | JobName={JobName} | JobExecutionId={JobExecutionId} | WorkerPid={WorkerPid} | WorkerProjectPath={WorkerProjectPath} | WaitForDebuggerAttach={WaitForDebuggerAttach}",
+            "Local worker dispatch started | JobName={JobName} | JobExecutionId={JobExecutionId} | WorkerPid={WorkerPid} | WorkerProjectPath={WorkerProjectPath} | WorkerEnvironment={WorkerEnvironment} | WaitForDebuggerAttach={WaitForDebuggerAttach}",
             detail.JobName,
             detail.JobExecutionId,
             process.Id,
             workerProjectPath,
+            workerEnvironment,
             shouldPauseForDebugger);
 
         return Task.FromResult($"localproc-{process.Id}");
