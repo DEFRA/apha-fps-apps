@@ -130,6 +130,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             return PartialView("_AddEditTestSupplier", new TestSupplierItem
             {
+                TestCode = string.Empty,
+                Buyer = string.Empty,
                 ProjectStatusOptions = GetProjectStatusOptions()
             });
         }

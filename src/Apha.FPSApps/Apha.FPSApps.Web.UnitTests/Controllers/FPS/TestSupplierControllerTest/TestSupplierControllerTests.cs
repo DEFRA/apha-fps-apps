@@ -289,8 +289,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestSupplierControllerTest
 
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             var model = Assert.IsType<TestSupplierItem>(partialViewResult.Model);
-            Assert.Contains(model.ProjectStatusOptions, o => o.Value == "Approved");
-            Assert.Contains(model.ProjectStatusOptions, o => o.Value == "Rejected");
+            Assert.NotNull(model.ProjectStatusOptions);
+            Assert.Contains(model.ProjectStatusOptions!, o => o.Value == "Approved");
+            Assert.Contains(model.ProjectStatusOptions!, o => o.Value == "Rejected");
         }
 
         #endregion
@@ -429,7 +430,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestSupplierControllerTest
 
             _mapper.Map<QueryParameters<string>>(request).Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
             _testSupplierService.GetPagedAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode, false).Returns(response);
-            _mapper.Map<List<TestSupplierItem>>(pagedItems).Returns(new List<TestSupplierItem> { new() { TestCode = DefaultTestCode } });
+            _mapper.Map<List<TestSupplierItem>>(pagedItems).Returns(new List<TestSupplierItem> { new() { TestCode = DefaultTestCode, Buyer = DefaultBuyer } });
 
             var result = await _controller.LoadTestSupplierGrid(request, DefaultTestCode, false);
 

@@ -7,12 +7,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class TestSupplierItem
     {
         [GridColumn(IsVisible = false)]
-        public string TestCode { get; set; }
+        public required string TestCode { get; set; }
 
         [Required(ErrorMessage = "Project (Buyer) is required.")]
         [Display(Name = "Project")]
         [GridColumn(Order = 1)]
-        public string Buyer { get; set; }
+        public required string Buyer { get; set; }
 
         [Display(Name = "Project Manager")]
         [GridColumn(Order = 2)]
