@@ -1,4 +1,4 @@
-ï»¿@* Single unified view for both Add and Edit operations *@
+@* Single unified view for both Add and Edit operations *@
 @model Apha.FPSApps.Web.Areas.FPS.Models.ProgrammeNewProjectViewModel
 @{
     var isEditMode = ViewBag.IsEditMode ?? !string.IsNullOrEmpty(Model.ParentProject);
@@ -16,22 +16,8 @@
                 <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
                     <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
                         <div class="col-md-6">
-                            <nav aria-label="Breadcrumb">
-                                <a href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt;
-                                <a href="@Url.Action("Index", "Project", new { area = "FPS" })">Programme Management</a> &gt;
-                                Plan Projects &gt; @(isEditMode ? "Edit Project" : "Set Up A New Project")
-                            </nav>
+
                         </div>
-                        @if (!isEditMode)
-                        {
-                            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px;" class="col-md-6">
-                                <label class="fw-bold mt-2" for="programmeSelect">Programme:</label>
-                                <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
-                                        class="form-select form-select-sm" style="width: auto; min-width: 260px;">
-                                    <option value="">-- Select Programme --</option>
-                                </select>
-                            </div>
-                        }
                     </div>
                 </div>
             </div>
@@ -104,8 +90,8 @@
                             </div>
                         </div>
 
-                        @* Change Project Code section - Edit mode only *@
-                        @if (isEditMode)
+                        @* Change Project Code section - Edit mode, FPSAdmin only *@
+                        @if (isEditMode && User.IsInRole("FPSAdmin"))
                         {
                             <div class="govuk-form-group sup_margin_0 mt-2 mb-3"
                                  style="border: 1px solid #1d70b8; padding: 8px; border-radius: 4px; display: flex; align-items: center; gap: 10px;">
@@ -155,13 +141,73 @@
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="Program">Programme:</label>
-                                    <select asp-for="Program" asp-items="@Model.ProgramList" class="govuk-select sup_select_option_width_100" required></select>
+                                    <div style="position: relative;">
+                                        <input type="text" id="ProgramDisplay" placeholder="Select Programme" autocomplete="off"
+                                               class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly />
+                                        <div id="ProgramDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                                                max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                                                box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                                            <input type="text" id="ProgramSearchBox" placeholder="Type to search programme"
+                                                   style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                                            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                                                <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                                                    <tr>
+                                                        <th style="padding:6px 8px; text-align:left;">Programme No</th>
+                                                        <th style="padding:6px 8px; text-align:left;">Programme Name</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="ProgramDropdownBody">
+                                                    @foreach (var item in Model.ProgramList.Where(i => !string.IsNullOrEmpty(i.Value)))
+                                                    {
+                                                        var parts = item.Text.Split('|');
+                                                        var progNo   = parts[0].Trim();
+                                                        var progName = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                                                        <tr data-value="@item.Value" data-display="@progNo" style="cursor:pointer;">
+                                                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@progNo</td>
+                                                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@progName</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <select asp-for="Program" asp-items="@Model.ProgramList" class="govuk-select sup_select_option_width_100" required style="display:none;"></select>
                                     <span asp-validation-for="Program" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="Manager">Manager:</label>
-                                    <select asp-for="Manager" asp-items="@Model.ManagerList" class="govuk-select sup_select_option_width_100" required></select>
+                                    <div style="position: relative;">
+                                        <input type="text" id="ManagerDisplay" placeholder="Select Manager" autocomplete="off"
+                                               class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly />
+                                        <div id="ManagerDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                                                max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                                                box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                                            <input type="text" id="ManagerSearchBox" placeholder="Type to search manager"
+                                                   style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                                            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                                                <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                                                    <tr>
+                                                        <th style="padding:6px 8px; text-align:left;">Name</th>
+                                                        <th style="padding:6px 8px; text-align:left;">Work Group</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="ManagerDropdownBody">
+                                                    @foreach (var item in Model.ManagerList.Where(i => !string.IsNullOrEmpty(i.Value)))
+                                                    {
+                                                        var parts = item.Text.Split('|');
+                                                        var mgrName  = parts[0].Trim();
+                                                        var mgrGroup = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                                                        <tr data-value="@item.Value" data-display="@mgrName" style="cursor:pointer;">
+                                                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@mgrName</td>
+                                                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@mgrGroup</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <select asp-for="Manager" asp-items="@Model.ManagerList" class="govuk-select sup_select_option_width_100" required style="display:none;"></select>
                                     <span asp-validation-for="Manager" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -174,7 +220,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="CustIncome">Customer Income:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="CustIncome" class="govuk-input" required />
                                     </div>
                                     <span asp-validation-for="CustIncome" class="govuk-error-message" style="display:none;"></span>
@@ -183,7 +229,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="TransferIncome">Transfer Income:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="TransferIncome" class="govuk-input" required />
                                     </div>
                                     <span asp-validation-for="TransferIncome" class="govuk-error-message" style="display:none;"></span>
@@ -192,7 +238,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="Profit">Target Profit:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="Profit" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="Profit" class="govuk-error-message" style="display:none;"></span>
@@ -224,7 +270,40 @@
 
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="CostCentre">Cost Centre:</label>
-                                    <select asp-for="CostCentre" asp-items="@Model.CostCentreList" class="govuk-select sup_select_option_width_100" required></select>
+                                    <div style="position: relative;">
+                                        <input type="text" id="CostCentreDisplay" placeholder="Select Cost Centre" autocomplete="off"
+                                               class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly />
+                                        <div id="CostCentreDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                                                max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                                                box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                                            <input type="text" id="CostCentreSearchBox" placeholder="Type to search cost centre"
+                                                   style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                                            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                                                <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                                                    <tr>
+                                                        <th style="padding:6px 8px; text-align:left;">Cost Centre</th>
+                                                        <th style="padding:6px 8px; text-align:left;">Profit Centre</th>
+                                                        <th style="padding:6px 8px; text-align:left;">WG</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="CostCentreDropdownBody">
+                                                    @foreach (var item in Model.CostCentreList.Where(i => !string.IsNullOrEmpty(i.Value)))
+                                                    {
+                                                        var ccParts  = item.Text.Split('|');
+                                                        var ccNo     = ccParts[0].Trim();
+                                                        var ccProfit = ccParts.Length > 1 ? ccParts[1].Trim() : string.Empty;
+                                                        var ccWg     = ccParts.Length > 2 ? ccParts[2].Trim() : string.Empty;
+                                                        <tr data-value="@item.Value" data-display="@ccNo" style="cursor:pointer;">
+                                                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@ccNo</td>
+                                                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@ccProfit</td>
+                                                            <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@ccWg</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <select asp-for="CostCentre" asp-items="@Model.CostCentreList" class="govuk-select sup_select_option_width_100" required style="display:none;"></select>
                                     <span asp-validation-for="CostCentre" class="govuk-error-message" style="display:none;"></span>
                                 </div>
 
@@ -258,7 +337,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label required" asp-for="BudgetCvl">Budget:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="BudgetCvl" class="govuk-input" required />
                                     </div>
                                     <span asp-validation-for="BudgetCvl" class="govuk-error-message" style="display:none;"></span>
@@ -267,7 +346,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="PvsIncome">PVS Income: (Surv Only)</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="PvsIncome" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="PvsIncome" class="govuk-error-message" style="display:none;"></span>
@@ -276,7 +355,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="PlanCaseWorkDebit">Plan CW Debit: (Surv Only)</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="PlanCaseWorkDebit" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="PlanCaseWorkDebit" class="govuk-error-message" style="display:none;"></span>
@@ -285,7 +364,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="CarryOver">CarryOver:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="CarryOver" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="CarryOver" class="govuk-error-message" style="display:none;"></span>
@@ -294,7 +373,7 @@
                                 <div class="govuk-form-group sup_margin_0">
                                     <label class="govuk-label" asp-for="CarryOverSeed">CarryOverSeed:</label>
                                     <div class="govuk-input__wrapper">
-                                        <div class="govuk-input__prefix" aria-hidden="true">Â£</div>
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input type="text" asp-for="CarryOverSeed" class="govuk-input" />
                                     </div>
                                     <span asp-validation-for="CarryOverSeed" class="govuk-error-message" style="display:none;"></span>
@@ -321,13 +400,6 @@
             $.validator.unobtrusive.parse(document);
         }
 
-        $('#programmeSelect').on('change', function () {
-            var programDropdown = document.getElementById('Program');
-            if (programDropdown && !programDropdown.value) {
-                programDropdown.value = $(this).val();
-            }
-        });
-
         function syncResourceCentreFromCostCentre() {
             const sel = document.getElementById('CostCentre');
             if (!sel) return;
@@ -336,7 +408,6 @@
             if (owningRc) owningRc.value = parts.length >= 2 ? parts[1].trim() : '';
         }
         document.getElementById('CostCentre')?.addEventListener('change', syncResourceCentreFromCostCentre);
-        syncResourceCentreFromCostCentre(); // pre-populate on page load (edit mode)
 
         // Currency formatting and validation (same pattern as ProgramStaffPlan)
         function formatCurrency(value) {
@@ -344,7 +415,7 @@
         }
 
         function parseCurrencyValue(val) {
-            return (val || '').toString().replace(/[Â£,\s]/g, '').trim();
+            return (val || '').toString().replace(/[£,\s]/g, '').trim();
         }
 
         var currencyFieldNames = ['CustIncome', 'TransferIncome', 'Profit', 'BudgetCvl', 'PvsIncome', 'PlanCaseWorkDebit', 'CarryOver', 'CarryOverSeed'];
@@ -358,6 +429,151 @@
                     $field.val(formatCurrency(raw));
                 }
             });
+
+            // Programme multi-column dropdown
+            var programDisplay = document.getElementById('ProgramDisplay');
+            var programSelect  = document.getElementById('Program');
+            var programPanel   = document.getElementById('ProgramDropdownPanel');
+            var programSearch  = document.getElementById('ProgramSearchBox');
+            var programBody    = document.getElementById('ProgramDropdownBody');
+
+            // Pre-populate display on edit mode
+            if (programSelect && programSelect.value) {
+                var matchRow = programBody.querySelector('tr[data-value="' + programSelect.value + '"]');
+                programDisplay.value = matchRow ? matchRow.getAttribute('data-display') : programSelect.value;
+            }
+
+            programDisplay.addEventListener('click', function (e) {
+                e.stopPropagation();
+                programPanel.style.display = programPanel.style.display === 'none' ? 'block' : 'none';
+                if (programPanel.style.display === 'block') { programSearch.value = ''; filterProgramRows(); programSearch.focus(); }
+            });
+
+            programSearch.addEventListener('input', filterProgramRows);
+
+            function filterProgramRows() {
+                var q = programSearch.value.toLowerCase();
+                programBody.querySelectorAll('tr').forEach(function (row) {
+                    row.style.display = row.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+                });
+            }
+
+            programBody.querySelectorAll('tr').forEach(function (row) {
+                row.addEventListener('click', function () {
+                    var val  = this.getAttribute('data-value');
+                    var disp = this.getAttribute('data-display');
+                    programDisplay.value = disp;
+                    Array.from(programSelect.options).forEach(function (o) { o.selected = o.value === val; });
+                    programSelect.dispatchEvent(new Event('change'));
+                    programPanel.style.display = 'none';
+                });
+                row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
+                row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!programDisplay.contains(e.target) && !programPanel.contains(e.target)) {
+                    programPanel.style.display = 'none';
+                }
+            });
+
+            // Manager multi-column dropdown
+            var managerDisplay = document.getElementById('ManagerDisplay');
+            var managerSelect  = document.getElementById('Manager');
+            var managerPanel   = document.getElementById('ManagerDropdownPanel');
+            var managerSearch  = document.getElementById('ManagerSearchBox');
+            var managerBody    = document.getElementById('ManagerDropdownBody');
+
+            // Pre-populate display on edit mode
+            if (managerSelect && managerSelect.value) {
+                var matchManagerRow = managerBody.querySelector('tr[data-value="' + managerSelect.value + '"]');
+                managerDisplay.value = matchManagerRow ? matchManagerRow.getAttribute('data-display') : managerSelect.value;
+            }
+
+            managerDisplay.addEventListener('click', function (e) {
+                e.stopPropagation();
+                managerPanel.style.display = managerPanel.style.display === 'none' ? 'block' : 'none';
+                if (managerPanel.style.display === 'block') { managerSearch.value = ''; filterManagerRows(); managerSearch.focus(); }
+            });
+
+            managerSearch.addEventListener('input', filterManagerRows);
+
+            function filterManagerRows() {
+                var q = managerSearch.value.toLowerCase();
+                managerBody.querySelectorAll('tr').forEach(function (row) {
+                    row.style.display = row.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+                });
+            }
+
+            managerBody.querySelectorAll('tr').forEach(function (row) {
+                row.addEventListener('click', function () {
+                    var val  = this.getAttribute('data-value');
+                    var disp = this.getAttribute('data-display');
+                    managerDisplay.value = disp;
+                    Array.from(managerSelect.options).forEach(function (o) { o.selected = o.value === val; });
+                    managerSelect.dispatchEvent(new Event('change'));
+                    managerPanel.style.display = 'none';
+                });
+                row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
+                row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!managerDisplay.contains(e.target) && !managerPanel.contains(e.target)) {
+                    managerPanel.style.display = 'none';
+                }
+            });
+
+            // Cost Centre multi-column dropdown
+            var costCentreDisplay = document.getElementById('CostCentreDisplay');
+            var costCentreSelect  = document.getElementById('CostCentre');
+            var costCentrePanel   = document.getElementById('CostCentreDropdownPanel');
+            var costCentreSearch  = document.getElementById('CostCentreSearchBox');
+            var costCentreBody    = document.getElementById('CostCentreDropdownBody');
+
+            // Pre-populate display on edit mode
+            if (costCentreSelect && costCentreSelect.value) {
+                var matchCcRow = costCentreBody.querySelector('tr[data-value="' + costCentreSelect.value + '"]');
+                costCentreDisplay.value = matchCcRow ? matchCcRow.getAttribute('data-display') : costCentreSelect.value;
+            }
+
+            costCentreDisplay.addEventListener('click', function (e) {
+                e.stopPropagation();
+                costCentrePanel.style.display = costCentrePanel.style.display === 'none' ? 'block' : 'none';
+                if (costCentrePanel.style.display === 'block') { costCentreSearch.value = ''; filterCostCentreRows(); costCentreSearch.focus(); }
+            });
+
+            costCentreSearch.addEventListener('input', filterCostCentreRows);
+
+            function filterCostCentreRows() {
+                var q = costCentreSearch.value.toLowerCase();
+                costCentreBody.querySelectorAll('tr').forEach(function (row) {
+                    row.style.display = row.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+                });
+            }
+
+            costCentreBody.querySelectorAll('tr').forEach(function (row) {
+                row.addEventListener('click', function () {
+                    var val  = this.getAttribute('data-value');
+                    var disp = this.getAttribute('data-display');
+                    costCentreDisplay.value = disp;
+                    Array.from(costCentreSelect.options).forEach(function (o) { o.selected = o.value === val; });
+                    // Dispatch change so syncResourceCentreFromCostCentre fires
+                    costCentreSelect.dispatchEvent(new Event('change'));
+                    costCentrePanel.style.display = 'none';
+                });
+                row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
+                row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!costCentreDisplay.contains(e.target) && !costCentrePanel.contains(e.target)) {
+                    costCentrePanel.style.display = 'none';
+                }
+            });
+
+            // Trigger Resource Centre sync on page load for edit mode
+            syncResourceCentreFromCostCentre();
         });
 
         // Re-format on blur, validate on input
@@ -441,7 +657,7 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData);
 
-            // Strip Â£ signs, commas, and spaces from currency/numeric fields before parsing
+            // Strip £ signs, commas, and spaces from currency/numeric fields before parsing
             const numericFields = ['CustIncome', 'TransferIncome', 'Profit', 'BudgetCvl', 'PvsIncome',
                                    'PlanCaseWorkDebit', 'CarryOver', 'CarryOverSeed', 'CostCentre', 'IsDefraProject'];
             numericFields.forEach(field => {
@@ -457,6 +673,8 @@
             ['TransferIncome', 'CustIncome', 'IsDefraProject'].forEach(field => {
                 if (data[field] === null || data[field] === undefined) data[field] = 0;
             });
+            // ProjectGroup is optional — send null when blank to avoid FK constraint violation
+            if (data['ProjectGroup'] === '' || data['ProjectGroup'] === undefined) data['ProjectGroup'] = null;
 
             const url = isEdit
                 ? '@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(parentProject)

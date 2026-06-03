@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
@@ -12,22 +12,24 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
     {
         /// <summary>
         /// Creates a ProjectListRepository with in-memory data for all DbSets.
-        /// All parameters are optional â€” omitted sets are initialised as empty.
+        /// All parameters are optional — omitted sets are initialised as empty.
         /// </summary>
         private static ProjectListRepository CreateRepository(
             IEnumerable<Project>? fpsProjects = null,
             IEnumerable<ProposedProject>? proposedProjects = null,
             IEnumerable<Projects>? yearlyProjects = null,
             IEnumerable<ProjectLatestDetail>? projectLatestDetails = null,
-            IEnumerable<RadtrackProg>? radtrackProgs = null)
+            IEnumerable<RadtrackProg>? radtrackProgs = null,
+            IEnumerable<ProjectStatus>? projectStatuses = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
 
-            var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(fpsProjects ?? Enumerable.Empty<Project>());
-            var proposedProjectsMockSet = RepositoryTestHelper.CreateMockDbSet(proposedProjects ?? Enumerable.Empty<ProposedProject>());
-            var yearlyProjectsMockSet = RepositoryTestHelper.CreateMockDbSet(yearlyProjects ?? Enumerable.Empty<Projects>());
+            var projectsMockSet            = RepositoryTestHelper.CreateMockDbSet(fpsProjects          ?? Enumerable.Empty<Project>());
+            var proposedProjectsMockSet    = RepositoryTestHelper.CreateMockDbSet(proposedProjects      ?? Enumerable.Empty<ProposedProject>());
+            var yearlyProjectsMockSet      = RepositoryTestHelper.CreateMockDbSet(yearlyProjects        ?? Enumerable.Empty<Projects>());
             var projectLatestDetailsMockSet = RepositoryTestHelper.CreateMockDbSet(projectLatestDetails ?? Enumerable.Empty<ProjectLatestDetail>());
-            var radtrackProgsMockSet = RepositoryTestHelper.CreateMockDbSet(radtrackProgs ?? Enumerable.Empty<RadtrackProg>());
+            var radtrackProgsMockSet       = RepositoryTestHelper.CreateMockDbSet(radtrackProgs         ?? Enumerable.Empty<RadtrackProg>());
+            var projectStatusesMockSet     = RepositoryTestHelper.CreateMockDbSet(projectStatuses       ?? Enumerable.Empty<ProjectStatus>());
 
             RepositoryTestHelper.SetupDbSetOperations(proposedProjectsMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
@@ -37,6 +39,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             mockContext.Setup(x => x.MyTlkpProjects).Returns(yearlyProjectsMockSet.Object);
             mockContext.Setup(x => x.ProjectLatestDetails).Returns(projectLatestDetailsMockSet.Object);
             mockContext.Setup(x => x.RadtrackProgs).Returns(radtrackProgsMockSet.Object);
+            mockContext.Setup(x => x.ProjectStatuses).Returns(projectStatusesMockSet.Object);
 
             return new ProjectListRepository(mockContext.Object);
         }
@@ -54,15 +57,17 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
                 IEnumerable<ProposedProject>? proposedProjects = null,
                 IEnumerable<Projects>? yearlyProjects = null,
                 IEnumerable<ProjectLatestDetail>? projectLatestDetails = null,
-                IEnumerable<RadtrackProg>? radtrackProgs = null)
+                IEnumerable<RadtrackProg>? radtrackProgs = null,
+                IEnumerable<ProjectStatus>? projectStatuses = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
 
-            var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(fpsProjects ?? Enumerable.Empty<Project>());
-            var proposedProjectsMockSet = RepositoryTestHelper.CreateMockDbSet(proposedProjects ?? Enumerable.Empty<ProposedProject>());
-            var yearlyProjectsMockSet = RepositoryTestHelper.CreateMockDbSet(yearlyProjects ?? Enumerable.Empty<Projects>());
-            var projectLatestDetailsMockSet = RepositoryTestHelper.CreateMockDbSet(projectLatestDetails ?? Enumerable.Empty<ProjectLatestDetail>());
-            var radtrackProgsMockSet = RepositoryTestHelper.CreateMockDbSet(radtrackProgs ?? Enumerable.Empty<RadtrackProg>());
+            var projectsMockSet             = RepositoryTestHelper.CreateMockDbSet(fpsProjects          ?? Enumerable.Empty<Project>());
+            var proposedProjectsMockSet     = RepositoryTestHelper.CreateMockDbSet(proposedProjects      ?? Enumerable.Empty<ProposedProject>());
+            var yearlyProjectsMockSet       = RepositoryTestHelper.CreateMockDbSet(yearlyProjects        ?? Enumerable.Empty<Projects>());
+            var projectLatestDetailsMockSet = RepositoryTestHelper.CreateMockDbSet(projectLatestDetails  ?? Enumerable.Empty<ProjectLatestDetail>());
+            var radtrackProgsMockSet        = RepositoryTestHelper.CreateMockDbSet(radtrackProgs          ?? Enumerable.Empty<RadtrackProg>());
+            var projectStatusesMockSet      = RepositoryTestHelper.CreateMockDbSet(projectStatuses        ?? Enumerable.Empty<ProjectStatus>());
 
             RepositoryTestHelper.SetupDbSetOperations(proposedProjectsMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
@@ -72,12 +77,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             mockContext.Setup(x => x.MyTlkpProjects).Returns(yearlyProjectsMockSet.Object);
             mockContext.Setup(x => x.ProjectLatestDetails).Returns(projectLatestDetailsMockSet.Object);
             mockContext.Setup(x => x.RadtrackProgs).Returns(radtrackProgsMockSet.Object);
+            mockContext.Setup(x => x.ProjectStatuses).Returns(projectStatusesMockSet.Object);
 
             var repo = new ProjectListRepository(mockContext.Object);
             return (repo, proposedProjectsMockSet, mockContext);
         }
 
-        #region GetAllProjectsAsync â€” no filter
+        #region GetAllProjectsAsync — no filter
 
         [Fact]
         public async Task GetAllProjectsAsync_WithNoFilter_ReturnsAllProjects()
@@ -122,14 +128,14 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
 
         #endregion
 
-        #region GetAllProjectsAsync â€” OnFps projection
+        #region GetAllProjectsAsync — OnFps projection
 
         [Fact]
         public async Task GetAllProjectsAsync_OnFpsFlag_TrueWhenParentProjectExistsInFpsProjects()
         {
             // Arrange
-            // PP001 and PP002 appear in projectLatestDetails (Active="Y") with matching radtrackProgs â†’ OnFps="Yes"
-            // PP003 is in proposedProjects but NOT in projects â†’ OnFps="No"
+            // PP001 and PP002 appear in projectLatestDetails (Active="Y") with matching radtrackProgs ? OnFps="Yes"
+            // PP003 is in proposedProjects but NOT in projects ? OnFps="No"
             var projectLatestDetails = new List<ProjectLatestDetail>
             {
                 new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1", Active = "Y" },
@@ -166,14 +172,14 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             Assert.Equal(3, result.Data.Count);
             Assert.Equal("Yes", result.Data.First(p => p.Parentproject == "PP001").OnFps);
             Assert.Equal("Yes", result.Data.First(p => p.Parentproject == "PP002").OnFps);
-            Assert.Equal("No", result.Data.First(p => p.Parentproject == "PP003").OnFps);
+            Assert.Equal("No",  result.Data.First(p => p.Parentproject == "PP003").OnFps);
         }
 
         [Fact]
         public async Task GetAllProjectsAsync_OnFpsFlag_FalseWhenNoFpsProjectsExist()
         {
             // Arrange
-            // No projectLatestDetails â†’ onFpsQuery returns nothing â†’ all projects get OnFps="No"
+            // No projectLatestDetails ? onFpsQuery returns nothing ? all projects get OnFps="No"
             var proposedProjects = new List<ProposedProject>
             {
                 new() { Parentproject = "PP001", Program = "PROG1", Customer = "CUST1" }
@@ -195,7 +201,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
         [Fact]
         public async Task GetAllProjectsAsync_OnFpsFlag_ExcludesInactiveProjectLatestDetails()
         {
-            // Arrange â€” PP001 is inactive (Active != "Y") so it should not appear with OnFps="Yes"
+            // Arrange — PP001 is inactive (Active="N"), showWhichProjects=1 filters to Active="Y" only
             var projectLatestDetails = new List<ProjectLatestDetail>
             {
                 new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1", Active = "N" }
@@ -215,7 +221,6 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             var queryFilter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            // showWhichProjects=1 filters onFpsQuery to Active="Y" only, so the inactive PP001 is excluded
             var result = await repo.GetAllProjectsAsync(queryFilter, 1);
 
             // Assert
@@ -223,9 +228,36 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             Assert.Equal("No", result.Data.First().OnFps);
         }
 
+        [Fact]
+        public async Task GetAllProjectsAsync_ShowWhichProjects2_IncludesActiveAndInactiveOnFpsProjects()
+        {
+            // Arrange — PP001 Active="Y", PP002 Active="N"; showWhichProjects=2 ? both included
+            var projectLatestDetails = new List<ProjectLatestDetail>
+            {
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1", Active = "Y" },
+                new() { ParentProject = "PP002", Program = "PROG2", Customer = "CUST2", Active = "N" }
+            };
+            var radtrackProgs = new List<RadtrackProg>
+            {
+                new() { Program = "PROG1" },
+                new() { Program = "PROG2" }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                radtrackProgs: radtrackProgs);
+            var queryFilter = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAllProjectsAsync(queryFilter, 2);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count);
+            Assert.All(result.Data, p => Assert.Equal("Yes", p.OnFps));
+        }
+
         #endregion
 
-        #region GetAllProjectsAsync â€” ApplyFilter
+        #region GetAllProjectsAsync — ApplyFilter
 
         [Fact]
         public async Task GetAllProjectsAsync_WithNullFilter_ReturnsAllProjects()
@@ -372,17 +404,41 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             Assert.All(result.Data, p => Assert.Equal("PROG1", p.Program));
         }
 
+        [Fact]
+        public async Task GetAllProjectsAsync_WithFilterMatchingNoRecords_ReturnsEmpty()
+        {
+            // Arrange
+            var proposedProjects = new List<ProposedProject>
+            {
+                new() { Parentproject = "PP001", Program = "PROG1", Customer = "CUST1" }
+            };
+            var repo = CreateRepository(proposedProjects: proposedProjects);
+            var queryFilter = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Parentproject\":\"ZZZZ\"}"
+            };
+
+            // Act
+            var result = await repo.GetAllProjectsAsync(queryFilter, 2);
+
+            // Assert
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
         #endregion
 
-        #region GetAllProjectsAsync â€” ApplySorting
+        #region GetAllProjectsAsync — ApplySorting
 
         [Theory]
         [InlineData("parentproject", false, "PP001")]
-        [InlineData("parentproject", true, "PP003")]
-        [InlineData("program", false, "PROG1")]
-        [InlineData("program", true, "PROG3")]
-        [InlineData("customer", false, "CUST1")]
-        [InlineData("customer", true, "CUST3")]
+        [InlineData("parentproject", true,  "PP003")]
+        [InlineData("program",       false, "PROG1")]
+        [InlineData("program",       true,  "PROG3")]
+        [InlineData("customer",      false, "CUST1")]
+        [InlineData("customer",      true,  "CUST3")]
         public async Task GetAllProjectsAsync_WithSorting_ReturnsSortedResults(
             string sortBy, bool descending, string expectedFirstValue)
         {
@@ -411,9 +467,9 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             var actualValue = sortBy.ToLower() switch
             {
                 "parentproject" => firstItem.Parentproject,
-                "program" => firstItem.Program,
-                "customer" => firstItem.Customer,
-                _ => null
+                "program"       => firstItem.Program,
+                "customer"      => firstItem.Customer,
+                _               => null
             };
             Assert.Equal(expectedFirstValue, actualValue);
         }
@@ -423,7 +479,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
         [InlineData(true)]
         public async Task GetAllProjectsAsync_SortingByOnFps_ReturnsSortedResults(bool descending)
         {
-            // Arrange â€” PP001 is on FPS (via projectLatestDetails + radtrackProgs), PP002 is not
+            // Arrange — PP001 is on FPS (via projectLatestDetails + radtrackProgs), PP002 is not
             var projectLatestDetails = new List<ProjectLatestDetail>
             {
                 new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1", Active = "Y" }
@@ -459,8 +515,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
 
             // Assert
             Assert.Equal(2, result.Data.Count);
-            // descending = true  â†’ OnFps="Yes" first (PP001)
-            // descending = false â†’ OnFps="No"  first (PP002)
+            // descending=true  ? "Yes" first (PP001)
+            // descending=false ? "No"  first (PP002)
             if (descending)
                 Assert.Equal("Yes", result.Data.First().OnFps);
             else
@@ -514,7 +570,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
 
         #endregion
 
-        #region GetAllProjectsAsync â€” ApplyPaging
+        #region GetAllProjectsAsync — ApplyPaging
 
         [Fact]
         public async Task GetAllProjectsAsync_WithPaging_ReturnsCorrectPage()
@@ -580,213 +636,134 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             Assert.Equal(10, result.PaginationData.PageSize);
         }
 
-        #endregion
-
-        #region GetFpsProjectByIdAsync
-
         [Fact]
-        public async Task GetFpsProjectByIdAsync_ReturnsProject_WhenProjectExists()
+        public async Task GetAllProjectsAsync_LastPage_ReturnsRemainingItems()
         {
-            // Arrange
-            var fpsProjects = new List<Project>
-            {
-                new() { Parentproject = "PP001", Projecttitle = "FMD Survey",    Disease = "FMD", Contract = "CON001", Projectstatus = "Active" },
-                new() { Parentproject = "PP002", Projecttitle = "TB Eradication", Disease = "TB",  Contract = "CON002", Projectstatus = "Active" }
-            };
-            var repo = CreateRepository(fpsProjects: fpsProjects);
+            // Arrange — 5 items, pageSize=2 ? page 3 should return 1 item
+            var proposedProjects = Enumerable.Range(1, 5)
+                .Select(i => new ProposedProject { Parentproject = $"PP{i:D3}", Program = "PROG1", Customer = "CUST1" })
+                .ToList();
+            var repo = CreateRepository(proposedProjects: proposedProjects);
+            var queryFilter = new PaginationParameters<string> { Page = 3, PageSize = 2 };
 
             // Act
-            var result = await repo.GetFpsProjectByIdAsync("PP001");
+            var result = await repo.GetAllProjectsAsync(queryFilter, 2);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal("PP001", result.Parentproject);
-            Assert.Equal("FMD Survey", result.Projecttitle);
-            Assert.Equal("CON001", result.Contract);
-            Assert.Equal("FMD", result.Disease);
+            Assert.Single(result.Data);
+            Assert.Equal(3, result.PaginationData.TotalPages);
         }
 
         [Fact]
-        public async Task GetFpsProjectByIdAsync_ReturnsNull_WhenProjectDoesNotExist()
-        {
-            // Arrange
-            var fpsProjects = new List<Project>
-            {
-                new() { Parentproject = "PP001", Projecttitle = "FMD Survey" }
-            };
-            var repo = CreateRepository(fpsProjects: fpsProjects);
-
-            // Act
-            var result = await repo.GetFpsProjectByIdAsync("UNKNOWN");
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public async Task GetFpsProjectByIdAsync_ReturnsNull_WhenFpsProjectsIsEmpty()
-        {
-            // Arrange
-            var repo = CreateRepository(fpsProjects: new List<Project>());
-
-            // Act
-            var result = await repo.GetFpsProjectByIdAsync("PP001");
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Theory]
-        [InlineData("")]
-        [InlineData("NONEXISTENT")]
-        public async Task GetFpsProjectByIdAsync_ReturnsNull_WhenIdDoesNotMatch(string parentproject)
-        {
-            // Arrange
-            var fpsProjects = new List<Project>
-            {
-                new() { Parentproject = "PP001", Projecttitle = "FMD Survey" }
-            };
-            var repo = CreateRepository(fpsProjects: fpsProjects);
-
-            // Act
-            var result = await repo.GetFpsProjectByIdAsync(parentproject);
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        #endregion
-
-        #region GetProposedProjectByIdAsync
-
-        [Fact]
-        public async Task GetProposedProjectByIdAsync_ReturnsProposedProject_WhenExists()
+        public async Task GetAllProjectsAsync_PageBeyondTotal_ReturnsEmpty()
         {
             // Arrange
             var proposedProjects = new List<ProposedProject>
             {
-                new() { Id = 1, Parentproject = "PP001", Projecttitle = "TB Project",  Program = "PROG1", Customer = "CUST1", Projectstatus = "Proposed", Disease = "TB" },
-                new() { Id = 2, Parentproject = "PP002", Projecttitle = "FMD Project", Program = "PROG2", Customer = "CUST2", Projectstatus = "Active",   Disease = "FMD" }
+                new() { Parentproject = "PP001", Program = "PROG1", Customer = "CUST1" }
             };
             var repo = CreateRepository(proposedProjects: proposedProjects);
+            var queryFilter = new PaginationParameters<string> { Page = 99, PageSize = 10 };
 
             // Act
-            var result = await repo.GetProposedProjectByIdAsync("PP001");
+            var result = await repo.GetAllProjectsAsync(queryFilter, 2);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(1, result.Id);
-            Assert.Equal("PP001", result.Parentproject);
-            Assert.Equal("TB Project", result.Projecttitle);
-            Assert.Equal("Proposed", result.Projectstatus);
-        }
-            
-        [Fact]
-        public async Task GetProposedProjectByIdAsync_ReturnsNull_WhenProjectDoesNotExist()
-        {
-            // Arrange
-            var proposedProjects = new List<ProposedProject>
-            {
-                new() { Id = 1, Parentproject = "PP001", Projecttitle = "TB Project" }
-            };
-            var repo = CreateRepository(proposedProjects: proposedProjects);
-
-            // Act
-            var result = await repo.GetProposedProjectByIdAsync("UNKNOWN");
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public async Task GetProposedProjectByIdAsync_ReturnsNull_WhenProposedProjectsIsEmpty()
-        {
-            // Arrange
-            var repo = CreateRepository(proposedProjects: new List<ProposedProject>());
-
-            // Act
-            var result = await repo.GetProposedProjectByIdAsync("PP001");
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Theory]
-        [InlineData("")]
-        [InlineData("NONEXISTENT")]
-        public async Task GetProposedProjectByIdAsync_ReturnsNull_WhenIdDoesNotMatch(string parentproject)
-        {
-            // Arrange
-            var proposedProjects = new List<ProposedProject>
-            {
-                new() { Id = 1, Parentproject = "PP001", Projecttitle = "TB Project" }
-            };
-            var repo = CreateRepository(proposedProjects: proposedProjects);
-
-            // Act
-            var result = await repo.GetProposedProjectByIdAsync(parentproject);
-
-            // Assert
-            Assert.Null(result);
+            Assert.Empty(result.Data);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
         }
 
         #endregion
 
-        #region GetYearlyDetailsByProjectAsync
+        #region GetAllProjectsForDropDownAsync
 
         [Fact]
-        public async Task GetYearlyDetailsByProjectAsync_ReturnsYearlyDetails_WhenProjectExists()
+        public async Task GetAllProjectsForDropDownAsync_ReturnsOnlyActiveProjectsOnFps()
         {
-            // Arrange
-            var yearlyProjects = new List<Projects>
+            // Arrange — PP001 Active="Y" with matching radtrackProg ? included
+            //            PP002 Active="N"                            ? excluded
+            var projectLatestDetails = new List<ProjectLatestDetail>
             {
-                new() { Year = (short)2023, Parentproject = "PP001", Program = "PROG1", Customer = "CUST1", Manager = "MGR1" },
-                new() { Year = (short)2024, Parentproject = "PP001", Program = "PROG1", Customer = "CUST1", Manager = "MGR1" },
-                new() { Year = (short)2024, Parentproject = "PP002", Program = "PROG2", Customer = "CUST2", Manager = "MGR2" }
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1", Active = "Y" },
+                new() { ParentProject = "PP002", Program = "PROG2", Customer = "CUST2", Active = "N" }
             };
-            var repo = CreateRepository(yearlyProjects: yearlyProjects);
+            var radtrackProgs = new List<RadtrackProg>
+            {
+                new() { Program = "PROG1" },
+                new() { Program = "PROG2" }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                radtrackProgs: radtrackProgs);
 
             // Act
-            var result = await repo.GetYearlyDetailsByProjectAsync("PP001");
+            var result = await repo.GetAllProjectsForDropDownAsync();
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(2, result.Count);
-            Assert.All(result, p => Assert.Equal("PP001", p.Parentproject));
+            Assert.Single(result);
+            Assert.Equal("PP001", result[0].Parentproject);
         }
 
         [Fact]
-        public async Task GetYearlyDetailsByProjectAsync_ReturnsOnlyMatchingParentProject()
+        public async Task GetAllProjectsForDropDownAsync_SetsOnFpsToYesForAllResults()
         {
             // Arrange
-            var yearlyProjects = new List<Projects>
+            var projectLatestDetails = new List<ProjectLatestDetail>
             {
-                new() { Year = (short)2022, Parentproject = "PP001", Program = "PROG1" },
-                new() { Year = (short)2023, Parentproject = "PP001", Program = "PROG1" },
-                new() { Year = (short)2024, Parentproject = "PP002", Program = "PROG2" }
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1", Active = "Y" },
+                new() { ParentProject = "PP002", Program = "PROG2", Customer = "CUST2", Active = "Y" }
             };
-            var repo = CreateRepository(yearlyProjects: yearlyProjects);
+            var radtrackProgs = new List<RadtrackProg>
+            {
+                new() { Program = "PROG1" },
+                new() { Program = "PROG2" }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                radtrackProgs: radtrackProgs);
 
             // Act
-            var result = await repo.GetYearlyDetailsByProjectAsync("PP001");
+            var result = await repo.GetAllProjectsForDropDownAsync();
 
             // Assert
             Assert.Equal(2, result.Count);
-            Assert.All(result, p => Assert.Equal("PP001", p.Parentproject));
+            Assert.All(result, p => Assert.Equal("Yes", p.OnFps));
         }
 
         [Fact]
-        public async Task GetYearlyDetailsByProjectAsync_ReturnsEmptyList_WhenProjectDoesNotExist()
+        public async Task GetAllProjectsForDropDownAsync_ExcludesProjectsWithNoMatchingRadtrackProg()
         {
-            // Arrange
-            var yearlyProjects = new List<Projects>
+            // Arrange — PP001 has no matching RadtrackProg ? excluded from the join
+            var projectLatestDetails = new List<ProjectLatestDetail>
             {
-                new() { Year = (short)2024, Parentproject = "PP001", Program = "PROG1" }
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1", Active = "Y" }
             };
-            var repo = CreateRepository(yearlyProjects: yearlyProjects);
+            var radtrackProgs = new List<RadtrackProg>
+            {
+                new() { Program = "PROG_OTHER" }  // no match for PROG1
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                radtrackProgs: radtrackProgs);
 
             // Act
-            var result = await repo.GetYearlyDetailsByProjectAsync("UNKNOWN");
+            var result = await repo.GetAllProjectsForDropDownAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForDropDownAsync_ReturnsEmptyList_WhenNoActiveProjectsExist()
+        {
+            // Arrange
+            var repo = CreateRepository(
+                projectLatestDetails: new List<ProjectLatestDetail>(),
+                radtrackProgs: new List<RadtrackProg>());
+
+            // Act
+            var result = await repo.GetAllProjectsForDropDownAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -794,76 +771,31 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
         }
 
         [Fact]
-        public async Task GetYearlyDetailsByProjectAsync_ReturnsEmptyList_WhenNoYearlyProjectsExist()
+        public async Task GetAllProjectsForDropDownAsync_MapsProjectFieldsCorrectly()
         {
             // Arrange
-            var repo = CreateRepository(yearlyProjects: new List<Projects>());
-
-            // Act
-            var result = await repo.GetYearlyDetailsByProjectAsync("PP001");
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result);
-        }
-
-        #endregion
-
-        #region AddProjectAsync
-
-        [Fact]
-        public async Task AddProjectAsync_AddsEntityAndReturnsIt()
-        {
-            // Arrange
-            var (repo, _, _) = CreateRepositoryWithMocks();
-            var newEntity = new ProposedProject
+            var projectLatestDetails = new List<ProjectLatestDetail>
             {
-                Parentproject = "PP001",
-                Projecttitle = "New Project",
-                Program = "PROG1",
-                Customer = "CUST1",
-                Manager = "MGR1",
-                Projectstatus = "Proposed",
-                Disease = "FMD"
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST_ABC", Active = "Y" }
             };
+            var radtrackProgs = new List<RadtrackProg>
+            {
+                new() { Program = "PROG1" }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                radtrackProgs: radtrackProgs);
 
             // Act
-            var result = await repo.AddProjectAsync(newEntity);
+            var result = await repo.GetAllProjectsForDropDownAsync();
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Same(newEntity, result);
-            Assert.Equal("PP001", result.Parentproject);
-            Assert.Equal("New Project", result.Projecttitle);
-            Assert.Equal("Proposed", result.Projectstatus);
-        }
-
-        [Fact]
-        public async Task AddProjectAsync_CallsDbSetAdd()
-        {
-            // Arrange
-            var (repo, proposedProjectsDbSet, _) = CreateRepositoryWithMocks();
-            var newEntity = new ProposedProject { Parentproject = "PP001", Projecttitle = "New Project" };
-
-            // Act
-            await repo.AddProjectAsync(newEntity);
-
-            // Assert
-            proposedProjectsDbSet.Verify(x => x.Add(newEntity), Times.Once);
-        }
-
-        [Fact]
-        public async Task AddProjectAsync_CallsSaveChangesAsync()
-        {
-            // Arrange
-            var (repo, _, mockContext) = CreateRepositoryWithMocks();
-            var newEntity = new ProposedProject { Parentproject = "PP001", Projecttitle = "New Project" };
-
-            // Act
-            await repo.AddProjectAsync(newEntity);
-
-            // Assert
-            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+            Assert.Single(result);
+            var item = result[0];
+            Assert.Equal("PP001",    item.Parentproject);
+            Assert.Equal("PROG1",    item.Program);
+            Assert.Equal("CUST_ABC", item.Customer);
+            Assert.Equal("Yes",      item.OnFps);
         }
 
         #endregion

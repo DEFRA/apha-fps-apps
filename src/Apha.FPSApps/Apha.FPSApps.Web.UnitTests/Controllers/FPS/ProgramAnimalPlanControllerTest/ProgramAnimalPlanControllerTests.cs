@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +13,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
     public class ProgramAnimalPlanControllerTests
     {
         private readonly IProgramService _programService;
+        private readonly IAppStateService _appStateService;
         private readonly ProgramAnimalPlanController _controller;
 
         public ProgramAnimalPlanControllerTests()
         {
             _programService = Substitute.For<IProgramService>();
-            _controller = new ProgramAnimalPlanController(_programService);
+            _appStateService = Substitute.For<IAppStateService>();
+            _controller = new ProgramAnimalPlanController(_programService, _appStateService);
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -64,13 +67,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
         }
 
         [Fact]
-        public async Task Index_WithoutProgramNo_UsesEmptySelectedProgramNo()
+        public async Task Index_WithoutProgramNo_FallsBackToFirstProgrammeInList()
         {
             // Arrange
             var programs = BuildProgramList();
 
             _programService.GetAllProgramsAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+            _programService.GetProgramByIdAsync("P001")
+                .Returns(ApiResponseDto<ProgramDto?>.SuccessResponse(programs.First()));
 
             // Act
             var result = await _controller.Index(null);
@@ -79,11 +84,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramAnimalPlanController
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProgramAnimalPlanViewModel>(viewResult.Model);
 
-            Assert.Equal(string.Empty, model.SelectedProgramNo);
-            Assert.Equal(string.Empty, model.SelectedProgramme);
-            Assert.Equal(string.Empty, model.Manager);
-            Assert.Equal(2, model.ProgrammeList.Count);
-            await _programService.DidNotReceive().GetProgramByIdAsync(Arg.Any<string>());
+            Assert.Equal("P001", model.SelectedProgramNo);
+            Assert.Equal(2,      model.ProgrammeList.Count);
         }
 
         [Fact]

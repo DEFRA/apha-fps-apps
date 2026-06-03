@@ -27,9 +27,12 @@
             
         </li>
         <li>
-            <a class="dropdown-item" href="#">
-                Maintain Resource Centres
-            </a>
+            
+                <a class="dropdown-item@(Model == "ResourceCentreMaintenance" ? " sidenav-title" : "")"
+                       asp-area="FPS" asp-controller="ResourceCentreMaintenance" asp-action="Index">
+                     Maintain Resource Centres
+                </a>
+           
         </li>
         <li>
             <a class="dropdown-item" href="#">
@@ -55,7 +58,8 @@
         </li>
       
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "ProfitCentreGradeMaint" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="ProfitCentreGradeMaint" asp-action="Index">
                 Maintain RC Grades (Defra)
             </a>
         </li>
@@ -97,7 +101,8 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "AnimalMaintenance" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="AnimalMaintenance" asp-action="Index">
                 Maintain Animals
             </a>
         </li>

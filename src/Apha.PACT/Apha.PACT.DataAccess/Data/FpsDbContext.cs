@@ -20,6 +20,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<TimeCodeValid> TimeCodeValids { get; set; }
         public virtual DbSet<WorkGroup> WorkGroups { get; set; }
         public virtual DbSet<ProjectInvoice> ProjectInvoices { get; set; }
+        public virtual DbSet<SummarisedWgTimeView> SummarisedWgTimeViews { get; set; }
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
         public virtual DbSet<TestCapability> TestCapabilities { get; set; }
         public virtual DbSet<TestRequirement> TestRequirements { get; set; }
@@ -38,6 +39,10 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<CalenderMonth> CalenderMonths { get; set; }
         public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
         public virtual DbSet<WorkGroupStaffView> WorkGroupStaffViews { get; set; }
+        public virtual DbSet<WgSummarisedStaffTimeUsageView> WgSummarisedStaffTimeUsageViews { get; set; }
+        public virtual DbSet<WorkGroupStaffView> PactStaffViews { get; set; }        
+        public virtual DbSet<PactProfitCentreView> PactProfitCentreViews { get; set; }
+        public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -106,6 +111,17 @@ namespace Apha.PACT.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new WorkGroupStaffViewMap());
             modelBuilder.Entity<WorkGroupStaffView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new WgSummarisedStaffTimeUsageViewMap());
+            modelBuilder.Entity<WgSummarisedStaffTimeUsageView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new SummarisedWgTimeViewMap());
+            modelBuilder.Entity<SummarisedWgTimeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);            
+
+            modelBuilder.ApplyConfiguration(new PactProfitCentreViewMap());
+
+            modelBuilder.ApplyConfiguration(new ProfitCentreMap());
+
         }
     }
 }

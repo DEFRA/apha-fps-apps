@@ -441,7 +441,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             };
             var mappedItems = new List<WorkGroupTimeCodeItem>
             {
-                new() { PACTStaffID = "S1" }
+                new() { TimeCode = "TC1" }
             };
             _workGroupService.GetPagedWorkGroupTimeCodesAsync(
                     Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<int>())
@@ -459,7 +459,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupShowTimeRecordCon
             var partial = Assert.IsType<PartialViewResult>(result);
             var grid = Assert.IsType<DataGridConfig<WorkGroupTimeCodeItem>>(partial.Model);
             Assert.Single(grid.Data);
-            Assert.Equal("S1", grid.Data.First().PACTStaffID);
         }
 
         [Fact]

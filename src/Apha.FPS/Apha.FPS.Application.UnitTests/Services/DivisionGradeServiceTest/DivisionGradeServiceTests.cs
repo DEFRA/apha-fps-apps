@@ -327,5 +327,44 @@ namespace Apha.FPS.Application.UnitTests.Services.DivisionGradeServiceTest
         }
 
         #endregion
+
+        #region GetAllDivisionGradeCodesAsync Tests
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_ReturnsDivisionGradeCodes()
+        {
+            // Arrange
+            var codes = new List<string> { "A-VSD", "B-VSD", "C-VSD" };
+            _mockRepository.GetAllDivisionGradeCodesAsync().Returns(codes);
+
+            // Act
+            var result = await _sut.GetAllDivisionGradeCodesAsync();
+
+            // Assert
+            result.Should().BeEquivalentTo(codes);
+            await _mockRepository.Received(1).GetAllDivisionGradeCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_ReturnsEmpty_WhenNoCodes()
+        {
+            _mockRepository.GetAllDivisionGradeCodesAsync().Returns([]);
+
+            var result = await _sut.GetAllDivisionGradeCodesAsync();
+
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_WhenRepositoryThrows_PropagatesException()
+        {
+            _mockRepository.GetAllDivisionGradeCodesAsync()
+                .ThrowsAsync(new InvalidOperationException("DB failure"));
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _sut.GetAllDivisionGradeCodesAsync());
+        }
+
+        #endregion
     }
 }

@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
@@ -11,140 +11,78 @@ using Microsoft.AspNetCore.Mvc;
 namespace Apha.FPS.Api.Controllers
 {
     /// <summary>
-    /// Controller for managing animal-related operations.
-    /// </summary>    
-    [ApiController]
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
-    [ApiVersion("1.0")]
+    /// Controller for managing Animal Master (tblAnimals_MAP) CRUD operations.
+    /// </summary>
+    [Authorize(Roles = "API-FPSAdmin")]
     [Route("api/v{version:apiVersion}/animal")]
+    [ApiController]
+    [ApiVersion("1.0")]
     public class AnimalController : ControllerBase
     {
         private readonly IAnimalService _animalService;
         private readonly IMapper _mapper;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AnimalController"/> class.
-        /// </summary>
-        /// <param name="animalService">The animal service.</param>
-        /// <param name="mapper">The AutoMapper instance.</param>
-        public AnimalController(
-                        IAnimalService animalService,
-                        IMapper mapper)
+        public AnimalController(IAnimalService animalService, IMapper mapper)
         {
-            _animalService = animalService;
-            _mapper = mapper;
+            _animalService = animalService ?? throw new ArgumentNullException(nameof(animalService));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        /// <summary>
-        /// Gets a paginated list of animal costs for a specific job code.
-        /// </summary>
-        /// <param name="query">Pagination and filter parameters.</param>
-        /// <param name="jobCode">The job code to filter animal costs.</param>
-        /// <returns>A paginated list of animal cost view results.</returns>
+        /// <summary>Gets all animals.</summary>
         [HttpGet]
-        public async Task<IActionResult> GetAnimalCostAsync([FromQuery] PaginationReq<string> query, string jobCode)
+        public async Task<ActionResult> GetAllAnimalsAsync()
         {
-            var filter = _mapper.Map<QueryParameters<string>>(query);
-            var result = await _animalService.GetAnimalCostAsync(filter, jobCode);
-            return Ok(_mapper.Map<PaginationRes<AnimalCostViewRes>>(result));
+            var dtos = await _animalService.GetAllAnimalsAsync();
+            return Ok(_mapper.Map<List<AnimalRes>>(dtos));
         }
 
-        /// <summary>
-        /// Gets a lookup list of all animals.
-        /// </summary>
-        /// <returns>A list of animal resources.</returns>
-        [HttpGet("lookup")]
-        public async Task<IActionResult> GetAnimalLookupAsync()
+        /// <summary>Gets a paged list of animals.</summary>
+        [HttpGet("paged")]
+        public async Task<ActionResult> GetAllAnimalsPagedAsync([FromQuery] QueryParameters<string> query)
         {
-            var result = await _animalService.GetAnimalLookupAsync();
-            return Ok(_mapper.Map<List<AnimalRes>>(result));
+            var paged = await _animalService.GetAllAnimalsAsync(query);
+            return Ok(_mapper.Map<PaginationRes<AnimalRes>>(paged));
         }
 
-        /// <summary>
-        /// Gets the rate for a specific animal type.
-        /// </summary>
-        /// <param name="animalType">The animal type identifier.</param>
-        /// <param name="jobCode">The job code to determine the project rate.</param>
-        /// <returns>The rate for the specified animal type, or NotFound if not found.</returns>
-        [HttpGet("rate")]
-        public async Task<IActionResult> GetAnimalRateByIdAsync(string animalType, string jobCode)
+        /// <summary>Gets an animal by its type key.</summary>
+        [HttpGet("{animalType}")]
+        public async Task<ActionResult<AnimalRes>> GetAnimalByIdAsync(string animalType)
         {
-            var result = await _animalService.GetAnimalRateByIdAsync(animalType, jobCode);
-            if (result.HasValue)
-            {
-                return Ok(result.Value);
-            }
-            return NotFound();
+            var dto = await _animalService.GetAnimalByIdAsync(animalType);
+            if (dto == null)
+                throw new ArgumentException($"Animal '{animalType}' not found.");
+            return Ok(_mapper.Map<AnimalRes>(dto));
         }
 
-        /// <summary>
-        /// Adds a new animal cost entry.
-        /// </summary>
-        /// <param name="animalReq">The animal request data.</param>
-        /// <returns>The created animal request resource.</returns>
+        /// <summary>Creates a new animal master record.</summary>
         [HttpPost]
-        public async Task<IActionResult> AddAnimalCostAsync(AnimalRequestReq animalReq)
+        public async Task<ActionResult<AnimalRes>> CreateAnimal([FromBody] AnimalReq req)
         {
-            var mapAnimalReq = _mapper.Map<AnimalRequestDto>(animalReq);
-            var result = await _animalService.AddAnimalCostAsync(mapAnimalReq);
-            return Ok(_mapper.Map<AnimalRequestRes>(result));
+            var dto = _mapper.Map<AnimalDto>(req);
+            var added = await _animalService.AddAnimalAsync(dto);
+            return Ok(_mapper.Map<AnimalRes>(added));
         }
 
-        /// <summary>
-        /// Updates an existing animal cost entry.
-        /// </summary>
-        /// <param name="animalReq">The animal request data to update.</param>
-        /// <returns>The updated animal request resource.</returns>
+        /// <summary>Updates an existing animal master record.</summary>
         [HttpPut]
-        public async Task<IActionResult> UpdateAnimalCostAsync(AnimalRequestReq animalReq)
+        public async Task<ActionResult<AnimalRes>> UpdateAnimal([FromBody] AnimalReq req)
         {
-            var mapAnimalReq = _mapper.Map<AnimalRequestDto>(animalReq);
-            var result = await _animalService.UpdateAnimalCostAsync(mapAnimalReq);
-            return Ok(_mapper.Map<AnimalRequestRes>(result));
+            var dto = _mapper.Map<AnimalDto>(req);
+            var updated = await _animalService.UpdateAnimalAsync(dto);
+            return Ok(_mapper.Map<AnimalRes>(updated));
         }
 
-        /// <summary>
-        /// Returns the total animal cost (all records, unpaged) for a given job code.
-        /// </summary>
-        /// <param name="jobCode">The job code.</param>
-        /// <returns>Total animal cost as a decimal.</returns>
-        [HttpGet("totalanimalcost")]
-        public async Task<IActionResult> GetTotalAnimalCostAsync([FromQuery] string jobCode)
+        /// <summary>Deletes an animal master record.</summary>
+        [HttpDelete("{animalType}")]
+        public async Task<IActionResult> DeleteAnimal(string animalType)
         {
-            var total = await _animalService.GetTotalAnimalCostAsync(jobCode);
-            return Ok(total);
-        }
+            if (string.IsNullOrWhiteSpace(animalType))
+                throw new ArgumentException("Animal type cannot be null or empty.", nameof(animalType));
 
-        /// <summary>
-        /// Gets a single animal cost view record by index counter and job code.
-        /// </summary>
-        /// <param name="indCounter">The index counter of the animal cost entry.</param>
-        /// <param name="jobCode">The job code.</param>
-        /// <returns>The animal cost view record, or NotFound if not found.</returns>
-        [HttpGet("view")]
-        public async Task<IActionResult> GetAnimalCostViewByIdAsync([FromQuery] int indCounter, [FromQuery] string jobCode)
-        {
-            var result = await _animalService.GetAnimalCostViewByIdAsync(indCounter, jobCode);
-            if (result == null)
-                throw new KeyNotFoundException("Data not found.");
-            return Ok(_mapper.Map<AnimalCostViewRes>(result));
+            var deleted = await _animalService.DeleteAnimalAsync(animalType);
+            if (!deleted)
+                throw new ArgumentException($"Animal '{animalType}' not found.");
+            return Ok(deleted);
         }
-
-        /// <summary>
-        /// Deletes an animal cost entry by its index counter.
-        /// </summary>
-        /// <param name="indCounter">The index counter of the animal cost entry to delete.</param>
-        /// <returns>True if deleted; otherwise, throws if not found.</returns>
-        [HttpDelete]
-        public async Task<IActionResult> DeleteAnimalCostAsync(int indCounter)
-        {
-            var isDeleted = await _animalService.DeleteAnimalCostAsync(indCounter);
-            if (!isDeleted)
-            {
-                throw new KeyNotFoundException("Data not found.");
-            }
-            return Ok(isDeleted);
-        }
-
     }
 }

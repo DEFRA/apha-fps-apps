@@ -124,19 +124,24 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     // ── Tests ────────────────────────────────────────────────────────────────
 
-    public async Task<IEnumerable<TestRequirementDto>> GetTestRequirementsAsync(string projectId, int year)
+    public async Task<PaginatedResult<TestRequirementDto>> GetTestRequirementsAsync(
+        string projectId, int year, QueryParameters<string> query)
     {
-        var rows = await _testRepo.GetTestRequirementsByProjectYearAsync(projectId, year);
-        return rows.Select(r => new TestRequirementDto
+        PaginationParameters<string> filter = _mapper.Map<PaginationParameters<string>>(query);
+        PagedData<TestRequirementDetailView> result = await _testRepo.GetTestRequirementsByProjectYearAsync(projectId, year, filter);
+
+        var dtos = result.Data.Select(r => new TestRequirementDto
         {
-            Project = r.Project,
-            Year = r.Year,
-            TestCode = r.TestCode,
-            NumberOfTests = r.NumberOfTests,
-            UnitPrice = r.UnitPrice,
-            TestCost = r.TestCost,
+            Project         = r.Project,
+            Year            = r.Year,
+            TestCode        = r.TestCode,
+            NumberOfTests   = r.NumberOfTests,
+            UnitPrice       = r.UnitPrice,
+            TestCost        = r.TestCost,
             TestDescription = r.TestDescription
         });
+
+        return new PaginatedResult<TestRequirementDto>(dtos, _mapper.Map<PaginationDto>(result.PaginationData));
     }
 
     public async Task<TestRequirementDto> AddTestRequirementAsync(TestRequirementDto dto)
@@ -160,20 +165,25 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     // ── Animals ──────────────────────────────────────────────────────────────
 
-    public async Task<IEnumerable<AnimalRequirementDto>> GetAnimalRequirementsAsync(string projectId, int year)
+    public async Task<PaginatedResult<AnimalRequirementDto>> GetAnimalRequirementsAsync(
+        string projectId, int year, QueryParameters<string> query)
     {
-        var rows = await _animalRepo.GetAnimalRequirementsByProjectYearAsync(projectId, year);
-        return rows.Select(r => new AnimalRequirementDto
+        PaginationParameters<string> filter = _mapper.Map<PaginationParameters<string>>(query);
+        PagedData<AnimalRequirementDetailView> result = await _animalRepo.GetAnimalRequirementsByProjectYearAsync(projectId, year, filter);
+
+        var dtos = result.Data.Select(r => new AnimalRequirementDto
         {
-            ArIdentity = r.ArIdentity,
-            Project = r.Project,
-            Year = r.Year,
-            AnimalType = r.AnimalType,
-            NumberOfDays = r.NumberOfDays,
+            ArIdentity      = r.ArIdentity,
+            Project         = r.Project,
+            Year            = r.Year,
+            AnimalType      = r.AnimalType,
+            NumberOfDays    = r.NumberOfDays,
             NumberOfAnimals = r.NumberOfAnimals,
-            DailyRate = r.DailyRate,
-            AnimalCost = r.AnimalCost
+            DailyRate       = r.DailyRate,
+            AnimalCost      = r.AnimalCost
         });
+
+        return new PaginatedResult<AnimalRequirementDto>(dtos, _mapper.Map<PaginationDto>(result.PaginationData));
     }
 
     public async Task<AnimalRequirementDto> AddAnimalRequirementAsync(AnimalRequirementDto dto)
@@ -197,10 +207,13 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     // ── Additional Costs ─────────────────────────────────────────────────────
 
-    public async Task<IEnumerable<AdditionalCostDto>> GetAdditionalCostsAsync(string projectId, int year)
+    public async Task<PaginatedResult<AdditionalCostDto>> GetAdditionalCostsAsync(
+        string projectId, int year, QueryParameters<string> query)
     {
-        var rows = await _additionalCostRepo.GetAdditionalCostsByProjectYearAsync(projectId, year);
-        return rows.Select(r => new AdditionalCostDto
+        PaginationParameters<string> filter = _mapper.Map<PaginationParameters<string>>(query);
+        PagedData<AdditionalCostDetailView> result = await _additionalCostRepo.GetAdditionalCostsByProjectYearAsync(projectId, year, filter);
+
+        var dtos = result.Data.Select(r => new AdditionalCostDto
         {
             AcIdentity  = r.AcIdentity,
             Project     = r.Project,
@@ -211,6 +224,8 @@ public class YearlyDetailsService : IYearlyDetailsService
             CostEntered = r.CostEntered,
             Freq        = r.Freq
         });
+
+        return new PaginatedResult<AdditionalCostDto>(dtos, _mapper.Map<PaginationDto>(result.PaginationData));
     }
 
     public async Task<AdditionalCostDto> AddAdditionalCostAsync(AdditionalCostDto dto)
@@ -234,23 +249,24 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     // ── Lookups ──────────────────────────────────────────────────────────────
 
-    public async Task<IEnumerable<PayRateDto>> GetPayRatesAsync(bool isDefra)
+    public async Task<IEnumerable<PayRateDto>> GetPayRatesAsync(string projectId, int year, bool isDefra)
     {
-        var rates = await _projectYearRepo.GetPayRatesAsync(isDefra);
+        var rates = await _projectYearRepo.GetPayRatesAsync(projectId, year, isDefra);
         return rates.Select(r => new PayRateDto
         {
             WgGrade = r.WgGrade,
             ChargeRate = r.ChargeRate,
             PayRate = r.PayRate,
             Npr = r.Npr,
-            Ohr = r.Ohr
+            Ohr = r.Ohr,
+            ChargeRateWithInflamation = r.ChargeRateWithInflamation
         });
     }
 
-    public async Task<IEnumerable<AnimalRateDto>> GetAnimalRatesAsync(bool isDefra)
+    public async Task<IEnumerable<AnimalRateDto>> GetAnimalRatesAsync(string projectId, int year, bool isDefra)
     {
-        var rates = await _animalRepo.GetAnimalRatesAsync(isDefra);
-        return rates.Select(r => new AnimalRateDto { AnimalType = r.AnimalType, DailyRate = r.DailyRate });
+        var rates = await _animalRepo.GetAnimalRatesAsync(projectId, year, isDefra);
+        return rates.Select(r => new AnimalRateDto { AnimalType = r.AnimalType, DailyRate = r.DailyRate, DailyRateWithInflamation = r.DailyRateWithInflamation });
     }
 
     public async Task<IEnumerable<AccountCategoryDto>> GetAccountCategoriesAsync()
@@ -259,14 +275,15 @@ public class YearlyDetailsService : IYearlyDetailsService
         return cats.Select(c => new AccountCategoryDto { AccShortName = c.AccShortName, UseInflation = c.UseInflation });
     }
 
-    public async Task<IEnumerable<TestCodeLookupDto>> GetTestCodeLookupsAsync(bool isDefra)
+    public async Task<IEnumerable<TestCodeLookupDto>> GetTestCodeLookupsAsync(string projectId, int year, bool isDefra)
     {
-        var lookups = await _testRepo.GetTestCodeLookupsAsync(isDefra);
+        var lookups = await _testRepo.GetTestCodeLookupsAsync(projectId, year, isDefra);
         return lookups.Select(t => new TestCodeLookupDto
         {
             ItemCode = t.ItemCode,
             ItemDescription = t.ItemDescription,
-            UnitPrice = t.UnitPrice
+            UnitPrice = t.UnitPrice,
+            UnitPriceWithInflamation = t.UnitPriceWithInflamation
         });
     }
 

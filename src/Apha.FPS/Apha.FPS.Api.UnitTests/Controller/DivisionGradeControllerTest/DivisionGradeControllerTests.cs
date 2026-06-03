@@ -322,6 +322,53 @@ namespace Apha.FPS.Api.UnitTests.Controller.DivisionGradeControllerTest
 
         #endregion
 
+        #region GetAllDivisionGradeCodesAsync Tests
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_ReturnsOkWithCodes()
+        {
+            // Arrange
+            var codes = new List<string> { "A-VSD", "B-VSD", "C-VSD" };
+            _serviceMock.GetAllDivisionGradeCodesAsync().Returns(codes);
+
+            // Act
+            var result = await _controller.GetAllDivisionGradeCodesAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var data = Assert.IsType<List<string>>(okResult.Value);
+            Assert.Equal(3, data.Count);
+            await _serviceMock.Received(1).GetAllDivisionGradeCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_ReturnsEmptyList_WhenNoCodes()
+        {
+            // Arrange
+            _serviceMock.GetAllDivisionGradeCodesAsync().Returns([]);
+
+            // Act
+            var result = await _controller.GetAllDivisionGradeCodesAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var data = Assert.IsType<List<string>>(okResult.Value);
+            Assert.Empty(data);
+        }
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.GetAllDivisionGradeCodesAsync().ThrowsAsync(new InvalidOperationException("error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _controller.GetAllDivisionGradeCodesAsync());
+        }
+
+        #endregion
+
         #region Additional Edge Case Tests
 
         [Fact]

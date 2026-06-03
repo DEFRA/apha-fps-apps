@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Dynamic;
 using System.Linq.Expressions;
+using System.Xml.Linq;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Apha.FPS.DataAccess.Repositories
@@ -32,6 +33,17 @@ namespace Apha.FPS.DataAccess.Repositories
             var result = (await queryStaffJob.ToListAsync())
                 .Select(ComputeStaffCost)
                 .ToList();
+
+            var lookupStaffList = await GetStaffWorkgroupLookup();
+            var staffNameMap = lookupStaffList
+                .GroupBy(s => s.StaffID)
+                .ToDictionary(g => g.Key, g => g.First().Name);
+
+            foreach (var item in result)
+            {
+                if (item.StaffID != null && staffNameMap.TryGetValue(item.StaffID, out var name))
+                    item.Name = name;
+            }
 
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
@@ -98,6 +110,13 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var queryStaffJob = await BuildJobStaffCostQueryAsync(jobCode);
             var record = await queryStaffJob.Where(e => e.StaffID == staffId).FirstOrDefaultAsync();
+
+            var lookupStaffList = await GetStaffWorkgroupLookup();
+            var staffName = lookupStaffList
+                .Where(p=> p.StaffID == staffId).Select(s => new { s.StaffID, s.Name }).FirstOrDefault();
+
+            record?.Name = staffName?.Name;
+           
             return record != null ? ComputeStaffCost(record) : null;
         }
 
@@ -266,7 +285,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         StaffID = sj.StaffId,
                         JobCode = sj.JobCode,
                         PlannedHours = sj.PlannedHours ?? 0,
-                        Name = s.Name,
+                        Name = "",
                         WorkGroupGrade = s.WorkGroupGrade,
                         ChargeRate = dailyRate,
                         StaffCost = 0m,

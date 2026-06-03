@@ -1286,6 +1286,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         private static EmployeeRepository CreateRepositoryForWorkGroupStaff(
             IEnumerable<WorkGroupStaff> WorkGroupStaff,
             IEnumerable<WorkgroupGrade>? workgroupGrades = null,
+            IEnumerable<Workgroup>? workgroups = null,
+            IEnumerable<PactWorkGroupGradeView>? pactWorkGroupGradeViews = null,
             int fpsYear = DefaultTestFpsYear)
         {
             var mockFpsYearContext = CreateMockFpsYearContext(fpsYear);
@@ -1306,6 +1308,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             // WorkgroupGrades DbSet
             var gradesMockSet = RepositoryTestHelper.CreateMockDbSet(workgroupGrades ?? Enumerable.Empty<WorkgroupGrade>());
             mockContext.Setup(x => x.WorkgroupGrades).Returns(gradesMockSet.Object);
+
+            // Workgroups DbSet (used by GetWorkGroupStaffAsync when workGroup filter is applied)
+            var workgroupsMockSet = RepositoryTestHelper.CreateMockDbSet(workgroups ?? Enumerable.Empty<Workgroup>());
+            mockContext.Setup(x => x.Workgroups).Returns(workgroupsMockSet.Object);
+
+            // PactWorkGroupGradeViews DbSet (used by GetWorkGroupStaffAsync when workGroup filter is applied)
+            var pactGradesMockSet = RepositoryTestHelper.CreateMockDbSet(pactWorkGroupGradeViews ?? Enumerable.Empty<PactWorkGroupGradeView>());
+            mockContext.Setup(x => x.PactWorkGroupGradeViews).Returns(pactGradesMockSet.Object);
 
             return new EmployeeRepository(mockContext.Object, mockFpsYearContext.Object);
         }
@@ -1463,24 +1473,32 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetWorkGroupStaffAsync_FilterByWorkGroup_ReturnsMatchingPeople()
         {
             // Arrange
+            // GetWorkGroupStaffAsync joins: Workgroups → PactWorkGroupGradeViews → WorkGroupStaffs
             var people = new List<WorkGroupStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2" }
             };
-            var grades = new List<WorkgroupGrade>
+            var workgroups = new List<Workgroup>
             {
-                new() { WgGrade = "WG1", Workgroup = "Group A" },
-                new() { WgGrade = "WG2", Workgroup = "Group B" }
+                new() { WorkgroupName = "Group A" },
+                new() { WorkgroupName = "Group B" }
             };
-            var repo = CreateRepositoryForWorkGroupStaff(people, grades);
+            var pactGrades = new List<PactWorkGroupGradeView>
+            {
+                new() { WgGrade = "WG1", WorkGroup = "Group A" },
+                new() { WgGrade = "WG2", WorkGroup = "Group B" }
+            };
+            var repo = CreateRepositoryForWorkGroupStaff(
+                people,
+                workgroups: workgroups,
+                pactWorkGroupGradeViews: pactGrades);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
 
             // Act
             var result = await repo.GetWorkGroupStaffAsync(query, "Group A");
 
-            // Assert
-            // workGroup filter matches via join: WG1 belongs to Group A
+            // Assert – workGroup filter joins through Workgroups + PactWorkGroupGradeViews; only WG1 staff returned
             Assert.All(result.Data, p => Assert.Equal("WG1", p.WorkGroupGrade));
         }
 

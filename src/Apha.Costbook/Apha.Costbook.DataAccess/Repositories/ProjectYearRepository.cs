@@ -11,11 +11,13 @@ public class ProjectYearRepository : IProjectYearRepository
 {
     private readonly CostbookDbContext _context;
     private readonly ISettingsRepository _settingsRepo;
+    private readonly IProjectRepository _projectRepo;
 
-    public ProjectYearRepository(CostbookDbContext context, ISettingsRepository settingsRepo)
+    public ProjectYearRepository(CostbookDbContext context, ISettingsRepository settingsRepo, IProjectRepository projectRepo)
     {
         _context = context;
         _settingsRepo = settingsRepo;
+        _projectRepo = projectRepo;
     }
 
     public async Task<IEnumerable<ProjectYear>> GetByProjectAsync(string project)
@@ -168,13 +170,17 @@ public class ProjectYearRepository : IProjectYearRepository
             errors.Add($"Year has {count} {label}. Remove them first.");
     }
 
-    public async Task<IEnumerable<PayRateLookup>> GetPayRatesAsync(bool isDefra)
+    public async Task<IEnumerable<PayRateLookup>> GetPayRatesAsync(string projectId, int year, bool isDefra)
     {
-        // qryPayRates_NonDefra / qryPayRates_Defra:
-        // SELECT WorkGroupGrade.WGGrade, tblPCGrades.ChargeRate, tblPCGrades.PayRate, tblPCGrades.NPR, tblPCGrades.OHR
-        // FROM tblPCGrades INNER JOIN WorkGroupGrade ON tblPCGrades.PCGrade = WorkGroupGrade.ProfitCentreGrade
-        // WHERE tblPCGrades.ChargeRate <> 0
-        // Defra variant uses DefraChargeRate; NonDefra uses ChargeRate
+        var decodedId = HttpUtility.UrlDecode(projectId);
+
+        var currentYearSetting = await _settingsRepo.GetSettingValueByIdAsync("CurrentYear");
+
+        if (string.IsNullOrEmpty(currentYearSetting) || !int.TryParse(currentYearSetting, out int fyear))
+        {
+            throw new InvalidOperationException("CurrentYear setting not found or invalid in settings table.");
+        }
+
         var rows = await _context.WorkGroupGrades
             .AsNoTracking()
             .Join(
@@ -185,12 +191,21 @@ public class ProjectYearRepository : IProjectYearRepository
             .Where(x => isDefra ? x.DefraChargeRate != 0 : x.ChargeRate != 0)
             .ToListAsync();
 
-        return rows.Select(x => new PayRateLookup(
-            x.WgGrade,
-            isDefra ? (double?)x.DefraChargeRate : (double?)x.ChargeRate,
-            (double?)x.PayRate,
-            (double?)x.Npr,
-            (double?)x.Ohr));
+        double inflationFactor = await _projectRepo.GetInflationFactorAsync("InflationStaff", decodedId, year, fyear);
+
+        return rows.Select(x =>
+        {
+            var baseRate = isDefra ? (double?)x.DefraChargeRate : (double?)x.ChargeRate;
+            return new PayRateLookup
+            {
+                WgGrade = x.WgGrade,
+                ChargeRate = (decimal?)baseRate,
+                PayRate = (decimal?)x.PayRate,
+                Npr = (decimal?)x.Npr,
+                Ohr = (decimal?)x.Ohr,
+                ChargeRateWithInflamation = baseRate.HasValue ? (decimal?)(baseRate.Value * inflationFactor) : null
+            };
+        });
     }
 
     private async Task<double?> GetSettingDoubleAsync(string key)

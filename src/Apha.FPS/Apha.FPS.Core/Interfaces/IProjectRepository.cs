@@ -5,6 +5,8 @@ namespace Apha.FPS.Core.Interfaces
 {
     public interface IProjectRepository
     {
+        // ProjectProfitability — project profitability query
+        Task<PagedData<ProjectProfitabilityView>> GetProjectProfitabilityAsync(PaginationParameters<string> query, string programNo, string workTypeFilter);
         Task<IEnumerable<ProjectView>> GetAllProjectsAsync();
         Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync();
         Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query);
@@ -17,6 +19,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> DeleteProjectAsync(string parentProject);
         Task<bool> HasAssociatedJobCodesAsync(string parentProject);
         Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo);
+        Task<PagedData<Project>> GetProjectsByProjectGroupAsync(PaginationParameters<string> query, string projectGroup);
 
         // ProgrammeNewProject operations
         Task<bool> CheckProjectExistsAsync(string newProject);

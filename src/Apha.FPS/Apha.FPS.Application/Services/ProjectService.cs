@@ -139,6 +139,13 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<PaginatedResult<ProjectDto>>(projects);
         }
 
+        public async Task<PaginatedResult<ProjectDto>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup)
+        {
+            var filter = _mapper.Map<PaginationParameters<string>>(query);
+            var projects = await _projectRepository.GetProjectsByProjectGroupAsync(filter, projectGroup);
+            return _mapper.Map<PaginatedResult<ProjectDto>>(projects);
+        }
+
         public async Task<bool> CheckProjectExistsAsync(string newProject)
         {
             ArgumentNullException.ThrowIfNull(newProject);
@@ -207,6 +214,14 @@ namespace Apha.FPS.Application.Services
                 throw new BusinessValidationErrorException(errors);
 
             await _projectRepository.DeleteProjectAndChildrenAsync(parentProject);
+        }
+
+        public async Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectProfitabilityAsync(
+            QueryParameters<string> query, string programNo, string workTypeFilter)
+        {
+            var pagedResult = await _projectRepository.GetProjectProfitabilityAsync(
+                _mapper.Map<PaginationParameters<string>>(query), programNo, workTypeFilter);
+            return _mapper.Map<PaginatedResult<ProjectProfitabilityDto>>(pagedResult);
         }
     }
 }

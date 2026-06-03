@@ -6,5 +6,7 @@ namespace Apha.PACT.Application.Dtos
         public string? Description { get; set; }
         public int FpsYear { get; set; }
         public string? ProfitCentre { get; set; }
+        public short? SendEmail { get; set; }
+        public string? EmailRecipient { get; set; }
     }
 }

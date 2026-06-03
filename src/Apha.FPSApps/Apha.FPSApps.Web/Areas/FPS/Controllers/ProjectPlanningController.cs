@@ -1,4 +1,5 @@
-﻿using Apha.FPSApps.Application.Interfaces.FPS;
+﻿using Apha.Common.Utilities.ExcelExport;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
@@ -7,6 +8,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
+using System.Reflection;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {    
@@ -21,6 +23,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly ITestRequirementService _testRequirementService;
         private readonly IAdditionalCostService _additionalCostService;
         private readonly IProjectService _projectService;
+        private readonly IExcelExportService _excelExportService;
 
         public ProjectPlanningController(
             IMapper mapper,
@@ -28,7 +31,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             IAnimalPlanService animalPlanService,
             ITestRequirementService testRequirementService,
             IAdditionalCostService additionalCostService,
-            IProjectService projectService)
+            IProjectService projectService,
+            IExcelExportService excelExportService)
         {
             _mapper = mapper;
             _staffJobService = staffJobService;
@@ -36,6 +40,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             _testRequirementService = testRequirementService;
             _additionalCostService = additionalCostService;
             _projectService = projectService;
+            _excelExportService = excelExportService;
         }
 
         public async Task<IActionResult> Index(string projectCode, string? selectedYear = null)
@@ -70,6 +75,46 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
 
             return View(model);
+        }
+
+        public async Task<IActionResult> ExportToExcel(string projectCode)
+        {
+            if (string.IsNullOrWhiteSpace(projectCode))
+                throw new InvalidOperationException("Project code is required.");
+
+            var allRecords = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
+
+            var staffData = await _staffJobService.GetAllStaffJobsAsync(allRecords, projectCode);
+            var staffItems = staffData.Data != null
+                ? _mapper.Map<List<StaffJobItemViewModel>>(staffData.Data.ToList())
+                : new List<StaffJobItemViewModel>();
+
+            var animalData = await _animalPlanService.GetAllAnimalCostAsync(allRecords, projectCode);
+            var animalItems = animalData.Data != null
+                ? _mapper.Map<List<AnimalPlanItem>>(animalData.Data.ToList())
+                : new List<AnimalPlanItem>();
+
+            var testData = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(allRecords, projectCode);
+            var testItems = testData.Success && testData.Data != null
+                ? _mapper.Map<List<TestPlanItem>>(testData.Data)
+                : new List<TestPlanItem>();
+
+            var costData = await _additionalCostService.GetAdditionalCostsAsync(allRecords, projectCode);
+            var costItems = costData.Data != null
+                ? _mapper.Map<List<AdditionalCostItemViewModel>>(costData.Data)
+                : new List<AdditionalCostItemViewModel>();
+
+            var sheets = new List<ExcelSheetDefinition>
+            {
+                new() { SheetName = "Staff Booked",      Data = staffItems.Cast<object>(),  DataType = typeof(StaffJobItemViewModel),         IncludedProperties = GetVisibleProperties<StaffJobItemViewModel>() },
+                new() { SheetName = "Animals Booked",    Data = animalItems.Cast<object>(), DataType = typeof(AnimalPlanItem),                IncludedProperties = GetVisibleProperties<AnimalPlanItem>() },
+                new() { SheetName = "Tests Booked",      Data = testItems.Cast<object>(),   DataType = typeof(TestPlanItem),                  IncludedProperties = GetVisibleProperties<TestPlanItem>() },
+                new() { SheetName = "Exceptional Costs", Data = costItems.Cast<object>(),   DataType = typeof(AdditionalCostItemViewModel),   IncludedProperties = GetVisibleProperties<AdditionalCostItemViewModel>() }
+            };
+
+            var bytes = _excelExportService.ExportToExcelMultiSheet(sheets);
+            var fileName = $"ProjectPlanning_{projectCode}_{DateTime.Now:yyyyMMdd}.xlsx";
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
         private async Task<DataGridConfig<StaffJobItemViewModel>> GetStaffBookedDataGrid(string jobcode)
@@ -187,5 +232,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Pagination = paginationModel
             };
         }
+            private static IEnumerable<string> GetVisibleProperties<T>()
+            {
+                return typeof(T)
+                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(p =>
+                    {
+                        var attr = p.GetCustomAttribute<GridColumnAttribute>();
+                        return attr == null || attr.IsVisible;
+                    })
+                    .Select(p => p.Name);
+            }
+        }
     }
-}

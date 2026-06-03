@@ -94,6 +94,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<PactStaff> PactStaffs { get; set; }
 
 
+        public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -260,6 +261,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new TimeCostCalcsViewMap());
             modelBuilder.Entity<TimeCostCalcsView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new ProjectStaffPlanViewMap());
+            modelBuilder.Entity<ProjectStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new TimeCostCalcsMap());
             modelBuilder.Entity<TimeCostCalcs>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
