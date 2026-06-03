@@ -496,5 +496,318 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
         }
 
         #endregion
+
+        #region GetRecreateSummariesLogsAsync - Edge Cases
+
+        [Fact]
+        public async Task GetRecreateSummariesLogsAsync_WithLogsWithoutMatchingUsers_ReturnsLogsWithEmptyUserData()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            // Create logs without matching users in the Users table
+            var logs = new List<RecreateSummaryLogs>
+            {
+                new() { UserId = "NonExistentUser1", Period = 1, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = null! },
+                new() { UserId = "NonExistentUser2", Period = 2, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = null! }
+            };
+
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+            var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
+            var resultList = result.Data.ToList();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, resultList.Count);
+            Assert.All(resultList, log =>
+            {
+                Assert.NotNull(log.User);
+                Assert.Equal(string.Empty, log.User.UserName);
+                Assert.Equal(string.Empty, log.User.Comments);
+            });
+        }
+
+        [Fact]
+        public async Task GetRecreateSummariesLogsAsync_WithMixedUserData_ReturnsCorrectUserAssociations()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            // Create one user with matching CVLNT pattern
+            var matchedUser = new User { UserName = "CVLNTMatchedUser", Comments = "Matched Comment", Logs = new List<RecreateSummaryLogs>() };
+            await context.Users.AddAsync(matchedUser);
+
+            var logs = new List<RecreateSummaryLogs>
+            {
+                new() { UserId = "MatchedUser", Period = 1, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = null! },
+                new() { UserId = "UnmatchedUser", Period = 2, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = null! }
+            };
+
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+            var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "userid", descending: false);
+
+            // Act
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
+            var resultList = result.Data.ToList();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, resultList.Count);
+
+            // First log should have matched user
+            var matchedLog = resultList.First(l => l.UserId == "MatchedUser");
+            Assert.Equal("CVLNTMatchedUser", matchedLog.User.UserName);
+            Assert.Equal("Matched Comment", matchedLog.User.Comments);
+
+            // Second log should have empty user
+            var unmatchedLog = resultList.First(l => l.UserId == "UnmatchedUser");
+            Assert.Equal(string.Empty, unmatchedLog.User.UserName);
+            Assert.Equal(string.Empty, unmatchedLog.User.Comments);
+        }
+
+        [Fact]
+        public async Task GetRecreateSummariesLogsAsync_WithPageSizeMatchingTotalRecords_ReturnsAllRecordsInOnePage()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
+
+            var logs = Enumerable.Range(1, 10)
+                .Select(i => new RecreateSummaryLogs
+                {
+                    UserId = TestUserId,
+                    Period = (short)i,
+                    DateDone = DateTime.UtcNow.AddDays(-i),
+                    FpsYear = TestFpsYear,
+                    User = user
+                }).ToList();
+
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+            var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(10, result.Data.Count);
+            Assert.Equal(10, result.PaginationData.TotalRecords);
+            Assert.Equal(1, result.PaginationData.TotalPages);
+            Assert.Equal(1, result.PaginationData.PageNumber);
+        }
+
+        [Fact]
+        public async Task GetRecreateSummariesLogsAsync_WithSingleRecord_ReturnsSingleRecordWithCorrectPagination()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+            var user = new User { UserName = "CVLNT" + TestUserId, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
+            await context.Users.AddAsync(user);
+
+            var log = new RecreateSummaryLogs
+            {
+                UserId = TestUserId,
+                Period = TestPeriod,
+                DateDone = DateTime.UtcNow,
+                FpsYear = TestFpsYear,
+                User = null!
+            };
+
+            await context.RecreateSummaryLogs.AddAsync(log);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+            var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Data);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal(1, result.PaginationData.TotalPages);
+            Assert.Equal(TestUserId, result.Data.First().UserId);
+            Assert.Equal("CVLNT" + TestUserId, result.Data.First().User.UserName);
+        }
+
+        [Fact]
+        public async Task GetRecreateSummariesLogsAsync_WithEmptyStringsortBy_DefaultsToDateDoneDescending()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
+
+            var logs = new List<RecreateSummaryLogs>
+            {
+                new() { UserId = TestUserId, Period = 1, DateDone = new DateTime(2024, 1, 10), FpsYear = TestFpsYear, User = user },
+                new() { UserId = TestUserId, Period = 2, DateDone = new DateTime(2024, 3, 15), FpsYear = TestFpsYear, User = user },
+                new() { UserId = TestUserId, Period = 3, DateDone = new DateTime(2024, 2, 20), FpsYear = TestFpsYear, User = user }
+            };
+
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+            var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: string.Empty, descending: false);
+
+            // Act
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
+            var resultList = result.Data.ToList();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(3, resultList.Count);
+            Assert.Equal(new DateTime(2024, 3, 15), resultList[0].DateDone);
+            Assert.Equal(new DateTime(2024, 2, 20), resultList[1].DateDone);
+            Assert.Equal(new DateTime(2024, 1, 10), resultList[2].DateDone);
+        }
+
+        [Fact]
+        public async Task GetRecreateSummariesLogsAsync_WithMultipleUsersAndComplexJoin_ReturnsCorrectAssociations()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            // Create multiple users with CVLNT pattern
+            var users = new[]
+            {
+                new User { UserName = "CVLNTUserA", Comments = "Comment A", Logs = new List<RecreateSummaryLogs>() },
+                new User { UserName = "CVLNTUserB", Comments = "Comment B", Logs = new List<RecreateSummaryLogs>() },
+                new User { UserName = "CVLNTUserC", Comments = "Comment C", Logs = new List<RecreateSummaryLogs>() }
+            };
+            await context.Users.AddRangeAsync(users);
+
+            var logs = new List<RecreateSummaryLogs>
+            {
+                new() { UserId = "UserA", Period = 1, DateDone = new DateTime(2024, 1, 1), FpsYear = TestFpsYear, User = null! },
+                new() { UserId = "UserB", Period = 2, DateDone = new DateTime(2024, 1, 2), FpsYear = TestFpsYear, User = null! },
+                new() { UserId = "UserC", Period = 3, DateDone = new DateTime(2024, 1, 3), FpsYear = TestFpsYear, User = null! },
+                new() { UserId = "UserA", Period = 4, DateDone = new DateTime(2024, 1, 4), FpsYear = TestFpsYear, User = null! }
+            };
+
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+            var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "datedone", descending: false);
+
+            // Act
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
+            var resultList = result.Data.ToList();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(4, resultList.Count);
+            Assert.All(resultList, log => Assert.NotNull(log.User));
+            Assert.Equal("CVLNTUserA", resultList[0].User.UserName);
+            Assert.Equal("CVLNTUserB", resultList[1].User.UserName);
+            Assert.Equal("CVLNTUserC", resultList[2].User.UserName);
+            Assert.Equal("CVLNTUserA", resultList[3].User.UserName);
+        }
+
+        [Fact]
+        public async Task GetRecreateSummariesLogsAsync_WithCaseInsensitiveSortBy_HandlesCorrectly()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
+
+            var logs = new List<RecreateSummaryLogs>
+            {
+                new() { UserId = TestUserId, Period = 5, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user },
+                new() { UserId = TestUserId, Period = 2, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user },
+                new() { UserId = TestUserId, Period = 8, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user }
+            };
+
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+            var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "PERIOD", descending: false);
+
+            // Act
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
+            var resultList = result.Data.ToList();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(3, resultList.Count);
+            Assert.Equal((short)2, resultList[0].Period);
+            Assert.Equal((short)5, resultList[1].Period);
+            Assert.Equal((short)8, resultList[2].Period);
+        }
+
+        [Fact]
+        public async Task GetRecreateSummariesLogsAsync_WithZeroPageSize_StillReturnsValidPaginationData()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+            var user = new User { UserName = TestUserName, Comments = "Test Comment", Logs = new List<RecreateSummaryLogs>() };
+
+            var logs = new List<RecreateSummaryLogs>
+            {
+                new() { UserId = TestUserId, Period = 1, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = user }
+            };
+
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+            // Note: PaginationParameters might enforce minimum page size, but testing edge case
+            var parameters = new PaginationParameters<string>(page: 1, pageSize: 1);
+
+            // Act
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Data);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetRecreateSummariesLogsAsync_WithUserCommentsNull_ReturnsEmptyUserData()
+        {
+            // Arrange
+            await using var context = CreateTestContext(Guid.NewGuid().ToString());
+
+            // The join will return null UserComments when user doesn't exist
+            var logs = new List<RecreateSummaryLogs>
+            {
+                new() { UserId = "NoUser", Period = 1, DateDone = DateTime.UtcNow, FpsYear = TestFpsYear, User = null! }
+            };
+
+            await context.RecreateSummaryLogs.AddRangeAsync(logs);
+            await context.SaveChangesAsync();
+
+            var repository = new RecreateAndReleaseSummaryRepository(context);
+            var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repository.GetRecreateSummariesLogsAsync(parameters);
+            var firstLog = result.Data.FirstOrDefault();
+
+            // Assert
+            Assert.NotNull(firstLog);
+            Assert.NotNull(firstLog.User);
+            Assert.Equal(string.Empty, firstLog.User.UserName);
+            Assert.Equal(string.Empty, firstLog.User.Comments);
+            Assert.Empty(firstLog.User.Logs);
+        }
+
+        #endregion
     }
 }
