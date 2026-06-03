@@ -124,9 +124,14 @@
 
         .state-ready { background: var(--ready-bg); color: var(--ready-ink); border-color: #c9ddfd; }
         .state-submitting, .state-accepted { background: var(--active-bg); color: var(--active-ink); border-color: #b9d3fa; }
+        .state-pending { background: #e3f2ff; color: #1565c0; border-color: #b3d9f2; }
         .state-running { background: var(--running-bg); color: var(--running-ink); border-color: #b3ebdd; }
         .state-completed { background: var(--ok-bg); color: var(--ok-ink); border-color: #bfe8cd; }
-        .state-failed, .state-timeout, .state-delivery { background: var(--bad-bg); color: var(--bad-ink); border-color: #f1c2cc; }
+        .state-failed { background: var(--bad-bg); color: var(--bad-ink); border-color: #f1c2cc; }
+        .state-timeout { background: var(--bad-bg); color: var(--bad-ink); border-color: #f1c2cc; }
+        .state-retry { background: #fff3e0; color: #e65100; border-color: #ffe0b2; }
+        .state-cancelled { background: #f5f5f5; color: #616161; border-color: #e0e0e0; }
+        .state-skipped { background: #f5f5f5; color: #616161; border-color: #e0e0e0; }
 
         .action {
             border: 1px solid transparent;
@@ -140,35 +145,101 @@
             min-width: 180px;
         }
 
-        .action-secondary {
-            border: 1px solid #9bb8dd;
-            background: #eff5ff;
-            color: #1f4e86;
-            font-weight: 700;
-            font-size: 14px;
-            border-radius: 8px;
-            padding: 9px 14px;
+        .action[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+        .ref-section {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .ref-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 14px;
+            background: #f0f4fc;
+            border-bottom: 1px solid var(--line);
             cursor: pointer;
-            min-width: 180px;
-        }
-
-        .scenario-wrap {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        select {
-            width: 100%;
-            border: 1px solid #bcd;
-            border-radius: 8px;
-            padding: 8px 10px;
             font-size: 14px;
+            font-weight: 700;
+            color: #2a4560;
+            list-style: none;
+            user-select: none;
+        }
+        .ref-summary::-webkit-details-marker { display: none; }
+        .ref-summary::before { content: "▶ "; font-size: 11px; }
+        details[open] .ref-summary::before { content: "▼ "; }
+
+        .ref-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--ink-2);
+            border: 1px solid #c0cfe8;
+            border-radius: 999px;
+            padding: 2px 8px;
             background: #fff;
         }
 
-        .action[disabled] { opacity: 0.6; cursor: not-allowed; }
+        .ref-body {
+            padding: 14px;
+            font-size: 13px;
+        }
+
+        .ref-body h4 {
+            margin: 0 0 8px;
+            font-size: 13px;
+            color: #2a4560;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+            font-size: 12px;
+        }
+
+        .ref-table th {
+            background: #eff4ff;
+            border: 1px solid #cdd8e8;
+            padding: 6px 8px;
+            text-align: left;
+            font-weight: 700;
+            color: #2a4560;
+        }
+
+        .ref-table td {
+            border: 1px solid #dde5f0;
+            padding: 5px 8px;
+            vertical-align: top;
+        }
+
+        .ref-table tr:nth-child(even) td { background: #f7f9ff; }
+
+        .flow-block {
+            background: #091525;
+            color: #c8dff5;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 12px;
+            line-height: 1.55;
+            overflow-x: auto;
+            white-space: pre;
+            margin-bottom: 0;
+        }
+
+        .pill-xs {
+            display: inline-block;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border: 1px solid transparent;
+        }
 
         .meta {
             margin-top: 8px;
@@ -251,17 +322,6 @@
                     <button id="triggerBtn" class="action">Trigger RecreateSummaries</button>
                 </div>
 
-                <div class="scenario-wrap">
-                    <select id="scenarioSelect" aria-label="Select scenario to preview">
-                        <option value="failed">Failed</option>
-                        <option value="timeout">StartFailedTimeout</option>
-                        <option value="delivery">StartFailedDeliveryExhausted</option>
-                        <option value="running">Running</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                    <button id="scenarioBtn" class="action-secondary">Show Scenario</button>
-                </div>
-
                 <div id="statusMeta" class="meta">Ready to trigger via PACT API.</div>
             </div>
 
@@ -275,32 +335,196 @@
                     <pre id="raw">No trigger yet.</pre>
                 </div>
             </div>
+
+            <details class="ref-section">
+                <summary class="ref-summary">
+                    <span>Canonical States, DB Table Relation &amp; How to Handle UI Scenarios</span>
+                    <span class="ref-badge">Click to expand</span>
+                </summary>
+                <div class="ref-body">
+                    <h4>State Classification &amp; Source of Truth</h4>
+                    <table class="ref-table">
+                        <thead>
+                            <tr>
+                                <th>State</th>
+                                <th>Source of Truth</th>
+                                <th>DB Table</th>
+                                <th>Terminal?</th>
+                                <th>isRunning</th>
+                                <th>UI Pill</th>
+                                <th>Button Label</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="pill-xs state-accepted">TriggerAccepted</span></td>
+                                <td>Startup Watchdog</td>
+                                <td>PACT Trigger Store (in-memory)</td>
+                                <td>No</td>
+                                <td>true</td>
+                                <td>Blue spinner</td>
+                                <td>Polling…</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pill-xs state-accepted">WorkerProcessStarted</span></td>
+                                <td>Startup Watchdog</td>
+                                <td>PACT Trigger Store (in-memory)</td>
+                                <td>No</td>
+                                <td>true</td>
+                                <td>Blue spinner</td>
+                                <td>Polling…</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pill-xs state-timeout">StartFailedTimeout</span></td>
+                                <td>Startup Watchdog</td>
+                                <td>PACT Trigger Store (in-memory)</td>
+                                <td>Yes</td>
+                                <td>false</td>
+                                <td>Red</td>
+                                <td>Retry</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pill-xs state-pending">Pending</span></td>
+                                <td>BatchJobs DB</td>
+                                <td>fps.job_queue</td>
+                                <td>No</td>
+                                <td>false</td>
+                                <td>Blue</td>
+                                <td>Polling…</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pill-xs state-running">Running</span></td>
+                                <td>BatchJobs DB</td>
+                                <td>fps.job_queue</td>
+                                <td>No</td>
+                                <td>true</td>
+                                <td>Green spinner</td>
+                                <td>Polling…</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pill-xs state-completed">Completed</span></td>
+                                <td>BatchJobs DB</td>
+                                <td>fps.job_queue</td>
+                                <td><strong>Yes</strong></td>
+                                <td>false</td>
+                                <td>Green</td>
+                                <td>Re-trigger</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pill-xs state-failed">Failed</span></td>
+                                <td>BatchJobs DB</td>
+                                <td>fps.job_queue</td>
+                                <td>Yes (unless Retry)</td>
+                                <td>false</td>
+                                <td>Red</td>
+                                <td>Retry</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pill-xs state-retry">Retry</span></td>
+                                <td>BatchJobs DB</td>
+                                <td>fps.job_queue</td>
+                                <td>No (→ Pending)</td>
+                                <td>false</td>
+                                <td>Orange spinner</td>
+                                <td>Polling…</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pill-xs state-cancelled">Cancelled</span></td>
+                                <td>BatchJobs DB</td>
+                                <td>fps.job_queue</td>
+                                <td><strong>Yes</strong></td>
+                                <td>false</td>
+                                <td>Grey</td>
+                                <td>Re-trigger</td>
+                            </tr>
+                            <tr>
+                                <td><span class="pill-xs state-skipped">Skipped</span></td>
+                                <td>BatchJobs DB</td>
+                                <td>fps.job_queue</td>
+                                <td><strong>Yes</strong></td>
+                                <td>false</td>
+                                <td>Grey</td>
+                                <td>Re-trigger</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>State Transition Flow</h4>
+                    <div class="flow-block">User clicks Trigger
+       │
+       ▼
+  PACT API (HTTP 202) ──saves──▶ PACT Trigger Store (IMemoryCache)
+       │                          └─ jobExecutionId, acceptedAtUtc, workerLaunchHint
+       │
+       ▼ (UI starts polling /status)
+  ┌─ Startup Watchdog Phase ────────────────────────────────────────┐
+  │  PACT resolves from trigger store (no fps.job_queue row yet)    │
+  │                                                                 │
+  │  projectedState = TriggerAccepted    (event sent, no ack yet)  │
+  │  projectedState = WorkerProcessStarted  (local proc launched)  │
+  │  projectedState = StartFailedTimeout ──────────────────────────┼──▶ ❌ STOP (SLA exceeded)
+  └─────────────────────────────────────────────────────────────────┘
+       │ (worker starts, writes row to fps.job_queue)
+       │
+       ▼
+  ┌─ Persistent DB Phase (fps.job_queue) ───────────────────────────┐
+  │                                                                 │
+  │  Pending ──▶ Running ──▶ Completed ✅                          │
+  │                      └──▶ Failed ──▶ Retry ──▶ Pending…        │
+  │                      └──▶ Cancelled ✅                         │
+  │  Skipped ✅  (concurrent detection at trigger time)            │
+  └─────────────────────────────────────────────────────────────────┘
+
+DB Table: fps.job_queue
+  ├─ job_execution_id   (UUID, correlation key, matches PACT trigger store)
+  ├─ job_name
+  ├─ current_state      (Pending | Running | Completed | Failed | Retry | Cancelled | Skipped)
+  ├─ started_at
+  ├─ completed_at
+  ├─ requested_by
+  └─ error_message
+
+Watchdog Correlation: /status?jobExecutionId={uuid}
+  → PACT looks up trigger store first (no acceptedAtUtc required from client)
+  → If no DB row + store hit  → returns startupWatchdog projection
+  → If DB row found           → returns lastExecution (authoritative)</div>
+                </div>
+            </details>
         </section>
     </div>
 
     <script>
         const JOB_NAME = "RecreateSummaries";
-        const STARTUP_WINDOW_MS = 10 * 60 * 1000;
+        const BATCH_JOBS_API_BASE = "/api/batch-jobs";
+        const STARTUP_POLL_MIN_MS = 2000;
+        const STARTUP_POLL_MAX_MS = 5000;
+        const RUNNING_POLL_MS = 15000;
+        const MAX_SILENT_RETRIES = 3;
 
         const timelineEl = document.getElementById("timeline");
         const rawEl = document.getElementById("raw");
         const statusPill = document.getElementById("statusPill");
         const statusMeta = document.getElementById("statusMeta");
         const triggerBtn = document.getElementById("triggerBtn");
-        const scenarioBtn = document.getElementById("scenarioBtn");
-        const scenarioSelect = document.getElementById("scenarioSelect");
 
         const timers = [];
+        let isRunning = false;
+        let currentJobExecutionId = null;
+        let workerLaunchHint = false;
+        let pollFailureCount = 0;
 
         const STATES = {
             ready: { label: "Ready", cls: "state-ready", btn: "Trigger RecreateSummaries", disabled: false, spinning: false },
             submitting: { label: "Submitting", cls: "state-submitting", btn: "Submitting...", disabled: true, spinning: true },
-            accepted: { label: "TriggerAccepted", cls: "state-accepted", btn: "Accepted", disabled: true, spinning: true },
-            running: { label: "Running", cls: "state-running", btn: "Running...", disabled: true, spinning: true },
+            accepted: { label: "TriggerAccepted", cls: "state-accepted", btn: "Polling...", disabled: true, spinning: true },
+            pending: { label: "Pending", cls: "state-pending", btn: "Polling...", disabled: true, spinning: true },
+            running: { label: "Running", cls: "state-running", btn: "Polling...", disabled: true, spinning: true },
             completed: { label: "Completed", cls: "state-completed", btn: "Re-trigger RecreateSummaries", disabled: false, spinning: false },
             failed: { label: "Failed", cls: "state-failed", btn: "Retry RecreateSummaries", disabled: false, spinning: false },
-            timeout: { label: "StartFailedTimeout", cls: "state-timeout", btn: "Retry RecreateSummaries", disabled: false, spinning: false },
-            delivery: { label: "StartFailedDeliveryExhausted", cls: "state-delivery", btn: "Retry RecreateSummaries", disabled: false, spinning: false }
+            retry: { label: "Retry", cls: "state-retry", btn: "Polling...", disabled: true, spinning: true },
+            cancelled: { label: "Cancelled", cls: "state-cancelled", btn: "Re-trigger RecreateSummaries", disabled: false, spinning: false },
+            skipped: { label: "Skipped", cls: "state-skipped", btn: "Re-trigger RecreateSummaries", disabled: false, spinning: false },
+            timeout: { label: "StartFailedTimeout", cls: "state-timeout", btn: "Retry RecreateSummaries", disabled: false, spinning: false }
         };
 
         function addTimeline(text) {
@@ -324,7 +548,7 @@
             statusPill.className = `status-pill ${s.cls}`;
             statusPill.innerHTML = s.spinning ? `<span class="spinner"></span>${s.label}` : s.label;
             triggerBtn.textContent = s.btn;
-            triggerBtn.disabled = s.disabled;
+            triggerBtn.disabled = s.disabled || isRunning;
             statusMeta.textContent = metaText || "";
         }
 
@@ -332,40 +556,146 @@
             rawEl.textContent = `HTTP ${statusCode}\n${bodyText}`;
         }
 
-        function parseUtc(value, fallback) {
-            if (!value) return fallback;
-            const dt = Date.parse(value);
-            return Number.isNaN(dt) ? fallback : dt;
+        async function checkCanRun() {
+            try {
+                const response = await fetch(`${BATCH_JOBS_API_BASE}/${JOB_NAME}/can-run`);
+                const data = await response.json();
+                triggerBtn.disabled = data.canRun !== true;
+                if (data.canRun !== true) {
+                    addTimeline(`Cannot run: ${data.reason || "Job is busy or not available"}`);
+                }
+            } catch (err) {
+                addTimeline(`Can-run check failed (will allow trigger anyway): ${err.message}`);
+            }
         }
 
-        function previewScenario() {
-            clearTimers();
+        async function pollStatus() {
+            if (!currentJobExecutionId) {
+                return;
+            }
 
-            const key = scenarioSelect.value;
-            const scenarioPayload = {
-                status: STATES[key]?.label || "Unknown",
-                source: "demo-scenario",
-                jobName: JOB_NAME,
-                timestampUtc: new Date().toISOString(),
-                message: key === "failed"
-                    ? "Simulated failure scenario for demo."
-                    : key === "timeout"
-                        ? "Simulated startup timeout before worker became visible."
-                        : key === "delivery"
-                            ? "Simulated exhausted delivery attempts to downstream queue."
-                            : `Simulated ${STATES[key]?.label || key} scenario.`
-            };
+            let response;
+            let bodyText = "";
+            let payload = null;
 
-            setState(key, scenarioPayload.message);
-            setRaw(200, JSON.stringify(scenarioPayload, null, 2));
-            addTimeline(`Scenario preview: ${scenarioPayload.status}`);
+            try {
+                const url = `${BATCH_JOBS_API_BASE}/${JOB_NAME}/status?jobExecutionId=${encodeURIComponent(currentJobExecutionId)}`;
+                response = await fetch(url);
+                bodyText = await response.text();
+
+                try {
+                    payload = bodyText ? JSON.parse(bodyText) : null;
+                } catch {
+                    payload = null;
+                }
+
+                if (!response.ok || !payload) {
+                    pollFailureCount++;
+                    if (pollFailureCount <= MAX_SILENT_RETRIES) {
+                        addTimeline(`Poll attempt ${pollFailureCount}: no response (silent retry)`);
+                    } else {
+                        setRaw(response.status, bodyText || "(empty response)");
+                        setState("failed", `Network error after ${pollFailureCount} retries`);
+                        isRunning = false;
+                        addTimeline(`Poll failed after ${MAX_SILENT_RETRIES} silent retries`);
+                    }
+                    return;
+                }
+
+                pollFailureCount = 0;
+                setRaw(response.status, bodyText);
+
+                const lastExec = payload.lastExecution;
+                const watchdog = payload.startupWatchdog;
+
+                // Transient watchdog states (when execution not yet visible in DB)
+                if (watchdog && watchdog.projectedState && !lastExec) {
+                    const projectedState = watchdog.projectedState;
+                    if (projectedState === "StartFailedTimeout") {
+                        setState("timeout", `Startup SLA exceeded (${watchdog.startupSlaSeconds}s). Worker did not start in time.`);
+                        isRunning = false;
+                        addTimeline("Status: StartFailedTimeout (watchdog)");
+                        return;
+                    } else if (projectedState === "TriggerAccepted") {
+                        setState("accepted", "Accepted by PACT. Waiting for worker to write Pending state...");
+                        addTimeline("Status: TriggerAccepted (watchdog, awaiting Pending)");
+                    } else if (projectedState === "WorkerProcessStarted") {
+                        setState("accepted", "Worker process started. Waiting for status visibility in DB...");
+                        addTimeline("Status: WorkerProcessStarted (watchdog)");
+                    }
+                }
+
+                // Persistent DB states (authoritative source of truth)
+                else if (lastExec) {
+                    // Support both camelCase and PascalCase field names from API
+                    const currentState = (lastExec.currentState || lastExec.status || "Unknown").trim();
+                    const startTime = lastExec.startDateTime || lastExec.startedAt;
+                    const endTime = lastExec.endDateTime || lastExec.completedAt;
+                    const stateTs = lastExec.stateTimestamp || startTime;
+
+                    if (currentState === "Pending") {
+                        setState("pending", "Job is queued and waiting for worker to start execution");
+                        addTimeline(`Status: Pending (queued at ${stateTs ? new Date(stateTs).toLocaleTimeString() : "n/a"})`);
+                    } else if (currentState === "Running") {
+                        setState("running", "Execution in progress (polls every 15s)");
+                        addTimeline(`Status: Running (started ${startTime ? new Date(startTime).toLocaleTimeString() : "n/a"})`);
+                    } else if (currentState === "Completed") {
+                        setState("completed", `Finished at ${endTime ? new Date(endTime).toLocaleTimeString() : "n/a"}`);
+                        isRunning = false;
+                        addTimeline(`Status: Completed successfully`);
+                        return;
+                    } else if (currentState === "Failed") {
+                        setState("failed", lastExec.errorMessage || "Job failed");
+                        isRunning = false;
+                        addTimeline(`Status: Failed - ${lastExec.errorMessage || "No error message"}`);
+                        return;
+                    } else if (currentState === "Cancelled") {
+                        setState("cancelled", "Job was cancelled by user or system");
+                        isRunning = false;
+                        addTimeline("Status: Cancelled");
+                        return;
+                    } else if (currentState === "Retry") {
+                        setState("retry", "Job failed; automatic retry is scheduled. Will resume as Pending...");
+                        addTimeline(`Status: Retry (retry scheduler will move to Pending)`);
+                        // Continue polling to see Pending transition
+                    } else if (currentState === "Skipped") {
+                        setState("skipped", "Job was skipped (concurrent execution detected or policy rejection)");
+                        isRunning = false;
+                        addTimeline("Status: Skipped");
+                        return;
+                    }
+                }
+            } catch (err) {
+                pollFailureCount++;
+                if (pollFailureCount <= MAX_SILENT_RETRIES) {
+                    addTimeline(`Poll attempt ${pollFailureCount}: network error (silent retry)`);
+                } else {
+                    setRaw(0, err.message);
+                    setState("failed", `Poll failed: ${err.message}`);
+                    isRunning = false;
+                    addTimeline(`Poll failed: ${err.message}`);
+                }
+                return;
+            }
+
+            if (isRunning) {
+                const interval = payload.isRunning ? RUNNING_POLL_MS : STARTUP_POLL_MIN_MS + Math.random() * (STARTUP_POLL_MAX_MS - STARTUP_POLL_MIN_MS);
+                later(interval, pollStatus);
+            }
         }
 
         async function triggerRecreateSummaries() {
+            if (isRunning) {
+                addTimeline("Already running. Please wait.");
+                return;
+            }
+
             clearTimers();
+            isRunning = true;
+            pollFailureCount = 0;
 
             const requestedBy = (document.getElementById("requestedBy").value || "sample-ui@local").trim();
-            setState("submitting", "Submitting trigger request to Sample UI backend...");
+            setState("submitting", "Submitting trigger request...");
             addTimeline(`Trigger submitted for ${JOB_NAME} by ${requestedBy}`);
 
             let response;
@@ -391,44 +721,46 @@
                 const msg = err && err.message ? err.message : "Network request failed.";
                 setRaw(0, msg);
                 setState("failed", msg);
-                addTimeline(`Request failed before API response (${msg})`);
+                isRunning = false;
+                addTimeline(`Trigger failed: ${msg}`);
                 return;
             }
 
             if (!response.ok || !payload || payload.accepted === false) {
                 const reason = payload && payload.reason ? payload.reason : "Trigger request was not accepted.";
                 setState("failed", reason);
-                addTimeline(`Trigger not accepted (${reason})`);
+                isRunning = false;
+                addTimeline(`Trigger not accepted: ${reason}`);
                 return;
             }
 
-            const acceptedAtMs = parseUtc(payload.acceptedAtUtc, Date.now());
-            const startupDeadlineMs = parseUtc(payload.startupDeadlineUtc, acceptedAtMs + STARTUP_WINDOW_MS);
+            currentJobExecutionId = payload.jobExecutionId;
+            workerLaunchHint = payload.workerProcessLaunched === true || payload.status === "WorkerProcessStarted";
 
-            setState("accepted", `ExecutionId ${payload.jobExecutionId || "n/a"}`);
-            addTimeline(`Trigger accepted (${payload.status || "TriggerAccepted"})`);
+            if (workerLaunchHint) {
+                setState("running", `ExecutionId: ${currentJobExecutionId || "n/a"}`);
+                addTimeline(`Trigger accepted (${payload.status || "WorkerProcessStarted"})`);
+            } else {
+                setState("accepted", `ExecutionId: ${currentJobExecutionId || "n/a"}`);
+                addTimeline(`Trigger accepted (${payload.status || "TriggerAccepted"})`);
+            }
 
-            later(2500, () => {
-                setState("running", "Execution in progress. UI shows run-level status only.");
-                addTimeline("Status moved to Running");
-
-                const now = Date.now();
-                if (now >= startupDeadlineMs) {
-                    setState("timeout", "Worker start not observed before startup deadline.");
-                    addTimeline("Status moved to StartFailedTimeout");
-                    return;
-                }
-
-                // Demo projection for local walkthrough.
-                later(15000, () => {
-                    setState("completed", "Completed. This demo does not display per-step statuses.");
-                    addTimeline("Status moved to Completed");
-                });
-            });
+            later(1000, pollStatus);
         }
 
+        window.addEventListener("beforeunload", (e) => {
+            if (isRunning) {
+                e.preventDefault();
+                e.returnValue = "Execution is in progress. Are you sure?";
+            }
+        });
+
         triggerBtn.addEventListener("click", triggerRecreateSummaries);
-        scenarioBtn.addEventListener("click", previewScenario);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            addTimeline("UI loaded. Checking can-run status...");
+            checkCanRun();
+        });
     </script>
 </body>
 </html>
