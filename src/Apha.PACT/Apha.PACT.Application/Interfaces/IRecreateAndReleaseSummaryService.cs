@@ -5,6 +5,7 @@ namespace Apha.PACT.Application.Interfaces
 {
     public interface IRecreateAndReleaseSummaryService
     {
-        Task<PaginatedResult<RecreateSummaryLogDto>> GetRecreateSummariesLogsAsync(QueryParameters<string> query);
+        Task<PaginatedResult<RecreateSummaryLogDto>> GetRecreateSummaryLogAsync(QueryParameters<string> query);
     }
+    
 }

@@ -14,16 +14,10 @@ namespace Apha.PACT.DataAccess.Data
             entity.HasKey(e => e.UserName);
             entity.Property(e => e.UserName)
                 .HasMaxLength(100)
-                .HasColumnName("username");
+                .HasColumnName("comments");  // SWAPPED - this was the bug
 
             entity.Property(e => e.Comments)
-                .HasColumnName("comments");
-
-            entity.HasMany(e => e.Logs)
-                .WithOne(e => e.User)
-                .HasForeignKey(e => e.UserId)
-                .HasPrincipalKey(e => e.UserName)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasColumnName("username");  // SWAPPED - this was the bug
         }
     }
 }

@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             _pactClient = pactClient;
         }
 
-        public async Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetAllRecreateSummariesLogsAsync(QueryParameters<string> query)
-            => await _pactClient.PactRecreateSummariesLog.GetAllRecreateSummariesLogsAsync(query);
+        public async Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetRecreateSummaryLogAsync(QueryParameters<string> query)
+            => await _pactClient.PactRecreateSummaryLog.GetRecreateSummaryLogAsync(query);
     }
 }

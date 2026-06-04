@@ -7,6 +7,4 @@ public class User
 {
     public required string UserName { get; set; }
     public required string Comments { get; set; }
-
-    public required virtual ICollection<RecreateSummaryLogs> Logs { get; set; }
 }

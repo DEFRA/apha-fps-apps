@@ -54,7 +54,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             };
 
             _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()).Returns(query);
-            _mockLogService.GetAllRecreateSummariesLogsAsync(query).Returns(apiResponse);
+            _mockLogService.GetRecreateSummaryLogAsync(query).Returns(apiResponse);
 
             // Act
             var result = await _controller.Index();
@@ -63,7 +63,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<RecreateSummaryLogViewModel>(viewResult.Model);
             Assert.NotNull(model.LogsGrid);
-            await _mockLogService.Received(1).GetAllRecreateSummariesLogsAsync(Arg.Any<QueryParameters<string>>());
+            await _mockLogService.Received(1).GetRecreateSummaryLogAsync(Arg.Any<QueryParameters<string>>());
         }
 
         [Fact]
@@ -79,7 +79,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             };
 
             _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()).Returns(query);
-            _mockLogService.GetAllRecreateSummariesLogsAsync(query).Returns(apiResponse);
+            _mockLogService.GetRecreateSummaryLogAsync(query).Returns(apiResponse);
 
             // Act
             var result = await _controller.Index();
@@ -104,7 +104,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             };
 
             _mockMapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()).Returns(query);
-            _mockLogService.GetAllRecreateSummariesLogsAsync(query).Returns(apiResponse);
+            _mockLogService.GetRecreateSummaryLogAsync(query).Returns(apiResponse);
 
             // Act
             var result = await _controller.Index();
@@ -149,7 +149,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             };
 
             _mockMapper.Map<QueryParameters<string>>(request).Returns(query);
-            _mockLogService.GetAllRecreateSummariesLogsAsync(query).Returns(apiResponse);
+            _mockLogService.GetRecreateSummaryLogAsync(query).Returns(apiResponse);
 
             // Act
             var result = await _controller.LoadRecreateSummariesLogGrid(request);
@@ -159,7 +159,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             Assert.Equal("_DataGrid", partialViewResult.ViewName);
             var model = Assert.IsType<DataGridConfig<RecreateSummaryLogItem>>(partialViewResult.Model);
             Assert.NotNull(model);
-            await _mockLogService.Received(1).GetAllRecreateSummariesLogsAsync(query);
+            await _mockLogService.Received(1).GetRecreateSummaryLogAsync(query);
         }
 
         [Fact]
@@ -182,7 +182,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             };
 
             _mockMapper.Map<QueryParameters<string>>(request).Returns(query);
-            _mockLogService.GetAllRecreateSummariesLogsAsync(query).Returns(apiResponse);
+            _mockLogService.GetRecreateSummaryLogAsync(query).Returns(apiResponse);
 
             // Act
             var result = await _controller.LoadRecreateSummariesLogGrid(request);
@@ -207,7 +207,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
             var query = new QueryParameters<string> { Page = TestPage, PageSize = TestPageSize };
 
             _mockMapper.Map<QueryParameters<string>>(request).Returns(query);
-            _mockLogService.GetAllRecreateSummariesLogsAsync(query)
+            _mockLogService.GetRecreateSummaryLogAsync(query)
                 .Returns(Task.FromException<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>>(
                     new InvalidOperationException("Service error")));
 

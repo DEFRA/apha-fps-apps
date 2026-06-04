@@ -43,10 +43,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
                 Filter = "{}"
             };
 
-            var apiResponse = new ApiResponse<List<RecreateSummariesLogRes>>
+            var apiResponse = new ApiResponse<List<RecreateSummaryLogRes>>
             {
                 Success = true,
-                Data = new List<RecreateSummariesLogRes>
+                Data = new List<RecreateSummaryLogRes>
                 {
                     new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
                 },
@@ -64,12 +64,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
                 new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
             };
 
-            _mockHttp.GetAsync<List<RecreateSummariesLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
-            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
+            _mockHttp.GetAsync<List<RecreateSummaryLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
+            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummaryLogRes>>>())
                 .Returns(new ApiResponseDto<List<RecreateSummaryLogDto>> { Success = true, Data = mappedDtos });
 
             // Act
-            var result = await _client.GetAllRecreateSummariesLogsAsync(query);
+            var result = await _client.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.True(result.Success);
@@ -78,7 +78,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
             Assert.Equal(TestTotalRecords, result.Data.TotalCount);
             Assert.Equal(TestPageNumber, result.Data.PageNumber);
             Assert.Equal(TestPageSize, result.Data.PageSize);
-            await _mockHttp.Received(1).GetAsync<List<RecreateSummariesLogRes>>(Arg.Any<string>());
+            await _mockHttp.Received(1).GetAsync<List<RecreateSummaryLogRes>>(Arg.Any<string>());
         }
 
         [Fact]
@@ -92,14 +92,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
                 Filter = "{}"
             };
 
-            var apiResponse = new ApiResponse<List<RecreateSummariesLogRes>>
+            var apiResponse = new ApiResponse<List<RecreateSummaryLogRes>>
             {
                 Success = false,
                 Errors = new List<ApiError> { new() { Message = "API Error", Code = "ERR001" } }
             };
 
-            _mockHttp.GetAsync<List<RecreateSummariesLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
-            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
+            _mockHttp.GetAsync<List<RecreateSummaryLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
+            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummaryLogRes>>>())
                 .Returns(new ApiResponseDto<List<RecreateSummaryLogDto>> 
                 { 
                     Success = false, 
@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
                 });
 
             // Act
-            var result = await _client.GetAllRecreateSummariesLogsAsync(query);
+            var result = await _client.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.False(result.Success);
@@ -127,7 +127,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
                 Filter = "{}"
             };
 
-            var apiResponse = new ApiResponse<List<RecreateSummariesLogRes>>
+            var apiResponse = new ApiResponse<List<RecreateSummaryLogRes>>
             {
                 Success = true,
                 Data = null,
@@ -140,12 +140,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
                 }
             };
 
-            _mockHttp.GetAsync<List<RecreateSummariesLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
-            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
+            _mockHttp.GetAsync<List<RecreateSummaryLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
+            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummaryLogRes>>>())
                 .Returns(new ApiResponseDto<List<RecreateSummaryLogDto>> { Success = true, Data = null });
 
             // Act
-            var result = await _client.GetAllRecreateSummariesLogsAsync(query);
+            var result = await _client.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.True(result.Success);
@@ -155,7 +155,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
         }
 
         [Fact]
-        public async Task GetAllRecreateSummariesLogsAsync_WithNullPagination_UsesFallbackValues()
+        public async Task GetRecreateSummaryLogAsync_WithNullPagination_UsesFallbackValues()
         {
             // Arrange
             var query = new QueryParameters<string>
@@ -165,19 +165,19 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
                 Filter = "{}"
             };
 
-            var apiResponse = new ApiResponse<List<RecreateSummariesLogRes>>
+            var apiResponse = new ApiResponse<List<RecreateSummaryLogRes>>
             {
                 Success = true,
-                Data = new List<RecreateSummariesLogRes>(),
+                Data = new List<RecreateSummaryLogRes>(),
                 Pagination = null
             };
 
-            _mockHttp.GetAsync<List<RecreateSummariesLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
-            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummariesLogRes>>>())
+            _mockHttp.GetAsync<List<RecreateSummaryLogRes>>(Arg.Any<string>()).Returns(Task.FromResult(apiResponse));
+            _mockMapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(Arg.Any<ApiResponse<List<RecreateSummaryLogRes>>>())
                 .Returns(new ApiResponseDto<List<RecreateSummaryLogDto>> { Success = true, Data = new List<RecreateSummaryLogDto>() });
 
             // Act
-            var result = await _client.GetAllRecreateSummariesLogsAsync(query);
+            var result = await _client.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.True(result.Success);

@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PACT.DataAccess.Data
 {
-    public class RecreateSummaryLogMap : IEntityTypeConfiguration<RecreateSummaryLogs>
+    public class RecreateSummaryLogMap : IEntityTypeConfiguration<RecreateSummaryLog>
     {
-        public void Configure(EntityTypeBuilder<RecreateSummaryLogs> entity)
+        public void Configure(EntityTypeBuilder<RecreateSummaryLog> entity)
         {
             entity.HasKey(e => e.Id);
 
@@ -27,12 +27,6 @@ namespace Apha.PACT.DataAccess.Data
 
             entity.Property(e => e.FpsYear)
                 .HasColumnName("fpsyear");
-
-            entity.HasOne(e => e.User)
-                .WithMany(e => e.Logs)
-                .HasForeignKey(e => e.UserId)
-                .HasPrincipalKey(e => e.UserName)
-                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

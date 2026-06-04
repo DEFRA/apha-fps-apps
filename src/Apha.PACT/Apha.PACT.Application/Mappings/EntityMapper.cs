@@ -2,6 +2,7 @@
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Core.Entities;
+using Apha.PACT.Core.Models;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
 
@@ -38,7 +39,8 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<SummarisedWgTimeView, SummarisedWgTimeDto>().ReverseMap();
             CreateMap<SummarisedWgTimeView, SummarisedWgTimeEntryDto>();
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimeRes>().ReverseMap();
-            CreateMap<RecreateSummaryLogs, RecreateSummaryLogDto>().ReverseMap();
+            CreateMap<RecreateSummaryLog, RecreateSummaryLogDto>().ReverseMap();
+            CreateMap<RecreateSummaryLogWithUser, RecreateSummaryLogDto>().ReverseMap();
         }
     }
 }

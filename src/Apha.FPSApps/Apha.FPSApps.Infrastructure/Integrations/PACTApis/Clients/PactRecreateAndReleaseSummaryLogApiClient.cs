@@ -21,10 +21,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetAllRecreateSummariesLogsAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetRecreateSummaryLogAsync(QueryParameters<string> query)
         {
-            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetAllRecreateSummariesLogs, query);
-            var response = await _http.GetAsync<List<RecreateSummariesLogRes>>(url);
+            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetRecreateSummaryLog, query);
+            var response = await _http.GetAsync<List<RecreateSummaryLogRes>>(url);
 
             if (response.Success)
             {

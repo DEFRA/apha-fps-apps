@@ -6,6 +6,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
 {
     public interface IRecreateAndReleaseSummaryService
     {
-        Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetAllRecreateSummariesLogsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetRecreateSummaryLogAsync(QueryParameters<string> query);
     }
 }

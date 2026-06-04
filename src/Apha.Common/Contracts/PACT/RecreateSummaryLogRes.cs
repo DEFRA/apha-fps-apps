@@ -1,6 +1,6 @@
 namespace Apha.Common.Contracts.PACT
 {
-    public class RecreateSummariesLogRes
+    public class RecreateSummaryLogRes
     {
         public int Id { get; set; }
         public string? UserId { get; set; }

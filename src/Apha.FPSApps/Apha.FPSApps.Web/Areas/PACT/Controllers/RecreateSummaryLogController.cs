@@ -42,7 +42,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> Index()
         {
             var query = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
-            var response = await _logService.GetAllRecreateSummariesLogsAsync(query);
+            var response = await _logService.GetRecreateSummaryLogAsync(query);
 
             return View(new RecreateSummaryLogViewModel
             {
@@ -66,7 +66,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> LoadRecreateSummariesLogGrid(PaginationFilter<string> request)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _logService.GetAllRecreateSummariesLogsAsync(query);
+            var response = await _logService.GetRecreateSummaryLogAsync(query);
 
             return PartialView("_DataGrid", MapToGridConfig(response, request.SortBy, request.Descending));
         }

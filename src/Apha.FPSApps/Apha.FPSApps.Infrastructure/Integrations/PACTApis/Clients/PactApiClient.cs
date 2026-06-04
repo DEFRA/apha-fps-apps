@@ -21,7 +21,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public IPactMonthlyOutputApiClient PactMonthlyOutput { get; }        
         public IPactSummarisedWgTimeApiClient PactSummarisedWgTime { get; }               
         public IPactWorkGroupReportEmailApiClient PactWorkGroupReportEmail { get; }
-        public IPactRecreateAndReleaseSummaryLogApiClient PactRecreateSummariesLog { get; }
+        public IPactRecreateAndReleaseSummaryLogApiClient PactRecreateSummaryLog { get; }
 
         public PactApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             PactSummarisedWgTime = new PactSummarisedWgTimeApiClient(http, mapper);                        
             PactWorkGroupReportEmail = new PactWorkGroupReportEmailApiClient(http, mapper);
             PactCalenderMonth = new PactCalenderMonthApiClient(http, mapper);
-            PactRecreateSummariesLog = new PactRecreateAndReleaseSummaryLogApiClient(http, mapper);
+            PactRecreateSummaryLog = new PactRecreateAndReleaseSummaryLogApiClient(http, mapper);
         }
     }
 }

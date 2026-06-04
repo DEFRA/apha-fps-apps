@@ -24,14 +24,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
         {
             _mockPactClient = Substitute.For<IPactApiClient>();
             _mockLogApiClient = Substitute.For<IPactRecreateAndReleaseSummaryLogApiClient>();
-            _mockPactClient.PactRecreateSummariesLog.Returns(_mockLogApiClient);
+            _mockPactClient.PactRecreateSummaryLog.Returns(_mockLogApiClient);
             _service = new RecreateAndReleaseSummaryService(_mockPactClient);
         }
 
-        #region GetAllRecreateSummariesLogsAsync
-
+        #region GetRecreateSummaryLogAsync
         [Fact]
-        public async Task GetAllRecreateSummariesLogsAsync_WithValidQuery_ReturnsSuccessResponse()
+        public async Task GetRecreateSummaryLogAsync_WithValidQuery_ReturnsSuccessResponse()
         {
             // Arrange
             var query = new QueryParameters<string>
@@ -54,10 +53,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
                     TestPageSize)
             };
 
-            _mockLogApiClient.GetAllRecreateSummariesLogsAsync(query).Returns(expectedResponse);
+            _mockLogApiClient.GetRecreateSummaryLogAsync(query).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetAllRecreateSummariesLogsAsync(query);
+            var result = await _service.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -65,11 +64,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
             Assert.NotNull(result.Data);
             Assert.Single(result.Data.data);
             Assert.Equal(TestTotalRecords, result.Data.TotalCount);
-            await _mockLogApiClient.Received(1).GetAllRecreateSummariesLogsAsync(query);
+            await _mockLogApiClient.Received(1).GetRecreateSummaryLogAsync(query);
         }
 
         [Fact]
-        public async Task GetAllRecreateSummariesLogsAsync_WithFailedApiResponse_ReturnsFailureResponse()
+        public async Task GetRecreateSummaryLogAsync_WithFailedApiResponse_ReturnsFailureResponse()
         {
             // Arrange
             var query = new QueryParameters<string>
@@ -85,10 +84,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
                 Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERR001" } }
             };
 
-            _mockLogApiClient.GetAllRecreateSummariesLogsAsync(query).Returns(expectedResponse);
+            _mockLogApiClient.GetRecreateSummaryLogAsync(query).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetAllRecreateSummariesLogsAsync(query);
+            var result = await _service.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -118,10 +117,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
                     TestPageSize)
             };
 
-            _mockLogApiClient.GetAllRecreateSummariesLogsAsync(query).Returns(expectedResponse);
+            _mockLogApiClient.GetRecreateSummaryLogAsync(query).Returns(expectedResponse);
 
             // Act
-            var result = await _service.GetAllRecreateSummariesLogsAsync(query);
+            var result = await _service.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -142,12 +141,12 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
                 Filter = "{}"
             };
 
-            _mockLogApiClient.GetAllRecreateSummariesLogsAsync(query)
+            _mockLogApiClient.GetRecreateSummaryLogAsync(query)
                 .Returns(Task.FromException<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>>(
                     new InvalidOperationException("API Client error")));
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetAllRecreateSummariesLogsAsync(query));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetRecreateSummaryLogAsync(query));
         }
 
         #endregion

@@ -18,10 +18,10 @@ namespace Apha.PACT.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<PaginatedResult<RecreateSummaryLogDto>> GetRecreateSummariesLogsAsync(QueryParameters<string> query)
+        public async Task<PaginatedResult<RecreateSummaryLogDto>> GetRecreateSummaryLogAsync(QueryParameters<string> query)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
-            var pagedData = await _repository.GetRecreateSummariesLogsAsync(parameters);
+            var pagedData = await _repository.GetRecreateSummaryLogAsync(parameters);
             return _mapper.Map<PaginatedResult<RecreateSummaryLogDto>>(pagedData);
         }
     }
