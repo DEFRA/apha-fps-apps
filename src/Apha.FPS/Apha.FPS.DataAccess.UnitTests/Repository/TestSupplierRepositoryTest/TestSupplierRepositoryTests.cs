@@ -306,6 +306,339 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestSupplierRepositoryTest
             Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByBuyerAscending_OrdersCorrectly()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B003"),
+                BuildTestRequirement(buyer: "B001"),
+                BuildTestRequirement(buyer: "B002")
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001"),
+                BuildProject("B002"),
+                BuildProject("B003")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "Buyer", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            var buyers = result.Data.Select(r => r.Buyer).ToList();
+            Assert.Equal("B001", buyers[0]);
+            Assert.Equal("B003", buyers[2]);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByProjectManagerDescending_OrdersCorrectly()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001"),
+                BuildTestRequirement(buyer: "B002"),
+                BuildTestRequirement(buyer: "B003")
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001", manager: "MGR_A"),
+                BuildProject("B002", manager: "MGR_C"),
+                BuildProject("B003", manager: "MGR_B")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "ProjectManager", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            var managers = result.Data.Select(r => r.ProjectManager).ToList();
+            Assert.Equal("MGR_C", managers[0]);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByProjectManagerAscending_OrdersCorrectly()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001"),
+                BuildTestRequirement(buyer: "B002"),
+                BuildTestRequirement(buyer: "B003")
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001", manager: "MGR_C"),
+                BuildProject("B002", manager: "MGR_A"),
+                BuildProject("B003", manager: "MGR_B")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "ProjectManager", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            var managers = result.Data.Select(r => r.ProjectManager).ToList();
+            Assert.Equal("MGR_A", managers[0]);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByUnitPriceDescending_OrdersCorrectly()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001", unitPrice: 10m),
+                BuildTestRequirement(buyer: "B002", unitPrice: 50m),
+                BuildTestRequirement(buyer: "B003", unitPrice: 30m)
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001"),
+                BuildProject("B002"),
+                BuildProject("B003")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "UnitPrice", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Equal("B002", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByUnitPriceAscending_OrdersCorrectly()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001", unitPrice: 50m),
+                BuildTestRequirement(buyer: "B002", unitPrice: 10m),
+                BuildTestRequirement(buyer: "B003", unitPrice: 30m)
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001"),
+                BuildProject("B002"),
+                BuildProject("B003")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "UnitPrice", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Equal("B002", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByNoRequiredDescending_OrdersCorrectly()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001", noRequired: 1),
+                BuildTestRequirement(buyer: "B002", noRequired: 5),
+                BuildTestRequirement(buyer: "B003", noRequired: 3)
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001"),
+                BuildProject("B002"),
+                BuildProject("B003")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "NoRequired", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Equal("B002", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByNoRequiredAscending_OrdersCorrectly()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001", noRequired: 5),
+                BuildTestRequirement(buyer: "B002", noRequired: 1),
+                BuildTestRequirement(buyer: "B003", noRequired: 3)
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001"),
+                BuildProject("B002"),
+                BuildProject("B003")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "NoRequired", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Equal("B002", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByProjectStatusDescending_OrdersCorrectly()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001"),
+                BuildTestRequirement(buyer: "B002"),
+                BuildTestRequirement(buyer: "B003")
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001", projectStatus: "Closed"),
+                BuildProject("B002", projectStatus: "Open"),
+                BuildProject("B003", projectStatus: "Pending")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "ProjectStatus", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Equal("B003", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByProjectStatusAscending_OrdersCorrectly()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001"),
+                BuildTestRequirement(buyer: "B002"),
+                BuildTestRequirement(buyer: "B003")
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001", projectStatus: "Pending"),
+                BuildProject("B002", projectStatus: "Closed"),
+                BuildProject("B003", projectStatus: "Open")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "ProjectStatus", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Equal("B002", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByUnknownFieldDescending_DefaultsToBuyerDesc()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001"),
+                BuildTestRequirement(buyer: "B003"),
+                BuildTestRequirement(buyer: "B002")
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001"),
+                BuildProject("B002"),
+                BuildProject("B003")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "UnknownField", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Equal("B003", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByUnknownFieldAscending_DefaultsToBuyerAsc()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B003"),
+                BuildTestRequirement(buyer: "B001"),
+                BuildTestRequirement(buyer: "B002")
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001"),
+                BuildProject("B002"),
+                BuildProject("B003")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "UnknownField", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Equal("B001", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByTestCostAscending_OrdersCorrectly()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001", unitPrice: 5m, noRequired: 2),   // 10
+                BuildTestRequirement(buyer: "B002", unitPrice: 20m, noRequired: 3),  // 60
+                BuildTestRequirement(buyer: "B003", unitPrice: 10m, noRequired: 1)   // 10
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001"),
+                BuildProject("B002"),
+                BuildProject("B003")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(sortBy: "TestCost", descending: false, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Equal("B002", result.Data.Last().Buyer); // highest cost last
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_NullNoRequired_TestCostIsNull()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001", unitPrice: 10m, noRequired: null)
+            };
+            var projects = new List<Project> { BuildProject("B001") };
+
+            var repo = CreateRepository(requirements, projects);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Null(result.Data.Single().TestCost);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_FilterByProjectStatus_ReturnsMatchingRows()
+        {
+            var requirements = new List<TestRequirement>
+            {
+                BuildTestRequirement(buyer: "B001"),
+                BuildTestRequirement(buyer: "B002")
+            };
+            var projects = new List<Project>
+            {
+                BuildProject("B001", projectStatus: "Active"),
+                BuildProject("B002", projectStatus: "Closed")
+            };
+
+            var repo = CreateRepository(requirements, projects);
+            var filterJson = "{\"ProjectStatus\":\"Active\"}";
+            var query = new PaginationParameters<string> { Filter = filterJson, Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode, showRejected: false);
+
+            Assert.Single(result.Data);
+            Assert.Equal("B001", result.Data.First().Buyer);
+        }
+
         #endregion
     }
 }
