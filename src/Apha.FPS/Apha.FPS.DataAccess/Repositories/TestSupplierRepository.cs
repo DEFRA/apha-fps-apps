@@ -37,30 +37,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 StringComparison.Ordinal);
 
             if (!sortByTestCost)
-            {
-                baseQuery = (!string.IsNullOrWhiteSpace(query.SortBy), query.Descending) switch
-                {
-                    (true, true) => query.SortBy switch
-                    {
-                        nameof(TestSupplierView.Buyer) => baseQuery.OrderByDescending(t => t.Buyer),
-                        nameof(TestSupplierView.ProjectManager) => baseQuery.OrderByDescending(t => t.ProjectManager),
-                        nameof(TestSupplierView.UnitPrice) => baseQuery.OrderByDescending(t => t.UnitPrice),
-                        nameof(TestSupplierView.NoRequired) => baseQuery.OrderByDescending(t => t.NoRequired),
-                        nameof(TestSupplierView.ProjectStatus) => baseQuery.OrderByDescending(t => t.ProjectStatus),
-                        _ => baseQuery.OrderByDescending(t => t.Buyer)
-                    },
-                    (true, false) => query.SortBy switch
-                    {
-                        nameof(TestSupplierView.Buyer) => baseQuery.OrderBy(t => t.Buyer),
-                        nameof(TestSupplierView.ProjectManager) => baseQuery.OrderBy(t => t.ProjectManager),
-                        nameof(TestSupplierView.UnitPrice) => baseQuery.OrderBy(t => t.UnitPrice),
-                        nameof(TestSupplierView.NoRequired) => baseQuery.OrderBy(t => t.NoRequired),
-                        nameof(TestSupplierView.ProjectStatus) => baseQuery.OrderBy(t => t.ProjectStatus),
-                        _ => baseQuery.OrderBy(t => t.Buyer)
-                    },
-                    _ => baseQuery.OrderBy(t => t.Buyer)
-                };
-            }
+                baseQuery = ApplyDbSort(baseQuery, query.SortBy, query.Descending);
 
             var rows = await baseQuery.ToListAsync();
 
@@ -73,13 +50,34 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             // Apply TestCost sort in memory now that the computed value is available.
-            IEnumerable<TestSupplierView> result = sortByTestCost
-                ? (query.Descending
-                    ? rows.OrderByDescending(t => t.TestCost)
-                    : rows.OrderBy(t => t.TestCost))
-                : rows;
+            IEnumerable<TestSupplierView> sortedByTestCost = query.Descending
+                ? rows.OrderByDescending(t => t.TestCost)
+                : rows.OrderBy(t => t.TestCost);
+            IEnumerable<TestSupplierView> result = sortByTestCost ? sortedByTestCost : rows;
 
             return ApplyPaging(result.ToList(), query.Page, query.PageSize);
+        }
+
+        private static IQueryable<TestSupplierView> ApplyDbSort(
+            IQueryable<TestSupplierView> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return query.OrderBy(t => t.Buyer);
+
+            return (sortBy, descending) switch
+            {
+                (nameof(TestSupplierView.Buyer), true) => query.OrderByDescending(t => t.Buyer),
+                (nameof(TestSupplierView.ProjectManager), true) => query.OrderByDescending(t => t.ProjectManager),
+                (nameof(TestSupplierView.UnitPrice), true) => query.OrderByDescending(t => t.UnitPrice),
+                (nameof(TestSupplierView.NoRequired), true) => query.OrderByDescending(t => t.NoRequired),
+                (nameof(TestSupplierView.ProjectStatus), true) => query.OrderByDescending(t => t.ProjectStatus),
+                (nameof(TestSupplierView.Buyer), false) => query.OrderBy(t => t.Buyer),
+                (nameof(TestSupplierView.ProjectManager), false) => query.OrderBy(t => t.ProjectManager),
+                (nameof(TestSupplierView.UnitPrice), false) => query.OrderBy(t => t.UnitPrice),
+                (nameof(TestSupplierView.NoRequired), false) => query.OrderBy(t => t.NoRequired),
+                (nameof(TestSupplierView.ProjectStatus), false) => query.OrderBy(t => t.ProjectStatus),
+                _ => descending ? query.OrderByDescending(t => t.Buyer) : query.OrderBy(t => t.Buyer)
+            };
         }
 
         private static IQueryable<TestSupplierView> ApplyFilter(
