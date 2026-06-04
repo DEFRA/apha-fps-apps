@@ -26,7 +26,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "No. Required")]
         [GridColumn(Order = 4, Width = 90, Type = GridColumnType.DecimalNumber)]
-        public double? NoRequired { get; set; }
+        public int? NoRequired { get; set; }
 
         [Display(Name = "Unit Price")]
         [GridColumn(Order = 5, Width = 110, Type = GridColumnType.GbpValue)]

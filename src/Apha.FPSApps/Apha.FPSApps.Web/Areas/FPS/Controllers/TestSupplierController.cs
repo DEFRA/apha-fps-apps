@@ -41,15 +41,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var testsResponse = await _testorProductService.GetAllTestorProductsAsync();
-            var testCodeOptions = testsResponse.Success && testsResponse.Data != null
-                ? testsResponse.Data
-                    .Select(t => new SelectListItem(
-                        string.IsNullOrWhiteSpace(t.ItemDescription) ? t.ItemCode : $"{t.ItemCode} – {t.ItemDescription}",
-                        t.ItemCode))
-                    .ToList()
-                : new List<SelectListItem>();
-
+            var testCodeOptions = await GetTestorProductSelectListAsync();
             var defaultTestCode = testCodeOptions.FirstOrDefault()?.Value ?? string.Empty;
 
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
