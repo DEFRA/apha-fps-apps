@@ -30,6 +30,9 @@ public sealed class JobOrchestratorTests
             _execRepo,
             _settings,
             NullLogger<JobOrchestrator>.Instance);
+
+        _execRepo.IsCancellationRequestedAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(false));
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -188,6 +191,39 @@ public sealed class JobOrchestratorTests
 
         // Assert — lock released
         await _lockRepo.Received(1).ReleaseLockAsync("CancellableJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenCancellationCheckpointRequested_PersistsCancelledAndSkipsExecution()
+    {
+        // Arrange
+        var capturedUpdateStatus = new List<JobStatus>();
+        var jobExecutionId = Guid.NewGuid();
+
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("CheckpointJob");
+
+        _factory.Create("CheckpointJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("CheckpointJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+            .Returns(101);
+        _execRepo.IsCancellationRequestedAsync(Arg.Is<Guid>(id => id == jobExecutionId), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(true));
+        _execRepo.UpdateExecutionRecordAsync(
+                Arg.Do<JobExecutionRecord>(r => capturedUpdateStatus.Add(r.Status)),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => _orchestrator.RunAsync("CheckpointJob", RunMode.Manual, jobExecutionId, "test-user"));
+
+        // Assert
+        await job.DidNotReceive().ExecuteAsync(Arg.Any<CancellationToken>());
+        Assert.Single(capturedUpdateStatus);
+        Assert.Equal(JobStatus.Cancelled, capturedUpdateStatus[0]);
+        await _lockRepo.Received(1).ReleaseLockAsync("CheckpointJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -432,6 +468,101 @@ public sealed class JobOrchestratorTests
         Assert.False(JobOrchestrator.IsRetryable(new NotImplementedException()));
         Assert.False(JobOrchestrator.IsRetryable(new Exception("generic transient")));
         Assert.True(JobOrchestrator.IsRetryable(new TimeoutException()));
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenRuntimeTimeoutExceeded_FailsWithTimeoutAndNoRetry()
+    {
+        // Arrange
+        var timeoutSettings = Options.Create(new BatchJobSettings
+        {
+            JobTimeout = 1,
+            RetryAttempts = 2,
+            RetryDelaySeconds = 0
+        });
+
+        var orchestrator = new JobOrchestrator(
+            _factory,
+            _lockRepo,
+            _execRepo,
+            timeoutSettings,
+            NullLogger<JobOrchestrator>.Instance);
+
+        JobStatus? updatedStatus = null;
+        string? updatedErrorMessage = null;
+
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("RuntimeTimeoutJob");
+        job.MaxExecutionSeconds.Returns((int?)null);
+        job.ExecuteAsync(Arg.Any<CancellationToken>())
+            .Returns(ci => Task.Delay(TimeSpan.FromSeconds(3), ci.Arg<CancellationToken>()));
+
+        _factory.Create("RuntimeTimeoutJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("RuntimeTimeoutJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+            .Returns(999);
+        _execRepo.UpdateExecutionRecordAsync(
+            Arg.Do<JobExecutionRecord>(r =>
+            {
+                updatedStatus = r.Status;
+                updatedErrorMessage = r.ErrorMessage;
+            }),
+            Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await Assert.ThrowsAsync<TimeoutException>(() =>
+            orchestrator.RunAsync("RuntimeTimeoutJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        // Assert
+        Assert.Equal(JobStatus.Failed, updatedStatus);
+        Assert.Contains("runtime timeout", updatedErrorMessage ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenJobTimeoutOverrideExists_OverrideTakesPrecedence()
+    {
+        // Arrange
+        var timeoutSettings = Options.Create(new BatchJobSettings
+        {
+            JobTimeout = 300,
+            JobTimeoutOverridesSeconds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["OverrideTimeoutJob"] = 1
+            },
+            RetryAttempts = 0,
+            RetryDelaySeconds = 0
+        });
+
+        var orchestrator = new JobOrchestrator(
+            _factory,
+            _lockRepo,
+            _execRepo,
+            timeoutSettings,
+            NullLogger<JobOrchestrator>.Instance);
+
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("OverrideTimeoutJob");
+        job.MaxExecutionSeconds.Returns(1200);
+        job.ExecuteAsync(Arg.Any<CancellationToken>())
+            .Returns(ci => Task.Delay(TimeSpan.FromSeconds(3), ci.Arg<CancellationToken>()));
+
+        _factory.Create("OverrideTimeoutJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("OverrideTimeoutJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+            .Returns(1001);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await Assert.ThrowsAsync<TimeoutException>(() =>
+            orchestrator.RunAsync("OverrideTimeoutJob", RunMode.Manual, Guid.NewGuid(), "test-user"));
+
+        // Assert
+        await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]

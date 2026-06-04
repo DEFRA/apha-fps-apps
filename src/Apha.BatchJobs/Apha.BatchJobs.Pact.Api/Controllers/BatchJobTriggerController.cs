@@ -1,6 +1,8 @@
 using Apha.BatchJobs.Pact.Api.Models;
 using Apha.BatchJobs.Pact.Api.Policy;
 using Apha.BatchJobs.Pact.Api.Services;
+using Apha.BatchJobs.Domain.Enums;
+using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -12,17 +14,20 @@ public sealed class BatchJobTriggerController : ControllerBase
 {
     private readonly ITriggerDispatcher _triggerDispatcher;
     private readonly Apha.BatchJobs.Pact.Api.Services.ITriggerAttemptStore _triggerAttemptStore;
+    private readonly IJobExecutionRepository _jobExecutionRepository;
     private readonly ILogger<BatchJobTriggerController> _logger;
     private readonly IHostEnvironment _environment;
 
     public BatchJobTriggerController(
         ITriggerDispatcher triggerDispatcher,
         Apha.BatchJobs.Pact.Api.Services.ITriggerAttemptStore triggerAttemptStore,
+        IJobExecutionRepository jobExecutionRepository,
         ILogger<BatchJobTriggerController> logger,
         IHostEnvironment environment)
     {
         _triggerDispatcher = triggerDispatcher;
         _triggerAttemptStore = triggerAttemptStore;
+        _jobExecutionRepository = jobExecutionRepository;
         _logger = logger;
         _environment = environment;
     }
@@ -103,6 +108,7 @@ public sealed class BatchJobTriggerController : ControllerBase
                 EventId = eventId,
                 WorkerProcessLaunched = workerProcessLaunched,
                 Status = status,
+                WorkerExitCode = null,
                 StoredAtUtc = DateTime.UtcNow
             },
             cancellationToken);
@@ -120,6 +126,106 @@ public sealed class BatchJobTriggerController : ControllerBase
             acceptedAtUtc,
             message
         });
+    }
+
+    [HttpPost("{jobName}/cancel")]
+    public async Task<IActionResult> Cancel(string jobName, [FromBody] BatchCancelRequest request, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(jobName))
+        {
+            return BadRequest(new { accepted = false, reason = "jobName is required." });
+        }
+
+        if (request is null || string.IsNullOrWhiteSpace(request.JobExecutionId))
+        {
+            return BadRequest(new { accepted = false, reason = "jobExecutionId is required." });
+        }
+
+        if (!Guid.TryParse(request.JobExecutionId, out var jobExecutionId))
+        {
+            return BadRequest(new { accepted = false, reason = "jobExecutionId must be a valid GUID." });
+        }
+
+        var requestedBy = ResolveRequestedBy(request.RequestedBy);
+        var execution = await _jobExecutionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
+
+        if (execution is null)
+        {
+            return Conflict(new
+            {
+                accepted = false,
+                jobName,
+                request.JobExecutionId,
+                reason = "Execution not found in job_queue. Cancel can be requested only after execution is persisted."
+            });
+        }
+
+        if (!string.Equals(execution.JobName, jobName, StringComparison.OrdinalIgnoreCase))
+        {
+            return Conflict(new
+            {
+                accepted = false,
+                reason = "jobExecutionId does not belong to the requested jobName.",
+                jobName,
+                request.JobExecutionId
+            });
+        }
+
+        var terminalStatuses = new[] { JobStatus.Completed, JobStatus.Failed, JobStatus.Cancelled, JobStatus.Skipped };
+        if (terminalStatuses.Contains(execution.Status))
+        {
+            var terminalResponse = new BatchCancelResponse
+            {
+                JobName = execution.JobName,
+                JobExecutionId = request.JobExecutionId,
+                CancellationStatus = BatchCancellationStatus.NoOpTerminal,
+                Accepted = false,
+                AlreadyRequested = false,
+                NoOpTerminal = true,
+                ExecutionState = execution.Status.ToString(),
+                Message = "Execution is already terminal. Cancellation request is a no-op."
+            };
+
+            return Ok(terminalResponse);
+        }
+
+        var created = await _jobExecutionRepository.TryRequestCancellationAsync(jobExecutionId, requestedBy, cancellationToken);
+        if (!created)
+        {
+            var alreadyRequestedResponse = new BatchCancelResponse
+            {
+                JobName = execution.JobName,
+                JobExecutionId = request.JobExecutionId,
+                CancellationStatus = BatchCancellationStatus.AlreadyRequested,
+                Accepted = false,
+                AlreadyRequested = true,
+                NoOpTerminal = false,
+                ExecutionState = execution.Status.ToString(),
+                Message = "Cancellation was already requested for this execution."
+            };
+
+            return Ok(alreadyRequestedResponse);
+        }
+
+        _logger.LogInformation(
+            "Cancellation accepted | JobName={JobName} | JobExecutionId={JobExecutionId} | RequestedBy={RequestedBy}",
+            execution.JobName,
+            jobExecutionId,
+            requestedBy);
+
+        var acceptedResponse = new BatchCancelResponse
+        {
+            JobName = execution.JobName,
+            JobExecutionId = request.JobExecutionId,
+            CancellationStatus = BatchCancellationStatus.Accepted,
+            Accepted = true,
+            AlreadyRequested = false,
+            NoOpTerminal = false,
+            ExecutionState = execution.Status.ToString(),
+            Message = "Cancellation request accepted. Worker will stop at the next cancellation checkpoint."
+        };
+
+        return Accepted(acceptedResponse);
     }
 
     private string ResolveRequestedBy(string? requestedByFromRequest)

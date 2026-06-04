@@ -24,6 +24,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly int _retryAttempts;
     private readonly int _retryDelaySeconds;
     private readonly int _maxRetryDurationSeconds;
+    private readonly int _defaultJobTimeoutSeconds;
+    private readonly Dictionary<string, int> _jobTimeoutOverridesSeconds;
 
     /// <summary>Default lock timeout in seconds when configuration is missing/invalid.</summary>
     private const int DefaultLockTimeoutSeconds = 3600;
@@ -56,6 +58,14 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _maxRetryDurationSeconds = settings?.Value.MaxRetryDurationSeconds > 0
             ? settings.Value.MaxRetryDurationSeconds
             : DefaultMaxRetryDurationSeconds;
+        _defaultJobTimeoutSeconds = settings?.Value.JobTimeout > 0
+            ? settings.Value.JobTimeout
+            : DefaultLockTimeoutSeconds;
+        _jobTimeoutOverridesSeconds = settings?.Value.JobTimeoutOverridesSeconds is { Count: > 0 }
+            ? settings.Value.JobTimeoutOverridesSeconds
+                .Where(kv => !string.IsNullOrWhiteSpace(kv.Key) && kv.Value > 0)
+                .ToDictionary(kv => kv.Key.Trim(), kv => kv.Value, StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -142,19 +152,38 @@ public sealed class JobOrchestrator : IJobOrchestrator
         try
         {
             job = _factory.Create(jobName);
+            var runtimeTimeoutSeconds = ResolveRuntimeTimeoutSeconds(job);
+
+            _logger.LogInformation(
+                "Runtime timeout policy resolved | JobName={JobName} | RuntimeTimeoutSeconds={RuntimeTimeoutSeconds}",
+                jobName,
+                runtimeTimeoutSeconds?.ToString() ?? "none");
 
             var totalAttempts = _retryAttempts + 1;
             for (var attempt = 1; attempt <= totalAttempts; attempt++)
             {
+                using var timeoutCts = runtimeTimeoutSeconds.HasValue
+                    ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)
+                    : null;
+
+                if (timeoutCts is not null)
+                {
+                    timeoutCts.CancelAfter(TimeSpan.FromSeconds(runtimeTimeoutSeconds!.Value));
+                }
+
+                var attemptToken = timeoutCts?.Token ?? cancellationToken;
+
                 try
                 {
+                    await ThrowIfCancellationRequestedAsync(jobExecutionId, jobName, attempt, totalAttempts, cancellationToken);
+
                     _logger.LogInformation(
                         "Executing job '{JobName}' | Attempt={Attempt}/{TotalAttempts}",
                         jobName,
                         attempt,
                         totalAttempts);
 
-                    await job.ExecuteAsync(cancellationToken);
+                    await job.ExecuteAsync(attemptToken);
                     _logger.LogInformation(
                         "Job '{JobName}' completed successfully | Attempt={Attempt}/{TotalAttempts}",
                         jobName,
@@ -166,6 +195,21 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 }
                 catch (OperationCanceledException ex)
                 {
+                    if (timeoutCts?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
+                    {
+                        var timeoutException = new TimeoutException(
+                            $"Job '{jobName}' exceeded runtime timeout of {runtimeTimeoutSeconds} seconds.",
+                            ex);
+                        jobException = timeoutException;
+                        _logger.LogError(timeoutException,
+                            "Job '{JobName}' exceeded runtime timeout and was stopped | Attempt={Attempt}/{TotalAttempts} | RuntimeTimeoutSeconds={RuntimeTimeoutSeconds}",
+                            jobName,
+                            attempt,
+                            totalAttempts,
+                            runtimeTimeoutSeconds);
+                        break;
+                    }
+
                     jobException = ex;
                     _logger.LogWarning(ex,
                         "Job '{JobName}' was cancelled | Attempt={Attempt}/{TotalAttempts}",
@@ -202,6 +246,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
                             jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, jobQueueId);
                         break;
                     }
+
+                    await ThrowIfCancellationRequestedAsync(jobExecutionId, jobName, attempt, totalAttempts, cancellationToken);
 
                     // Check if total retry duration would be exceeded
                     var elapsedRetrySeconds = (DateTime.UtcNow - retryStartedAt).TotalSeconds;
@@ -311,6 +357,31 @@ public sealed class JobOrchestrator : IJobOrchestrator
         return new JobExecutionResult(jobQueueId, jobName, status, finalDuration, executionId);
     }
 
+    private async Task ThrowIfCancellationRequestedAsync(
+        Guid jobExecutionId,
+        string jobName,
+        int attempt,
+        int totalAttempts,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var cancellationRequested = await _executionRepository.IsCancellationRequestedAsync(jobExecutionId, cancellationToken);
+        if (!cancellationRequested)
+            return;
+
+        _logger.LogWarning(
+            "Cancellation checkpoint consumed | JobName={JobName} | JobExecutionId={JobExecutionId} | Attempt={Attempt}/{TotalAttempts}",
+            jobName,
+            jobExecutionId,
+            attempt,
+            totalAttempts);
+
+        throw new OperationCanceledException(
+            $"Cancellation requested for job execution '{jobExecutionId}'.",
+            cancellationToken);
+    }
+
     /// <summary>
     /// Returns false for exceptions that must never be retried:
     /// configuration errors, validation failures, and business-rule violations.
@@ -339,4 +410,19 @@ public sealed class JobOrchestrator : IJobOrchestrator
         // Default: do NOT retry (fail-safe: assume permanent unless proven transient)
         _ => false
     };
+
+    private int? ResolveRuntimeTimeoutSeconds(IBatchJob job)
+    {
+        if (_jobTimeoutOverridesSeconds.TryGetValue(job.Name, out var overrideSeconds) && overrideSeconds > 0)
+        {
+            return overrideSeconds;
+        }
+
+        if (job.MaxExecutionSeconds.HasValue && job.MaxExecutionSeconds.Value > 0)
+        {
+            return job.MaxExecutionSeconds.Value;
+        }
+
+        return _defaultJobTimeoutSeconds > 0 ? _defaultJobTimeoutSeconds : null;
+    }
 }

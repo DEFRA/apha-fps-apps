@@ -16,6 +16,8 @@ public class JobExecutionRepository : IJobExecutionRepository
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<JobExecutionRepository> _logger;
     private const int DefaultTimeToLiveSeconds = 3600;
+    private const string CancellationRequestedStatus = "CancelRequested";
+    private const string CancellationRequestedNotePrefix = "Cancellation requested";
 
     /// <summary>
     /// Initializes a new instance of the JobExecutionRepository.
@@ -243,6 +245,77 @@ public class JobExecutionRepository : IJobExecutionRepository
             RetryAttempts = 0
         };
     }
+
+    /// <inheritdoc />
+    public async Task<bool> TryRequestCancellationAsync(Guid jobExecutionId, string requestedBy, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(requestedBy))
+            throw new ArgumentException("RequestedBy cannot be null or empty.", nameof(requestedBy));
+
+        var queueProjection = await _context.TblJobQueue
+            .Where(q => q.JobExecutionId == jobExecutionId)
+            .Select(q => new { q.JobQueueId, q.JobId })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (queueProjection is null)
+        {
+            _logger.LogInformation(
+                "Cancellation request ignored because execution was not found | JobExecutionId={JobExecutionId}",
+                jobExecutionId);
+            return false;
+        }
+
+        var alreadyRequested = await _context.TblJobQueueLog
+            .AnyAsync(l => l.JobQueueId == queueProjection.JobQueueId
+                && l.Note != null
+                && EF.Functions.ILike(l.Note, $"{CancellationRequestedNotePrefix}%"),
+                cancellationToken);
+
+        if (alreadyRequested)
+        {
+            _logger.LogInformation(
+                "Cancellation request already exists | JobExecutionId={JobExecutionId} | RequestedBy={RequestedBy}",
+                jobExecutionId,
+                requestedBy);
+            return false;
+        }
+
+        var now = DateTime.UtcNow;
+        var cancellationRequestedStatusId = await EnsureStatusAsync(
+            queueProjection.JobId,
+            CancellationRequestedStatus,
+            cancellationToken);
+
+        _context.TblJobQueueLog.Add(new TblJobQueueLog
+        {
+            JobQueueId = queueProjection.JobQueueId,
+            StatusId = cancellationRequestedStatusId,
+            PerformedBy = requestedBy.Trim(),
+            LogTime = now,
+            Note = $"{CancellationRequestedNotePrefix} by {requestedBy.Trim()}"
+        });
+
+        await _context.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation(
+            "Cancellation request stored in queue log | JobExecutionId={JobExecutionId} | RequestedBy={RequestedBy}",
+            jobExecutionId,
+            requestedBy);
+        return true;
+    }
+
+    /// <inheritdoc />
+    public Task<bool> IsCancellationRequestedAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
+        => (
+            from q in _context.TblJobQueue
+            join l in _context.TblJobQueueLog on q.JobQueueId equals l.JobQueueId
+            join s in _context.TblJobStatus on l.StatusId equals s.StatusId
+            where q.JobExecutionId == jobExecutionId
+                && (
+                    s.Status == CancellationRequestedStatus
+                    || (l.Note != null && EF.Functions.ILike(l.Note, $"{CancellationRequestedNotePrefix}%"))
+                )
+            select l.JobQueueLogId
+        ).AnyAsync(cancellationToken);
 
     private async Task<int> EnsureJobMasterAsync(string jobName, CancellationToken cancellationToken)
     {

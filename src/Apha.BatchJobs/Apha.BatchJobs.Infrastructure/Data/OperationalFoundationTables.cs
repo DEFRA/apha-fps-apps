@@ -54,3 +54,4 @@ internal sealed class TblJobQueueLog
     public DateTime LogTime { get; set; }
     public string? Note { get; set; }
 }
+

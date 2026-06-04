@@ -81,6 +81,34 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
 	}
 });
 
+app.MapPost("/api/batch-jobs/{jobName}/cancel", async (
+	string jobName,
+	BatchCancelRequest request,
+	IHttpClientFactory clientFactory,
+	IConfiguration configuration,
+	CancellationToken cancellationToken) =>
+{
+	var baseUrl = configuration["DownstreamApis:PactBaseUrl"];
+	if (string.IsNullOrWhiteSpace(baseUrl))
+		return Results.Problem("PACT API base URL is not configured.", statusCode: StatusCodes.Status500InternalServerError);
+
+	var client = clientFactory.CreateClient("status-proxy");
+	try
+	{
+		var response = await client.PostAsJsonAsync(
+			$"{baseUrl.TrimEnd('/')}/api/v1/batch-jobs/{Uri.EscapeDataString(jobName)}/cancel",
+			request,
+			cancellationToken);
+
+		var body = await response.Content.ReadAsStringAsync(cancellationToken);
+		return Results.Content(body, "application/json", statusCode: (int)response.StatusCode);
+	}
+	catch (Exception ex)
+	{
+		return Results.Problem($"Failed to send cancellation request: {ex.Message}", statusCode: StatusCodes.Status503ServiceUnavailable);
+	}
+});
+
 app.MapGet("/api/jobs", () =>
 {
 	var jobs = BatchJobRoutingPolicy.GetCatalog().Select(route => new
@@ -199,4 +227,11 @@ public sealed class DownstreamApisOptions
 	public string FpsBaseUrl { get; init; } = "http://localhost:5160";
 
 	public string PactBaseUrl { get; init; } = "http://localhost:5189";
+}
+
+public sealed class BatchCancelRequest
+{
+	public string JobExecutionId { get; init; } = string.Empty;
+
+	public string RequestedBy { get; init; } = string.Empty;
 }

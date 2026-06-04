@@ -41,6 +41,7 @@ public class BatchJobsDbContext : DbContext
     /// </summary>
     internal DbSet<TblJobQueueLog> TblJobQueueLog { get; set; }
 
+
     /// <summary>
     /// Gets or sets scheduled load run lifecycle rows.
     /// </summary>

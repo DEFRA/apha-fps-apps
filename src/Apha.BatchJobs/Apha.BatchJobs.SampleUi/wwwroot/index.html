@@ -147,6 +147,16 @@
 
         .action[disabled] { opacity: 0.6; cursor: not-allowed; }
 
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-cancel {
+            background: linear-gradient(120deg, #9f1d2f, #c62828);
+        }
+
         .ref-section {
             border: 1px solid var(--line);
             border-radius: 10px;
@@ -319,7 +329,10 @@
 
                 <div class="status-wrap">
                     <span id="statusPill" class="status-pill state-ready">Ready</span>
-                    <button id="triggerBtn" class="action">Trigger RecreateSummaries</button>
+                    <div class="actions">
+                        <button id="triggerBtn" class="action">Trigger RecreateSummaries</button>
+                        <button id="cancelBtn" class="action action-cancel" disabled>Cancel Execution</button>
+                    </div>
                 </div>
 
                 <div id="statusMeta" class="meta">Ready to trigger via PACT API.</div>
@@ -496,22 +509,26 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
     <script>
         const JOB_NAME = "RecreateSummaries";
         const BATCH_JOBS_API_BASE = "/api/batch-jobs";
-        const STARTUP_POLL_MIN_MS = 2000;
-        const STARTUP_POLL_MAX_MS = 5000;
+        const STARTUP_POLL_MS = 2500;
         const RUNNING_POLL_MS = 15000;
         const MAX_SILENT_RETRIES = 3;
-        const UI_WATCHDOG_MAX_WAIT_MS = 30000;
+        const CORRELATION_STORAGE_KEY = `batchjobs:${JOB_NAME}:correlation`;
+        const CORRELATION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
         const timelineEl = document.getElementById("timeline");
         const rawEl = document.getElementById("raw");
         const statusPill = document.getElementById("statusPill");
         const statusMeta = document.getElementById("statusMeta");
         const triggerBtn = document.getElementById("triggerBtn");
+        const cancelBtn = document.getElementById("cancelBtn");
 
         const timers = [];
         let isRunning = false;
         let currentJobExecutionId = null;
+        let currentAcceptedAtUtc = null;
         let pollFailureCount = 0;
+        let currentStateKey = "ready";
+        let cancelRequestedForCurrentRun = false;
 
         const STATES = {
             ready: { label: "Ready", cls: "state-ready", btn: "Trigger RecreateSummaries", disabled: false, spinning: false },
@@ -545,27 +562,115 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
 
         function setState(key, metaText) {
             const s = STATES[key] || STATES.failed;
+            currentStateKey = key;
             statusPill.className = `status-pill ${s.cls}`;
             statusPill.innerHTML = s.spinning ? `<span class="spinner"></span>${s.label}` : s.label;
             triggerBtn.textContent = s.btn;
             triggerBtn.disabled = s.disabled || isRunning;
             statusMeta.textContent = metaText || "";
+            updateCancelButton();
+        }
+
+        function isCancelableState(key) {
+            return key === "accepted" || key === "pending" || key === "running" || key === "retry";
+        }
+
+        function updateCancelButton() {
+            if (!cancelBtn) {
+                return;
+            }
+
+            const canCancel = isRunning
+                && !!currentJobExecutionId
+                && isCancelableState(currentStateKey)
+                && !cancelRequestedForCurrentRun;
+
+            cancelBtn.disabled = !canCancel;
+            cancelBtn.textContent = cancelRequestedForCurrentRun ? "Cancellation Requested" : "Cancel Execution";
         }
 
         function setRaw(statusCode, bodyText) {
             rawEl.textContent = `HTTP ${statusCode}\n${bodyText}`;
         }
 
-        async function checkCanRun() {
+        function saveCorrelation() {
+            if (!currentJobExecutionId || !currentAcceptedAtUtc) {
+                return;
+            }
+
+            const payload = {
+                jobName: JOB_NAME,
+                jobExecutionId: currentJobExecutionId,
+                acceptedAtUtc: currentAcceptedAtUtc,
+                storedAtUtc: new Date().toISOString()
+            };
+
+            localStorage.setItem(CORRELATION_STORAGE_KEY, JSON.stringify(payload));
+        }
+
+        function clearCorrelation() {
+            localStorage.removeItem(CORRELATION_STORAGE_KEY);
+            currentJobExecutionId = null;
+            currentAcceptedAtUtc = null;
+        }
+
+        function loadCorrelation() {
+            const raw = localStorage.getItem(CORRELATION_STORAGE_KEY);
+            if (!raw) {
+                return null;
+            }
+
+            try {
+                const parsed = JSON.parse(raw);
+                if (!parsed || !parsed.jobExecutionId || !parsed.acceptedAtUtc) {
+                    clearCorrelation();
+                    return null;
+                }
+
+                const acceptedAtMs = Date.parse(parsed.acceptedAtUtc);
+                if (Number.isNaN(acceptedAtMs) || Date.now() - acceptedAtMs > CORRELATION_MAX_AGE_MS) {
+                    clearCorrelation();
+                    return null;
+                }
+
+                return parsed;
+            } catch {
+                clearCorrelation();
+                return null;
+            }
+        }
+
+        function mapApiStateToUiKey(state) {
+            const key = (state || "").toLowerCase();
+            const map = {
+                triggeraccepted: "accepted",
+                workerprocessstarted: "running",
+                startfailedtimeout: "timeout",
+                workerprocessexited: "failed"
+            };
+
+            return map[key] || key;
+        }
+
+        async function checkCanRun(options = {}) {
+            const { silent = false } = options;
             try {
                 const response = await fetch(`${BATCH_JOBS_API_BASE}/${JOB_NAME}/can-run`);
                 const data = await response.json();
                 triggerBtn.disabled = data.canRun !== true;
                 if (data.canRun !== true) {
-                    addTimeline(`Cannot run: ${data.reason || "Job is busy or not available"}`);
+                    if (!silent) {
+                        addTimeline(`Cannot run: ${data.reason || "Job is busy or not available"}`);
+                    }
+                    return false;
                 }
+
+                return true;
             } catch (err) {
-                addTimeline(`Can-run check failed (will allow trigger anyway): ${err.message}`);
+                if (!silent) {
+                    addTimeline(`Can-run check failed (will allow trigger anyway): ${err.message}`);
+                }
+                return true;
             }
         }
 
@@ -607,83 +712,48 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
 
                 const lastExec = payload.lastExecution;
                 const watchdog = payload.startupWatchdog;
+                const queryResolution = payload.queryResolution || null;
 
-                // Transient watchdog states (when execution not yet visible in DB)
-                if (watchdog && watchdog.projectedState && !lastExec) {
-                    const projectedState = watchdog.projectedState;
-                    const acceptedAt = watchdog.acceptedAtUtc ? new Date(watchdog.acceptedAtUtc).getTime() : null;
-                    const uiWaitExceeded = acceptedAt ? (Date.now() - acceptedAt) > UI_WATCHDOG_MAX_WAIT_MS : false;
+                let currentState = "Unknown";
+                let metaText = "No state returned by API.";
 
-                    if (projectedState === "StartFailedTimeout") {
-                        setState("timeout", `Startup SLA exceeded (${watchdog.startupSlaSeconds}s). Worker did not start in time.`);
-                        isRunning = false;
-                        addTimeline("Status: StartFailedTimeout (watchdog)");
-                        return;
-                    } else if (projectedState === "WorkerProcessExited") {
-                        setState("failed", "Worker process exited before DB status became visible. Please retry.");
-                        isRunning = false;
-                        addTimeline("Status: WorkerProcessExited (watchdog)");
-                        return;
-                    } else if (projectedState === "TriggerAccepted") {
-                        if (uiWaitExceeded) {
-                            setState("timeout", "Still waiting for startup visibility. Please retry.");
-                            isRunning = false;
-                            addTimeline("Status: UI startup wait ceiling reached (TriggerAccepted)");
-                            return;
-                        }
-                        setState("accepted", "Accepted by PACT. Waiting for worker to write Pending state...");
-                        addTimeline("Status: TriggerAccepted (watchdog, awaiting Pending)");
-                    } else if (projectedState === "WorkerProcessStarted") {
-                        if (uiWaitExceeded) {
-                            setState("timeout", "Worker started but DB status is delayed. Please retry.");
-                            isRunning = false;
-                            addTimeline("Status: UI startup wait ceiling reached (WorkerProcessStarted)");
-                            return;
-                        }
-                        setState("running", "Worker process started. Waiting for DB status visibility...");
-                        addTimeline("Status: WorkerProcessStarted (watchdog)");
-                    }
-                }
-
-                // Persistent DB states (authoritative source of truth)
-                else if (lastExec) {
-                    // Support both camelCase and PascalCase field names from API
-                    const currentState = (lastExec.currentState || lastExec.status || "Unknown").trim();
+                if (lastExec) {
+                    currentState = (lastExec.currentState || lastExec.status || "Unknown").trim();
                     const startTime = lastExec.startDateTime || lastExec.startedAt;
                     const endTime = lastExec.endDateTime || lastExec.completedAt;
-                    const stateTs = lastExec.stateTimestamp || startTime;
-
-                    if (currentState === "Pending") {
-                        setState("pending", "Job is queued and waiting for worker to start execution");
-                        addTimeline(`Status: Pending (queued at ${stateTs ? new Date(stateTs).toLocaleTimeString() : "n/a"})`);
-                    } else if (currentState === "Running") {
-                        setState("running", "Execution in progress (polls every 15s)");
-                        addTimeline(`Status: Running (started ${startTime ? new Date(startTime).toLocaleTimeString() : "n/a"})`);
+                    if (currentState === "Running") {
+                        metaText = `Execution in progress (started ${startTime ? new Date(startTime).toLocaleTimeString() : "n/a"})`;
                     } else if (currentState === "Completed") {
-                        setState("completed", `Finished at ${endTime ? new Date(endTime).toLocaleTimeString() : "n/a"}`);
-                        isRunning = false;
-                        addTimeline(`Status: Completed successfully`);
-                        return;
+                        metaText = `Finished at ${endTime ? new Date(endTime).toLocaleTimeString() : "n/a"}`;
                     } else if (currentState === "Failed") {
-                        setState("failed", lastExec.errorMessage || "Job failed");
-                        isRunning = false;
-                        addTimeline(`Status: Failed - ${lastExec.errorMessage || "No error message"}`);
-                        return;
-                    } else if (currentState === "Cancelled") {
-                        setState("cancelled", "Job was cancelled by user or system");
-                        isRunning = false;
-                        addTimeline("Status: Cancelled");
-                        return;
-                    } else if (currentState === "Retry") {
-                        setState("retry", "Job failed; automatic retry is scheduled. Will resume as Pending...");
-                        addTimeline(`Status: Retry (retry scheduler will move to Pending)`);
-                        // Continue polling to see Pending transition
-                    } else if (currentState === "Skipped") {
-                        setState("skipped", "Job was skipped (concurrent execution detected or policy rejection)");
-                        isRunning = false;
-                        addTimeline("Status: Skipped");
-                        return;
+                        metaText = lastExec.errorMessage || "Job failed";
+                    } else {
+                        metaText = `State from BatchJobs: ${currentState}`;
                     }
+                } else if (watchdog && watchdog.projectedState) {
+                    currentState = watchdog.projectedState;
+                    metaText = `Startup watchdog state: ${currentState}`;
+                }
+
+                const key = mapApiStateToUiKey(currentState);
+                const stateKey = STATES[key] ? key : "failed";
+                const fallbackSuffix = queryResolution && queryResolution.isFallback
+                    ? ` | latest-run fallback (${queryResolution.fallbackReason || "NoCorrelation"})`
+                    : "";
+                setState(stateKey, `${metaText}${fallbackSuffix}`);
+                addTimeline(`Status: ${currentState}${payload.sourceOfTruth ? ` (${payload.sourceOfTruth})` : ""}`);
+
+                if (queryResolution && queryResolution.isFallback) {
+                    addTimeline(`Status query fallback active: ${queryResolution.fallbackReason || "NoCorrelation"}`);
+                }
+
+                const terminalStates = new Set(["completed", "failed", "cancelled", "skipped", "startfailedtimeout", "workerprocessexited"]);
+                if (terminalStates.has(key)) {
+                    isRunning = false;
+                    cancelRequestedForCurrentRun = false;
+                    clearCorrelation();
+                    updateCancelButton();
+                    return;
                 }
             } catch (err) {
                 pollFailureCount++;
@@ -699,11 +769,39 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             }
 
             if (isRunning) {
-                const isStartupWatchdogPhase = payload.sourceOfTruth === "StartupWatchdog";
-                const interval = (!payload.isRunning || isStartupWatchdogPhase)
-                    ? STARTUP_POLL_MIN_MS + Math.random() * (STARTUP_POLL_MAX_MS - STARTUP_POLL_MIN_MS)
-                    : RUNNING_POLL_MS;
+                const isStartupWatchdogPhase = payload && payload.sourceOfTruth === "StartupWatchdog";
+                const interval = isStartupWatchdogPhase ? STARTUP_POLL_MS : RUNNING_POLL_MS;
                 later(interval, pollStatus);
+            }
+        }
+
+        async function showLatestStatusView() {
+            try {
+                const response = await fetch(`${BATCH_JOBS_API_BASE}/${JOB_NAME}/status`);
+                const bodyText = await response.text();
+                setRaw(response.status, bodyText || "(empty response)");
+
+                if (!response.ok) {
+                    setState("ready", "No correlated run. Latest-run status could not be loaded.");
+                    return;
+                }
+
+                const payload = bodyText ? JSON.parse(bodyText) : null;
+                const lastExec = payload && payload.lastExecution ? payload.lastExecution : null;
+
+                if (!lastExec) {
+                    setState("ready", "No correlated run. Showing latest-run view (no recent execution found).");
+                    addTimeline("Latest-run view loaded (not correlated to a prior run).");
+                    return;
+                }
+
+                const currentState = (lastExec.currentState || lastExec.status || "Unknown").trim();
+                const key = mapApiStateToUiKey(currentState);
+                const stateKey = STATES[key] ? key : "ready";
+                setState(stateKey, `Latest-run view only (not correlated). Last state: ${currentState}`);
+                addTimeline(`Latest-run view loaded (not correlated). Last state: ${currentState}`);
+            } catch (err) {
+                setState("ready", `No correlated run. Latest-run view unavailable: ${err.message}`);
             }
         }
 
@@ -714,11 +812,13 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             }
 
             clearTimers();
-            isRunning = true;
             pollFailureCount = 0;
             currentJobExecutionId = null;  // reset so no stale ID leaks into first poll
+            cancelRequestedForCurrentRun = false;
 
             const requestedBy = (document.getElementById("requestedBy").value || "sample-ui@local").trim();
+
+            isRunning = true;
             setState("submitting", "Submitting trigger request...");
             addTimeline(`Trigger submitted for ${JOB_NAME} by ${requestedBy}`);
 
@@ -759,10 +859,93 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             }
 
             currentJobExecutionId = payload.jobExecutionId;
+            currentAcceptedAtUtc = payload.acceptedAtUtc || new Date().toISOString();
+            saveCorrelation();
             setState("accepted", `ExecutionId: ${currentJobExecutionId || "n/a"}`);
             addTimeline(`Trigger accepted (${payload.status || "TriggerAccepted"})`);
 
             later(1000, pollStatus);
+        }
+
+        async function requestCancellation() {
+            if (!currentJobExecutionId) {
+                addTimeline("No active correlated execution to cancel.");
+                return;
+            }
+
+            if (!isRunning) {
+                addTimeline("Cancellation ignored: no active run.");
+                return;
+            }
+
+            const requestedBy = (document.getElementById("requestedBy").value || "sample-ui@local").trim();
+            cancelBtn.disabled = true;
+
+            let response;
+            let bodyText = "";
+            let payload = null;
+
+            try {
+                response = await fetch(`${BATCH_JOBS_API_BASE}/${JOB_NAME}/cancel`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        jobExecutionId: currentJobExecutionId,
+                        requestedBy
+                    })
+                });
+
+                bodyText = await response.text();
+                setRaw(response.status, bodyText);
+
+                try {
+                    payload = bodyText ? JSON.parse(bodyText) : null;
+                } catch {
+                    payload = null;
+                }
+            } catch (err) {
+                const msg = err && err.message ? err.message : "Cancellation request failed.";
+                addTimeline(`Cancel request failed: ${msg}`);
+                setState(currentStateKey, `${statusMeta.textContent} | Cancel request failed`);
+                updateCancelButton();
+                return;
+            }
+
+            if (!response.ok || !payload) {
+                addTimeline(`Cancel request failed with HTTP ${response.status}`);
+                setState(currentStateKey, `${statusMeta.textContent} | Cancel request failed`);
+                updateCancelButton();
+                return;
+            }
+
+            if (payload.noOpTerminal === true) {
+                isRunning = false;
+                cancelRequestedForCurrentRun = false;
+                addTimeline(`Cancel no-op: execution already terminal (${payload.executionState || "Unknown"}).`);
+                setState(mapApiStateToUiKey((payload.executionState || "").toString()) || currentStateKey,
+                    payload.message || "Cancellation is a no-op for terminal executions.");
+                clearCorrelation();
+                updateCancelButton();
+                return;
+            }
+
+            if (payload.alreadyRequested === true) {
+                cancelRequestedForCurrentRun = true;
+                addTimeline("Cancellation already requested for this execution.");
+                setState(currentStateKey, payload.message || "Cancellation already requested.");
+                return;
+            }
+
+            if (payload.accepted === true) {
+                cancelRequestedForCurrentRun = true;
+                addTimeline("Cancellation accepted. Worker will stop at the next checkpoint.");
+                setState(currentStateKey, payload.message || "Cancellation accepted.");
+                return;
+            }
+
+            addTimeline("Cancel request returned an unexpected response.");
+            setState(currentStateKey, payload.message || "Unexpected cancellation response.");
+            updateCancelButton();
         }
 
         window.addEventListener("beforeunload", (e) => {
@@ -773,10 +956,25 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
         });
 
         triggerBtn.addEventListener("click", triggerRecreateSummaries);
+        cancelBtn.addEventListener("click", requestCancellation);
 
         document.addEventListener("DOMContentLoaded", () => {
             addTimeline("UI loaded. Checking can-run status...");
             checkCanRun();
+
+            const resumed = loadCorrelation();
+            if (resumed) {
+                currentJobExecutionId = resumed.jobExecutionId;
+                currentAcceptedAtUtc = resumed.acceptedAtUtc;
+                isRunning = true;
+                setState("accepted", `Resumed correlated polling for ${currentJobExecutionId}`);
+                addTimeline(`Resumed correlated polling from browser storage: ${currentJobExecutionId}`);
+                later(250, pollStatus);
+                return;
+            }
+
+            showLatestStatusView();
+            updateCancelButton();
         });
     </script>
 </body>

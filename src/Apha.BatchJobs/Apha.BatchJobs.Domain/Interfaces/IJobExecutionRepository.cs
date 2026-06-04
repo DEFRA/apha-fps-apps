@@ -35,4 +35,22 @@ public interface IJobExecutionRepository
     /// <param name="jobExecutionId">External job execution id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task<JobExecutionRecord?> GetExecutionByJobExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tries to persist an idempotent cancellation request keyed by job execution id.
+    /// </summary>
+    /// <param name="jobExecutionId">External job execution id.</param>
+    /// <param name="requestedBy">Identity that requested cancellation.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>
+    /// True when cancellation is newly requested; false when an existing request is already stored.
+    /// </returns>
+    Task<bool> TryRequestCancellationAsync(Guid jobExecutionId, string requestedBy, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns true when a cancellation request exists for the given execution id.
+    /// </summary>
+    /// <param name="jobExecutionId">External job execution id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<bool> IsCancellationRequestedAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
 }
