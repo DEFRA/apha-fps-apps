@@ -5,6 +5,7 @@ namespace Apha.PACT.Application.Interfaces
 {
     public interface IJobCodeService
     {
+        Task<IEnumerable<JobCodeDto>> GetJobCodesAsync();
         Task<IEnumerable<JobCodeDto>> GetJobCodesByProjectAsync(string parentProject);
         Task<PaginatedResult<JobCodeDto>> GetPagedJobCodesAsync(QueryParameters<string> query, string? parentProject);
         Task<JobCodeDto?> GetJobCodeByIdAsync(string jobCodeId);

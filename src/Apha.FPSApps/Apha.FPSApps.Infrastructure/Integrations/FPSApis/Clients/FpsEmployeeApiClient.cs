@@ -160,5 +160,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var failDto = _mapper.Map<ApiResponseDto<List<WorkGroupStaffDto>>>(response);
             return ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.FailureResponse(failDto.Errors, failDto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<PactStaffDto>>> GetPactStaffAsync()
+        {
+            var response = await _http.GetAsync<List<PactStaffRes>>(FpsApiEndpoints.GetpactStaffs);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<PactStaffDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<PactStaffDto>>>(response);
+            return ApiResponseDto<List<PactStaffDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }
