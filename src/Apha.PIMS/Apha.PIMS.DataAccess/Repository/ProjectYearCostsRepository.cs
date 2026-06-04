@@ -17,10 +17,10 @@ namespace Apha.PIMS.DataAccess.Repository
             _context = context;
         }
 
-        public async Task<PagedData<MyProjSubContract>> GetAdditionalActualsAsync(
+        public async Task<PagedData<ProjSubContract>> GetAdditionalActualsAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            IQueryable<MyProjSubContract> query = _context.MyProjSubcontracts
+            IQueryable<ProjSubContract> query = _context.ProjSubContracts
                 .AsNoTracking()
                 .Where(s => s.Project == project
                          && s.Year == year
@@ -28,27 +28,27 @@ namespace Apha.PIMS.DataAccess.Repository
 
             query = ApplyActualsSearch(query, paging.Search);
             query = ApplyActualsSorting(query, paging.SortBy, paging.Descending);
-            List<MyProjSubContract> all = await query.ToListAsync();
+            List<ProjSubContract> all = await query.ToListAsync();
             return ApplyPaging(all, paging.Page, paging.PageSize);
         }
 
-        public async Task<PagedData<MyTblAdditionalCosts>> GetAdditionalPlansAsync(
+        public async Task<PagedData<AdditionalCosts>> GetAdditionalPlansAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            IQueryable<MyTblAdditionalCosts> query = _context.MyTblAdditionalCosts
+            IQueryable<AdditionalCosts> query = _context.AdditionalCosts
                 .AsNoTracking()
                 .Where(s => s.Jobcode == project && s.Year == year);
 
             query = ApplyPlansSearch(query, paging.Search);
             query = ApplyPlansSorting(query, paging.SortBy, paging.Descending);
-            List<MyTblAdditionalCosts> all = await query.ToListAsync();
+            List<AdditionalCosts> all = await query.ToListAsync();
             return ApplyPaging(all, paging.Page, paging.PageSize);
         }
 
-        public async Task<PagedData<MyProjSubContract>> GetAnimalActualsAsync(
+        public async Task<PagedData<ProjSubContract>> GetAnimalActualsAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            IQueryable<MyProjSubContract> query = _context.MyProjSubcontracts
+            IQueryable<ProjSubContract> query = _context.ProjSubContracts
                 .AsNoTracking()
                 .Where(s => s.Project == project
                          && s.Year == year
@@ -56,25 +56,25 @@ namespace Apha.PIMS.DataAccess.Repository
 
             query = ApplyActualsSearch(query, paging.Search);
             query = ApplyActualsSorting(query, paging.SortBy, paging.Descending);
-            List<MyProjSubContract> all = await query.ToListAsync();
+            List<ProjSubContract> all = await query.ToListAsync();
             return ApplyPaging(all, paging.Page, paging.PageSize);
         }
 
-        public async Task<PagedData<MyProjectAnimalPlan>> GetAnimalPlansAsync(
+        public async Task<PagedData<ProjectAnimalPlan>> GetAnimalPlansAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            IQueryable<MyProjectAnimalPlan> query = _context.MyProjectAnimalPlans
+            IQueryable<ProjectAnimalPlan> query = _context.ProjectAnimalPlans
                 .AsNoTrackingWithIdentityResolution()
                 .Where(s => s.Parentproject == project && s.Year == year);
 
             query = ApplyAnimalPlanSearch(query, paging.Search);
             query = ApplyAnimalPlanSorting(query, paging.SortBy, paging.Descending);
-            List<MyProjectAnimalPlan> all = await query.ToListAsync();
+            List<ProjectAnimalPlan> all = await query.ToListAsync();
             return ApplyPaging(all, paging.Page, paging.PageSize);
         }
 
-        private static IQueryable<MyProjSubContract> ApplyActualsSearch(
-            IQueryable<MyProjSubContract> query, string? search)
+        private static IQueryable<ProjSubContract> ApplyActualsSearch(
+            IQueryable<ProjSubContract> query, string? search)
         {
             if (string.IsNullOrWhiteSpace(search)) return query;
             string s = search.ToLower();
@@ -84,8 +84,8 @@ namespace Apha.PIMS.DataAccess.Repository
                 (x.Supplier    != null && x.Supplier.ToLower().Contains(s)));
         }
 
-        private static IQueryable<MyTblAdditionalCosts> ApplyPlansSearch(
-            IQueryable<MyTblAdditionalCosts> query, string? search)
+        private static IQueryable<AdditionalCosts> ApplyPlansSearch(
+            IQueryable<AdditionalCosts> query, string? search)
         {
             if (string.IsNullOrWhiteSpace(search)) return query;
             string s = search.ToLower();
@@ -95,8 +95,8 @@ namespace Apha.PIMS.DataAccess.Repository
                 (x.Supplier    != null && x.Supplier.ToLower().Contains(s)));
         }
 
-        private static IQueryable<MyProjSubContract> ApplyActualsSorting(
-            IQueryable<MyProjSubContract> query, string? sortBy, bool descending)
+        private static IQueryable<ProjSubContract> ApplyActualsSorting(
+            IQueryable<ProjSubContract> query, string? sortBy, bool descending)
         {
             return (sortBy?.ToLower()) switch
             {
@@ -111,8 +111,8 @@ namespace Apha.PIMS.DataAccess.Repository
             };
         }
 
-        private static IQueryable<MyTblAdditionalCosts> ApplyPlansSorting(
-            IQueryable<MyTblAdditionalCosts> query, string? sortBy, bool descending)
+        private static IQueryable<AdditionalCosts> ApplyPlansSorting(
+            IQueryable<AdditionalCosts> query, string? sortBy, bool descending)
         {
             return (sortBy?.ToLower()) switch
             {
@@ -127,16 +127,16 @@ namespace Apha.PIMS.DataAccess.Repository
             IQueryable<T> query, Expression<Func<T, TKey>> keySelector, bool descending)
             => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
 
-        private static IQueryable<MyProjectAnimalPlan> ApplyAnimalPlanSearch(
-            IQueryable<MyProjectAnimalPlan> query, string? search)
+        private static IQueryable<ProjectAnimalPlan> ApplyAnimalPlanSearch(
+            IQueryable<ProjectAnimalPlan> query, string? search)
         {
             if (string.IsNullOrWhiteSpace(search)) return query;
             string s = search.ToLower();
             return query.Where(x => x.Animaltype != null && x.Animaltype.ToLower().Contains(s));
         }
 
-        private static IQueryable<MyProjectAnimalPlan> ApplyAnimalPlanSorting(
-            IQueryable<MyProjectAnimalPlan> query, string? sortBy, bool descending)
+        private static IQueryable<ProjectAnimalPlan> ApplyAnimalPlanSorting(
+            IQueryable<ProjectAnimalPlan> query, string? sortBy, bool descending)
         {
             return (sortBy?.ToLower()) switch
             {
@@ -149,25 +149,25 @@ namespace Apha.PIMS.DataAccess.Repository
             };
         }
 
-        public async Task<PagedData<MyTlkpTestReqmt>> GetTestPlansAsync(
+        public async Task<PagedData<TestReqmt>> GetTestPlansAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            IQueryable<MyTlkpTestReqmt> query = _context.MyTlkpTestReqmts
+            IQueryable<TestReqmt> query = _context.TestReqmts
                 .AsNoTracking()
                 .Where(t => t.Buyer == project && t.Year == year);
 
             query = ApplyTestPlanSearch(query, paging.Search);
             query = ApplyTestPlanSorting(query, paging.SortBy, paging.Descending);
-            List<MyTlkpTestReqmt> all = await query.ToListAsync();
+            List<TestReqmt> all = await query.ToListAsync();
             return ApplyPaging(all, paging.Page, paging.PageSize);
         }
 
-        public async Task<PagedData<(MyMonthlyOutput Output, MyTlkpTestReqmt Reqmt)>> GetTestActualsAsync(
+        public async Task<PagedData<(MonthlyOutput Output, TestReqmt Reqmt)>> GetTestActualsAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            List<(MyMonthlyOutput Output, MyTlkpTestReqmt Reqmt)> joined = await (
-                from mo in _context.MyMonthlyOutputs.AsNoTracking()
-                join tr in _context.MyTlkpTestReqmts.AsNoTracking()
+            List<(MonthlyOutput Output, TestReqmt Reqmt)> joined = await (
+                from mo in _context.MonthlyOutputs.AsNoTracking()
+                join tr in _context.TestReqmts.AsNoTracking()
                     on new { mo.Year, mo.Testcode, mo.Buyer }
                     equals new { tr.Year, tr.Testcode, tr.Buyer }
                 where mo.Buyer == project && mo.Year == year
@@ -196,8 +196,8 @@ namespace Apha.PIMS.DataAccess.Repository
             return ApplyPaging(joined, paging.Page, paging.PageSize);
         }
 
-        private static IQueryable<MyTlkpTestReqmt> ApplyTestPlanSearch(
-            IQueryable<MyTlkpTestReqmt> query, string? search)
+        private static IQueryable<TestReqmt> ApplyTestPlanSearch(
+            IQueryable<TestReqmt> query, string? search)
         {
             if (string.IsNullOrWhiteSpace(search)) return query;
             string s = search.ToLower();
@@ -206,8 +206,8 @@ namespace Apha.PIMS.DataAccess.Repository
                 (x.Buyer    != null && x.Buyer.ToLower().Contains(s)));
         }
 
-        private static IQueryable<MyTlkpTestReqmt> ApplyTestPlanSorting(
-            IQueryable<MyTlkpTestReqmt> query, string? sortBy, bool descending)
+        private static IQueryable<TestReqmt> ApplyTestPlanSorting(
+            IQueryable<TestReqmt> query, string? sortBy, bool descending)
         {
             return (sortBy?.ToLower()) switch
             {
@@ -235,10 +235,10 @@ namespace Apha.PIMS.DataAccess.Repository
             });
         }
 
-        public async Task<PagedData<MyProjectStaffPlan>> GetStaffPlansAsync(
+        public async Task<PagedData<ProjectStaffPlan>> GetStaffPlansAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            IQueryable<MyProjectStaffPlan> query = _context.MyProjectStaffPlans
+            IQueryable<ProjectStaffPlan> query = _context.ProjectStaffPlans
                 .AsNoTracking()
                 .Where(s => s.Parentproject == project && s.Year == year);
 
@@ -258,14 +258,14 @@ namespace Apha.PIMS.DataAccess.Repository
                 _              => query.OrderBy(x => x.Workgroupgrade)
             };
 
-            List<MyProjectStaffPlan> all = await query.ToListAsync();
+            List<ProjectStaffPlan> all = await query.ToListAsync();
             return ApplyPaging(all, paging.Page, paging.PageSize);
         }
 
-        public async Task<PagedData<MyTimeCostCalcs>> GetStaffActualsAsync(
+        public async Task<PagedData<TimeCostCalcs>> GetStaffActualsAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            IQueryable<MyTimeCostCalcs> query = _context.MyTimeCostCalcs
+            IQueryable<TimeCostCalcs> query = _context.TimeCostCalcs
                 .AsNoTracking()
                 .Where(s => s.Project == project && s.Year == year);
 
@@ -289,7 +289,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 _           => query.OrderBy(x => x.Jobcode).ThenBy(x => x.Month)
             };
 
-            List<MyTimeCostCalcs> all = await query.ToListAsync();
+            List<TimeCostCalcs> all = await query.ToListAsync();
             return ApplyPaging(all, paging.Page, paging.PageSize);
         }
 
@@ -306,7 +306,7 @@ namespace Apha.PIMS.DataAccess.Repository
         {
             // Mirror qryProjectTimeCostCalcs: GROUP BY Year, Project, Month
             // SUM(Pay), SUM(NonPay), SUM(Cost) AS StaffCosts, SUM(Overhead)
-            IQueryable<PactPayCalc> query = _context.MyTimeCostCalcs
+            IQueryable<PactPayCalc> query = _context.TimeCostCalcs
                 .AsNoTracking()
                 .Where(s => s.Project == project && s.Year == year)
                 .GroupBy(s => new { s.Year, s.Project, s.Month })
@@ -333,6 +333,43 @@ namespace Apha.PIMS.DataAccess.Repository
 
             List<PactPayCalc> all = await query.ToListAsync();
             return ApplyPaging(all, paging.Page, paging.PageSize);
+        }
+
+        public async Task<PagedData<ProjectMonthFinal>> GetMonthlyPactDataAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            IQueryable<ProjectMonthFinal> query = _context.ProjectMonthFinals
+                .AsNoTracking()
+                .Where(m => m.Project == project && m.Year == year);
+
+            string? search = paging.Search?.ToLower();
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(m => m.Periodname != null && m.Periodname.ToLower().Contains(search));
+
+            query = (paging.SortBy?.ToLower()) switch
+            {
+                "monthno"      => ApplyOrder(query, m => m.Monthno,      paging.Descending),
+                "periodname"   => ApplyOrder(query, m => m.Periodname,   paging.Descending),
+                "nonanimals"   => ApplyOrder(query, m => m.Nonanimals,   paging.Descending),
+                "animals"      => ApplyOrder(query, m => m.Animals,      paging.Descending),
+                "timecosts"    => ApplyOrder(query, m => m.Timecosts,    paging.Descending),
+                "transfercosts"=> ApplyOrder(query, m => m.Transfercosts,paging.Descending),
+                "totalcost"    => ApplyOrder(query, m => m.Totalcost,    paging.Descending),
+                "totalhours"   => ApplyOrder(query, m => m.Totalhours,   paging.Descending),
+                "invoices"     => ApplyOrder(query, m => m.Invoices,     paging.Descending),
+                "coiw"         => ApplyOrder(query, m => m.Coiw,         paging.Descending),
+                _              => query.OrderBy(m => m.Monthno)
+            };
+
+            List<ProjectMonthFinal> all = await query.ToListAsync();
+            return ApplyPaging(all, paging.Page, paging.PageSize);
+        }
+
+        public async Task<FpsYearTotal?> GetFpsYearTotalsAsync(string project, short year)
+        {
+            return await _context.FpsYearTotals
+                .AsNoTracking()
+                .FirstOrDefaultAsync(f => f.Parentproject == project && f.Year == year);
         }
     }
 }

@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PIMS.DataAccess.Data
 {
-    public class MyTimeCostCalcsMap : IEntityTypeConfiguration<MyTimeCostCalcs>
+    public class TimeCostCalcsMap : IEntityTypeConfiguration<TimeCostCalcs>
     {
-        public void Configure(EntityTypeBuilder<MyTimeCostCalcs> entity)
+        public void Configure(EntityTypeBuilder<TimeCostCalcs> entity)
         {
             entity.HasKey(e => new { e.Year, e.Workgroup, e.Jobcode, e.Project, e.Month, e.Staffid }).HasName("pk_my_timecostcalcs");
 

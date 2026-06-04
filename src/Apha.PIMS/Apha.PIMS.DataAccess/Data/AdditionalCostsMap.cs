@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PIMS.DataAccess.Data
 {
-    public class MyTblAdditionalCostsMap : IEntityTypeConfiguration<MyTblAdditionalCosts>
+    public class AdditionalCostsMap : IEntityTypeConfiguration<AdditionalCosts>
     {
-        public void Configure(EntityTypeBuilder<MyTblAdditionalCosts> entity)
+        public void Configure(EntityTypeBuilder<AdditionalCosts> entity)
         {
             entity.HasKey(e => e.AcCounter).HasName("pk_my_tbladditionalcosts");
 

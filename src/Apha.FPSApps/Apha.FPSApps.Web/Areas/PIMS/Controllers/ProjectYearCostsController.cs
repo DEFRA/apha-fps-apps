@@ -85,6 +85,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 DataGridConfig<PactPayItem> pactPayGrid =
                     BuildEmptyGrid<PactPayItem>("pactPayGrid", "Pact Pay", "Month", "/PIMS/ProjectYearCosts/LoadPactPayGrid");
 
+                // Monthly Pact Data tab grid — lazy-loaded on first tab click
+                DataGridConfig<MonthlyPactItem> monthlyPactGrid =
+                    BuildEmptyGrid<MonthlyPactItem>("monthlyPactGrid", "Monthly Pact Data", "MonthNo", "/PIMS/ProjectYearCosts/LoadMonthlyPactGrid");
+
                 await Task.WhenAll(plansGridTask, actualsGridTask, animalPlansGridTask, animalActualsGridTask,
                     testPlansGridTask, testActualsGridTask, staffPlansGridTask, staffActualsGridTask);
 
@@ -106,7 +110,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 PlanTestGrid = planTestGrid,
                 PlanAnimalGrid = planAnimalGrid,
                 PlanAdditionalGrid = planAdditionalGrid,
-                PactPayGrid = pactPayGrid
+                PactPayGrid = pactPayGrid,
+                MonthlyPactGrid = monthlyPactGrid
             });
         }
 
@@ -780,6 +785,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             List<PactPayItem> items = response.Success && response.Data != null
                 ? _mapper.Map<List<PactPayItem>>(response.Data)
                 : [];
+            items.ForEach(x => x.MonthName = GetAbbreviatedMonthName(x.Month));
 
             PaginationModel pagination = response.Pagination is null
                 ? new PaginationModel()
@@ -840,5 +846,125 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 comments          = d.Comments
             });
         }
+
+        // ── Monthly Pact Data tab ─────────────────────────────────────────
+
+        [HttpPost]
+        public async Task<IActionResult> LoadMonthlyPactGrid(
+            PaginationFilter<string> request, string project, short year)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid request" });
+
+            DataGridConfig<MonthlyPactItem> grid = await BuildMonthlyPactGridAsync(project, year, request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetMonthlyPactTotals(string project, short year)
+        {
+            QueryParameters<string> allRecords = new() { Page = 1, PageSize = int.MaxValue };
+            ApiResponseDto<List<MonthlyPactDto>> response =
+                await _yearCostsService.GetMonthlyPactDataAsync(project, year, allRecords);
+
+            List<MonthlyPactDto> data = response.Data ?? [];
+            return Json(new
+            {
+                totalNonAnimals    = data.Sum(x => x.Nonanimals    ?? 0m).ToString("C"),
+                totalAnimals       = data.Sum(x => x.Animals       ?? 0m).ToString("C"),
+                totalTimeCosts     = data.Sum(x => x.Timecosts     ?? 0m).ToString("C"),
+                totalTransferCosts = data.Sum(x => x.Transfercosts ?? 0m).ToString("C"),
+                totalCost          = data.Sum(x => x.Totalcost     ?? 0m).ToString("C"),
+                totalHours         = data.Sum(x => x.Totalhours    ?? 0d).ToString("N2"),
+                totalInvoices      = data.Sum(x => x.Invoices      ?? 0m).ToString("C"),
+                totalCoiw          = data.Sum(x => x.Coiw          ?? 0m).ToString("C")
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetMonthlyPactFpsPlanned(string project, short year)
+        {
+            QueryParameters<string> allRecords = new() { Page = 1, PageSize = int.MaxValue };
+
+            ApiResponseDto<FpsYearTotalsDto> fpsResponse =
+                await _yearCostsService.GetFpsYearTotalsAsync(project, year);
+            ApiResponseDto<List<MonthlyPactDto>> monthlyResponse =
+                await _yearCostsService.GetMonthlyPactDataAsync(project, year, allRecords);
+
+            FpsYearTotalsDto fps = fpsResponse.Data ?? new FpsYearTotalsDto();
+
+            decimal staffCosts       = (decimal)(fps.Totalstaffcosts      ?? 0d);
+            decimal testCosts        = (decimal)(fps.Totaltestcosts        ?? 0d);
+            decimal animalCosts      = (decimal)(fps.Totalanimalcosts      ?? 0d);
+            decimal exceptionalCosts = fps.Totaladditionalcosts            ?? 0m;
+            decimal totalCosts       = (decimal)(fps.Totalcosts            ?? 0d);
+            decimal custIncome       = fps.Custincome;
+            decimal totalIncome      = fps.Totalincome;
+            decimal budgetVla        = fps.BudgetCvl                       ?? 0m;
+
+            // Total Cost as Percentage uses actuals sum (sf_MY_ProjectMonthFinal1.SumTotalCost)
+            List<MonthlyPactDto> monthlyData = monthlyResponse.Data ?? [];
+            decimal sumTotalCost = monthlyData.Sum(x => x.Totalcost ?? 0m);
+
+            string totalCostPct = budgetVla > 0
+                ? (sumTotalCost / budgetVla * 100m).ToString("N2") + "%"
+                : string.Empty;
+
+            return Json(new
+            {
+                staffCosts       = staffCosts.ToString("C"),
+                testCosts        = testCosts.ToString("C"),
+                exceptionalCosts = exceptionalCosts.ToString("C"),
+                animalCosts      = animalCosts.ToString("C"),
+                totalCosts       = totalCosts.ToString("C"),
+                custIncome       = custIncome.ToString("C"),
+                totalIncome      = totalIncome.ToString("C"),
+                budgetVla        = budgetVla.ToString("C"),
+                totalCostPct
+            });
+        }
+
+        private async Task<DataGridConfig<MonthlyPactItem>> BuildMonthlyPactGridAsync(
+            string project, short year, PaginationFilter<string> request)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<MonthlyPactDto>> response =
+                await _yearCostsService.GetMonthlyPactDataAsync(project, year, queryParameters);
+
+            List<MonthlyPactItem> items = response.Success && response.Data != null
+                ? _mapper.Map<List<MonthlyPactItem>>(response.Data)
+                : [];
+            items.ForEach(x => x.Periodname = GetAbbreviatedMonthName(x.Monthno));
+
+            PaginationModel pagination = response.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(response.Pagination);
+            pagination.SortColumn    = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            return new DataGridConfig<MonthlyPactItem>
+            {
+                GridId = "monthlyPactGrid",
+                Title = "Monthly Pact Data",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "MonthNo",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowView = false,
+                ExtraFilterMethod = "getYearCostsExtraFilters",
+                BindGridUrl = "/PIMS/ProjectYearCosts/LoadMonthlyPactGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<MonthlyPactItem>(null),
+                Pagination = pagination
+            };
+        }
+
+        private static string GetAbbreviatedMonthName(double monthno)
+            => monthno >= 1 && monthno <= 12
+                ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat
+                    .GetAbbreviatedMonthName((int)monthno)
+                : monthno.ToString();
     }
 }

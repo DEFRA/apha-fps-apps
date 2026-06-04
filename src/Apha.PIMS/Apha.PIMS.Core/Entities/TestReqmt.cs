@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Apha.PIMS.Core.Entities
 {
-    public partial class MyTlkpTestReqmt
+    public partial class TestReqmt
     {
         public short Year { get; set; }
 

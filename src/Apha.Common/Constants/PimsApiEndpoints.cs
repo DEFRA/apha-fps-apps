@@ -42,5 +42,7 @@ namespace Apha.Common.Constants
         public const string GetStaffActuals = "api/v1/projectyearcosts/{0}/{1}/staffactuals";
         public const string GetProjectYearDetails = "api/v1/projectyearcosts/{0}/{1}/projectyeardetails";
         public const string GetPactPay = "api/v1/projectyearcosts/{0}/{1}/pactpay";
+        public const string GetMonthlyPactData = "api/v1/projectyearcosts/{0}/{1}/monthlypactdata";
+        public const string GetFpsYearTotals = "api/v1/projectyearcosts/{0}/{1}/fpsyeartotals";
     }
 }

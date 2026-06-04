@@ -28,5 +28,8 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
 
         // Pact Pay tab (lazy-loaded)
         public DataGridConfig<PactPayItem> PactPayGrid { get; set; } = new();
+
+        // Monthly Pact Data tab (lazy-loaded)
+        public DataGridConfig<MonthlyPactItem> MonthlyPactGrid { get; set; } = new();
     }
 }

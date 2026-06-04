@@ -64,6 +64,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Pact Pay
             CreateMap<PactPayRes, PactPayDto>().ReverseMap();
+
+            // Monthly Pact Data
+            CreateMap<MonthlyPactRes, MonthlyPactDto>().ReverseMap();
+
+            // FPS Year Totals
+            CreateMap<FpsYearTotalsRes, FpsYearTotalsDto>().ReverseMap();
         }
     }
 }

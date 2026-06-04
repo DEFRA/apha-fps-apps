@@ -22,35 +22,35 @@ namespace Apha.PIMS.Application.Services
         public async Task<PaginatedResult<AdditionalCostDto>> GetAdditionalActualsAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            PagedData<MyProjSubContract> paged = await _repository.GetAdditionalActualsAsync(project, year, paging);
+            PagedData<ProjSubContract> paged = await _repository.GetAdditionalActualsAsync(project, year, paging);
             return BuildResult(_mapper.Map<List<AdditionalCostDto>>(paged.Data), paged.PaginationData);
         }
 
         public async Task<PaginatedResult<AdditionalCostDto>> GetAdditionalPlansAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            PagedData<MyTblAdditionalCosts> paged = await _repository.GetAdditionalPlansAsync(project, year, paging);
+            PagedData<AdditionalCosts> paged = await _repository.GetAdditionalPlansAsync(project, year, paging);
             return BuildResult(_mapper.Map<List<AdditionalCostDto>>(paged.Data), paged.PaginationData);
         }
 
         public async Task<PaginatedResult<AnimalCostDto>> GetAnimalActualsAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            PagedData<MyProjSubContract> paged = await _repository.GetAnimalActualsAsync(project, year, paging);
+            PagedData<ProjSubContract> paged = await _repository.GetAnimalActualsAsync(project, year, paging);
             return BuildResult(_mapper.Map<List<AnimalCostDto>>(paged.Data), paged.PaginationData);
         }
 
         public async Task<PaginatedResult<AnimalCostDto>> GetAnimalPlansAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            PagedData<MyProjectAnimalPlan> paged = await _repository.GetAnimalPlansAsync(project, year, paging);
+            PagedData<ProjectAnimalPlan> paged = await _repository.GetAnimalPlansAsync(project, year, paging);
             return BuildResult(_mapper.Map<List<AnimalCostDto>>(paged.Data), paged.PaginationData);
         }
 
         public async Task<PaginatedResult<TestCostDto>> GetTestPlansAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            PagedData<MyTlkpTestReqmt> paged = await _repository.GetTestPlansAsync(project, year, paging);
+            PagedData<TestReqmt> paged = await _repository.GetTestPlansAsync(project, year, paging);
             List<TestCostDto> items = paged.Data.Select(t => new TestCostDto
             {
                 Year       = t.Year,
@@ -68,7 +68,7 @@ namespace Apha.PIMS.Application.Services
         public async Task<PaginatedResult<TestCostDto>> GetTestActualsAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            PagedData<(MyMonthlyOutput Output, MyTlkpTestReqmt Reqmt)> paged =
+            PagedData<(MonthlyOutput Output, TestReqmt Reqmt)> paged =
                 await _repository.GetTestActualsAsync(project, year, paging);
             List<TestCostDto> items = paged.Data.Select(x => new TestCostDto
             {
@@ -97,10 +97,16 @@ namespace Apha.PIMS.Application.Services
             });
         }
 
+        public async Task<FpsYearTotalsDto?> GetFpsYearTotalsAsync(string project, short year)
+        {
+            var entity = await _repository.GetFpsYearTotalsAsync(project, year);
+            return entity == null ? null : _mapper.Map<FpsYearTotalsDto>(entity);
+        }
+
         public async Task<PaginatedResult<StaffCostDto>> GetStaffPlansAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            PagedData<MyProjectStaffPlan> paged = await _repository.GetStaffPlansAsync(project, year, paging);
+            PagedData<ProjectStaffPlan> paged = await _repository.GetStaffPlansAsync(project, year, paging);
             List<StaffCostDto> items = paged.Data.Select(s => new StaffCostDto
             {
                 Year         = s.Year,
@@ -117,7 +123,7 @@ namespace Apha.PIMS.Application.Services
         public async Task<PaginatedResult<StaffCostDto>> GetStaffActualsAsync(
             string project, short year, PaginationParameters<string> paging)
         {
-            PagedData<MyTimeCostCalcs> paged = await _repository.GetStaffActualsAsync(project, year, paging);
+            PagedData<TimeCostCalcs> paged = await _repository.GetStaffActualsAsync(project, year, paging);
             List<StaffCostDto> items = paged.Data.Select(s => new StaffCostDto
             {
                 JobCode    = s.Jobcode,
@@ -145,6 +151,13 @@ namespace Apha.PIMS.Application.Services
         {
             PagedData<PactPayCalc> paged = await _repository.GetPactPayAsync(project, year, paging);
             return BuildResult(_mapper.Map<List<PactPayDto>>(paged.Data), paged.PaginationData);
+        }
+
+        public async Task<PaginatedResult<MonthlyPactDto>> GetMonthlyPactDataAsync(
+            string project, short year, PaginationParameters<string> paging)
+        {
+            PagedData<ProjectMonthFinal> paged = await _repository.GetMonthlyPactDataAsync(project, year, paging);
+            return BuildResult(_mapper.Map<List<MonthlyPactDto>>(paged.Data), paged.PaginationData);
         }
     }
 }

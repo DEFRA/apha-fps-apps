@@ -16,5 +16,7 @@ namespace Apha.PIMS.Application.Interfaces
         Task<PaginatedResult<StaffCostDto>> GetStaffActualsAsync(string project, short year, PaginationParameters<string> paging);
         Task<ProjectYearDetailsDto> GetProjectYearDetailsAsync(string project, short year);
         Task<PaginatedResult<PactPayDto>> GetPactPayAsync(string project, short year, PaginationParameters<string> paging);
+        Task<PaginatedResult<MonthlyPactDto>> GetMonthlyPactDataAsync(string project, short year, PaginationParameters<string> paging);
+        Task<FpsYearTotalsDto?> GetFpsYearTotalsAsync(string project, short year);
     }
 }

@@ -1,6 +1,6 @@
 namespace Apha.PIMS.Core.Entities
 {
-    public partial class MyProjSubContract
+    public partial class ProjSubContract
     {
         public short Year { get; set; }
 

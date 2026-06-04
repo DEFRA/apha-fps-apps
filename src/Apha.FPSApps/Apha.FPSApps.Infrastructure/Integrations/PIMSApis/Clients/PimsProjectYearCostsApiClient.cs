@@ -240,5 +240,47 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<MonthlyPactDto>>> GetMonthlyPactDataAsync(
+            string project, short year, QueryParameters<string> query)
+        {
+            try
+            {
+                string url = QueryStringHelper.AddQueryString(
+                    string.Format(PimsApiEndpoints.GetMonthlyPactData, project, year), query);
+                var response = await _http.GetAsync<List<MonthlyPactRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<MonthlyPactDto>>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<List<MonthlyPactDto>>>(response);
+                return ApiResponseDto<List<MonthlyPactDto>>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<MonthlyPactDto>>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve monthly pact data", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
+
+        public async Task<ApiResponseDto<FpsYearTotalsDto>> GetFpsYearTotalsAsync(string project, short year)
+        {
+            try
+            {
+                string url = string.Format(PimsApiEndpoints.GetFpsYearTotals, project, year);
+                var response = await _http.GetAsync<FpsYearTotalsRes>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<FpsYearTotalsDto>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<FpsYearTotalsDto>>(response);
+                return ApiResponseDto<FpsYearTotalsDto>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<FpsYearTotalsDto>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve FPS year totals", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 namespace Apha.PIMS.Core.Entities
 {
-    public partial class MyTblAdditionalCosts
+    public partial class AdditionalCosts
     {
         public short Year { get; set; }
 

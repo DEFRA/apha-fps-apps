@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PIMS.DataAccess.Data
 {
-    public class MyProjSubContractMap : IEntityTypeConfiguration<MyProjSubContract>
+    public class ProjSubContractMap : IEntityTypeConfiguration<ProjSubContract>
     {
-        public void Configure(EntityTypeBuilder<MyProjSubContract> entity)
+        public void Configure(EntityTypeBuilder<ProjSubContract> entity)
         {
             entity.HasKey(e => new { e.Year, e.Subcontcounter }).HasName("pk_my_proj_subcontract");
 

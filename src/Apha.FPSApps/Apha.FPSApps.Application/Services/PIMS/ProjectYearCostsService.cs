@@ -44,5 +44,11 @@ namespace Apha.FPSApps.Application.Services.PIMS
 
         public async Task<ApiResponseDto<List<PactPayDto>>> GetPactPayAsync(string project, short year, QueryParameters<string> query)
             => await _client.PimsProjectYearCosts.GetPactPayAsync(project, year, query);
+
+        public async Task<ApiResponseDto<List<MonthlyPactDto>>> GetMonthlyPactDataAsync(string project, short year, QueryParameters<string> query)
+            => await _client.PimsProjectYearCosts.GetMonthlyPactDataAsync(project, year, query);
+
+        public async Task<ApiResponseDto<FpsYearTotalsDto>> GetFpsYearTotalsAsync(string project, short year)
+            => await _client.PimsProjectYearCosts.GetFpsYearTotalsAsync(project, year);
     }
 }

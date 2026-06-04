@@ -1,6 +1,6 @@
 namespace Apha.PIMS.Core.Entities
 {
-    public partial class MyProjectAnimalPlan
+    public partial class ProjectAnimalPlan
     {
         public short? Year { get; set; }
 

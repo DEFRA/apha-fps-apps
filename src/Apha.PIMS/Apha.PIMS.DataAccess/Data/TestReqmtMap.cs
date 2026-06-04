@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PIMS.DataAccess.Data
 {
-    public class MyTlkpTestReqmtMap : IEntityTypeConfiguration<MyTlkpTestReqmt>
+    public class TestReqmtMap : IEntityTypeConfiguration<TestReqmt>
     {
-        public void Configure(EntityTypeBuilder<MyTlkpTestReqmt> entity)
+        public void Configure(EntityTypeBuilder<TestReqmt> entity)
         {
             entity.HasKey(e => new { e.Year, e.Testcode, e.Buyer }).HasName("pk_my_tlkptestreqmt");
 

@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.PIMS.DataAccess.Data
 {
-    public class MyMonthlyOutputMap : IEntityTypeConfiguration<MyMonthlyOutput>
+    public class MonthlyOutputMap : IEntityTypeConfiguration<MonthlyOutput>
     {
-        public void Configure(EntityTypeBuilder<MyMonthlyOutput> entity)
+        public void Configure(EntityTypeBuilder<MonthlyOutput> entity)
         {
             entity.HasKey(e => new { e.Year, e.Testcode, e.Buyer, e.Month, e.Workgroup }).HasName("pk_my_monthlyoutput");
 

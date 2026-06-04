@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Apha.PIMS.Core.Entities
 {
-    public partial class MyProjectStaffPlan
+    public partial class ProjectStaffPlan
     {
         public short? Year { get; set; }
 
