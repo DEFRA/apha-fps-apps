@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -17,6 +18,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
         private readonly IMapper _mapper;
         private readonly IProgramService _programService;
         private readonly IProjectService _projectService;
+        private readonly IAppStateService _appStateService;
         private readonly ProjectProfitabilityController _controller;
 
         public ProjectProfitabilityControllerTests()
@@ -24,7 +26,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
             _mapper = Substitute.For<IMapper>();
             _programService = Substitute.For<IProgramService>();
             _projectService = Substitute.For<IProjectService>();
-            _controller = new ProjectProfitabilityController(_mapper, _programService, _projectService);
+            _appStateService = Substitute.For<IAppStateService>();
+            _controller = new ProjectProfitabilityController(_mapper, _programService, _projectService, _appStateService);
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────
