@@ -35,7 +35,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
                 new() { PeriodName = "Period2", PeriodType = "Month", StartPeriod = 1.5, EndPeriod = 2.0, FinalSummariesRun = 1, PeriodLocked = 0 }
             };
 
-            var expectedResponse = ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(periods.AsReadOnly());
+            var summaryDto = new ReleaseSummaryDto
+            {
+                ReleasePeriods = periods.AsReadOnly()
+            };
+            var expectedResponse = ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(summaryDto);
 
             _mockReleaseSummaryApiClient.GetReleaseSummariesAsync().Returns(expectedResponse);
 
@@ -46,9 +50,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(2, result.Data.Count);
-            Assert.Equal("Period1", result.Data[0].PeriodName);
-            Assert.Equal("Period2", result.Data[1].PeriodName);
+            Assert.Equal(2, result.Data.ReleasePeriods.Count);
+            Assert.Equal("Period1", result.Data.ReleasePeriods[0].PeriodName);
+            Assert.Equal("Period2", result.Data.ReleasePeriods[1].PeriodName);
 
             await _mockReleaseSummaryApiClient.Received(1).GetReleaseSummariesAsync();
         }
@@ -57,8 +61,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
         public async Task GetReleaseSummariesAsync_WithNoPeriods_ReturnsSuccessResponseWithEmptyList()
         {
             // Arrange
-            var expectedResponse = ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(
-                new List<ReleasePeriodDto>().AsReadOnly());
+            var expectedResponse = ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(
+                new ReleaseSummaryDto { ReleasePeriods = new List<ReleasePeriodDto>().AsReadOnly() });
 
             _mockReleaseSummaryApiClient.GetReleaseSummariesAsync().Returns(expectedResponse);
 
@@ -69,7 +73,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Empty(result.Data);
+            Assert.Empty(result.Data.ReleasePeriods);
 
             await _mockReleaseSummaryApiClient.Received(1).GetReleaseSummariesAsync();
         }
@@ -78,7 +82,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
         public async Task GetReleaseSummariesAsync_WithFailedApiResponse_ReturnsFailureResponseWithErrors()
         {
             // Arrange
-            var expectedResponse = new ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>
+            var expectedResponse = new ApiResponseDto<ReleaseSummaryDto>
             {
                 Success = false,
                 Errors = new List<ApiErrorDto>
@@ -117,8 +121,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
                 PeriodLocked = 1
             };
 
-            var expectedResponse = ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(
-                new List<ReleasePeriodDto> { period }.AsReadOnly());
+            var expectedResponse = ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(
+                new ReleaseSummaryDto { ReleasePeriods = new List<ReleasePeriodDto> { period }.AsReadOnly() });
 
             _mockReleaseSummaryApiClient.GetReleaseSummariesAsync().Returns(expectedResponse);
 
@@ -128,8 +132,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Single(result.Data!);
-            var dto = result.Data![0];
+            Assert.Single(result.Data!.ReleasePeriods);
+            var dto = result.Data!.ReleasePeriods[0];
             Assert.Equal("P1",      dto.PeriodName);
             Assert.Equal("Quarter", dto.PeriodType);
             Assert.Equal(1.0,       dto.StartPeriod);
@@ -142,8 +146,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
         public async Task GetReleaseSummariesAsync_DelegatesDirectlyToPactReleaseSummaryApiClient()
         {
             // Arrange
-            var expectedResponse = ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(
-                new List<ReleasePeriodDto>().AsReadOnly());
+            var expectedResponse = ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(
+                new ReleaseSummaryDto { ReleasePeriods = new List<ReleasePeriodDto>().AsReadOnly() });
 
             _mockReleaseSummaryApiClient.GetReleaseSummariesAsync().Returns(expectedResponse);
 
@@ -160,7 +164,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
         {
             // Arrange
             _mockReleaseSummaryApiClient.GetReleaseSummariesAsync()
-                .Returns(Task.FromException<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>>(
+                .Returns(Task.FromException<ApiResponseDto<ReleaseSummaryDto>>(
                     new InvalidOperationException("API Client error")));
 
             // Act & Assert
@@ -187,11 +191,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
             var expectedResponse = ApiResponseDto<ReleasePeriodDto>.SuccessResponse(updatedDto);
 
             _mockReleaseSummaryApiClient
-                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun)
+                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>())
                 .Returns(expectedResponse);
 
             // Act
-            var result = await _service.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            var result = await _service.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "1");
 
             // Assert
             Assert.NotNull(result);
@@ -201,7 +205,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
             Assert.Equal(TestFinalSummariesRun, result.Data.FinalSummariesRun);
 
             await _mockReleaseSummaryApiClient.Received(1)
-                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>());
         }
 
         [Fact]
@@ -218,11 +222,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
             };
 
             _mockReleaseSummaryApiClient
-                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun)
+                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>())
                 .Returns(expectedResponse);
 
             // Act
-            var result = await _service.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            var result = await _service.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "0");
 
             // Assert
             Assert.NotNull(result);
@@ -233,7 +237,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
             Assert.Equal("Period not found", result.Errors[0].Message);
 
             await _mockReleaseSummaryApiClient.Received(1)
-                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>());
         }
 
         [Fact]
@@ -247,16 +251,17 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
             var expectedResponse = ApiResponseDto<ReleasePeriodDto>.SuccessResponse(updatedDto);
 
             _mockReleaseSummaryApiClient
-                .SetFinalSummaryRunAsync(periodName, finalSummariesRun)
+                .SetFinalSummaryRunAsync(periodName, finalSummariesRun, Arg.Any<string>())
                 .Returns(expectedResponse);
 
             // Act
-            await _service.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+            await _service.SetFinalSummaryRunAsync(periodName, finalSummariesRun, "1");
 
             // Assert
             await _mockReleaseSummaryApiClient.Received(1).SetFinalSummaryRunAsync(
                 Arg.Is<string>(p => p == periodName),
-                Arg.Is<short>(f  => f == finalSummariesRun)
+                Arg.Is<short>(f  => f == finalSummariesRun),
+                Arg.Any<string>()
             );
         }
 
@@ -277,11 +282,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
             var expectedResponse = ApiResponseDto<ReleasePeriodDto>.SuccessResponse(updatedDto);
 
             _mockReleaseSummaryApiClient
-                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun)
+                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>())
                 .Returns(expectedResponse);
 
             // Act
-            var result = await _service.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            var result = await _service.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "1");
 
             // Assert
             Assert.NotNull(result);
@@ -303,15 +308,15 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
                 new ReleasePeriodDto { PeriodName = TestPeriodName, FinalSummariesRun = TestFinalSummariesRun });
 
             _mockReleaseSummaryApiClient
-                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun)
+                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>())
                 .Returns(expectedResponse);
 
             // Act
-            await _service.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            await _service.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "1");
 
             // Assert — the root pact client must never be called directly; only the sub-client
             await _mockReleaseSummaryApiClient.Received(1)
-                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>());
             _ = _mockPactClient.Received(1).PactReleaseSummary;
         }
 
@@ -320,16 +325,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
         {
             // Arrange
             _mockReleaseSummaryApiClient
-                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun)
+                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>())
                 .Returns(Task.FromException<ApiResponseDto<ReleasePeriodDto>>(
                     new InvalidOperationException("API Client error")));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _service.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun));
+                () => _service.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "1"));
 
             await _mockReleaseSummaryApiClient.Received(1)
-                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+                .SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>());
         }
 
         #endregion

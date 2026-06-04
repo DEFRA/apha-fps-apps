@@ -28,15 +28,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ReleaseSummaryControllerTe
 
         // ── helpers ──────────────────────────────────────────────────────────
 
-        private static ApiResponseDto<IReadOnlyList<ReleasePeriodDto>> SuccessResponse(
+        private static ApiResponseDto<ReleaseSummaryDto> SuccessResponse(
             IReadOnlyList<ReleasePeriodDto>? data = null) =>
             new()
             {
                 Success = true,
-                Data    = data ?? new List<ReleasePeriodDto>().AsReadOnly()
+                Data    = new ReleaseSummaryDto { ReleasePeriods = data ?? new List<ReleasePeriodDto>().AsReadOnly() }
             };
 
-        private static ApiResponseDto<IReadOnlyList<ReleasePeriodDto>> FailureResponse() =>
+        private static ApiResponseDto<ReleaseSummaryDto> FailureResponse() =>
             new()
             {
                 Success = false,
@@ -96,7 +96,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ReleaseSummaryControllerTe
         public async Task Index_WithNullData_ReturnsViewWithEmptyGrid()
         {
             // Arrange
-            _mockService.GetReleaseSummariesAsync().Returns(new ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>
+            _mockService.GetReleaseSummariesAsync().Returns(new ApiResponseDto<ReleaseSummaryDto>
             {
                 Success = true,
                 Data    = null
@@ -188,7 +188,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ReleaseSummaryControllerTe
         {
             // Arrange
             _mockService.GetReleaseSummariesAsync()
-                .Returns(Task.FromException<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>>(
+                .Returns(Task.FromException<ApiResponseDto<ReleaseSummaryDto>>(
                     new InvalidOperationException("Service error")));
 
             // Act & Assert
@@ -240,7 +240,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ReleaseSummaryControllerTe
         public async Task LoadReleaseSummaryGrid_WithNullData_ReturnsPartialViewWithEmptyGrid()
         {
             // Arrange
-            _mockService.GetReleaseSummariesAsync().Returns(new ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>
+            _mockService.GetReleaseSummariesAsync().Returns(new ApiResponseDto<ReleaseSummaryDto>
             {
                 Success = true,
                 Data    = null
@@ -275,7 +275,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ReleaseSummaryControllerTe
         {
             // Arrange
             _mockService.GetReleaseSummariesAsync()
-                .Returns(Task.FromException<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>>(
+                .Returns(Task.FromException<ApiResponseDto<ReleaseSummaryDto>>(
                     new InvalidOperationException("Service error")));
 
             // Act & Assert
@@ -296,28 +296,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ReleaseSummaryControllerTe
                 FinalSummariesRun = TestFinalSummariesRun
             };
 
-            _mockService.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun)
+            _mockService.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>())
                 .Returns(new ApiResponseDto<ReleasePeriodDto> { Success = true, Data = dto });
 
             // Act
-            var result = await _controller.SetFinalSummaryRun(TestPeriodName, TestFinalSummariesRun);
+            var result = await _controller.SetFinalSummaryRun(TestPeriodName, TestFinalSummariesRun, "1");
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal((short?)TestFinalSummariesRun, okResult.Value);
 
-            await _mockService.Received(1).SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            await _mockService.Received(1).SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>());
         }
 
         [Fact]
         public async Task SetFinalSummaryRun_WithSuccessAndNullData_ReturnsOkWithNullValue()
         {
             // Arrange — service succeeds but returns null DTO (period not found on API side)
-            _mockService.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun)
+            _mockService.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>())
                 .Returns(new ApiResponseDto<ReleasePeriodDto> { Success = true, Data = null });
 
             // Act
-            var result = await _controller.SetFinalSummaryRun(TestPeriodName, TestFinalSummariesRun);
+            var result = await _controller.SetFinalSummaryRun(TestPeriodName, TestFinalSummariesRun, "1");
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -330,11 +330,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ReleaseSummaryControllerTe
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Code = "ERR002", Message = "Period not found" } };
 
-            _mockService.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun)
+            _mockService.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>())
                 .Returns(new ApiResponseDto<ReleasePeriodDto> { Success = false, Errors = errors });
 
             // Act
-            var result = await _controller.SetFinalSummaryRun(TestPeriodName, TestFinalSummariesRun);
+            var result = await _controller.SetFinalSummaryRun(TestPeriodName, TestFinalSummariesRun, "0");
 
             // Assert
             var badResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -343,7 +343,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ReleaseSummaryControllerTe
             Assert.Equal("ERR002",           returnedErrors.First().Code);
             Assert.Equal("Period not found", returnedErrors.First().Message);
 
-            await _mockService.Received(1).SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            await _mockService.Received(1).SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>());
         }
 
         [Fact]
@@ -353,7 +353,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ReleaseSummaryControllerTe
             const string periodName        = "ArgCheckPeriod";
             const short  finalSummariesRun = 3;
 
-            _mockService.SetFinalSummaryRunAsync(periodName, finalSummariesRun)
+            _mockService.SetFinalSummaryRunAsync(periodName, finalSummariesRun, Arg.Any<string>())
                 .Returns(new ApiResponseDto<ReleasePeriodDto>
                 {
                     Success = true,
@@ -361,25 +361,26 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ReleaseSummaryControllerTe
                 });
 
             // Act
-            await _controller.SetFinalSummaryRun(periodName, finalSummariesRun);
+            await _controller.SetFinalSummaryRun(periodName, finalSummariesRun, "1");
 
             // Assert
             await _mockService.Received(1).SetFinalSummaryRunAsync(
                 Arg.Is<string>(p => p  == periodName),
-                Arg.Is<short>(f  => f  == finalSummariesRun));
+                Arg.Is<short>(f  => f  == finalSummariesRun),
+                Arg.Any<string>());
         }
 
         [Fact]
         public async Task SetFinalSummaryRun_ServiceThrowsException_PropagatesException()
         {
             // Arrange
-            _mockService.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun)
+            _mockService.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, Arg.Any<string>())
                 .Returns(Task.FromException<ApiResponseDto<ReleasePeriodDto>>(
                     new InvalidOperationException("Service error")));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _controller.SetFinalSummaryRun(TestPeriodName, TestFinalSummariesRun));
+                () => _controller.SetFinalSummaryRun(TestPeriodName, TestFinalSummariesRun, "1"));
         }
 
         #endregion

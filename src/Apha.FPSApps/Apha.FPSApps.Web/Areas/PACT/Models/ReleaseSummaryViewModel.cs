@@ -6,6 +6,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     public class ReleaseSummaryViewModel
     {
         public required DataGridConfig<ReleasePeriodItem> ReleaseSummaryGrid { get; set; }
+        public string? Setting { get; set; }
     }
 
     public class ReleasePeriodItem

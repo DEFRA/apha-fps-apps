@@ -5,7 +5,7 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
 {
     public interface IReleaseSummaryService
     {
-        Task<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>> GetReleaseSummariesAsync();
-        Task<ApiResponseDto<ReleasePeriodDto>> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun);
+        Task<ApiResponseDto<ReleaseSummaryDto>> GetReleaseSummariesAsync();
+        Task<ApiResponseDto<ReleasePeriodDto>> SetFinalSummaryRunAsync(string? periodName, short? finalSummariesRun, string? sendEmail);
     }
 }

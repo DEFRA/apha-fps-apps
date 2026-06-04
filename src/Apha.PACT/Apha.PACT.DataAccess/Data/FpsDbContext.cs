@@ -43,6 +43,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<PactProfitCentreView> PactProfitCentreViews { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }        
         public virtual DbSet<RecreateSummariesLog> RecreateSummariesLogs { get; set; }
+        public virtual DbSet<Settings> Settings { get; set; }
         public virtual DbSet<ReleasePeriod> ReleasePeriods { get; set; }
         public virtual DbSet<TblUser> TblUsers { get; set; }
 
@@ -130,6 +131,7 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ReleasePeriodMap());
             modelBuilder.Entity<ReleasePeriod>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new SettingsMap());
         }
     }
 }

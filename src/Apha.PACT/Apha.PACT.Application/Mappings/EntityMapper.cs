@@ -42,6 +42,7 @@ namespace Apha.PACT.Application.Mappings
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName));
 
             CreateMap<ReleasePeriod, ReleasePeriodDto>().ReverseMap();
+            CreateMap<ReleaseSummary, ReleaseSummaryDto>();
         }
     }
 }

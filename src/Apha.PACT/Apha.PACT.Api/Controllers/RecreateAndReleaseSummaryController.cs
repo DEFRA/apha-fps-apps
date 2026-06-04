@@ -52,7 +52,7 @@ namespace Apha.PACT.Api.Controllers
         public async Task<IActionResult> GetReleaseSummaries()
         {
             var result = await _service.GetReleaseSummariesAsync();
-            return Ok(_mapper.Map<IReadOnlyList<ReleasePeriodRes>>(result));
+            return Ok(_mapper.Map<ReleaseSummaryRes>(result));
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace Apha.PACT.Api.Controllers
         [HttpPut("/api/v{version:apiVersion}/releasesummary/finalrun")]
         public async Task<IActionResult> SetFinalSummaryRun([FromBody] ReleasePeriodReq request)
         {
-            var result = await _service.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun);
+            var result = await _service.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail);
            
             return Ok(_mapper.Map<ReleasePeriodRes>(result));
         }

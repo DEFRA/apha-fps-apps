@@ -19,23 +19,20 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>> GetReleaseSummariesAsync()
+        public async Task<ApiResponseDto<ReleaseSummaryDto>> GetReleaseSummariesAsync()
         {
-            var response = await _http.GetAsync<List<ReleasePeriodRes>>(PactApiEndpoints.GetReleaseSummaries);
+            var response = await _http.GetAsync<ReleaseSummaryRes>(PactApiEndpoints.GetReleaseSummaries);
 
-            if (response.Success)
-            {
-                var dtoList = _mapper.Map<IReadOnlyList<ReleasePeriodDto>>(response.Data ?? new List<ReleasePeriodRes>());
-                return ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(dtoList);
-            }
+            if (response.Success && response.Data is not null)
+                return ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(_mapper.Map<ReleaseSummaryDto>(response.Data));
 
-            var failDto = _mapper.Map<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>>(response);
-            return ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.FailureResponse(failDto.Errors, failDto.Meta);
+            var failDto = _mapper.Map<ApiResponseDto<ReleaseSummaryDto>>(response);
+            return ApiResponseDto<ReleaseSummaryDto>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<ReleasePeriodDto>> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun)
+        public async Task<ApiResponseDto<ReleasePeriodDto>> SetFinalSummaryRunAsync(string? periodName, short? finalSummariesRun, string? sendEmail)
         {
-            var request = new ReleasePeriodReq { PeriodName = periodName, FinalSummariesRun = finalSummariesRun };
+            var request = new ReleasePeriodReq { PeriodName = periodName, FinalSummariesRun = finalSummariesRun, SendEmail = sendEmail };
             var response = await _http.PutAsync<ReleasePeriodReq, ReleasePeriodRes>(PactApiEndpoints.SetFinalSummaryRun, request);
 
             if (response.Success && response.Data is not null)

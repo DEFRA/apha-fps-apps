@@ -336,40 +336,44 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
                 new() { PeriodName = "Period2", PeriodType = "Month", StartPeriod = 1.5, EndPeriod = 2.0, FinalSummariesRun = 1, PeriodLocked = 0 }
             };
 
-            _mockService.GetReleaseSummariesAsync().Returns(dtos.AsReadOnly());
-            _mockMapper.Map<IReadOnlyList<ReleasePeriodRes>>(Arg.Any<IReadOnlyList<ReleasePeriodDto>>()).Returns(responses.AsReadOnly());
+            var summaryDto = new ReleaseSummaryDto { ReleasePeriods = dtos.AsReadOnly() };
+
+            var summaryRes = new ReleaseSummaryRes { ReleasePeriods = responses.AsReadOnly() };
+
+            _mockService.GetReleaseSummariesAsync().Returns(summaryDto);
+            _mockMapper.Map<ReleaseSummaryRes>(Arg.Any<ReleaseSummaryDto>()).Returns(summaryRes);
 
             // Act
             var result = await _controller.GetReleaseSummaries();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnValue = Assert.IsAssignableFrom<IReadOnlyList<ReleasePeriodRes>>(okResult.Value);
-            Assert.Equal(2, returnValue.Count);
-            Assert.Equal("Period1", returnValue[0].PeriodName);
-            Assert.Equal("Period2", returnValue[1].PeriodName);
+            var returnValue = Assert.IsType<ReleaseSummaryRes>(okResult.Value);
+            Assert.Equal(2, returnValue.ReleasePeriods.Count);
+            Assert.Equal("Period1", returnValue.ReleasePeriods[0].PeriodName);
+            Assert.Equal("Period2", returnValue.ReleasePeriods[1].PeriodName);
 
             await _mockService.Received(1).GetReleaseSummariesAsync();
-            _mockMapper.Received(1).Map<IReadOnlyList<ReleasePeriodRes>>(Arg.Any<IReadOnlyList<ReleasePeriodDto>>());
+            _mockMapper.Received(1).Map<ReleaseSummaryRes>(Arg.Any<ReleaseSummaryDto>());
         }
 
         [Fact]
         public async Task GetReleaseSummaries_WithNoPeriods_ReturnsOkWithEmptyList()
         {
             // Arrange
-            var emptyDtos = new List<ReleasePeriodDto>().AsReadOnly();
-            var emptyResponses = new List<ReleasePeriodRes>().AsReadOnly();
+            var summaryDto    = new ReleaseSummaryDto { ReleasePeriods = new List<ReleasePeriodDto>().AsReadOnly() };
+            var summaryRes    = new ReleaseSummaryRes { ReleasePeriods = new List<ReleasePeriodRes>().AsReadOnly() };
 
-            _mockService.GetReleaseSummariesAsync().Returns(emptyDtos);
-            _mockMapper.Map<IReadOnlyList<ReleasePeriodRes>>(Arg.Any<IReadOnlyList<ReleasePeriodDto>>()).Returns(emptyResponses);
+            _mockService.GetReleaseSummariesAsync().Returns(summaryDto);
+            _mockMapper.Map<ReleaseSummaryRes>(Arg.Any<ReleaseSummaryDto>()).Returns(summaryRes);
 
             // Act
             var result = await _controller.GetReleaseSummaries();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnValue = Assert.IsAssignableFrom<IReadOnlyList<ReleasePeriodRes>>(okResult.Value);
-            Assert.Empty(returnValue);
+            var returnValue = Assert.IsType<ReleaseSummaryRes>(okResult.Value);
+            Assert.Empty(returnValue.ReleasePeriods);
 
             await _mockService.Received(1).GetReleaseSummariesAsync();
         }
@@ -404,17 +408,20 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
                 }
             }.AsReadOnly();
 
-            _mockService.GetReleaseSummariesAsync().Returns(dtos);
-            _mockMapper.Map<IReadOnlyList<ReleasePeriodRes>>(Arg.Any<IReadOnlyList<ReleasePeriodDto>>()).Returns(responses);
+            var summaryDto = new ReleaseSummaryDto { ReleasePeriods = dtos };
+            var summaryRes = new ReleaseSummaryRes { ReleasePeriods = responses };
+
+            _mockService.GetReleaseSummariesAsync().Returns(summaryDto);
+            _mockMapper.Map<ReleaseSummaryRes>(Arg.Any<ReleaseSummaryDto>()).Returns(summaryRes);
 
             // Act
             var result = await _controller.GetReleaseSummaries();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnValue = Assert.IsAssignableFrom<IReadOnlyList<ReleasePeriodRes>>(okResult.Value);
-            Assert.Single(returnValue);
-            var res = returnValue[0];
+            var returnValue = Assert.IsType<ReleaseSummaryRes>(okResult.Value);
+            Assert.Single(returnValue.ReleasePeriods);
+            var res = returnValue.ReleasePeriods[0];
             Assert.Equal("P1",      res.PeriodName);
             Assert.Equal("Quarter", res.PeriodType);
             Assert.Equal(1.0,       res.StartPeriod);
@@ -428,7 +435,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
         {
             // Arrange
             _mockService.GetReleaseSummariesAsync()
-                .Returns(Task.FromException<IReadOnlyList<ReleasePeriodDto>>(new InvalidOperationException("Service error")));
+                .Returns(Task.FromException<ReleaseSummaryDto>(new InvalidOperationException("Service error")));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetReleaseSummaries());
@@ -440,13 +447,13 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
         public async Task GetReleaseSummaries_MapperThrowsException_PropagatesException()
         {
             // Arrange
-            var dtos = new List<ReleasePeriodDto>
+            var summaryDto = new ReleaseSummaryDto
             {
-                new() { PeriodName = "Period1" }
-            }.AsReadOnly();
+                ReleasePeriods = new List<ReleasePeriodDto> { new() { PeriodName = "Period1" } }.AsReadOnly()
+            };
 
-            _mockService.GetReleaseSummariesAsync().Returns(dtos);
-            _mockMapper.When(m => m.Map<IReadOnlyList<ReleasePeriodRes>>(Arg.Any<IReadOnlyList<ReleasePeriodDto>>()))
+            _mockService.GetReleaseSummariesAsync().Returns(summaryDto);
+            _mockMapper.When(m => m.Map<ReleaseSummaryRes>(Arg.Any<ReleaseSummaryDto>()))
                 .Do(_ => throw new InvalidOperationException("Mapper error"));
 
             // Act & Assert
@@ -461,7 +468,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
         public async Task SetFinalSummaryRun_WithExistingPeriod_ReturnsOkWithMappedResponse()
         {
             // Arrange
-            var request = new ReleasePeriodReq { PeriodName = "TestPeriod", FinalSummariesRun = 1 };
+            var request = new ReleasePeriodReq { PeriodName = "TestPeriod", FinalSummariesRun = 1, SendEmail = "1" };
 
             var dto = new ReleasePeriodDto
             {
@@ -477,7 +484,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
                 EndPeriod = 1.0
             };
 
-            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun).Returns(dto);
+            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail).Returns(dto);
             _mockMapper.Map<ReleasePeriodRes>(dto).Returns(response);
 
             // Act
@@ -489,7 +496,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
             Assert.Equal("TestPeriod", returnValue.PeriodName);
             Assert.Equal((short)1, returnValue.FinalSummariesRun);
 
-            await _mockService.Received(1).SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun);
+            await _mockService.Received(1).SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail);
             _mockMapper.Received(1).Map<ReleasePeriodRes>(dto);
         }
 
@@ -497,9 +504,9 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
         public async Task SetFinalSummaryRun_WithNonExistingPeriod_ReturnsOkWithNullMappedResponse()
         {
             // Arrange
-            var request = new ReleasePeriodReq { PeriodName = "NonExistentPeriod", FinalSummariesRun = 1 };
+            var request = new ReleasePeriodReq { PeriodName = "NonExistentPeriod", FinalSummariesRun = 1, SendEmail = "0" };
 
-            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun)
+            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail)
                 .Returns((ReleasePeriodDto?)null);
             _mockMapper.Map<ReleasePeriodRes>((ReleasePeriodDto?)null).Returns((ReleasePeriodRes?)null);
 
@@ -510,7 +517,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Null(okResult.Value);
 
-            await _mockService.Received(1).SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun);
+            await _mockService.Received(1).SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail);
             _mockMapper.Received(1).Map<ReleasePeriodRes>((ReleasePeriodDto?)null);
         }
 
@@ -518,12 +525,12 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
         public async Task SetFinalSummaryRun_PassesCorrectArgumentsToService()
         {
             // Arrange
-            var request = new ReleasePeriodReq { PeriodName = "ArgCheckPeriod", FinalSummariesRun = 3 };
+            var request = new ReleasePeriodReq { PeriodName = "ArgCheckPeriod", FinalSummariesRun = 3, SendEmail = "1" };
 
             var dto      = new ReleasePeriodDto { PeriodName = "ArgCheckPeriod", FinalSummariesRun = 3 };
             var response = new ReleasePeriodRes { PeriodName = "ArgCheckPeriod", FinalSummariesRun = 3 };
 
-            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun).Returns(dto);
+            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail).Returns(dto);
             _mockMapper.Map<ReleasePeriodRes>(dto).Returns(response);
 
             // Act
@@ -532,7 +539,8 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
             // Assert
             await _mockService.Received(1).SetFinalSummaryRunAsync(
                 Arg.Is<string>(p  => p  == "ArgCheckPeriod"),
-                Arg.Is<short>(f   => f  == (short)3)
+                Arg.Is<short>(f   => f  == (short)3),
+                Arg.Is<string>(s  => s  == "1")
             );
         }
 
@@ -540,7 +548,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
         public async Task SetFinalSummaryRun_MapsAllFieldsFromDtoToResponse()
         {
             // Arrange
-            var request = new ReleasePeriodReq { PeriodName = "FieldMapPeriod", FinalSummariesRun = 2 };
+            var request = new ReleasePeriodReq { PeriodName = "FieldMapPeriod", FinalSummariesRun = 2, SendEmail = "0" };
 
             var dto = new ReleasePeriodDto
             {
@@ -562,7 +570,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
                 PeriodLocked     = 0
             };
 
-            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun).Returns(dto);
+            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail).Returns(dto);
             _mockMapper.Map<ReleasePeriodRes>(dto).Returns(response);
 
             // Act
@@ -583,25 +591,25 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
         public async Task SetFinalSummaryRun_ServiceThrowsException_PropagatesException()
         {
             // Arrange
-            var request = new ReleasePeriodReq { PeriodName = "ErrorPeriod", FinalSummariesRun = 1 };
+            var request = new ReleasePeriodReq { PeriodName = "ErrorPeriod", FinalSummariesRun = 1, SendEmail = "1" };
 
-            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun)
+            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail)
                 .Returns(Task.FromException<ReleasePeriodDto?>(new InvalidOperationException("Service error")));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.SetFinalSummaryRun(request));
 
-            await _mockService.Received(1).SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun);
+            await _mockService.Received(1).SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail);
         }
 
         [Fact]
         public async Task SetFinalSummaryRun_MapperThrowsException_PropagatesException()
         {
             // Arrange
-            var request = new ReleasePeriodReq { PeriodName = "MapperErrorPeriod", FinalSummariesRun = 1 };
+            var request = new ReleasePeriodReq { PeriodName = "MapperErrorPeriod", FinalSummariesRun = 1, SendEmail = "0" };
             var dto = new ReleasePeriodDto { PeriodName = "MapperErrorPeriod", FinalSummariesRun = 1 };
 
-            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun).Returns(dto);
+            _mockService.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail).Returns(dto);
             _mockMapper.When(m => m.Map<ReleasePeriodRes>(dto))
                 .Do(_ => throw new InvalidOperationException("Mapper error"));
 

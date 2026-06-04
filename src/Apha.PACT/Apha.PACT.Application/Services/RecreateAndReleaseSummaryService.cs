@@ -25,15 +25,15 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<PaginatedResult<RecreateSummariesLogDto>>(pagedData);
         }
 
-        public async Task<IReadOnlyList<ReleasePeriodDto>> GetReleaseSummariesAsync()
+        public async Task<ReleaseSummaryDto> GetReleaseSummariesAsync()
         {
-            var releasePeriods = await _repository.GetReleaseSummariesAsync();
-            return _mapper.Map<IReadOnlyList<ReleasePeriodDto>>(releasePeriods);
+            var releaseSummary = await _repository.GetReleaseSummariesAsync();
+            return _mapper.Map<ReleaseSummaryDto>(releaseSummary);
         }
 
-        public async Task<ReleasePeriodDto?> SetFinalSummaryRunAsync(string periodName, short finalSummariesRun)
+        public async Task<ReleasePeriodDto?> SetFinalSummaryRunAsync(string? periodName, short? finalSummariesRun, string? sendEmail)
         {
-            var releasePeriod = await _repository.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+            var releasePeriod = await _repository.SetFinalSummaryRunAsync(periodName, finalSummariesRun, sendEmail);
             return _mapper.Map<ReleasePeriodDto?>(releasePeriod);
         }
     }

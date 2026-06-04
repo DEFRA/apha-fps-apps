@@ -37,7 +37,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _releaseSummaryService.GetReleaseSummariesAsync();
             return View(new ReleaseSummaryViewModel
             {
-                ReleaseSummaryGrid = MapToGridConfig(response.Data)
+                Setting = response.Data?.Setting,
+                ReleaseSummaryGrid = MapToGridConfig(response.Data?.ReleasePeriods)
             });
         }
 
@@ -49,7 +50,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> LoadReleaseSummaryGrid()
         {
             var response = await _releaseSummaryService.GetReleaseSummariesAsync();
-            return PartialView("_DataGrid", MapToGridConfig(response.Data));
+            return PartialView("_DataGrid", MapToGridConfig(response.Data?.ReleasePeriods));
         }
 
         /// <summary>
@@ -59,9 +60,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <param name="finalSummariesRun">The new flag value (0 or 1).</param>
         /// <returns><c>200 OK</c> with the updated <c>finalSummariesRun</c> value on success; <c>400 Bad Request</c> on failure.</returns>
         [HttpPost]
-        public async Task<IActionResult> SetFinalSummaryRun(string periodName, short finalSummariesRun)
+        public async Task<IActionResult> SetFinalSummaryRun(string? periodName = null, short? finalSummariesRun = null, string? sendEmail = null)
         {
-            var response = await _releaseSummaryService.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+            var response = await _releaseSummaryService.SetFinalSummaryRunAsync(periodName, finalSummariesRun, sendEmail);
             if (response.Success)
                 return Ok(response.Data?.FinalSummariesRun);
 

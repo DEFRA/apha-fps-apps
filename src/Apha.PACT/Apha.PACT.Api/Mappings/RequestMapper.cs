@@ -59,6 +59,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<WorkGroupReportEmailResultDto, WorkGroupReportEmailResultRes>().ReverseMap();            
             CreateMap<RecreateSummariesLogRes, RecreateSummariesLogDto>().ReverseMap();
             CreateMap<ReleasePeriodRes, ReleasePeriodDto>().ReverseMap();
+            CreateMap<ReleaseSummaryDto, ReleaseSummaryRes>();
         }
     }
 }

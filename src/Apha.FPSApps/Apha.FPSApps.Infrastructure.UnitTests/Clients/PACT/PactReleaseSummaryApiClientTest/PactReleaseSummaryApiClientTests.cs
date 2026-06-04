@@ -32,26 +32,27 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
         public async Task GetReleaseSummariesAsync_WithSuccessfulResponse_ReturnsMappedDtoList()
         {
             // Arrange
-            var apiResponse = new ApiResponse<List<ReleasePeriodRes>>
+            var apiData = new ReleaseSummaryRes
             {
-                Success = true,
-                Data = new List<ReleasePeriodRes>
+                ReleasePeriods = new List<ReleasePeriodRes>
                 {
                     new() { PeriodName = "Period1", PeriodType = "Month", StartPeriod = 0.5, EndPeriod = 1.0, FinalSummariesRun = 0, PeriodLocked = 0 },
                     new() { PeriodName = "Period2", PeriodType = "Month", StartPeriod = 1.5, EndPeriod = 2.0, FinalSummariesRun = 1, PeriodLocked = 0 }
-                }
+                }.AsReadOnly()
             };
+            var apiResponse = new ApiResponse<ReleaseSummaryRes> { Success = true, Data = apiData };
 
-            var mappedDtos = new List<ReleasePeriodDto>
+            var mappedDto = new ReleaseSummaryDto
             {
-                new() { PeriodName = "Period1", PeriodType = "Month", StartPeriod = 0.5, EndPeriod = 1.0, FinalSummariesRun = 0, PeriodLocked = 0 },
-                new() { PeriodName = "Period2", PeriodType = "Month", StartPeriod = 1.5, EndPeriod = 2.0, FinalSummariesRun = 1, PeriodLocked = 0 }
+                ReleasePeriods = new List<ReleasePeriodDto>
+                {
+                    new() { PeriodName = "Period1" },
+                    new() { PeriodName = "Period2" }
+                }.AsReadOnly()
             };
 
-            _mockHttp.GetAsync<List<ReleasePeriodRes>>(PactApiEndpoints.GetReleaseSummaries)
-                .Returns(apiResponse);
-            _mockMapper.Map<IReadOnlyList<ReleasePeriodDto>>(apiResponse.Data)
-                .Returns(mappedDtos.AsReadOnly());
+            _mockHttp.GetAsync<ReleaseSummaryRes>(PactApiEndpoints.GetReleaseSummaries).Returns(apiResponse);
+            _mockMapper.Map<ReleaseSummaryDto>(apiData).Returns(mappedDto);
 
             // Act
             var result = await _client.GetReleaseSummariesAsync();
@@ -60,60 +61,50 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(2, result.Data.Count);
-            Assert.Equal("Period1", result.Data[0].PeriodName);
-            Assert.Equal("Period2", result.Data[1].PeriodName);
+            Assert.Equal(2, result.Data.ReleasePeriods.Count);
+            Assert.Equal("Period1", result.Data.ReleasePeriods[0].PeriodName);
+            Assert.Equal("Period2", result.Data.ReleasePeriods[1].PeriodName);
 
-            await _mockHttp.Received(1).GetAsync<List<ReleasePeriodRes>>(PactApiEndpoints.GetReleaseSummaries);
-            _mockMapper.Received(1).Map<IReadOnlyList<ReleasePeriodDto>>(apiResponse.Data);
+            await _mockHttp.Received(1).GetAsync<ReleaseSummaryRes>(PactApiEndpoints.GetReleaseSummaries);
+            _mockMapper.Received(1).Map<ReleaseSummaryDto>(apiData);
         }
 
         [Fact]
-        public async Task GetReleaseSummariesAsync_WithNullData_MapsEmptyListAndReturnsSuccess()
+        public async Task GetReleaseSummariesAsync_WithNullData_ReturnsFailure()
         {
             // Arrange
-            var apiResponse = new ApiResponse<List<ReleasePeriodRes>>
+            var apiResponse = new ApiResponse<ReleaseSummaryRes> { Success = true, Data = null };
+
+            var mappedFailure = new ApiResponseDto<ReleaseSummaryDto>
             {
-                Success = true,
-                Data    = null
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Code = "ERR_NULL", Message = "No data" } },
+                Meta    = new ApiMetaDto()
             };
 
-            var emptyDtos = new List<ReleasePeriodDto>().AsReadOnly();
-
-            _mockHttp.GetAsync<List<ReleasePeriodRes>>(PactApiEndpoints.GetReleaseSummaries)
-                .Returns(apiResponse);
-            // When Data is null the client falls back to new List<ReleasePeriodRes>()
-            _mockMapper.Map<IReadOnlyList<ReleasePeriodDto>>(Arg.Any<List<ReleasePeriodRes>>())
-                .Returns(emptyDtos);
+            _mockHttp.GetAsync<ReleaseSummaryRes>(PactApiEndpoints.GetReleaseSummaries).Returns(apiResponse);
+            _mockMapper.Map<ApiResponseDto<ReleaseSummaryDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
             var result = await _client.GetReleaseSummariesAsync();
 
             // Assert
             Assert.NotNull(result);
-            Assert.True(result.Success);
-            Assert.NotNull(result.Data);
-            Assert.Empty(result.Data);
+            Assert.False(result.Success);
 
-            await _mockHttp.Received(1).GetAsync<List<ReleasePeriodRes>>(PactApiEndpoints.GetReleaseSummaries);
+            _mockMapper.DidNotReceive().Map<ReleaseSummaryDto>(Arg.Any<ReleaseSummaryRes>());
         }
 
         [Fact]
         public async Task GetReleaseSummariesAsync_WithEmptyDataList_ReturnsMappedEmptyDtoList()
         {
             // Arrange
-            var apiResponse = new ApiResponse<List<ReleasePeriodRes>>
-            {
-                Success = true,
-                Data    = new List<ReleasePeriodRes>()
-            };
+            var apiData = new ReleaseSummaryRes { ReleasePeriods = new List<ReleasePeriodRes>().AsReadOnly() };
+            var apiResponse = new ApiResponse<ReleaseSummaryRes> { Success = true, Data = apiData };
+            var mappedDto = new ReleaseSummaryDto { ReleasePeriods = new List<ReleasePeriodDto>().AsReadOnly() };
 
-            var emptyDtos = new List<ReleasePeriodDto>().AsReadOnly();
-
-            _mockHttp.GetAsync<List<ReleasePeriodRes>>(PactApiEndpoints.GetReleaseSummaries)
-                .Returns(apiResponse);
-            _mockMapper.Map<IReadOnlyList<ReleasePeriodDto>>(apiResponse.Data)
-                .Returns(emptyDtos);
+            _mockHttp.GetAsync<ReleaseSummaryRes>(PactApiEndpoints.GetReleaseSummaries).Returns(apiResponse);
+            _mockMapper.Map<ReleaseSummaryDto>(apiData).Returns(mappedDto);
 
             // Act
             var result = await _client.GetReleaseSummariesAsync();
@@ -122,32 +113,30 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Empty(result.Data);
+            Assert.Empty(result.Data.ReleasePeriods);
 
-            await _mockHttp.Received(1).GetAsync<List<ReleasePeriodRes>>(PactApiEndpoints.GetReleaseSummaries);
+            await _mockHttp.Received(1).GetAsync<ReleaseSummaryRes>(PactApiEndpoints.GetReleaseSummaries);
         }
 
         [Fact]
         public async Task GetReleaseSummariesAsync_WithFailedResponse_ReturnsFailureResponseWithErrors()
         {
             // Arrange
-            var apiResponse = new ApiResponse<List<ReleasePeriodRes>>
+            var apiResponse = new ApiResponse<ReleaseSummaryRes>
             {
                 Success = false,
                 Errors  = new List<ApiError> { new() { Code = "ERR001", Message = "API Error" } }
             };
 
-            var mappedFailure = new ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>
+            var mappedFailure = new ApiResponseDto<ReleaseSummaryDto>
             {
                 Success = false,
                 Errors  = new List<ApiErrorDto> { new() { Code = "ERR001", Message = "API Error" } },
                 Meta    = new ApiMetaDto()
             };
 
-            _mockHttp.GetAsync<List<ReleasePeriodRes>>(PactApiEndpoints.GetReleaseSummaries)
-                .Returns(apiResponse);
-            _mockMapper.Map<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>>(apiResponse)
-                .Returns(mappedFailure);
+            _mockHttp.GetAsync<ReleaseSummaryRes>(PactApiEndpoints.GetReleaseSummaries).Returns(apiResponse);
+            _mockMapper.Map<ApiResponseDto<ReleaseSummaryDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
             var result = await _client.GetReleaseSummariesAsync();
@@ -157,56 +146,55 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
             Assert.False(result.Success);
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
-            Assert.Equal("ERR001",   result.Errors[0].Code);
+            Assert.Equal("ERR001",    result.Errors[0].Code);
             Assert.Equal("API Error", result.Errors[0].Message);
 
-            await _mockHttp.Received(1).GetAsync<List<ReleasePeriodRes>>(PactApiEndpoints.GetReleaseSummaries);
-            _mockMapper.Received(1).Map<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>>(apiResponse);
+            await _mockHttp.Received(1).GetAsync<ReleaseSummaryRes>(PactApiEndpoints.GetReleaseSummaries);
+            _mockMapper.Received(1).Map<ApiResponseDto<ReleaseSummaryDto>>(apiResponse);
         }
 
         [Fact]
         public async Task GetReleaseSummariesAsync_WithFailedResponse_DoesNotCallMapperForDtoList()
         {
             // Arrange
-            var apiResponse = new ApiResponse<List<ReleasePeriodRes>>
+            var apiResponse = new ApiResponse<ReleaseSummaryRes>
             {
                 Success = false,
                 Errors  = new List<ApiError> { new() { Code = "ERR001", Message = "API Error" } }
             };
 
-            var mappedFailure = new ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>
+            var mappedFailure = new ApiResponseDto<ReleaseSummaryDto>
             {
                 Success = false,
                 Errors  = new List<ApiErrorDto> { new() { Code = "ERR001", Message = "API Error" } },
                 Meta    = new ApiMetaDto()
             };
 
-            _mockHttp.GetAsync<List<ReleasePeriodRes>>(PactApiEndpoints.GetReleaseSummaries)
-                .Returns(apiResponse);
-            _mockMapper.Map<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>>(apiResponse)
-                .Returns(mappedFailure);
+            _mockHttp.GetAsync<ReleaseSummaryRes>(PactApiEndpoints.GetReleaseSummaries).Returns(apiResponse);
+            _mockMapper.Map<ApiResponseDto<ReleaseSummaryDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
             await _client.GetReleaseSummariesAsync();
 
-            // Assert — the DTO list mapper must NOT be invoked on the failure path
-            _mockMapper.DidNotReceive().Map<IReadOnlyList<ReleasePeriodDto>>(Arg.Any<List<ReleasePeriodRes>>());
+            // Assert — the DTO mapper must NOT be invoked on the failure path
+            _mockMapper.DidNotReceive().Map<ReleaseSummaryDto>(Arg.Any<ReleaseSummaryRes>());
         }
 
         [Fact]
         public async Task GetReleaseSummariesAsync_UsesCorrectEndpoint()
         {
             // Arrange
-            var apiResponse = new ApiResponse<List<ReleasePeriodRes>> { Success = true, Data = new List<ReleasePeriodRes>() };
-            _mockHttp.GetAsync<List<ReleasePeriodRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mockMapper.Map<IReadOnlyList<ReleasePeriodDto>>(Arg.Any<List<ReleasePeriodRes>>())
-                .Returns(new List<ReleasePeriodDto>().AsReadOnly());
+            var apiData = new ReleaseSummaryRes { ReleasePeriods = new List<ReleasePeriodRes>().AsReadOnly() };
+            var apiResponse = new ApiResponse<ReleaseSummaryRes> { Success = true, Data = apiData };
+            _mockHttp.GetAsync<ReleaseSummaryRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mockMapper.Map<ReleaseSummaryDto>(Arg.Any<ReleaseSummaryRes>())
+                .Returns(new ReleaseSummaryDto { ReleasePeriods = new List<ReleasePeriodDto>().AsReadOnly() });
 
             // Act
             await _client.GetReleaseSummariesAsync();
 
             // Assert
-            await _mockHttp.Received(1).GetAsync<List<ReleasePeriodRes>>(
+            await _mockHttp.Received(1).GetAsync<ReleaseSummaryRes>(
                 Arg.Is<string>(url => url == PactApiEndpoints.GetReleaseSummaries));
         }
 
@@ -240,12 +228,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
                     PactApiEndpoints.SetFinalSummaryRun,
                     Arg.Is<ReleasePeriodReq>(r =>
                         r.PeriodName        == TestPeriodName &&
-                        r.FinalSummariesRun == TestFinalSummariesRun))
+                        r.FinalSummariesRun == TestFinalSummariesRun &&
+                        r.SendEmail         == "1"))
                 .Returns(apiResponse);
             _mockMapper.Map<ReleasePeriodDto>(apiResponse.Data).Returns(mappedDto);
 
             // Act
-            var result = await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            var result = await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "1");
 
             // Assert
             Assert.NotNull(result);
@@ -258,7 +247,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
                 PactApiEndpoints.SetFinalSummaryRun,
                 Arg.Is<ReleasePeriodReq>(r =>
                     r.PeriodName        == TestPeriodName &&
-                    r.FinalSummariesRun == TestFinalSummariesRun));
+                    r.FinalSummariesRun == TestFinalSummariesRun &&
+                    r.SendEmail         == "1"));
             _mockMapper.Received(1).Map<ReleasePeriodDto>(apiResponse.Data);
         }
 
@@ -285,7 +275,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
             _mockMapper.Map<ApiResponseDto<ReleasePeriodDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            var result = await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "1");
 
             // Assert
             Assert.NotNull(result);
@@ -317,7 +307,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
             _mockMapper.Map<ApiResponseDto<ReleasePeriodDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            var result = await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            var result = await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "0");
 
             // Assert
             Assert.NotNull(result);
@@ -355,7 +345,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
             _mockMapper.Map<ApiResponseDto<ReleasePeriodDto>>(apiResponse).Returns(mappedFailure);
 
             // Act
-            await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "0");
 
             // Assert — DTO mapper must NOT be invoked on the failure path
             _mockMapper.DidNotReceive().Map<ReleasePeriodDto>(Arg.Any<ReleasePeriodRes>());
@@ -381,14 +371,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
                 .Returns(new ReleasePeriodDto { PeriodName = periodName, FinalSummariesRun = finalSummariesRun });
 
             // Act
-            await _client.SetFinalSummaryRunAsync(periodName, finalSummariesRun);
+            await _client.SetFinalSummaryRunAsync(periodName, finalSummariesRun, "1");
 
             // Assert — exact request payload sent to the HTTP executor
             await _mockHttp.Received(1).PutAsync<ReleasePeriodReq, ReleasePeriodRes>(
                 Arg.Any<string>(),
                 Arg.Is<ReleasePeriodReq>(r =>
                     r.PeriodName        == periodName &&
-                    r.FinalSummariesRun == finalSummariesRun));
+                    r.FinalSummariesRun == finalSummariesRun &&
+                    r.SendEmail         == "1"));
         }
 
         [Fact]
@@ -408,7 +399,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
                 .Returns(new ReleasePeriodDto { PeriodName = TestPeriodName });
 
             // Act
-            await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "1");
 
             // Assert
             await _mockHttp.Received(1).PutAsync<ReleasePeriodReq, ReleasePeriodRes>(
@@ -448,7 +439,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactReleaseSummaryA
             _mockMapper.Map<ReleasePeriodDto>(responseData).Returns(mappedDto);
 
             // Act
-            var result = await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun);
+            var result = await _client.SetFinalSummaryRunAsync(TestPeriodName, TestFinalSummariesRun, "1");
 
             // Assert
             Assert.NotNull(result);

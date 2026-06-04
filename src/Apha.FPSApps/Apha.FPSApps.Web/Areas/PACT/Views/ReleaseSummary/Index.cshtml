@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Release Summaries";
+     var isChecked = (Model.Setting == "1" || Model.Setting == "-1");
 }
 
 <style>
@@ -17,16 +18,18 @@
         <div class="govuk-grid-column-one-third sup_margin_top_neg_10">
             <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0">
                 <div class="govuk-checkboxes__item">
-
-                    <input class="govuk-checkboxes__input govuk-!-font-size-16" id="chkdefraproject" name="chkdefraproject" type="checkbox" value="defraproject">
-                    <label class="govuk-label govuk-checkboxes__label govuk-!-font-weight-bold sup_label_auto_width" for="chkdefraproject">
+                    <input class="govuk-checkboxes__input govuk-!-font-size-16"
+                           id="cbSendEmail"
+                           name="cbSendEmail"
+                           type="checkbox"
+                           checked="@isChecked" />
+                    <label for="cbSendEmail"
+                        class="govuk-label govuk-checkboxes__label govuk-!-font-weight-bold sup_label_auto_width">
                         Send Report Emails?
                     </label>
                 </div>
-
             </div>
         </div>
-
     </div>
 </div>
 
@@ -44,8 +47,6 @@
         var GRID_SELECTOR = '#gridContainer_releaseSummariesGrid';
         var ROW_SELECTOR = GRID_SELECTOR + ' tbody tr';
         var CHECKBOX_CLASS = '.grid-checkbox';
-
-        // ── Helpers ───────────────────────────────────────────────────────────
 
         function getGridRows() {
             return $(ROW_SELECTOR);
@@ -107,10 +108,11 @@
          * Sends the updated finalSummariesRun value to the server.
          */
         function saveFinalSummaryRun(periodName, finalSummariesRun, $row, $checkbox, isChecked) {
+            // var sendEmail = $('#cbSendEmail').is(':checked') ? '1' : '0';
             $.ajax({
                 url: '@Url.Action("SetFinalSummaryRun", "ReleaseSummary", new { area = "PACT" })',
                 type: 'POST',
-                data: { periodName: periodName, finalSummariesRun: finalSummariesRun },
+                data: { periodName: periodName, finalSummariesRun: finalSummariesRun, sendEmail: "" },
                 success: function () {
                     $row.css('background-color', '#ffffcc');
                     updateCheckboxStates();
@@ -119,6 +121,22 @@
                     showGovukAlert('Failed to update Final Summaries Run for period: ' + periodName);
                     $checkbox.prop('checked', !isChecked);
                     updateCheckboxStates();
+                }
+            });
+        }
+
+        /**
+         * Sends the updated sendEmail setting to the server when cbSendEmail is toggled.
+         */
+        function onSendEmailChange() {
+            var sendEmail = $(this).is(':checked') ? '1' : '0';
+            $.ajax({
+                url: '@Url.Action("SetFinalSummaryRun", "ReleaseSummary", new { area = "PACT" })',
+                type: 'POST',
+                data: { periodName: '', finalSummariesRun: 0, sendEmail: sendEmail },
+                error: function () {
+                    showGovukAlert('Failed to update Send Report Emails setting.');
+                    $('#cbSendEmail').prop('checked', !$('#cbSendEmail').is(':checked'));
                 }
             });
         }
@@ -146,5 +164,6 @@
 
         updateCheckboxStates();
         $(GRID_SELECTOR).on('change', CHECKBOX_CLASS, onCheckboxChange);
+        $('#cbSendEmail').on('change', onSendEmailChange);
     });
 </script>
