@@ -74,26 +74,29 @@ These states are **computed on-the-fly by the status API** for better UX during 
 3. **`WorkerProcessStarted`** – Local process dispatcher reports worker spawned (local mode only); execution not yet visible in DB.
 4. **`StartFailedTimeout`** – Watchdog projection: `acceptedAtUtc` + `startupSlaSeconds` deadline exceeded with no execution record observed.
 
-**Purpose**: Show users meaningful feedback during the 10-180 second startup window while the worker is starting and hasn't written to the DB yet.
+**Purpose**: Show users meaningful feedback during the startup window while the worker is starting and hasn't written to the DB yet.
 
 ### 4.3 Startup Watchdog Mechanism
 
 **When does watchdog activate?**
-- PACT status endpoint receives a request with `jobExecutionId` + `acceptedAtUtc` parameters.
+- PACT status endpoint receives a request with `jobExecutionId`.
 - No execution record exists yet in the BatchJobs DB.
-- API computes projected state based on time elapsed since `acceptedAtUtc`.
+- Trigger-attempt metadata exists in trigger store, including `acceptedAtUtc`.
+- API computes projected state based on time elapsed since stored `acceptedAtUtc`.
 
 **Watchdog computation (in PACT API /api/batch-jobs/{jobName}/status endpoint):**
 ```csharp
-if (execution is null && acceptedAtUtc.HasValue)
+if (execution is null && triggerAttempt is not null)
 {
     var now = DateTime.UtcNow;
-    var startupSlaSeconds = environment.IsProduction() ? 600 : 180;
-    var startupDeadlineUtc = acceptedAtUtc.Value.AddSeconds(startupSlaSeconds);
+  var startupSlaSeconds = environment.IsProduction() ? 600 : 30;
+  var startupDeadlineUtc = triggerAttempt.AcceptedAtUtc.AddSeconds(startupSlaSeconds);
     
-    var projectedState = now > startupDeadlineUtc 
-        ? "StartFailedTimeout"           // Deadline passed, worker never appeared
-        : "TriggerAcceptedPendingStart"; // Still within SLA window, waiting for visibility
+  var projectedState = now > startupDeadlineUtc
+    ? "StartFailedTimeout"
+    : triggerAttempt.WorkerProcessLaunched
+      ? "WorkerProcessStarted"
+      : "TriggerAccepted";
 }
 ```
 
@@ -101,11 +104,11 @@ if (execution is null && acceptedAtUtc.HasValue)
 ```json
 {
   "startupWatchdog": {
-    "projectedState": "TriggerAcceptedPendingStart",
+    "projectedState": "TriggerAccepted",
     "acceptedAtUtc": "2026-06-03T12:00:00Z",
-    "startupDeadlineUtc": "2026-06-03T12:03:00Z",
+    "startupDeadlineUtc": "2026-06-03T12:00:30Z",
     "evaluatedAtUtc": "2026-06-03T12:00:30Z",
-    "startupSlaSeconds": 180,
+    "startupSlaSeconds": 30,
     "deliveryExhaustionConfirmed": false
   }
 }
@@ -140,7 +143,7 @@ stateDiagram-v2
 **Key notes:**
 1. **7 states** persist to `fps.job_status`: `Pending`, `Running`, `Completed`, `Failed`, `Cancelled`, `Retry`, `Skipped`.
 2. **Transient states** (`TriggerAccepted`, `WorkerProcessStarted`, `StartFailedTimeout`) are API projections, not DB rows.
-3. **Watchdog phase**: When `acceptedAtUtc` is known but execution not yet visible in DB, API projects `TriggerAcceptedPendingStart`.
+3. **Watchdog phase**: When `acceptedAtUtc` is known in trigger store but execution is not yet visible in DB, API projects `TriggerAccepted` or `WorkerProcessStarted`.
 4. **Normal flow**: `Pending` → `Running` → `Completed` (or `Failed` or `Cancelled`).
 5. **Retry flow**: `Running` → `Failed` → `Retry` → `Pending` → `Running`.
 6. **Skipped**: Job rejected at acceptance time (e.g., lock collision, already running).
@@ -155,7 +158,7 @@ Show **only these states** to business users:
 | State | Label | Color | User Meaning | Duration | Source |
 |-------|-------|-------|--------------|----------|--------|
 | Ready | Ready | Green | Job can be triggered now | Before trigger | UI local |
-| TriggerAcceptedPendingStart | Pending / Queued | Blue | Job accepted, waiting to start | 0–3 min (prod: 0–10 min) | Watchdog |
+| TriggerAccepted / WorkerProcessStarted | Pending / Queued | Blue | Job accepted, waiting to start | Short startup window | Watchdog |
 | Pending | Pending | Blue | Job is queued but not yet running | Variable (seconds to minutes) | DB |
 | Running | Running | Blue | Job is executing | Variable (seconds to hours) | DB |
 | Retry | ⟳ Retry Scheduled | Orange | Job failed; retry is queued | After failure detection | DB |
@@ -167,7 +170,7 @@ Show **only these states** to business users:
 
 **Why show `Pending` (DB state)?**
 - Distinguishes the queued/startup phase from active execution.
-- Watchdog projection `TriggerAcceptedPendingStart` is an interim label while DB `Pending` record is being written.
+- Watchdog projections `TriggerAccepted` and `WorkerProcessStarted` are interim labels while DB `Pending` record is being written.
 - Shows user confidence that job was accepted and is moving through the startup pipeline.
 
 **Why show `Retry` and `Skipped` (DB states)?**
@@ -197,32 +200,36 @@ The Sample UI in this repo shows more states for **demo/debugging purposes**:
 
 Base routes:
 1. Trigger route: `/api/v1/batch-jobs`
-2. Status route: `/api/batch-jobs`
+2. Operational/status route: `/api/batch-jobs`
 
 1. `GET /api/v1/batch-jobs/catalog`
-   - Discover jobs and route policy.
+  - Discover jobs and route policy.
+  - Response includes `canTriggerFromThisApi`.
 2. `POST /api/v1/batch-jobs/trigger`
-   - Request body:
-     ```json
-     {
-       "jobName": "RecreateSummaries",
-       "requestedBy": "user@domain"
-     }
-     ```
-   - Behavior:
-     - `202 Accepted` with `jobExecutionId`, `eventId`, `status`.
-     - `409 Conflict` on route or single-run conflict.
-   - Identity note:
-     - `requestedBy` from body is advisory in local/dev.
-     - In integrated environments, server should derive identity from principal/claims.
+  - Request body:
+    ```json
+    {
+     "jobName": "RecreateSummaries",
+     "requestedBy": "user@domain"
+    }
+    ```
+  - Behavior:
+    - `202 Accepted` with `jobExecutionId`, `eventId`, `acceptedAtUtc`, `status`.
+    - `409 Conflict` on route-policy rejection.
+  - Identity note:
+    - `requestedBy` from body is advisory in local/dev.
+    - In integrated environments, server should derive identity from principal/claims.
 3. `GET /health`
 4. `GET /api/batch-jobs/{jobName}/can-run`
-   - Guardrail for UI enablement.
-   - Backed by BatchJobs status service/DB query.
-5. `GET /api/batch-jobs/{jobName}/status?jobExecutionId=<guid>&acceptedAtUtc=<ISO-8601>`
-   - Correlated status for a specific accepted trigger.
-   - Returns source-of-truth execution state and/or startup watchdog projection.
-   - Backed by BatchJobs status service/DB query.
+  - Guardrail for UI enablement.
+  - Backed by lock + latest execution checks.
+5. `GET /api/batch-jobs/{jobName}/status?jobExecutionId=<guid>`
+  - Correlated status for a specific accepted trigger.
+  - Returns source-of-truth execution state and/or startup watchdog projection.
+  - `acceptedAtUtc` query parameter is not required in current implementation.
+
+Internal/local break-glass route (excluded from public contract):
+- `POST /internal/local/batch-jobs/{jobName}/break-glass/release-lock`
 
 ### 5.2 BatchJobs API
 
@@ -234,7 +241,7 @@ Base route: `/api/batch-jobs`
    - Job-level status (latest run + lock).
 3. `GET /api/batch-jobs/{jobName}/status?jobExecutionId=<guid>`
    - Correlated status for a specific accepted trigger.
-   - Optional `acceptedAtUtc=<ISO-8601>` enables startup watchdog projection when execution row is not yet observable.
+  - Optional `acceptedAtUtc=<ISO-8601>` may be used by BatchJobs API variants; PACT API currently computes startup watchdog from trigger store without this query parameter.
 4. `GET /api/batch-jobs/executions/{jobExecutionId}`
    - Execution-centric lookup.
 5. `GET /api/batch-jobs/{jobName}/can-run`
@@ -258,18 +265,18 @@ Base route: `/api/batch-jobs`
 ### 7.2 Startup Watchdog Phase (0–180 seconds in non-prod, 0–600 in prod)
 
 1. **Poll rapidly** with jitter: every 2–5 seconds.
-2. Include both `jobExecutionId` AND `acceptedAtUtc` in query string:
+2. Include `jobExecutionId` in query string:
    ```
-   GET /api/batch-jobs/{jobName}/status?jobExecutionId=<guid>&acceptedAtUtc=<ISO-8601>
+  GET /api/batch-jobs/{jobName}/status?jobExecutionId=<guid>
    ```
 3. **API behavior:**
    - If execution row exists: return DB-backed state and `lastExecution` object.
    - If execution row NOT found: compute watchdog projection:
-     - If `now < startupDeadlineUtc`: return `projectedState: "TriggerAcceptedPendingStart"` with watchdog block.
-     - If `now >= startupDeadlineUtc`: return `projectedState: "StartFailedTimeout"` with watchdog block; set `isRunning: false`.
+    - If within startup window: return `projectedState: "TriggerAccepted"` or `"WorkerProcessStarted"`.
+    - If deadline exceeded: return `projectedState: "StartFailedTimeout"`; set `isRunning: false`.
 4. **UI logic:**
    - If watchdog projects `StartFailedTimeout`, stop polling and show failure state.
-   - If watchdog projects `TriggerAcceptedPendingStart`, continue rapid polling.
+  - If watchdog projects `TriggerAccepted` or `WorkerProcessStarted`, continue rapid polling.
    - Once `lastExecution` appears with `status: "Running"`, transition to running phase.
 
 ### 7.3 Running Phase (Job has appeared in DB)
@@ -299,6 +306,12 @@ Base route: `/api/batch-jobs`
 | Poll request network fails | Retry silently, show last known state. |
 | User closes browser during startup phase | OK—no polling state loss needed; session can be recovered via jobExecutionId if reloaded. |
 
+## 7.6 Stale Lock Reconciliation Ownership
+
+1. Stale lock release is system-owned behavior in repository logic (`GetActiveLockAsync`).
+2. Public clients must not depend on unlock endpoints for normal recovery.
+3. Local/dev break-glass unlock exists only on the internal local route above.
+
 ## 8. Correlation and Idempotency Rules
 
 
@@ -310,32 +323,39 @@ Base route: `/api/batch-jobs`
 
 ## 8.1 Startup Watchdog Projection Contract (API Implementation Detail)
 
-When `jobExecutionId` is provided but no execution row exists yet, BatchJobs API returns a `startupWatchdog` block **only when `acceptedAtUtc` is supplied**:
+When `jobExecutionId` is provided but no execution row exists yet, PACT API returns a `startupWatchdog` block using trigger-attempt data from `ITriggerAttemptStore`:
 
 ```json
 {
   "isRunning": true,
+  "sourceOfTruth": "StartupWatchdog",
   "startupWatchdog": {
-    "projectedState": "TriggerAcceptedPendingStart",
+    "projectedState": "WorkerProcessStarted",
     "acceptedAtUtc": "2026-06-03T12:00:00Z",
-    "startupDeadlineUtc": "2026-06-03T12:03:00Z",
-    "evaluatedAtUtc": "2026-06-03T12:00:45Z",
-    "startupSlaSeconds": 180,
+    "startupDeadlineUtc": "2026-06-03T12:00:30Z",
+    "evaluatedAtUtc": "2026-06-03T12:00:15Z",
+    "startupSlaSeconds": 30,
     "deliveryExhaustionConfirmed": false,
-    "deliveryExhaustionOwner": "IntegrationTransportReconciler"
+    "deliveryExhaustionOwner": "IntegrationTransportReconciler",
+    "eventId": "localproc-12345",
+    "triggerStatus": "WorkerProcessStarted",
+    "workerExitCode": null,
+    "triggerStore": "PactInMemoryCache"
   },
   "lastExecution": null
 }
 ```
 
 **Contract fields:**
-1. `projectedState`: Either `TriggerAcceptedPendingStart` (within SLA) or `StartFailedTimeout` (deadline exceeded).
+1. `projectedState`: One of `TriggerAccepted`, `WorkerProcessStarted`, `StartFailedTimeout`, `WorkerProcessExited`, or mapped terminal projection.
 2. `acceptedAtUtc`: Timestamp from trigger response (UTC, ISO-8601).
 3. `startupDeadlineUtc`: `acceptedAtUtc + startupSlaSeconds`.
 4. `evaluatedAtUtc`: Current time when projection was computed.
-5. `startupSlaSeconds`: Configurable per environment (180s non-prod, 600s prod).
+5. `startupSlaSeconds`: Configurable per environment (current code: 30s non-prod, 600s prod).
 6. `deliveryExhaustionConfirmed`: `false` unless transport reconciler confirms delivery exhaustion.
 7. `deliveryExhaustionOwner`: Currently always `"IntegrationTransportReconciler"`.
+8. `eventId`, `triggerStatus`, `workerExitCode`: trigger-attempt diagnostics for local support.
+9. `triggerStore`: source store label currently set to `PactInMemoryCache`.
 
 **UI consumption:**
 - **Do use**: `startupWatchdog.projectedState` to decide whether to stop polling (if `StartFailedTimeout`).
@@ -387,6 +407,18 @@ Keep response shape transport-agnostic:
 
 **Business user visibility**: The trigger response itself is not shown to users; only the polling-derived state is displayed.
 
+## 10.1 Trigger Attempt Store (Local Cache vs Redis)
+
+Current implementation:
+1. PACT API writes trigger attempts to in-process memory cache via `MemoryTriggerAttemptStore`.
+2. Entries use TTL from `TriggerStore:EntryTtlMinutes` (default 60).
+3. Status watchdog reads this cache to correlate accepted trigger metadata.
+
+Production recommendation:
+1. Keep `ITriggerAttemptStore` contract but switch implementation to Redis-backed distributed cache.
+2. Use shared cache so watchdog behavior is consistent across replicas and restarts.
+3. Preserve response shape; only storage backend changes.
+
 ## 11. End-to-End Sequence (PACT UI)
 
 1. Call PACT `GET /api/batch-jobs/{jobName}/can-run` on page load.
@@ -395,7 +427,7 @@ Keep response shape transport-agnostic:
 4. Capture `jobExecutionId` from `202` response.
 5. **Start polling** correlated PACT status endpoint:
    ```
-   GET /api/batch-jobs/{jobName}/status?jobExecutionId=<guid>&acceptedAtUtc=<acceptedAtUtc>
+  GET /api/batch-jobs/{jobName}/status?jobExecutionId=<guid>
    ```
    - PACT resolves status from BatchJobs-backed services/DB
 6. **Map API state to user state:**
@@ -442,7 +474,7 @@ Response:
 ### 13.2 Poll with Watchdog (No Execution Record Yet)
 
 ```bash
-curl "http://localhost:5261/api/batch-jobs/RecreateSummaries/status?jobExecutionId=7fdf872e-2b58-41fe-887b-6bdbb8ea596a&acceptedAtUtc=2026-06-03T09:29:16.814329Z"
+curl "http://localhost:5261/api/batch-jobs/RecreateSummaries/status?jobExecutionId=7fdf872e2b5841fe887b6bdbb8ea596a"
 ```
 
 Response (within SLA, execution not yet visible):
@@ -450,17 +482,21 @@ Response (within SLA, execution not yet visible):
 {
   "jobName": "RecreateSummaries",
   "isRunning": true,
-  "sourceOfTruth": "BatchJobs",
-  "correlatedJobExecutionId": "7fdf872e-2b58-41fe-887b-6bdbb8ea596a",
+  "sourceOfTruth": "StartupWatchdog",
+  "correlatedJobExecutionId": "7fdf872e2b5841fe887b6bdbb8ea596a",
   "lastExecution": null,
   "startupWatchdog": {
-    "projectedState": "TriggerAcceptedPendingStart",
+    "projectedState": "WorkerProcessStarted",
     "acceptedAtUtc": "2026-06-03T09:29:16.814329Z",
-    "startupDeadlineUtc": "2026-06-03T09:32:16.814329Z",
+    "startupDeadlineUtc": "2026-06-03T09:29:46.814329Z",
     "evaluatedAtUtc": "2026-06-03T09:29:20.1091147Z",
-    "startupSlaSeconds": 180,
+    "startupSlaSeconds": 30,
     "deliveryExhaustionConfirmed": false,
-    "deliveryExhaustionOwner": "IntegrationTransportReconciler"
+    "deliveryExhaustionOwner": "IntegrationTransportReconciler",
+    "eventId": "localproc-11080",
+    "triggerStatus": "WorkerProcessStarted",
+    "workerExitCode": null,
+    "triggerStore": "PactInMemoryCache"
   }
 }
 ```
@@ -470,7 +506,7 @@ Response (within SLA, execution not yet visible):
 ### 13.3 Poll After Execution Appears in DB
 
 ```bash
-curl "http://localhost:5261/api/batch-jobs/RecreateSummaries/status?jobExecutionId=7fdf872e-2b58-41fe-887b-6bdbb8ea596a&acceptedAtUtc=2026-06-03T09:29:16.814329Z"
+curl "http://localhost:5261/api/batch-jobs/RecreateSummaries/status?jobExecutionId=7fdf872e2b5841fe887b6bdbb8ea596a"
 ```
 
 Response (execution is now visible):
@@ -501,7 +537,7 @@ Response (execution is now visible):
 ### 13.4 Poll After Completion
 
 ```bash
-curl "http://localhost:5261/api/batch-jobs/RecreateSummaries/status?jobExecutionId=7fdf872e-2b58-41fe-887b-6bdbb8ea596a&acceptedAtUtc=2026-06-03T09:29:16.814329Z"
+curl "http://localhost:5261/api/batch-jobs/RecreateSummaries/status?jobExecutionId=7fdf872e2b5841fe887b6bdbb8ea596a"
 ```
 
 Response (execution completed):

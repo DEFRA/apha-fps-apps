@@ -26,4 +26,16 @@ public sealed class LocalWorkerOptions
     public int DebuggerAttachTimeoutSeconds { get; init; } = 120;
 
     public bool BreakOnStartAfterAttach { get; init; } = true;
+
+    // When false, noisy EF SQL command text is omitted from per-run local worker logs.
+    public bool IncludeSqlCommandLogs { get; init; }
+
+    // Enables background cleanup of stale local worker processes tracked by metadata files.
+    public bool EnableOrphanProcessReaper { get; init; } = true;
+
+    // Reaper loop interval.
+    public int ReaperIntervalSeconds { get; init; } = 30;
+
+    // Maximum allowed age before a tracked worker process is treated as stale.
+    public int MaxWorkerLifetimeMinutes { get; init; } = 30;
 }

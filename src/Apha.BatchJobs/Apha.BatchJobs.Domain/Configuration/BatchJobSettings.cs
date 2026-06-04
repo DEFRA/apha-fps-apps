@@ -18,6 +18,12 @@ public sealed class BatchJobSettings
     public int JobTimeout { get; set; } = 3600;
 
     /// <summary>
+    /// Optional per-job runtime timeout overrides in seconds.
+    /// Keys are job names (for example: RecreateSummaries, MABArchive).
+    /// </summary>
+    public Dictionary<string, int> JobTimeoutOverridesSeconds { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Number of retry attempts for failed jobs.
     /// Retry policy wiring is planned in a future story.
     /// </summary>

@@ -85,6 +85,7 @@ builder.Services.AddAWSService<IAmazonEventBridge>();
 builder.Services.AddScoped<IEventPublisher, EventBridgePublisher>();
 builder.Services.AddScoped<EventBridgeTriggerDispatcher>();
 builder.Services.AddScoped<LocalWorkerProcessTriggerDispatcher>();
+builder.Services.AddHostedService<LocalWorkerProcessJanitorService>();
 builder.Services.AddScoped<ITriggerDispatcher>(serviceProvider =>
 {
     var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<TriggerDispatchOptions>>().Value;
@@ -144,7 +145,9 @@ app.MapGet("/api/batch-jobs/{jobName}/can-run", async (
             && (lastExecution.Status == JobStatus.Running || lastExecution.Status == JobStatus.Pending || lastExecution.Status == JobStatus.Retry)
             && (lastExecution.CompletedAt is null);
 
-        var canRun = activeLock is null && !hasActiveExecution;
+        var hasDurableActiveExecution = hasActiveExecution && activeLock is not null;
+
+        var canRun = activeLock is null && !hasDurableActiveExecution;
         var reason = canRun
             ? null
             : activeLock is not null
@@ -173,6 +176,47 @@ app.MapGet("/api/batch-jobs/{jobName}/can-run", async (
     }
 });
 
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Local"))
+{
+    app.MapPost("/internal/local/batch-jobs/{jobName}/break-glass/release-lock", async (
+        string jobName,
+        BatchJobsDbContext dbContext,
+        CancellationToken cancellationToken) =>
+    {
+        var now = DateTime.UtcNow;
+        var lockRow = await dbContext.BatchLocks
+            .FirstOrDefaultAsync(l => l.JobName == jobName && l.IsActive && l.ExpiresAt > now, cancellationToken);
+
+        if (lockRow is null)
+        {
+            return Results.Ok(new
+            {
+                released = false,
+                reason = "No active lock row found.",
+                jobName,
+                scope = "local-break-glass"
+            });
+        }
+
+        dbContext.BatchLocks.Remove(lockRow);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Results.Ok(new
+        {
+            released = true,
+            reason = "Active lock row was removed.",
+            jobName,
+            scope = "local-break-glass",
+            releasedLock = new
+            {
+                lockRow.JobQueueId,
+                lockRow.AcquiredAt,
+                lockRow.ExpiresAt
+            }
+        });
+    });
+}
+
 app.MapGet("/api/batch-jobs/{jobName}/status", async (
     string jobName,
     [FromQuery] string? jobExecutionId,
@@ -183,14 +227,17 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
 {
     try
     {
+        var hasRequestedJobExecutionId = !string.IsNullOrWhiteSpace(jobExecutionId);
+        var requestedJobExecutionIdIsValid = Guid.TryParse(jobExecutionId, out var correlatedExecutionId);
+
         TriggerAttemptRecord? triggerAttempt = null;
 
-        if (!string.IsNullOrWhiteSpace(jobExecutionId))
+        if (hasRequestedJobExecutionId)
         {
-            triggerAttempt = await triggerAttemptStore.GetByJobExecutionIdAsync(jobExecutionId, cancellationToken);
+            triggerAttempt = await triggerAttemptStore.GetByJobExecutionIdAsync(jobExecutionId!, cancellationToken);
         }
 
-        var execution = Guid.TryParse(jobExecutionId, out var correlatedExecutionId)
+        var execution = requestedJobExecutionIdIsValid
             ? await executionRepository.GetExecutionByJobExecutionIdAsync(correlatedExecutionId, cancellationToken)
             : await executionRepository.GetLastExecutionAsync(jobName, cancellationToken);
 
@@ -203,6 +250,14 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
         var isRunning = false;
         var sourceOfTruth = "BatchJobs";
         var correlatedJobExecutionId = jobExecutionId;
+        var queryMode = requestedJobExecutionIdIsValid
+            ? "CorrelatedExecutionId"
+            : "LatestByJobNameFallback";
+        var fallbackReason = requestedJobExecutionIdIsValid
+            ? (string?)null
+            : hasRequestedJobExecutionId
+                ? "InvalidJobExecutionId"
+                : "MissingJobExecutionId";
 
         if (execution is not null)
         {
@@ -219,6 +274,7 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
             var startupSlaSeconds = environment.IsProduction() ? 600 : 30;
             var startupDeadlineUtc = triggerAttempt.AcceptedAtUtc.AddSeconds(startupSlaSeconds);
             var workerProcessExited = false;
+            int? workerExitCode = triggerAttempt.WorkerExitCode;
 
             if (triggerAttempt.EventId.StartsWith("localproc-", StringComparison.OrdinalIgnoreCase)
                 && int.TryParse(triggerAttempt.EventId["localproc-".Length..], out var workerPid))
@@ -234,13 +290,37 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
                 }
             }
 
-            var projectedState = workerProcessExited
-                ? "WorkerProcessExited"
-                : now > startupDeadlineUtc
-                    ? "StartFailedTimeout"
+            if (!workerProcessExited && workerExitCode.HasValue)
+            {
+                // Persisted exit code indicates process has already exited.
+                workerProcessExited = true;
+            }
+
+            string projectedState;
+            if (workerProcessExited)
+            {
+                projectedState = workerExitCode switch
+                {
+                    0 => "Completed",
+                    3 => "Cancelled",
+                    4 => "Skipped",
+                    _ => string.Equals(triggerAttempt.Status, "Skipped", StringComparison.OrdinalIgnoreCase)
+                        ? "Skipped"
+                        : string.Equals(triggerAttempt.Status, "Cancelled", StringComparison.OrdinalIgnoreCase)
+                            ? "Cancelled"
+                            : "WorkerProcessExited"
+                };
+            }
+            else
+            {
+                projectedState = now > startupDeadlineUtc
+                    ? triggerAttempt.WorkerProcessLaunched
+                        ? "WorkerProcessStarted"
+                        : "StartFailedTimeout"
                     : triggerAttempt.WorkerProcessLaunched
                         ? "WorkerProcessStarted"
                         : "TriggerAccepted";
+            }
 
             startupWatchdog = new
             {
@@ -252,10 +332,16 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
                 deliveryExhaustionConfirmed = false,
                 deliveryExhaustionOwner = "IntegrationTransportReconciler",
                 eventId = triggerAttempt.EventId,
+                triggerStatus = triggerAttempt.Status,
+                workerExitCode,
                 triggerStore = "PactInMemoryCache"
             };
 
-            isRunning = projectedState != "StartFailedTimeout" && projectedState != "WorkerProcessExited";
+            isRunning = projectedState != "StartFailedTimeout"
+                && projectedState != "WorkerProcessExited"
+                && projectedState != "Completed"
+                && projectedState != "Skipped"
+                && projectedState != "Cancelled";
             sourceOfTruth = "StartupWatchdog";
         }
         else if (execution is not null)
@@ -269,6 +355,14 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
             isRunning,
             sourceOfTruth,
             correlatedJobExecutionId,
+            queryResolution = new
+            {
+                mode = queryMode,
+                isFallback = string.Equals(queryMode, "LatestByJobNameFallback", StringComparison.Ordinal),
+                fallbackReason,
+                requestedJobExecutionId = jobExecutionId,
+                requestedJobExecutionIdIsValid
+            },
             lastExecution = execution is null ? null : new
             {
                 execution.ExecutionId,

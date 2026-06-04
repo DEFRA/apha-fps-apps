@@ -101,7 +101,36 @@ public class BatchLockRepository : IBatchLockRepository
             throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
 
         var now = DateTime.UtcNow;
-        return await _context.BatchLocks
+        var activeLock = await _context.BatchLocks
             .FirstOrDefaultAsync(l => l.JobName == jobName && l.IsActive && l.ExpiresAt > now, cancellationToken);
+
+        if (activeLock is null)
+        {
+            return null;
+        }
+
+        var queueState = await (
+            from q in _context.TblJobQueue
+            join s in _context.TblJobStatus on q.StatusId equals s.StatusId
+            where q.JobQueueId == activeLock.JobQueueId
+            select s.Status)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.Equals(queueState, "Running", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(queueState, "Pending", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(queueState, "Retry", StringComparison.OrdinalIgnoreCase))
+        {
+            return activeLock;
+        }
+
+        _logger.LogWarning(
+            "Detected stale lock; releasing lock row | JobName={JobName} | JobQueueId={JobQueueId} | QueueState={QueueState}",
+            jobName,
+            activeLock.JobQueueId,
+            queueState ?? "MissingQueueRecord");
+
+        _context.BatchLocks.Remove(activeLock);
+        await _context.SaveChangesAsync(cancellationToken);
+        return null;
     }
 }

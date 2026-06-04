@@ -38,48 +38,192 @@ This document officially hands off the **formal API contract** and **state machi
 
 ---
 
-## What PACT API Must Implement
+## Current PACT API Endpoints (Implemented)
 
-### Endpoints (2 total)
+The current public implementation exposes 5 endpoints in PACT API.
 
-#### 1. POST /api/v1/batch-jobs/trigger
-**Purpose**: Accept batch job trigger, return 202 with correlation ID
+| Endpoint | Purpose | Typical Status |
+|----------|---------|----------------|
+| `GET /health` | Service liveness check | `200` |
+| `GET /api/v1/batch-jobs/catalog` | Job routing catalog for UI/client policy checks | `200` |
+| `POST /api/v1/batch-jobs/trigger` | Accept and dispatch a trigger request | `202`, `409` |
+| `GET /api/batch-jobs/{jobName}/can-run` | Lock-aware guardrail check before trigger | `200` |
+| `GET /api/batch-jobs/{jobName}/status?jobExecutionId=<guid>` | Correlated run status + watchdog projection | `200` |
 
-**PACT Responsibilities**:
-- [x] Validate job name exists in system
-- [x] Check single-run policy (return 409 if already running)
-- [x] Persist trigger acceptance with acceptedAtUtc timestamp
-- [x] Dispatch to event bus (EventBridge/EventGrid/Message Queue)
-- [x] Return HTTP 202 with eventId + acceptedAtUtc for polling correlation
-- [x] Handle transient/network errors gracefully
+Internal/local-only break-glass route (not part of public integration contract):
+- `POST /internal/local/batch-jobs/{jobName}/break-glass/release-lock`
+- Available only in `Development` / `Local` environments.
 
-**Test Case**:
+### 1. GET /health
+What it does:
+- Returns basic health metadata for PACT API process.
+
+Request example:
 ```bash
-curl -X POST http://localhost:5189/api/v1/batch-jobs/trigger \
-  -H "Content-Type: application/json" \
-  -d '{"jobName":"RecreateSummaries","requestedBy":"demo@local"}'
-
-# Expected: HTTP 202 Accepted
-# Body: { "eventId": "...", "acceptedAtUtc": "..." }
+curl "http://localhost:5189/health"
 ```
 
-#### 2. GET /api/batch-jobs/{jobName}/status
-**Purpose**: Return current job status including DB state + watchdog projection
+Response example (`200 OK`):
+```json
+{
+  "status": "healthy",
+  "service": "pact.api",
+  "timestamp": "2026-06-04T10:22:11.341Z"
+}
+```
 
-**PACT Responsibilities**:
-- [x] Query BatchJobs DB for last execution state
-- [x] Join fps.job_status to get state name from statusid
-- [x] Compute watchdog projection if execution not yet visible in DB
-- [x] Compute SLA deadline based on acceptedAtUtc + startupSlaSeconds
-- [x] Return BOTH lastExecution (DB) AND startupWatchdog (projection)
-- [x] Handle concurrent query loads (batching, caching)
+### 2. GET /api/v1/batch-jobs/catalog
+What it does:
+- Returns known jobs and whether they can be triggered from PACT API.
 
-**Test Case**:
+Request example:
 ```bash
-curl http://localhost:5189/api/batch-jobs/RecreateSummaries/status
+curl "http://localhost:5189/api/v1/batch-jobs/catalog"
+```
 
-# Expected: HTTP 200 OK
-# Returns: Full contract response with lastExecution + startupWatchdog
+Response example (`200 OK`):
+```json
+{
+  "api": "pact.api",
+  "jobs": [
+    {
+      "jobName": "RecreateSummaries",
+      "description": "Mapped to PACT API",
+      "routeKind": "PactApi",
+      "canTriggerFromThisApi": true
+    },
+    {
+      "jobName": "MABArchive",
+      "description": "Scheduled job only; year is derived internally from execution date",
+      "routeKind": "ScheduledOnly",
+      "canTriggerFromThisApi": false
+    }
+  ]
+}
+```
+
+### 3. POST /api/v1/batch-jobs/trigger
+What it does:
+- Validates job route policy.
+- Generates immutable `jobExecutionId`.
+- Dispatches trigger to configured dispatcher (EventBridge or local process).
+- Stores trigger-attempt metadata used by status watchdog.
+
+Request example:
+```bash
+curl -X POST "http://localhost:5189/api/v1/batch-jobs/trigger" \
+  -H "Content-Type: application/json" \
+  -d '{"jobName":"RecreateSummaries","requestedBy":"demo@local"}'
+```
+
+Accepted response example (`202 Accepted`):
+```json
+{
+  "accepted": true,
+  "source": "pact.api",
+  "jobName": "RecreateSummaries",
+  "jobExecutionId": "7fdf872e2b5841fe887b6bdbb8ea596a",
+  "eventId": "localproc-11080",
+  "workerPid": 11080,
+  "workerProcessLaunched": true,
+  "status": "WorkerProcessStarted",
+  "acceptedAtUtc": "2026-06-04T10:22:11.341Z",
+  "message": "Trigger accepted and local worker process launched. Attach debugger to workerPid."
+}
+```
+
+Route-policy rejection example (`409 Conflict`):
+```json
+{
+  "accepted": false,
+  "source": "pact.api",
+  "jobName": "MABArchive",
+  "reason": "Job 'MABArchive' is scheduled-only and cannot be triggered by API."
+}
+```
+
+### 4. GET /api/batch-jobs/{jobName}/can-run
+What it does:
+- Checks active distributed lock plus active execution state.
+- Returns a simple UI guardrail decision.
+
+Request example:
+```bash
+curl "http://localhost:5189/api/batch-jobs/RecreateSummaries/can-run"
+```
+
+Response example (`200 OK`):
+```json
+{
+  "jobName": "RecreateSummaries",
+  "canRun": false,
+  "reason": "Job is already running (active distributed lock).",
+  "activeLock": {
+    "jobQueueId": "5b0f0eaf-f763-4de0-aedf-a28a8c93fbec",
+    "acquiredAt": "2026-06-04T10:22:15.111Z",
+    "expiresAt": "2026-06-04T10:42:15.111Z",
+    "isActive": true
+  },
+  "sourceOfTruth": "BatchJobs"
+}
+```
+
+### 5. GET /api/batch-jobs/{jobName}/status?jobExecutionId=<guid>
+What it does:
+- Returns DB-backed `lastExecution` when available.
+- If no execution record exists yet, computes `startupWatchdog` projection from trigger-attempt store.
+- Provides `sourceOfTruth` so UI can remain render-only.
+
+Request example:
+```bash
+curl "http://localhost:5189/api/batch-jobs/RecreateSummaries/status?jobExecutionId=7fdf872e2b5841fe887b6bdbb8ea596a"
+```
+
+Response example while waiting for execution row (`200 OK`):
+```json
+{
+  "jobName": "RecreateSummaries",
+  "isRunning": true,
+  "sourceOfTruth": "StartupWatchdog",
+  "correlatedJobExecutionId": "7fdf872e2b5841fe887b6bdbb8ea596a",
+  "lastExecution": null,
+  "startupWatchdog": {
+    "projectedState": "WorkerProcessStarted",
+    "acceptedAtUtc": "2026-06-04T10:22:11.341Z",
+    "startupDeadlineUtc": "2026-06-04T10:22:41.341Z",
+    "evaluatedAtUtc": "2026-06-04T10:22:16.211Z",
+    "startupSlaSeconds": 30,
+    "deliveryExhaustionConfirmed": false,
+    "deliveryExhaustionOwner": "IntegrationTransportReconciler",
+    "eventId": "localproc-11080",
+    "triggerStatus": "WorkerProcessStarted",
+    "workerExitCode": null,
+    "triggerStore": "PactInMemoryCache"
+  }
+}
+```
+
+Response example when execution exists (`200 OK`):
+```json
+{
+  "jobName": "RecreateSummaries",
+  "isRunning": true,
+  "sourceOfTruth": "BatchJobs",
+  "correlatedJobExecutionId": "7fdf872e-2b58-41fe-887b-6bdbb8ea596a",
+  "lastExecution": {
+    "executionId": 12345,
+    "jobName": "RecreateSummaries",
+    "jobExecutionId": "7fdf872e-2b58-41fe-887b-6bdbb8ea596a",
+    "status": "Running",
+    "startedAt": "2026-06-04T10:22:20.000Z",
+    "completedAt": null,
+    "durationSeconds": null,
+    "recordsProcessed": 1250,
+    "recordsFailed": 0,
+    "errorMessage": null
+  },
+  "startupWatchdog": null
+}
 ```
 
 ---
@@ -116,7 +260,7 @@ curl http://localhost:5189/api/batch-jobs/RecreateSummaries/status
 │ WATCHDOG STATES (Computed, Not Persisted)    │
 └──────────────────────────────────────────────┘
 
-Computed during startup window (0-180s):
+Computed during startup window (0-30s non-prod, 0-600s prod):
 - TriggerAccepted           ← Initial: awaiting DB visibility
 - WorkerProcessStarted      ← Local mode: process spawned
 - StartFailedTimeout        ← Deadline exceeded, no DB record
@@ -126,55 +270,47 @@ All transitions are defined in BATCHJOBS-STATE-MACHINE-CONTRACT.md Section 2
 
 ---
 
-## Watchdog Algorithm (Critical)
+## Watchdog And Trigger Store (Critical)
 
-This is the **most important piece** of PACT API logic:
+### How watchdog works in current implementation
+1. If execution exists in BatchJobs DB, response uses `sourceOfTruth = "BatchJobs"` and `startupWatchdog = null`.
+2. If execution does not exist and a trigger attempt is found, API computes a startup projection:
+   - `startupSlaSeconds = 600` in production
+   - `startupSlaSeconds = 30` in non-production (current code)
+3. Projected states are:
+   - `TriggerAccepted`
+   - `WorkerProcessStarted`
+   - `StartFailedTimeout`
+   - `WorkerProcessExited` (or mapped terminal outcomes via `workerExitCode` such as `Completed`, `Cancelled`, `Skipped`)
 
+### Trigger attempt store behavior
+Current behavior:
+- Trigger attempts are stored via `ITriggerAttemptStore`.
+- This repo currently wires `MemoryTriggerAttemptStore` with `IMemoryCache`.
+- TTL is controlled by `TriggerStore:EntryTtlMinutes` (default `60`).
+- Status response exposes `startupWatchdog.triggerStore = "PactInMemoryCache"`.
+
+Operational implication:
+- In-memory cache is process-local and volatile.
+- Restarting PACT API clears trigger-attempt context for in-flight watchdog projections.
+- Multi-instance deployments can produce inconsistent watchdog visibility without a shared store.
+
+Production recommendation:
+- Use a distributed implementation of `ITriggerAttemptStore` backed by Redis.
+- Keep the same contract fields and TTL policy.
+- Route all instances to the same Redis cache so watchdog behavior is consistent across replicas.
+
+Pseudo-code for production store selection:
 ```csharp
-public class WatchdogService
+if (environment.IsProduction())
 {
-    public StartupWatchdog ComputeWatchdog(
-        DateTime? acceptedAtUtc,
-        JobExecution? execution,
-        bool isProd)
-    {
-        // If execution record found in DB, no watchdog needed
-        if (execution != null)
-            return null;  // ← STOP: DB is source of truth
-        
-        // If no trigger acceptance recorded, can't compute watchdog
-        if (!acceptedAtUtc.HasValue)
-            return null;
-        
-        // Compute SLA deadline
-        var now = DateTime.UtcNow;
-        var startupSlaSeconds = isProd ? 600 : 180;  // 10m prod, 3m dev
-        var deadline = acceptedAtUtc.Value.AddSeconds(startupSlaSeconds);
-        
-        // Determine projected state
-        var projectedState = now > deadline
-            ? "StartFailedTimeout"      // Worker never started!
-            : "TriggerAccepted";        // Still waiting (normal)
-        
-        return new StartupWatchdog
-        {
-            IsWatchdogActive = true,
-            TriggeredAtUtc = acceptedAtUtc.Value,
-            StartupDeadlineUtc = deadline,
-            ProjectedState = projectedState,
-            EvaluatedAtUtc = now,
-            StartupSlaSeconds = startupSlaSeconds
-        };
-    }
+  services.AddSingleton<ITriggerAttemptStore, RedisTriggerAttemptStore>();
+}
+else
+{
+  services.AddSingleton<ITriggerAttemptStore, MemoryTriggerAttemptStore>();
 }
 ```
-
-**Key Points:**
-- ✅ Run watchdog logic **every time** /status is called (not cached)
-- ✅ Watchdog is **stateless computation**, not a DB record
-- ✅ SLA is 180s (dev) or 600s (prod) — configurable per environment
-- ✅ If execution found in DB, **watchdog returns null** (DB is authoritative)
-- ✅ Only compute timeout **after** deadline passes **without** DB record
 
 ---
 
@@ -232,10 +368,16 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
 ### Trigger Success Response (HTTP 202)
 ```json
 {
-  "eventId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
-  "acceptedAtUtc": "2026-06-03T14:30:00.123Z",
+  "accepted": true,
+  "source": "pact.api",
   "jobName": "RecreateSummaries",
-  "message": "Batch job trigger accepted"
+  "jobExecutionId": "7fdf872e2b5841fe887b6bdbb8ea596a",
+  "eventId": "localproc-11080",
+  "workerPid": 11080,
+  "workerProcessLaunched": true,
+  "status": "WorkerProcessStarted",
+  "acceptedAtUtc": "2026-06-04T10:22:11.341Z",
+  "message": "Trigger accepted and local worker process launched. Attach debugger to workerPid."
 }
 ```
 
@@ -245,19 +387,19 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
   "jobName": "RecreateSummaries",
   "isRunning": true,
   "sourceOfTruth": "BatchJobs",
-  "correlatedJobExecutionId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
-  
+  "correlatedJobExecutionId": "7fdf872e-2b58-41fe-887b-6bdbb8ea596a",
   "lastExecution": {
-    "jobQueueId": "550e8400-e29b-41d4-a716-446655440000",
-    "jobExecutionId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
-    "currentState": "Running",
-    "stateTimestamp": "2026-06-03T14:30:45.123Z",
-    "startDateTime": "2026-06-03T14:30:00.000Z",
-    "endDateTime": null,
-    "requestedBy": "demo@local",
+    "executionId": 12345,
+    "jobName": "RecreateSummaries",
+    "jobExecutionId": "7fdf872e-2b58-41fe-887b-6bdbb8ea596a",
+    "status": "Running",
+    "startedAt": "2026-06-04T10:22:20.000Z",
+    "completedAt": null,
+    "durationSeconds": null,
+    "recordsProcessed": 1250,
+    "recordsFailed": 0,
     "errorMessage": null
   },
-  
   "startupWatchdog": null
 }
 ```
@@ -266,20 +408,22 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
 ```json
 {
   "jobName": "RecreateSummaries",
-  "isRunning": false,
-  "sourceOfTruth": "BatchJobs",
-  "correlatedJobExecutionId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
-  
+  "isRunning": true,
+  "sourceOfTruth": "StartupWatchdog",
+  "correlatedJobExecutionId": "7fdf872e2b5841fe887b6bdbb8ea596a",
   "lastExecution": null,
-  
   "startupWatchdog": {
-    "isWatchdogActive": true,
-    "triggerAcceptedAtUtc": "2026-06-03T14:30:00.000Z",
-    "startupDeadlineUtc": "2026-06-03T14:33:00.000Z",
-    "projectedState": "TriggerAccepted",
-    "evaluatedAtUtc": "2026-06-03T14:30:15.000Z",
-    "startupSlaSeconds": 180,
-    "deliveryExhaustionConfirmed": false
+    "projectedState": "WorkerProcessStarted",
+    "acceptedAtUtc": "2026-06-04T10:22:11.341Z",
+    "startupDeadlineUtc": "2026-06-04T10:22:41.341Z",
+    "evaluatedAtUtc": "2026-06-04T10:22:16.211Z",
+    "startupSlaSeconds": 30,
+    "deliveryExhaustionConfirmed": false,
+    "deliveryExhaustionOwner": "IntegrationTransportReconciler",
+    "eventId": "localproc-11080",
+    "triggerStatus": "WorkerProcessStarted",
+    "workerExitCode": null,
+    "triggerStore": "PactInMemoryCache"
   }
 }
 ```
@@ -303,7 +447,7 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
 
 ### Phase 2: Watchdog Logic (Week 1-2)
 - [ ] Implement watchdog algorithm
-- [ ] Test SLA deadline logic (180s dev, 600s prod)
+- [ ] Test SLA deadline logic (30s non-prod in current code, 600s prod)
 - [ ] Test timeout projection after deadline
 - [ ] Test watchdog returns null when execution found
 
