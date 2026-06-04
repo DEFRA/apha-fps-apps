@@ -1,0 +1,202 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.TestSupplierViewModel
+
+@{
+    ViewData["Title"] = "FPS : Test Supplier";
+}
+
+@* Breadcrumb *@
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
+            <div class="sup_flex_left_center" style="display: flex; font-size: 14px; align-items: center;"></div>
+            <div style="visibility: hidden"><a id="backlink" href="#" class="govuk-back-link">Back</a></div>
+        </h1>
+    </div>
+</div>
+
+@* Page Title *@
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
+            <div class="sup_flex_left_center">Test Supplier</div>
+        </h1>
+    </div>
+</div>
+
+@* Filter Header: Select Test Code + Show Rejected toggle *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_flex_left_center sup_padding_bottom_10 sup_border-bottom" style="margin-top:10px;">
+
+    <div class="govuk-grid-column-one-third">
+        <label for="testCodePick" class="govuk-label govuk-!-font-weight-bold">Select a Test:</label>
+        <select id="testCodePick" class="govuk-select govuk-!-font-size-16" style="width:100%;"
+                onchange="onTestCodeChange(this.value)">
+            <option value="">-- Select --</option>
+            @foreach (var item in Model.TestCodeList)
+            {
+                if (item.Value == Model.SelectedTestCode)
+                {
+                    <option value="@item.Value" selected>@item.Text</option>
+                }
+                else
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            }
+        </select>
+    </div>
+</div>
+
+@* Grid *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+    <div class="govuk-grid-column-full">
+        <div id="gridContainer_testSupplierGrid">
+            @await Html.PartialAsync("_DataGrid", Model.TestSupplierGrid)
+        </div>
+        <div class="fps-summary-row">
+            <div class="govuk-form-group govuk-!-margin-bottom-0">
+                <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0" for="totalTests">Total Tests</label>
+                <input type="text" id="totalTests" class="govuk-input fps-summary-input" value="0.00" readonly aria-label="Total tests" />
+            </div>
+            <div class="govuk-form-group govuk-!-margin-bottom-0">
+                <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0" for="totalTestCost">Total Cost</label>
+                <input type="text" id="totalTestCost" class="govuk-input fps-summary-input" value="£0.00" readonly aria-label="Total test cost" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var currentTestCode = '@Model.SelectedTestCode';
+    var currentShowRejected = @Model.ShowRejected.ToString().ToLower();
+
+    $(function () { calculateTotals(); });
+
+    // ── Filter changes ────────────────────────────────────────────────────────
+
+    function onTestCodeChange(testCode) {
+        currentTestCode = testCode;
+        reloadGrid();
+    }
+
+    function onShowRejectedChange(checked) {
+        currentShowRejected = checked;
+        reloadGrid();
+    }
+
+    function reloadGrid() {
+        var request = {
+            Page: 1,
+            PageSize: 20,
+            SortBy: '',
+            Descending: false,
+            Filter: '{}',
+            testCode: currentTestCode,
+            showRejected: currentShowRejected
+        };
+        $.post('/FPS/TestSupplier/LoadTestSupplierGrid', request, function (html) {
+            $('#gridContainer_testSupplierGrid').html(html);
+            calculateTotals();
+        });
+    }
+
+    function calculateTotals() {
+        var totalTests = 0;
+        var totalCost = 0;
+
+        $('#gridContainer_testSupplierGrid td[data-property="NoRequired"] span').each(function () {
+            var val = parseFloat($(this).text().trim());
+            if (!isNaN(val)) totalTests += val;
+        });
+
+        $('#gridContainer_testSupplierGrid td[data-property="TestCost"] span').each(function () {
+            var raw = $(this).text().trim().replace(/[£,]/g, '');
+            var val = parseFloat(raw);
+            if (!isNaN(val)) totalCost += val;
+        });
+
+        $('#totalTests').val(totalTests.toFixed(2));
+        $('#totalTestCost').val('£' + totalCost.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    }
+
+    // ── CRUD ──────────────────────────────────────────────────────────────────
+
+    function addTestSupplier() {
+        if (!currentTestCode) {
+            alert('Please select a Test Code first.');
+            return;
+        }
+        $.get('/FPS/TestSupplier/CreateTestReqmt', { testCode: currentTestCode }, function (html) {
+            $('#modalContent').html(html);
+            $('#modalPopup').addClass('show');
+        });
+    }
+
+    function editTestSupplier(btn) {
+        var buyer = $(btn).data('id');
+        $.get('/FPS/TestSupplier/EditTestReqmt', { testCode: currentTestCode, buyer: buyer }, function (html) {
+            $('#modaPopupBody').html(html);
+            $('#modalPopup').addClass('show');
+        });
+    }
+
+    function deleteTestSupplier(btn) {
+        var buyer = $(btn).data('id');
+        if (!confirm('Are you sure you want to delete this Test Supplier entry?')) return;
+        $.ajax({
+            url: '/FPS/TestSupplier/DeleteTestReqmt',
+            type: 'DELETE',
+            data: { testCode: currentTestCode, buyer: buyer },
+            success: function (result) {
+                if (result.success) {
+                    reloadGrid();
+                    alert('Record deleted successfully.');
+                } else {
+                    alert(result.message || 'Failed to delete entry.');
+                }
+            }
+        });
+    }
+
+    function saveTestSupplier() {
+        var formData = {};
+        $('#testSupplierForm').serializeArray().forEach(function (item) {
+            formData[item.name] = item.value;
+        });
+
+        $.ajax({
+            url: '/FPS/TestSupplier/EditTestReqmt',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function (result) {
+                if (result.success) {
+                    $('#modalPopup').removeClass('show');
+                    reloadGrid();
+                    alert('Record saved successfully.');
+                } else {
+                    showFormErrors('#testSupplierForm', result.errors);
+                }
+            }
+        });
+    }
+
+    function showFormErrors(formSelector, errors) {
+        $(formSelector + ' .govuk-error-message').text('').hide();
+        $(formSelector + ' .govuk-error-summary').hide();
+
+        if (!errors || errors.length === 0) return;
+
+        var summaryList = $(formSelector + ' .govuk-error-summary__list');
+        summaryList.empty();
+        errors.forEach(function (e) {
+            if (e.field) {
+                $(formSelector + ' [data-valmsg-for="' + e.field + '"]').text(e.message).show();
+            }
+            summaryList.append('<li>' + e.message + '</li>');
+        });
+        $(formSelector + ' .govuk-error-summary').show();
+    }
+</script>
+}

@@ -103,6 +103,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
+
+            // Test Supplier view
+            CreateMap<TestSupplierViewDto, TestSupplierViewRes>().ReverseMap();
         }
     }
 }
