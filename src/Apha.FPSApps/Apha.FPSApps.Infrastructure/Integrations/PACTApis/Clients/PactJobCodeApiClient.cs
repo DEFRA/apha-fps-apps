@@ -21,6 +21,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
+        public async Task<ApiResponseDto<List<JobCodeDto>>> GetJobCodesAsync()
+        {
+            var response = await _http.GetAsync<List<JobCodeRes>>(PactApiEndpoints.GetAllJobCodes);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<JobCodeDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<JobCodeDto>>>(response);
+            return ApiResponseDto<List<JobCodeDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<JobCodeDto>>> GetJobCodesByProjectAsync(string parentProject)
         {
 

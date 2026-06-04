@@ -78,6 +78,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
 
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
+            CreateMap<PactStaffDto, PactStaffRes>().ReverseMap();
         }
     }
 }
