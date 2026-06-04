@@ -59,6 +59,9 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimePivotRow>();
             CreateMap<SummarisedWgTimeSummaryDto, SummarisedWgTimeSummary>();
+
+            CreateMap<RecreateSummaryLogDto, RecreateSummaryLogItem>()
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.Comments));
         }
     }
 }

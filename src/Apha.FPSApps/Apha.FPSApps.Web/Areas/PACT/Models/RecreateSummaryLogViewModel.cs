@@ -16,7 +16,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         [Display(Name = "DateDone")]
         [GridColumn(Order = 2, Width = 180, Type = GridColumnType.Text)]
-        public string? DateDone { get; set; }
+        public DateTime? DateDone { get; set; }
 
         [Display(Name = "UserID")]
         [GridColumn(Order = 3, Width = 120, Type = GridColumnType.Text)]

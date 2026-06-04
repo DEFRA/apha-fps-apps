@@ -5,6 +5,16 @@ namespace Apha.PACT.Core.Entities;
 
 public class User
 {
-    public required string UserName { get; set; }
-    public required string Comments { get; set; }
+    public int UserId { get; set; }
+
+    public string? UserName { get; set; }
+
+    public int? AgencyId { get; set; }
+
+    public bool FrmWarning { get; set; }
+
+    public string? Comments { get; set; }
+
+    public string? Dt2UserName { get; set; }
+    public string? UserEmail { get; set; }
 }

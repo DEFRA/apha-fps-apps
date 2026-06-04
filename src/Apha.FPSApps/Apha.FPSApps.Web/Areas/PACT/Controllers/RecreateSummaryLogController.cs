@@ -94,14 +94,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!response.Success || response.Data is null)
                 return grid;
 
-            grid.Data = response.Data.data.Select(log => new RecreateSummaryLogItem
-            {
-                Id = log.Id,
-                DateDone = log.DateDone?.ToString("yyyy-MM-dd HH:mm:ss"),
-                UserId = log.UserId,
-                User = log.UserName ?? string.Empty,
-                Period = log.Period
-            }).ToList();
+            grid.Data = _mapper.Map<List<RecreateSummaryLogItem>>(response.Data.data);
 
             grid.Pagination = new PaginationModel
             {

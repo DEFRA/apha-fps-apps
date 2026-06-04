@@ -2,7 +2,6 @@
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Core.Entities;
-using Apha.PACT.Core.Models;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
 

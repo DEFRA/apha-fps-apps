@@ -1,5 +1,4 @@
 using Apha.PACT.Core.Entities;
-using Apha.PACT.Core.Models;
 using Apha.PACT.Core.Pagination;
 
 namespace Apha.PACT.Core.Interfaces

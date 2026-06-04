@@ -7,7 +7,7 @@ using NSubstitute;
 
 namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogServiceTests
 {
-    public class RecreateSummariesLogServiceTests
+    public class RecreateSummaryLogServiceTests
     {
         private readonly IPactApiClient _mockPactClient;
         private readonly IPactRecreateAndReleaseSummaryLogApiClient _mockLogApiClient;
@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
         private const int TestPageSize = 20;
         private const int TestTotalRecords = 50;
 
-        public RecreateSummariesLogServiceTests()
+        public RecreateSummaryLogServiceTests()
         {
             _mockPactClient = Substitute.For<IPactApiClient>();
             _mockLogApiClient = Substitute.For<IPactRecreateAndReleaseSummaryLogApiClient>();
@@ -46,7 +46,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
                 Data = new PaginatedResult<RecreateSummaryLogDto>(
                     new List<RecreateSummaryLogDto>
                     {
-                        new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
+                        new() { Id = 1, UserId = TestUserId, Comments = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
                     },
                     TestTotalRecords,
                     TestPageNumber,

@@ -1,6 +1,5 @@
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
-using Apha.PACT.Core.Models;
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
@@ -31,9 +30,6 @@ namespace Apha.PACT.DataAccess.Repository
                                 UserName = user != null ? user.UserName : null,
                                 UserComments = user != null ? user.Comments : null
                             };
-
-            // Get total count before pagination (at database level)
-            var totalCount = await baseQuery.CountAsync();
 
             // Apply sorting at database level
             if (!string.IsNullOrWhiteSpace(parameters.SortBy))
@@ -72,22 +68,12 @@ namespace Apha.PACT.DataAccess.Repository
             {
                 Id = r.Log.Id,
                 UserId = r.Log.UserId,
-                UserName = r.UserName ?? string.Empty,
+                Comments = r.UserComments ?? string.Empty,
                 Period = r.Log.Period,
                 DateDone = r.Log.DateDone,
-                FpsYear = r.Log.FpsYear
             }).ToList();
 
-            // Build pagination metadata manually
-            var paginationData = new PaginationData
-            {
-                PageNumber = parameters.Page,
-                PageSize = parameters.PageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / parameters.PageSize),
-                TotalRecords = totalCount
-            };
-
-            return new PagedData<RecreateSummaryLogWithUser>(mappedData.AsReadOnly(), paginationData);
+            return base.ApplyPaging(mappedData, parameters.Page, parameters.PageSize);
         }
     }
 }

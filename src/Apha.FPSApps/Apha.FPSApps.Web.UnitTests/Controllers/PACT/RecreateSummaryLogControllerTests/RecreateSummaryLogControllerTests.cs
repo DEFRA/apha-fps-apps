@@ -11,7 +11,7 @@ using NSubstitute;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogControllerTest
 {
-    public class RecreateSummariesLogControllerTests
+    public class RecreateSummaryLogControllerTests
     {
         private readonly IMapper _mockMapper;
         private readonly IRecreateAndReleaseSummaryService _mockLogService;
@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
         private const int TestPageSize = 20;
         private const int TestTotalRecords = 50;
 
-        public RecreateSummariesLogControllerTests()
+        public RecreateSummaryLogControllerTests()
         {
             _mockMapper = Substitute.For<IMapper>();
             _mockLogService = Substitute.For<IRecreateAndReleaseSummaryService>();
@@ -46,7 +46,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
                 Data = new PaginatedResult<RecreateSummaryLogDto>(
                     new List<RecreateSummaryLogDto>
                     {
-                        new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
+                        new() { Id = 1, UserId = TestUserId, Comments = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
                     },
                     TestTotalRecords,
                     TestPage,
@@ -141,7 +141,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummariesLogContro
                 Data = new PaginatedResult<RecreateSummaryLogDto>(
                     new List<RecreateSummaryLogDto>
                     {
-                        new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
+                        new() { Id = 1, UserId = TestUserId, Comments = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow }
                     },
                     TestTotalRecords,
                     TestPage,

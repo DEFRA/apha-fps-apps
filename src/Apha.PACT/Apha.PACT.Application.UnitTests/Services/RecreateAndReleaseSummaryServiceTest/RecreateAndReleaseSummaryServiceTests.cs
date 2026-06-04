@@ -3,7 +3,6 @@ using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
-using Apha.PACT.Core.Models;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
 using NSubstitute;
@@ -51,8 +50,8 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var entities = new List<RecreateSummaryLogWithUser>
             {
-                new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow, FpsYear = 2024 },
-                new() { Id = 2, UserId = TestUserId, UserName = TestUserName, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1), FpsYear = 2024 }
+                new() { Id = 1, UserId = TestUserId, Comments = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow },
+                new() { Id = 2, UserId = TestUserId, Comments = TestUserName, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1) }
             };
 
             var paginationData = new PaginationData
@@ -67,8 +66,8 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var dtos = new List<RecreateSummaryLogDto>
             {
-                new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow },
-                new() { Id = 2, UserId = TestUserId, UserName = TestUserName, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1) }
+                new() { Id = 1, UserId = TestUserId, Comments = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow },
+                new() { Id = 2, UserId = TestUserId, Comments = TestUserName, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1) }
             };
 
             var paginationDto = new PaginationDto
@@ -215,10 +214,9 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 {
                     Id = i,
                     UserId = TestUserId,
-                    UserName = TestUserName,
+                    Comments = TestUserName,
                     Period = (short)i,
-                    DateDone = DateTime.UtcNow.AddDays(-i),
-                    FpsYear = 2024
+                    DateDone = DateTime.UtcNow.AddDays(-i)
                 })
                 .ToList();
 
@@ -236,7 +234,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
             {
                 Id = e.Id,
                 UserId = e.UserId,
-                UserName = TestUserName,
+                Comments = TestUserName,
                 Period = e.Period,
                 DateDone = e.DateDone
             }).ToList();
@@ -294,8 +292,8 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var entities = new List<RecreateSummaryLogWithUser>
             {
-                new() { Id = 1, UserId = "UserA", UserName = TestUserName, Period = 1, DateDone = DateTime.UtcNow, FpsYear = 2024 },
-                new() { Id = 2, UserId = "UserB", UserName = TestUserName, Period = 2, DateDone = DateTime.UtcNow, FpsYear = 2024 }
+                new() { Id = 1, UserId = "UserA", Comments = TestUserName, Period = 1, DateDone = DateTime.UtcNow },
+                new() { Id = 2, UserId = "UserB", Comments = TestUserName, Period = 2, DateDone = DateTime.UtcNow }
             };
 
             var paginationData = new PaginationData
@@ -310,8 +308,8 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var dtos = new List<RecreateSummaryLogDto>
             {
-                new() { Id = 1, UserId = "UserA", UserName = "User A", Period = 1, DateDone = DateTime.UtcNow },
-                new() { Id = 2, UserId = "UserB", UserName = "User B", Period = 2, DateDone = DateTime.UtcNow }
+                new() { Id = 1, UserId = "UserA", Comments = "User A", Period = 1, DateDone = DateTime.UtcNow },
+                new() { Id = 2, UserId = "UserB", Comments = "User B", Period = 2, DateDone = DateTime.UtcNow }
             };
 
             var paginationDto = new PaginationDto
