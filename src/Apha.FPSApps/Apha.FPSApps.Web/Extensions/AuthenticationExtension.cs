@@ -7,9 +7,9 @@ namespace Apha.FPSApps.Web.Extensions
 {
     public static class AuthenticationExtension
     {
-        public static IServiceCollection AddAuthenticationServices(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddAuthenticationServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
         {
-            services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+            var authBuilder = services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
              .AddMicrosoftIdentityWebApp(options =>
              {
                  configuration.Bind("AzureAd", options);
@@ -22,8 +22,18 @@ namespace Apha.FPSApps.Web.Extensions
                  };
 
              })
-            .EnableTokenAcquisitionToCallDownstreamApi()
-             .AddInMemoryTokenCaches();
+            .EnableTokenAcquisitionToCallDownstreamApi();
+
+            if (!environment.IsEnvironment("local"))
+            {
+                Console.WriteLine($"[Auth] Environment: {environment.EnvironmentName} - Using AddDistributedTokenCaches");
+                authBuilder.AddDistributedTokenCaches();
+            }
+            else
+            {
+                Console.WriteLine($"[Auth] Environment: {environment.EnvironmentName} - Using AddInMemoryTokenCaches");
+                authBuilder.AddInMemoryTokenCaches();
+            }
 
             return services;
         }
