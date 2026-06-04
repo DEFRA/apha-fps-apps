@@ -514,6 +514,7 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
         const MAX_SILENT_RETRIES = 3;
         const CORRELATION_STORAGE_KEY = `batchjobs:${JOB_NAME}:correlation`;
         const CORRELATION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+        const DEBUG_VIEW = new URLSearchParams(window.location.search).get("view") === "debug";
 
         const timelineEl = document.getElementById("timeline");
         const rawEl = document.getElementById("raw");
@@ -538,7 +539,6 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             running: { label: "Running", cls: "state-running", btn: "Please wait...", disabled: true, spinning: true },
             completed: { label: "Completed", cls: "state-completed", btn: "Re-trigger RecreateSummaries", disabled: false, spinning: false },
             failed: { label: "Failed", cls: "state-failed", btn: "Retry RecreateSummaries", disabled: false, spinning: false },
-            retry: { label: "Retry", cls: "state-retry", btn: "Please wait...", disabled: true, spinning: true },
             cancelled: { label: "Cancelled", cls: "state-cancelled", btn: "Re-trigger RecreateSummaries", disabled: false, spinning: false },
             skipped: { label: "Skipped", cls: "state-skipped", btn: "Re-trigger RecreateSummaries", disabled: false, spinning: false },
             timeout: { label: "StartFailedTimeout", cls: "state-timeout", btn: "Retry RecreateSummaries", disabled: false, spinning: false }
@@ -645,6 +645,7 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             const map = {
                 triggeraccepted: "accepted",
                 workerprocessstarted: "running",
+                retry: "running",
                 startfailedtimeout: "timeout",
                 workerprocessexited: "failed"
             };
@@ -684,7 +685,15 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             let payload = null;
 
             try {
-                const url = `${BATCH_JOBS_API_BASE}/${JOB_NAME}/status?jobExecutionId=${encodeURIComponent(currentJobExecutionId)}`;
+                const queryParams = new URLSearchParams({
+                    jobExecutionId: currentJobExecutionId
+                });
+
+                if (DEBUG_VIEW) {
+                    queryParams.set("debugView", "true");
+                }
+
+                const url = `${BATCH_JOBS_API_BASE}/${JOB_NAME}/status?${queryParams.toString()}`;
                 response = await fetch(url);
                 bodyText = await response.text();
 
@@ -747,6 +756,10 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                     addTimeline(`Status query fallback active: ${queryResolution.fallbackReason || "NoCorrelation"}`);
                 }
 
+                if (DEBUG_VIEW && payload.diagnostics) {
+                    addTimeline(`Debug diagnostics: ${JSON.stringify(payload.diagnostics)}`);
+                }
+
                 const terminalStates = new Set(["completed", "failed", "cancelled", "skipped", "startfailedtimeout", "workerprocessexited"]);
                 if (terminalStates.has(key)) {
                     isRunning = false;
@@ -777,7 +790,8 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
 
         async function showLatestStatusView() {
             try {
-                const response = await fetch(`${BATCH_JOBS_API_BASE}/${JOB_NAME}/status`);
+                const suffix = DEBUG_VIEW ? "?debugView=true" : "";
+                const response = await fetch(`${BATCH_JOBS_API_BASE}/${JOB_NAME}/status${suffix}`);
                 const bodyText = await response.text();
                 setRaw(response.status, bodyText || "(empty response)");
 
@@ -851,7 +865,14 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             }
 
             if (!response.ok || !payload || payload.accepted === false) {
-                const reason = payload && payload.reason ? payload.reason : "Trigger request was not accepted.";
+                const reason = payload && (
+                    payload.reason
+                    || payload.detail
+                    || payload.title
+                    || payload.message
+                )
+                    ? (payload.reason || payload.detail || payload.title || payload.message)
+                    : (bodyText && bodyText.trim() ? bodyText : "Trigger request was not accepted.");
                 setState("failed", reason);
                 isRunning = false;
                 addTimeline(`Trigger not accepted: ${reason}`);

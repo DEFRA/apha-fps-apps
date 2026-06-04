@@ -21,6 +21,8 @@ public sealed class TriggerAttemptRecord
 
 public interface ITriggerAttemptStore
 {
+    string StoreName { get; }
+
     Task SaveAsync(TriggerAttemptRecord record, CancellationToken cancellationToken = default);
 
     Task<TriggerAttemptRecord?> GetByJobExecutionIdAsync(string jobExecutionId, CancellationToken cancellationToken = default);

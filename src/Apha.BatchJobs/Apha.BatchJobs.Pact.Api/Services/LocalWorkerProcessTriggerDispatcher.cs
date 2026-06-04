@@ -286,6 +286,7 @@ internal static class LocalWorkerProcessRegistry
             var record = new LocalWorkerProcessRecord
             {
                 Pid = pid,
+                ParentPid = Environment.ProcessId,
                 JobName = jobName,
                 JobExecutionId = jobExecutionId,
                 StartedAtUtc = startedAtUtc
@@ -332,6 +333,8 @@ internal static class LocalWorkerProcessRegistry
 internal sealed class LocalWorkerProcessRecord
 {
     public int Pid { get; init; }
+
+    public int ParentPid { get; init; }
 
     public string JobName { get; init; } = string.Empty;
 

@@ -33,8 +33,10 @@ app.MapGet("/api/batch-jobs/{jobName}/can-run", async (
 	var client = clientFactory.CreateClient("status-proxy");
 	try
 	{
-		var response = await client.GetAsync(
-			$"{baseUrl.TrimEnd('/')}/api/batch-jobs/{Uri.EscapeDataString(jobName)}/can-run",
+		var response = await SendWithTransientRetriesAsync(
+			() => client.GetAsync(
+				$"{baseUrl.TrimEnd('/')}/api/batch-jobs/{Uri.EscapeDataString(jobName)}/can-run",
+				cancellationToken),
 			cancellationToken);
 
 		var body = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -50,6 +52,7 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
 	string jobName,
 	[FromQuery] string? jobExecutionId,
 	[FromQuery] DateTime? acceptedAtUtc,
+	[FromQuery] bool? debugView,
 	IHttpClientFactory clientFactory,
 	IConfiguration configuration,
 	CancellationToken cancellationToken) =>
@@ -66,10 +69,14 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
 			queryParts.Add($"jobExecutionId={Uri.EscapeDataString(jobExecutionId)}");
 		if (acceptedAtUtc.HasValue)
 			queryParts.Add($"acceptedAtUtc={Uri.EscapeDataString(acceptedAtUtc.Value.ToString("O"))}");
+		if (debugView == true)
+			queryParts.Add("debugView=true");
 
 		var queryString = queryParts.Count > 0 ? "?" + string.Join("&", queryParts) : "";
-		var response = await client.GetAsync(
-			$"{baseUrl.TrimEnd('/')}/api/batch-jobs/{Uri.EscapeDataString(jobName)}/status{queryString}",
+		var response = await SendWithTransientRetriesAsync(
+			() => client.GetAsync(
+				$"{baseUrl.TrimEnd('/')}/api/batch-jobs/{Uri.EscapeDataString(jobName)}/status{queryString}",
+				cancellationToken),
 			cancellationToken);
 
 		var body = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -95,9 +102,11 @@ app.MapPost("/api/batch-jobs/{jobName}/cancel", async (
 	var client = clientFactory.CreateClient("status-proxy");
 	try
 	{
-		var response = await client.PostAsJsonAsync(
-			$"{baseUrl.TrimEnd('/')}/api/v1/batch-jobs/{Uri.EscapeDataString(jobName)}/cancel",
-			request,
+		var response = await SendWithTransientRetriesAsync(
+			() => client.PostAsJsonAsync(
+				$"{baseUrl.TrimEnd('/')}/api/v1/batch-jobs/{Uri.EscapeDataString(jobName)}/cancel",
+				request,
+				cancellationToken),
 			cancellationToken);
 
 		var body = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -171,13 +180,15 @@ app.MapPost("/api/trigger", async (
 			statusCode: StatusCodes.Status503ServiceUnavailable);
 	}
 
-	var response = await client.PostAsJsonAsync(
-		$"{baseUrl.TrimEnd('/')}/api/v1/batch-jobs/trigger",
-		new BatchTriggerRequest
-		{
-			JobName = route.JobName,
-			RequestedBy = string.IsNullOrWhiteSpace(request.RequestedBy) ? "sample-ui@local" : request.RequestedBy
-		},
+	var response = await SendWithTransientRetriesAsync(
+		() => client.PostAsJsonAsync(
+			$"{baseUrl.TrimEnd('/')}/api/v1/batch-jobs/trigger",
+			new BatchTriggerRequest
+			{
+				JobName = route.JobName,
+				RequestedBy = string.IsNullOrWhiteSpace(request.RequestedBy) ? "sample-ui@local" : request.RequestedBy
+			},
+			cancellationToken),
 		cancellationToken);
 
 	var body = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -220,6 +231,45 @@ static async Task<(bool IsReady, string ErrorMessage)> WaitForServiceReadyAsync(
 	}
 
 	return (false, lastError?.Message ?? "No response from downstream API.");
+}
+
+static async Task<HttpResponseMessage> SendWithTransientRetriesAsync(
+	Func<Task<HttpResponseMessage>> send,
+	CancellationToken cancellationToken,
+	int maxAttempts = 3)
+{
+	HttpResponseMessage? lastResponse = null;
+	Exception? lastException = null;
+
+	for (var attempt = 1; attempt <= maxAttempts; attempt++)
+	{
+		try
+		{
+			var response = await send();
+			if ((int)response.StatusCode >= 500 && attempt < maxAttempts)
+			{
+				response.Dispose();
+				await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt), cancellationToken);
+				continue;
+			}
+
+			return response;
+		}
+		catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+		{
+			lastException = ex;
+			if (attempt < maxAttempts)
+			{
+				await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt), cancellationToken);
+				continue;
+			}
+		}
+	}
+
+	if (lastResponse is not null)
+		return lastResponse;
+
+	throw lastException ?? new HttpRequestException("Downstream request failed after retries.");
 }
 
 public sealed class DownstreamApisOptions

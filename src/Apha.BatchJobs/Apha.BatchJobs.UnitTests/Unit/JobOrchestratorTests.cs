@@ -4,6 +4,7 @@ using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -20,19 +21,36 @@ public sealed class JobOrchestratorTests
     private readonly IBatchLockRepository _lockRepo = Substitute.For<IBatchLockRepository>();
     private readonly IJobExecutionRepository _execRepo = Substitute.For<IJobExecutionRepository>();
     private readonly IOptions<BatchJobSettings> _settings = Options.Create(new BatchJobSettings { JobTimeout = 3600 });
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly JobOrchestrator _orchestrator;
 
     public JobOrchestratorTests()
     {
+        _scopeFactory = CreateScopeFactory(_execRepo);
+
         _orchestrator = new JobOrchestrator(
             _factory,
             _lockRepo,
             _execRepo,
+            _scopeFactory,
             _settings,
             NullLogger<JobOrchestrator>.Instance);
 
         _execRepo.IsCancellationRequestedAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(false));
+    }
+
+    private static IServiceScopeFactory CreateScopeFactory(IJobExecutionRepository execRepo)
+    {
+        var sp = Substitute.For<IServiceProvider>();
+        sp.GetService(typeof(IJobExecutionRepository)).Returns(execRepo);
+
+        var scope = Substitute.For<IServiceScope>();
+        scope.ServiceProvider.Returns(sp);
+
+        var factory = Substitute.For<IServiceScopeFactory>();
+        factory.CreateScope().Returns(scope);
+        return factory;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -346,6 +364,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _scopeFactory,
             retrySettings,
             NullLogger<JobOrchestrator>.Instance);
 
@@ -387,6 +406,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _scopeFactory,
             retrySettings,
             NullLogger<JobOrchestrator>.Instance);
 
@@ -434,6 +454,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _scopeFactory,
             retrySettings,
             NullLogger<JobOrchestrator>.Instance);
 
@@ -485,6 +506,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _scopeFactory,
             timeoutSettings,
             NullLogger<JobOrchestrator>.Instance);
 
@@ -540,6 +562,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _scopeFactory,
             timeoutSettings,
             NullLogger<JobOrchestrator>.Instance);
 
@@ -574,6 +597,7 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
+            _scopeFactory,
             timeoutSettings,
             NullLogger<JobOrchestrator>.Instance);
 

@@ -48,6 +48,37 @@ public interface IJobExecutionRepository
     Task<bool> TryRequestCancellationAsync(Guid jobExecutionId, string requestedBy, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Creates a durable cancellation request when none exists.
+    /// </summary>
+    /// <param name="jobExecutionId">External job execution id.</param>
+    /// <param name="requestedBy">Identity that requested cancellation.</param>
+    /// <param name="source">Optional source channel (UI/API/system).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>
+    /// True when request is newly persisted; false when request already exists.
+    /// </returns>
+    Task<bool> UpsertCancellationRequestAsync(
+        Guid jobExecutionId,
+        string requestedBy,
+        string? source = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets durable cancellation request details for a given execution id.
+    /// </summary>
+    /// <param name="jobExecutionId">External job execution id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<CancellationRequestRecord?> GetCancellationRequestAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Marks a durable cancellation request as consumed by a worker.
+    /// </summary>
+    /// <param name="jobExecutionId">External job execution id.</param>
+    /// <param name="consumedBy">Worker identity consuming the request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task MarkCancellationConsumedAsync(Guid jobExecutionId, string consumedBy, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Returns true when a cancellation request exists for the given execution id.
     /// </summary>
     /// <param name="jobExecutionId">External job execution id.</param>

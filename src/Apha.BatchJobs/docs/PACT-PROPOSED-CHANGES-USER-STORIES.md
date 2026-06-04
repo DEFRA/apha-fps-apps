@@ -183,6 +183,24 @@ As QA, I want explicit scenarios for refresh, reopen, and second-user behavior, 
 ### Slice 3 (Hardening and QA)
 - US-08, US-10, US-12
 
+### Slice 3 Implementation Sweep (2026-06-04)
+
+- US-08: Implemented in code (production-ready Redis-backed trigger attempt store path plus local/dev in-memory path).
+- US-10: Implemented in code (retry attempt number and exception classification in logs; business UI treats Retry as internal signal and maps to Running; debug diagnostics view available).
+- US-12: Implemented as explicit QA scenario coverage in [SLICE3-QA-SCENARIOS.md](SLICE3-QA-SCENARIOS.md).
+
+### Slice 3 Cancellation Hardening Addendum (2026-06-04)
+
+- Gap closed: cancel now supports pre-persist requests (execution row not yet created) and stores durable intent immediately.
+- Gap closed: cancel requester identity is persisted in durable storage (`requested_by`) and replayed by orchestrator checkpoints/monitor.
+- Gap closed: orchestrator now runs a continuous cancellation monitor during active execution attempts and cancels the running token as soon as durable intent is observed.
+- Backward compatibility: if `fps.job_cancellation_request` is not yet deployed, repository paths fall back to legacy `job_queue_log` markers.
+- DBA action required for production: create table `fps.job_cancellation_request` and index `ix_job_cancellation_request_status` before rollout.
+
+Remaining for Slice 3 before sign-off:
+- PACT team to provide and deploy actual Redis connection settings in target environments.
+- Manual UI validation run to execute the US-12 scenarios and confirm behavior end to end.
+
 ## MVP Guardrails (Avoid Over-Engineering)
 
 Implement these first and ship:

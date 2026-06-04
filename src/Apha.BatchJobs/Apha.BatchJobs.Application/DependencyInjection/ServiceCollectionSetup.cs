@@ -193,6 +193,19 @@ public static class ServiceCollectionSetup
         public Task<bool> TryRequestCancellationAsync(Guid jobExecutionId, string requestedBy, CancellationToken cancellationToken = default)
             => Task.FromResult(true);
 
+        public Task<bool> UpsertCancellationRequestAsync(
+            Guid jobExecutionId,
+            string requestedBy,
+            string? source = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(true);
+
+        public Task<CancellationRequestRecord?> GetCancellationRequestAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
+            => Task.FromResult<CancellationRequestRecord?>(null);
+
+        public Task MarkCancellationConsumedAsync(Guid jobExecutionId, string consumedBy, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
         public Task<bool> IsCancellationRequestedAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
             => Task.FromResult(false);
     }

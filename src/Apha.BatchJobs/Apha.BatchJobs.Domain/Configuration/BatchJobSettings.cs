@@ -45,4 +45,9 @@ public sealed class BatchJobSettings
     /// Lock acquisition timeout in seconds for distributed locking.
     /// </summary>
     public int LockTimeoutSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Poll interval in seconds for checking durable cancellation requests while a job is running.
+    /// </summary>
+    public int CancellationPollIntervalSeconds { get; set; } = 2;
 }

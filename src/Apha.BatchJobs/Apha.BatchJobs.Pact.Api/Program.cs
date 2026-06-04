@@ -79,8 +79,40 @@ builder.Services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
 builder.Services.Configure<EventPublisherOptions>(builder.Configuration.GetSection("EventBridge"));
 builder.Services.Configure<TriggerDispatchOptions>(builder.Configuration.GetSection("TriggerDispatch"));
 builder.Services.Configure<TriggerStoreOptions>(builder.Configuration.GetSection("TriggerStore"));
-builder.Services.AddMemoryCache();
-builder.Services.AddSingleton<ITriggerAttemptStore, MemoryTriggerAttemptStore>();
+
+var triggerStoreOptions = builder.Configuration.GetSection("TriggerStore").Get<TriggerStoreOptions>() ?? new TriggerStoreOptions();
+var useRedisTriggerStore = builder.Environment.IsProduction()
+    || string.Equals(triggerStoreOptions.Provider, "Redis", StringComparison.OrdinalIgnoreCase);
+
+if (useRedisTriggerStore)
+{
+    var redisConnectionString = !string.IsNullOrWhiteSpace(triggerStoreOptions.RedisConnectionString)
+        ? triggerStoreOptions.RedisConnectionString
+        : builder.Configuration.GetConnectionString("Redis");
+
+    if (string.IsNullOrWhiteSpace(redisConnectionString)
+        || redisConnectionString.Contains("__REPLACE", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException(
+            "TriggerStore is configured for Redis, but no Redis connection string was provided. Set TriggerStore:RedisConnectionString or ConnectionStrings:Redis.");
+    }
+
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnectionString;
+        options.InstanceName = string.IsNullOrWhiteSpace(triggerStoreOptions.RedisInstanceName)
+            ? "pact-trigger-store:"
+            : triggerStoreOptions.RedisInstanceName;
+    });
+
+    builder.Services.AddSingleton<ITriggerAttemptStore, RedisTriggerAttemptStore>();
+}
+else
+{
+    builder.Services.AddMemoryCache();
+    builder.Services.AddSingleton<ITriggerAttemptStore, MemoryTriggerAttemptStore>();
+}
+
 builder.Services.AddAWSService<IAmazonEventBridge>();
 builder.Services.AddScoped<IEventPublisher, EventBridgePublisher>();
 builder.Services.AddScoped<EventBridgeTriggerDispatcher>();
@@ -220,6 +252,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Local"))
 app.MapGet("/api/batch-jobs/{jobName}/status", async (
     string jobName,
     [FromQuery] string? jobExecutionId,
+    [FromQuery] bool? debugView,
     ITriggerAttemptStore triggerAttemptStore,
     IJobExecutionRepository executionRepository,
     IHostEnvironment environment,
@@ -334,7 +367,7 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
                 eventId = triggerAttempt.EventId,
                 triggerStatus = triggerAttempt.Status,
                 workerExitCode,
-                triggerStore = "PactInMemoryCache"
+                triggerStore = triggerAttemptStore.StoreName
             };
 
             isRunning = projectedState != "StartFailedTimeout"
@@ -347,6 +380,32 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
         else if (execution is not null)
         {
             isRunning = execution.Status == JobStatus.Running || execution.Status == JobStatus.Pending || execution.Status == JobStatus.Retry;
+        }
+
+        var businessState = execution is null
+            ? (string?)null
+            : execution.Status switch
+            {
+                JobStatus.Pending => "Running",
+                JobStatus.Retry => "Running",
+                _ => execution.Status.ToString()
+            };
+
+        object? diagnostics = null;
+        if (debugView == true)
+        {
+            diagnostics = new
+            {
+                retry = execution is null ? null : new
+                {
+                    rawState = execution.Status.ToString(),
+                    businessState,
+                    execution.RetryAttempts,
+                    isInternalOperationalSignal = execution.Status == JobStatus.Retry,
+                    note = "Retry is treated as an internal operational signal and should not be surfaced as a primary business UI state."
+                },
+                triggerStore = triggerAttemptStore.StoreName
+            };
         }
 
         var result = new
@@ -369,6 +428,7 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
                 execution.JobName,
                 execution.JobExecutionId,
                 status = execution.Status.ToString(),
+                businessState,
                 startedAt = execution.StartedAt,
                 completedAt = execution.CompletedAt,
                 durationSeconds = execution.DurationSeconds,
@@ -376,7 +436,8 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
                 recordsFailed = execution.RecordsFailed,
                 errorMessage = execution.ErrorMessage
             },
-            startupWatchdog
+            startupWatchdog,
+            diagnostics
         };
 
         return Results.Ok(result);

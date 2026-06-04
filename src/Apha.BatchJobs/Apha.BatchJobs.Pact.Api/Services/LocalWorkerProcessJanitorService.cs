@@ -96,6 +96,20 @@ public sealed class LocalWorkerProcessJanitorService : BackgroundService
                     continue;
                 }
 
+                var parentProcessAlive = record.ParentPid <= 0 || IsProcessAlive(record.ParentPid);
+                if (!parentProcessAlive)
+                {
+                    process.Kill(entireProcessTree: true);
+                    _logger.LogWarning(
+                        "Killed orphaned local worker process because parent API process is missing | WorkerPid={WorkerPid} | ParentPid={ParentPid} | JobName={JobName} | JobExecutionId={JobExecutionId}",
+                        record.Pid,
+                        record.ParentPid,
+                        record.JobName,
+                        record.JobExecutionId);
+                    TryDeleteMetadata(metadataPath);
+                    continue;
+                }
+
                 var age = utcNow - record.StartedAtUtc;
                 if (age <= maxLifetime)
                 {
@@ -140,6 +154,19 @@ public sealed class LocalWorkerProcessJanitorService : BackgroundService
         catch
         {
             // Ignore cleanup failure; next cycle can retry.
+        }
+    }
+
+    private static bool IsProcessAlive(int pid)
+    {
+        try
+        {
+            using var process = Process.GetProcessById(pid);
+            return !process.HasExited;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

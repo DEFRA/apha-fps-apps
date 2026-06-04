@@ -12,6 +12,8 @@ public sealed class MemoryTriggerAttemptStore : ITriggerAttemptStore
     private readonly IMemoryCache _memoryCache;
     private readonly TimeSpan _entryTtl;
 
+    public string StoreName => "PactInMemoryCache";
+
     public MemoryTriggerAttemptStore(
         IMemoryCache memoryCache,
         IOptions<TriggerStoreOptions> options)

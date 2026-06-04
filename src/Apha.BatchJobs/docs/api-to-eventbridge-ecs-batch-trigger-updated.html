@@ -83,10 +83,16 @@
           <td>Execution transition audit trail</td>
           <td><code>jobqueuelogid</code> (PK), <code>jobqueueid</code> (FK), <code>performedby</code></td>
         </tr>
+        <tr>
+          <td><code>fps.job_cancellation_request</code></td>
+          <td>Durable cancel intent per execution</td>
+          <td><code>jobexecutionid</code> (PK), <code>requested_by</code>, <code>requested_at_utc</code>, <code>status</code></td>
+        </tr>
       </tbody>
     </table>
-    <p><strong>US-06 cancel contract (June 2026):</strong> <code>POST /api/v1/batch-jobs/{jobName}/cancel</code> returns <code>Accepted</code>, <code>AlreadyRequested</code>, or terminal <code>NoOp</code>. Idempotent cancel intent is persisted via <code>fps.job_queue_log</code> marker entries keyed by execution queue row, with no new table required.</p>
-    <p><strong>Last updated:</strong> June 2026 (US-06 cancellation flow).</p>
+    <p><strong>US-06 cancel contract (June 2026, hardening update):</strong> <code>POST /api/v1/batch-jobs/{jobName}/cancel</code> returns <code>Accepted</code>, <code>AlreadyRequested</code>, or terminal <code>NoOp</code>. Idempotent cancel intent is now durably persisted in <code>fps.job_cancellation_request</code> (including <code>requested_by</code>) and can be accepted even before <code>fps.job_queue</code> row creation; orchestrator continuously polls this intent and cancels running work cooperatively.</p>
+    <p><strong>DBA action required (production):</strong> apply DDL for <code>fps.job_cancellation_request</code> and index <code>ix_job_cancellation_request_status</code> before deploying this cancellation hardening flow.</p>
+    <p><strong>Last updated:</strong> June 2026 (US-06 cancellation hardening + durable intent table).</p>
 
     <h2>Consolidation Risk Handoff (June 2026)</h2>
     <p><strong>Important:</strong> RecreateSummaries validation on consolidated PostgreSQL identified schema/data integrity risks that require DBA remediation before production cutover.</p>
