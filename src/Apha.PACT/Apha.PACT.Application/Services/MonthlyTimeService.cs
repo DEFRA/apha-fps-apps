@@ -19,20 +19,14 @@ namespace Apha.PACT.Application.Services
         }
 
         public async Task<PaginatedResult<MonthlyTimeLogDto>> SearchAsync(
-            QueryParameters<string> query,
-            string? workGroup,
-            string? timeCode,
-            string? pactStaffId,
-            string? parentProject,
-            DateTime? dateImported,
-            double? month,
-            string? userId,
-            string? insertDelete)
+           QueryParameters<string> query,
+           MonthlyTimeLogFilterDto monthlyTimeLogFilter
+            )
         {
             var filter = _mapper.Map<PaginationParameters<string>>(query);
-            var result = await _repository.SearchAsync(
-                filter, workGroup, timeCode, pactStaffId, parentProject,
-                dateImported, month, userId, insertDelete);
+            var logFilter = _mapper.Map<Apha.PACT.Core.Entities.MonthlyTimeLogFilter>(monthlyTimeLogFilter);
+
+            var result = await _repository.SearchAsync(filter, logFilter);
             return _mapper.Map<PaginatedResult<MonthlyTimeLogDto>>(result);
         }
     }

@@ -6,14 +6,7 @@ namespace Apha.PACT.Application.Interfaces
     public interface IMonthlyTimeService
     {
         Task<PaginatedResult<MonthlyTimeLogDto>> SearchAsync(
-            QueryParameters<string> query,
-            string? workGroup,
-            string? timeCode,
-            string? pactStaffId,
-            string? parentProject,
-            DateTime? dateImported,
-            double? month,
-            string? userId,
-            string? insertDelete);
+                QueryParameters<string> query,
+                MonthlyTimeLogFilterDto monthlyTimeLogFilter);
     }
 }

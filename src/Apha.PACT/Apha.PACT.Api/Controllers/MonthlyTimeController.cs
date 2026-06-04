@@ -59,9 +59,18 @@ namespace Apha.PACT.Api.Controllers
             [FromQuery] string? userId,
             [FromQuery] string? insertDelete)
         {
-            var result = await _service.SearchAsync(
-                query, workGroup, timeCode, pactStaffId, parentProject,
-                dateImported, month, userId, insertDelete);
+            var logFilter = new Apha.PACT.Application.Dtos.MonthlyTimeLogFilterDto
+            { 
+                WorkGroup = workGroup, 
+                TimeCode = timeCode, 
+                PactStaffId = pactStaffId, 
+                ParentProject = parentProject, 
+                DateImported = dateImported, 
+                Month = month, 
+                UserId = userId, 
+                InsertDelete = insertDelete };
+
+            var result = await _service.SearchAsync(query, logFilter);
 
             return Ok(_mapper.Map<PaginationRes<MonthlyTimeLogRes>>(result));
         }

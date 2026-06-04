@@ -76,6 +76,8 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto();
+            var coreFilter = new MonthlyTimeLogFilter();
             var entities = new List<MonthlyTimeLog>
             {
                 new() { SequenceNo = 1, PactStaffId = "S001", TimeCode = "TC1", WorkGroup = "WG1" },
@@ -90,19 +92,18 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             var expectedResult = BuildPaginatedResult(dtos);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, null, null, null, null, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, null, null, null, null, null, null, null, null);
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
             result.Should().NotBeNull();
             result.Data.Should().HaveCount(2);
             result.Data.Should().BeEquivalentTo(dtos);
-            await _mockRepository.Received(1)
-                .SearchAsync(paginationParams, null, null, null, null, null, null, null, null);
+            await _mockRepository.Received(1).SearchAsync(paginationParams, coreFilter);
         }
 
         [Fact]
@@ -112,20 +113,31 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
             var dateImported = new DateTime(2024, 6, 1);
+            var filterDto = new MonthlyTimeLogFilterDto
+            {
+                WorkGroup = "WG1", TimeCode = "TC1", PactStaffId = "S001",
+                ParentProject = "PP1", DateImported = dateImported, Month = 6,
+                UserId = "USER1", InsertDelete = "I"
+            };
+            var coreFilter = new MonthlyTimeLogFilter
+            {
+                WorkGroup = "WG1", TimeCode = "TC1", PactStaffId = "S001",
+                ParentProject = "PP1", DateImported = dateImported, Month = 6,
+                UserId = "USER1", InsertDelete = "I"
+            };
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, "WG1", "TC1", "S001", "PP1", dateImported, 6, "USER1", "I")
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, "WG1", "TC1", "S001", "PP1", dateImported, 6, "USER1", "I");
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
-            await _mockRepository.Received(1)
-                .SearchAsync(paginationParams, "WG1", "TC1", "S001", "PP1", dateImported, 6, "USER1", "I");
+            await _mockRepository.Received(1).SearchAsync(paginationParams, coreFilter);
         }
 
         #endregion
@@ -138,19 +150,44 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery(page: 2, pageSize: 5);
             var paginationParams = DefaultPaginationParameters(page: 2, pageSize: 5);
+            var filterDto = new MonthlyTimeLogFilterDto();
+            var coreFilter = new MonthlyTimeLogFilter();
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, null, null, null, null, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            await _sut.SearchAsync(query, null, null, null, null, null, null, null, null);
+            await _sut.SearchAsync(query, filterDto);
 
             // Assert
             _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
+        }
+
+        [Fact]
+        public async Task SearchAsync_MapsFilterDtoToCoreFilter()
+        {
+            // Arrange
+            var query = DefaultQuery();
+            var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto { WorkGroup = "WG1" };
+            var coreFilter = new MonthlyTimeLogFilter { WorkGroup = "WG1" };
+            var pagedData = BuildPagedData([]);
+            var expectedResult = BuildPaginatedResult([]);
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            await _sut.SearchAsync(query, filterDto);
+
+            // Assert
+            _mockMapper.Received(1).Map<MonthlyTimeLogFilter>(filterDto);
         }
 
         [Fact]
@@ -159,16 +196,18 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto();
+            var coreFilter = new MonthlyTimeLogFilter();
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, null, null, null, null, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            await _sut.SearchAsync(query, null, null, null, null, null, null, null, null);
+            await _sut.SearchAsync(query, filterDto);
 
             // Assert
             _mockMapper.Received(1).Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData);
@@ -184,16 +223,18 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto();
+            var coreFilter = new MonthlyTimeLogFilter();
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, null, null, null, null, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, null, null, null, null, null, null, null, null);
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
             result.Should().NotBeNull();
@@ -210,6 +251,8 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery(page: 2, pageSize: 3);
             var paginationParams = DefaultPaginationParameters(page: 2, pageSize: 3);
+            var filterDto = new MonthlyTimeLogFilterDto();
+            var coreFilter = new MonthlyTimeLogFilter();
             var entities = new List<MonthlyTimeLog>
             {
                 new() { SequenceNo = 4 },
@@ -221,12 +264,12 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             var expectedResult = BuildPaginatedResult(dtos, page: 2, pageSize: 3, totalRecords: 10);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, null, null, null, null, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, null, null, null, null, null, null, null, null);
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
             result.PaginationData.PageNumber.Should().Be(2);
@@ -245,20 +288,21 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto { WorkGroup = "WG1" };
+            var coreFilter = new MonthlyTimeLogFilter { WorkGroup = "WG1" };
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, "WG1", null, null, null, null, null, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, "WG1", null, null, null, null, null, null, null);
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
-            await _mockRepository.Received(1)
-                .SearchAsync(paginationParams, "WG1", null, null, null, null, null, null, null);
+            await _mockRepository.Received(1).SearchAsync(paginationParams, coreFilter);
         }
 
         [Fact]
@@ -267,20 +311,21 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto { TimeCode = "TC1" };
+            var coreFilter = new MonthlyTimeLogFilter { TimeCode = "TC1" };
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, "TC1", null, null, null, null, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, null, "TC1", null, null, null, null, null, null);
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
-            await _mockRepository.Received(1)
-                .SearchAsync(paginationParams, null, "TC1", null, null, null, null, null, null);
+            await _mockRepository.Received(1).SearchAsync(paginationParams, coreFilter);
         }
 
         [Fact]
@@ -289,20 +334,21 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto { PactStaffId = "S001" };
+            var coreFilter = new MonthlyTimeLogFilter { PactStaffId = "S001" };
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, "S001", null, null, null, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, null, null, "S001", null, null, null, null, null);
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
-            await _mockRepository.Received(1)
-                .SearchAsync(paginationParams, null, null, "S001", null, null, null, null, null);
+            await _mockRepository.Received(1).SearchAsync(paginationParams, coreFilter);
         }
 
         [Fact]
@@ -311,20 +357,21 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto { ParentProject = "PP1" };
+            var coreFilter = new MonthlyTimeLogFilter { ParentProject = "PP1" };
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, null, "PP1", null, null, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, null, null, null, "PP1", null, null, null, null);
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
-            await _mockRepository.Received(1)
-                .SearchAsync(paginationParams, null, null, null, "PP1", null, null, null, null);
+            await _mockRepository.Received(1).SearchAsync(paginationParams, coreFilter);
         }
 
         [Fact]
@@ -334,20 +381,21 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
             var dateImported = new DateTime(2024, 3, 15);
+            var filterDto = new MonthlyTimeLogFilterDto { DateImported = dateImported };
+            var coreFilter = new MonthlyTimeLogFilter { DateImported = dateImported };
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, null, null, dateImported, null, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, null, null, null, null, dateImported, null, null, null);
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
-            await _mockRepository.Received(1)
-                .SearchAsync(paginationParams, null, null, null, null, dateImported, null, null, null);
+            await _mockRepository.Received(1).SearchAsync(paginationParams, coreFilter);
         }
 
         [Fact]
@@ -356,20 +404,21 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto { Month = 6 };
+            var coreFilter = new MonthlyTimeLogFilter { Month = 6 };
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, null, null, null, 6, null, null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, null, null, null, null, null, 6, null, null);
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
-            await _mockRepository.Received(1)
-                .SearchAsync(paginationParams, null, null, null, null, null, 6, null, null);
+            await _mockRepository.Received(1).SearchAsync(paginationParams, coreFilter);
         }
 
         [Fact]
@@ -378,20 +427,21 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto { UserId = "USER1" };
+            var coreFilter = new MonthlyTimeLogFilter { UserId = "USER1" };
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, null, null, null, null, "USER1", null)
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, null, null, null, null, null, null, "USER1", null);
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
-            await _mockRepository.Received(1)
-                .SearchAsync(paginationParams, null, null, null, null, null, null, "USER1", null);
+            await _mockRepository.Received(1).SearchAsync(paginationParams, coreFilter);
         }
 
         [Fact]
@@ -400,20 +450,21 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto { InsertDelete = "D" };
+            var coreFilter = new MonthlyTimeLogFilter { InsertDelete = "D" };
             var pagedData = BuildPagedData([]);
             var expectedResult = BuildPaginatedResult([]);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(paginationParams, null, null, null, null, null, null, null, "D")
-                .Returns(pagedData);
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(paginationParams, coreFilter).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<MonthlyTimeLogDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.SearchAsync(query, null, null, null, null, null, null, null, "D");
+            var result = await _sut.SearchAsync(query, filterDto);
 
             // Assert
-            await _mockRepository.Received(1)
-                .SearchAsync(paginationParams, null, null, null, null, null, null, null, "D");
+            await _mockRepository.Received(1).SearchAsync(paginationParams, coreFilter);
         }
 
         #endregion
@@ -426,15 +477,16 @@ namespace Apha.PACT.Application.UnitTests.Services.MonthlyTimeServiceTest
             // Arrange
             var query = DefaultQuery();
             var paginationParams = DefaultPaginationParameters();
+            var filterDto = new MonthlyTimeLogFilterDto();
+            var coreFilter = new MonthlyTimeLogFilter();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
-            _mockRepository.SearchAsync(Arg.Any<PaginationParameters<string>>(),
-                    Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                    Arg.Any<DateTime?>(), Arg.Any<double?>(), Arg.Any<string?>(), Arg.Any<string?>())
+            _mockMapper.Map<MonthlyTimeLogFilter>(filterDto).Returns(coreFilter);
+            _mockRepository.SearchAsync(Arg.Any<PaginationParameters<string>>(), Arg.Any<MonthlyTimeLogFilter>())
                 .ThrowsAsync(new InvalidOperationException("Repository failure"));
 
             // Act
-            var act = async () => await _sut.SearchAsync(query, null, null, null, null, null, null, null, null);
+            var act = async () => await _sut.SearchAsync(query, filterDto);
 
             // Assert
             await act.Should().ThrowAsync<InvalidOperationException>()

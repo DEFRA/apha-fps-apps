@@ -19,15 +19,17 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<PagedData<MonthlyTimeLog>> SearchAsync(
             PaginationParameters<string> query,
-            string? workGroup,
-            string? timeCode,
-            string? pactStaffId,
-            string? parentProject,
-            DateTime? dateImported,
-            double? month,
-            string? userId,
-            string? insertDelete)
+            MonthlyTimeLogFilter monthlyTimeLogFilter)
         {
+            string? workGroup = monthlyTimeLogFilter.WorkGroup;
+            string? timeCode = monthlyTimeLogFilter.TimeCode;
+            string? pactStaffId = monthlyTimeLogFilter.PactStaffId;
+            string? parentProject = monthlyTimeLogFilter.ParentProject;
+            DateTime? dateImported = monthlyTimeLogFilter.DateImported;
+            double? month = monthlyTimeLogFilter.Month;
+            string? userId = monthlyTimeLogFilter.UserId;
+            string? insertDelete = monthlyTimeLogFilter.InsertDelete;
+
             var baseQuery = _context.MonthlyTimeLogs.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(workGroup))
@@ -50,7 +52,7 @@ namespace Apha.PACT.DataAccess.Repository
             }
 
             if (month.HasValue)
-                baseQuery = baseQuery.Where(x => x.Month == month.Value);
+                baseQuery = baseQuery.Where(x => (int)x.Month == (int)month.Value);
 
             if (!string.IsNullOrWhiteSpace(userId))
                 baseQuery = baseQuery.Where(x => x.UserId != null && x.UserId.Contains(userId));

@@ -31,6 +31,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
         {
             // Arrange
             var query = new QueryParameters<string>();
+            var filter = new MonthlyTimeLogFilterDto();
             var paginatedResult = new PaginatedResult<MonthlyTimeLogDto>
             {
                 Data = new List<MonthlyTimeLogDto> { new() { TimeCode = "TC1", PactStaffId = "S001" } },
@@ -41,7 +42,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
                 Data = new List<MonthlyTimeLogRes> { new() { TimeCode = "TC1", PactStaffId = "S001" } }
             };
 
-            _serviceMock.SearchAsync(query, null, null, null, null, null, null, null, null)
+            _serviceMock.SearchAsync(query, filter)
                 .Returns(paginatedResult);
             _mapperMock.Map<PaginationRes<MonthlyTimeLogRes>>(paginatedResult)
                 .Returns(mappedResult);
@@ -52,7 +53,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mappedResult, okResult.Value);
-            await _serviceMock.Received(1).SearchAsync(query, null, null, null, null, null, null, null, null);
+            await _serviceMock.Received(1).SearchAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<MonthlyTimeLogFilterDto>());
         }
 
         [Fact]
@@ -64,7 +65,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
             var paginatedResult = new PaginatedResult<MonthlyTimeLogDto> { Data = new List<MonthlyTimeLogDto>() };
             var mappedResult = new PaginationRes<MonthlyTimeLogRes>();
 
-            _serviceMock.SearchAsync(query, "WG1", "TC1", "S001", "PP1", dateImported, 6.0, "USER1", "I")
+            _serviceMock.SearchAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<MonthlyTimeLogFilterDto>())
                 .Returns(paginatedResult);
             _mapperMock.Map<PaginationRes<MonthlyTimeLogRes>>(paginatedResult)
                 .Returns(mappedResult);
@@ -74,7 +75,12 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
-            await _serviceMock.Received(1).SearchAsync(query, "WG1", "TC1", "S001", "PP1", dateImported, 6.0, "USER1", "I");
+            await _serviceMock.Received(1).SearchAsync(
+                Arg.Any<QueryParameters<string>>(),
+                Arg.Is<MonthlyTimeLogFilterDto>(f =>
+                    f.WorkGroup == "WG1" && f.TimeCode == "TC1" && f.PactStaffId == "S001" &&
+                    f.ParentProject == "PP1" && f.DateImported == dateImported &&
+                    f.Month == 6.0 && f.UserId == "USER1" && f.InsertDelete == "I"));
         }
 
         [Fact]
@@ -92,7 +98,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
                 Data = new List<MonthlyTimeLogRes>()
             };
 
-            _serviceMock.SearchAsync(query, null, null, null, null, null, null, null, null)
+            _serviceMock.SearchAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<MonthlyTimeLogFilterDto>())
                 .Returns(paginatedResult);
             _mapperMock.Map<PaginationRes<MonthlyTimeLogRes>>(paginatedResult)
                 .Returns(mappedResult);
@@ -114,7 +120,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
             var paginatedResult = new PaginatedResult<MonthlyTimeLogDto>();
             var mappedResult = new PaginationRes<MonthlyTimeLogRes>();
 
-            _serviceMock.SearchAsync(query, null, null, null, null, null, null, null, null)
+            _serviceMock.SearchAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<MonthlyTimeLogFilterDto>())
                 .Returns(paginatedResult);
             _mapperMock.Map<PaginationRes<MonthlyTimeLogRes>>(paginatedResult)
                 .Returns(mappedResult);
@@ -134,8 +140,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
 
             _serviceMock.SearchAsync(
                     Arg.Any<QueryParameters<string>>(),
-                    Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                    Arg.Any<DateTime?>(), Arg.Any<double?>(), Arg.Any<string?>(), Arg.Any<string?>())
+                    Arg.Any<MonthlyTimeLogFilterDto>())
                 .ThrowsAsync(new Exception("Service error"));
 
             // Act & Assert

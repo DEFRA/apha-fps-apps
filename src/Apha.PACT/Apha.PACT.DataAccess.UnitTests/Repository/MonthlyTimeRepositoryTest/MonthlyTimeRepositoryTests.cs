@@ -171,7 +171,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], DefaultLogs());
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, null, null, null, null, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter());
 
             Assert.Equal(3, result.PaginationData.TotalRecords);
         }
@@ -182,7 +182,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], []);
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, null, null, null, null, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter());
 
             Assert.Empty(result.Data);
         }
@@ -197,7 +197,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], DefaultLogs());
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, workGroup: "WGA", null, null, null, null, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { WorkGroup = "WGA" });
 
             Assert.Equal(2, result.PaginationData.TotalRecords);
             Assert.All(result.Data, r => Assert.Equal("WGA", r.WorkGroup));
@@ -209,7 +209,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], DefaultLogs());
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, workGroup: "NONE", null, null, null, null, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { WorkGroup = "NONE" });
 
             Assert.Empty(result.Data);
         }
@@ -220,7 +220,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], DefaultLogs());
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, timeCode: "TC1", null, null, null, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { TimeCode = "TC1" });
 
             Assert.Equal(1, result.PaginationData.TotalRecords);
             Assert.Equal("TC1", result.Data.First().TimeCode);
@@ -232,7 +232,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], DefaultLogs());
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, null, pactStaffId: "S2", null, null, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { PactStaffId = "S2" });
 
             Assert.Equal(1, result.PaginationData.TotalRecords);
             Assert.Equal("S2", result.Data.First().PactStaffId);
@@ -244,7 +244,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], DefaultLogs());
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, null, null, parentProject: "PP1", null, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { ParentProject = "PP1" });
 
             Assert.Equal(2, result.PaginationData.TotalRecords);
             Assert.All(result.Data, r => Assert.Equal("PP1", r.ParentProject));
@@ -256,7 +256,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], DefaultLogs());
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, null, null, null, null, month: 7, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { Month = 7 });
 
             Assert.Equal(1, result.PaginationData.TotalRecords);
             Assert.Equal(7, result.Data.First().Month);
@@ -268,7 +268,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], DefaultLogs());
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, null, null, null, null, null, userId: "mUser1", null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { UserId = "mUser1" });
 
             Assert.Equal(1, result.PaginationData.TotalRecords);
             Assert.Contains("mUser1", result.Data.First().UserId);
@@ -284,7 +284,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], DefaultLogs());
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, null, null, null, null, null, null, insertDelete: insertDelete);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { InsertDelete = insertDelete });
 
             Assert.Equal(expectedCount, result.PaginationData.TotalRecords);
             Assert.All(result.Data, r => Assert.StartsWith(insertDelete, r.InsertDelete));
@@ -301,8 +301,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var query = new PaginationParameters<string>();
 
             // BaseDate is 2024-06-15; pass any time on the same calendar day
-            var result = await repo.SearchAsync(query, null, null, null, null,
-                dateImported: BaseDate.Date, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { DateImported = BaseDate.Date });
 
             Assert.Equal(1, result.PaginationData.TotalRecords);
             Assert.Equal(BaseDate.Date, result.Data.First().DateTime!.Value.Date);
@@ -314,8 +313,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], DefaultLogs());
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, null, null, null,
-                dateImported: new DateTime(2000, 1, 1), null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { DateImported = new DateTime(2000, 1, 1) });
 
             Assert.Empty(result.Data);
         }
@@ -330,8 +328,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], logs);
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, null, null, null,
-                dateImported: BaseDate.Date, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter { DateImported = BaseDate.Date });
 
             Assert.Empty(result.Data);
         }
@@ -347,8 +344,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var query = new PaginationParameters<string>();
 
             var result = await repo.SearchAsync(query,
-                workGroup: "WGA", timeCode: "TC1", null, parentProject: "PP1",
-                null, null, null, null);
+                new MonthlyTimeLogFilter { WorkGroup = "WGA", TimeCode = "TC1", ParentProject = "PP1" });
 
             Assert.Equal(1, result.PaginationData.TotalRecords);
             Assert.Equal("TC1", result.Data.First().TimeCode);
@@ -361,8 +357,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var query = new PaginationParameters<string>();
 
             var result = await repo.SearchAsync(query,
-                workGroup: "WGA", timeCode: "TC2", null, null,
-                null, null, null, null);
+                new MonthlyTimeLogFilter { WorkGroup = "WGA", TimeCode = "TC2" });
 
             Assert.Empty(result.Data);
         }
@@ -383,7 +378,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], logs);
             var query = new PaginationParameters<string>();
 
-            var result = await repo.SearchAsync(query, null, null, null, null, null, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter());
             var data = result.Data.ToList();
 
             // Most recent date first; within same date, ascending SequenceNo
@@ -411,7 +406,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.MonthlyTimeRepositoryTest
             var repo = CreateRepository([], logs);
             var query = new PaginationParameters<string> { Page = 2, PageSize = 3 };
 
-            var result = await repo.SearchAsync(query, null, null, null, null, null, null, null, null);
+            var result = await repo.SearchAsync(query, new MonthlyTimeLogFilter());
 
             Assert.Equal(10, result.PaginationData.TotalRecords);
             Assert.Equal(3, result.Data.Count());
