@@ -31,7 +31,6 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
         {
             // Arrange
             var query = new QueryParameters<string>();
-            var filter = new MonthlyTimeLogFilterDto();
             var paginatedResult = new PaginatedResult<MonthlyTimeLogDto>
             {
                 Data = new List<MonthlyTimeLogDto> { new() { TimeCode = "TC1", PactStaffId = "S001" } },
@@ -42,7 +41,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.MonthlyTimeControllerTest
                 Data = new List<MonthlyTimeLogRes> { new() { TimeCode = "TC1", PactStaffId = "S001" } }
             };
 
-            _serviceMock.SearchAsync(query, filter)
+            _serviceMock.SearchAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<MonthlyTimeLogFilterDto>())
                 .Returns(paginatedResult);
             _mapperMock.Map<PaginationRes<MonthlyTimeLogRes>>(paginatedResult)
                 .Returns(mappedResult);
