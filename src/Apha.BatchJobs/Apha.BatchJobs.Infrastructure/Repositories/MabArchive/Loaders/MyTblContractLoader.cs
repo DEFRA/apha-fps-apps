@@ -11,9 +11,12 @@ internal sealed class MyTblContractLoader : MabArchiveExecutionLoaderBase
 
     protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
-        var rows = await context.MaSrcTblContract
+        var sourceRows = await context.MaSrcTblContract
             .AsNoTracking()
             .Where(c => c.FpsYear == year)
+            .ToListAsync(cancellationToken);
+
+        var rows = sourceRows
             .Select(c => new MaDstMyTblContract
             {
                 Year = year,
@@ -22,13 +25,13 @@ internal sealed class MyTblContractLoader : MabArchiveExecutionLoaderBase
                 Manager = c.Manager,
                 Customer = c.Customer,
                 Title = c.Title,
-                RegisteredDate = c.RegisteredDate,
-                StartDate = c.StartDate,
-                EndDate = c.EndDate,
+                RegisteredDate = ToUtcKind(c.RegisteredDate),
+                StartDate = ToUtcKind(c.StartDate),
+                EndDate = ToUtcKind(c.EndDate),
                 ContractDoc = c.ContractDoc,
                 Duration = c.Duration
             })
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         if (rows.Count == 0)
         {
@@ -37,6 +40,18 @@ internal sealed class MyTblContractLoader : MabArchiveExecutionLoaderBase
 
         await context.MaDstMyTblContract.AddRangeAsync(rows, cancellationToken);
         return await context.SaveChangesAsync(cancellationToken);
+    }
+
+    private static DateTime? ToUtcKind(DateTime? value)
+    {
+        if (!value.HasValue)
+        {
+            return null;
+        }
+
+        return value.Value.Kind == DateTimeKind.Utc
+            ? value.Value
+            : DateTime.SpecifyKind(value.Value, DateTimeKind.Utc);
     }
 }
 

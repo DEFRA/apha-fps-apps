@@ -160,3 +160,37 @@ The following local clone remediation was executed to unblock validation and ver
 
 The `MAX(fpsyear)` assignment for ambiguous multi-year projects is a local operational fallback for testability.
 For production, DBA/business must approve the final backfill strategy and key model changes listed in this handoff.
+
+## DBA Addendum: MABArchive Production Readiness (2026-06-04)
+
+This addendum records MABArchive-specific production prerequisites identified during isolation runs.
+
+### DBA-required DB rollout
+
+1. Deploy `fps.qrytotaltestcosts` with `fpsyear` included in projection and grouping.
+2. Use controlled migration script:
+  - [src/Apha.BatchJobs/docs/database/sql/2026-06-03-qrytotaltestcosts-add-fpsyear.sql](src/Apha.BatchJobs/docs/database/sql/2026-06-03-qrytotaltestcosts-add-fpsyear.sql)
+
+### DBA operational runbook check (before reruns after abnormal stop)
+
+```sql
+-- Check active lock state for MABArchive
+SELECT job_name, jobqueueid, acquired_at, expires_at, is_active
+FROM fps.job_lock
+WHERE job_name = 'MABArchive'
+ORDER BY acquired_at DESC;
+
+-- Cleanup only when confirmed stale/orphaned
+DELETE FROM fps.job_lock
+WHERE job_name = 'MABArchive';
+```
+
+### Application-only fixes already implemented (no new DB migration)
+
+1. EF key mapping for MAB animal requirement flow aligned to row identity used by data load path.
+2. Contract date values normalized to UTC-kind before writes to avoid `timestamp with time zone` provider write failures.
+
+### Production verification recommendation
+
+1. Confirm target contract date columns remain `timestamp with time zone`.
+2. Confirm source contract dates are compatible with UTC-normalized writes.

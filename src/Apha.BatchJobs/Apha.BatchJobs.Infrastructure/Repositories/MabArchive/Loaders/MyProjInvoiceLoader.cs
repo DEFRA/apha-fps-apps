@@ -14,11 +14,12 @@ internal sealed class MyProjInvoiceLoader : MabArchiveExecutionLoaderBase
         var rows = await context.MaSrcProjInvoice
             .AsNoTracking()
             .Where(i => i.FpsYear == year)
+            .Where(i => i.Month.HasValue)
             .Select(i => new MaDstMyProjInvoice
             {
                 Year = year,
                 ProjectParent = i.ProjectParent,
-                Month = i.Month,
+                Month = i.Month!.Value,
                 Amount = i.Amount,
                 CostOfWork = i.CostOfWork,
                 Wip = i.Wip,

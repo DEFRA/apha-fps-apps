@@ -202,7 +202,7 @@ internal sealed class MaSrcProjInvoice
 {
     public int FpsYear { get; set; }
     public required string ProjectParent { get; set; }
-    public int Month { get; set; }
+    public int? Month { get; set; }
     public decimal? Amount { get; set; }
     public decimal? CostOfWork { get; set; }
     public decimal? Wip { get; set; }

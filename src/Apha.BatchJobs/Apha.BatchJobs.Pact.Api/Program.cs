@@ -36,32 +36,14 @@ builder.Services.AddSwaggerGen(options =>
 var batchJobsConnectionString = builder.Configuration.GetConnectionString("BatchJobsConnectionString");
 if (string.IsNullOrWhiteSpace(batchJobsConnectionString) || batchJobsConnectionString == "__REPLACE_VIA_ENV__")
 {
-    // Local fallback for environments without DB configuration.
-    builder.Services.AddScoped<IBatchLockRepository, NoDbBatchLockRepository>();
-    builder.Services.AddScoped<IJobExecutionRepository, NoDbJobExecutionRepository>();
+    throw new InvalidOperationException(
+        "ConnectionStrings:BatchJobsConnectionString is required. NoDb mode has been removed for PACT API.");
 }
-else
-{
-    var dbCommandTimeoutSeconds = builder.Configuration.GetValue<int?>("BatchJobs:DbCommandTimeoutSeconds") is int v && v > 0 ? v : 30;
 
-    builder.Services.AddDbContext<BatchJobsDbContext>(
-        options =>
-        {
-            options.UseNpgsql(
-                batchJobsConnectionString,
-                npgsqlOptions =>
-                {
-                    npgsqlOptions.EnableRetryOnFailure(
-                        maxRetryCount: 5,
-                        maxRetryDelay: TimeSpan.FromSeconds(10),
-                        errorCodesToAdd: null);
-                    npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
-                });
-        },
-        contextLifetime: ServiceLifetime.Scoped,
-        optionsLifetime: ServiceLifetime.Singleton);
+var dbCommandTimeoutSeconds = builder.Configuration.GetValue<int?>("BatchJobs:DbCommandTimeoutSeconds") is int v && v > 0 ? v : 30;
 
-    builder.Services.AddDbContextFactory<BatchJobsDbContext>(options =>
+builder.Services.AddDbContext<BatchJobsDbContext>(
+    options =>
     {
         options.UseNpgsql(
             batchJobsConnectionString,
@@ -73,11 +55,26 @@ else
                     errorCodesToAdd: null);
                 npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
             });
-    });
+    },
+    contextLifetime: ServiceLifetime.Scoped,
+    optionsLifetime: ServiceLifetime.Singleton);
 
-    builder.Services.AddScoped<IBatchLockRepository, BatchLockRepository>();
-    builder.Services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
-}
+builder.Services.AddDbContextFactory<BatchJobsDbContext>(options =>
+{
+    options.UseNpgsql(
+        batchJobsConnectionString,
+        npgsqlOptions =>
+        {
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorCodesToAdd: null);
+            npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
+        });
+});
+
+builder.Services.AddScoped<IBatchLockRepository, BatchLockRepository>();
+builder.Services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
 
 builder.Services.Configure<EventPublisherOptions>(builder.Configuration.GetSection("EventBridge"));
 builder.Services.Configure<TriggerDispatchOptions>(builder.Configuration.GetSection("TriggerDispatch"));
@@ -297,30 +294,3 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
 });
 
 app.Run();
-
-file sealed class NoDbBatchLockRepository : IBatchLockRepository
-{
-    public Task<bool> TryAcquireLockAsync(string jobName, Guid jobQueueId, int timeoutSeconds, CancellationToken cancellationToken = default)
-        => Task.FromResult(true);
-
-    public Task ReleaseLockAsync(string jobName, Guid jobQueueId, CancellationToken cancellationToken = default)
-        => Task.CompletedTask;
-
-    public Task<BatchLock?> GetActiveLockAsync(string jobName, CancellationToken cancellationToken = default)
-        => Task.FromResult<BatchLock?>(null);
-}
-
-file sealed class NoDbJobExecutionRepository : IJobExecutionRepository
-{
-    public Task<int> CreateExecutionRecordAsync(JobExecutionRecord record, CancellationToken cancellationToken = default)
-        => Task.FromResult(0);
-
-    public Task UpdateExecutionRecordAsync(JobExecutionRecord record, CancellationToken cancellationToken = default)
-        => Task.CompletedTask;
-
-    public Task<JobExecutionRecord?> GetLastExecutionAsync(string jobName, CancellationToken cancellationToken = default)
-        => Task.FromResult<JobExecutionRecord?>(null);
-
-    public Task<JobExecutionRecord?> GetExecutionByJobExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
-        => Task.FromResult<JobExecutionRecord?>(null);
-}

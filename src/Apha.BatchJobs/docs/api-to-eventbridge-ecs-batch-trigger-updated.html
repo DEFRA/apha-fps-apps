@@ -100,6 +100,46 @@
       </a>
     </p>
 
+    <h2>DB Shortcoming Log: MABArchive Strict-Year Isolation</h2>
+    <p><strong>Date:</strong> 2026-06-03</p>
+    <p><strong>Issue:</strong> <code>fps.qrytotaltestcosts</code> did not expose <code>fpsyear</code>, which breaks strict year isolation checks for MABArchive totals rebuild.</p>
+    <p><strong>Symptom:</strong> worker failed with: "Strict year isolation is enabled, but these fps source views are missing fpsyear: qrytotaltestcosts".</p>
+    <p><strong>Local remediation applied:</strong></p>
+    <pre><code>CREATE OR REPLACE VIEW fps.qrytotaltestcosts AS
+SELECT
+    jobcode,
+    SUM(notests * testprice) AS totaltestcosts,
+    fpsyear
+FROM fps.vtbltestrequ
+GROUP BY jobcode, fpsyear;</code></pre>
+    <p><strong>Production action required:</strong> apply the same view definition through controlled DBA migration before release.</p>
+    <p><strong>Rollout script:</strong> <a href="database/sql/2026-06-03-qrytotaltestcosts-add-fpsyear.sql">database/sql/2026-06-03-qrytotaltestcosts-add-fpsyear.sql</a></p>
+    <p><strong>Post-fix status:</strong> strict-year-isolation check passes; next observed MABArchive blocker is a separate duplicate-key tracking/data issue and is not caused by this view shape gap.</p>
+
+    <h2>DBA Addendum: MABArchive Production Readiness (June 2026)</h2>
+    <p><strong>Why this addendum:</strong> recent local validation fixes include both app-layer corrections and DB/environment prerequisites. This section separates what DBA must deploy from what is already handled in code.</p>
+    <p><strong>DBA required before production run:</strong></p>
+    <ul>
+      <li>Deploy <code>fps.qrytotaltestcosts</code> with <code>fpsyear</code> (script above) in all target environments.</li>
+      <li>Confirm no stale active lock row remains for <code>MABArchive</code> in <code>fps.job_lock</code> prior to reruns after abnormal termination.</li>
+    </ul>
+    <p><strong>Operational lock check/cleanup SQL (DBA runbook):</strong></p>
+    <pre><code>-- Check active lock state for MABArchive
+SELECT job_name, jobqueueid, acquired_at, expires_at, is_active
+FROM fps.job_lock
+WHERE job_name = 'MABArchive'
+ORDER BY acquired_at DESC;
+
+-- Cleanup only when confirmed stale/orphaned
+DELETE FROM fps.job_lock
+WHERE job_name = 'MABArchive';</code></pre>
+    <p><strong>Application-only fixes already implemented (no new DB schema migration):</strong></p>
+    <ul>
+      <li>MAB animal requirement loader tracking now aligns with row identity used in data flow (prevents EF duplicate tracking collisions).</li>
+      <li>Contract date values are normalized to UTC kind before persistence to avoid Npgsql <code>timestamp with time zone</code> write failures.</li>
+    </ul>
+    <p><strong>DBA verification recommended:</strong> confirm destination contract date columns remain <code>timestamp with time zone</code> and source data contract dates are compatible with UTC-normalized writes.</p>
+
     <p>If you are not redirected automatically, use the link above.</p>
   </div>
 </body>

@@ -708,7 +708,7 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<MaSrcProjInvoice>(entity =>
         {
             entity.ToView("proj_invoice", schema: "fps");
-            entity.HasKey(e => new { e.FpsYear, e.InvoiceCounter, e.ProjectParent, e.Month });
+            entity.HasNoKey();
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ProjectParent).HasColumnName("projectparent");
             entity.Property(e => e.Month).HasColumnName("month");
@@ -891,7 +891,7 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<MaSrcTblAnimalReq>(entity =>
         {
             entity.ToView("tblanimalreq", schema: "fps");
-            entity.HasKey(e => new { e.FpsYear, e.JobCode, e.AnimalType });
+            entity.HasKey(e => new { e.FpsYear, e.IndCounter });
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
             entity.Property(e => e.AnimalType).HasColumnName("animaltype");
@@ -903,7 +903,7 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<MaDstMyTblAnimalReq>(entity =>
         {
             entity.ToTable("my_tblanimalreq", schema: "mabarchive");
-            entity.HasKey(e => new { e.Year, e.JobCode, e.AnimalType });
+            entity.HasKey(e => new { e.Year, e.ArCounter });
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
             entity.Property(e => e.AnimalType).HasColumnName("animaltype");
