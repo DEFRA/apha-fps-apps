@@ -81,6 +81,7 @@ namespace Apha.FPS.Api.Mappings
 
             // TestSupplier
             CreateMap<TestSupplierViewDto, TestSupplierViewRes>().ReverseMap();
+            CreateMap<PactStaffDto, PactStaffRes>().ReverseMap();
         }
     }
 }
