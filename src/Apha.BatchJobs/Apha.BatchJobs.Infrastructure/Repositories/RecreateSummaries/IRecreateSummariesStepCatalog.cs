@@ -1,0 +1,17 @@
+namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
+
+/// <summary>
+/// Builds the ordered step list for RecreateSummaries execution.
+/// </summary>
+public interface IRecreateSummariesStepCatalog
+{
+    /// <summary>
+    /// Builds mandatory steps 1-14.
+    /// </summary>
+    IReadOnlyList<IRecreateSummariesExecutionStep> BuildMandatorySteps(int month, string triggeredBy);
+
+    /// <summary>
+    /// Builds conditional refresh steps 15-17.
+    /// </summary>
+    IReadOnlyList<IRecreateSummariesExecutionStep> BuildRefreshSteps(int month);
+}
