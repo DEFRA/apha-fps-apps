@@ -55,6 +55,9 @@ namespace Apha.Common.Constants
         public const string GetTestListOwners = "api/v1/testorproduct/owners";
         public const string GetAllTestorProducts = "api/v1/testorproduct";
 
+        // Recreate Summaries Log
+        public const string GetRecreateSummaryLog = "api/v1/recreatereleasesummary/recreatesummary/log";
+
         // Project Invoice
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
         public const string GetPagedProjectInvoiceManual = "api/v1/projectinvoice";
