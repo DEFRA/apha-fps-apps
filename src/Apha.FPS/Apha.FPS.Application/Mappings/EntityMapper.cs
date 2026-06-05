@@ -44,7 +44,6 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<ProjectStaffPlanView, ProjectStaffPlanViewDto>().ReverseMap();
             CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
             CreateMap<AccountCategory, AccountCategoryDto>().ReverseMap();
-            CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
             CreateMap<WorkGroupStaff, WorkGroupStaffDto>().ReverseMap();
             CreateMap<WorkGroupPerson, WorkGroupPersonDto>().ReverseMap();
            
@@ -69,6 +68,8 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<WorkGroupEmployeeView, WorkGroupEmployeeDto>().ReverseMap();
             CreateMap<PactStaff, PactStaffDto>().ReverseMap();
             CreateMap<ProjectProfitabilityView, ProjectProfitabilityDto>().ReverseMap();
+            CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
+              
         }
     }
 }
