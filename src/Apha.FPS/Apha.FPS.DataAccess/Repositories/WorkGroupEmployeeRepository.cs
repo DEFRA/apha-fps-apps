@@ -141,10 +141,10 @@ namespace Apha.FPS.DataAccess.Repositories
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("SpNumber", out var spNumber) && spNumber != null)
-                query = query.Where(x => x.SpNumber.Contains(spNumber.ToString()!));
+                query = query.Where(x => x.SpNumber != null && x.SpNumber.Contains(spNumber.ToString()!));
 
             if (dict.TryGetValue("Name", out var name) && name != null)
-                query = query.Where(x => x.Name.Contains(name.ToString()!));
+                query = query.Where(x => x.Name != null && x.Name.Contains(name.ToString()!));
 
             return query;
         }
