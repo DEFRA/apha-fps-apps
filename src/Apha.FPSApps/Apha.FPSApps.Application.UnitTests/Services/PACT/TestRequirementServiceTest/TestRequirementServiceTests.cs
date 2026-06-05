@@ -275,6 +275,35 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestRequirementServic
             Assert.False(result.Success);
         }
 
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_AllDtoPropertiesPopulated_ReturnsAllValues()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new TestSupplierViewDto
+            {
+                TestCode = "BLOOD",
+                Buyer = "PRJ1",
+                ProjectManager = "PM001",
+                NoRequired = 5.0,
+                UnitPrice = 20.0m,
+                TestCost = 100.0m,
+                ProjectStatus = "Active"
+            };
+            var expected = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse([dto]);
+            _apiClient.GetPagedBySupplierTestCodeAsync(query, "BLOOD", false).Returns(expected);
+
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            var item = result.Data!.Single();
+            Assert.Equal("BLOOD", item.TestCode);
+            Assert.Equal("PRJ1", item.Buyer);
+            Assert.Equal("PM001", item.ProjectManager);
+            Assert.Equal(5.0, item.NoRequired);
+            Assert.Equal(20.0m, item.UnitPrice);
+            Assert.Equal(100.0m, item.TestCost);
+            Assert.Equal("Active", item.ProjectStatus);
+        }
+
         #endregion
 
         #region GetTestReqmtPricingAsync
