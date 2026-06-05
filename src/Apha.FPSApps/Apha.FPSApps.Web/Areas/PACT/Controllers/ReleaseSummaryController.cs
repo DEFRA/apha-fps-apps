@@ -69,7 +69,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return BadRequest(response.Errors);
         }
 
-        private DataGridConfig<ReleasePeriodItem> MapToGridConfig(IReadOnlyList<ReleasePeriodDto>? data)
+        private static DataGridConfig<ReleasePeriodItem> MapToGridConfig(IReadOnlyList<ReleasePeriodDto>? data)
         {
             var grid = ReleaseSummaryGridConfig();
 
