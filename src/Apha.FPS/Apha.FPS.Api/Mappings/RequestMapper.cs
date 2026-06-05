@@ -17,6 +17,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<Pagination, PaginationDto>().ReverseMap();
 
             CreateMap<StaffJobViewDto, StaffJobViewRes>().ReverseMap();
+            CreateMap<ZtStaffJobViewDto, ZtStaffJobViewRes>().ReverseMap();
             CreateMap<StaffWorkgroupLookupDto, StaffWorkgroupLookupRes>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobReq>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();

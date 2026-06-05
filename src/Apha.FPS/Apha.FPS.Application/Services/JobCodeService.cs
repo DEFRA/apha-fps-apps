@@ -15,11 +15,17 @@ namespace Apha.FPS.Application.Services
             _jobCodeRepository = jobCodeRepository;
             _mapper = mapper;
         }
-       
+
         public async Task<IEnumerable<JobCodeDto>> GetJobCodeListAsync()
         {
             var jobCodes = await _jobCodeRepository.GetAllJobCodesAsync();
             return _mapper.Map<IEnumerable<JobCodeDto>>(jobCodes);            
+        }
+
+        public async Task<IEnumerable<JobCodeDto>> GetZtCodeLookupAsync()
+        {
+            var jobCodes = await _jobCodeRepository.GetZtJobCodesAsync();
+            return _mapper.Map<IEnumerable<JobCodeDto>>(jobCodes);
         }
     }
 }

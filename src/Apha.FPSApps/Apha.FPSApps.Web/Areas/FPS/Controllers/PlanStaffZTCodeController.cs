@@ -1,0 +1,321 @@
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.FPSApps.Web.Areas.FPS.Models;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Identity.Web;
+using Newtonsoft.Json;
+
+namespace Apha.FPSApps.Web.Areas.FPS.Controllers
+{
+    [Area("FPS")]
+    [Authorize(Roles = "FPSAdmin,FPSUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    public class PlanStaffZTCodeController : Controller
+    {
+        private readonly IMapper _mapper;
+        private readonly IPlanStaffZTCodeService _planStaffZTCodeService;
+
+        public PlanStaffZTCodeController(IMapper mapper, IPlanStaffZTCodeService planStaffZTCodeService)
+        {
+            _mapper = mapper;
+            _planStaffZTCodeService = planStaffZTCodeService;
+        }
+
+        public async Task<IActionResult> Index(string staffId)
+        {
+            ViewBag.StaffId = staffId ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(staffId))
+            {
+                var staffResult = await _planStaffZTCodeService.GetStaffSummaryByIdAsync(staffId);
+                if (staffResult.Success && staffResult.Data != null)
+                {
+                    ViewBag.StaffName = staffResult.Data.Name;
+                    ViewBag.WorkGroupGrade = staffResult.Data.WorkGroupGrade;
+                    ViewBag.HrsPaid = staffResult.Data.HrsPaid;
+                    ViewBag.Leave = staffResult.Data.Leave;
+                    ViewBag.SickSpecial = staffResult.Data.SickSpecial;
+                    ViewBag.HrsAvail = staffResult.Data.HrsAvail;
+                }
+                var ztTotalResult = await _planStaffZTCodeService.GetZtTotalHoursByStaffIdAsync(staffId);
+                if (ztTotalResult.Success)
+                {
+                    ViewBag.PlannedAdminZT = ztTotalResult.Data;
+                    ViewBag.FreeForChargeableWork = ((double?)ViewBag.HrsAvail ?? 0.0) - ztTotalResult.Data;
+                }
+            }
+            var gridConfig = await GetZtGridConfigAsync(staffId ?? string.Empty);
+            return View(gridConfig);
+        }
+
+        /// <summary>
+        /// Returns time-summary data for a given staffId as JSON (used for live refresh).
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetStaffSummary(string staffId)
+        {
+            if (string.IsNullOrWhiteSpace(staffId))
+                return Json(new { success = false, message = "StaffId is required." });
+
+            var staffResult = await _planStaffZTCodeService.GetStaffSummaryByIdAsync(staffId);
+            var ztResult = await _planStaffZTCodeService.GetZtTotalHoursByStaffIdAsync(staffId);
+
+            if (!staffResult.Success || staffResult.Data == null)
+                return Json(new { success = false, message = "Staff not found." });
+
+            var data = staffResult.Data;
+            var ztTotal = ztResult.Success ? ztResult.Data : 0;
+
+            return Json(new
+            {
+                success = true,
+                name = data.Name,
+                workGroupGrade = data.WorkGroupGrade,
+                hrsPaid = data.HrsPaid,
+                leave = data.Leave,
+                sickSpecial = data.SickSpecial,
+                hrsAvail = data.HrsAvail,
+                plannedAdminZT = ztTotal,
+                freeForChargeableWork = data.HrsAvail - ztTotal
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadZtGrid(PaginationFilter<string> request, string? staffId = null)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Invalid request data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+
+            var filterDict = !string.IsNullOrEmpty(request.Filter)
+                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
+                : null;
+
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            var gridConfig = await GetZtGridConfigAsync(staffId ?? string.Empty, queryParameters, filterDict);
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetZtCodes()
+        {
+            var result = await _planStaffZTCodeService.GetZtJobCodesAsync();
+            if (result.Success && result.Data != null)
+            {
+                var items = result.Data.Select(j => new { value = j.JobCodeId, text = j.JobCodeName ?? j.JobCodeId });
+
+                return Json(new { success = true, data = items });
+            }
+            return Json(new { success = false, message = "Failed to load ZT codes." });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Create(string? jobCode = null)
+        {
+            var model = new PlanStaffZTCodeItemViewModel
+            {
+                JobCode = jobCode ?? string.Empty
+            };
+            await PopulateZtDropdownAsync(model);
+            return PartialView("_AddEditPlanStaffZTCode", model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] PlanStaffZTCodeItemViewModel item)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key,
+                            message = e.ErrorMessage
+                        }))
+                });
+            }
+
+            var dto = new StaffJobDto
+            {
+                StaffId = item.StaffID ?? string.Empty,
+                JobCode = item.JobCode,
+                PlannedHours = item.PlannedHours
+            };
+            var result = await _planStaffZTCodeService.CreateStaffJobAsync(dto);
+
+            if (result.Success)
+            {
+                return Json(new { success = true, data = result.Data, message = "ZT plan entry created successfully." });
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to create ZT plan entry.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(string staffId, string? jobCode = null)
+        {
+            var result = await _planStaffZTCodeService.GetStaffJobAsync(staffId, jobCode ?? string.Empty);
+
+            if (result.Success && result.Data != null)
+            {
+                var model = _mapper.Map<PlanStaffZTCodeItemViewModel>(result.Data);
+                await PopulateZtDropdownAsync(model);
+                return PartialView("_AddEditPlanStaffZTCode", model);
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to retrieve ZT plan entry."
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(string staffId, [FromBody] PlanStaffZTCodeItemViewModel item)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any())
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key,
+                            message = e.ErrorMessage
+                        }))
+                });
+            }
+
+            var dto = new StaffJobDto
+            {
+                StaffId = item.StaffID ?? string.Empty,
+                JobCode = item.JobCode,
+                PlannedHours = item.PlannedHours
+            };
+            var result = await _planStaffZTCodeService.UpdateStaffJobAsync(staffId, dto);
+
+            if (result.Success)
+            {
+                return Json(new { success = true, data = result.Data, message = "ZT plan entry updated successfully." });
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update ZT plan entry.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> Delete(string staffId, string jobCode)
+        {
+            var result = await _planStaffZTCodeService.DeleteStaffJobAsync(staffId, jobCode);
+
+            if (result.Success)
+            {
+                return Json(new { success = true, message = "ZT plan entry deleted successfully." });
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete ZT plan entry.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
+        }
+
+        private async Task PopulateZtDropdownAsync(PlanStaffZTCodeItemViewModel model)
+        {
+            var ztResult = await _planStaffZTCodeService.GetZtJobCodesAsync();
+            model.ZtCodeList = ztResult.Data == null ? new List<SelectListItem>() :
+                ztResult.Data.Select(j => new SelectListItem
+                {
+                    Value = j.JobCodeId,
+                    Text = j.JobCodeName ?? j.JobCodeId,
+                    Selected = string.Equals(model.JobCode, j.JobCodeId, StringComparison.OrdinalIgnoreCase)
+                }).ToList();
+        }
+
+        private async Task<DataGridConfig<PlanStaffZTCodeItemViewModel>> GetZtGridConfigAsync(
+            string staffId,
+            QueryParameters<string>? query = null,
+            Dictionary<string, string>? filterDict = null)
+        {
+            var items = new List<PlanStaffZTCodeItemViewModel>();
+            var paginationModel = new PaginationModel();
+
+            if (!string.IsNullOrWhiteSpace(staffId))
+            {
+                var rowsResult = await _planStaffZTCodeService.GetZtStaffJobsByStaffIdPagedAsync(
+                    query ?? new QueryParameters<string>(), staffId);
+
+                if (rowsResult.Data != null)
+                {
+                    items = rowsResult.Data.Select(d => new PlanStaffZTCodeItemViewModel
+                    {
+                        StaffID = d.StaffID,
+                        JobCode = d.JobCode ?? string.Empty,
+                        ZtDescription = d.ZtDescription ?? d.Name,
+                        PlannedHours = d.PlannedHours
+                    }).ToList();
+                }
+                paginationModel = _mapper.Map<PaginationModel>(rowsResult.Pagination) ?? new PaginationModel();
+                paginationModel.SortColumn = query?.SortBy;
+                paginationModel.SortDirection = query?.Descending ?? false;
+            }
+
+            return new DataGridConfig<PlanStaffZTCodeItemViewModel>
+            {
+                GridId = "ztCodesGrid",
+                Title = "ZT Code Plan",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "JobCode",
+                AddFunction = "addZtPlan",
+                EditFunction = "editZtPlan",
+                DeleteFunction = "deleteZtPlan",
+                BindGridUrl = $"/FPS/PlanStaffZTCode/LoadZtGrid?staffId={Uri.EscapeDataString(staffId)}",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<PlanStaffZTCodeItemViewModel>(null),
+                Pagination = paginationModel,
+                CurrentFilters = filterDict
+            };
+        }
+    }
+}

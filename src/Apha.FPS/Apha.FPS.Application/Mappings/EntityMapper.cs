@@ -15,6 +15,7 @@ namespace Apha.FPS.Application.Mappings
 
             CreateMap<PaginationData, PaginationDto>().ReverseMap();
             CreateMap<StaffJobView, StaffJobViewDto>().ReverseMap();
+            CreateMap<ZtStaffJobView, ZtStaffJobViewDto>().ReverseMap();
             CreateMap<StaffWorkgroupLookup, StaffWorkgroupLookupDto>().ReverseMap();
             CreateMap<StaffJob, StaffJobDto>().ReverseMap();
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
@@ -22,6 +23,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Project, ProjectDto>().ReverseMap();
             CreateMap<ProjectView, Project>().ReverseMap();
             CreateMap<JobCode, JobCodeDto>().ReverseMap();
+            CreateMap<JobCode, Apha.Common.Contracts.FPS.JobCodeRes>().ReverseMap();
             CreateMap<Contract, ContractDto>().ReverseMap();
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
             CreateMap<Animal, AnimalDto>().ReverseMap();

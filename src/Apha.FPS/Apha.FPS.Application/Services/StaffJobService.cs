@@ -35,8 +35,32 @@ namespace Apha.FPS.Application.Services
 
         public async Task<List<StaffWorkgroupLookupDto>> GetStaffWorkgroupLookup()
         {
-            var staffWorkgroupLookup =  await _staffJobRepository.GetStaffWorkgroupLookup();
+            var staffWorkgroupLookup = await _staffJobRepository.GetStaffWorkgroupLookup();
             return _mapper.Map<List<StaffWorkgroupLookupDto>>(staffWorkgroupLookup);
+        }
+
+        public async Task<StaffWorkgroupLookupDto?> GetStaffSummaryByIdAsync(string staffId)
+        {
+            var staff = await _staffJobRepository.GetStaffSummaryByIdAsync(staffId);
+            return staff == null ? null : _mapper.Map<StaffWorkgroupLookupDto>(staff);
+        }
+
+        public async Task<double> GetZtTotalHoursByStaffIdAsync(string staffId)
+        {
+            return await _staffJobRepository.GetZtTotalHoursByStaffIdAsync(staffId);
+        }
+
+        public async Task<List<StaffJobViewDto>> GetZtStaffJobsByStaffIdAsync(string staffId)
+        {
+            var rows = await _staffJobRepository.GetZtStaffJobsByStaffIdAsync(staffId);
+            return _mapper.Map<List<StaffJobViewDto>>(rows);
+        }
+
+        public async Task<PaginatedResult<ZtStaffJobViewDto>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
+        {
+            var filter = _mapper.Map<PaginationParameters<string>>(query);
+            var rows = await _staffJobRepository.GetZtStaffJobsByStaffIdPagedAsync(filter, staffId);
+            return _mapper.Map<PaginatedResult<ZtStaffJobViewDto>>(rows);
         }
 
         public async Task<decimal?> GetStaffChargeRate(string staffId, string jobcode)

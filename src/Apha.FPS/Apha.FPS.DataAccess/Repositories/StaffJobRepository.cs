@@ -28,7 +28,7 @@ namespace Apha.FPS.DataAccess.Repositories
             // Apply filtering
             queryStaffJob = ApplyStaffJobFilter(queryStaffJob, query.Filter);
 
-            queryStaffJob = (IQueryable<StaffJobView>)ApplySorting(queryStaffJob, query.SortBy, query.Descending);
+            queryStaffJob = ApplySorting(queryStaffJob, query.SortBy, query.Descending);
 
             var result = (await queryStaffJob.ToListAsync())
                 .Select(ComputeStaffCost)
@@ -65,10 +65,31 @@ namespace Apha.FPS.DataAccess.Repositories
                              StaffID = s.StaffId ?? "",
                              Name = s.Name ?? "",
                              WorkGroupGrade = s.WorkgroupGrade ?? "",
-                             HrsAvail = s.HrsAvail ?? 0
+                             HrsAvail = s.HrsAvail ?? 0,
+                             HrsPaid = s.HrsPaid ?? 0,
+                             Leave = s.Leave ?? 0,
+                             SickSpecial = s.SickSpecial ?? 0
                          }).Distinct().OrderBy(e => e.Name);
 
             return await query.ToListAsync();
+        }
+
+        public async Task<StaffWorkgroupLookup?> GetStaffSummaryByIdAsync(string staffId)
+        {
+            return await _dbContext.StaffViews
+                .AsNoTracking()
+                .Where(s => s.StaffId == staffId)
+                .Select(s => new StaffWorkgroupLookup
+                {
+                    StaffID = s.StaffId ?? "",
+                    Name = s.Name ?? "",
+                    WorkGroupGrade = s.WorkgroupGrade ?? "",
+                    HrsAvail = s.HrsAvail ?? 0,
+                    HrsPaid = s.HrsPaid ?? 0,
+                    Leave = s.Leave ?? 0,
+                    SickSpecial = s.SickSpecial ?? 0
+                })
+                .FirstOrDefaultAsync();
         }
 
         public async Task<decimal?> GetStaffChargeRate(string staffId, string jobcode)
@@ -296,7 +317,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     }).Distinct().OrderBy(e => e.Name).AsQueryable();            
         }
 
-        private static IQueryable ApplySorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)
+        private static IQueryable<StaffJobView> ApplySorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
             {
@@ -306,7 +327,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplySortingByProperty(query, sortBy.ToLower(), descending);
         }
 
-        private static IQueryable ApplySortingByProperty(IQueryable<StaffJobView> query, string property, bool descending)
+        private static IQueryable<StaffJobView> ApplySortingByProperty(IQueryable<StaffJobView> query, string property, bool descending)
         {
             return property switch
             {
@@ -319,7 +340,7 @@ namespace Apha.FPS.DataAccess.Repositories
             };
         }
 
-        private static IQueryable ApplyOrder<T>(IQueryable<StaffJobView> query, Expression<Func<StaffJobView, T>> keySelector, bool descending)
+        private static IOrderedQueryable<StaffJobView> ApplyOrder<T>(IQueryable<StaffJobView> query, Expression<Func<StaffJobView, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
@@ -350,6 +371,96 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             return queryStaffJob;
+        }
+
+        public async Task<double> GetZtTotalHoursByStaffIdAsync(string staffId)
+        {
+            return await (from sj in _dbContext.StaffJobTblViews
+                          join jc in _dbContext.JobCodes on sj.JobCode equals jc.JobCodeId
+                          where sj.StaffId == staffId
+                                && jc.Type != null && jc.Type.ToUpper() == "ZT"
+                          select (double?)sj.PlannedHours)
+                .SumAsync(h => h ?? 0);
+        }
+
+        public async Task<List<StaffJobView>> GetZtStaffJobsByStaffIdAsync(string staffId)
+        {
+            return await (from sj in _dbContext.StaffJobTblViews
+                          join jc in _dbContext.ProjectViews on sj.JobCode equals jc.ParentProject
+                          //where jc.Program == "zt_prog" && 
+                          //sj.StaffId == staffId && 
+                          //jc.UserEmail != null && jc.UserEmail.ToLower() == _requestContext.UserEmailId
+                          select new StaffJobView
+                          {
+                              StaffID = sj.StaffId,
+                              JobCode = sj.JobCode,
+                              PlannedHours = (double?)sj.PlannedHours ?? 0,
+                              Name = jc.ProjectTitle,
+                              SectorName = jc.Program,
+                              WorkGroup = jc.ParentProject,
+                              ChargeRate = jc.Program == "zt_Prog" ? (decimal?)sj.PlannedHours ?? 0 : 0,
+                              StaffCost = jc.Program == "zt_Prog" ? 0 : (decimal?)sj.PlannedHours ?? 0,
+                              GradeCode = null,
+                              WorkGroupGrade = null,
+                              Days = 0
+                          })
+                .Distinct()
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<PagedData<ZtStaffJobView>> GetZtStaffJobsByStaffIdPagedAsync(PaginationParameters<string> query, string staffId)
+        {
+            var baseQuery = (from sj in _dbContext.StaffJobTblViews
+                             join jc in _dbContext.ProjectViews on sj.JobCode equals jc.ParentProject
+                             where sj.StaffId == staffId
+                             select new ZtStaffJobView
+                             {
+                                 StaffID = sj.StaffId,
+                                 JobCode = sj.JobCode,
+                                 PlannedHours = (double?)sj.PlannedHours ?? 0,
+                                 Name = jc.ProjectTitle
+                             }).Distinct().AsQueryable();
+
+            baseQuery = ApplyZtStaffJobFilter(baseQuery, query.Filter);
+            baseQuery = ApplyZtSorting(baseQuery, query.SortBy, query.Descending);
+
+            var result = await baseQuery.AsNoTracking().ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        private static IQueryable<ZtStaffJobView> ApplyZtSorting(IQueryable<ZtStaffJobView> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+                return query;
+
+            return sortBy.ToLower() switch
+            {
+                "jobcode"      => descending ? query.OrderByDescending(x => x.JobCode)      : query.OrderBy(x => x.JobCode),
+                "plannedhours" => descending ? query.OrderByDescending(x => x.PlannedHours) : query.OrderBy(x => x.PlannedHours),
+                "name"         => descending ? query.OrderByDescending(x => x.Name)         : query.OrderBy(x => x.Name),
+                _              => query
+            };
+        }
+
+        private static IQueryable<ZtStaffJobView> ApplyZtStaffJobFilter(IQueryable<ZtStaffJobView> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("Name", out var name) && name != null)
+                query = query.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
+
+            if (dict.TryGetValue("PlannedHours", out var plannedHours) && plannedHours != null)
+                query = query.Where(x => EF.Functions.ILike(x.PlannedHours.ToString(), $"%{plannedHours}%"));
+
+            return query;
         }
     }
 }

@@ -49,6 +49,12 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Staff Plan view
             CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();
+
+            // Plan Staff ZT Code
+            CreateMap<PlanStaffZTCodeItemViewModel, StaffJobViewDto>().ReverseMap();
+            CreateMap<PlanStaffZTCodeItemViewModel, StaffJobDto>()
+                .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
+                .ReverseMap();
         }
     }
 }

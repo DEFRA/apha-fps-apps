@@ -13,5 +13,6 @@
         public string? WorkGroup { get; set; }
         public string? SectorName { get; set; }
         public double Days { get; set; }
+        public string? ZtDescription { get; set; }
     }
 }

@@ -19,6 +19,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PaginationDto, Pagination>().ReverseMap();
 
             CreateMap<StaffJobViewDto, StaffJobViewRes>().ReverseMap();
+            CreateMap<ZtStaffJobViewDto, ZtStaffJobViewRes>().ReverseMap();
             CreateMap<StaffWorkgroupLookupDto, StaffWorkgroupLookupRes>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobReq>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();
@@ -103,6 +104,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
+
+            // Job Code (ZT lookup)
+            CreateMap<FpsJobCodeDto, JobCodeRes>().ReverseMap();
         }
     }
 }

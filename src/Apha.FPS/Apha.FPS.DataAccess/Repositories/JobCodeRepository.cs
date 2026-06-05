@@ -21,6 +21,13 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-
+        public async Task<IEnumerable<JobCode>> GetZtJobCodesAsync()
+        {
+            return await _dbContext.JobCodes
+                .AsNoTracking()
+                .Where(j => j.Type != null && j.Type.ToUpper() == "ZT")
+                .OrderBy(j => j.JobCodeId)
+                .ToListAsync();
+        }
     }
 }

@@ -1,0 +1,68 @@
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Pagination;
+
+namespace Apha.FPSApps.Application.Services.FPS
+{
+    public class PlanStaffZTCodeService : IPlanStaffZTCodeService
+    {
+        private readonly IFpsApiClient _fpsClient;
+
+        public PlanStaffZTCodeService(IFpsApiClient fpsClient)
+        {
+            _fpsClient = fpsClient;
+        }
+
+        public async Task<ApiResponseDto<IEnumerable<FpsJobCodeDto>>> GetZtJobCodesAsync()
+        {
+            return await _fpsClient.FpsJobCode.GetZtJobCodesAsync();
+        }
+
+        public async Task<ApiResponseDto<StaffWorkgroupLookupDto>> GetStaffSummaryByIdAsync(string staffId)
+        {
+            return await _fpsClient.FpsStaffJob.GetStaffSummaryByIdAsync(staffId);
+        }
+
+        public async Task<ApiResponseDto<double>> GetZtTotalHoursByStaffIdAsync(string staffId)
+        {
+            return await _fpsClient.FpsStaffJob.GetZtTotalHoursByStaffIdAsync(staffId);
+        }
+
+        public async Task<ApiResponseDto<List<StaffJobViewDto>>> GetZtStaffJobsByStaffIdAsync(string staffId)
+        {
+            return await _fpsClient.FpsStaffJob.GetZtStaffJobsByStaffIdAsync(staffId);
+        }
+
+        public async Task<ApiResponseDto<List<ZtStaffJobViewDto>>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
+        {
+            return await _fpsClient.FpsStaffJob.GetZtStaffJobsByStaffIdPagedAsync(query, staffId);
+        }
+
+        public async Task<ApiResponseDto<List<StaffJobViewDto>>> GetStaffJobsByJobCodeAsync(QueryParameters<string> query, string jobCode)
+        {
+            return await _fpsClient.FpsStaffJob.GetAllStaffJobAsync(query, jobCode);
+        }
+
+        public async Task<ApiResponseDto<StaffJobDto>> GetStaffJobAsync(string staffId, string jobCode)
+        {
+            return await _fpsClient.FpsStaffJob.GetStaffJobByIdAsync(staffId, jobCode);
+        }
+
+        public async Task<ApiResponseDto<StaffJobDto>> CreateStaffJobAsync(StaffJobDto staffJob)
+        {
+            return await _fpsClient.FpsStaffJob.CreateStaffJobAsync(staffJob);
+        }
+
+        public async Task<ApiResponseDto<StaffJobDto>> UpdateStaffJobAsync(string staffId, StaffJobDto staffJob)
+        {
+            return await _fpsClient.FpsStaffJob.UpdateStaffJobAsync(staffJob);
+        }
+
+        public async Task<ApiResponseDto<bool>> DeleteStaffJobAsync(string staffId, string jobCode)
+        {
+            return await _fpsClient.FpsStaffJob.DeleteStaffJobAsync(staffId, jobCode);
+        }
+    }
+}

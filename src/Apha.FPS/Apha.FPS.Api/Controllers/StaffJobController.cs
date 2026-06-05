@@ -61,6 +61,49 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves the time-summary data (HrsPaid, Leave, SickSpecial, HrsAvail) for a specific staff member.
+        /// </summary>
+        [HttpGet("staffsummary")]
+        public async Task<IActionResult> GetStaffSummaryByIdAsync([FromQuery] string staffId)
+        {
+            var result = await _staffJobService.GetStaffSummaryByIdAsync(staffId);
+            if (result == null)
+                return NotFound();
+            return Ok(_mapper.Map<StaffWorkgroupLookupRes>(result));
+        }
+
+        /// <summary>
+        /// Returns the total planned ZT hours for a specific staff member.
+        /// </summary>
+        [HttpGet("zttotalhours")]
+        public async Task<IActionResult> GetZtTotalHoursByStaffIdAsync([FromQuery] string staffId)
+        {
+            var total = await _staffJobService.GetZtTotalHoursByStaffIdAsync(staffId);
+            return Ok(total);
+        }
+
+        /// <summary>
+        /// Returns all ZT-type staff job rows for a specific staff member (the subform data).
+        /// </summary>
+        [HttpGet("ztstaffjobs")]
+        public async Task<IActionResult> GetZtStaffJobsByStaffIdAsync([FromQuery] string staffId)
+        {
+            var result = await _staffJobService.GetZtStaffJobsByStaffIdAsync(staffId);
+            return Ok(_mapper.Map<List<StaffJobViewRes>>(result));
+        }
+
+        /// <summary>
+        /// Returns a paged, sorted and filtered list of ZT-type staff job rows for a specific staff member.
+        /// </summary>
+        [HttpGet("ztstaffjobs/paged")]
+        public async Task<IActionResult> GetZtStaffJobsByStaffIdPagedAsync([FromQuery] PaginationReq<string> query, [FromQuery] string staffId)
+        {
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _staffJobService.GetZtStaffJobsByStaffIdPagedAsync(filter, staffId);
+            return Ok(_mapper.Map<PaginationRes<ZtStaffJobViewRes>>(result));
+        }
+
+        /// <summary>
         /// Retrieves the charge rate for a specific staff member and job code.
         /// </summary>
         /// <param name="staffId">The staff member's identifier.</param>
