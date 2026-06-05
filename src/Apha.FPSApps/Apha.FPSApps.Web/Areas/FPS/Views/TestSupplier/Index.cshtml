@@ -67,7 +67,8 @@
 </div>
 
 @section Scripts {
-<script>
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
     var currentTestCode = '@Model.SelectedTestCode';
     var currentShowRejected = @Model.ShowRejected.ToString().ToLower();
 
@@ -124,12 +125,14 @@
 
     function addTestSupplier() {
         if (!currentTestCode) {
-            alert('Please select a Test Code first.');
+            showGovukAlert('Please select a Test Code first.');
             return;
         }
         $.get('/FPS/TestSupplier/CreateTestReqmt', { testCode: currentTestCode }, function (html) {
-            $('#modalContent').html(html);
+            $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+        }).fail(function () {
+            showGovukAlert('An error occurred while loading the form');
         });
     }
 
@@ -138,30 +141,46 @@
         $.get('/FPS/TestSupplier/EditTestReqmt', { testCode: currentTestCode, buyer: buyer }, function (html) {
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
+        }).fail(function () {
+            showGovukAlert('An error occurred while loading the edit form');
         });
     }
 
     function deleteTestSupplier(btn) {
         var buyer = $(btn).data('id');
-        if (!confirm('Are you sure you want to delete this Test Supplier entry?')) return;
-        $.ajax({
-            url: '/FPS/TestSupplier/DeleteTestReqmt',
-            type: 'DELETE',
-            data: { testCode: currentTestCode, buyer: buyer },
-            success: function (result) {
-                if (result.success) {
-                    reloadGrid();
-                    alert('Record deleted successfully.');
-                } else {
-                    alert(result.message || 'Failed to delete entry.');
+        showGovukConfirm('Are you sure you want to delete this Test Supplier entry?').then(function (result) {
+            if (!result) return;
+            $.ajax({
+                url: '/FPS/TestSupplier/DeleteTestReqmt',
+                type: 'DELETE',
+                data: { testCode: currentTestCode, buyer: buyer },
+                success: function (response) {
+                    if (response.success) {
+                        showGovukAlert('Record deleted successfully.').then(function () {
+                            reloadGrid();
+                        });
+                    } else {
+                        showGovukAlert(response.message || 'Failed to delete entry.');
+                    }
+                },
+                error: function () {
+                    showGovukAlert('An error occurred while deleting.');
                 }
-            }
+            });
         });
     }
 
     function saveTestSupplier() {
+        clearValidationErrors('#modaPopupBody');
+        var form = $('#testSupplierForm');
+
+        if (!isFormValid(form)) {
+            displayClientValidationErrors(form, '#modaPopupBody');
+            return;
+        }
+
         var formData = {};
-        $('#testSupplierForm').serializeArray().forEach(function (item) {
+        form.serializeArray().forEach(function (item) {
             formData[item.name] = item.value;
         });
 
@@ -172,31 +191,26 @@
             data: JSON.stringify(formData),
             success: function (result) {
                 if (result.success) {
-                    $('#modalPopup').removeClass('show');
+                    closeModal();
+                    showGovukAlert(result.message || 'Record saved successfully.');
                     reloadGrid();
-                    alert('Record saved successfully.');
                 } else {
-                    showFormErrors('#testSupplierForm', result.errors);
+                    displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 400 && xhr.responseJSON) {
+                    displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                } else {
+                    showGovukAlert('An error occurred while saving.');
                 }
             }
         });
     }
 
-    function showFormErrors(formSelector, errors) {
-        $(formSelector + ' .govuk-error-message').text('').hide();
-        $(formSelector + ' .govuk-error-summary').hide();
-
-        if (!errors || errors.length === 0) return;
-
-        var summaryList = $(formSelector + ' .govuk-error-summary__list');
-        summaryList.empty();
-        errors.forEach(function (e) {
-            if (e.field) {
-                $(formSelector + ' [data-valmsg-for="' + e.field + '"]').text(e.message).show();
-            }
-            summaryList.append('<li>' + e.message + '</li>');
-        });
-        $(formSelector + ' .govuk-error-summary').show();
+    function closeModal() {
+        $('#modaPopupBody').html('');
+        $('#modalPopup').removeClass('show');
     }
 </script>
 }
