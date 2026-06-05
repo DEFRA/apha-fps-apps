@@ -84,27 +84,7 @@
     </div>
 </div>
 
-            <!-- Lab Testing Manager's -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="lab-testing-manager" allow-edit="true">
-                    <div class="align-menu-text"><span>Lab Testing Manager's</span></div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow" width="12" /></span>
-                </button>
-                <div class="dropdown-menu" id="lab-testing-manager">
-                     <div class="sub-dropdown">
-                        <button class="sub-dropdown-toggle" data-subdropdown="requirements-for-tests">
-                            Requirements for Tests 
-                            <img src="~/images/right-arrow.png" class="sub-right-arrow" alt="expand" width="14" />
-                        </button>
-                        <div class="sub-dropdown-menu" id="requirements-for-tests">
-                            <a class="dropdown-item" href="#">Test List</a>
-                            <a class="dropdown-item" asp-area="FPS" asp-controller="TestSupplier" asp-action="Index">Test Supplier View</a>
-                            <a class="dropdown-item" href="#">Test Price Check</a>
-                            <a class="dropdown-item" href="#">Log of Test Requirement Changes</a>
-                        </div>
-                     </div>
-                </div>
-            </div>
+            
 <!-- MAB — multi-column -->
 <div class="nav-item dropdown">
     <button class="nav-button dropdown-toggle" data-dropdown="mab-menu" allow-edit="true">
@@ -141,11 +121,26 @@
 </div>
 
 <!-- Lab Testing Manager's -->
-<div class="nav-item">
-    <a class="nav-button" href="#" allow-edit="true">
-        <div class="align-menu-text"><span>Lab Testing Manager's</span></div>
-    </a>
-</div>
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="lab-testing-manager" allow-edit="true">
+                    <div class="align-menu-text"><span>Lab Testing Manager's</span></div>
+                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow" width="12" /></span>
+                </button>
+                <div class="dropdown-menu" id="lab-testing-manager">
+                     <div class="sub-dropdown">
+                        <button class="sub-dropdown-toggle" data-subdropdown="requirements-for-tests">
+                            Requirements for Tests 
+                            <img src="~/images/right-arrow.png" class="sub-right-arrow" alt="expand" width="14" />
+                        </button>
+                        <div class="sub-dropdown-menu" id="requirements-for-tests">
+                            <a class="dropdown-item" href="#">Test List</a>
+                            <a class="dropdown-item" asp-area="FPS" asp-controller="TestSupplier" asp-action="Index">Test Supplier View</a>
+                            <a class="dropdown-item" href="#">Test Price Check</a>
+                            <a class="dropdown-item" href="#">Log of Test Requirement Changes</a>
+                        </div>
+                     </div>
+                </div>
+            </div>
 
 <!-- Project Plan Viewer -->
 <div class="nav-item">
