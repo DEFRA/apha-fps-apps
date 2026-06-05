@@ -29,7 +29,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
         {
             // Arrange
             var names = new List<string> { "WG01", "WG02" };
-            _serviceMock.GetAllWorkgroupNamesAsync(default).Returns(names);
+            _serviceMock.GetAllWorkgroupNamesAsync().Returns(names);
 
             // Act
             var result = await _controller.GetAllWorkgroupNamesAsync();
@@ -37,14 +37,14 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(names, okResult.Value);
-            await _serviceMock.Received(1).GetAllWorkgroupNamesAsync(default);
+            await _serviceMock.Received(1).GetAllWorkgroupNamesAsync();
         }
 
         [Fact]
         public async Task GetAllWorkgroupNamesAsync_WithEmptyResult_ReturnsOkWithEmptyList()
         {
             // Arrange
-            _serviceMock.GetAllWorkgroupNamesAsync(default).Returns(new List<string>());
+            _serviceMock.GetAllWorkgroupNamesAsync().Returns(new List<string>());
 
             // Act
             var result = await _controller.GetAllWorkgroupNamesAsync();
@@ -59,7 +59,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
         public async Task GetAllWorkgroupNamesAsync_WhenServiceThrows_PropagatesException()
         {
             // Arrange
-            _serviceMock.GetAllWorkgroupNamesAsync(default)
+            _serviceMock.GetAllWorkgroupNamesAsync()
                 .ThrowsAsync(new InvalidOperationException("Service error"));
 
             // Act & Assert
