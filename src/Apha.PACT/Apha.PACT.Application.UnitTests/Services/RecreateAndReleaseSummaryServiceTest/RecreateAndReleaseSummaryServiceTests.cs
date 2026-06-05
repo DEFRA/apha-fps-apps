@@ -48,7 +48,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 Comments = "Test Comment"
             };
 
-            var entities = new List<RecreateSummaryLogWithUser>
+            var entities = new List<RecreateSummaryLogWithComment>
             {
                 new() { Id = 1, UserId = TestUserId, Comments = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow },
                 new() { Id = 2, UserId = TestUserId, Comments = TestUserName, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1) }
@@ -62,7 +62,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 2
             };
 
-            var pagedData = new PagedData<RecreateSummaryLogWithUser>(entities.AsReadOnly(), paginationData);
+            var pagedData = new PagedData<RecreateSummaryLogWithComment>(entities.AsReadOnly(), paginationData);
 
             var dtos = new List<RecreateSummaryLogDto>
             {
@@ -115,7 +115,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
 
-            var emptyEntities = new List<RecreateSummaryLogWithUser>();
+            var emptyEntities = new List<RecreateSummaryLogWithComment>();
             var paginationData = new PaginationData
             {
                 PageNumber = 1,
@@ -124,7 +124,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 0
             };
 
-            var pagedData = new PagedData<RecreateSummaryLogWithUser>(emptyEntities.AsReadOnly(), paginationData);
+            var pagedData = new PagedData<RecreateSummaryLogWithComment>(emptyEntities.AsReadOnly(), paginationData);
 
             var emptyDtos = new List<RecreateSummaryLogDto>();
             var paginationDto = new PaginationDto
@@ -166,7 +166,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(parameters);
             _mockRepository.GetRecreateSummaryLogAsync(parameters)
-                .Returns(Task.FromException<PagedData<RecreateSummaryLogWithUser>>(new InvalidOperationException("Database error")));
+                .Returns(Task.FromException<PagedData<RecreateSummaryLogWithComment>>(new InvalidOperationException("Database error")));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetRecreateSummaryLogAsync(query));
@@ -210,7 +210,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
             };
 
             var entities = Enumerable.Range(6, 5)
-                .Select(i => new RecreateSummaryLogWithUser
+                .Select(i => new RecreateSummaryLogWithComment
                 {
                     Id = i,
                     UserId = TestUserId,
@@ -228,7 +228,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 20
             };
 
-            var pagedData = new PagedData<RecreateSummaryLogWithUser>(entities.AsReadOnly(), paginationData);
+            var pagedData = new PagedData<RecreateSummaryLogWithComment>(entities.AsReadOnly(), paginationData);
 
             var dtos = entities.Select(e => new RecreateSummaryLogDto
             {
@@ -290,7 +290,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 Comments = "Comment B"
             };
 
-            var entities = new List<RecreateSummaryLogWithUser>
+            var entities = new List<RecreateSummaryLogWithComment>
             {
                 new() { Id = 1, UserId = "UserA", Comments = TestUserName, Period = 1, DateDone = DateTime.UtcNow },
                 new() { Id = 2, UserId = "UserB", Comments = TestUserName, Period = 2, DateDone = DateTime.UtcNow }
@@ -304,7 +304,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 2
             };
 
-            var pagedData = new PagedData<RecreateSummaryLogWithUser>(entities.AsReadOnly(), paginationData);
+            var pagedData = new PagedData<RecreateSummaryLogWithComment>(entities.AsReadOnly(), paginationData);
 
             var dtos = new List<RecreateSummaryLogDto>
             {

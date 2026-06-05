@@ -17,7 +17,7 @@ namespace Apha.PACT.DataAccess.Repository
         /// Implements the SQL query logic: LEFT JOIN tblUsers ON CONCAT('CVLNT', UserID) = UserName
         /// Returns enriched log data with user information.
         /// </summary>
-        public async Task<PagedData<RecreateSummaryLogWithUser>> GetRecreateSummaryLogAsync(PaginationParameters<string> parameters)
+        public async Task<PagedData<RecreateSummaryLogWithComment>> GetRecreateSummaryLogAsync(PaginationParameters<string> parameters)
         {
             // Build the query with LEFT JOIN - EF Core will translate string concatenation to SQL CONCAT
             var baseQuery = from log in _context.RecreateSummaryLogs.AsNoTracking()
@@ -64,7 +64,7 @@ namespace Apha.PACT.DataAccess.Repository
             var result = await pagedQuery.ToListAsync();
 
             // Map to the result model
-            var mappedData = result.Select(r => new RecreateSummaryLogWithUser
+            var mappedData = result.Select(r => new RecreateSummaryLogWithComment
             {
                 Id = r.Log.Id,
                 UserId = r.Log.UserId,

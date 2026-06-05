@@ -5,6 +5,6 @@ namespace Apha.PACT.Core.Interfaces
 {
     public interface IRecreateAndReleaseSummaryRepository
     {
-        Task<PagedData<RecreateSummaryLogWithUser>> GetRecreateSummaryLogAsync(PaginationParameters<string> parameters);
+        Task<PagedData<RecreateSummaryLogWithComment>> GetRecreateSummaryLogAsync(PaginationParameters<string> parameters);
     }
 }

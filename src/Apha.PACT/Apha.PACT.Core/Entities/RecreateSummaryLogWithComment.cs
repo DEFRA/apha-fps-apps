@@ -2,7 +2,7 @@ using System;
 
 namespace Apha.PACT.Core.Entities;
 
-public class RecreateSummaryLogWithUser
+public class RecreateSummaryLogWithComment
 {
     public int Id { get; set; }
     public string? UserId { get; set; }
