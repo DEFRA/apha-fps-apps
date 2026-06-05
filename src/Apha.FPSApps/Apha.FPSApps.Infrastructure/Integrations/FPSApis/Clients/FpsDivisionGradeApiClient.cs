@@ -116,6 +116,21 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 return ApiResponseDto<List<string>>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
+
+        public async Task<ApiResponseDto<List<string>>> GetAllDivisionGradeCodesAsync()
+        {
+            var response = await _http.GetAsync<List<string>>(FpsApiEndpoints.GetAllDivisionGradeCodes);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<string>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+                return ApiResponseDto<List<string>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
     }
 }
 

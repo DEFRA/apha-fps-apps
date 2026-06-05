@@ -608,5 +608,66 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
         }
 
         #endregion
+
+        #region GetAllPactStaffAsync
+
+        [Fact]
+        public async Task GetAllPactStaffAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var serviceResult = new List<PactStaffDto>();
+            var mappedResult = new List<PactStaffRes>();
+
+            _serviceMock.GetPactStaffAsync().Returns(serviceResult);
+            _mapperMock.Map<List<PactStaffRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAllPactStaffAsync();
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, ((OkObjectResult)result).Value);
+        }
+
+        [Fact]
+        public async Task GetAllPactStaffAsync_EdgeCase_EmptyList()
+        {
+            // Arrange
+            var serviceResult = new List<PactStaffDto>();
+            var mappedResult = new List<PactStaffRes>();
+
+            _serviceMock.GetPactStaffAsync().Returns(serviceResult);
+            _mapperMock.Map<List<PactStaffRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAllPactStaffAsync();
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetAllPactStaffAsync_Error_ServiceThrows()
+        {
+            // Arrange
+            _serviceMock.GetPactStaffAsync().Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllPactStaffAsync());
+        }
+
+        [Fact]
+        public async Task GetAllPactStaffAsync_Error_MapperThrows()
+        {
+            // Arrange
+            var serviceResult = new List<PactStaffDto>();
+            _serviceMock.GetPactStaffAsync().Returns(serviceResult);
+            _mapperMock.Map<List<PactStaffRes>>(serviceResult).Throws(new Exception("Mapping error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllPactStaffAsync());
+        }
+
+        #endregion
     }
 }

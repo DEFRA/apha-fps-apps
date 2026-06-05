@@ -142,6 +142,16 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<string>> GetAllDivisionGradeCodesAsync()
+        {
+            return await _context.DivisionGrades
+                .AsNoTracking()
+                .Select(x => x.DivisionGradeCode)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+        }
+
         private static IQueryable<DivisionGrade> ApplyFilter(IQueryable<DivisionGrade> query, string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter))

@@ -47,6 +47,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<AnimalRequestDto, AnimalRequestReq>().ReverseMap();
             CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();
 
+            // FPS Animal Master
+            CreateMap<AnimalDto, AnimalReq>().ReverseMap();
+
             // YEar Master
             CreateMap<YearMasterDto, YearMasterRes>().ReverseMap();
             CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
@@ -90,6 +93,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
             CreateMap<ProfitCentreDto, ProfitCentreReq>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
+            CreateMap<ProfitCentreGradeDto, ProfitCentreGradeReq>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
@@ -99,6 +103,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
+            CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
         }
     }
 }
