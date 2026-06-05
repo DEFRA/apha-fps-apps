@@ -5,19 +5,13 @@
     ViewData["Title"] = "FPS : Test Supplier";
 }
 
-@* Breadcrumb *@
+@* Breadcrumb / Page Title *@
 <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-full">
         <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
             <div class="sup_flex_left_center" style="display: flex; font-size: 14px; align-items: center;"></div>
             <div style="visibility: hidden"><a id="backlink" href="#" class="govuk-back-link">Back</a></div>
         </h1>
-    </div>
-</div>
-
-@* Page Title *@
-<div class="govuk-grid-row sup_margin_left_right_0">
-    <div class="govuk-grid-column-full">
         <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
             <div class="sup_flex_left_center">Test Supplier</div>
         </h1>
@@ -129,8 +123,7 @@
             return;
         }
         $.get('/FPS/TestSupplier/CreateTestReqmt', { testCode: currentTestCode }, function (html) {
-            $('#modaPopupBody').html(html);
-            $('#modalPopup').addClass('show');
+            openModal(html);
         }).fail(function () {
             showGovukAlert('An error occurred while loading the form');
         });
@@ -139,8 +132,7 @@
     function editTestSupplier(btn) {
         var buyer = $(btn).data('id');
         $.get('/FPS/TestSupplier/EditTestReqmt', { testCode: currentTestCode, buyer: buyer }, function (html) {
-            $('#modaPopupBody').html(html);
-            $('#modalPopup').addClass('show');
+            openModal(html);
         }).fail(function () {
             showGovukAlert('An error occurred while loading the edit form');
         });
@@ -206,6 +198,11 @@
                 }
             }
         });
+    }
+
+    function openModal(html) {
+        $('#modaPopupBody').html(html);
+        $('#modalPopup').addClass('show');
     }
 
     function closeModal() {
