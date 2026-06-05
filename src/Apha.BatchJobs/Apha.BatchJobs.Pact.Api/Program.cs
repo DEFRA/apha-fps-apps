@@ -1,4 +1,5 @@
 using Amazon.EventBridge;
+using Asp.Versioning;
 using Apha.BatchJobs.Pact.Api.Options;
 using Apha.BatchJobs.Pact.Api.Services;
 using Apha.BatchJobs.Domain.Entities;
@@ -19,6 +20,18 @@ builder.Configuration
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+})
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
@@ -162,7 +175,7 @@ app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "pact.api", timestamp = DateTime.UtcNow }));
 
 // Status query endpoints
-app.MapGet("/api/batch-jobs/{jobName}/can-run", async (
+var canRunHandler = async (
     string jobName,
     IBatchLockRepository lockRepository,
     IJobExecutionRepository executionRepository,
@@ -206,7 +219,9 @@ app.MapGet("/api/batch-jobs/{jobName}/can-run", async (
     {
         return Results.Problem($"Failed to check can-run status: {ex.Message}", statusCode: StatusCodes.Status503ServiceUnavailable);
     }
-});
+};
+
+app.MapGet("/api/v{version:apiVersion}/batch-jobs/{jobName}/can-run", canRunHandler);
 
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Local"))
 {
@@ -249,15 +264,18 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Local"))
     });
 }
 
-app.MapGet("/api/batch-jobs/{jobName}/status", async (
+var statusHandler = async (
     string jobName,
     [FromQuery] string? jobExecutionId,
     [FromQuery] bool? debugView,
     ITriggerAttemptStore triggerAttemptStore,
     IJobExecutionRepository executionRepository,
+    ILoggerFactory loggerFactory,
     IHostEnvironment environment,
     CancellationToken cancellationToken) =>
 {
+    var logger = loggerFactory.CreateLogger("StatusEndpoint");
+
     try
     {
         var hasRequestedJobExecutionId = !string.IsNullOrWhiteSpace(jobExecutionId);
@@ -440,12 +458,29 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
             diagnostics
         };
 
+        logger.LogInformation(
+            "Status response generated | JobName={JobName} | RequestedJobExecutionId={RequestedJobExecutionId} | CorrelatedJobExecutionId={CorrelatedJobExecutionId} | QueryMode={QueryMode} | SourceOfTruth={SourceOfTruth} | IsRunning={IsRunning}",
+            jobName,
+            jobExecutionId,
+            correlatedJobExecutionId,
+            queryMode,
+            sourceOfTruth,
+            isRunning);
+
         return Results.Ok(result);
     }
     catch (Exception ex)
     {
+        logger.LogError(
+            ex,
+            "Status request failed | JobName={JobName} | RequestedJobExecutionId={RequestedJobExecutionId}",
+            jobName,
+            jobExecutionId);
+
         return Results.Problem($"Failed to fetch status: {ex.Message}", statusCode: StatusCodes.Status503ServiceUnavailable);
     }
-});
+};
+
+app.MapGet("/api/v{version:apiVersion}/batch-jobs/{jobName}/status", statusHandler);
 
 app.Run();

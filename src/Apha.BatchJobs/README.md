@@ -91,7 +91,7 @@ docker run --rm -e ASPNETCORE_ENVIRONMENT=Development batchjobs-worker:local Hea
 - ASPNETCORE_ENVIRONMENT: Demo or Development.
 - BATCH_JOB_NAME: HealthCheck, ScheduleJobs, FECProcess, or other registered job.
 - BATCH_JOBQUEUE_ID: required UUID for strict mode (simulates API/EventBridge trigger id).
-- BATCH_USER_ID: optional trigger identity (defaults to system if omitted).
+- BATCH_REQUESTED_BY: optional trigger identity (defaults to system if omitted).
 - ConnectionStrings__BatchJobsConnectionString: required for withdb mode.
 - BatchJobs__RecreateSummariesImplementationMode: optional and retained for backward compatibility.
 	Runtime always uses the LINQ-based RecreateSummaries implementation.
@@ -112,7 +112,7 @@ $env:ASPNETCORE_ENVIRONMENT = "Development"
 $env:BATCH_JOB_NAME = "MABArchive"
 $env:BATCH_RUN_MODE = "AdHoc"
 $env:BATCH_JOBQUEUE_ID = [guid]::NewGuid().ToString()
-$env:BATCH_USER_ID = "local-debug-user"
+$env:BATCH_REQUESTED_BY = "local-debug-user"
 
 dotnet run --project Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj
 ```

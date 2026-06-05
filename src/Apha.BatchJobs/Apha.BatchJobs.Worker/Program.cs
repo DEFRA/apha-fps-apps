@@ -13,6 +13,11 @@ using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+var isLocalOrDevelopment = builder.Environment.IsDevelopment()
+    || builder.Environment.IsEnvironment("Local")
+    || builder.Environment.IsEnvironment("local");
+var strictExecutionContractMode = ResolveStrictExecutionContractMode(builder.Configuration, isLocalOrDevelopment);
+
 builder.Configuration
     .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -123,11 +128,18 @@ try
     Guid jobExecutionId;
     string userId = "system";
 
-    // Get optional userId from caller (API/UI)
-    userId = Environment.GetEnvironmentVariable("BATCH_USER_ID") ?? "system";
+    // Canonical requester identity env var for trigger -> worker contract.
+    userId = Environment.GetEnvironmentVariable("BATCH_REQUESTED_BY")
+        ?? "system";
 
     if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
     {
+        if (strictExecutionContractMode)
+        {
+            throw new InvalidOperationException(
+                "BATCH_JOB_EXECUTION_ID is required in strict execution contract mode.");
+        }
+
         jobExecutionId = Guid.NewGuid();
         logger.LogWarning(
             "BATCH_JOB_EXECUTION_ID was missing. Generated fallback execution id | GeneratedJobExecutionId={GeneratedJobExecutionId}",
@@ -135,6 +147,12 @@ try
     }
     else if (!Guid.TryParse(jobExecutionIdEnv, out jobExecutionId))
     {
+        if (strictExecutionContractMode)
+        {
+            throw new InvalidOperationException(
+                "BATCH_JOB_EXECUTION_ID must be a valid GUID in strict execution contract mode.");
+        }
+
         jobExecutionId = Guid.NewGuid();
         logger.LogWarning(
             "BATCH_JOB_EXECUTION_ID was invalid. Generated fallback execution id | ProvidedValue={ProvidedJobExecutionId} | GeneratedJobExecutionId={GeneratedJobExecutionId}",
@@ -174,6 +192,15 @@ try
     {
         // Run through orchestrator (handles lock, execution records, and job execution)
         await using var executionScope = serviceProvider.CreateAsyncScope();
+        var executionRepository = executionScope.ServiceProvider.GetRequiredService<IJobExecutionRepository>();
+
+        await VerifyExecutionContractAsync(
+            jobName,
+            jobExecutionId,
+            executionRepository,
+            logger,
+            linkedCts.Token);
+
         var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
         var result = await orchestrator.RunAsync(jobName, runMode, jobExecutionId, userId, linkedCts.Token);
 
@@ -483,5 +510,61 @@ static int ResolveIntSetting(IConfiguration configuration, string configKey, str
     }
 
     return defaultValue;
+}
+
+static bool ResolveStrictExecutionContractMode(IConfiguration configuration, bool isLocalOrDevelopment)
+{
+    var envValue = Environment.GetEnvironmentVariable("BATCH_STRICT_EXECUTION_CONTRACT");
+    if (!string.IsNullOrWhiteSpace(envValue) && bool.TryParse(envValue, out var parsedEnv))
+    {
+        return parsedEnv;
+    }
+
+    var configValue = configuration.GetValue<bool?>("BatchJobs:StrictExecutionContractMode");
+    if (configValue.HasValue)
+    {
+        return configValue.Value;
+    }
+
+    // Safe default: strict outside local/development.
+    return !isLocalOrDevelopment;
+}
+
+static async Task VerifyExecutionContractAsync(
+    string requestedJobName,
+    Guid jobExecutionId,
+    IJobExecutionRepository executionRepository,
+    Microsoft.Extensions.Logging.ILogger logger,
+    CancellationToken cancellationToken)
+{
+    var existingExecution = await executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
+    if (existingExecution is null)
+    {
+        logger.LogInformation(
+            "Execution contract pre-check passed | JobExecutionId={JobExecutionId} | JobName={JobName} | ExistingExecution=False",
+            jobExecutionId,
+            requestedJobName);
+        return;
+    }
+
+    if (!string.Equals(existingExecution.JobName, requestedJobName, StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException(
+            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' already belongs to job '{existingExecution.JobName}', not '{requestedJobName}'.");
+    }
+
+    var isTerminal = existingExecution.Status is JobStatus.Completed
+        or JobStatus.Failed
+        or JobStatus.Cancelled
+        or JobStatus.Skipped;
+
+    if (isTerminal)
+    {
+        throw new InvalidOperationException(
+            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' was already used by terminal execution '{existingExecution.Status}' (ExecutionId={existingExecution.ExecutionId}). Replays are not permitted.");
+    }
+
+    throw new InvalidOperationException(
+        $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is already active with status '{existingExecution.Status}' (ExecutionId={existingExecution.ExecutionId}).");
 }
 

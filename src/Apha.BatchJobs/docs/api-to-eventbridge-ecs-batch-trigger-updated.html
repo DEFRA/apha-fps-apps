@@ -2,152 +2,621 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0; url=index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apha.BatchJobs Documentation</title>
+  <title>BatchJobs PACT Interface Contract</title>
   <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #132238;
+      --muted: #50627a;
+      --line: #d3dbe7;
+      --accent: #0a5d9c;
+      --ok: #116a3a;
+      --warn: #8a5a00;
+      --bad: #8f1d1d;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #1f2937;
-      background: #f3f4f6;
       margin: 0;
-      padding: 40px 24px;
+      padding: 28px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Segoe UI, Tahoma, Arial, sans-serif;
+      line-height: 1.45;
     }
-    .card {
-      max-width: 760px;
+
+    main {
+      max-width: 1100px;
       margin: 0 auto;
-      background: #ffffff;
-      border: 1px solid #d1d5db;
-      padding: 32px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 28px;
     }
-    a {
-      color: #1d4ed8;
+
+    h1, h2, h3 {
+      margin-top: 0;
+      color: #0b2946;
     }
+
+    h2 {
+      margin-top: 26px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      background: #eef4fc;
+      color: #123e66;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
     table {
-      border-collapse: collapse;
       width: 100%;
-      margin-top: 12px;
+      border-collapse: collapse;
+      margin: 10px 0 16px;
       font-size: 14px;
     }
+
     th, td {
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--line);
       padding: 8px;
-      text-align: left;
       vertical-align: top;
+      text-align: left;
     }
+
     th {
-      background: #f3f4f6;
+      background: #edf3fb;
+      color: #123e66;
     }
+
+    code, pre {
+      font-family: Consolas, Menlo, monospace;
+      font-size: 13px;
+    }
+
+    pre {
+      background: #f3f6fb;
+      border: 1px solid var(--line);
+      padding: 10px;
+      overflow: auto;
+      margin: 8px 0 14px;
+    }
+
+    .ok { color: var(--ok); font-weight: 600; }
+    .warn { color: var(--warn); font-weight: 600; }
+    .bad { color: var(--bad); font-weight: 600; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Apha.BatchJobs Documentation</h1>
-    <p>This page has moved to <a href="index.html">index.html</a>.</p>
-    <p><strong>Canonical naming:</strong> API payload fields use <code>jobExecutionId</code> and <code>requestedBy</code>; database columns use <code>jobexecutionid</code> and <code>requestedby</code>.</p>
-    <p><strong>Generation ownership:</strong> API (manual flow) or scheduler/triggering API (scheduled flow) must generate <code>jobExecutionId</code>. Worker uses it as correlation id and only generates a fallback GUID when missing/invalid.</p>
-    <p><strong>PACT hand-off alignment (June 2026):</strong> use correlated polling by <code>jobExecutionId</code>, enforce single execution per job name, and keep BatchJobs DB as the source of truth for execution outcomes.</p>
-    <p><strong>Startup watchdog policy:</strong> timeout projection is API-owned from <code>acceptedAtUtc</code>; delivery exhaustion is transport-reconciler-owned and must not be inferred from timeout alone.</p>
-    <p>
-      Updated hand-off:
-      <a href="PACT-BATCHJOBS-HANDOFF-EVENTGRID.md">PACT-BATCHJOBS-HANDOFF-EVENTGRID.md</a>
+  <main>
+    <h1>BatchJobs Worker and PACT API Interface Contract</h1>
+    <p class="muted">
+      Canonical single-document handoff for architecture, integration, and stakeholder briefings.
+      This document defines API contract, state transitions, responsibilities, and failure scenarios.
     </p>
-    <p><strong>Canonical table design (summary):</strong></p>
+    <p>
+      <span class="badge">Owner: Batch Worker Architecture</span>
+      <span class="badge">Integration: PACT API</span>
+      <span class="badge">Last Updated: 2026-06-04</span>
+    </p>
+
+    <h2>1. Scope and Principles</h2>
+    <ul>
+      <li>PACT API is the trigger and query surface for PACT-routed jobs.</li>
+      <li>Formal cross-team dispatch contract is EventBridge (not LocalProcess mode).</li>
+      <li>BatchJobs DB is the source of truth for execution outcomes.</li>
+      <li>Trigger store (Redis or memory) is a startup-tracking cache, not the final business state.</li>
+      <li>Single-execution safety is enforced by distributed lock in BatchJobs DB.</li>
+      <li>External correlation key is jobExecutionId and must be used for status polling and cancellation.</li>
+    </ul>
+
+    <p><strong>Contract boundary:</strong> EventBridge dispatch is the supported integration path for PACT API in shared environments. LocalProcess dispatch exists only for development/local debugging and is not part of the inter-team production contract.</p>
+
+    <h2>2. API Endpoints Required</h2>
     <table>
       <thead>
         <tr>
-          <th>Table</th>
+          <th>Method</th>
+          <th>Path</th>
           <th>Purpose</th>
-          <th>Key columns</th>
+          <th>Owner</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td><code>fps.job_master</code></td>
-          <td>Job definition catalog</td>
-          <td><code>jobid</code> (PK), <code>jobname</code></td>
+          <td>GET</td>
+          <td>/health</td>
+          <td>API liveness endpoint.</td>
+          <td>PACT API</td>
         </tr>
         <tr>
-          <td><code>fps.job_status</code></td>
-          <td>Status catalog per job</td>
-          <td><code>statusid</code> (PK), <code>jobid</code> (FK), <code>status</code></td>
+          <td>GET</td>
+          <td>/api/v1/batch-jobs/catalog</td>
+          <td>Returns routable jobs and whether trigger is allowed via PACT API.</td>
+          <td>PACT API</td>
         </tr>
         <tr>
-          <td><code>fps.job_queue</code></td>
-          <td>One row per execution instance</td>
-          <td><code>jobqueueid</code> (internal PK), <code>jobexecutionid</code> (external UNIQUE), <code>requestedby</code>, <code>statusid</code></td>
+          <td>POST</td>
+          <td>/api/v1/batch-jobs/trigger</td>
+          <td>Creates new trigger attempt and dispatches to EventBridge.</td>
+          <td>PACT API</td>
         </tr>
         <tr>
-          <td><code>fps.job_queue_log</code></td>
-          <td>Execution transition audit trail</td>
-          <td><code>jobqueuelogid</code> (PK), <code>jobqueueid</code> (FK), <code>performedby</code></td>
+          <td>GET</td>
+          <td>/api/v1/batch-jobs/{jobName}/can-run</td>
+          <td>Advisory pre-check for lock and active execution before trigger attempt.</td>
+          <td>PACT API + BatchJobs DB</td>
         </tr>
         <tr>
-          <td><code>fps.job_cancellation_request</code></td>
-          <td>Durable cancel intent per execution</td>
-          <td><code>jobexecutionid</code> (PK), <code>requested_by</code>, <code>requested_at_utc</code>, <code>status</code></td>
+          <td>GET</td>
+          <td>/api/v1/batch-jobs/{jobName}/status</td>
+          <td>Returns correlated status from BatchJobs DB with startup watchdog fallback.</td>
+          <td>PACT API + BatchJobs DB + Trigger store</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td>/api/v1/batch-jobs/{jobName}/cancel</td>
+          <td>Creates idempotent durable cancellation request and optionally kills local process in Local/Dev.</td>
+          <td>PACT API + BatchJobs DB</td>
         </tr>
       </tbody>
     </table>
-    <p><strong>US-06 cancel contract (June 2026, hardening update):</strong> <code>POST /api/v1/batch-jobs/{jobName}/cancel</code> returns <code>Accepted</code>, <code>AlreadyRequested</code>, or terminal <code>NoOp</code>. Idempotent cancel intent is now durably persisted in <code>fps.job_cancellation_request</code> (including <code>requested_by</code>) and can be accepted even before <code>fps.job_queue</code> row creation; orchestrator continuously polls this intent and cancels running work cooperatively.</p>
-    <p><strong>DBA action required (production):</strong> apply DDL for <code>fps.job_cancellation_request</code> and index <code>ix_job_cancellation_request_status</code> before deploying this cancellation hardening flow.</p>
-    <p><strong>Last updated:</strong> June 2026 (US-06 cancellation hardening + durable intent table).</p>
-
-    <h2>Consolidation Risk Handoff (June 2026)</h2>
-    <p><strong>Important:</strong> RecreateSummaries validation on consolidated PostgreSQL identified schema/data integrity risks that require DBA remediation before production cutover.</p>
-    <ul>
-      <li><strong>Engineering completed:</strong> application-side safeguards and parity-preserving fixes.</li>
-      <li><strong>DBA required:</strong> null <code>fpsyear</code> backfill strategy, key alignment for multi-year tables, and residual data cleanup.</li>
-    </ul>
-    <p>
-      Full handoff document:
-      <a href="database/RECREATESUMMARIES-CONSOLIDATION-DBA-HANDOFF-2026-06-02.md">
-        RECREATESUMMARIES-CONSOLIDATION-DBA-HANDOFF-2026-06-02.md
-      </a>
+    <p class="muted">
+      Contract routes are versioned under /api/v{version} and currently served as /api/v1.
+      PACT consumers should call /api/v1 paths.
     </p>
 
-    <h2>DB Shortcoming Log: MABArchive Strict-Year Isolation</h2>
-    <p><strong>Date:</strong> 2026-06-03</p>
-    <p><strong>Issue:</strong> <code>fps.qrytotaltestcosts</code> did not expose <code>fpsyear</code>, which breaks strict year isolation checks for MABArchive totals rebuild.</p>
-    <p><strong>Symptom:</strong> worker failed with: "Strict year isolation is enabled, but these fps source views are missing fpsyear: qrytotaltestcosts".</p>
-    <p><strong>Local remediation applied:</strong></p>
-    <pre><code>CREATE OR REPLACE VIEW fps.qrytotaltestcosts AS
-SELECT
-    jobcode,
-    SUM(notests * testprice) AS totaltestcosts,
-    fpsyear
-FROM fps.vtbltestrequ
-GROUP BY jobcode, fpsyear;</code></pre>
-    <p><strong>Production action required:</strong> apply the same view definition through controlled DBA migration before release.</p>
-    <p><strong>Rollout script:</strong> <a href="database/sql/2026-06-03-qrytotaltestcosts-add-fpsyear.sql">database/sql/2026-06-03-qrytotaltestcosts-add-fpsyear.sql</a></p>
-    <p><strong>Post-fix status:</strong> strict-year-isolation check passes; next observed MABArchive blocker is a separate duplicate-key tracking/data issue and is not caused by this view shape gap.</p>
+    <h2>3. Request and Response Contract</h2>
 
-    <h2>DBA Addendum: MABArchive Production Readiness (June 2026)</h2>
-    <p><strong>Why this addendum:</strong> recent local validation fixes include both app-layer corrections and DB/environment prerequisites. This section separates what DBA must deploy from what is already handled in code.</p>
-    <p><strong>DBA required before production run:</strong></p>
+    <h3>3.1 Trigger</h3>
+    <pre>{
+  "jobName": "RecreateSummaries",
+  "requestedBy": "pact.user@defra.gov.uk"
+}</pre>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Direction</th>
+          <th>Required</th>
+          <th>Contract Rule</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>jobName</td>
+          <td>Request</td>
+          <td>Yes</td>
+          <td>Must be routable via PACT policy. PACT-routed jobs include RecreateSummaries; HealthCheck is neutral.</td>
+        </tr>
+        <tr>
+          <td>requestedBy</td>
+          <td>Request</td>
+          <td>Yes</td>
+          <td>Mandatory caller identity for audit and traceability. Request is rejected if missing or blank.</td>
+        </tr>
+        <tr>
+          <td>jobExecutionId</td>
+          <td>Response</td>
+          <td>Always returned</td>
+          <td>Generated by API at trigger acceptance. Caller must persist and use this value for status and cancel operations.</td>
+        </tr>
+        <tr>
+          <td>acceptedAtUtc</td>
+          <td>Response</td>
+          <td>Always returned</td>
+          <td>Generated by API at acceptance; used by startup watchdog projection window.</td>
+        </tr>
+        <tr>
+          <td>runMode</td>
+          <td>Internal</td>
+          <td>Not caller supplied</td>
+          <td>PACT trigger path dispatches Manual run mode internally; clients do not send runMode.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Trigger success response (202 Accepted):</p>
+    <pre>{
+  "accepted": true,
+  "source": "pact.api",
+  "jobName": "RecreateSummaries",
+  "jobExecutionId": "f6ab2d5f8f6849d89b8b5ca73d4f0f17",
+  "eventId": "aws-event-id",
+  "status": "TriggerAccepted",
+  "acceptedAtUtc": "2026-06-04T11:00:00Z",
+  "message": "Trigger accepted for dispatch."
+}</pre>
+
+    <p class="muted">Local debug responses may include worker process details, but those fields are not part of the production API contract.</p>
+
+    <p>Trigger dispatch failure response (503 Service Unavailable):</p>
+    <pre>{
+  "accepted": false,
+  "source": "pact.api",
+  "jobName": "RecreateSummaries",
+  "reason": "DispatchFailed"
+}</pre>
+
+    <h3>3.2 Cancel</h3>
+    <pre>{
+  "jobExecutionId": "f6ab2d5f-8f68-49d8-9b8b-5ca73d4f0f17",
+  "requestedBy": "pact.user@defra.gov.uk"
+}</pre>
+    <p>Cancel outcomes:</p>
     <ul>
-      <li>Deploy <code>fps.qrytotaltestcosts</code> with <code>fpsyear</code> (script above) in all target environments.</li>
-      <li>Confirm no stale active lock row remains for <code>MABArchive</code> in <code>fps.job_lock</code> prior to reruns after abnormal termination.</li>
+      <li><span class="ok">Accepted</span>: new durable cancel request created.</li>
+      <li><span class="warn">AlreadyRequested</span>: idempotent duplicate request.</li>
+      <li><span class="warn">NoOpTerminal</span>: execution already terminal (Completed, Failed, Cancelled, Skipped).</li>
     </ul>
-    <p><strong>Operational lock check/cleanup SQL (DBA runbook):</strong></p>
-    <pre><code>-- Check active lock state for MABArchive
-SELECT job_name, jobqueueid, acquired_at, expires_at, is_active
-FROM fps.job_lock
-WHERE job_name = 'MABArchive'
-ORDER BY acquired_at DESC;
 
--- Cleanup only when confirmed stale/orphaned
-DELETE FROM fps.job_lock
-WHERE job_name = 'MABArchive';</code></pre>
-    <p><strong>Application-only fixes already implemented (no new DB schema migration):</strong></p>
+    <h3>3.3 Status Query</h3>
+    <p>Recommended query:</p>
+    <pre>GET /api/v1/batch-jobs/{jobName}/status?jobExecutionId={guid}</pre>
+    <p>
+      Status by jobExecutionId is the deterministic contract for user-facing tracking.
+      Latest-by-job-name is convenience/debug fallback and should not be used by PACT UI for deterministic execution tracking.
+    </p>
+
+    <h3>3.4 HTTP Status Contract</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Case</th>
+          <th>HTTP Status</th>
+          <th>Contract Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Trigger accepted</td><td>202</td><td>TriggerAccepted</td></tr>
+        <tr><td>Missing or blank requestedBy</td><td>400</td><td>ValidationFailed</td></tr>
+        <tr><td>Job not allowed via PACT routing policy</td><td>409</td><td>RoutingPolicyConflict</td></tr>
+        <tr><td>Dispatch to EventBridge failed before acceptance</td><td>503</td><td>DispatchFailed</td></tr>
+        <tr><td>Cancel accepted</td><td>202</td><td>Accepted</td></tr>
+        <tr><td>Cancel duplicate request</td><td>200</td><td>AlreadyRequested</td></tr>
+        <tr><td>Cancel on terminal execution</td><td>200</td><td>NoOpTerminal</td></tr>
+      </tbody>
+    </table>
+
+    <h2>4. State Model and Transition Contract</h2>
+
+    <h3>4.1 Business States (source of truth: BatchJobs DB)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>State</th>
+          <th>Meaning</th>
+          <th>Transition Owner</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Pending</td><td>Execution accepted and queued internally.</td><td>Worker orchestration</td></tr>
+        <tr><td>Running</td><td>Job currently executing.</td><td>Worker orchestration</td></tr>
+        <tr><td>Retry</td><td>Internal operational retry signal.</td><td>Worker orchestration</td></tr>
+        <tr><td>Completed</td><td>Execution finished successfully.</td><td>Worker orchestration</td></tr>
+        <tr><td>Failed</td><td>Execution ended with non-cancelled failure.</td><td>Worker orchestration</td></tr>
+        <tr><td>Cancelled</td><td>Execution cooperatively or forcibly cancelled.</td><td>Worker orchestration / cancellation flow</td></tr>
+        <tr><td>Skipped</td><td>Run skipped because lock already held by concurrent execution.</td><td>Worker orchestration</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4.2 Startup Watchdog Projection States (PACT API owned projection)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Projected State</th>
+          <th>When used</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>TriggerAccepted</td><td>Trigger recorded, worker not yet confirmed started.</td></tr>
+        <tr><td>WorkerProcessStarted</td><td>Worker startup confirmed but no DB execution row yet.</td></tr>
+        <tr><td>StartFailedTimeout</td><td>Startup SLA passed and worker did not reach expected started signal.</td></tr>
+        <tr><td>WorkerProcessExited</td><td>Worker exited before durable execution state available.</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">
+      Startup watchdog does not declare transport delivery exhaustion. That confirmation belongs to integration transport reconciliation.
+      startupDeadlineUtc and startupSlaSeconds are included in status projection for explicit timeout interpretation.
+    </p>
+
+    <h2>5. Responsibility Matrix</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Capability</th>
+          <th>PACT API Team</th>
+          <th>Batch Worker Team</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Endpoint hosting and request validation</td>
+          <td>Owns</td>
+          <td>Consulted</td>
+        </tr>
+        <tr>
+          <td>Trigger dispatch to EventBridge or local process</td>
+          <td>Owns</td>
+          <td>Consulted</td>
+        </tr>
+        <tr>
+          <td>EventBridge publish and transport-to-ECS launch chain</td>
+          <td>Owns publish request and correlation fields</td>
+          <td>Owns post-start execution correctness; infrastructure owns transport delivery</td>
+        </tr>
+        <tr>
+          <td>Distributed lock and execution lifecycle transitions</td>
+          <td>Consumes</td>
+          <td>Owns</td>
+        </tr>
+        <tr>
+          <td>Durable cancellation semantics</td>
+          <td>Initiates requests</td>
+          <td>Owns consumption and checkpoints</td>
+        </tr>
+        <tr>
+          <td>Status source of truth</td>
+          <td>Reads and surfaces</td>
+          <td>Writes and maintains</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>6. Scenario Coverage (Happy to Worst)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Expected Behavior</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Happy path trigger and run</td>
+          <td>Trigger accepted, worker starts, DB states progress to Completed.</td>
+        </tr>
+        <tr>
+          <td>Concurrent trigger while lock active</td>
+          <td>New run is skipped or rejected by can-run checks and lock protections.</td>
+        </tr>
+        <tr>
+          <td>EventBridge publish fails before acceptance</td>
+          <td>Trigger returns DispatchFailed (503) and no accepted execution should be treated as active.</td>
+        </tr>
+        <tr>
+          <td>EventBridge accepts but worker does not start</td>
+          <td>Status remains startup projection until startupDeadlineUtc, then StartFailedTimeout.</td>
+        </tr>
+        <tr>
+          <td>Wrong API route for job name</td>
+          <td>Trigger returns conflict with routing-policy reason.</td>
+        </tr>
+        <tr>
+          <td>Trigger accepted but startup delayed</td>
+          <td>Status returns startupWatchdog projection until DB row exists.</td>
+        </tr>
+        <tr>
+          <td>Worker exits before durable state</td>
+          <td>Status projects WorkerProcessExited or mapped terminal projection from exit code.</td>
+        </tr>
+        <tr>
+          <td>Cancel before execution row exists</td>
+          <td>Cancel accepted and stored in durable cancellation request table keyed by jobExecutionId; worker applies at earliest checkpoint.</td>
+        </tr>
+        <tr>
+          <td>Cancel after already requested</td>
+          <td>AlreadyRequested response; no duplicate side effect.</td>
+        </tr>
+        <tr>
+          <td>Cancel after terminal state</td>
+          <td>NoOpTerminal response.</td>
+        </tr>
+        <tr>
+          <td>Dependency outage during execution</td>
+          <td>Execution ends Failed (or retry then fail) with error details in DB record.</td>
+        </tr>
+        <tr>
+          <td>BatchJobs DB unavailable during status</td>
+          <td>Status endpoint returns dependency failure (503); API should not invent terminal business state.</td>
+        </tr>
+        <tr>
+          <td>Cancel requested during non-cancellable step</td>
+          <td>Cancellation remains pending and is applied at the next cooperative cancellation checkpoint.</td>
+        </tr>
+        <tr>
+          <td>Worker completes before cancellation is processed</td>
+          <td>Cancellation resolves as NoOpTerminal and final state remains terminal business outcome.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>6.1 Trigger Lifecycle Sequence</h3>
+    <pre>PACT API receives trigger
+-> validates requestedBy and jobName
+-> creates jobExecutionId
+-> dispatches event to EventBridge
+-> records trigger attempt in trigger store (Redis in shared environments)
+-> worker starts
+-> worker creates/updates durable execution state in BatchJobs DB
+-> status switches from startup projection to DB-backed business state</pre>
+
+    <h2>7. Rationale: Watchdog and Redis Cache</h2>
+
+    <h3>Why Startup Watchdog Exists</h3>
     <ul>
-      <li>MAB animal requirement loader tracking now aligns with row identity used in data flow (prevents EF duplicate tracking collisions).</li>
-      <li>Contract date values are normalized to UTC kind before persistence to avoid Npgsql <code>timestamp with time zone</code> write failures.</li>
+      <li>There is a short consistency gap between trigger acceptance and first durable DB execution row.</li>
+      <li>Watchdog gives deterministic status projection in that gap for UI and operations.</li>
+      <li>Watchdog prevents false "lost trigger" assumptions by exposing projection timestamps and deadline.</li>
     </ul>
-    <p><strong>DBA verification recommended:</strong> confirm destination contract date columns remain <code>timestamp with time zone</code> and source data contract dates are compatible with UTC-normalized writes.</p>
 
-    <p>If you are not redirected automatically, use the link above.</p>
-  </div>
+    <h3>Why Redis Trigger Store Exists</h3>
+    <ul>
+      <li>Provides cross-instance shared trigger attempt visibility for distributed API deployments.</li>
+      <li>Allows correlated retrieval by jobExecutionId and latest by job name.</li>
+      <li>Supports startup watchdog continuity across restarts and scale events.</li>
+      <li>Redis is the default production path. Outside production, memory store is allowed unless TriggerStore provider is explicitly configured to Redis.</li>
+    </ul>
+
+    <h3>Dispatch Mode Policy</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Environment</th>
+          <th>Dispatch Mode</th>
+          <th>Contract Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Production</td>
+          <td>EventBridge</td>
+          <td><span class="ok">In contract</span></td>
+        </tr>
+        <tr>
+          <td>Development or Local environments</td>
+          <td>LocalProcess (when explicitly configured) or EventBridge</td>
+          <td><span class="warn">LocalProcess out of contract (debug only)</span></td>
+        </tr>
+        <tr>
+          <td>Local developer machine</td>
+          <td>LocalProcess</td>
+          <td><span class="warn">Out of contract (debug only)</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>8. Operational Notes</h2>
+    <ul>
+      <li>Correlation contract: jobExecutionId is external key for trigger, status polling, and cancellation.</li>
+      <li>Requester identity contract: requestedBy is mandatory on trigger/cancel requests; missing or blank values are rejected.</li>
+      <li>can-run contract: advisory pre-check only; final single-execution enforcement is the distributed DB lock in worker orchestration.</li>
+      <li>Status rendering rule: Retry is internal; business UI should show Running during retry.</li>
+      <li>Logging correlation rule: trigger accepted logs include jobExecutionId, jobName, eventId; cancellation accepted logs include jobExecutionId, jobName, requestedBy; status logs include jobName, requested/correlated jobExecutionId, query mode, and sourceOfTruth.</li>
+      <li>Local-only janitor service can kill orphaned local worker processes by metadata and age policy.</li>
+    </ul>
+
+    <h2>9. DevOps and Infra Mandatory Asks (PoC Contract)</h2>
+    <p>
+      The following setup is mandatory for this contract and should be implemented by DevOps/Infra as part of initial environment provisioning.
+      These asks follow existing sibling-repo norms: URL-segment v1 APIs, least-privilege IAM, and explicit environment-variable contracts.
+    </p>
+
+    <h3>9.1 PACT API Task Configuration</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Required Value</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Connection string secret key</td>
+          <td>ConnectionStrings__BatchJobsConnectionString</td>
+          <td>PACT API startup requires BatchJobs DB connection using this key.</td>
+        </tr>
+        <tr>
+          <td>EventBridge source</td>
+          <td>pact.api</td>
+          <td>Matches published event envelope source.</td>
+        </tr>
+        <tr>
+          <td>EventBridge detail-type</td>
+          <td>BatchJob.TriggerRequested</td>
+          <td>Matches published trigger event contract.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>9.2 EventBridge to ECS Mappings (Mandatory)</h3>
+    <p>Worker runtime consumes these environment variables: BATCH_JOB_NAME, BATCH_RUN_MODE, BATCH_JOB_EXECUTION_ID.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Trigger Path</th>
+          <th>Input Path or Fixed Value</th>
+          <th>Container Env Variable</th>
+          <th>Required</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Manual/API rule</td>
+          <td>$.detail.jobName</td>
+          <td>BATCH_JOB_NAME</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td>Manual/API rule</td>
+          <td>$.detail.runMode</td>
+          <td>BATCH_RUN_MODE</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td>Manual/API rule</td>
+          <td>$.detail.jobExecutionId</td>
+          <td>BATCH_JOB_EXECUTION_ID</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td>Manual/API rule</td>
+          <td>$.detail.requestedBy</td>
+          <td>BATCH_REQUESTED_BY</td>
+          <td>Recommended</td>
+        </tr>
+        <tr>
+          <td>Scheduled rule</td>
+          <td>Fixed per rule (example: MABArchive)</td>
+          <td>BATCH_JOB_NAME</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td>Scheduled rule</td>
+          <td>Fixed value: Scheduled</td>
+          <td>BATCH_RUN_MODE</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td>Scheduled rule</td>
+          <td>$.id (EventBridge event envelope id)</td>
+          <td>BATCH_JOB_EXECUTION_ID</td>
+          <td>Yes</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted">
+      Notes: scheduled rules must provide BATCH_JOB_EXECUTION_ID. In strict execution contract mode, worker startup fails if this value is missing or not a valid GUID.
+    </p>
+
+    <h3>9.3 IAM and Security Group Norms</h3>
+    <ul>
+      <li>EventBridge invoke role must have ecs:RunTask scoped to approved worker task definition family and target cluster.</li>
+      <li>EventBridge invoke role must have iam:PassRole scoped only to approved worker task role and execution role.</li>
+      <li>PACT/FPS API task roles that publish events must have events:PutEvents scoped to the approved event bus.</li>
+      <li>API tasks may expose inbound 8080 from ALB; batch worker task should have no inbound listener requirement.</li>
+      <li>Worker outbound should be least-privilege for required dependencies (DB, Redis, HTTPS).</li>
+    </ul>
+
+    <h2>10. Stakeholder Summary</h2>
+    <p>
+      This design separates concerns cleanly: PACT API owns trigger ingress, policy routing, and startup projection;
+      Batch Worker owns execution correctness, distributed lock enforcement, and durable state transitions.
+      Together they provide auditable end-to-end traceability from trigger acceptance to terminal outcome.
+    </p>
+  </main>
 </body>
 </html>

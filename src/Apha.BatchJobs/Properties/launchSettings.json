@@ -8,7 +8,7 @@
         "BATCH_JOB_NAME": "HealthCheck",
         "BATCH_RUN_MODE": "AdHoc",
         "BATCH_JOBQUEUE_ID": "00000000-0000-0000-0000-000000000002",
-        "BATCH_USER_ID": "local-debug-user",
+        "BATCH_REQUESTED_BY": "local-debug-user",
         "BatchJobs__EnableDatabase": "true"
       }
     }

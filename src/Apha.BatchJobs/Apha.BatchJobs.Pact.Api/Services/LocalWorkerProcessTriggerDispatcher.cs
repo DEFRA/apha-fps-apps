@@ -64,7 +64,7 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
         startInfo.Environment["BATCH_JOB_NAME"] = detail.JobName;
         startInfo.Environment["BATCH_RUN_MODE"] = detail.RunMode;
         startInfo.Environment["BATCH_JOB_EXECUTION_ID"] = detail.JobExecutionId;
-        startInfo.Environment["BATCH_USER_ID"] = detail.RequestedBy;
+        startInfo.Environment["BATCH_REQUESTED_BY"] = detail.RequestedBy;
         startInfo.Environment["BATCH_DEBUG_WAIT_FOR_ATTACH"] = shouldPauseForDebugger ? "true" : "false";
         startInfo.Environment["BATCH_DEBUG_ATTACH_TIMEOUT_SECONDS"] = _options.LocalWorker.DebuggerAttachTimeoutSeconds.ToString();
         startInfo.Environment["BATCH_DEBUG_BREAK_ON_START"] =

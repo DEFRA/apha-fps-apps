@@ -9,6 +9,8 @@
   <ItemGroup>
     <PackageReference Include="AWSSDK.EventBridge" Version="3.7.*" />
     <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.*" />
+    <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.6" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />

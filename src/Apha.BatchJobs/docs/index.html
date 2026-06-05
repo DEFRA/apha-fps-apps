@@ -41,7 +41,7 @@
 <div class="page">
 
 <h1>Batch Job Triggering Approach Recommendation</h1>
-    <p class="subtitle">Updated for <b>JobExecutionId external correlation + orchestrator-generated JobQueueId</b> model (May 2026). Triggers must provide <code>BATCH_JOB_EXECUTION_ID</code> and <code>BATCH_USER_ID</code>. Use <code>BATCH_YEAR_CONTEXT</code> for caller-scoped jobs such as RecreateSummaries; scheduled MABArchive derives year internally from the execution date. Implementation is complete and live.</p>
+    <p class="subtitle">Updated for <b>JobExecutionId external correlation + orchestrator-generated JobQueueId</b> model (May 2026). Triggers must provide <code>BATCH_JOB_EXECUTION_ID</code> and <code>BATCH_REQUESTED_BY</code>. Use <code>BATCH_YEAR_CONTEXT</code> for caller-scoped jobs such as RecreateSummaries; scheduled MABArchive derives year internally from the execution date. Implementation is complete and live.</p>
 
     <div class="neutral">
       <strong>Canonical document:</strong> This HTML is now the single primary BatchJobs design and delivery document. Earlier standalone repository, DevOps, compliance, and implementation HTML pages have been retired to avoid duplication and drift.
@@ -172,7 +172,7 @@ Worker Task (container)
  ->
 <b>Worker reads:</b>
   <code>BATCH_JOB_EXECUTION_ID</code> (caller-generated external correlation key; worker fallback only if missing/invalid)
-  <code>BATCH_USER_ID</code> (caller-provided user or system identity)
+  <code>BATCH_REQUESTED_BY</code> (caller-provided user or system identity)
   <code>BATCH_JOB_NAME</code>, <code>BATCH_RUN_MODE</code>, <code>BATCH_YEAR_CONTEXT</code> (job-specific; required for caller-scoped jobs such as RecreateSummaries)
  ->
 Job Orchestrator
@@ -189,7 +189,7 @@ Worker Task (container)
  ->
 <b>Worker reads:</b>
   <code>BATCH_JOB_EXECUTION_ID</code> (caller-generated external correlation key; worker fallback only if missing/invalid)
-  <code>BATCH_USER_ID</code> (caller-provided, e.g. "system" or scheduler identity)
+  <code>BATCH_REQUESTED_BY</code> (caller-provided, e.g. "system" or scheduler identity)
   <code>BATCH_JOB_NAME</code>, <code>BATCH_RUN_MODE</code>, <code>BATCH_YEAR_CONTEXT</code> (job-specific; not required for scheduled MABArchive)
  ->
 Job Orchestrator
@@ -406,7 +406,7 @@ UI polls status using jobExecutionId</div>
       "name": "batch-container",
       "environment": [
         { "name": "BATCH_JOB_EXECUTION_ID", "value": "&lt;jobExecutionId&gt;" },
-        { "name": "BATCH_USER_ID", "value": "&lt;userId&gt;" },
+        { "name": "BATCH_REQUESTED_BY", "value": "&lt;userId&gt;" },
         { "name": "BATCH_JOB_NAME", "value": "&lt;jobName&gt;" },
         { "name": "BATCH_RUN_MODE", "value": "&lt;runMode&gt;" },
         { "name": "BATCH_YEAR_CONTEXT", "value": "&lt;yearContext&gt;" }
@@ -877,7 +877,7 @@ UI
     <pre><code>// Caller should provide external correlation key (jobExecutionId).
   // Worker/orchestrator owns internal jobQueueId generation at execution start.
   var jobExecutionId = Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID");
-  var userId = Environment.GetEnvironmentVariable("BATCH_USER_ID");
+  var userId = Environment.GetEnvironmentVariable("BATCH_REQUESTED_BY");
   var jobName = Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
   var runMode = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "Manual";
   var yearContext = Environment.GetEnvironmentVariable("BATCH_YEAR_CONTEXT");
@@ -885,7 +885,7 @@ UI
   if (string.IsNullOrWhiteSpace(jobExecutionId))
     jobExecutionId = Guid.NewGuid().ToString("D"); // transitional fallback
   if (string.IsNullOrWhiteSpace(userId))
-    throw new InvalidOperationException("BATCH_USER_ID is required.");
+    throw new InvalidOperationException("BATCH_REQUESTED_BY is required.");
   if (string.IsNullOrWhiteSpace(jobName))
     throw new InvalidOperationException("BATCH_JOB_NAME is required.");
 
@@ -1520,7 +1520,7 @@ EventBridge target delivery exhausted
       <b>Final direction (2026):</b> <br>
       <ul>
         <li>Use <b>EventBridge as the common trigger layer</b> for API/manual jobs and scheduled jobs, with ECS Fargate as the worker execution runtime.</li>
-        <li><b>All triggers (API, UI, scheduled) should inject <code>BATCH_JOB_EXECUTION_ID</code> and <code>BATCH_USER_ID</code> (string).</li>
+        <li><b>All triggers (API, UI, scheduled) should inject <code>BATCH_JOB_EXECUTION_ID</code> and <code>BATCH_REQUESTED_BY</code> (string).</li>
         <li>Use <code>BATCH_YEAR_CONTEXT</code> for caller-scoped jobs such as RecreateSummaries. Scheduled MABArchive derives year internally from the execution date.</li>
         <li>Worker uses <code>BATCH_JOB_EXECUTION_ID</code> as canonical correlation id and currently falls back to a generated GUID only when missing/invalid (target state: fail-fast in non-local environments).</li>
         <li>External/UI/API correlation is by <code>jobExecutionId</code>; internal runtime/DB correlation is by worker-generated <code>jobQueueId</code>.</li>
@@ -1529,7 +1529,7 @@ EventBridge target delivery exhausted
 
     <div class="flow">PACT API / FPS API / Scheduler
   -> Generate <b>jobExecutionId = Guid.NewGuid().ToString("N")</b> and <b>userId</b>
-  -> Set <b>BATCH_JOB_EXECUTION_ID</b> and <b>BATCH_USER_ID</b> (and <b>BATCH_YEAR_CONTEXT</b> if needed)
+  -> Set <b>BATCH_JOB_EXECUTION_ID</b> and <b>BATCH_REQUESTED_BY</b> (and <b>BATCH_YEAR_CONTEXT</b> if needed)
   -> PutEvents only (API) or direct container env (scheduler)
   -> No ECS cluster/subnet/security group config in API
 
@@ -1539,7 +1539,7 @@ EventBridge
   -> Passes job details to worker using container overrides
 
 Worker Task
-  -> Reads <b>BATCH_JOB_EXECUTION_ID</b>, <b>BATCH_USER_ID</b>, <b>BATCH_JOB_NAME</b>, <b>BATCH_RUN_MODE</b>, <b>BATCH_YEAR_CONTEXT</b>
+  -> Reads <b>BATCH_JOB_EXECUTION_ID</b>, <b>BATCH_REQUESTED_BY</b>, <b>BATCH_JOB_NAME</b>, <b>BATCH_RUN_MODE</b>, <b>BATCH_YEAR_CONTEXT</b>
   -> Generates internal <b>jobQueueId</b> per run
   -> Executes strict orchestration
   -> Updates status/logs
@@ -1885,7 +1885,7 @@ The AWS infrastructure team is required to provision and manage the runtime comp
 <ul>
   <li><b>EventBridge:</b> Create and manage the event bus, rules, schedules, targets, retry policy, and DLQ configuration for manual and scheduled batch jobs.</li>
   <li><b>ECS Fargate:</b> Provision the ECS cluster, task definition, container settings, networking, security groups, IAM task roles, execution roles, and logging integration.</li>
-  <li><b>Input Mapping:</b> Configure EventBridge input transformers or target input so the worker receives <code>BATCH_JOB_EXECUTION_ID</code>, <code>BATCH_USER_ID</code>, <code>BATCH_JOB_NAME</code>, and related values as separate environment variables. Include <code>BATCH_YEAR_CONTEXT</code> only for jobs whose contract requires caller-supplied year context.</li>
+  <li><b>Input Mapping:</b> Configure EventBridge input transformers or target input so the worker receives <code>BATCH_JOB_EXECUTION_ID</code>, <code>BATCH_REQUESTED_BY</code>, <code>BATCH_JOB_NAME</code>, and related values as separate environment variables. Include <code>BATCH_YEAR_CONTEXT</code> only for jobs whose contract requires caller-supplied year context.</li>
   <li><b>Secrets and Configuration:</b> Provide secure access to database connection strings, mail settings, and other runtime configuration through approved AWS secret/configuration services.</li>
   <li><b>Observability:</b> Ensure CloudWatch logs, metrics, alarms, and DLQ monitoring are configured for operational support and failure diagnosis.</li>
   <li><b>Scheduling:</b> For scheduled jobs, implement EventBridge schedules and ensure the correct year context and user identity are injected for each run.</li>
@@ -1951,7 +1951,7 @@ Configure input transformer so EventBridge event fields are mapped to worker env
     "runMode": "$.detail.runMode",
     "yearContext": "$.detail.yearContext"
   },
-  "InputTemplate": "{\"containerOverrides\":[{\"name\":\"batchjobs-worker\",\"environment\":[{\"name\":\"BATCH_JOB_EXECUTION_ID\",\"value\":\"&lt;jobExecutionId&gt;\"},{\"name\":\"BATCH_USER_ID\",\"value\":\"&lt;userId&gt;\"},{\"name\":\"BATCH_JOB_NAME\",\"value\":\"&lt;jobName&gt;\"},{\"name\":\"BATCH_RUN_MODE\",\"value\":\"&lt;runMode&gt;\"},{\"name\":\"BATCH_YEAR_CONTEXT\",\"value\":\"&lt;yearContext&gt;\"}]}]}"
+  "InputTemplate": "{\"containerOverrides\":[{\"name\":\"batchjobs-worker\",\"environment\":[{\"name\":\"BATCH_JOB_EXECUTION_ID\",\"value\":\"&lt;jobExecutionId&gt;\"},{\"name\":\"BATCH_REQUESTED_BY\",\"value\":\"&lt;userId&gt;\"},{\"name\":\"BATCH_JOB_NAME\",\"value\":\"&lt;jobName&gt;\"},{\"name\":\"BATCH_RUN_MODE\",\"value\":\"&lt;runMode&gt;\"},{\"name\":\"BATCH_YEAR_CONTEXT\",\"value\":\"&lt;yearContext&gt;\"}]}]}"
 }</code></pre>
 
 <h4>15.11.1.4 IAM Permissions for EventBridge Invoke Role</h4>
@@ -2041,7 +2041,7 @@ Use this as the go-live checklist. Any missing mandatory value below should bloc
     </tr>
     <tr>
       <td>Worker runtime env</td>
-      <td><code>BATCH_USER_ID</code></td>
+      <td><code>BATCH_REQUESTED_BY</code></td>
       <td>Yes</td>
       <td>API + Infra</td>
       <td>From event detail <code>userId</code>.</td>
@@ -2869,7 +2869,7 @@ Please review and approve the proposed solution structure, repository registrati
 
 <h2>15.17 Best Practice: Passing Context to Batch Jobs</h2>
 <p>
-<b>Recommendation:</b> Pass all required context values - such as <code>BATCH_USER_ID</code>, <code>BATCH_YEAR_CONTEXT</code>, <code>BATCH_JOB_EXECUTION_ID</code>, <code>BATCH_JOB_NAME</code>, etc. - as <b>separate environment variables</b> to the worker container.
+<b>Recommendation:</b> Pass all required context values - such as <code>BATCH_REQUESTED_BY</code>, <code>BATCH_YEAR_CONTEXT</code>, <code>BATCH_JOB_EXECUTION_ID</code>, <code>BATCH_JOB_NAME</code>, etc. - as <b>separate environment variables</b> to the worker container.
 </p>
 <ul>
   <li>This is the native and recommended pattern for AWS ECS, EventBridge, and containerized batch jobs.</li>

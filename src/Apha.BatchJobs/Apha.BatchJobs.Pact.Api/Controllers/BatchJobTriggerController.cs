@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Apha.BatchJobs.Pact.Api.Models;
 using Apha.BatchJobs.Pact.Api.Policy;
 using Apha.BatchJobs.Pact.Api.Services;
@@ -11,7 +12,8 @@ using System.Security.Claims;
 namespace Apha.BatchJobs.Pact.Api.Controllers;
 
 [ApiController]
-[Route("api/v1/batch-jobs")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/batch-jobs")]
 public sealed class BatchJobTriggerController : ControllerBase
 {
     private readonly ITriggerDispatcher _triggerDispatcher;
@@ -56,6 +58,11 @@ public sealed class BatchJobTriggerController : ControllerBase
     [HttpPost("trigger")]
     public async Task<IActionResult> Trigger([FromBody] BatchTriggerRequest request, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(request.RequestedBy))
+        {
+            return BadRequest(new { accepted = false, reason = "requestedBy is required." });
+        }
+
         if (!BatchJobRoutingPolicy.CanTriggerFromSource(
                 request.JobName,
                 TriggerApiSource.Pact,
@@ -75,14 +82,34 @@ public sealed class BatchJobTriggerController : ControllerBase
         var acceptedAtUtc = DateTime.UtcNow;
         var requestedBy = ResolveRequestedBy(request.RequestedBy);
 
-        var eventId = await _triggerDispatcher.DispatchAsync(
-            new BatchTriggerEventDetail(
-                jobExecutionId,
+        string eventId;
+        try
+        {
+            eventId = await _triggerDispatcher.DispatchAsync(
+                new BatchTriggerEventDetail(
+                    jobExecutionId,
+                    normalizedJobName,
+                    "Manual",
+                    requestedBy,
+                    acceptedAtUtc),
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "PACT API trigger dispatch failed | JobName={JobName} | JobExecutionId={JobExecutionId}",
                 normalizedJobName,
-                "Manual",
-                requestedBy,
-                acceptedAtUtc),
-            cancellationToken);
+                jobExecutionId);
+
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+            {
+                accepted = false,
+                source = "pact.api",
+                jobName = normalizedJobName,
+                reason = "DispatchFailed"
+            });
+        }
 
         _logger.LogInformation(
             "PACT API trigger accepted | JobName={JobName} | JobExecutionId={JobExecutionId} | EventId={EventId}",
@@ -118,6 +145,25 @@ public sealed class BatchJobTriggerController : ControllerBase
             },
             cancellationToken);
 
+        var isLocalDebug = _environment.IsDevelopment() || _environment.IsEnvironment("Local");
+
+        if (isLocalDebug)
+        {
+            return Accepted(new
+            {
+                accepted = true,
+                source = "pact.api",
+                jobName = normalizedJobName,
+                jobExecutionId,
+                eventId,
+                workerPid,
+                workerProcessLaunched,
+                status,
+                acceptedAtUtc,
+                message
+            });
+        }
+
         return Accepted(new
         {
             accepted = true,
@@ -125,8 +171,6 @@ public sealed class BatchJobTriggerController : ControllerBase
             jobName = normalizedJobName,
             jobExecutionId,
             eventId,
-            workerPid,
-            workerProcessLaunched,
             status,
             acceptedAtUtc,
             message
@@ -144,6 +188,11 @@ public sealed class BatchJobTriggerController : ControllerBase
         if (request is null || string.IsNullOrWhiteSpace(request.JobExecutionId))
         {
             return BadRequest(new { accepted = false, reason = "jobExecutionId is required." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.RequestedBy))
+        {
+            return BadRequest(new { accepted = false, reason = "requestedBy is required." });
         }
 
         if (!Guid.TryParse(request.JobExecutionId, out var jobExecutionId))
@@ -274,13 +323,12 @@ public sealed class BatchJobTriggerController : ControllerBase
             }
         }
 
-        if ((_environment.IsDevelopment() || _environment.IsEnvironment("Local"))
-            && !string.IsNullOrWhiteSpace(requestedByFromRequest))
+        if (!string.IsNullOrWhiteSpace(requestedByFromRequest))
         {
             return requestedByFromRequest.Trim();
         }
 
-        return "pact.api@system";
+        return "unknown-requested-by";
     }
 
     private (bool Terminated, int? WorkerPid) TryTerminateLocalWorkerProcess(Guid jobExecutionId)
