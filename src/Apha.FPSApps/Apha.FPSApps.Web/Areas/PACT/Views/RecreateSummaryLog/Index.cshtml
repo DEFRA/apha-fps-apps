@@ -1,0 +1,19 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.RecreateSummaryLogViewModel
+
+@{
+    ViewData["Title"] = "Recreate Summaries Log";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+    <div class="govuk-grid-column-full sup_flex_center_start sup_border-bottom sup_margin_bottom_10">
+        <h1 class="sup_margin_bottom_10">Recreate Summaries Log</h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+        <div id="gridContainer_releaseLogsGrid">
+            @await Html.PartialAsync("_DataGrid", Model.LogsGrid)
+        </div>
+    </div>
+</div>
