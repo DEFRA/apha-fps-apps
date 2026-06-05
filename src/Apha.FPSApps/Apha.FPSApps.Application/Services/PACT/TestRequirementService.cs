@@ -37,5 +37,9 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<TestRequirementDto>> GetTestReqmtPricingAsync(string testCode, string? projectCode = null)
             => await _pactClient.PactTestRequirement.GetTestReqmtPricingAsync(testCode, projectCode);
+
+        public async Task<ApiResponseDto<List<TestSupplierViewDto>>> GetPagedBySupplierTestCodeAsync(
+            QueryParameters<string> query, string testCode, bool showRejected)
+            => await _pactClient.PactTestRequirement.GetPagedBySupplierTestCodeAsync(query, testCode, showRejected);
     }
 }
