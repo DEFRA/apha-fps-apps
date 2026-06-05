@@ -8,12 +8,12 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 {
-    public class PactWorkGroupReportEmailApiClient : IPactWorkGroupReportEmailApiClient
+    public class PactWorkGroupReportApiClient : IPactWorkGroupReportApiClient
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        public PactWorkGroupReportEmailApiClient(IPactHttpExecutor http, IMapper mapper)
+        public PactWorkGroupReportApiClient(IPactHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;

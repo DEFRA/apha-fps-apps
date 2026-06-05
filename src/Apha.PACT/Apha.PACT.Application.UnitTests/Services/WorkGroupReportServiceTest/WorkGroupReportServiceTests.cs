@@ -10,15 +10,15 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportEmailServiceTest
+namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportServiceTest
 {
-    public class WorkGroupReportEmailServiceTests
+    public class WorkGroupReportServiceTests
     {
         private readonly IWorkGroupRepository _mockRepository;
         private readonly IGraphEmailService _mockEmailService;
         private readonly IExcelExportService _mockExcelService;
-        private readonly ILogger<WorkGroupReportEmailService> _mockLogger;
-        private readonly WorkGroupReportEmailService _sut;
+        private readonly ILogger<WorkGroupReportService> _mockLogger;
+        private readonly WorkGroupReportService _sut;
 
         private const short Month4 = 4;
         private const string ProfitCentre = "PC001";
@@ -64,12 +64,12 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportEmailServiceTe
             EmailRecipient = null
         };
 
-        public WorkGroupReportEmailServiceTests()
+        public WorkGroupReportServiceTests()
         {
             _mockRepository   = Substitute.For<IWorkGroupRepository>();
             _mockEmailService = Substitute.For<IGraphEmailService>();
             _mockExcelService = Substitute.For<IExcelExportService>();
-            _mockLogger       = Substitute.For<ILogger<WorkGroupReportEmailService>>();
+            _mockLogger       = Substitute.For<ILogger<WorkGroupReportService>>();
             _mockExcelService
                 .BuildTimeSheetExcel(Arg.Any<string>(), Arg.Any<short>(), Arg.Any<IEnumerable<WorkGroupTimeSheetRow>>(), Arg.Any<short>())
                 .Returns(Array.Empty<byte>());
@@ -83,7 +83,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportEmailServiceTe
                 EmailBodyTemplate = "Please complete and return to APHA Gatekeeper - OTL Mailbox. [Mailto:{0}]. Thank you."
             });
 
-            _sut = new WorkGroupReportEmailService(_mockRepository, _mockEmailService, _mockExcelService, emailSettings, _mockLogger);
+            _sut = new WorkGroupReportService(_mockRepository, _mockEmailService, _mockExcelService, emailSettings, _mockLogger);
         }
 
         #region SendEmailsAsync — empty work groups

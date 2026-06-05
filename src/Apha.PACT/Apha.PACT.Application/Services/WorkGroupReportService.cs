@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace Apha.PACT.Application.Services
 {
-    public class WorkGroupReportEmailService : IWorkGroupReportEmailService
+    public class WorkGroupReportService : IWorkGroupReportService
     {
         private const string StatusSent    = "Sent";
         private const string StatusSkipped = "Skipped";
@@ -20,15 +20,15 @@ namespace Apha.PACT.Application.Services
         private readonly IWorkGroupRepository _workGroupReportRepository;
         private readonly IGraphEmailService _emailService;
         private readonly IExcelExportService _excelService;
-        private readonly ILogger<WorkGroupReportEmailService> _logger;
+        private readonly ILogger<WorkGroupReportService> _logger;
         private readonly string _emailBody;
 
-        public WorkGroupReportEmailService(
+        public WorkGroupReportService(
             IWorkGroupRepository workGroupReportRepository,
             IGraphEmailService emailService,
             IExcelExportService excelService,
             IOptions<WorkGroupReportEmailSettings> emailSettings,
-            ILogger<WorkGroupReportEmailService> logger)
+            ILogger<WorkGroupReportService> logger)
         {
             _workGroupReportRepository = workGroupReportRepository;
             _emailService = emailService;

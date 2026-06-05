@@ -1,0 +1,6 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model DataGridConfig<Apha.FPSApps.Web.Areas.PACT.Models.MonthHourRowItem>
+
+<div id="gridContainer_@Model.GridId" class="govuk-!-margin-top-2">
+    @await Html.PartialAsync("_DataGrid", Model)
+</div>

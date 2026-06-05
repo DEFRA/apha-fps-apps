@@ -265,9 +265,11 @@ namespace Apha.PACT.DataAccess.Repository
 
             baseQuery = ApplyWorkGroupFilter(baseQuery, query.Filter);
 
-            // SendEmailYes / SendEmailNo are view-model-only computed properties that have no
-            // corresponding column on the WorkGroup entity; fall back to WorkGroupName for those.
-            var sortBy = query.SortBy is nameof(WorkGroup.WorkGroupName) or nameof(WorkGroup.EmailRecipient)
+            // SendEmail/COS90 yes-no columns are view-model-only computed properties and do not
+            // map to entity columns directly. Fall back to WorkGroupName for unsupported sorts.
+            var sortBy = query.SortBy is nameof(WorkGroup.WorkGroupName)
+                or nameof(WorkGroup.EmailRecipient)
+                or nameof(WorkGroup.Cos90)
                 ? query.SortBy
                 : nameof(WorkGroup.WorkGroupName);
 
@@ -376,6 +378,41 @@ namespace Apha.PACT.DataAccess.Repository
                 query = query.Where(e => EF.Functions.ILike(e.TimeCode, $"%{timeCode}%"));
 
             return query;
+        }
+
+        // ── COS90 ────────────────────────────────────────────────────────────
+
+        public async Task<IEnumerable<WorkGroup>> GetWorkGroupsFlaggedForCos90Async()
+        {
+            return await _context.WorkGroups
+                .AsNoTracking()
+                .Where(w => w.Cos90 == 1)
+                .OrderBy(w => w.ProfitCentre)
+                .ThenBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<bool> SetCos90ForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
+        {
+            var updated = await _context.WorkGroups
+                .Where(w => w.ProfitCentre == profitCentre)
+                .ExecuteUpdateAsync(s => s.SetProperty(w => w.Cos90, flag));
+            return updated >= 0;
+        }
+
+        public async Task<bool> SetCos90ForAllWorkGroupsAsync(short flag)
+        {
+            var updated = await _context.WorkGroups
+                .ExecuteUpdateAsync(s => s.SetProperty(w => w.Cos90, flag));
+            return updated >= 0;
+        }
+
+        public async Task<bool> SetCos90ForWorkGroupAsync(string profitCentre, string workGroupName, short flag)
+        {
+            var updated = await _context.WorkGroups
+                .Where(w => w.ProfitCentre == profitCentre && w.WorkGroupName == workGroupName)
+                .ExecuteUpdateAsync(s => s.SetProperty(w => w.Cos90, flag));
+            return updated >= 0;
         }
     }
 }

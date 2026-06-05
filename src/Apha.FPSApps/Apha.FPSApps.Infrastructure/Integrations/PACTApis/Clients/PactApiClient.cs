@@ -20,7 +20,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public IPactProjectProfileApiClient PactProjectProfile { get; }
         public IPactMonthlyOutputApiClient PactMonthlyOutput { get; }        
         public IPactSummarisedWgTimeApiClient PactSummarisedWgTime { get; }               
-        public IPactWorkGroupReportEmailApiClient PactWorkGroupReportEmail { get; }
+        public IPactWorkGroupReportApiClient PactWorkGroupReport { get; }
+        public IPactMonthHourApiClient PactMonthHour { get; }
 
         public PactApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -36,9 +37,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             PactTestList = new PactTestorProductApiClient(http, mapper);
             PactProjectMonth = new PactProjectMonthApiClient(http, mapper);
             PactProjectProfile = new PactProjectProfileApiClient(http, mapper);
-            PactMonthlyOutput = new PactMonthlyOutputApiClient(http, mapper);            
-            PactSummarisedWgTime = new PactSummarisedWgTimeApiClient(http, mapper);                        
-            PactWorkGroupReportEmail = new PactWorkGroupReportEmailApiClient(http, mapper);
+            PactMonthlyOutput = new PactMonthlyOutputApiClient(http, mapper);
+            PactSummarisedWgTime = new PactSummarisedWgTimeApiClient(http, mapper);
+            PactWorkGroupReport = new PactWorkGroupReportApiClient(http, mapper);
+            PactMonthHour = new PactMonthHourApiClient(http, mapper);
         }
     }
 }

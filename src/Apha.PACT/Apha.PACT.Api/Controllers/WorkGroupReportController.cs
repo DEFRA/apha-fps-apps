@@ -13,10 +13,10 @@ namespace Apha.PACT.Api.Controllers
     [Route("api/v{version:apiVersion}/workgroupreport")]
     public class WorkGroupReportController : ControllerBase
     {
-        private readonly IWorkGroupReportEmailService _service;
+        private readonly IWorkGroupReportService _service;
         private readonly IMapper _mapper;
 
-        public WorkGroupReportController(IWorkGroupReportEmailService service, IMapper mapper)
+        public WorkGroupReportController(IWorkGroupReportService service, IMapper mapper)
         {
             _service = service;
             _mapper = mapper;

@@ -14,6 +14,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<List<ManagerDto>>> GetAllManagersAsync();
         Task<ApiResponseDto<List<ManagerDto>>> GetAllPactManagersAsync();
         Task<ApiResponseDto<List<WorkGroupPersonDto>>> GetAllWorkGroupPersonAsync();
+        Task<ApiResponseDto<List<WorkGroupStaffDto>>> GetActiveStaffAsync();
         Task<ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>> GetWorkGroupStaffAsync(QueryParameters<string> query, string? workGroup = null);
     }
 }

@@ -136,5 +136,53 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var failureDto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(failureDto.Errors, failureDto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<WorkGroupDto>>> GetWorkGroupsFlaggedForCos90Async()
+        {
+            var response = await _http.GetAsync<List<WorkGroupRes>>(PactApiEndpoints.GetWorkGroupsFlaggedForCos90);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
+            return ApiResponseDto<List<WorkGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> SetCos90ForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
+        {
+            var url = string.Format(PactApiEndpoints.SetCos90ForProfitCentreWorkGroups,
+                Uri.EscapeDataString(profitCentre), flag);
+
+            var response = await _http.PutAsync<object, bool?>(url, new { });
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> SetCos90ForAllWorkGroupsAsync(short flag)
+        {
+            var url = string.Format(PactApiEndpoints.SetCos90ForAllWorkGroups, flag);
+
+            var response = await _http.PutAsync<object, bool?>(url, new { });
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> SetCos90ForWorkGroupAsync(string profitCentre, string workGroupName, short flag)
+        {
+            var url = string.Format(PactApiEndpoints.SetCos90ForWorkGroup,
+                Uri.EscapeDataString(profitCentre), Uri.EscapeDataString(workGroupName), flag);
+
+            var response = await _http.PutAsync<object, bool?>(url, new { });
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }

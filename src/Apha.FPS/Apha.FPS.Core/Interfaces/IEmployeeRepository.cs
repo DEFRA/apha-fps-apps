@@ -15,6 +15,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<IEnumerable<Manager>> GetAllManagersAsync();
         Task<IEnumerable<Manager>> GetAllPactManagersAsync();
         Task<IEnumerable<WorkGroupPerson>> GetAllWorkGroupPersonAsync();
+        Task<IEnumerable<WorkGroupStaff>> GetActiveStaffAsync();
         Task<PagedData<WorkGroupStaff>> GetWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null);
     }
 }

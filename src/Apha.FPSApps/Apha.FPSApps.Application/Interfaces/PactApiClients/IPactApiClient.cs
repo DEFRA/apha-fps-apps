@@ -16,6 +16,7 @@
         IPactProjectProfileApiClient PactProjectProfile { get; }
         IPactMonthlyOutputApiClient PactMonthlyOutput { get; }        
         IPactSummarisedWgTimeApiClient PactSummarisedWgTime { get; }            
-        IPactWorkGroupReportEmailApiClient PactWorkGroupReportEmail { get; }
+        IPactWorkGroupReportApiClient PactWorkGroupReport { get; }
+        IPactMonthHourApiClient PactMonthHour { get; }
     }
 }

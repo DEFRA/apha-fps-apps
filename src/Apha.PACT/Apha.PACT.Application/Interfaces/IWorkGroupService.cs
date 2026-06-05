@@ -14,5 +14,11 @@ namespace Apha.PACT.Application.Interfaces
         Task<bool> SetSendEmailForProfitCentreWorkGroupsAsync(string profitCentre, short flag);
         Task<bool> SetSendEmailForAllWorkGroupsAsync(short flag);
         Task<bool> UpdateWorkGroupEmailAsync(string workGroupName, short sendEmail, string? emailRecipient);
+
+        // COS90
+        Task<IEnumerable<Cos90WorkGroupDto>> GetWorkGroupsFlaggedForCos90Async();
+        Task<bool> SetCos90ForProfitCentreWorkGroupsAsync(string profitCentre, short flag);
+        Task<bool> SetCos90ForAllWorkGroupsAsync(short flag);
+        Task<bool> SetCos90ForWorkGroupAsync(string profitCentre, string workGroupName, short flag);
     }
 }

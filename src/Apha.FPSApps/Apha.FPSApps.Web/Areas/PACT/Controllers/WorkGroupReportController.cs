@@ -17,18 +17,18 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class WorkGroupReportController : Controller
     {
-        private readonly IWorkGroupReportEmailService _emailSendService;
+        private readonly IWorkGroupReportService _workGroupReportService;
         private readonly IWorkGroupService _workGroupService;
         private readonly ICalenderMonthService _calenderMonthService;
         private readonly IProfitCentreService _profitCentreService;
 
         public WorkGroupReportController(
-            IWorkGroupReportEmailService emailSendService,
+            IWorkGroupReportService workGroupReportService,
             IWorkGroupService workGroupService,
             ICalenderMonthService calenderMonthService,
             IProfitCentreService profitCentreService)
         {
-            _emailSendService = emailSendService;
+            _workGroupReportService = workGroupReportService;
             _workGroupService = workGroupService;
             _calenderMonthService = calenderMonthService;
             _profitCentreService = profitCentreService;
@@ -145,7 +145,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var response = await _emailSendService.SendEmailsAsync(profitCentre, monthNumber);
+            var response = await _workGroupReportService.SendEmailsAsync(profitCentre, monthNumber);
 
             if (!response.Success)
                 return StatusCode(500, new { error = "An error occurred while sending emails. Please try again." });

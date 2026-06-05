@@ -1,0 +1,36 @@
+@* ── Edit Print COS90 Modal ─────────────────────────────────────────────── *@
+<div class="modal" id="editPrintCOS90Modal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header flex-space-center">
+                <h3 class="modal-title m-0" id="printModalLabel">Edit Print COS90</h3>
+                <button type="button" class="btn-close btn-red" id="closePrintModalBtn">X</button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditPrintCOS90">
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="txtmodal-workgroup">Work Group:</label>
+                        <input type="text" class="govuk-input govuk-!-font-size-16 sup_readonly" id="txtmodal-workgroup" readonly />
+                    </div>
+                    <div class="govuk-form-group sup_margin_bottom_10">
+                        <label class="govuk-label govuk-!-font-weight-bold">Print COS90?</label>
+                        <div class="govuk-radios govuk-radios--inline govuk-radios govuk-radios--small">
+                            <div class="govuk-radios__item">
+                                <input class="govuk-radios__input" id="printCOS90-yes" name="printCOS90" type="radio" value="1">
+                                <label class="govuk-label govuk-radios__label" for="printCOS90-yes">Yes</label>
+                            </div>
+                            <div class="govuk-radios__item">
+                                <input class="govuk-radios__input" id="printCOS90-no" name="printCOS90" type="radio" value="0">
+                                <label class="govuk-label govuk-radios__label" for="printCOS90-no">No</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer sup_flex_center_space">
+                <button class="govuk-button govuk-button--secondary sup_margin_0" aria-label="Cancel" id="cancelPrintModalBtn" type="button">Cancel</button>
+                <button class="govuk-button sup_margin_0" aria-label="Save" id="savePrintBtn" type="button">Save</button>
+            </div>
+        </div>
+    </div>
+</div>

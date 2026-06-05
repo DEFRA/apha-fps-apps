@@ -62,6 +62,18 @@ namespace Apha.FPSApps.Application.Services.PACT
             return await _pactApiClient.PactWorkGroup.GetWgSummarisedStaffTimeUsageAsync(query, staffName);
         }
 
+        public async Task<ApiResponseDto<List<WorkGroupDto>>> GetWorkGroupsFlaggedForCos90Async()
+            => await _pactApiClient.PactWorkGroup.GetWorkGroupsFlaggedForCos90Async();
+
+        public async Task<ApiResponseDto<bool>> SetCos90ForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
+            => await _pactApiClient.PactWorkGroup.SetCos90ForProfitCentreWorkGroupsAsync(profitCentre, flag);
+
+        public async Task<ApiResponseDto<bool>> SetCos90ForAllWorkGroupsAsync(short flag)
+            => await _pactApiClient.PactWorkGroup.SetCos90ForAllWorkGroupsAsync(flag);
+
+        public async Task<ApiResponseDto<bool>> SetCos90ForWorkGroupAsync(string profitCentre, string workGroupName, short flag)
+            => await _pactApiClient.PactWorkGroup.SetCos90ForWorkGroupAsync(profitCentre, workGroupName, flag);
+
         private static void ValidateWorkGroup(string workGroup)
         {
             var errors = new List<BusinessValidationError>();

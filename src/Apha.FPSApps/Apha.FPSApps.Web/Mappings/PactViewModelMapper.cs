@@ -1,5 +1,8 @@
 using Apha.FPSApps.Application.Dtos.FPS;
-using Apha.FPSApps.Application.Dtos.PACT;using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.FPSApps.Application.Pagination;
+using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 
 namespace Apha.FPSApps.Web.Mappings
@@ -8,6 +11,7 @@ namespace Apha.FPSApps.Web.Mappings
     {
         public PactViewModelMapper() 
         {
+            CreateMap(typeof(PaginationFilter<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap<PactProjectViewModel, ProjectDto>().ReverseMap();
             CreateMap<ProjectJobCodeViewModel, JobCodeDto>().ReverseMap();
             CreateMap<JobCodeViewModel, JobCodeDto>().ReverseMap();
@@ -54,6 +58,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<CalenderMonthDto, CalenderMonth>().ReverseMap();
             CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeItem>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeItem>().ReverseMap();
+            CreateMap<MonthHourDto, MonthHourRowItem>().ReverseMap();
             CreateMap<WgSummarisedStaffTimeUsageRowDto, WgSummarisedStaffTimeUsageRow>().ReverseMap();
             CreateMap<WgSummarisedStaffTimeUsageSummaryDto, WgSummarisedStaffTimeUsageSummary>().ReverseMap();
 

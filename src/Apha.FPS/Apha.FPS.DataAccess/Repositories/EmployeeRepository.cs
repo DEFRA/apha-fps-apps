@@ -243,6 +243,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<WorkGroupStaff>> GetActiveStaffAsync()
+        {
+            return await _dbContext.WorkGroupStaffs
+                .AsNoTracking()
+                .Where(s => s.PersonStatus == "A")
+                .OrderBy(s => s.Name)
+                .ToListAsync();
+        }
+
         public async Task<PagedData<WorkGroupStaff>> GetWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null)
         {
             IQueryable<WorkGroupStaff> queryStaff;

@@ -1,0 +1,278 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PACT.Models.WorkGroupCos90sViewModel
+
+@{
+    ViewData["Title"] = "PACT : Create & Print Individual COS90s";
+
+    var periodsJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.CalenderMonthItems.OrderBy(m => m.AccntsPeriod).Select(m => new {
+            period = m.AccntsPeriod,
+            monthName = m.MonthName,
+            monthNumber = m.MonthNumber
+        }));
+}
+
+@* ── Page heading ────────────────────────────────────────────────────────── *@
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom sup_heading_padding sup_margin_bottom_10">
+            Create &amp; print individual COS90s
+        </h1>
+    </div>
+</div>
+
+@* ── Antiforgery token for AJAX calls ────────────────────────────────────── *@
+<form id="formCos90" method="post" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="govuk-grid-column-full">
+    @* ── Top criteria row ────────────────────────────────────────────────── *@
+    <div class="govuk-grid-row sup_flex_row">
+        <div class="govuk-grid-column-two-thirds sup_p_0">
+
+            <div class="govuk-grid-column-one-half">
+                @* Profit Centre *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold" for="SelectedProfitCentre">
+                        Profit Centre
+                    </label>
+                    <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                            id="SelectedProfitCentre"
+                            name="SelectedProfitCentre"
+                            aria-label="select profit centre">
+                        <option value="">--select profit centre--</option>
+                        @foreach (var pc in Model.ProfitCentreOptions)
+                        {
+                            var isSelected = Model.SelectedProfitCentre == pc.Value;
+                            if (isSelected)
+                            {
+                                <option value="@pc.Value" selected>@pc.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@pc.Value">@pc.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                @* For Period *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <div class="tableselectdropdown input-group searchfiels" id="for-period-dropdown" data-perioddropdown data-source="monthlist">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="txtstaffsearchBox">
+                            For Period
+                        </label>
+
+                        <input type="text"
+                               id="txtstaffsearchBox"
+                               placeholder="Select Period"
+                               class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                               readonly
+                               aria-label="For Period" />
+
+                        <input type="hidden" id="for-period-value" name="SelectedMonthNumber" value="@(Model.SelectedMonthNumber?.ToString() ?? string.Empty)" />
+
+                        <div class="tbl-dropdown-panel" id="for-period-panel" style="display:none;">
+                            <input type="text"
+                                   class="select-search-box"
+                                   id="for-period-search"
+                                   placeholder="Type to search and select period" />
+
+                            <table id="tblMonthPeriod" class="govuk-table govuk-!-font-size-16">
+                                <thead>
+                                    <tr>
+                                        <th>Accnts Period</th>
+                                        <th>Month Name</th>
+                                        <th>Month Number</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="for-period-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="govuk-grid-column-one-third sup_margin_top_25">
+                @* Maintain Working Hours & Days – opens modal *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <button class="govuk-button sup_margin_bottom_0 sup_width_100"
+                            id="maintainWorkHoursDaysBtn"
+                            type="button"
+                            data-module="govuk-button">
+                        Maintain Working Hours &amp; Days
+                    </button>
+                </div>
+
+                @* In Year dropdown *@
+                <div class="govuk-form-group sup_margin_bottom_35">
+                    <label class="govuk-label govuk-!-font-weight-bold" for="dpInYear">
+                        In Year
+                    </label>
+                    <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                            id="dpInYear"
+                            name="dpInYear"
+                            aria-label="select In Year">
+                        <option value="">--select In Year--</option>
+                        @foreach (var year in Model.YearOptions)
+                        {
+                            if (Model.SelectedYear == year)
+                            {
+                                <option value="@year" selected>@year</option>
+                            }
+                            else
+                            {
+                                <option value="@year">@year</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Work Group Grid + PC actions ────────────────────────────────────── *@
+    <div class="govuk-grid-row">
+        <div>
+            <div class="govuk-grid-column-two-thirds sup_border sup_margin_tb_lr_0_20 sup_padding_tb_15_lr_0">
+
+                <div class="govuk-grid-column-three-quarters">
+                    <div id="gridContainer_@Model.WorkGroupGrid.GridId" class="govuk-!-margin-top-2">
+                        @await Html.PartialAsync("_DataGrid", Model.WorkGroupGrid)
+                    </div>
+                </div>
+
+                <div class="govuk-grid-column-one-quarter">
+                    <p class="govuk-body">For the current profit centre...</p>
+                    <div class="sup_flex_column">
+                        <button class="govuk-button"
+                                id="selectPCWorkgroupsBtn"
+                                type="button"
+                                data-module="govuk-button"
+                                aria-label="Select PC's Work Groups">
+                            Select PC's Work Groups
+                        </button>
+                        <button class="govuk-button govuk-button--warning"
+                                id="clearPCWorkgroupsBtn"
+                                type="button"
+                                data-module="govuk-button"
+                                aria-label="Clear PC's Work Groups">
+                            Clear PC's Work Groups
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Bottom action buttons ───────────────────────────────────────────── *@
+    <div class="sup_flex_center_space">
+        <div class="govuk-grid-column-one-half sup_margin_top_10 sup_p_0 sup_flex_center_space sup_flex_start_space">
+            <button class="govuk-button govuk-button--warning sup_margin_bottom_10"
+                    id="clearAllWorkgroupsBtn"
+                    type="button"
+                    data-module="govuk-button"
+                    aria-label="Clear All Work Group">
+                Clear All Work Groups
+            </button>
+            <button class="govuk-button sup_margin_bottom_20"
+                    id="btn-print-cos90"
+                    type="button"
+                    data-module="govuk-button"
+                    aria-label="Print COS90s"
+                    disabled
+                    title="Print COS90s functionality is not yet available">
+                Print COS90s
+            </button>
+        </div>
+    </div>
+
+    @* ── Excel COS90 + Person selector ───────────────────────────────────── *@
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-one-half sup_margin_bottom_20 sup_flex_center_space sup_mr_0_pr_0">
+            <div class="govuk-grid-column-one-quarter sup_p_0 sup_flex_end_space">
+                <button class="govuk-button sup_margin_bottom_0"
+                        id="btn-excel-cos90"
+                        type="button"
+                        aria-label="Excel COS90s">
+                    Excel COS90s
+                </button>
+            </div>
+            <div class="govuk-form-group sup_margin_bottom_0 sup_flex_row_gap_3">
+                <label for="dpWgMemberList" class="govuk-label govuk-!-font-weight-bold sup_margin_0">
+                    Person (leave blank to use WGs above)
+                </label>
+                <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_50"
+                        id="dpWgMemberList"
+                        name="dpWgMemberList"
+                        aria-label="Person (leave blank to use WGs above)">
+                    <option value="">--select--</option>
+                    @foreach (var person in Model.IndividualOptions)
+                    {
+                        <option value="@person.Value">@person.Text</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @* ── Save To location (read-only, from config) ───────────────────────── *@
+    <div class="govuk-grid-row sup_p_0 sup_margin_0">
+        <div class="sup_file_location_wrapper sup_margin_0 govuk-grid-column-three-quarters sup_p_0">
+            <div class="govuk-form-group sup_p_0 sup_margin_bottom_10 govuk-grid-column-one-third">
+                <label class="govuk-label govuk-!-font-weight-bold" for="inputSavetofile">Save To:</label>
+                <input type="text"
+                       id="inputSavetofile"
+                       class="govuk-input govuk-!-font-size-16"
+                       placeholder="No file selected"
+                       readonly />
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_EditPrintCos90Modal")
+
+@* ── Maintain Working Hours & Days Modal (read-only, no CRUD) ────────────── *@
+<div class="modal" id="workingHoursModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal_position_transform_y_40">
+        <div class="modal-content">
+            <div class="modal-header flex-space-center">
+                <h3 class="modal-title m-0">Maintain Working Hours &amp; Days</h3>
+                <button type="button" class="btn-close btn-red" id="closeWorkingHoursModalBtn">X</button>
+            </div>
+            <div class="modal-body">
+                <div class="sup_border">
+                    <div class="sup_table_wrapper" id="monthHourGridContainer">
+                       
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer sup_flex_end_center">
+                <button class="govuk-button govuk-button--secondary sup_margin_0"
+                        id="closeWorkingHoursBtn"
+                        type="button"
+                        aria-label="Close">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function getCos90GridExtraFilters() {
+            return { profitCentre: document.getElementById('SelectedProfitCentre')?.value ?? '' };
+        }
+
+        function getMonthHourGridExtraFilters() {
+            const yearValue = document.getElementById('dpInYear')?.value;
+            return { year: yearValue ? yearValue : '' };
+        }
+    </script>
+    <script>window.__cos90PeriodData = @Html.Raw(periodsJson);</script>
+    <script src="~/js/pact_js/work-group-cos90s.js"></script>
+}
+

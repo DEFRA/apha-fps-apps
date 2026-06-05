@@ -38,6 +38,8 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<SummarisedWgTimeView, SummarisedWgTimeDto>().ReverseMap();
             CreateMap<SummarisedWgTimeView, SummarisedWgTimeEntryDto>();
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimeRes>().ReverseMap();
+            CreateMap<MonthHour, MonthHourDto>().ReverseMap();
+            CreateMap<WorkGroup, Cos90WorkGroupDto>().ReverseMap();
         }
     }
 }

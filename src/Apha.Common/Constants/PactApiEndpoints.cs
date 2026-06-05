@@ -113,5 +113,16 @@ namespace Apha.Common.Constants
 
         // Work Group Report Email
         public const string SendEmails = "api/v1/workgroupreport/send";
+
+        // COS90
+        public const string GetWorkGroupsFlaggedForCos90 = "api/v1/workgroup/cos90/flagged";
+        public const string SetCos90ForProfitCentreWorkGroups = "api/v1/workgroup/cos90/{0}/flag/{1}";
+        public const string SetCos90ForAllWorkGroups = "api/v1/workgroup/cos90/all/flag/{0}";
+        public const string SetCos90ForWorkGroup = "api/v1/workgroup/cos90/{0}/workgroup/{1}/flag/{2}";
+
+        // Month Hour
+        public const string GetAllMonthHours = "api/v1/monthhour";
+        public const string GetMonthHoursByYear = "api/v1/monthhour/year/{0}";
+        public const string GetDistinctMonthHourYears = "api/v1/monthhour/years";
     }
 }

@@ -5,18 +5,18 @@ using Apha.FPSApps.Application.Interfaces.PactApiClients;
 
 namespace Apha.FPSApps.Application.Services.PACT
 {
-    public class WorkGroupReportEmailService : IWorkGroupReportEmailService
+    public class WorkGroupReportService : IWorkGroupReportService
     {
         private readonly IPactApiClient _pactClient;
 
-        public WorkGroupReportEmailService(IPactApiClient pactClient)
+        public WorkGroupReportService(IPactApiClient pactClient)
         {
             _pactClient = pactClient;
         }
 
         public async Task<ApiResponseDto<List<WorkGroupReportEmailResultDto>>> SendEmailsAsync(string profitCentre, short monthNumber)
         {
-            return await _pactClient.PactWorkGroupReportEmail.SendEmailsAsync(profitCentre, monthNumber);
+            return await _pactClient.PactWorkGroupReport.SendEmailsAsync(profitCentre, monthNumber);
         }
     }
 }

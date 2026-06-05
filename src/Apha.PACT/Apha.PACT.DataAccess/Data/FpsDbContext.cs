@@ -42,6 +42,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<WorkGroupStaffView> PactStaffViews { get; set; }        
         public virtual DbSet<PactProfitCentreView> PactProfitCentreViews { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }        
+        public virtual DbSet<MonthHour> MonthHours { get; set; }        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -117,6 +118,9 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new PactProfitCentreViewMap());
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
+
+            modelBuilder.ApplyConfiguration(new MonthHourMap());
+            modelBuilder.Entity<MonthHour>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
         }
     }

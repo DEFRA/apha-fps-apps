@@ -11,13 +11,13 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupReportControllerTest
 {
     public class WorkGroupReportControllerTests
     {
-        private readonly IWorkGroupReportEmailService _serviceMock;
+        private readonly IWorkGroupReportService _serviceMock;
         private readonly IMapper _mapperMock;
         private readonly WorkGroupReportController _controller;
 
         public WorkGroupReportControllerTests()
         {
-            _serviceMock = Substitute.For<IWorkGroupReportEmailService>();
+            _serviceMock = Substitute.For<IWorkGroupReportService>();
             _mapperMock = Substitute.For<IMapper>();
             _controller = new WorkGroupReportController(_serviceMock, _mapperMock);
         }

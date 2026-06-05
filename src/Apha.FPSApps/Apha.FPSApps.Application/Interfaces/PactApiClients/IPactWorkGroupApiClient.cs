@@ -14,5 +14,9 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
         Task<ApiResponseDto<bool>> SetSendEmailForAllWorkGroupsAsync(short flag);
         Task<ApiResponseDto<bool>> UpdateWorkGroupEmailAsync(string workGroupName, short sendEmail, string? emailRecipient);
         Task<ApiResponseDto<WgSummarisedStaffTimeUsageDto>> GetWgSummarisedStaffTimeUsageAsync(QueryParameters<string> query, string staffName);
+        Task<ApiResponseDto<List<WorkGroupDto>>> GetWorkGroupsFlaggedForCos90Async();
+        Task<ApiResponseDto<bool>> SetCos90ForProfitCentreWorkGroupsAsync(string profitCentre, short flag);
+        Task<ApiResponseDto<bool>> SetCos90ForAllWorkGroupsAsync(short flag);
+        Task<ApiResponseDto<bool>> SetCos90ForWorkGroupAsync(string profitCentre, string workGroupName, short flag);
     }
 }

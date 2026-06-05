@@ -187,5 +187,58 @@ namespace Apha.PACT.Api.Controllers
             var success = await _service.UpdateWorkGroupEmailAsync(workGroupName, request.SendEmail, request.EmailRecipient);
             return Ok(success);
         }
+
+        // ── COS90 endpoints ──────────────────────────────────────────────────
+
+        /// <summary>
+        /// Retrieves all work groups that have been flagged for COS90 (Cos90 = 1).
+        /// </summary>
+        [HttpGet("cos90/flagged")]
+        public async Task<IActionResult> GetWorkGroupsFlaggedForCos90()
+        {
+            var items = await _service.GetWorkGroupsFlaggedForCos90Async();
+            return Ok(_mapper.Map<IEnumerable<Cos90WorkGroupRes>>(items));
+        }
+
+        /// <summary>
+        /// Sets the COS90 flag for all work groups belonging to the specified profit centre.
+        /// </summary>
+        /// <param name="profitCentre">Profit centre identifier.</param>
+        /// <param name="flag">Flag value: <c>1</c> to select, <c>0</c> to clear.</param>
+        [HttpPut("cos90/{profitCentre}/flag/{flag}")]
+        public async Task<IActionResult> SetCos90ForProfitCentreWorkGroups(string profitCentre, short flag)
+        {
+            if (string.IsNullOrWhiteSpace(profitCentre))
+                return BadRequest("ProfitCentre is required.");
+
+            var success = await _service.SetCos90ForProfitCentreWorkGroupsAsync(profitCentre, flag);
+            return Ok(success);
+        }
+
+        /// <summary>
+        /// Clears the COS90 flag for all work groups across every profit centre.
+        /// </summary>
+        /// <param name="flag">Flag value: <c>0</c> to clear all.</param>
+        [HttpPut("cos90/all/flag/{flag}")]
+        public async Task<IActionResult> SetCos90ForAllWorkGroups(short flag)
+        {
+            var success = await _service.SetCos90ForAllWorkGroupsAsync(flag);
+            return Ok(success);
+        }
+
+        /// <summary>
+        /// Sets the COS90 flag for a single work group in a profit centre.
+        /// </summary>
+        [HttpPut("cos90/{profitCentre}/workgroup/{workGroupName}/flag/{flag}")]
+        public async Task<IActionResult> SetCos90ForWorkGroup(string profitCentre, string workGroupName, short flag)
+        {
+            if (string.IsNullOrWhiteSpace(profitCentre) || string.IsNullOrWhiteSpace(workGroupName))
+                return BadRequest("ProfitCentre and WorkGroupName are required.");
+
+            var success = await _service.SetCos90ForWorkGroupAsync(profitCentre, workGroupName, flag);
+            return Ok(success);
+        }
+
+
     }
 }

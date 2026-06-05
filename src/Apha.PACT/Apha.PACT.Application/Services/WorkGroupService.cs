@@ -436,5 +436,28 @@ namespace Apha.PACT.Application.Services
                 GrandTotalCost = rows.Sum(r => r.TotalCost)
             };
         }
+
+        // ── COS90 ────────────────────────────────────────────────────────────
+
+        public async Task<IEnumerable<Cos90WorkGroupDto>> GetWorkGroupsFlaggedForCos90Async()
+        {
+            var items = await _repository.GetWorkGroupsFlaggedForCos90Async();
+            return _mapper.Map<IEnumerable<Cos90WorkGroupDto>>(items);
+        }
+
+        public async Task<bool> SetCos90ForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
+        {
+            return await _repository.SetCos90ForProfitCentreWorkGroupsAsync(profitCentre, flag);
+        }
+
+        public async Task<bool> SetCos90ForAllWorkGroupsAsync(short flag)
+        {
+            return await _repository.SetCos90ForAllWorkGroupsAsync(flag);
+        }
+
+        public async Task<bool> SetCos90ForWorkGroupAsync(string profitCentre, string workGroupName, short flag)
+        {
+            return await _repository.SetCos90ForWorkGroupAsync(profitCentre, workGroupName, flag);
+        }
     }
 }

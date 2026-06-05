@@ -5,20 +5,20 @@ using Apha.FPSApps.Application.Services.PACT;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupReportEmailServiceTest
+namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupReportServiceTest
 {
-    public class WorkGroupReportEmailServiceTests
+    public class WorkGroupReportServiceTests
     {
         private readonly IPactApiClient _pactClient;
-        private readonly IPactWorkGroupReportEmailApiClient _pactWorkGroupReportEmailApiClient;
-        private readonly WorkGroupReportEmailService _service;
+        private readonly IPactWorkGroupReportApiClient _pactWorkGroupReportApiClient;
+        private readonly WorkGroupReportService _service;
 
-        public WorkGroupReportEmailServiceTests()
+        public WorkGroupReportServiceTests()
         {
             _pactClient = Substitute.For<IPactApiClient>();
-            _pactWorkGroupReportEmailApiClient = Substitute.For<IPactWorkGroupReportEmailApiClient>();
-            _pactClient.PactWorkGroupReportEmail.Returns(_pactWorkGroupReportEmailApiClient);
-            _service = new WorkGroupReportEmailService(_pactClient);
+            _pactWorkGroupReportApiClient = Substitute.For<IPactWorkGroupReportApiClient>();
+            _pactClient.PactWorkGroupReport.Returns(_pactWorkGroupReportApiClient);
+            _service = new WorkGroupReportService(_pactClient);
         }
 
         #region SendEmailsAsync Tests
@@ -35,7 +35,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupReportEmailS
                 new() { WorkGroupName = "WG002", EmailRecipient = "b@example.com", Status = "Sent" }
             };
             var expectedResponse = ApiResponseDto<List<WorkGroupReportEmailResultDto>>.SuccessResponse(results);
-            _pactWorkGroupReportEmailApiClient.SendEmailsAsync(profitCentre, monthNumber).Returns(expectedResponse);
+            _pactWorkGroupReportApiClient.SendEmailsAsync(profitCentre, monthNumber).Returns(expectedResponse);
 
             // Act
             var result = await _service.SendEmailsAsync(profitCentre, monthNumber);
@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupReportEmailS
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _pactWorkGroupReportEmailApiClient.Received(1).SendEmailsAsync(profitCentre, monthNumber);
+            await _pactWorkGroupReportApiClient.Received(1).SendEmailsAsync(profitCentre, monthNumber);
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupReportEmailS
             const short monthNumber = 1;
             var expectedResponse = ApiResponseDto<List<WorkGroupReportEmailResultDto>>.SuccessResponse(
                 new List<WorkGroupReportEmailResultDto>());
-            _pactWorkGroupReportEmailApiClient.SendEmailsAsync(profitCentre, monthNumber).Returns(expectedResponse);
+            _pactWorkGroupReportApiClient.SendEmailsAsync(profitCentre, monthNumber).Returns(expectedResponse);
 
             // Act
             var result = await _service.SendEmailsAsync(profitCentre, monthNumber);
@@ -78,7 +78,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupReportEmailS
                 new() { WorkGroupName = "WG002", EmailRecipient = null,            Status = "Failed", Reason = "No recipient" }
             };
             var expectedResponse = ApiResponseDto<List<WorkGroupReportEmailResultDto>>.SuccessResponse(results);
-            _pactWorkGroupReportEmailApiClient.SendEmailsAsync(profitCentre, monthNumber).Returns(expectedResponse);
+            _pactWorkGroupReportApiClient.SendEmailsAsync(profitCentre, monthNumber).Returns(expectedResponse);
 
             // Act
             var result = await _service.SendEmailsAsync(profitCentre, monthNumber);
@@ -99,7 +99,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupReportEmailS
             const short monthNumber = 3;
             var errors = new List<ApiErrorDto> { new() { Message = "Send Failed", Code = "SEND_ERROR" } };
             var expectedResponse = ApiResponseDto<List<WorkGroupReportEmailResultDto>>.FailureResponse(errors, new ApiMetaDto());
-            _pactWorkGroupReportEmailApiClient.SendEmailsAsync(profitCentre, monthNumber).Returns(expectedResponse);
+            _pactWorkGroupReportApiClient.SendEmailsAsync(profitCentre, monthNumber).Returns(expectedResponse);
 
             // Act
             var result = await _service.SendEmailsAsync(profitCentre, monthNumber);

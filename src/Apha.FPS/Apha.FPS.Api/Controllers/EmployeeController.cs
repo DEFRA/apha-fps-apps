@@ -154,6 +154,16 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Gets all active staff entries used by PACT/COS90 staff picker.
+        /// </summary>
+        [HttpGet("activestaff")]
+        public async Task<IActionResult> GetActiveStaffAsync()
+        {
+            var result = await _employeeService.GetActiveStaffAsync();
+            return Ok(_mapper.Map<List<WorkGroupStaffRes>>(result));
+        }
+
+        /// <summary>
         /// Gets a paginated, filtered and sorted list of all PACT staff people, optionally filtered by work group.
         /// </summary>
         [HttpGet("WorkGroupStaff/paginated")]

@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
 {
     public class WorkGroupReportControllerTests
     {
-        private readonly IWorkGroupReportEmailService _emailSendService;
+        private readonly IWorkGroupReportService _workGroupReportService;
         private readonly IWorkGroupService _workGroupService;
         private readonly ICalenderMonthService _calenderMonthService;
         private readonly IProfitCentreService _profitCentreService;
@@ -23,13 +23,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
 
         public WorkGroupReportControllerTests()
         {
-            _emailSendService     = Substitute.For<IWorkGroupReportEmailService>();
-            _workGroupService     = Substitute.For<IWorkGroupService>();
-            _calenderMonthService = Substitute.For<ICalenderMonthService>();
-            _profitCentreService  = Substitute.For<IProfitCentreService>();
+            _workGroupReportService = Substitute.For<IWorkGroupReportService>();
+            _workGroupService       = Substitute.For<IWorkGroupService>();
+            _calenderMonthService   = Substitute.For<ICalenderMonthService>();
+            _profitCentreService    = Substitute.For<IProfitCentreService>();
 
             _controller = new WorkGroupReportController(
-                _emailSendService,
+                _workGroupReportService,
                 _workGroupService,
                 _calenderMonthService,
                 _profitCentreService);
@@ -416,7 +416,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
                 new() { WorkGroupName = "WG001", EmailRecipient = "a@example.com", Status = "Sent" },
                 new() { WorkGroupName = "WG002", EmailRecipient = "b@example.com", Status = "Sent" }
             };
-            _emailSendService.SendEmailsAsync(profitCentre, monthNumber)
+            _workGroupReportService.SendEmailsAsync(profitCentre, monthNumber)
                 .Returns(ApiResponseDto<List<WorkGroupReportEmailResultDto>>.SuccessResponse(emailResults));
 
             // Act
@@ -436,7 +436,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
             const string profitCentre = "PC001";
             const short monthNumber = 1;
             var response = ApiResponseDto<List<WorkGroupReportEmailResultDto>>.SuccessResponse(null!);
-            _emailSendService.SendEmailsAsync(profitCentre, monthNumber).Returns(response);
+            _workGroupReportService.SendEmailsAsync(profitCentre, monthNumber).Returns(response);
 
             // Act
             var result = await _controller.Send(profitCentre, monthNumber);
@@ -452,7 +452,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Code = "SEND_ERROR", Message = "Failed" } };
-            _emailSendService.SendEmailsAsync(Arg.Any<string>(), Arg.Any<short>())
+            _workGroupReportService.SendEmailsAsync(Arg.Any<string>(), Arg.Any<short>())
                 .Returns(ApiResponseDto<List<WorkGroupReportEmailResultDto>>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act

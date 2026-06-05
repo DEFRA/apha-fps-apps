@@ -9,19 +9,19 @@ using AutoMapper;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupReportEmailApiClientTest
+namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupReportApiClientTest
 {
-    public class PactWorkGroupReportEmailApiClientTests
+    public class PactWorkGroupReportApiClientTests
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
-        private readonly PactWorkGroupReportEmailApiClient _client;
+        private readonly PactWorkGroupReportApiClient _client;
 
-        public PactWorkGroupReportEmailApiClientTests()
+        public PactWorkGroupReportApiClientTests()
         {
             _http = Substitute.For<IPactHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new PactWorkGroupReportEmailApiClient(_http, _mapper);
+            _client = new PactWorkGroupReportApiClient(_http, _mapper);
         }
 
         #region SendEmailsAsync Tests

@@ -139,6 +139,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<WorkGroupPersonDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<WorkGroupStaffDto>>> GetActiveStaffAsync()
+        {
+            var response = await _http.GetAsync<List<WorkGroupStaffRes>>(FpsApiEndpoints.GetActiveStaff);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<WorkGroupStaffDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<WorkGroupStaffDto>>>(response);
+            return ApiResponseDto<List<WorkGroupStaffDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>> GetWorkGroupStaffAsync(QueryParameters<string> query, string? workGroup = null)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetWorkGroupStaffPaginated, query);
