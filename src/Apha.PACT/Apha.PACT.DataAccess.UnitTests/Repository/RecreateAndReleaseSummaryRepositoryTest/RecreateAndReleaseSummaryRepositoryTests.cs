@@ -145,7 +145,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             Assert.NotNull(result);
             // ApplyPaging is called on already-paginated data (10 items from DB),
             // then Skip((2-1)*10).Take(10) results in 0 items
-            Assert.Equal(0, result.Data.Count);
+            Assert.Empty(result.Data);
             Assert.Equal(10, result.PaginationData.TotalRecords);
             Assert.Equal(1, result.PaginationData.TotalPages);
             Assert.Equal(2, result.PaginationData.PageNumber);
@@ -181,7 +181,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             Assert.NotNull(result);
             // ApplyPaging is called on already-paginated data (5 items from DB),
             // then Skip((3-1)*10).Take(10) results in 0 items
-            Assert.Equal(0, result.Data.Count);
+            Assert.Empty(result.Data);
             Assert.Equal(5, result.PaginationData.TotalRecords);
             Assert.Equal(1, result.PaginationData.TotalPages);
         }
