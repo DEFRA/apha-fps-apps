@@ -861,40 +861,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
 
         #endregion
 
-        #region GetProjectGroupsAsync Tests
-
-        [Fact]
-        public async Task GetProjectGroupsAsync_WithSuccess_ReturnsMappedProjectGroups()
-        {
-            var data = new List<ProjectGroupRes> { new() { ProjectGroupName = "GRP1" } };
-            var apiResponse = new ApiResponse<List<ProjectGroupRes>> { Success = true, Data = data };
-            var expectedDto = ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(new List<ProjectGroupDto> { new() { ProjectGroupName = "GRP1" } });
-
-            _http.GetAsync<List<ProjectGroupRes>>(Arg.Is<string>(url => url.Contains("projectgroup"))).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(apiResponse).Returns(expectedDto);
-
-            var result = await _client.GetProjectGroupsAsync();
-
-            Assert.True(result.Success);
-            Assert.Single(result.Data!);
-        }
-
-        [Fact]
-        public async Task GetProjectGroupsAsync_WhenFails_ReturnsFailure()
-        {
-            var apiResponse = new ApiResponse<List<ProjectGroupRes>> { Success = false, Errors = new List<ApiError> { new() { Message = "Error" } } };
-            var mappedResponse = new ApiResponseDto<List<ProjectGroupDto>> { Success = false, Errors = new List<ApiErrorDto> { new() { Message = "Error" } }, Meta = new ApiMetaDto() };
-
-            _http.GetAsync<List<ProjectGroupRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(apiResponse).Returns(mappedResponse);
-
-            var result = await _client.GetProjectGroupsAsync();
-
-            Assert.False(result.Success);
-        }
-
-        #endregion
-
         #region GetAccountCodesAsync Tests
 
         [Fact]

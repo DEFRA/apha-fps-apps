@@ -2,15 +2,23 @@ namespace Apha.Common.Constants
 {
     public static class FpsApiEndpoints
     {
+        // Animal Master (tblAnimals_MAP maintenance)
+        public const string GetAllAnimalMasters = "api/v1/animal";
+        public const string GetPagedAnimalMasters = "api/v1/animal/paged";
+        public const string GetAnimalMasterById = "api/v1/animal/{0}";
+        public const string CreateAnimalMaster = "api/v1/animal";
+        public const string UpdateAnimalMaster = "api/v1/animal";
+        public const string DeleteAnimalMaster = "api/v1/animal/{0}";
+
         // Animal
-        public const string GetAnimalCosts = "api/v1/animal?jobCode={0}";
-        public const string GetAnimalLookup = "api/v1/animal/lookup";
-        public const string GetAnimalRate = "api/v1/animal/rate?animalType={0}&jobCode={1}";
-        public const string CreateAnimalCost = "api/v1/animal";
-        public const string UpdateAnimalCost = "api/v1/animal";
-        public const string DeleteAnimalCost = "api/v1/animal?indCounter={0}";
-        public const string GetTotalAnimalCost = "api/v1/animal/totalanimalcost?jobCode={0}";
-        public const string GetAnimalCostViewById = "api/v1/animal/view?indCounter={0}&jobCode={1}";
+        public const string GetAnimalCosts = "api/v1/animalrequest?jobCode={0}";
+        public const string GetAnimalLookup = "api/v1/animalrequest/lookup";
+        public const string GetAnimalRate = "api/v1/animalrequest/rate?animalType={0}&jobCode={1}";
+        public const string CreateAnimalCost = "api/v1/animalrequest";
+        public const string UpdateAnimalCost = "api/v1/animalrequest";
+        public const string DeleteAnimalCost = "api/v1/animalrequest?indCounter={0}";
+        public const string GetTotalAnimalCost = "api/v1/animalrequest/totalanimalcost?jobCode={0}";
+        public const string GetAnimalCostViewById = "api/v1/animalrequest/view?indCounter={0}&jobCode={1}";
 
         // Employee
         public const string GetFilteredEmployees = "api/v1/employee/paginated?filterOption={0}";
@@ -22,6 +30,7 @@ namespace Apha.Common.Constants
         public const string GetAllPactManagers = "api/v1/employee/pactmanagers";
         public const string GetAllPerson = "api/v1/employee/persons";
         public const string GetWorkGroupStaffPaginated = "api/v1/employee/WorkGroupStaff/paginated";
+        public const string GetpactStaffs = "api/v1/employee/pactstaff";
 
         // Lookup
         public const string GetAllStatuses = "api/v1/status";
@@ -45,6 +54,7 @@ namespace Apha.Common.Constants
         public const string UpdateDivisionGrade = "api/v1/DivisionGrade/{0}";
         public const string DeleteDivisionGrade = "api/v1/DivisionGrade/{0}";
         public const string GetAllDivisionGrades = "api/v1/DivisionGrade/grades";
+        public const string GetAllDivisionGradeCodes = "api/v1/DivisionGrade/divisiongrades";
 
         // Program
         public const string GetAllPrograms = "api/v1/program";
@@ -66,6 +76,7 @@ namespace Apha.Common.Constants
         public const string UpdatePactPortfolio = "api/v1/project/external/portfolio";
         public const string DeleteProject = "api/v1/project/{0}";
         public const string GetProjectsByProgram = "api/v1/project/paged?programNo={0}";
+        public const string GetProjectsByProjectGroup = "api/v1/project/paged/by-project-group?projectGroup={0}";
 
         // Project Group
         public const string GetAllProjectGroups = "api/v1/projectgroup";
@@ -126,10 +137,20 @@ namespace Apha.Common.Constants
         public const string GetProfitCentreById = "api/v1/profitcentres/{0}";
         public const string CreateProfitCentre = "api/v1/profitcentres";
         public const string UpdateProfitCentre = "api/v1/profitcentres/{0}";
-        public const string DeleteProfitCentre = "api/v1/profitcentres/{0}";
+        public const string DeleteProfitCentre = "api/v1/profitcentres/{0}";                    
+        public const string GetAllProfitCentres = "api/v1/profitcentres/all";        
+        public const string PatchProfitCentreSettings = "api/v1/profitcentres/settings";
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";
+        public const string GetPagedPcGrades = "api/v1/pcgrades/paged";
+        public const string GetPcGradeById = "api/v1/pcgrades/{0}";
+        public const string CreatePcGrade = "api/v1/pcgrades";
+        public const string UpdatePcGrade = "api/v1/pcgrades/{0}";
+        public const string DeletePcGrade = "api/v1/pcgrades/{0}";
+        public const string GetPcGradeDivisionGrades = "api/v1/pcgrades/divisiongrades";
+        public const string GetPcGradeGradeCodes = "api/v1/pcgrades/gradecodes";
+        public const string GetPcGradeProfitCentres = "api/v1/pcgrades/profitcentres";
         public const string GetAllPcGrades = "api/v1/pcgrades/allpcgrades";
 
         // Resource Set-Up — Workgroups

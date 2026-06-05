@@ -90,6 +90,9 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProfitCentreGradeView> ProfitCentreGradeViews { get; set; }
         public virtual DbSet<WorkGroupGradeView> WorkGroupGradeViews { get; set; }
         public virtual DbSet<WorkGroupEmployeeView> WorkGroupEmployeeViews { get; set; }
+        public virtual DbSet<PactStaff> PactStaffs { get; set; }
+
+
         public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -280,6 +283,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
             modelBuilder.Entity<MonthlyTime>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PactStaffMap());
+            modelBuilder.Entity<PactStaff>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
             modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 

@@ -1,4 +1,4 @@
-using Apha.PACT.Core.Entities;
+﻿using Apha.PACT.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

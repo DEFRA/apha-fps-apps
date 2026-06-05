@@ -478,8 +478,8 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
                 () => _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), null!));
 
             Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
-            Assert.Equal("WorkGroup is required", ex.Errors[0].Message);
+            Assert.Equal("STAFFNane_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("Staff Name is required", ex.Errors[0].Message);
             await _mockRepository.DidNotReceive()
                 .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<string>());
         }
@@ -491,7 +491,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
                 () => _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), ""));
 
             Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("STAFFNane_REQUIRED", ex.Errors[0].Code);
             await _mockRepository.DidNotReceive()
                 .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<string>());
         }
@@ -503,7 +503,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
                 () => _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "   "));
 
             Assert.Single(ex.Errors);
-            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("STAFFNane_REQUIRED", ex.Errors[0].Code);
             await _mockRepository.DidNotReceive()
                 .GetWgSummarisedStaffTimeUsageAsync(Arg.Any<string>());
         }
@@ -1307,6 +1307,970 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
             await _sut.GetWgSummarisedStaffTimeUsageAsync(DefaultQuery(), "WG1");
 
             _mockMapper.Received(1).Map<IEnumerable<WgSummarisedStaffTimeUsageEntryDto>>(entries);
+        }
+
+        #endregion
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // Helpers shared by GetSummarisedWorkgroupTimeSummaryAsync tests
+        // ════════════════════════════════════════════════════════════════════════════
+
+        /// <summary>Builds a minimal SummarisedWgTimeView entry with sensible defaults.</summary>
+        private static SummarisedWgTimeView WgTimeEntry(
+            string  workGroup     = "WG1",
+            string  parentProject = "PP1",
+            string  projectTitle  = "Project Title 1",
+            string  monthName     = "April",
+            double? totalTime     = 10.0,
+            double? totalCost     = 500.0) =>
+            new()
+            {
+                WorkGroup     = workGroup,
+                ParentProject = parentProject,
+                ProjectTitle  = projectTitle,
+                MonthName     = monthName,
+                TotalTime     = totalTime,
+                TotalCost     = totalCost
+            };
+
+        private static QueryParameters<string> DefaultWgQuery(int page = 1, int pageSize = 10) =>
+            new() { Page = page, PageSize = pageSize };
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // Setup helper: configure the mapper to pass-through SummarisedWgTimeView
+        // ════════════════════════════════════════════════════════════════════════════
+
+        private void SetupWgTimeEntryMapper()
+        {
+            _mockMapper
+                .Map<IEnumerable<SummarisedWgTimeEntryDto>>(Arg.Any<object>())
+                .Returns(callInfo =>
+                {
+                    var views = (IEnumerable<SummarisedWgTimeView>)callInfo.Arg<object>();
+                    return views.Select(v => new SummarisedWgTimeEntryDto
+                    {
+                        MonthName     = v.MonthName,
+                        ParentProject = v.ParentProject,
+                        ProjectTitle  = v.ProjectTitle,
+                        TotalTime     = v.TotalTime,
+                        TotalCost     = v.TotalCost
+                    });
+                });
+        }
+
+        #region GetSummarisedWorkgroupTimeSummaryAsync — validation
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_NullWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            SetupWgTimeEntryMapper();
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), null!));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            Assert.Equal("WorkGroup is required", ex.Errors[0].Message);
+            await _mockRepository.DidNotReceive()
+                .GetSummarisedWorkgroupTimeAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_EmptyWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            SetupWgTimeEntryMapper();
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), ""));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            await _mockRepository.DidNotReceive()
+                .GetSummarisedWorkgroupTimeAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_WhitespaceWorkGroup_ThrowsBusinessValidationErrorException()
+        {
+            SetupWgTimeEntryMapper();
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "   "));
+
+            Assert.Single(ex.Errors);
+            Assert.Equal("WORKGROUP_REQUIRED", ex.Errors[0].Code);
+            await _mockRepository.DidNotReceive()
+                .GetSummarisedWorkgroupTimeAsync(Arg.Any<string>());
+        }
+
+        #endregion
+
+        #region GetSummarisedWorkgroupTimeSummaryAsync — repository interaction
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_ValidWorkGroup_CallsRepositoryOnceWithCorrectWorkGroup()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1")
+                           .Returns(new List<SummarisedWgTimeView>());
+
+            await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            await _mockRepository.Received(1).GetSummarisedWorkgroupTimeAsync("WG1");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_RepositoryThrows_PropagatesException()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1")
+                           .ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(
+                () => _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1"));
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_EmptyRepositoryResult_ReturnsEmptyRowsAndZeroSummary()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1")
+                           .Returns(new List<SummarisedWgTimeView>());
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.Rows.Should().BeEmpty();
+            result.Summary.GrandTotalTime.Should().Be(0);
+            result.Summary.GrandTotalCost.Should().Be(0);
+            result.Pagination.TotalRecords.Should().Be(0);
+            result.ProjectTitleLookup.Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region GetSummarisedWorkgroupTimeSummaryAsync — BuildWgSummarisedTimeRows
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_SingleEntry_ProducesOneRowWithCorrectFields()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April", totalTime: 10.0, totalCost: 500.0)
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            var row = result.Rows.Single();
+            row.ParentProject.Should().Be("PP1");
+            row.April.Should().Be(10.0);
+            row.May.Should().Be(0.0);
+            row.TotalTime.Should().Be(10.0);
+            row.TotalCost.Should().Be(500.0);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_SameProjectMultipleMonths_PivotsHoursIntoCorrectColumns()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April",    totalTime: 10.0),
+                WgTimeEntry(parentProject: "PP1", monthName: "May",      totalTime: 20.0),
+                WgTimeEntry(parentProject: "PP1", monthName: "December", totalTime: 5.0)
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            var row = result.Rows.Single();
+            row.April.Should().Be(10.0);
+            row.May.Should().Be(20.0);
+            row.June.Should().Be(0.0);
+            row.December.Should().Be(5.0);
+            row.TotalTime.Should().Be(35.0);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_MultipleProjects_ProducesOneRowPerProject()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April", totalTime: 10.0),
+                WgTimeEntry(parentProject: "PP2", monthName: "April", totalTime: 5.0),
+                WgTimeEntry(parentProject: "PP3", monthName: "April", totalTime: 8.0)
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.Rows.Should().HaveCount(3);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Rows_OrderedByParentProject()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP3", monthName: "April"),
+                WgTimeEntry(parentProject: "PP1", monthName: "April"),
+                WgTimeEntry(parentProject: "PP2", monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].ParentProject.Should().Be("PP1");
+            rows[1].ParentProject.Should().Be("PP2");
+            rows[2].ParentProject.Should().Be("PP3");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_NullTotalTime_TreatedAsZeroInRow()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April", totalTime: null, totalCost: null)
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            var row = result.Rows.Single();
+            row.April.Should().Be(0.0);
+            row.TotalTime.Should().Be(0.0);
+            row.TotalCost.Should().Be(0.0);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_AllTwelveMonthsPivotedCorrectly()
+        {
+            SetupWgTimeEntryMapper();
+            var months = new[]
+            {
+                ("April", 1.0), ("May", 2.0), ("June", 3.0), ("July", 4.0),
+                ("August", 5.0), ("September", 6.0), ("October", 7.0), ("November", 8.0),
+                ("December", 9.0), ("January", 10.0), ("February", 11.0), ("March", 12.0)
+            };
+            var entries = months.Select(m =>
+                WgTimeEntry(parentProject: "PP1", monthName: m.Item1, totalTime: m.Item2)).ToList();
+
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(entries);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            var row = result.Rows.Single();
+            row.April.Should().Be(1.0);
+            row.May.Should().Be(2.0);
+            row.June.Should().Be(3.0);
+            row.July.Should().Be(4.0);
+            row.August.Should().Be(5.0);
+            row.September.Should().Be(6.0);
+            row.October.Should().Be(7.0);
+            row.November.Should().Be(8.0);
+            row.December.Should().Be(9.0);
+            row.January.Should().Be(10.0);
+            row.February.Should().Be(11.0);
+            row.March.Should().Be(12.0);
+            row.TotalTime.Should().Be(78.0);
+        }
+
+        #endregion
+
+        #region GetSummarisedWorkgroupTimeSummaryAsync — BuildWgSummarisedTimeSummary
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Summary_MonthlyTotalsAreCorrect()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April", totalTime: 10.0, totalCost: 200.0),
+                WgTimeEntry(parentProject: "PP2", monthName: "April", totalTime:  5.0, totalCost: 100.0)
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.Summary.TotalApril.Should().Be(15.0);
+            result.Summary.GrandTotalTime.Should().Be(15.0);
+            result.Summary.GrandTotalCost.Should().Be(300.0);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Summary_AllMonthsTotalled()
+        {
+            SetupWgTimeEntryMapper();
+            var months = new[]
+            {
+                ("April", 1.0), ("May", 2.0), ("June", 3.0), ("July", 4.0),
+                ("August", 5.0), ("September", 6.0), ("October", 7.0), ("November", 8.0),
+                ("December", 9.0), ("January", 10.0), ("February", 11.0), ("March", 12.0)
+            };
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+                months.Select(m => WgTimeEntry(parentProject: "PP1", monthName: m.Item1, totalTime: m.Item2)).ToList());
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.Summary.TotalApril.Should().Be(1.0);
+            result.Summary.TotalMay.Should().Be(2.0);
+            result.Summary.TotalJune.Should().Be(3.0);
+            result.Summary.TotalJuly.Should().Be(4.0);
+            result.Summary.TotalAugust.Should().Be(5.0);
+            result.Summary.TotalSeptember.Should().Be(6.0);
+            result.Summary.TotalOctober.Should().Be(7.0);
+            result.Summary.TotalNovember.Should().Be(8.0);
+            result.Summary.TotalDecember.Should().Be(9.0);
+            result.Summary.TotalJanuary.Should().Be(10.0);
+            result.Summary.TotalFebruary.Should().Be(11.0);
+            result.Summary.TotalMarch.Should().Be(12.0);
+            result.Summary.GrandTotalTime.Should().Be(78.0);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Summary_ComputedFromAllRowsNotJustCurrentPage()
+        {
+            SetupWgTimeEntryMapper();
+            // 15 distinct projects, each with 4 hours in April; page 1 = 10 rows
+            var entries = Enumerable.Range(1, 15)
+                .Select(i => WgTimeEntry(parentProject: $"PP{i}", monthName: "April", totalTime: 4.0))
+                .ToList();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(entries);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10 }, "WG1");
+
+            result.Rows.Should().HaveCount(10);
+            result.Summary.TotalApril.Should().Be(60.0);    // 15 * 4
+            result.Summary.GrandTotalTime.Should().Be(60.0);
+        }
+
+        #endregion
+
+        #region GetSummarisedWorkgroupTimeSummaryAsync — ProjectTitleLookup
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_SingleProject_LookupContainsOneItem()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", projectTitle: "Alpha", monthName: "April"),
+                WgTimeEntry(parentProject: "PP1", projectTitle: "Alpha", monthName: "May")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.ProjectTitleLookup.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_MultipleProjects_LookupContainsOneItemPerProject()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", projectTitle: "Alpha",   monthName: "April"),
+                WgTimeEntry(parentProject: "PP2", projectTitle: "Beta",    monthName: "April"),
+                WgTimeEntry(parentProject: "PP3", projectTitle: "Gamma",   monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.ProjectTitleLookup.Should().HaveCount(3);
+            result.ProjectTitleLookup.Should().Contain(x => x.ParentProject == "PP1" && x.ProjectTitle == "Alpha");
+            result.ProjectTitleLookup.Should().Contain(x => x.ParentProject == "PP2" && x.ProjectTitle == "Beta");
+            result.ProjectTitleLookup.Should().Contain(x => x.ParentProject == "PP3" && x.ProjectTitle == "Gamma");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_NullParentProject_ExcludedFromLookup()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1",  projectTitle: "Alpha", monthName: "April"),
+                WgTimeEntry(parentProject: null!,  projectTitle: "None",  monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.ProjectTitleLookup.Should().HaveCount(1);
+            result.ProjectTitleLookup.Should().NotContain(x => x.ParentProject == null);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_WhitespaceParentProject_ExcludedFromLookup()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", projectTitle: "Alpha", monthName: "April"),
+                WgTimeEntry(parentProject: "   ", projectTitle: "None",  monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.ProjectTitleLookup.Should().HaveCount(1);
+            result.ProjectTitleLookup.Single().ParentProject.Should().Be("PP1");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_NullProjectTitle_LookupItemProjectTitleIsEmpty()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", projectTitle: null!, monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.ProjectTitleLookup.Single().ProjectTitle.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_WhitespaceProjectTitle_LookupItemProjectTitleIsEmpty()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", projectTitle: "   ", monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.ProjectTitleLookup.Single().ProjectTitle.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_LookupBuiltFromAllEntries_NotJustCurrentPage()
+        {
+            SetupWgTimeEntryMapper();
+            var entries = Enumerable.Range(1, 15)
+                .Select(i => WgTimeEntry(parentProject: $"PP{i:D2}", projectTitle: $"Title {i}", monthName: "April"))
+                .ToList();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(entries);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10 }, "WG1");
+
+            result.Rows.Should().HaveCount(10);
+            result.ProjectTitleLookup.Should().HaveCount(15);
+        }
+
+        #endregion
+
+        #region GetSummarisedWorkgroupTimeSummaryAsync — pagination
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Pagination_TotalRecordsEqualsTotalProjects()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April"),
+                WgTimeEntry(parentProject: "PP2", monthName: "April"),
+                WgTimeEntry(parentProject: "PP3", monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.Pagination.TotalRecords.Should().Be(3);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Pagination_TotalPagesIsCeiling()
+        {
+            SetupWgTimeEntryMapper();
+            var entries = Enumerable.Range(1, 15)
+                .Select(i => WgTimeEntry(parentProject: $"PP{i}", monthName: "April"))
+                .ToList();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(entries);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10 }, "WG1");
+
+            result.Pagination.TotalPages.Should().Be(2);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Pagination_FirstPageReturnsCorrectSlice()
+        {
+            SetupWgTimeEntryMapper();
+            var entries = Enumerable.Range(1, 15)
+                .Select(i => WgTimeEntry(parentProject: $"PP{i:D2}", monthName: "April"))
+                .ToList();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(entries);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10 }, "WG1");
+
+            result.Rows.Should().HaveCount(10);
+            result.Rows.First().ParentProject.Should().Be("PP01");
+            result.Rows.Last().ParentProject.Should().Be("PP10");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Pagination_SecondPageReturnsRemainder()
+        {
+            SetupWgTimeEntryMapper();
+            var entries = Enumerable.Range(1, 15)
+                .Select(i => WgTimeEntry(parentProject: $"PP{i:D2}", monthName: "April"))
+                .ToList();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(entries);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 2, PageSize = 10 }, "WG1");
+
+            result.Rows.Should().HaveCount(5);
+            result.Rows.First().ParentProject.Should().Be("PP11");
+            result.Rows.Last().ParentProject.Should().Be("PP15");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Pagination_PageNumberAndPageSizeReturnedInResult()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 2, PageSize = 5 }, "WG1");
+
+            result.Pagination.PageNumber.Should().Be(2);
+            result.Pagination.PageSize.Should().Be(5);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Pagination_PageLessThanOneClampedToOne()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 0, PageSize = 10 }, "WG1");
+
+            result.Pagination.PageNumber.Should().Be(1);
+            result.Rows.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Pagination_PageSizeLessThanOneClampedToOne()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April"),
+                WgTimeEntry(parentProject: "PP2", monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 0 }, "WG1");
+
+            result.Pagination.PageSize.Should().Be(1);
+            result.Rows.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Pagination_EmptyData_TotalPagesIsZero()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1")
+                           .Returns(new List<SummarisedWgTimeView>());
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(DefaultWgQuery(), "WG1");
+
+            result.Pagination.TotalRecords.Should().Be(0);
+            result.Pagination.TotalPages.Should().Be(0);
+        }
+
+        #endregion
+
+        #region GetSummarisedWorkgroupTimeSummaryAsync — ApplySortToWgSummarisedTimeRows
+
+        [Theory]
+        [InlineData("ParentProject", false)]
+        [InlineData("ParentProject", true)]
+        [InlineData("April",         false)]
+        [InlineData("April",         true)]
+        [InlineData("May",           false)]
+        [InlineData("June",          false)]
+        [InlineData("July",          false)]
+        [InlineData("August",        false)]
+        [InlineData("September",     false)]
+        [InlineData("October",       false)]
+        [InlineData("November",      false)]
+        [InlineData("December",      false)]
+        [InlineData("January",       false)]
+        [InlineData("February",      false)]
+        [InlineData("March",         false)]
+        [InlineData("TotalTime",     false)]
+        [InlineData("TotalTime",     true)]
+        [InlineData("TotalCost",     false)]
+        [InlineData("TotalCost",     true)]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Sort_KnownColumn_DoesNotThrow(string sortBy, bool descending)
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP2", monthName: "April", totalTime: 5.0,  totalCost: 100.0),
+                WgTimeEntry(parentProject: "PP1", monthName: "April", totalTime: 10.0, totalCost: 200.0)
+            ]);
+
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+
+            var act = () => _sut.GetSummarisedWorkgroupTimeSummaryAsync(query, "WG1");
+
+            await act.Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Sort_ByParentProjectAscending_OrdersRowsAZ()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP3", monthName: "April"),
+                WgTimeEntry(parentProject: "PP1", monthName: "April"),
+                WgTimeEntry(parentProject: "PP2", monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "ParentProject", Descending = false }, "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].ParentProject.Should().Be("PP1");
+            rows[1].ParentProject.Should().Be("PP2");
+            rows[2].ParentProject.Should().Be("PP3");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Sort_ByParentProjectDescending_OrdersRowsZA()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April"),
+                WgTimeEntry(parentProject: "PP3", monthName: "April"),
+                WgTimeEntry(parentProject: "PP2", monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "ParentProject", Descending = true }, "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].ParentProject.Should().Be("PP3");
+            rows[1].ParentProject.Should().Be("PP2");
+            rows[2].ParentProject.Should().Be("PP1");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Sort_ByTotalTimeAscending_OrdersRowsLowToHigh()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April", totalTime: 30.0),
+                WgTimeEntry(parentProject: "PP2", monthName: "April", totalTime: 10.0),
+                WgTimeEntry(parentProject: "PP3", monthName: "April", totalTime: 20.0)
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "TotalTime", Descending = false }, "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].TotalTime.Should().Be(10.0);
+            rows[1].TotalTime.Should().Be(20.0);
+            rows[2].TotalTime.Should().Be(30.0);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Sort_ByTotalCostDescending_OrdersRowsHighToLow()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP1", monthName: "April", totalCost: 100.0),
+                WgTimeEntry(parentProject: "PP2", monthName: "April", totalCost: 300.0),
+                WgTimeEntry(parentProject: "PP3", monthName: "April", totalCost: 200.0)
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "TotalCost", Descending = true }, "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].TotalCost.Should().Be(300.0);
+            rows[1].TotalCost.Should().Be(200.0);
+            rows[2].TotalCost.Should().Be(100.0);
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Sort_NullSortBy_ReturnDefaultOrder()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP3", monthName: "April"),
+                WgTimeEntry(parentProject: "PP1", monthName: "April"),
+                WgTimeEntry(parentProject: "PP2", monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = null }, "WG1");
+
+            // With no sort, BuildWgSummarisedTimeRows applies default OrderBy(ParentProject)
+            result.Rows.First().ParentProject.Should().Be("PP1");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Sort_UnknownColumn_FallsBackToParentProjectOrder()
+        {
+            SetupWgTimeEntryMapper();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(
+            [
+                WgTimeEntry(parentProject: "PP3", monthName: "April"),
+                WgTimeEntry(parentProject: "PP1", monthName: "April"),
+                WgTimeEntry(parentProject: "PP2", monthName: "April")
+            ]);
+
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "UnknownColumn", Descending = false }, "WG1");
+
+            // Unknown column falls back to ParentProject in the switch _ case
+            result.Rows.First().ParentProject.Should().Be("PP1");
+        }
+
+        [Fact]
+        public async Task GetSummarisedWorkgroupTimeSummaryAsync_Sort_AppliedBeforePaging_SortedSliceReturned()
+        {
+            SetupWgTimeEntryMapper();
+            var entries = Enumerable.Range(1, 15)
+                .Select(i => WgTimeEntry(parentProject: $"PP{i:D2}", monthName: "April", totalTime: (double)(16 - i)))
+                .ToList();
+            _mockRepository.GetSummarisedWorkgroupTimeAsync("WG1").Returns(entries);
+
+            // Sort by TotalTime descending: PP01 has highest time (15), PP15 has lowest (1)
+            var result = await _sut.GetSummarisedWorkgroupTimeSummaryAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 5, SortBy = "TotalTime", Descending = true }, "WG1");
+
+            result.Rows.Should().HaveCount(5);
+            result.Rows.First().TotalTime.Should().Be(15.0);
+            result.Rows.Last().TotalTime.Should().Be(11.0);
+        }
+
+        #endregion
+
+        #region GetWgSummarisedStaffTimeUsageAsync — ApplySortToWgStaffTimeRows
+
+        [Theory]
+        [InlineData("ParentProject", false)]
+        [InlineData("ParentProject", true)]
+        [InlineData("JobCode",       false)]
+        [InlineData("JobCode",       true)]
+        [InlineData("April",         false)]
+        [InlineData("April",         true)]
+        [InlineData("May",           false)]
+        [InlineData("June",          false)]
+        [InlineData("July",          false)]
+        [InlineData("August",        false)]
+        [InlineData("September",     false)]
+        [InlineData("October",       false)]
+        [InlineData("November",      false)]
+        [InlineData("December",      false)]
+        [InlineData("January",       false)]
+        [InlineData("February",      false)]
+        [InlineData("March",         false)]
+        [InlineData("TotalTime",     false)]
+        [InlineData("TotalTime",     true)]
+        [InlineData("TotalCost",     false)]
+        [InlineData("TotalCost",     true)]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_Sort_KnownColumn_DoesNotThrow(string sortBy, bool descending)
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP2", jobCode: "JC2", monthName: "April", totalTime: 5.0,  totalCost: 100.0),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", monthName: "April", totalTime: 10.0, totalCost: 200.0)
+            ]);
+
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+
+            var act = () => _sut.GetWgSummarisedStaffTimeUsageAsync(query, "WG1");
+
+            await act.Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_Sort_ByParentProjectAscending_OrdersRowsAZ()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP3", jobCode: "JC1", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP2", jobCode: "JC1", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "ParentProject", Descending = false }, "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].ParentProject.Should().Be("PP1");
+            rows[1].ParentProject.Should().Be("PP2");
+            rows[2].ParentProject.Should().Be("PP3");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_Sort_ByParentProjectDescending_OrdersRowsZA()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP3", jobCode: "JC1", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP2", jobCode: "JC1", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "ParentProject", Descending = true }, "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].ParentProject.Should().Be("PP3");
+            rows[1].ParentProject.Should().Be("PP2");
+            rows[2].ParentProject.Should().Be("PP1");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_Sort_ByJobCodeAscending_OrdersRowsAZ()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC3", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC2", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "JobCode", Descending = false }, "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].JobCode.Should().Be("JC1");
+            rows[1].JobCode.Should().Be("JC2");
+            rows[2].JobCode.Should().Be("JC3");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_Sort_ByJobCodeDescending_OrdersRowsZA()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC3", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC2", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "JobCode", Descending = true }, "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].JobCode.Should().Be("JC3");
+            rows[1].JobCode.Should().Be("JC2");
+            rows[2].JobCode.Should().Be("JC1");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_Sort_ByTotalTimeAscending_OrdersRowsLowToHigh()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", monthName: "April", totalTime: 30.0),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC2", monthName: "April", totalTime: 10.0),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC3", monthName: "April", totalTime: 20.0)
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "TotalTime", Descending = false }, "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].TotalTime.Should().Be(10.0);
+            rows[1].TotalTime.Should().Be(20.0);
+            rows[2].TotalTime.Should().Be(30.0);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_Sort_ByTotalCostDescending_OrdersRowsHighToLow()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", monthName: "April", totalCost: 100.0),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC2", monthName: "April", totalCost: 300.0),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC3", monthName: "April", totalCost: 200.0)
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "TotalCost", Descending = true }, "WG1");
+
+            var rows = result.Rows.ToList();
+            rows[0].TotalCost.Should().Be(300.0);
+            rows[1].TotalCost.Should().Be(200.0);
+            rows[2].TotalCost.Should().Be(100.0);
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_Sort_NullSortBy_ReturnDefaultOrder()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP3", jobCode: "JC1", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP2", jobCode: "JC1", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = null }, "WG1");
+
+            // BuildRows applies default OrderBy(ParentProject).ThenBy(JobCode)
+            result.Rows.First().ParentProject.Should().Be("PP1");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_Sort_UnknownColumn_FallsBackToParentProjectOrder()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+            [
+                TimeUsageEntry(parentProject: "PP3", jobCode: "JC1", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP1", jobCode: "JC1", monthName: "April"),
+                TimeUsageEntry(parentProject: "PP2", jobCode: "JC1", monthName: "April")
+            ]);
+
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "UnknownColumn", Descending = false }, "WG1");
+
+            // Unknown column falls back to ParentProject in the switch _ case
+            result.Rows.First().ParentProject.Should().Be("PP1");
+        }
+
+        [Fact]
+        public async Task GetWgSummarisedStaffTimeUsageAsync_Sort_AppliedBeforePaging_SortedSliceReturned()
+        {
+            _mockRepository.GetWgSummarisedStaffTimeUsageAsync("WG1").Returns(
+                Enumerable.Range(1, 15)
+                    .Select(i => TimeUsageEntry(
+                        parentProject: $"PP{i:D2}",
+                        jobCode: $"JC{i:D2}",
+                        monthName: "April",
+                        totalTime: (double)(16 - i)))
+                    .ToList());
+
+            // Sort by TotalTime descending: PP01 has time=15, PP15 has time=1
+            var result = await _sut.GetWgSummarisedStaffTimeUsageAsync(
+                new QueryParameters<string> { Page = 1, PageSize = 5, SortBy = "TotalTime", Descending = true }, "WG1");
+
+            result.Rows.Should().HaveCount(5);
+            result.Rows.First().TotalTime.Should().Be(15.0);
+            result.Rows.Last().TotalTime.Should().Be(11.0);
         }
 
         #endregion

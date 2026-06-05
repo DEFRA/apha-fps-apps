@@ -39,17 +39,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// server-side dictionary that the client-side row-selection handler uses to resolve
         /// job titles without additional round-trips.
         /// </summary>
-        /// <param name="workGroup">Work group name whose time-usage data should be displayed.</param>
-        /// <param name="personName">Person name passed in from the Work Group People page; stored on
+        /// <param name="workGroup">WorkGroup whose time-usage data should be displayed.</param>
+        /// <param name="staffName">staff name passed in from the Work Group People page; stored on
         /// the view model so the view can pre-select the correct person.</param>
         /// <returns>
         /// A <see cref="ViewResult"/> containing a <see cref="WgSummarisedStaffTimeUsageViewModel"/>
         /// with the populated grid, summary footer, header fields, and job-title lookup.
         /// </returns>
-        public async Task<IActionResult> Index(string workGroup, string personName)
+        public async Task<IActionResult> Index(string workGroup, string staffName)
         {
             var query = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
-            var response = await _workGroupService.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
+            var response = await _workGroupService.GetWgSummarisedStaffTimeUsageAsync(query, staffName);
 
             ViewBag.JobTitleLookup = response.Data?.JobTitleLookup
                 .ToDictionary(x => x.JobCode, x => x.JobTitle)
@@ -57,7 +57,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return View(new WgSummarisedStaffTimeUsageViewModel
             {
                 SelectedWorkGroup = workGroup,
-                SelectedPersonName = personName,
+                SelectedPersonName = staffName,
                 WorkGroupName = workGroup,
                 HrsPaid = response.Data?.HrsPaid ?? 0,
                 Grid = MapToGridConfig(response, sortBy: null, descending: false),
@@ -75,20 +75,20 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <c>work-group-summarised-staffTimeUsage.js</c> listens to in order to auto-select the first row.
         /// </summary>
         /// <param name="request">Pagination, sort, and column-filter parameters submitted by the grid via AJAX POST.</param>
-        /// <param name="workGroup">Work group name used to scope the data query.
+        /// <param name="staffName">Staff name used to scope the data query.
         /// Must not be <see langword="null"/>, empty, or whitespace.</param>
         /// <returns>
         /// A <see cref="PartialViewResult"/> rendering the <c>_DataGrid</c> partial with an updated
         /// <see cref="DataGridConfig{WgSummarisedStaffTimeUsageRow}"/> model.
         /// </returns>
         /// <exception cref="ArgumentException">
-        /// Thrown when <paramref name="workGroup"/> is <see langword="null"/>, empty, or whitespace.
+        /// Thrown when <paramref name="staffName"/> is <see langword="null"/>, empty, or whitespace.
         /// </exception>
         [HttpPost]
-        public async Task<IActionResult> LoadSummarisedStaffTimeGrid(PaginationFilter<string> request, string workGroup)
+        public async Task<IActionResult> LoadSummarisedStaffTimeGrid(PaginationFilter<string> request, string staffName)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _workGroupService.GetWgSummarisedStaffTimeUsageAsync(query, workGroup);
+            var response = await _workGroupService.GetWgSummarisedStaffTimeUsageAsync(query, staffName);
 
             return PartialView("_DataGrid", MapToGridConfig(response, request.SortBy, request.Descending));
         }

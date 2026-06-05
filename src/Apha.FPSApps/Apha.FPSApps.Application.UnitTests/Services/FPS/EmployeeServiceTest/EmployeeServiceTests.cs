@@ -848,5 +848,89 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
         }
 
         #endregion
+
+        #region GetPactStaffAsync Tests
+
+        [Fact]
+        public async Task GetPactStaffAsync_WithSuccessResponse_ReturnsPactStaffList()
+        {
+            // Arrange
+            var staff = new List<PactStaffDto>
+            {
+                new PactStaffDto { PactId = "S001", SpNumber = "SP001", Name = "John Smith" },
+                new PactStaffDto { PactId = "S002", SpNumber = "SP002", Name = "Jane Doe" }
+            };
+            var expectedResponse = ApiResponseDto<List<PactStaffDto>>.SuccessResponse(staff);
+
+            _fpsEmployeeApiClient.GetPactStaffAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetPactStaffAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            Assert.Equal("S001", result.Data![0].PactId);
+            Assert.Equal("John Smith", result.Data![0].Name);
+            await _fpsEmployeeApiClient.Received(1).GetPactStaffAsync();
+        }
+
+        [Fact]
+        public async Task GetPactStaffAsync_WithEmptyList_ReturnsEmptySuccessResponse()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<PactStaffDto>>.SuccessResponse([]);
+
+            _fpsEmployeeApiClient.GetPactStaffAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetPactStaffAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            await _fpsEmployeeApiClient.Received(1).GetPactStaffAsync();
+        }
+
+        [Fact]
+        public async Task GetPactStaffAsync_WithFailureResponse_ReturnsFailure()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }
+            };
+            var failureResponse = ApiResponseDto<List<PactStaffDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsEmployeeApiClient.GetPactStaffAsync().Returns(failureResponse);
+
+            // Act
+            var result = await _employeeService.GetPactStaffAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            await _fpsEmployeeApiClient.Received(1).GetPactStaffAsync();
+        }
+
+        [Fact]
+        public async Task GetPactStaffAsync_ClientThrows_PropagatesException()
+        {
+            // Arrange
+            _fpsEmployeeApiClient.GetPactStaffAsync()
+                .ThrowsAsync(new Exception("API unavailable"));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(
+                async () => await _employeeService.GetPactStaffAsync());
+            Assert.Equal("API unavailable", ex.Message);
+            await _fpsEmployeeApiClient.Received(1).GetPactStaffAsync();
+        }
+
+        #endregion
     }
 }

@@ -39,6 +39,16 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Returns all profit centres including their associated timesheet, output-sheet, and layout settings.         
+        /// </summary>
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllProfitCentres()
+        {
+            var items = await _profitCentreService.GetAllProfitCentresAsync();
+            return Ok(_mapper.Map<IEnumerable<ProfitCentreRes>>(items));
+        }
+
+        /// <summary>
         /// Returns a paginated list of profit centres for maintenance.
         /// </summary>
         [HttpGet("paged")]
@@ -102,5 +112,27 @@ namespace Apha.FPS.Api.Controllers
             return Ok(isDeleted);
         }
 
+        /// <summary>
+        /// Partially updates the timesheet, output-sheet, and timesheet-layout settings for the
+        /// specified profit centre. Only the three settings fields are written; other profit-centre
+        /// data is left unchanged.
+        /// </summary>
+        /// <param name="request">Contains the profit-centre code and the new values for
+        /// <c>Timesheet</c>, <c>Outputsheet</c>, and <c>TimesheetLayout</c>.</param>
+        [HttpPatch("settings")]
+        public async Task<IActionResult> PatchSettings([FromBody] UpdateProfitCentreSettingsReq request)
+        {
+            if (string.IsNullOrWhiteSpace(request.ProfitCentre))
+                return BadRequest("ProfitCentre is required.");
+
+            var success = await _profitCentreService.UpdateProfitCentreSettingsAsync(
+                request.ProfitCentre,
+                request.Timesheet,
+                request.Outputsheet,
+                request.TimesheetLayout);
+
+            return Ok(success);
         }
+
+    }
 }

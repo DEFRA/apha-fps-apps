@@ -27,9 +27,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.CalenderMonthRepositoryTest
         {
             var months = new List<CalenderMonth>
             {
-                new() { MonthNumber = 3, MonthName = "June",  AccntsPeriod = 3, FQuarter = 1 },
-                new() { MonthNumber = 1, MonthName = "April", AccntsPeriod = 1, FQuarter = 1 },
-                new() { MonthNumber = 2, MonthName = "May",   AccntsPeriod = 2, FQuarter = 1 }
+                new() { MonthNumber = 3, MonthName = "June",  AccntsPeriod = 3, Fquarter = 1 },
+                new() { MonthNumber = 1, MonthName = "April", AccntsPeriod = 1, Fquarter = 1 },
+                new() { MonthNumber = 2, MonthName = "May",   AccntsPeriod = 2, Fquarter = 1 }
             };
             var repo = CreateRepository(months);
 
@@ -56,7 +56,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.CalenderMonthRepositoryTest
         {
             var months = new List<CalenderMonth>
             {
-                new() { MonthNumber = 1, MonthName = "April", AccntsPeriod = 1, FQuarter = 1 }
+                new() { MonthNumber = 1, MonthName = "April", AccntsPeriod = 1, Fquarter = 1 }
             };
             var repo = CreateRepository(months);
 
@@ -66,7 +66,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.CalenderMonthRepositoryTest
             Assert.Equal("April",    result[0].MonthName);
             Assert.Equal((short)1,   result[0].MonthNumber);
             Assert.Equal((short)1,   result[0].AccntsPeriod);
-            Assert.Equal((short)1,   result[0].FQuarter);
+            Assert.Equal((short)1,   result[0].Fquarter);
         }
 
         [Fact]
@@ -74,7 +74,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.CalenderMonthRepositoryTest
         {
             var months = new List<CalenderMonth>
             {
-                new() { MonthNumber = 5, MonthName = "August", AccntsPeriod = 5, FQuarter = 2 }
+                new() { MonthNumber = 5, MonthName = "August", AccntsPeriod = 5, Fquarter = 2 }
             };
             var repo = CreateRepository(months);
 
@@ -84,7 +84,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.CalenderMonthRepositoryTest
             Assert.Equal((short)5,    result[0].MonthNumber);
             Assert.Equal("August",    result[0].MonthName);
             Assert.Equal((short)5,    result[0].AccntsPeriod);
-            Assert.Equal((short)2,    result[0].FQuarter);
+            Assert.Equal((short)2,    result[0].Fquarter);
         }
 
         [Fact]
@@ -92,7 +92,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.CalenderMonthRepositoryTest
         {
             var months = new List<CalenderMonth>
             {
-                new() { MonthNumber = null, MonthName = null, AccntsPeriod = null, FQuarter = null }
+                new() { MonthNumber = null, MonthName = null, AccntsPeriod = null, Fquarter = null }
             };
             var repo = CreateRepository(months);
 
@@ -102,7 +102,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.CalenderMonthRepositoryTest
             Assert.Null(result[0].MonthNumber);
             Assert.Null(result[0].MonthName);
             Assert.Null(result[0].AccntsPeriod);
-            Assert.Null(result[0].FQuarter);
+            Assert.Null(result[0].Fquarter);
         }
 
         #endregion

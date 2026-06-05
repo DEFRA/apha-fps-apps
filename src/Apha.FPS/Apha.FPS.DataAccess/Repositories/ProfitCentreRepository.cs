@@ -29,6 +29,14 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<ProfitCentre>> GetAllProfitCentresAsync()
+        {
+            return await _context.ProfitCentres
+                .AsNoTracking()
+                .OrderBy(p => p.ProfitCentreId)
+                .ToListAsync();
+        }
+
         public async Task<PagedData<ProfitCentre>> GetAllProfitCentresPagedAsync(PaginationParameters<string> query)
         {
             ArgumentNullException.ThrowIfNull(query);
@@ -222,6 +230,22 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(p => p.ProfitCentreId.ToLower() == normalised);
         }
 
+        public async Task<bool> UpdateProfitCentreSettingsAsync(string profitCentre, int timesheet, int outputsheet, short timesheetlayout)
+        {
+            var entities = await _context.ProfitCentres
+                .Where(p => p.ProfitCentreId == profitCentre)
+                .ToListAsync();
+
+            foreach (var p in entities)
+            {
+                p.Timesheet = timesheet;
+                p.OutputSheet = outputsheet;
+                p.TimesheetLayout = timesheetlayout;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
         private static IQueryable<ProfitCentre> ApplyProfitCentreFilter(IQueryable<ProfitCentre> query, string? filter)
         {

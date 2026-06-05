@@ -9,6 +9,7 @@ using Apha.FPSApps.Application.Services.FPS;
 using Apha.FPSApps.Application.Services.PACT;
 using Apha.FPSApps.Application.Services.PIMS;
 using Apha.FPSApps.Web.Handler;
+
 namespace Apha.FPSApps.Web.Extensions
 {
     public static class ServiceCollectionExtension
@@ -48,6 +49,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<IMonthService, MonthService>();
+            services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
@@ -69,12 +71,16 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
+            services.AddScoped<IPactMonthlyTimeService, PactMonthlyTimeService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
-            services.AddScoped<IProjectMonthService, ProjectMonthService>();
-            services.AddScoped<ICalenderMonthService, CalenderMonthService>();
+            services.AddScoped<IProjectMonthService, ProjectMonthService>();            
+            services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
+            services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
+            services.AddScoped<IAnimalService, AnimalService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

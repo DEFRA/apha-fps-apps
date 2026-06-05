@@ -95,6 +95,243 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreGradeControllerTest
 
         #endregion
 
+        #region GetAllPagedAsync Tests
+
+        [Fact]
+        public async Task GetAllPagedAsync_WithValidQuery_ReturnsOk()
+        {
+            // Arrange
+            var query  = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var mapped = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<ProfitCentreGradeDto>();
+            var expectedRes   = new PaginationRes<ProfitCentreGradeRes>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(mapped);
+            _serviceMock.GetAllPagedAsync(mapped).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProfitCentreGradeRes>>(serviceResult).Returns(expectedRes);
+
+            // Act
+            var result = await _controller.GetAllPagedAsync(query);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().Be(expectedRes);
+            await _serviceMock.Received(1).GetAllPagedAsync(mapped);
+        }
+
+        [Fact]
+        public async Task GetAllPagedAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query  = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var mapped = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(mapped);
+            _serviceMock.GetAllPagedAsync(mapped).ThrowsAsync(new InvalidOperationException("service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetAllPagedAsync(query));
+        }
+
+        #endregion
+
+        #region GetByIdAsync Tests
+
+        [Fact]
+        public async Task GetByIdAsync_WhenFound_ReturnsOk()
+        {
+            // Arrange
+            var dto = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+            var res = new ProfitCentreGradeRes { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+
+            _serviceMock.GetByIdAsync("G001").Returns(dto);
+            _mapperMock.Map<ProfitCentreGradeRes>(dto).Returns(res);
+
+            // Act
+            var result = await _controller.GetByIdAsync("G001");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().Be(res);
+            await _serviceMock.Received(1).GetByIdAsync("G001");
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_WhenNotFound_ThrowsArgumentExceptionAsync()
+        {
+            _serviceMock.GetByIdAsync("NOTEXIST").Returns((ProfitCentreGradeDto?)null);
+
+            // Act and Assert
+            var exception = Assert.ThrowsAsync<ArgumentException>(async () => await _controller.GetByIdAsync("NOTEXIST"));
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_WhenServiceThrows_PropagatesException()
+        {
+            _serviceMock.GetByIdAsync("G001").ThrowsAsync(new InvalidOperationException("service error"));
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetByIdAsync("G001"));
+        }
+
+        #endregion
+
+        #region CreateAsync Tests
+
+        [Fact]
+        public async Task CreateAsync_WithValidRequest_ReturnsOk()
+        {
+            // Arrange
+            var req     = new ProfitCentreGradeReq { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+            var dto     = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+            var created = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+            var res     = new ProfitCentreGradeRes { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+
+            _mapperMock.Map<ProfitCentreGradeDto>(req).Returns(dto);
+            _serviceMock.CreateAsync(dto).Returns(created);
+            _mapperMock.Map<ProfitCentreGradeRes>(created).Returns(res);
+
+            // Act
+            var result = await _controller.CreateAsync(req);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().Be(res);
+            await _serviceMock.Received(1).CreateAsync(dto);
+        }
+
+        [Fact]
+        public async Task CreateAsync_WhenServiceThrowsInvalidOperation_ThrowsInvalidOPerationAsync()
+        {
+            // Arrange
+            var req = new ProfitCentreGradeReq { PcGrade = "G001", ProfitCentre = "INVALID" };
+            var dto = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = "INVALID" };
+
+            _mapperMock.Map<ProfitCentreGradeDto>(req).Returns(dto);
+            //_serviceMock.CreateAsync(dto).ThrowsAsync(new InvalidOperationException("Cannot insert ProfitCentreGrade because ProfitCentre 'INVALID' does not exist."));
+
+            // Act and Assert
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => await _controller.CreateAsync(req));
+
+        }
+
+        #endregion
+
+        #region UpdateAsync Tests
+
+        [Fact]
+        public async Task UpdateAsync_WithValidRequest_ReturnsOk()
+        {
+            // Arrange
+            var req     = new ProfitCentreGradeReq { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+            var dto     = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+            var updated = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+            var res     = new ProfitCentreGradeRes { PcGrade = "G001", ProfitCentre = DefaultProfitCentre };
+
+            _mapperMock.Map<ProfitCentreGradeDto>(req).Returns(dto);
+            _serviceMock.UpdateAsync("G001", dto).Returns(updated);
+            _mapperMock.Map<ProfitCentreGradeRes>(updated).Returns(res);
+
+            // Act
+            var result = await _controller.UpdateAsync("G001", req);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().Be(res);
+            await _serviceMock.Received(1).UpdateAsync("G001", dto);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WhenServiceThrowsInvalidOperation_ThrowsInvalidOperationAsync()
+        {
+            // Arrange
+            var req = new ProfitCentreGradeReq { PcGrade = "G001", ProfitCentre = "INVALID" };
+            var dto = new ProfitCentreGradeDto { PcGrade = "G001", ProfitCentre = "INVALID" };
+
+            _mapperMock.Map<ProfitCentreGradeDto>(req).Returns(dto);
+            //_serviceMock.UpdateAsync("G001", dto).ThrowsAsync(new InvalidOperationException("ProfitCentre 'INVALID' does not exist."));
+
+            // Act and Assert
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => await _controller.UpdateAsync("G001", req));
+        }
+
+        #endregion
+
+        #region DeleteAsync Tests
+
+        [Fact]
+        public async Task DeleteAsync_WhenDeleted_ReturnsOk()
+        {
+            _serviceMock.DeleteAsync("G001").Returns(true);
+
+            var result = await _controller.DeleteAsync("G001");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().NotBeNull();
+            await _serviceMock.Received(1).DeleteAsync("G001");
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenNotFound_ThrowsArgumentExceptionAsync()
+        {
+            _serviceMock.DeleteAsync("NOTEXIST").Returns(false);
+
+            // Act and Assert
+            var exception = Assert.ThrowsAsync<ArgumentException>(async () => await _controller.DeleteAsync("NOTEXIST"));
+        }
+
+        [Fact]
+        public async Task DeleteAsync_WhenServiceThrows_PropagatesException()
+        {
+            _serviceMock.DeleteAsync("G001").ThrowsAsync(new InvalidOperationException("service error"));
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.DeleteAsync("G001"));
+        }
+
+        #endregion
+
+        #region GetProfitCentreCodesAsync Tests
+
+        [Fact]
+        public async Task GetProfitCentreCodesAsync_ReturnsOkWithCodes()
+        {
+            // Arrange
+            var codes = new List<string> { "PC01", "PC02", "PC03" };
+            _serviceMock.GetAllProfitCentreCodesAsync().Returns(codes);
+
+            // Act
+            var result = await _controller.GetProfitCentreCodesAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsType<List<string>>(okResult.Value);
+            data.Should().HaveCount(3);
+            await _serviceMock.Received(1).GetAllProfitCentreCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetProfitCentreCodesAsync_ReturnsEmpty_WhenNoCodes()
+        {
+            _serviceMock.GetAllProfitCentreCodesAsync().Returns([]);
+
+            var result = await _controller.GetProfitCentreCodesAsync();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsType<List<string>>(okResult.Value);
+            data.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetProfitCentreCodesAsync_WhenServiceThrows_PropagatesException()
+        {
+            _serviceMock.GetAllProfitCentreCodesAsync()
+                .ThrowsAsync(new InvalidOperationException("service error"));
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _controller.GetProfitCentreCodesAsync());
+        }
+
+        #endregion
+
         #region GetAllPcGradesAsync Tests
 
         [Fact]

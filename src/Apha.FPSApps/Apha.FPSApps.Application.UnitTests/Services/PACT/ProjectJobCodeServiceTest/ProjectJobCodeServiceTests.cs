@@ -25,6 +25,69 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectJobCodeService
             _service = new ProjectJobCodeService(_pactClient);
         }
 
+        #region GetJobCodesAsync Tests
+
+        [Fact]
+        public async Task GetJobCodesAsync_WithSuccessResponse_ReturnsJobCodeList()
+        {
+            // Arrange
+            var jobCodes = new List<JobCodeDto>
+            {
+                new JobCodeDto { JobCodeId = "JC001", ParentProject = "PP001", JobCodeName = "Job Code One" },
+                new JobCodeDto { JobCodeId = "JC002", ParentProject = "PP002", JobCodeName = "Job Code Two" }
+            };
+            var expectedResponse = ApiResponseDto<List<JobCodeDto>>.SuccessResponse(jobCodes);
+            _pactJobCodeApiClient.GetJobCodesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetJobCodesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            Assert.Equal("JC001", result.Data![0].JobCodeId);
+            await _pactJobCodeApiClient.Received(1).GetJobCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetJobCodesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<JobCodeDto>>.SuccessResponse(new List<JobCodeDto>());
+            _pactJobCodeApiClient.GetJobCodesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetJobCodesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            await _pactJobCodeApiClient.Received(1).GetJobCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetJobCodesAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<JobCodeDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactJobCodeApiClient.GetJobCodesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetJobCodesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            await _pactJobCodeApiClient.Received(1).GetJobCodesAsync();
+        }
+
+        #endregion
+
         #region GetJobCodesByProjectAsync Tests
 
         [Fact]

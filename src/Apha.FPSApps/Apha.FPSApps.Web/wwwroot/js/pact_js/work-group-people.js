@@ -18,10 +18,10 @@ function getPeopleGridManager() {
 
 /**
  * Returns extra filter parameters to be appended to each grid reload request.
- * @returns {{ workGroup: string, personName: string }}
+ * @returns {{ workGroup: string }}
  */
 function getPeopleGridExtraFilters() {
-    return { workGroup: currentWorkGroup || '', personName: currentPersonName || '' };
+    return { workGroup: currentWorkGroup || '' };
 }
 
 var currentWorkGroup  = null;
@@ -139,7 +139,6 @@ function reloadPeopleGridByPerson(personName, personWorkGroup) {
             Descending: false,
             Page: 1,
             PageSize: 10,
-            personName: personName,
             workGroup: personWorkGroup || null
         },
         success: function (html) {
@@ -303,7 +302,7 @@ function initWorkGroupPeoplePage() {
         }
         $input.removeClass('govuk-input--error');
         $error.hide();
-        var url = '/PACT/WorkGroupSummarisedStaffTimeUsage?workGroup=' + encodeURIComponent(currentWorkGroup) + '&personName=' + encodeURIComponent(currentPersonName || '');
+        var url = '/PACT/WorkGroupSummarisedStaffTimeUsage?workGroup=' + encodeURIComponent(currentWorkGroup) + '&staffName=' + encodeURIComponent(currentPersonName || '');
         window.fpsNavigateTo(url);
     });
 
@@ -335,6 +334,21 @@ function initWorkGroupPeoplePage() {
         $input.removeClass('govuk-input--error');
         $error.hide();
         window.fpsNavigateTo('/PACT/WorkGroupValidTimeCode?workGroup=' + encodeURIComponent(currentWorkGroup));
+    });
+
+    // ── Show Summarised WorkGroup Time button ──────────────────────────────
+    $('#btnShowSummary').on('click', function () {
+        var $error = $('#workgroupValidationError');
+        var $input = $('#selectedWorkgroup');
+        if (!currentWorkGroup) {
+            $input.addClass('govuk-input--error');
+            $error.show();
+            alert('Please select a Work Group first.');
+            return;
+        }
+        $input.removeClass('govuk-input--error');
+        $error.hide();
+        window.fpsNavigateTo('/PACT/WorkGroupSummarisedTimeUsage?workGroup=' + encodeURIComponent(currentWorkGroup));
     });
 }
 

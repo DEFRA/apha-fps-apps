@@ -1,4 +1,4 @@
-namespace Apha.PACT.Core.Entities
+﻿namespace Apha.PACT.Core.Entities
 {
     public partial class WorkGroupStaffView
     {

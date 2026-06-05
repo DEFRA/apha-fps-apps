@@ -15,6 +15,9 @@ namespace Apha.FPSApps.Application.Services.PACT
             _pactClient = pactClient;
         }
 
+        public async Task<ApiResponseDto<List<JobCodeDto>>> GetJobCodesAsync()
+            => await _pactClient.PactJobCode.GetJobCodesAsync();
+
         public async Task<ApiResponseDto<List<JobCodeDto>>> GetJobCodesByProjectAsync(string parentProject)
             => await _pactClient.PactJobCode.GetJobCodesByProjectAsync(parentProject);
 
