@@ -13,5 +13,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<ProfitCentreGradeDto>> UpdateAsync(string originalPcGrade, ProfitCentreGradeDto dto);
         Task<ApiResponseDto<bool>> DeleteAsync(string pcGrade);
         Task<ApiResponseDto<List<string>>> GetAllProfitCentreCodesAsync();
+        Task<ApiResponseDto<List<string>>> GetAllPcGradesAsync();
     }
 }

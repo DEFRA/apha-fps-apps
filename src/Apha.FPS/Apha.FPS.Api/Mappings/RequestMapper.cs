@@ -79,6 +79,8 @@ namespace Apha.FPS.Api.Mappings
 
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
             CreateMap<PactStaffDto, PactStaffRes>().ReverseMap();
+            CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
+             
         }
     }
 }

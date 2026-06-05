@@ -288,7 +288,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.AnimalRepositoryTest
                 "defradailyrate" => list[0].DefraDailyRate?.ToString(),
                 _                => list[0].AnimalType
             };
+            var actualSecond = sortBy switch
+            {
+                "species"        => list[1].Species,
+                "dailyrate"      => list[1].DailyRate?.ToString(),
+                "defradailyrate" => list[1].DefraDailyRate?.ToString(),
+                _                => list[1].AnimalType
+            };
             Assert.Equal(expectedFirst, actualFirst);
+            Assert.Equal(expectedSecond, actualSecond);
         }
 
         [Fact]

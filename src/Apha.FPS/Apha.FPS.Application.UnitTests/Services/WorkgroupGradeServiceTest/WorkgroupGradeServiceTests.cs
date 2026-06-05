@@ -17,14 +17,16 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupGradeServiceTest
         private const string DefaultWgGrade = "WG01";
 
         private readonly IWorkGroupGradeRepository _mockRepository;
+        private readonly IWorkGroupEmployeeRepository _mockEmployeeRepository;
         private readonly IMapper _mockMapper;
         private readonly WorkGroupGradeService _sut;
 
         public WorkGroupGradeServiceTests()
         {
-            _mockRepository = Substitute.For<IWorkGroupGradeRepository>();
-            _mockMapper     = Substitute.For<IMapper>();
-            _sut            = new WorkGroupGradeService(_mockRepository, _mockMapper);
+            _mockRepository         = Substitute.For<IWorkGroupGradeRepository>();
+            _mockEmployeeRepository  = Substitute.For<IWorkGroupEmployeeRepository>();
+            _mockMapper             = Substitute.For<IMapper>();
+            _sut                    = new WorkGroupGradeService(_mockRepository, _mockEmployeeRepository, _mockMapper);
         }
 
         #region GetWorkGroupGradeAsync Tests

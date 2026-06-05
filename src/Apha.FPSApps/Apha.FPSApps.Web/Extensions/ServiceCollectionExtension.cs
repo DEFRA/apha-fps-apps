@@ -45,6 +45,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookSettingsService, CostBookSettingsService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IDivisionService, DivisionService>();
+            services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<IMonthService, MonthService>();
@@ -64,6 +65,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
+            services.AddScoped<IWorkgroupService, WorkgroupService>();
 
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<ITestorProductService, TestorProductService>();
