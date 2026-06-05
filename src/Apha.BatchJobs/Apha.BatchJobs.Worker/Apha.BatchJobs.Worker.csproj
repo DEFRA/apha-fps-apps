@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BatchJobs.csproj" />
+    <ProjectReference Include="..\Apha.BatchJobs.csproj" />
   </ItemGroup>
 
   <ItemGroup>

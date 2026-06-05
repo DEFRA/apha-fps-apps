@@ -27,7 +27,7 @@
 
   <!-- All Unit/*.cs files are now included implicitly by the SDK -->
   <ItemGroup>
-    <ProjectReference Include="..\BatchJobs.csproj" />
+    <ProjectReference Include="..\Apha.BatchJobs.csproj" />
   </ItemGroup>
 
   <ItemGroup>
