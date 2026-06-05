@@ -23,10 +23,10 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.Setting)
                 .HasMaxLength(255)
                 .HasColumnName("setting");
-            entity.Property(e => e.Testsetting)
+            entity.Property(e => e.TestSetting)
                 .HasMaxLength(255)
                 .HasColumnName("testsetting");
-            entity.Property(e => e.Userupdateable)
+            entity.Property(e => e.UserUpdateable)
                 .HasDefaultValue(false)
                 .HasColumnName("userupdateable");
         }

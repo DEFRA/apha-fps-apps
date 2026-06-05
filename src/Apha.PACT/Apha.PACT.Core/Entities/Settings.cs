@@ -8,8 +8,8 @@
 
         public string? Notes { get; set; }
 
-        public string? Testsetting { get; set; }
+        public string? TestSetting { get; set; }
 
-        public bool? Userupdateable { get; set; }
+        public bool? UserUpdateable { get; set; }
     }
 }
