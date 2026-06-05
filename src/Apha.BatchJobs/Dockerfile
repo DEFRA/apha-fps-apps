@@ -45,9 +45,4 @@ RUN find . -type f -exec chmod 444 {} \; && \
 
 USER app
 
-LABEL maintainer="Apha Engineering"
-LABEL managed="true"
-LABEL application="batch-jobs-worker"
-LABEL description="Containerized .NET 10 BatchJobs worker for ECS/Fargate"
-
 ENTRYPOINT ["dotnet", "Apha.BatchJobs.Worker.dll"]
