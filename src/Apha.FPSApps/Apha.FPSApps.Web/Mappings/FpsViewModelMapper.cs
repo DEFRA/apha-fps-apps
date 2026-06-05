@@ -62,6 +62,7 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.Active, o => o.MapFrom(s => s.Active))
                 .ForMember(d => d.RecUnitPrice, o => o.MapFrom(s => s.RecUnitPrice))
                 .ReverseMap();
+            CreateMap<MaintWGGradeItem, WorkgroupGradeDto>().ReverseMap();
         }
     }
 }

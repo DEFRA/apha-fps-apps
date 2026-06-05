@@ -83,7 +83,6 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Division> Divisions { get; set; }
         public virtual DbSet<Agency> Agencies { get; set; }
 
-
         public virtual DbSet<AdditionalCostView> AdditionalCostViews { get; set; }
         public virtual DbSet<AccountCategory> AccountCategories { get; set; }
         public virtual DbSet<WorkGroupStaff> WorkGroupStaffs { get; set; }
@@ -287,6 +286,11 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new PactStaffMap());
             modelBuilder.Entity<PactStaff>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
+            modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new GradeMap());
+            modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

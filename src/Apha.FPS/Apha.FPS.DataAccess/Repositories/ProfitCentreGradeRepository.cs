@@ -183,5 +183,15 @@ namespace Apha.FPS.DataAccess.Repositories
             System.Linq.Expressions.Expression<Func<ProfitCentreGrade, TKey>> keySelector,
             bool descending)
             => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+
+        public async Task<List<string>> GetAllPcGradesAsync()
+        {
+            return await _dbContext.ProfitCentreGrades
+                .AsNoTracking()
+                .Select(e => e.PcGrade)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+        }
     }
 }
