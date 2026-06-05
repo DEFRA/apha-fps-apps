@@ -151,6 +151,10 @@ namespace Apha.Common.Constants
         public const string GetPcGradeDivisionGrades = "api/v1/pcgrades/divisiongrades";
         public const string GetPcGradeGradeCodes = "api/v1/pcgrades/gradecodes";
         public const string GetPcGradeProfitCentres = "api/v1/pcgrades/profitcentres";
+        public const string GetAllPcGrades = "api/v1/pcgrades/allpcgrades";
+
+        // Resource Set-Up — Workgroups
+        public const string GetAllWorkgroupNames = "api/v1/workgroups/names";
 
         // Resource Set-Up — WG Grades
         public const string GetWgGrades = "api/v1/wggrades?pcGrade={0}";
@@ -164,5 +168,13 @@ namespace Apha.Common.Constants
 
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
+
+        // WorkgroupGrade Maintainence
+        public const string GetPagedWorkgroupGrades = "api/v1/wggrades/paged";
+        public const string GetWorkgroupGradeByCode = "api/v1/wggrades/{0}";
+        public const string CreateWorkgroupGrade = "api/v1/wggrades";
+        public const string UpdateWorkgroupGrade = "api/v1/wggrades/{0}";
+        public const string DeleteWorkgroupGrade = "api/v1/wggrades/maintain/{0}";
+        public const string GetAllGradeCodes = "api/v1/wggrades/gradecodes";
     }
 }

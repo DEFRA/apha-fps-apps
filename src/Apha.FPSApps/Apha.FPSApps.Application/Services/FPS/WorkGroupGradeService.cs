@@ -24,5 +24,24 @@ namespace Apha.FPSApps.Application.Services.FPS
         {
             return await _fpsClient.FpsWorkGroupGrade.DeleteWorkGroupGradeAsync(wgGrade);
         }
-    }
-}
+
+        public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetAllWorkgroupGradesPagedAsync(QueryParameters<string> query)
+    => await _fpsClient.FpsWorkGroupGrade.GetAllWorkgroupGradesPagedAsync(query);
+
+        public async Task<ApiResponseDto<WorkgroupGradeDto>> GetByWgGradeAsync(string wgGrade)
+            => await _fpsClient.FpsWorkGroupGrade.GetByWgGradeAsync(wgGrade);
+
+        public async Task<ApiResponseDto<WorkgroupGradeDto>> CreateAsync(WorkgroupGradeDto dto)
+            => await _fpsClient.FpsWorkGroupGrade.CreateAsync(dto);
+
+        public async Task<ApiResponseDto<WorkgroupGradeDto>> UpdateAsync(string wgGrade, WorkgroupGradeDto dto)
+            => await _fpsClient.FpsWorkGroupGrade.UpdateAsync(wgGrade, dto);
+
+        public async Task<ApiResponseDto<bool>> DeleteAsync(string wgGrade)
+            => await _fpsClient.FpsWorkGroupGrade.DeleteAsync(wgGrade);
+
+        public async Task<ApiResponseDto<List<string>>> GetAllGradeCodesAsync()
+            => await _fpsClient.FpsWorkGroupGrade.GetAllGradeCodesAsync();
+
+            }
+        }

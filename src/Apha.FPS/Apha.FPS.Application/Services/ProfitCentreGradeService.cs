@@ -86,5 +86,8 @@ namespace Apha.FPS.Application.Services
 
         public async Task<List<string>> GetAllProfitCentreCodesAsync()
             => await _repository.GetAllProfitCentreCodesAsync();
+
+        public async Task<List<string>> GetAllPcGradesAsync()
+            => await _repository.GetAllPcGradesAsync();
     }
 }
