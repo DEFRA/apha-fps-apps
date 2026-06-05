@@ -62,8 +62,8 @@ public static class ServiceCollectionSetup
         else
         {
             // Production mode: Use PostgreSQL database
-            var connectionString = config.GetConnectionString("BatchJobsConnectionString")
-                ?? throw new InvalidOperationException("Connection string 'BatchJobsConnectionString' not found.");
+            var connectionString = config.GetConnectionString("FPSConnectionString")
+                ?? throw new InvalidOperationException("Connection string 'FPSConnectionString' not found.");
             var dbCommandTimeoutSeconds = config.GetValue<int?>("BatchJobs:DbCommandTimeoutSeconds") is int v && v > 0 ? v : 30;
 
             services.AddDbContext<BatchJobsDbContext>(
@@ -234,4 +234,6 @@ public static class ServiceCollectionSetup
         }
     }
 }
+
+
 

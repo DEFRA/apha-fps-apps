@@ -22,7 +22,7 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
     public RecreateSummariesOrchestratorIntegrationTests()
     {
         _connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
+            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
             ?? DefaultConnectionString;
     }
 
@@ -253,3 +253,4 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
         }
     }
 }
+

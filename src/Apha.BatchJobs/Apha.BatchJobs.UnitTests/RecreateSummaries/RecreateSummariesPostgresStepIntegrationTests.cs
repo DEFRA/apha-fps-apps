@@ -21,7 +21,7 @@ public sealed class RecreateSummariesPostgresStepIntegrationTests : IAsyncLifeti
     public RecreateSummariesPostgresStepIntegrationTests()
     {
         _connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
+            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
             ?? DefaultConnectionString;
     }
 
@@ -390,3 +390,5 @@ public sealed class RecreateSummariesPostgresStepIntegrationTests : IAsyncLifeti
         return value is null || value is DBNull ? null : value.ToString();
     }
 }
+
+

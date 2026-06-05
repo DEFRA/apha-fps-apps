@@ -19,7 +19,7 @@ Key settings:
 
 - ASPNETCORE_ENVIRONMENT
 - BATCH_JOB_NAME
-- ConnectionStrings__BatchJobsConnectionString (required for database mode)
+- ConnectionStrings__FPSConnectionString (required for database mode)
 
 ## Exit Codes
 
@@ -33,3 +33,5 @@ Key settings:
 - Unknown job: verify BATCH_JOB_NAME matches a registered job.
 - Connection failure: validate host, port, database, and credentials.
 - Missing config: run from src/Apha.BatchJobs.
+
+

@@ -19,7 +19,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     public RepositoryIntegrationTests()
     {
         _connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
+            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
             ?? DefaultConnectionString;
     }
 
@@ -569,3 +569,5 @@ RESTART IDENTITY CASCADE;";
         return result?.ToString();
     }
 }
+
+

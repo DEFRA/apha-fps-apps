@@ -22,7 +22,7 @@ public sealed class MabArchivePostgresIntegrationTests : IAsyncLifetime
     public MabArchivePostgresIntegrationTests()
     {
         _connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
+            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
             ?? DefaultConnectionString;
     }
 
@@ -169,3 +169,5 @@ public sealed class MabArchivePostgresIntegrationTests : IAsyncLifetime
 
     private bool CanRunIntegrationTests() => string.IsNullOrWhiteSpace(_skipReason);
 }
+
+
