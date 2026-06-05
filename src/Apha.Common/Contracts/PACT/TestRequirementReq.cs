@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.Common.Contracts.PACT
 {
-    public class TestRequirementReq : IValidatableObject
+    public class TestRequirementReq 
     {
         public string TestCode { get; set; } = null!;
         public string Buyer { get; set; } = null!;
@@ -12,13 +12,5 @@ namespace Apha.Common.Contracts.PACT
         public string? ProjectBuyerCode { get; set; }
         public string? TestBuyerCode { get; set; }
         public short? Active { get; set; }
-
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            if (string.IsNullOrWhiteSpace(ProjectBuyerCode) && string.IsNullOrWhiteSpace(TestBuyerCode))
-                yield return new ValidationResult(
-                    "You must fill in project buyer or test buyer.",
-                    new[] { nameof(ProjectBuyerCode), nameof(TestBuyerCode) });
-        }
     }
 }
