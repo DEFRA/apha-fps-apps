@@ -23,6 +23,10 @@ on:
         description: 'PIMS API image version (leave blank to skip)'
         type: string
         required: false
+      BATCHJOBS_VERSION:
+        description: 'BatchJobs Worker image version (leave blank to skip)'
+        type: string
+        required: false
       tag_short_description:
         description: "Short description for the git tag (applied to all pushed images)"
         required: true
@@ -60,7 +64,7 @@ jobs:
             echo "========================================"
             echo " Current versions from: $latest_rollout"
             echo "========================================"
-            git tag -l --format='%(contents)' "$latest_rollout" | grep -E '^(fpsapps|fps|costbook|pact|pims|version)=' || true
+            git tag -l --format='%(contents)' "$latest_rollout" | grep -E '^(fpsapps|fps|costbook|pact|pims|batchjobs|version)=' || true
             echo "========================================"
           fi
       - name: Validate semver format (major.minor.patch) for all provided versions
@@ -71,6 +75,7 @@ jobs:
           COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
           PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
           PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+          BATCHJOBS_VERSION: ${{ github.event.inputs.BATCHJOBS_VERSION }}
           ROLLOUT_VERSION: ${{ github.event.inputs.ROLLOUT_VERSION }}
         run: |
           VERSION_REGEX='^[0-9]+\.[0-9]+\.[0-9]+$'
@@ -88,13 +93,14 @@ jobs:
           check_version "COSTBOOK_VERSION" "$COSTBOOK_VERSION"
           check_version "PACT_VERSION"     "$PACT_VERSION"
           check_version "PIMS_VERSION"     "$PIMS_VERSION"
+          check_version "BATCHJOBS_VERSION" "$BATCHJOBS_VERSION"
           check_version "ROLLOUT_VERSION"  "$ROLLOUT_VERSION"
           if [ $errors -gt 0 ]; then
             echo "One or more version inputs failed validation. Aborting."
             exit 1
           fi
           # Ensure at least one app version has been provided
-          if [ -z "$FPSAPPS_VERSION" ] && [ -z "$FPS_VERSION" ] && [ -z "$COSTBOOK_VERSION" ] && [ -z "$PACT_VERSION" ] && [ -z "$PIMS_VERSION" ]; then
+          if [ -z "$FPSAPPS_VERSION" ] && [ -z "$FPS_VERSION" ] && [ -z "$COSTBOOK_VERSION" ] && [ -z "$PACT_VERSION" ] && [ -z "$PIMS_VERSION" ] && [ -z "$BATCHJOBS_VERSION" ]; then
             echo "ERROR: At least one app version must be provided. All inputs are blank."
             exit 1
           fi
@@ -138,6 +144,7 @@ jobs:
           COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
           PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
           PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+          BATCHJOBS_VERSION: ${{ github.event.inputs.BATCHJOBS_VERSION }}
         run: |
           errors=0
           check_ecr() {
@@ -156,11 +163,51 @@ jobs:
           [ -n "$COSTBOOK_VERSION" ]  && check_ecr "apha/costbook"  "$COSTBOOK_VERSION"
           [ -n "$PACT_VERSION" ]      && check_ecr "apha/pact"      "$PACT_VERSION"
           [ -n "$PIMS_VERSION" ]      && check_ecr "apha/pims"      "$PIMS_VERSION"
+          [ -n "$BATCHJOBS_VERSION" ] && check_ecr "apha/fpsbatchjobs" "$BATCHJOBS_VERSION"
           if [ $errors -gt 0 ]; then
             echo "One or more image tags already exist in ECR. Aborting — update the version(s) and retry."
             exit 1
           fi
           echo "All image tags are available in ECR."
+
+  # ── BatchJobs Worker ─────────────────────────────────────────────────────────
+  build-sonar-batchjobs:
+    needs: [validate-inputs, check-ecr-tags]
+    if: needs.validate-inputs.result == 'success' && needs.check-ecr-tags.result == 'success' && github.event.inputs.BATCHJOBS_VERSION != ''
+    uses: ./.github/workflows/build-and-sonar-analyze-template.yaml
+    with:
+      dotnet_application_solution_name: Apha.BatchJobs
+      sonar_project_key: DEFRA_apha-fps-apps
+      solution_file: Apha.BatchJobs
+      run_application_tests: false
+      run_web_tests: false
+      run_dataaccess_tests: false
+      run_infrastructure_tests: false
+      run_custom_tests: true
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    permissions:
+      id-token: write
+      contents: read
+
+  push-batchjobs:
+    needs: build-sonar-batchjobs
+    if: always() && needs.build-sonar-batchjobs.result == 'success' && github.event.inputs.BATCHJOBS_VERSION != ''
+    uses: ./.github/workflows/push-image-template.yaml
+    with:
+      IMAGE_VERSION: ${{ github.event.inputs.BATCHJOBS_VERSION }}
+      repository: apha/fpsbatchjobs
+      dockerfile_path: src/Apha.BatchJobs/Dockerfile
+      dev_image_version_release: true
+      tag_short_description: ${{ github.event.inputs.tag_short_description }}
+      run_local_healthcheck: false
+    secrets:
+      AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
+      AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
+      AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
+    permissions:
+      id-token: write
+      contents: write
 
   # ── FPSApps Web ──────────────────────────────────────────────────────────────
   build-sonar-fpsapps:
@@ -175,7 +222,6 @@ jobs:
       run_web_tests: true
       web_layer_suffix: 'Web'
       run_infrastructure_tests: true
-      environment: rollout
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     permissions:
@@ -213,7 +259,6 @@ jobs:
       run_web_tests: true
       web_layer_suffix: 'Api'
       run_dataaccess_tests: true
-      environment: rollout
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     permissions:
@@ -251,7 +296,6 @@ jobs:
       run_web_tests: true
       web_layer_suffix: 'Api'
       run_dataaccess_tests: true
-      environment: rollout
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     permissions:
@@ -289,7 +333,6 @@ jobs:
       run_web_tests: true
       web_layer_suffix: 'Api'
       run_dataaccess_tests: true
-      environment: rollout
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     permissions:
@@ -327,7 +370,6 @@ jobs:
       run_web_tests: false
       web_layer_suffix: 'Api'
       run_dataaccess_tests: false
-      environment: rollout
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     permissions:
@@ -354,7 +396,7 @@ jobs:
 
   # ── Single repo-level git tag for the whole rollout ───────────────────────────
   create-rollout-git-tag:
-    needs: [push-fpsapps, push-fps, push-costbook, push-pact, push-pims]
+    needs: [push-fpsapps, push-fps, push-costbook, push-pact, push-pims, push-batchjobs]
     if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
     permissions:
@@ -375,6 +417,7 @@ jobs:
           COSTBOOK_VERSION: ${{ github.event.inputs.COSTBOOK_VERSION }}
           PACT_VERSION: ${{ github.event.inputs.PACT_VERSION }}
           PIMS_VERSION: ${{ github.event.inputs.PIMS_VERSION }}
+          BATCHJOBS_VERSION: ${{ github.event.inputs.BATCHJOBS_VERSION }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -388,6 +431,7 @@ jobs:
           [ -n "$COSTBOOK_VERSION" ]  && ANNOTATION+="\ncostbook=${COSTBOOK_VERSION}"
           [ -n "$PACT_VERSION" ]      && ANNOTATION+="\npact=${PACT_VERSION}"
           [ -n "$PIMS_VERSION" ]      && ANNOTATION+="\npims=${PIMS_VERSION}"
+          [ -n "$BATCHJOBS_VERSION" ] && ANNOTATION+="\nfpsbatchjobs=${BATCHJOBS_VERSION}"
 
           echo "Creating rollout tag: $GIT_TAG"
           echo -e "Tag annotation:\n$ANNOTATION"
