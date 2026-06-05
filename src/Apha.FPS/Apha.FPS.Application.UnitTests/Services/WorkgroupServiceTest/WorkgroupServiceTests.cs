@@ -28,21 +28,21 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
         {
             // Arrange
             var names = new List<string> { "WG01", "WG02", "WG03" };
-            _mockRepository.GetAllWorkgroupNamesAsync(default).Returns(names);
+            _mockRepository.GetAllWorkgroupNamesAsync().Returns(names);
 
             // Act
             var result = await _sut.GetAllWorkgroupNamesAsync();
 
             // Assert
             Assert.Equal(names, result);
-            await _mockRepository.Received(1).GetAllWorkgroupNamesAsync(default);
+            await _mockRepository.Received(1).GetAllWorkgroupNamesAsync();
         }
 
         [Fact]
         public async Task GetAllWorkgroupNamesAsync_WithEmptyRepository_ReturnsEmptyList()
         {
             // Arrange
-            _mockRepository.GetAllWorkgroupNamesAsync(default).Returns(new List<string>());
+            _mockRepository.GetAllWorkgroupNamesAsync().Returns(new List<string>());
 
             // Act
             var result = await _sut.GetAllWorkgroupNamesAsync();
@@ -55,7 +55,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
         public async Task GetAllWorkgroupNamesAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
-            _mockRepository.GetAllWorkgroupNamesAsync(default)
+            _mockRepository.GetAllWorkgroupNamesAsync()
                 .ThrowsAsync(new InvalidOperationException("DB failure"));
 
             // Act & Assert

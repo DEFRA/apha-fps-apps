@@ -6,6 +6,6 @@ namespace Apha.FPS.Core.Interfaces
     public interface IWorkgroupRepository
     {
         /// <summary>Returns all Workgroup names for dropdown population.</summary>
-        Task<List<string>> GetAllWorkgroupNamesAsync(CancellationToken cancellationToken = default);
+        Task<List<string>> GetAllWorkgroupNamesAsync();
     }
 }

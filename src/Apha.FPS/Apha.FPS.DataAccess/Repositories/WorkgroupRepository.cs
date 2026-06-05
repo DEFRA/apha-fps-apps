@@ -16,13 +16,13 @@ namespace Apha.FPS.DataAccess.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<List<string>> GetAllWorkgroupNamesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<string>> GetAllWorkgroupNamesAsync()
         {
             return await _dbContext.Workgroups
                 .AsNoTracking()
                 .Select(e => e.WorkgroupName)
                 .OrderBy(x => x)
-                .ToListAsync(cancellationToken);
+                .ToListAsync();
         }
     }
 }

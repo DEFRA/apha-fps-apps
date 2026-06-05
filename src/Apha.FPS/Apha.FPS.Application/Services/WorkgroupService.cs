@@ -15,7 +15,7 @@ namespace Apha.FPS.Application.Services
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
-        public async Task<List<string>> GetAllWorkgroupNamesAsync(CancellationToken cancellationToken = default)
-            => await _repository.GetAllWorkgroupNamesAsync(cancellationToken);
+        public async Task<List<string>> GetAllWorkgroupNamesAsync()
+            => await _repository.GetAllWorkgroupNamesAsync();
     }
 }
