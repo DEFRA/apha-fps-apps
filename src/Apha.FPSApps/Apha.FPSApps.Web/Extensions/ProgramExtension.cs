@@ -59,7 +59,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddControllersWithViews();
 
             // Authentication
-            services.AddAuthenticationServices(configuration);
+            services.AddAuthenticationServices(configuration, builder.Environment);
 
             //API clients
             services.AddApiClient(builder.Configuration);

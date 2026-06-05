@@ -18,5 +18,8 @@ namespace Apha.FPS.Application.Interfaces
         Task<bool> DeleteAsync(string pcGrade);
 
         Task<List<string>> GetAllProfitCentreCodesAsync();
+
+        /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
+        Task<List<string>> GetAllPcGradesAsync();
     }
 }

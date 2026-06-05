@@ -833,5 +833,48 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreGradeRepositoryTe
         }
 
         #endregion
+
+        #region GetAllPcGradesAsync Tests
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_ReturnsDistinctOrderedPcGrades()
+        {
+            var grades = new List<ProfitCentreGrade>
+            {
+                BuildGrade("GCC"),
+                BuildGrade("GCA"),
+                BuildGrade("GCB"),
+                BuildGrade("GCA") // duplicate
+            };
+            var repo = CreateRepository(grades: grades);
+
+            var result = await repo.GetAllPcGradesAsync();
+
+            Assert.Equal(["GCA", "GCB", "GCC"], result);
+        }
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_ReturnsEmpty_WhenNoGrades()
+        {
+            var repo = CreateRepository(grades: []);
+
+            var result = await repo.GetAllPcGradesAsync();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_ReturnsSingleItem_WhenOneGrade()
+        {
+            var grades = new List<ProfitCentreGrade> { BuildGrade("G001") };
+            var repo = CreateRepository(grades: grades);
+
+            var result = await repo.GetAllPcGradesAsync();
+
+            Assert.Single(result);
+            Assert.Equal("G001", result[0]);
+        }
+
+        #endregion
     }
 }

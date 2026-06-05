@@ -49,6 +49,7 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Staff Plan view
             CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();
+            CreateMap<MaintWGGradeItem, WorkgroupGradeDto>().ReverseMap();
         }
     }
 }

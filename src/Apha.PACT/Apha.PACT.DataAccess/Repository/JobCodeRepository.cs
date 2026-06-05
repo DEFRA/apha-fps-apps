@@ -18,6 +18,14 @@ namespace Apha.PACT.DataAccess.Repository
             _fpsRequestContext = fpsRequestContext;
         }
 
+        public async Task<IEnumerable<JobCode>> GetJobCodesAsync()
+        {
+            return await _context.JobCodes
+                .AsNoTracking()
+                .OrderBy(j => j.JobCodeId)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<JobCode>> GetJobCodesByProjectAsync(string parentProject)
         {
             return await _context.JobCodes
