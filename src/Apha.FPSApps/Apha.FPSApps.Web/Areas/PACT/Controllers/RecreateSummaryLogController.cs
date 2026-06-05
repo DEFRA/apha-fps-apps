@@ -1,5 +1,4 @@
-using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.PACT;
+using Apha.Common.Contracts;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
@@ -41,12 +40,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// </returns>
         public async Task<IActionResult> Index()
         {
-            var query = _mapper.Map<QueryParameters<string>>(new PaginationFilter<string> { Filter = "{}" });
-            var response = await _logService.GetRecreateSummaryLogAsync(query);
-
             return View(new RecreateSummaryLogViewModel
             {
-                LogsGrid = MapToGridConfig(response, sortBy: null, descending: false)
+                LogsGrid = await BuildLogGrid(new PaginationFilter<string> { Filter = "{}" })
             });
         }
 
@@ -65,45 +61,24 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadRecreateSummariesLogGrid(PaginationFilter<string> request)
         {
+            var grid = await BuildLogGrid(request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        private async Task<DataGridConfig<RecreateSummaryLogItem>> BuildLogGrid(PaginationFilter<string> request)
+        {
+            var grid = RecreateSummariesLogGridConfig();
             var query = _mapper.Map<QueryParameters<string>>(request);
             var response = await _logService.GetRecreateSummaryLogAsync(query);
 
-            return PartialView("_DataGrid", MapToGridConfig(response, request.SortBy, request.Descending));
-        }
+            grid.Data = response.Data != null ? _mapper.Map<List<RecreateSummaryLogItem>>(response.Data.data) : [];
 
-        /// <summary>
-        /// Builds a <see cref="DataGridConfig{RecreateSummaryLogItem}"/> from the service response.
-        /// When the response indicates failure or contains no data the default empty grid configuration
-        /// is returned immediately. On success, the response rows are mapped to view-model rows and the
-        /// pagination model is populated from the response metadata together with the supplied sort state.
-        /// </summary>
-        /// <param name="response">The API response containing log rows and pagination metadata.</param>
-        /// <param name="sortBy">The column name to sort by, or <see langword="null"/> if no sort is active.</param>
-        /// <param name="descending"><see langword="true"/> for a descending sort; <see langword="false"/> for ascending.</param>
-        /// <returns>
-        /// A fully populated <see cref="DataGridConfig{RecreateSummaryLogItem}"/>, or a default
-        /// empty configuration when <paramref name="response"/> is unsuccessful or has no data.
-        /// </returns>
-        private DataGridConfig<RecreateSummaryLogItem> MapToGridConfig(
-            ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>> response,
-            string? sortBy,
-            bool descending)
-        {
-            var grid = RecreateSummariesLogGridConfig();
-
-            if (!response.Success || response.Data is null)
-                return grid;
-
-            grid.Data = _mapper.Map<List<RecreateSummaryLogItem>>(response.Data.data);
-
-            grid.Pagination = new PaginationModel
-            {
-                TotalRecords = response.Data.TotalCount,
-                PageNumber = response.Data.PageNumber,
-                PageSize = response.Data.PageSize,
-                SortColumn = sortBy,
-                SortDirection = descending
-            };
+            grid.Pagination = response.Pagination != null
+                       ? _mapper.Map<PaginationModel>(response.Pagination)
+                       : new PaginationModel();
+            
+            grid.Pagination.SortColumn = request.SortBy;
+            grid.Pagination.SortDirection = request.Descending;
 
             return grid;
         }

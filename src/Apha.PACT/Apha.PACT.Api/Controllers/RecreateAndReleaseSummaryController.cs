@@ -37,7 +37,7 @@ namespace Apha.PACT.Api.Controllers
         /// <returns>
         /// <c>200 OK</c> with a <see cref="PaginationRes{T}"/> containing the logs and pagination metadata.
         /// </returns>
-        [HttpGet("Log")]
+        [HttpGet("recreatesummary/log")]
         public async Task<IActionResult> GetRecreateSummaryLog([FromQuery] QueryParameters<string> query)
         {
             var result = await _service.GetRecreateSummaryLogAsync(query);
