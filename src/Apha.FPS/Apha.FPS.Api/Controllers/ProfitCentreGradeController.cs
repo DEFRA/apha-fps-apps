@@ -116,7 +116,7 @@ namespace Apha.FPS.Api.Controllers
         [HttpGet("allpcgrades")]
         public async Task<ActionResult<List<string>>> GetAllPcGradesAsync()
         {
-            var result = await _ProfitCentreGradeService.GetAllPcGradesAsync();
+            var result = await _profitCentreGradeService.GetAllPcGradesAsync();
             return Ok(result);
         }
     }
