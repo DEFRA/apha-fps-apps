@@ -38,7 +38,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
             CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
-            CreateMap<MonthlyOutputLogDto, MonthlyOutputLogRes>().ReverseMap();            
+            CreateMap<MonthlyOutputLogDto, MonthlyOutputLogRes>().ReverseMap();
+            CreateMap<MonthlyTimeLogDto, MonthlyTimeLogRes>().ReverseMap();
+            CreateMap<CalenderMonthDto, CalenderMonthRes>().ReverseMap();
             CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeRes>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeRes>().ReverseMap();
             CreateMap<WgSummarisedStaffTimeUsageRowDto, WgSummarisedStaffTimeUsageRowRes>().ReverseMap();
@@ -51,7 +53,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectTitleLookupRes, SummarisedWgTimeProjectTitleLookupItem>().ReverseMap();
             CreateMap<ApiResponse<SummarisedWgTimePivotRes>, ApiResponseDto<SummarisedWgTimeViewDto>>();
             CreateMap<WorkGroupReportEmailResultDto, WorkGroupReportEmailResultRes>().ReverseMap();            
-            CreateMap<RecreateSummariesLogDto, RecreateSummariesLogRes>().ReverseMap();
+            CreateMap<RecreateSummaryLogDto, RecreateSummaryLogRes>().ReverseMap();
             CreateMap<ReleasePeriodDto, ReleasePeriodRes>().ReverseMap();
             CreateMap<ReleaseSummaryRes, ReleaseSummaryDto>();
         }

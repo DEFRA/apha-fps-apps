@@ -1,4 +1,4 @@
-using Apha.PACT.Application.Dtos;
+﻿using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Entities;
@@ -26,10 +26,10 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
             _service = new RecreateAndReleaseSummaryService(_mockRepository, _mockMapper);
         }
 
-        #region GetRecreateSummariesAllLogsAsync
+        #region GetRecreateSummariesLogsAsync
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithExistingLogs_ReturnsPaginatedDtos()
+        public async Task GetRecreateSummariesLogsAsync_WithExistingLogs_ReturnsPaginatedDtos()
         {
             // Arrange
             var query = new QueryParameters<string>
@@ -42,17 +42,16 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "datedone", descending: true);
 
-            var user = new TblUser 
+            var user = new User 
             { 
                 UserName = TestUserName, 
-                Comments = "Test Comment",
-                Logs = new List<RecreateSummariesLog>()
+                Comments = "Test Comment"
             };
 
-            var entities = new List<RecreateSummariesLog>
+            var entities = new List<RecreateSummaryLogWithComment>
             {
-                new() { Id = 1, UserId = TestUserId, Period = TestPeriod, DateDone = DateTime.UtcNow, FpsYear = 2024, User = user },
-                new() { Id = 2, UserId = TestUserId, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1), FpsYear = 2024, User = user }
+                new() { Id = 1, UserId = TestUserId, Comments = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow },
+                new() { Id = 2, UserId = TestUserId, Comments = TestUserName, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1) }
             };
 
             var paginationData = new PaginationData
@@ -63,12 +62,12 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 2
             };
 
-            var pagedData = new PagedData<RecreateSummariesLog>(entities.AsReadOnly(), paginationData);
+            var pagedData = new PagedData<RecreateSummaryLogWithComment>(entities.AsReadOnly(), paginationData);
 
-            var dtos = new List<RecreateSummariesLogDto>
+            var dtos = new List<RecreateSummaryLogDto>
             {
-                new() { Id = 1, UserId = TestUserId, UserName = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow },
-                new() { Id = 2, UserId = TestUserId, UserName = TestUserName, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1) }
+                new() { Id = 1, UserId = TestUserId, Comments = TestUserName, Period = TestPeriod, DateDone = DateTime.UtcNow },
+                new() { Id = 2, UserId = TestUserId, Comments = TestUserName, Period = 2, DateDone = DateTime.UtcNow.AddDays(-1) }
             };
 
             var paginationDto = new PaginationDto
@@ -79,14 +78,14 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 2
             };
 
-            var paginatedResult = new PaginatedResult<RecreateSummariesLogDto>(dtos, paginationDto);
+            var paginatedResult = new PaginatedResult<RecreateSummaryLogDto>(dtos, paginationDto);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(parameters);
-            _mockRepository.GetRecreateSummariesAllLogsAsync(parameters).Returns(pagedData);
-            _mockMapper.Map<PaginatedResult<RecreateSummariesLogDto>>(pagedData).Returns(paginatedResult);
+            _mockRepository.GetRecreateSummaryLogAsync(parameters).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<RecreateSummaryLogDto>>(pagedData).Returns(paginatedResult);
 
             // Act
-            var result = await _service.GetRecreateSummariesAllLogsAsync(query);
+            var result = await _service.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -100,12 +99,12 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
             Assert.Equal(2, result.PaginationData.TotalRecords);
 
             _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
-            await _mockRepository.Received(1).GetRecreateSummariesAllLogsAsync(parameters);
-            _mockMapper.Received(1).Map<PaginatedResult<RecreateSummariesLogDto>>(pagedData);
+            await _mockRepository.Received(1).GetRecreateSummaryLogAsync(parameters);
+            _mockMapper.Received(1).Map<PaginatedResult<RecreateSummaryLogDto>>(pagedData);
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithNoLogs_ReturnsEmptyPaginatedResult()
+        public async Task GetRecreateSummariesLogsAsync_WithNoLogs_ReturnsEmptyPaginatedResult()
         {
             // Arrange
             var query = new QueryParameters<string>
@@ -116,7 +115,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
 
-            var emptyEntities = new List<RecreateSummariesLog>();
+            var emptyEntities = new List<RecreateSummaryLogWithComment>();
             var paginationData = new PaginationData
             {
                 PageNumber = 1,
@@ -125,9 +124,9 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 0
             };
 
-            var pagedData = new PagedData<RecreateSummariesLog>(emptyEntities.AsReadOnly(), paginationData);
+            var pagedData = new PagedData<RecreateSummaryLogWithComment>(emptyEntities.AsReadOnly(), paginationData);
 
-            var emptyDtos = new List<RecreateSummariesLogDto>();
+            var emptyDtos = new List<RecreateSummaryLogDto>();
             var paginationDto = new PaginationDto
             {
                 PageNumber = 1,
@@ -136,25 +135,25 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 0
             };
 
-            var paginatedResult = new PaginatedResult<RecreateSummariesLogDto>(emptyDtos, paginationDto);
+            var paginatedResult = new PaginatedResult<RecreateSummaryLogDto>(emptyDtos, paginationDto);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(parameters);
-            _mockRepository.GetRecreateSummariesAllLogsAsync(parameters).Returns(pagedData);
-            _mockMapper.Map<PaginatedResult<RecreateSummariesLogDto>>(pagedData).Returns(paginatedResult);
+            _mockRepository.GetRecreateSummaryLogAsync(parameters).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<RecreateSummaryLogDto>>(pagedData).Returns(paginatedResult);
 
             // Act
-            var result = await _service.GetRecreateSummariesAllLogsAsync(query);
+            var result = await _service.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.NotNull(result);
             Assert.NotNull(result.Data);
             Assert.Empty(result.Data);
             Assert.Equal(0, result.PaginationData.TotalRecords);
-            await _mockRepository.Received(1).GetRecreateSummariesAllLogsAsync(parameters);
+            await _mockRepository.Received(1).GetRecreateSummaryLogAsync(parameters);
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_RepositoryThrowsException_PropagatesException()
+        public async Task GetRecreateSummariesLogsAsync_RepositoryThrowsException_PropagatesException()
         {
             // Arrange
             var query = new QueryParameters<string>
@@ -166,15 +165,15 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(parameters);
-            _mockRepository.GetRecreateSummariesAllLogsAsync(parameters)
-                .Returns(Task.FromException<PagedData<RecreateSummariesLog>>(new InvalidOperationException("Database error")));
+            _mockRepository.GetRecreateSummaryLogAsync(parameters)
+                .Returns(Task.FromException<PagedData<RecreateSummaryLogWithComment>>(new InvalidOperationException("Database error")));
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetRecreateSummariesAllLogsAsync(query));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetRecreateSummaryLogAsync(query));
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_MapperThrowsException_PropagatesException()
+        public async Task GetRecreateSummariesLogsAsync_MapperThrowsException_PropagatesException()
         {
             // Arrange
             var query = new QueryParameters<string>
@@ -187,11 +186,11 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 .Do(_ => throw new InvalidOperationException("Mapper error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetRecreateSummariesAllLogsAsync(query));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetRecreateSummaryLogAsync(query));
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithPagination_ReturnsCorrectPage()
+        public async Task GetRecreateSummariesLogsAsync_WithPagination_ReturnsCorrectPage()
         {
             // Arrange
             var query = new QueryParameters<string>
@@ -204,22 +203,20 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var parameters = new PaginationParameters<string>(page: 2, pageSize: 5, sortBy: "period", descending: false);
 
-            var user = new TblUser 
+            var user = new User 
             { 
                 UserName = TestUserName, 
-                Comments = "Test Comment",
-                Logs = new List<RecreateSummariesLog>()
+                Comments = "Test Comment"
             };
 
             var entities = Enumerable.Range(6, 5)
-                .Select(i => new RecreateSummariesLog
+                .Select(i => new RecreateSummaryLogWithComment
                 {
                     Id = i,
                     UserId = TestUserId,
+                    Comments = TestUserName,
                     Period = (short)i,
-                    DateDone = DateTime.UtcNow.AddDays(-i),
-                    FpsYear = 2024,
-                    User = user
+                    DateDone = DateTime.UtcNow.AddDays(-i)
                 })
                 .ToList();
 
@@ -231,13 +228,13 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 20
             };
 
-            var pagedData = new PagedData<RecreateSummariesLog>(entities.AsReadOnly(), paginationData);
+            var pagedData = new PagedData<RecreateSummaryLogWithComment>(entities.AsReadOnly(), paginationData);
 
-            var dtos = entities.Select(e => new RecreateSummariesLogDto
+            var dtos = entities.Select(e => new RecreateSummaryLogDto
             {
                 Id = e.Id,
                 UserId = e.UserId,
-                UserName = TestUserName,
+                Comments = TestUserName,
                 Period = e.Period,
                 DateDone = e.DateDone
             }).ToList();
@@ -250,14 +247,14 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 20
             };
 
-            var paginatedResult = new PaginatedResult<RecreateSummariesLogDto>(dtos, paginationDto);
+            var paginatedResult = new PaginatedResult<RecreateSummaryLogDto>(dtos, paginationDto);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(parameters);
-            _mockRepository.GetRecreateSummariesAllLogsAsync(parameters).Returns(pagedData);
-            _mockMapper.Map<PaginatedResult<RecreateSummariesLogDto>>(pagedData).Returns(paginatedResult);
+            _mockRepository.GetRecreateSummaryLogAsync(parameters).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<RecreateSummaryLogDto>>(pagedData).Returns(paginatedResult);
 
             // Act
-            var result = await _service.GetRecreateSummariesAllLogsAsync(query);
+            var result = await _service.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -269,7 +266,7 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
         }
 
         [Fact]
-        public async Task GetRecreateSummariesAllLogsAsync_WithSortParameters_PassesParametersToRepository()
+        public async Task GetRecreateSummariesLogsAsync_WithSortParameters_PassesParametersToRepository()
         {
             // Arrange
             var query = new QueryParameters<string>
@@ -282,23 +279,21 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
 
             var parameters = new PaginationParameters<string>(page: 1, pageSize: 10, sortBy: "userid", descending: false);
 
-            var userA = new TblUser 
+            var userA = new User 
             { 
                 UserName = "User A", 
-                Comments = "Comment A",
-                Logs = new List<RecreateSummariesLog>()
+                Comments = "Comment A"
             };
-            var userB = new TblUser 
+            var userB = new User 
             { 
                 UserName = "User B", 
-                Comments = "Comment B",
-                Logs = new List<RecreateSummariesLog>()
+                Comments = "Comment B"
             };
 
-            var entities = new List<RecreateSummariesLog>
+            var entities = new List<RecreateSummaryLogWithComment>
             {
-                new() { Id = 1, UserId = "UserA", Period = 1, DateDone = DateTime.UtcNow, FpsYear = 2024, User = userA },
-                new() { Id = 2, UserId = "UserB", Period = 2, DateDone = DateTime.UtcNow, FpsYear = 2024, User = userB }
+                new() { Id = 1, UserId = "UserA", Comments = TestUserName, Period = 1, DateDone = DateTime.UtcNow },
+                new() { Id = 2, UserId = "UserB", Comments = TestUserName, Period = 2, DateDone = DateTime.UtcNow }
             };
 
             var paginationData = new PaginationData
@@ -309,12 +304,12 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 2
             };
 
-            var pagedData = new PagedData<RecreateSummariesLog>(entities.AsReadOnly(), paginationData);
+            var pagedData = new PagedData<RecreateSummaryLogWithComment>(entities.AsReadOnly(), paginationData);
 
-            var dtos = new List<RecreateSummariesLogDto>
+            var dtos = new List<RecreateSummaryLogDto>
             {
-                new() { Id = 1, UserId = "UserA", UserName = "User A", Period = 1, DateDone = DateTime.UtcNow },
-                new() { Id = 2, UserId = "UserB", UserName = "User B", Period = 2, DateDone = DateTime.UtcNow }
+                new() { Id = 1, UserId = "UserA", Comments = "User A", Period = 1, DateDone = DateTime.UtcNow },
+                new() { Id = 2, UserId = "UserB", Comments = "User B", Period = 2, DateDone = DateTime.UtcNow }
             };
 
             var paginationDto = new PaginationDto
@@ -325,18 +320,18 @@ namespace Apha.PACT.Application.UnitTests.Services.RecreateAndReleaseSummaryServ
                 TotalRecords = 2
             };
 
-            var paginatedResult = new PaginatedResult<RecreateSummariesLogDto>(dtos, paginationDto);
+            var paginatedResult = new PaginatedResult<RecreateSummaryLogDto>(dtos, paginationDto);
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(parameters);
-            _mockRepository.GetRecreateSummariesAllLogsAsync(parameters).Returns(pagedData);
-            _mockMapper.Map<PaginatedResult<RecreateSummariesLogDto>>(pagedData).Returns(paginatedResult);
+            _mockRepository.GetRecreateSummaryLogAsync(parameters).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<RecreateSummaryLogDto>>(pagedData).Returns(paginatedResult);
 
             // Act
-            var result = await _service.GetRecreateSummariesAllLogsAsync(query);
+            var result = await _service.GetRecreateSummaryLogAsync(query);
 
             // Assert
             Assert.NotNull(result);
-            await _mockRepository.Received(1).GetRecreateSummariesAllLogsAsync(
+            await _mockRepository.Received(1).GetRecreateSummaryLogAsync(
                 Arg.Is<PaginationParameters<string>>(p =>
                     p.Page == 1 &&
                     p.PageSize == 10 &&

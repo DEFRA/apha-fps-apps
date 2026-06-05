@@ -1,5 +1,4 @@
 using Apha.FPS.Core.Entities;
-using Apha.FPS.Core.Entities;
 
 namespace Apha.FPS.Core.Interfaces
 {

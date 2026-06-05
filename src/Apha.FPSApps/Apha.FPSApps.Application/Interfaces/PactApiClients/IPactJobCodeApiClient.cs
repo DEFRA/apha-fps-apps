@@ -6,6 +6,7 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
 {
     public interface IPactJobCodeApiClient
     {
+        Task<ApiResponseDto<List<JobCodeDto>>> GetJobCodesAsync();
         Task<ApiResponseDto<List<JobCodeDto>>> GetJobCodesByProjectAsync(string parentProject);
         Task<ApiResponseDto<List<JobCodeDto>>> GetPagedJobCodesAsync(QueryParameters<string> query, string? parentProject);
         Task<ApiResponseDto<JobCodeDto>> GetJobCodeByIdAsync(string jobCodeId);

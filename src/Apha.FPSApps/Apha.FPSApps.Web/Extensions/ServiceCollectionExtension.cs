@@ -45,6 +45,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookSettingsService, CostBookSettingsService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IDivisionService, DivisionService>();
+            services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<IMonthService, MonthService>();
@@ -64,11 +65,13 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
+            services.AddScoped<IWorkgroupService, WorkgroupService>();
 
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
+            services.AddScoped<IPactMonthlyTimeService, PactMonthlyTimeService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
             services.AddScoped<IProjectMonthService, ProjectMonthService>();            
             services.AddScoped<IWorkGroupService, WorkGroupService>();
@@ -78,7 +81,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
-            services.AddScoped<IRecreateSummariesLogService, RecreateSummariesLogService>();
+            services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
             return services;
         }

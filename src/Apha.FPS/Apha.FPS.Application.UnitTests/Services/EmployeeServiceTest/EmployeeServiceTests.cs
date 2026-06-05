@@ -966,5 +966,81 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
         }
 
         #endregion
+
+        #region GetPactStaffAsync
+
+        [Fact]
+        public async Task GetPactStaffAsync_WithValidData_ReturnsPactStaffDtoList()
+        {
+            // Arrange
+            var pactStaffs = new List<PactStaff>
+            {
+                new PactStaff { PactId = "1", SpNumber = "SP001", Name = "Alice Smith", WorkGroupGrade = "WG1" },
+                new PactStaff { PactId = "2", SpNumber = "SP002", Name = "Bob Jones", WorkGroupGrade = "WG2" }
+            };
+
+            var expectedDtos = new List<PactStaffDto>
+            {
+                new PactStaffDto { PactId = "1", SpNumber = "SP001", Name = "Alice Smith", WorkGroupGrade = "WG1" },
+                new PactStaffDto { PactId = "2", SpNumber = "SP002", Name = "Bob Jones", WorkGroupGrade = "WG2" }
+            };
+
+            _mockRepository.GetPactStaffAsync().Returns(pactStaffs);
+            _mockMapper.Map<IEnumerable<PactStaffDto>>(pactStaffs).Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetPactStaffAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(2);
+            result.First().SpNumber.Should().Be("SP001");
+            result.First().Name.Should().Be("Alice Smith");
+
+            await _mockRepository.Received(1).GetPactStaffAsync();
+            _mockMapper.Received(1).Map<IEnumerable<PactStaffDto>>(pactStaffs);
+        }
+
+        [Fact]
+        public async Task GetPactStaffAsync_WithEmptyList_ReturnsEmptyList()
+        {
+            // Arrange
+            var emptyPactStaffs = new List<PactStaff>();
+            var emptyDtos = new List<PactStaffDto>();
+
+            _mockRepository.GetPactStaffAsync().Returns(emptyPactStaffs);
+            _mockMapper.Map<IEnumerable<PactStaffDto>>(emptyPactStaffs).Returns(emptyDtos);
+
+            // Act
+            var result = await _sut.GetPactStaffAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetPactStaffAsync();
+            _mockMapper.Received(1).Map<IEnumerable<PactStaffDto>>(emptyPactStaffs);
+        }
+
+        [Fact]
+        public async Task GetPactStaffAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetPactStaffAsync()
+                .Throws(expectedException);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetPactStaffAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetPactStaffAsync();
+            _mockMapper.DidNotReceive().Map<IEnumerable<PactStaffDto>>(Arg.Any<IEnumerable<PactStaff>>());
+        }
+
+        #endregion
     }
 }

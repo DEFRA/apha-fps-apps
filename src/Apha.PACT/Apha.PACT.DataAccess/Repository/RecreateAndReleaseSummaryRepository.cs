@@ -3,7 +3,6 @@ using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace Apha.PACT.DataAccess.Repository
 {
@@ -13,35 +12,70 @@ namespace Apha.PACT.DataAccess.Repository
         {
         }
 
-        public async Task<PagedData<RecreateSummariesLog>> GetRecreateSummariesAllLogsAsync(PaginationParameters<string> parameters)
+        /// <summary>
+        /// Retrieves recreate summaries logs with pagination and sorting.
+        /// Implements the SQL query logic: LEFT JOIN tblUsers ON CONCAT('CVLNT', UserID) = UserName
+        /// Returns enriched log data with user information.
+        /// </summary>
+        public async Task<PagedData<RecreateSummaryLogWithComment>> GetRecreateSummaryLogAsync(PaginationParameters<string> parameters)
         {
-            IQueryable<RecreateSummariesLog> query = _context.RecreateSummariesLogs
-                .Include(r => r.User)
-                .AsNoTracking();
+            // Build the query with LEFT JOIN - EF Core will translate string concatenation to SQL CONCAT
+            var baseQuery = from log in _context.RecreateSummaryLogs.AsNoTracking()
+                            join user in _context.Users.AsNoTracking()
+                            on ("CVLNT" + log.UserId) equals user.UserName into userGroup
+                            from user in userGroup.DefaultIfEmpty()
+                            select new
+                            {
+                                Log = log,
+                                UserName = user != null ? user.UserName : null,
+                                UserComments = user != null ? user.Comments : null
+                            };
 
-            // Apply sorting
-            query = ApplySorting(query, parameters.SortBy, parameters.Descending);
-
-            // Get total count before pagination
-            var totalRecords = await query.CountAsync();
-
-            // Apply pagination at database level
-            var data = await query
-                .Skip((parameters.Page - 1) * parameters.PageSize)
-                .Take(parameters.PageSize)
-                .ToListAsync();
-
-            // Build pagination metadata
-            var paginationData = new PaginationData
+            // Apply sorting at database level
+            if (!string.IsNullOrWhiteSpace(parameters.SortBy))
             {
-                PageNumber = parameters.Page,
-                PageSize = parameters.PageSize,
-                TotalPages = (int)Math.Ceiling((double)totalRecords / parameters.PageSize),
-                TotalRecords = totalRecords
-            };
+                var sortBy = parameters.SortBy.ToLower();
+                baseQuery = (sortBy, parameters.Descending) switch
+                {
+                    ("id", true) => baseQuery.OrderByDescending(e => e.Log.Id),
+                    ("id", false) => baseQuery.OrderBy(e => e.Log.Id),
+                    ("datedone", true) => baseQuery.OrderByDescending(e => e.Log.DateDone),
+                    ("datedone", false) => baseQuery.OrderBy(e => e.Log.DateDone),
+                    ("userid", true) => baseQuery.OrderByDescending(e => e.Log.UserId),
+                    ("userid", false) => baseQuery.OrderBy(e => e.Log.UserId),
+                    ("user", true) => baseQuery.OrderByDescending(e => e.UserComments),
+                    ("user", false) => baseQuery.OrderBy(e => e.UserComments),
+                    ("period", true) => baseQuery.OrderByDescending(e => e.Log.Period),
+                    ("period", false) => baseQuery.OrderBy(e => e.Log.Period),
+                    _ => baseQuery.OrderByDescending(e => e.Log.DateDone)
+                };
+            }
+            else
+            {
+                baseQuery = baseQuery.OrderByDescending(e => e.Log.DateDone);
+            }
 
-            return new PagedData<RecreateSummariesLog>(data.AsReadOnly(), paginationData);
+            // Apply pagination at database level before materialization
+            var pagedQuery = baseQuery
+                .Skip((parameters.Page - 1) * parameters.PageSize)
+                .Take(parameters.PageSize);
+
+            // Materialize only the paginated results
+            var result = await pagedQuery.ToListAsync();
+
+            // Map to the result model
+            var mappedData = result.Select(r => new RecreateSummaryLogWithComment
+            {
+                Id = r.Log.Id,
+                UserId = r.Log.UserId,
+                Comments = r.UserComments ?? string.Empty,
+                Period = r.Log.Period,
+                DateDone = r.Log.DateDone,
+            }).ToList();
+
+            return base.ApplyPaging(mappedData, parameters.Page, parameters.PageSize);
         }
+
 
         public async Task<ReleaseSummary> GetReleaseSummariesAsync()
         {
@@ -108,32 +142,6 @@ namespace Apha.PACT.DataAccess.Repository
             }
 
             return releasePeriod;
-        }
-
-        private static IQueryable<RecreateSummariesLog> ApplySorting(IQueryable<RecreateSummariesLog> query, string? sortBy, bool descending)
-        {
-            if (string.IsNullOrEmpty(sortBy))
-                return query.OrderByDescending(e => e.DateDone);
-
-            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
-        }
-
-        private static IQueryable<RecreateSummariesLog> ApplySortingByProperty(IQueryable<RecreateSummariesLog> query, string property, bool descending)
-        {
-            return property switch
-            {
-                "id" => ApplyOrder(query, r => r.Id, descending),
-                "datedone" => ApplyOrder(query, r => r.DateDone, descending),
-                "userid" => ApplyOrder(query, r => r.UserId, descending),
-                "user" => ApplyOrder(query, r => r.User!.UserName, descending),
-                "period" => ApplyOrder(query, r => r.Period, descending),
-                _ => query.OrderByDescending(e => e.DateDone)
-            };
-        }
-
-        private static IQueryable<RecreateSummariesLog> ApplyOrder<T>(IQueryable<RecreateSummariesLog> query, Expression<Func<RecreateSummariesLog, T>> keySelector, bool descending)
-        {
-            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
     }
 }

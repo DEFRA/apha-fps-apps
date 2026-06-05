@@ -31,6 +31,9 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<ProjectMonth, ProjectMonthDto>().ReverseMap();
             CreateMap<ProjectMonthFinal, ProjectMonthFinalDto>().ReverseMap();
             CreateMap<MonthlyOutputLog, MonthlyOutputLogDto>().ReverseMap();
+            CreateMap<MonthlyTimeLog, MonthlyTimeLogDto>().ReverseMap();
+            CreateMap<MonthlyTimeLog, MonthlyTimeLogDto>().ReverseMap();
+            CreateMap<MonthlyTimeLogFilter, MonthlyTimeLogFilterDto>().ReverseMap();
             CreateMap<CalenderMonth, CalenderMonthDto>().ReverseMap();
             CreateMap<WorkGroupTimeCode, WorkGroupTimeCodeDto>().ReverseMap();
             CreateMap<WorkGroupValidTimeCode, WorkGroupValidTimeCodeDto>().ReverseMap();
@@ -38,9 +41,8 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<SummarisedWgTimeView, SummarisedWgTimeDto>().ReverseMap();
             CreateMap<SummarisedWgTimeView, SummarisedWgTimeEntryDto>();
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimeRes>().ReverseMap();
-            CreateMap<RecreateSummariesLog, RecreateSummariesLogDto>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName));
-
+            CreateMap<RecreateSummaryLog, RecreateSummaryLogDto>().ReverseMap();
+            CreateMap<RecreateSummaryLogWithComment, RecreateSummaryLogDto>().ReverseMap();
             CreateMap<ReleasePeriod, ReleasePeriodDto>().ReverseMap();
             CreateMap<ReleaseSummary, ReleaseSummaryDto>();
         }

@@ -3,6 +3,7 @@ namespace Apha.Common.Constants
     public static class PactApiEndpoints
     {
         // Job Code
+        public const string GetAllJobCodes = "api/v1/jobcode";
         public const string GetJobCodesByProject = "api/v1/jobcode/project/{0}";
         public const string GetPagedJobCodes = "api/v1/jobcode/paged";
         public const string GetPagedJobCodesByProject = "api/v1/jobcode/paged?parentProject={0}";
@@ -55,7 +56,7 @@ namespace Apha.Common.Constants
         public const string GetAllTestorProducts = "api/v1/testorproduct";
 
         // Recreate Summaries Log
-        public const string GetAllRecreateSummariesLogs = "api/v1/recreatereleasesummary";
+        public const string GetRecreateSummaryLog = "api/v1/recreatereleasesummary/recreatesummary/log";
 
         // Release Summaries
         public const string GetReleaseSummaries = "api/v1/releasesummary";
@@ -117,6 +118,9 @@ namespace Apha.Common.Constants
 
         // Monthly Output Log
         public const string SearchMonthlyOutputLog = "api/v1/monthlyoutput/log/search";
+
+        // Monthly Time Log (MT_LOG)
+        public const string SearchMonthlyTimeLog = "api/v1/monthlytime/log/search";
 
         // Work Group Report Email
         public const string SendEmails = "api/v1/workgroupreport/send";
