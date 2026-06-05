@@ -51,7 +51,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();
 
             // Test Supplier
-            CreateMap<TestSupplierItem, TestSupplierViewDto>().ReverseMap();
+            CreateMap<TestSupplierItem, Apha.FPSApps.Application.Dtos.PACT.TestSupplierViewDto>().ReverseMap();
             CreateMap<TestSupplierItem, TestRequirementDto>()
                 .ForMember(d => d.TestCode, o => o.MapFrom(s => s.TestCode))
                 .ForMember(d => d.Buyer, o => o.MapFrom(s => s.Buyer))

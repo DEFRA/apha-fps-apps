@@ -169,8 +169,6 @@ namespace Apha.Common.Constants
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
 
-        // Test Supplier (custom FPS view — CRUD via PACT TestRequirement API)
-        public const string GetPagedTestSupplier = "api/v1/testsupplier?testCode={0}&showRejected={1}";
         // WorkgroupGrade Maintainence
         public const string GetPagedWorkgroupGrades = "api/v1/wggrades/paged";
         public const string GetWorkgroupGradeByCode = "api/v1/wggrades/{0}";

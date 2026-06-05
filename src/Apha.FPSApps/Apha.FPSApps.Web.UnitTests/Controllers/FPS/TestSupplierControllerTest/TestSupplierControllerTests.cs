@@ -1,7 +1,5 @@
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
-using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
@@ -21,7 +19,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestSupplierControllerTest
         private const string DefaultBuyer = "B001";
 
         private readonly IMapper _mapper;
-        private readonly ITestSupplierService _testSupplierService;
         private readonly ITestRequirementService _testReqmtService;
         private readonly ITestorProductService _testorProductService;
         private readonly TestSupplierController _controller;
@@ -29,11 +26,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestSupplierControllerTest
         public TestSupplierControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _testSupplierService = Substitute.For<ITestSupplierService>();
             _testReqmtService = Substitute.For<ITestRequirementService>();
             _testorProductService = Substitute.For<ITestorProductService>();
             _controller = new TestSupplierController(
-                _mapper, _testSupplierService, _testReqmtService, _testorProductService);
+                _mapper, _testReqmtService, _testorProductService);
         }
 
         private static T? GetJsonValue<T>(JsonResult jsonResult)
@@ -65,7 +61,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestSupplierControllerTest
             var viewResponse = BuildViewResponse();
 
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()).Returns(query);
-            _testSupplierService.GetPagedTestSupplierAsync(query, Arg.Any<string>(), Arg.Any<bool>())
+            _testReqmtService.GetPagedBySupplierTestCodeAsync(query, Arg.Any<string>(), Arg.Any<bool>())
                 .Returns(viewResponse);
             _mapper.Map<List<TestSupplierItem>>(Arg.Any<List<TestSupplierViewDto>>())
                 .Returns(new List<TestSupplierItem>());
@@ -158,8 +154,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestSupplierControllerTest
             await _controller.LoadTestSupplierGrid(request, DefaultTestCode, showRejected: false);
 
             // Assert
-            await _testSupplierService.Received(1)
-                .GetPagedTestSupplierAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode, false);
+            await _testReqmtService.Received(1)
+                .GetPagedBySupplierTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode, false);
         }
 
         #endregion
@@ -186,7 +182,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestSupplierControllerTest
             });
             var query = new QueryParameters<string> { Page = 1, PageSize = 100 };
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()).Returns(query);
-            _testSupplierService.GetPagedTestSupplierAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode, Arg.Any<bool>())
+            _testReqmtService.GetPagedBySupplierTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode, Arg.Any<bool>())
                 .Returns(viewResponse);
 
             // Act

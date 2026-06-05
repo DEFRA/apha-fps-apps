@@ -217,6 +217,66 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestRequirementServic
 
         #endregion
 
+        #region GetPagedBySupplierTestCodeAsync
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_DelegatesToApiClient_ReturnsResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse(
+            [
+                new TestSupplierViewDto { TestCode = "BLOOD", Buyer = "PRJ1", TestCost = 30m },
+                new TestSupplierViewDto { TestCode = "BLOOD", Buyer = "PRJ2", TestCost = 10m }
+            ]);
+            _apiClient.GetPagedBySupplierTestCodeAsync(query, "BLOOD", false).Returns(expected);
+
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            Assert.Equal(expected, result);
+            await _apiClient.Received(1).GetPagedBySupplierTestCodeAsync(query, "BLOOD", false);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_ShowRejectedTrue_PassesFlagToApiClient()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse([]);
+            _apiClient.GetPagedBySupplierTestCodeAsync(query, "BLOOD", true).Returns(expected);
+
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: true);
+
+            Assert.Equal(expected, result);
+            await _apiClient.Received(1).GetPagedBySupplierTestCodeAsync(query, "BLOOD", true);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse([]);
+            _apiClient.GetPagedBySupplierTestCodeAsync(query, "BLOOD", false).Returns(expected);
+
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Code = "NOT_FOUND" } };
+            var expected = ApiResponseDto<List<TestSupplierViewDto>>.FailureResponse(errors, new ApiMetaDto());
+            _apiClient.GetPagedBySupplierTestCodeAsync(query, "MISSING", false).Returns(expected);
+
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, "MISSING", showRejected: false);
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
         #region GetTestReqmtPricingAsync
 
         [Fact]

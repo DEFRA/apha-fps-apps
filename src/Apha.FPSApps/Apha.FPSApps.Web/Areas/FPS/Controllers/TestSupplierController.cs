@@ -1,7 +1,5 @@
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
-using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
@@ -21,18 +19,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class TestSupplierController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly ITestSupplierService _testSupplierService;
         private readonly ITestRequirementService _testReqmtService;
         private readonly ITestorProductService _testorProductService;
 
         public TestSupplierController(
             IMapper mapper,
-            ITestSupplierService testSupplierService,
             ITestRequirementService testReqmtService,
             ITestorProductService testorProductService)
         {
             _mapper = mapper;
-            _testSupplierService = testSupplierService;
             _testReqmtService = testReqmtService;
             _testorProductService = testorProductService;
         }
@@ -138,9 +133,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             ViewBag.TestorProductOptions = await GetTestorProductSelectListAsync();
             var item = _mapper.Map<TestSupplierItem>(result.Data);
 
-            // Populate TestCost and ProjectStatus from the FPS view (not available on TestRequirementDto)
+            // Populate TestCost and ProjectStatus from the PACT supplier view
             var viewQuery = new QueryParameters<string> { Page = 1, PageSize = 100, Filter = "{}" };
-            var viewResult = await _testSupplierService.GetPagedTestSupplierAsync(viewQuery, testCode, showRejected: true);
+            var viewResult = await _testReqmtService.GetPagedBySupplierTestCodeAsync(viewQuery, testCode, showRejected: true);
             if (viewResult.Success && viewResult.Data != null)
             {
                 var viewRow = viewResult.Data.FirstOrDefault(r =>
@@ -224,7 +219,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             PaginationFilter<string> request, string testCode, bool showRejected)
         {
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _testSupplierService.GetPagedTestSupplierAsync(query, testCode, showRejected);
+            var response = await _testReqmtService.GetPagedBySupplierTestCodeAsync(query, testCode, showRejected);
 
             var items = response.Success && response.Data != null
                 ? _mapper.Map<List<TestSupplierItem>>(response.Data)

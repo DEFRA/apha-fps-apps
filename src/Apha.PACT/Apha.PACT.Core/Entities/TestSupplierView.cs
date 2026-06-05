@@ -1,4 +1,4 @@
-namespace Apha.FPS.Core.Entities
+namespace Apha.PACT.Core.Entities
 {
     public class TestSupplierView
     {
