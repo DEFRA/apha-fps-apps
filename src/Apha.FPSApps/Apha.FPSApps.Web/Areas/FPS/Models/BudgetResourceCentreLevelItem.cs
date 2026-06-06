@@ -1,3 +1,4 @@
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
@@ -23,5 +24,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [GridColumn(IsVisible = false)]
         public List<SelectListItem> AccountList { get; set; } = new List<SelectListItem>();
+
+        [GridColumn(IsVisible = false)]
+        public List<AccountCategoryDto> AccountFullList { get; set; } = new List<AccountCategoryDto>();
     }
 }

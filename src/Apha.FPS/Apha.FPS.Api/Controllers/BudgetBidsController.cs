@@ -1,0 +1,95 @@
+using Apha.Common.Contracts.FPS;
+using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Interfaces;
+using Asp.Versioning;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Apha.FPS.Api.Controllers
+{
+    /// <summary>
+    /// API controller for the Budget Bids section in the Generic Bid feature.
+    /// </summary>
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [ApiController]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/budgetbids")]
+    public class BudgetBidsController : ControllerBase
+    {
+        private readonly IBudgetBidsService _service;
+        private readonly IMapper _mapper;
+
+        public BudgetBidsController(IBudgetBidsService service, IMapper mapper)
+        {
+            _service = service ?? throw new ArgumentNullException(nameof(service));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        }
+
+        /// <summary>
+        /// Returns bid view records for a given workgroup.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetBidViewAsync([FromQuery] string workgroup)
+        {
+            var result = await _service.GetBidViewAsync(workgroup);
+            return Ok(_mapper.Map<List<BidViewRes>>(result));
+        }
+
+        /// <summary>
+        /// Returns a single bid by workgroup name and account.
+        /// </summary>
+        [HttpGet("{workgroupName}/{account}")]
+        public async Task<IActionResult> GetBidByIdAsync(string workgroupName, string account)
+        {
+            var result = await _service.GetBidByIdAsync(workgroupName, account);
+            if (result == null)
+                throw new KeyNotFoundException("Data not found.");
+            return Ok(_mapper.Map<BidRes>(result));
+        }
+
+        /// <summary>
+        /// Adds a new bid record.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> AddBidAsync([FromBody] BidReq req)
+        {
+            var dto = _mapper.Map<BidDto>(req);
+            var result = await _service.AddBidAsync(dto);
+            return Ok(_mapper.Map<BidRes>(result));
+        }
+
+        /// <summary>
+        /// Updates an existing bid record.
+        /// </summary>
+        [HttpPut]
+        public async Task<IActionResult> UpdateBidAsync([FromBody] BidReq req)
+        {
+            var dto = _mapper.Map<BidDto>(req);
+            var result = await _service.UpdateBidAsync(dto);
+            return Ok(_mapper.Map<BidRes>(result));
+        }
+
+        /// <summary>
+        /// Deletes a bid record by workgroup name and account.
+        /// </summary>
+        [HttpDelete]
+        public async Task<IActionResult> DeleteBidAsync([FromQuery] string workgroupName, [FromQuery] string account)
+        {
+            var isDeleted = await _service.DeleteBidAsync(workgroupName, account);
+            if (!isDeleted)
+                throw new KeyNotFoundException("Data not found.");
+            return Ok(isDeleted);
+        }
+
+        /// <summary>
+        /// Returns account categories for budget bids.
+        /// </summary>
+        [HttpGet("accounts")]
+        public async Task<IActionResult> GetAccountCategoriesAsync()
+        {
+            var categories = await _service.GetAccountCategoriesAsync();
+            return Ok(_mapper.Map<List<AccountCategoryRes>>(categories));
+        }
+    }
+}

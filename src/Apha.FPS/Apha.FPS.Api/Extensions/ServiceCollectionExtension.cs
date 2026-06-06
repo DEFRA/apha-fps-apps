@@ -46,7 +46,9 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
-            services.AddScoped<IBudgetResourceLevelService, BudgetResourceLevelService>();
+            services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<IBudgetBidsService, BudgetBidsService>();
+            services.AddScoped<IPurchasesService, PurchasesService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -78,7 +80,9 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupGradeRepository, WorkGroupGradeRepository>();
             services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
             services.AddScoped<IDivisionGradeRepository, DivisionGradeRepository>();
-            services.AddScoped<IBudgetResourceLevelRepository, BudgetResourceLevelRepository>();
+            services.AddScoped<IWorkGroupRepository, WorkGroupRepository>();
+            services.AddScoped<IBudgetBidsRepository, BudgetBidsRepository>();
+            services.AddScoped<IPurchasesRepository, PurchasesRepository>();
             return services;
 
         }

@@ -5,5 +5,7 @@ namespace Apha.FPS.Application.Dtos
         public string AccShortName { get; set; } = null!;
 
         public string? AccountDescription { get; set; }
+
+        public string? ConstituentAccountCodes { get; set; }
     }
 }

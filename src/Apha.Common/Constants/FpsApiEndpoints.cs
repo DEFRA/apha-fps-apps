@@ -136,19 +136,22 @@ namespace Apha.Common.Constants
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
 
-        // Budget Resource Level
-        public const string GetBudgetWorkGroups = "api/v1/budgetresourcelevel/workgroups?profitCentre={0}";
-        public const string GetBidView = "api/v1/budgetresourcelevel/bids?workgroup={0}";
-        public const string GetBidById = "api/v1/budgetresourcelevel/bid/{0}/{1}";
-        public const string CreateBid = "api/v1/budgetresourcelevel/bid";
-        public const string UpdateBid = "api/v1/budgetresourcelevel/bid";
-        public const string DeleteBid = "api/v1/budgetresourcelevel/bid?workgroupName={0}&account={1}";
-        public const string GetPurchases = "api/v1/budgetresourcelevel/purchases?workgroupName={0}&account={1}";
-        public const string GetPurchaseById = "api/v1/budgetresourcelevel/purchase/{0}/{1}/{2}";
-        public const string CreatePurchase = "api/v1/budgetresourcelevel/purchase";
-        public const string UpdatePurchase = "api/v1/budgetresourcelevel/purchase";
-        public const string DeletePurchase = "api/v1/budgetresourcelevel/purchase?workgroupName={0}&account={1}&itemDescription={2}";
-        public const string GetBudgetProfitCentres = "api/v1/budgetresourcelevel/profitcentres";
-        public const string GetBudgetAccountCategories = "api/v1/budgetresourcelevel/accounts";
+        // Generic Bid — WorkGroup
+        public const string GetWorkGroups = "api/v1/workgroups?profitCentre={0}";
+
+        // Generic Bid — Budget Bids
+        public const string GetBids = "api/v1/budgetbids?workgroup={0}";
+        public const string GetBidByWorkgroupAccount = "api/v1/budgetbids/{0}/{1}";
+        public const string CreateBudgetBid = "api/v1/budgetbids";
+        public const string UpdateBudgetBid = "api/v1/budgetbids";
+        public const string DeleteBudgetBid = "api/v1/budgetbids?workgroupName={0}&account={1}";
+        public const string GetBudgetBidsAccounts = "api/v1/budgetbids/accounts";
+
+        // Generic Bid — Purchases
+        public const string GetGenericPurchases = "api/v1/purchases?workgroupName={0}&account={1}";
+        public const string GetPurchaseByKeys = "api/v1/purchases/{0}/{1}/{2}";
+        public const string CreateGenericPurchase = "api/v1/purchases";
+        public const string UpdateGenericPurchase = "api/v1/purchases";
+        public const string DeleteGenericPurchase = "api/v1/purchases?workgroupName={0}&account={1}&itemDescription={2}";
     }
 }

@@ -63,16 +63,17 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
 
-            services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
-            services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService, Apha.FPSApps.Application.Services.PACT.WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
-            services.AddScoped<IBudgetResourceLevelService, BudgetResourceLevelService>();
+            services.AddScoped<Apha.FPSApps.Application.Interfaces.FPS.IWorkGroupService, Apha.FPSApps.Application.Services.FPS.WorkGroupService>();
+            services.AddScoped<IBudgetBidsService, BudgetBidsService>();
+            services.AddScoped<IPurchasesService, PurchasesService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

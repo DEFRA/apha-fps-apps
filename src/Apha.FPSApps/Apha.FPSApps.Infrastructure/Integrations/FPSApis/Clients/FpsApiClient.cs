@@ -25,7 +25,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsProfitCentreGradeApiClient FpsProfitCentreGrade { get; }
         public IFpsWorkGroupGradeApiClient FpsWorkGroupGrade { get; }
         public IFpsWorkGroupEmployeeApiClient FpsWorkGroupEmployee { get; }
-        public IFpsBudgetResourceLevelApiClient FpsBudgetResourceLevel { get; }
+        public IFpsWorkGroupApiClient FpsWorkGroup { get; }
+        public IFpsBudgetBidsApiClient FpsBudgetBids { get; }
+        public IFpsPurchasesApiClient FpsPurchases { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -47,7 +49,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsWorkGroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
             FpsWorkGroupEmployee = new FpsWorkGroupEmployeeApiClient(http, mapper);
             FpsMaintDG = new FpsDivisionGradeApiClient(http, mapper);
-            FpsBudgetResourceLevel = new FpsBudgetResourceLevelApiClient(http, mapper);
+            FpsWorkGroup = new FpsWorkGroupApiClient(http, mapper);
+            FpsBudgetBids = new FpsBudgetBidsApiClient(http, mapper);
+            FpsPurchases = new FpsPurchasesApiClient(http, mapper);
         }
     }
 }

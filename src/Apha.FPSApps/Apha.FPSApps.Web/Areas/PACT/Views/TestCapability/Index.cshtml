@@ -149,6 +149,8 @@
                 currentFilterValue = workgroupParam;
                 // Load the grid with the workgroup
                 reloadTestCapabilityGrid(workgroupParam);
+                loadBudgetBidsGrid(workgroupParam);
+                loadPurchasesGrid(workgroupParam);
             }
         });
 
@@ -161,6 +163,8 @@
             document.getElementById('divTestcode').value = '';
             reloadTestCapabilityGrid(currentFilterValue);
             clearTestReqmtGrid();
+            loadBudgetBidsGrid(value);
+            loadPurchasesGrid(value);
         }
 
         // ── Test dropdown change ───────────────────────────────────────────────

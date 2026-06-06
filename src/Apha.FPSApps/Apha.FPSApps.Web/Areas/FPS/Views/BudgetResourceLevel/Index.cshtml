@@ -8,40 +8,99 @@
 
 <style type="text/css">
     #gridContainer_workGroupGrid .grid-scroll-container {
-        height: 400px;
-        max-height: 400px;
+        height: 260px;
+        max-height: 260px;
     }
     #gridContainer_budgetBidsGrid .grid-scroll-container {
-        height: 300px;
-        max-height: 300px;
+        height: 260px;
+        max-height: 260px;
     }
     #gridContainer_purchasesGrid .grid-scroll-container {
-        height: 300px;
-        max-height: 300px;
+        height: auto;
+        max-height: 260px;
+        min-height: 260px; /* ~4 rows at ~40px each */
+    }
+
+    #gridContainer_workGroupGrid tbody tr,
+    #gridContainer_budgetBidsGrid tbody tr {
+        cursor: pointer;
+    }
+
+    #gridContainer_workGroupGrid tbody tr.sup_selected_row,
+    #gridContainer_budgetBidsGrid tbody tr.sup_selected_row {
+        background-color: #b1d7f5 !important;
+        font-weight: bold;
+    }
+
+    /* Compact single-line pagination for workgroup grid */
+    #gridContainer_workGroupGrid .govuk-pagination__list,
+    #gridContainer_workGroupGrid nav[role="navigation"] {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 4px;
+        margin: 0;
+    }
+    #gridContainer_workGroupGrid .govuk-pagination {
+        flex-wrap: nowrap;
+    }
+    #gridContainer_workGroupGrid [class*="pagination"],
+    #gridContainer_workGroupGrid [class*="paging"],
+    #gridContainer_workGroupGrid .d-flex {
+        flex-wrap: nowrap !important;
+        font-size: 0.8rem;
+    }
+    #gridContainer_workGroupGrid .govuk-select {
+        width: auto;
+        min-width: 3.5rem;
+        padding: 2px 4px;
+        font-size: 0.8rem;
+    }
+    #gridContainer_workGroupGrid .govuk-pagination__item,
+    #gridContainer_workGroupGrid .govuk-pagination__link {
+        min-width: 1.5rem;
+        padding: 2px 6px;
+        font-size: 0.8rem;
+    }
+
+    /* Total rows aligned under columns */
+    .fps-total-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 5px 0;
+        border-top: 1px solid #b1b4b6;
+        margin-top: 10px;
+    }
+    .fps-total-row .govuk-input__wrapper {
+        margin-bottom: 0;
+    }
+    .fps-total-row .govuk-input__prefix {
+        padding: 4px 8px;
+        font-size: 0.875rem;
     }
 </style>
 
 <main id="main-content">
     <div class="container-fluid">
-        <!-- Breadcrumb -->
+        <!-- Page Title + Resource Centre selector -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <div class="row fps-sr-breadcrumb-row align-items-center">
-                    <div class="col-md-6">
-                        <nav class="govuk-breadcrumbs govuk-!-padding-left-3" aria-label="Breadcrumb">
-                            <ol class="govuk-breadcrumbs__list">
-                                <li class="govuk-breadcrumbs__list-item">
-                                    <a class="govuk-breadcrumbs__link" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a>
-                                </li>
-                                <li class="govuk-breadcrumbs__list-item">Budget</li>
-                                <li class="govuk-breadcrumbs__list-item" aria-current="page">Budget Bids for Resource Centre</li>
-                            </ol>
-                        </nav>
+                <div class="row align-items-center sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2">
+                    <div class="col">
+                        <h1 class="govuk-heading-s govuk-!-margin-bottom-0 govuk-!-padding-left-4">
+                            Budget Bids for Resource Centre
+                            @if (!string.IsNullOrWhiteSpace(Model.SelectedProfitCentre))
+                            {
+                                <span class="govuk-link">@Model.SelectedProfitCentre</span>
+                            }
+                        </h1>
                     </div>
-                    <div style="display: flex; justify-content: flex-end;" class="col-md-6">
+                    <div class="col-auto d-flex align-items-center justify-content-end">
                         <form asp-action="Index" asp-controller="BudgetResourceLevel" asp-area="FPS" method="get" style="display: flex; align-items: center;">
                             <input type="hidden" name="year" value="@FpsYearContext.Year" />
-                            <label class="fw-bold mt-2" for="profitCentreSelect">Resource Centre:</label>
+                            <label class="fw-bold me-2 mb-0" for="profitCentreSelect">Resource Centre:</label>
                             <select id="profitCentreSelect"
                                     name="profitCentre"
                                     asp-items="Model.ProfitCentreList"
@@ -56,75 +115,76 @@
             </div>
         </div>
 
-        <!-- Page Title -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
-                    Budget Bids for Resource Centre
-                    @if (!string.IsNullOrWhiteSpace(Model.SelectedProfitCentre))
-                    {
-                        <span class="govuk-link">@Model.SelectedProfitCentre</span>
-                    }
-                </h1>
-            </div>
-        </div>
-
         <!-- Three-panel layout: WorkGroups | Budget Bids | Purchases -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
                 <div class="data-table-container sup_border govuk-!-margin-left-2 govuk-!-padding-3">
-                    <div class="row" style="align-items: flex-start;">
+                    <div class="row align-items-start g-0">
 
                         <!-- Left: WorkGroup selector -->
-                        <div class="col-3" style="border-right: 1px solid #b1b4b6;">
+                        <div class="col-3 sup_border-right">
                             <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Select Work Group</h3>
+                            <br/>
                             <div id="gridContainer_workGroupGrid">
                                 @await Html.PartialAsync("_DataGrid", Model.WorkGroupGrid)
+                            </div>
+                            <div class="sup_flex_column sup_gap_8 sup_margin_top_10 d-flex align-items-center">
+                                <button type="button" class="govuk-button govuk-!-margin-bottom-0" style="width: 50%;" onclick="selectByAccount()">
+                                    Select by Account<br />(Rather than WorkGroup)
+                                </button>
+                                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0" style="width: 50%;" onclick="viewReport()">
+                                    View Report
+                                </button>
+                                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0" style="width: 50%;" onclick="sendToExcel()">
+                                    &#128196; Send To Excel
+                                </button>
                             </div>
                         </div>
 
                         <!-- Centre: Budget Bids grid -->
-                        <div class="col-5" style="border-right: 1px solid #b1b4b6;">
-                            <div class="d-flex align-items-center gap-3 govuk-!-margin-bottom-2">
-                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0" style="white-space: nowrap;">Budget Bids for Work Group</h3>
+                        <div class="col-5 sup_border-right">
+                            <div class="sup_flex_align_center sup_gap_16 govuk-!-margin-bottom-2">
+                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0">Budget Bids for Work Group</h3>
                                 <input id="fpsBrlSelectedWg"
-                                       class="govuk-input"
-                                       style="width: auto; min-width: 120px;"
+                                       class="govuk-input sup_width_auto"
                                        aria-label="Selected work group" readonly value="@Model.SelectedWorkgroup" />
                             </div>
                             <div id="gridContainer_budgetBidsGrid">
                                 @await Html.PartialAsync("_DataGrid", Model.BudgetBidsGrid)
                             </div>
-                            <table class="govuk-table govuk-!-margin-top-0 govuk-!-margin-bottom-0" style="width: 100%; border-top: 2px solid #b1b4b6;">
-                                <tbody>
-                                    <tr class="govuk-table__row" style="background-color: #f3f2f1;">
-                                        <td class="govuk-table__cell" style="font-weight:bold;">Total Bid for WG</td>
-                                        <td class="govuk-table__cell" id="fpsBrlTotalBid" style="text-align:right; font-weight:bold;">@Model.TotalBid.ToString("C")</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div class="d-flex align-items-center gap-2 govuk-!-margin-top-2" style="border-top: 1px solid #b1b4b6; padding-top: 5px;">
+                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0">Total Bid for Workgroup:</label>
+                                <div class="govuk-input__wrapper" style="margin-bottom: 0;">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                    <input id="fpsBrlTotalBid" type="text" class="govuk-input sup_width_140 sup_text_align_right" readonly
+                                           value="@Model.TotalBid.ToString("N2")" />
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Right: Purchases grid -->
                         <div class="col-4">
-                            <div class="d-flex align-items-center gap-3 govuk-!-margin-bottom-2">
-                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0" style="white-space: nowrap;">Purchases for Account</h3>
+                            <div class="sup_flex_align_center sup_gap_8 govuk-!-margin-bottom-2">
+                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0">Purchases in</h3>
                                 <input id="fpsBrlSelectedAccount"
-                                       class="govuk-input"
-                                       style="width: auto; min-width: 120px;"
+                                       class="govuk-input sup_width_auto"
                                        aria-label="Selected account" readonly value="@Model.SelectedAccount" />
+                                <span class="govuk-body govuk-!-margin-bottom-0">in Workgroup:</span>
+                                <input id="fpsBrlPurchasesWg"
+                                       class="govuk-input sup_width_auto"
+                                       aria-label="Selected workgroup for purchases" readonly value="@Model.SelectedWorkgroup" />
                             </div>
                             <div id="gridContainer_purchasesGrid">
                                 @await Html.PartialAsync("_DataGrid", Model.PurchasesGrid)
                             </div>
-                            <table class="govuk-table govuk-!-margin-top-0 govuk-!-margin-bottom-0" style="width: 100%; border-top: 2px solid #b1b4b6;">
-                                <tbody>
-                                    <tr class="govuk-table__row" style="background-color: #f3f2f1;">
-                                        <td class="govuk-table__cell" style="font-weight:bold;">Total Purchases</td>
-                                        <td class="govuk-table__cell" id="fpsBrlTotalPurchases" style="text-align:right; font-weight:bold;">@Model.TotalPurchases.ToString("C")</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div class="d-flex align-items-center gap-2 govuk-!-margin-top-2" style="border-top: 1px solid #b1b4b6; padding-top: 5px;">
+                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0">Total Purchases:</label>
+                                <div class="govuk-input__wrapper" style="margin-bottom: 0;">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                    <input id="fpsBrlTotalPurchases" type="text" class="govuk-input sup_width_140 sup_text_align_right" readonly
+                                           value="@Model.TotalPurchases.ToString("N2")" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -134,62 +194,79 @@
 </main>
 
 <!-- Modal container -->
-<div id="modalContainer" class="modal-backdrop" style="display:none;">
-    <div class="modal-dialog modal-lg" role="dialog" aria-modal="true">
-        <div id="modalContent" class="modal-content"></div>
+<div id="modalContainer" class="modal-backdrop"
+     style="display:none; position:fixed; inset:0; z-index:1050; background:rgba(0,0,0,0.5);  align-items:center; justify-content:center;">
+    <div class="modal-dialog modal-lg" role="dialog" aria-modal="true"
+         style="overflow:visible; margin:auto; position:relative; top:50%; transform:translateY(-50%);">
+        <div id="modalContent" class="modal-content sup_overflow_visible"></div>
     </div>
 </div>
 
 @section Scripts {
+<script src="~/js/ajax-form-validation.js"></script>
 <script>
     // ─── Shared state ───────────────────────────────────────────────────────────
-    var currentWorkgroup = '@Html.Raw(Model.SelectedWorkgroup ?? "")';
-    var currentAccount   = '@Html.Raw(Model.SelectedAccount ?? "")';
+    var currentWorkgroup    = '@Html.Raw(Model.SelectedWorkgroup ?? "")';
+    var currentAccount      = '@Html.Raw(Model.SelectedAccount ?? "")';
     var currentProfitCentre = '@Html.Raw(Model.SelectedProfitCentre ?? "")';
 
-    // ─── WorkGroup grid — row click handler ────────────────────────────────────
-    function getWorkGroupExtraFilters() {
-        return { profitCentre: currentProfitCentre };
-    }
+    // ─── Grid manager accessors (ResourceSetUp pattern) ─────────────────────────
+    function getWorkGroupGridManager()  { return window['gridManager_workGroupGrid']; }
+    function getBudgetBidsGridManager() { return window['gridManager_budgetBidsGrid']; }
+    function getPurchasesGridManager()  { return window['gridManager_purchasesGrid']; }
 
-    $(document).on('click', '#gridContainer_workGroupGrid tbody tr', function () {
-        var workgroupName = $(this).find('td[data-field="WorkgroupName"]').text().trim()
-                         || $(this).data('id');
-        if (!workgroupName) return;
+    // ─── Extra filter callbacks used by _DataGrid ────────────────────────────────
+    function getWorkGroupExtraFilters()  { return { profitCentre: currentProfitCentre }; }
+    function getBudgetBidExtraFilters()  { return { workgroup: currentWorkgroup }; }
+    function getPurchaseExtraFilters()   { return { workgroup: currentWorkgroup, account: currentAccount }; }
 
+    // ─── Cascade helpers ─────────────────────────────────────────────────────────
+    function onWorkGroupRowClick(workgroupName) {
         currentWorkgroup = workgroupName;
+        currentAccount   = '';
         $('#fpsBrlSelectedWg').val(workgroupName);
+        $('#fpsBrlPurchasesWg').val(workgroupName);
+        $('#fpsBrlSelectedAccount').val('');
 
-        // Reload budget bids grid
-        reloadGrid('budgetBidsGrid');
-    });
+        var mgr = getBudgetBidsGridManager();
+        if (mgr) mgr.reloadGrid({ page: 1 });
 
-    // ─── Budget Bids grid extra filters ────────────────────────────────────────
-    function getBudgetBidExtraFilters() {
-        return { workgroup: currentWorkgroup };
+        var purchasesMgr = getPurchasesGridManager();
+        if (purchasesMgr) purchasesMgr.reloadGrid({ page: 1 });
     }
 
-    // ─── Budget Bids row click — select account ─────────────────────────────────
-    $(document).on('click', '#gridContainer_budgetBidsGrid tbody tr', function () {
-        var account = $(this).find('td[data-field="Account"]').text().trim()
-                   || $(this).data('id');
-        if (!account) return;
-
+    function onBudgetBidRowClick(account) {
         currentAccount = account;
         $('#fpsBrlSelectedAccount').val(account);
+        $('#fpsBrlPurchasesWg').val(currentWorkgroup);
 
-        // Reload purchases grid
-        reloadGrid('purchasesGrid');
+        var mgr = getPurchasesGridManager();
+        if (mgr) mgr.reloadGrid({ page: 1 });
+    }
+
+    // ─── WorkGroup grid — row click ──────────────────────────────────────────────
+    $(document).on('click', '#gridContainer_workGroupGrid table tbody tr', function () {
+        var workgroupName = $(this).data('id');
+        if (!workgroupName) return;
+
+        $('#gridContainer_workGroupGrid table tbody tr').removeClass('selected-row');
+        $(this).addClass('selected-row');
+        onWorkGroupRowClick(workgroupName);
     });
 
-    // ─── Purchases grid extra filters ──────────────────────────────────────────
-    function getPurchaseExtraFilters() {
-        return { workgroup: currentWorkgroup, account: currentAccount };
-    }
+    // ─── Budget Bids grid — row click ────────────────────────────────────────────
+    $(document).on('click', '#gridContainer_budgetBidsGrid table tbody tr', function () {
+        var account = $(this).find('td[data-property="Account"]').text().trim() || $(this).data('id');
+        if (!account) return;
+
+        $('#gridContainer_budgetBidsGrid table tbody tr').removeClass('selected-row');
+        $(this).addClass('selected-row');
+        onBudgetBidRowClick(account);
+    });
 
     // ─── Budget Bid CRUD ────────────────────────────────────────────────────────
     function addBudgetBid() {
-        if (!currentWorkgroup) { alert('Please select a work group first.'); return; }
+            if (!currentWorkgroup) { showGovukAlert('Please select a work group first.'); return; }
         openModal('/FPS/BudgetResourceLevel/CreateBudgetBid?workgroupName=' + encodeURIComponent(currentWorkgroup));
     }
 
@@ -200,18 +277,24 @@
 
     function deleteBudgetBid(btn) {
         var account = $(btn).data('id');
-        if (!confirm('Are you sure you want to delete this budget bid?')) return;
-        $.ajax({
-            url: '/FPS/BudgetResourceLevel/DeleteBudgetBid?workgroupName=' + encodeURIComponent(currentWorkgroup) + '&account=' + encodeURIComponent(account),
-            type: 'DELETE',
-            success: function (response) {
-                if (response.success) {
-                    showSuccess(response.message);
-                    reloadGrid('budgetBidsGrid');
-                } else {
-                    showError(response.message || 'Failed to delete budget bid.');
+        showGovukConfirm('Are you sure you want to delete this budget bid?').then(function (result) {
+            if (!result) return;
+            $.ajax({
+                url: '/FPS/BudgetResourceLevel/DeleteBudgetBid?workgroupName=' + encodeURIComponent(currentWorkgroup) + '&account=' + encodeURIComponent(account),
+                type: 'DELETE',
+                success: function (response) {
+                    if (response.success) {
+                        showGovukAlert(response.message).then(function () {
+                            var mgr = getBudgetBidsGridManager(); if (mgr) mgr.reloadGrid({ page: 1 });
+                        });
+                    } else {
+                        showGovukAlert(response.message || 'Failed to delete budget bid.');
+                    }
+                },
+                error: function () {
+                    showGovukAlert('An error occurred while deleting.');
                 }
-            }
+            });
         });
     }
 
@@ -221,9 +304,9 @@
             if (response.success) {
                 closeModal();
                 showSuccess(response.message);
-                reloadGrid('budgetBidsGrid');
+                var mgr = getBudgetBidsGridManager(); if (mgr) mgr.reloadGrid({ page: 1 });
             } else {
-                showModalErrors(response.errors);
+                showModalErrors(response.errors, response.message);
             }
         });
     }
@@ -234,16 +317,16 @@
             if (response.success) {
                 closeModal();
                 showSuccess(response.message);
-                reloadGrid('budgetBidsGrid');
+                var mgr = getBudgetBidsGridManager(); if (mgr) mgr.reloadGrid({ page: 1 });
             } else {
-                showModalErrors(response.errors);
+                showModalErrors(response.errors, response.message);
             }
         });
     }
 
     // ─── Purchase CRUD ──────────────────────────────────────────────────────────
     function addPurchase() {
-        if (!currentWorkgroup || !currentAccount) { alert('Please select a work group and account first.'); return; }
+            if (!currentWorkgroup || !currentAccount) { showGovukAlert('Please select a work group and account first.'); return; }
         openModal('/FPS/BudgetResourceLevel/CreatePurchase?workgroupName=' + encodeURIComponent(currentWorkgroup) + '&account=' + encodeURIComponent(currentAccount));
     }
 
@@ -254,18 +337,24 @@
 
     function deletePurchase(btn) {
         var itemDescription = $(btn).data('id');
-        if (!confirm('Are you sure you want to delete this purchase?')) return;
-        $.ajax({
-            url: '/FPS/BudgetResourceLevel/DeletePurchase?workgroupName=' + encodeURIComponent(currentWorkgroup) + '&account=' + encodeURIComponent(currentAccount) + '&itemDescription=' + encodeURIComponent(itemDescription),
-            type: 'DELETE',
-            success: function (response) {
-                if (response.success) {
-                    showSuccess(response.message);
-                    reloadGrid('purchasesGrid');
-                } else {
-                    showError(response.message || 'Failed to delete purchase.');
+        showGovukConfirm('Are you sure you want to delete this purchase?').then(function (result) {
+            if (!result) return;
+            $.ajax({
+                url: '/FPS/BudgetResourceLevel/DeletePurchase?workgroupName=' + encodeURIComponent(currentWorkgroup) + '&account=' + encodeURIComponent(currentAccount) + '&itemDescription=' + encodeURIComponent(itemDescription),
+                type: 'DELETE',
+                success: function (response) {
+                    if (response.success) {
+                        showGovukAlert(response.message).then(function () {
+                            var mgr = getPurchasesGridManager(); if (mgr) mgr.reloadGrid({ page: 1 });
+                        });
+                    } else {
+                        showGovukAlert(response.message || 'Failed to delete purchase.');
+                    }
+                },
+                error: function () {
+                    showGovukAlert('An error occurred while deleting.');
                 }
-            }
+            });
         });
     }
 
@@ -275,9 +364,9 @@
             if (response.success) {
                 closeModal();
                 showSuccess(response.message);
-                reloadGrid('purchasesGrid');
+                var mgr = getPurchasesGridManager(); if (mgr) mgr.reloadGrid({ page: 1 });
             } else {
-                showModalErrors(response.errors);
+                showModalErrors(response.errors, response.message);
             }
         });
     }
@@ -288,19 +377,131 @@
             if (response.success) {
                 closeModal();
                 showSuccess(response.message);
-                reloadGrid('purchasesGrid');
+                var mgr = getPurchasesGridManager(); if (mgr) mgr.reloadGrid({ page: 1 });
             } else {
-                showModalErrors(response.errors);
+                showModalErrors(response.errors, response.message);
             }
         });
     }
+
+    // ─── WorkGroup action buttons ───────────────────────────────────────────────
+    function selectByAccount() {
+        alert('Select by Account feature coming soon.');
+    }
+
+    function viewReport() {
+        alert('View Report feature coming soon.');
+    }
+
+    function sendToExcel() {
+        if (!currentProfitCentre) { showGovukAlert('Please select a Resource Centre first.'); return; }
+        window.location.href = '/FPS/BudgetResourceLevel/ExportToExcel?profitCentre=' + encodeURIComponent(currentProfitCentre);
+    }
+
+    // ─── Submit form fields as JSON (DivisionGradeMaintenance pattern) ──────────
+    function submitFormAsJson(form, url, successCallback) {
+        clearValidationErrors('#modalContent');
+
+        if (!isFormValid(form)) {
+            displayClientValidationErrors(form, '#modalContent');
+            return;
+        }
+
+        var data = {};
+        form.serializeArray().forEach(function (item) {
+            data[item.name] = item.value;
+        });
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json; charset=utf-8',
+            success: successCallback,
+            error: function (xhr) {
+                if (xhr.status === 400 && xhr.responseJSON) {
+                    displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modalContent');
+                } else {
+                    showGovukAlert('An error occurred while saving.');
+                }
+            }
+        });
+    }
+
+    // ─── Close modal on backdrop click ──────────────────────────────────────────
+    $(document).on('click', '#modalContainer', function (e) {
+        if ($(e.target).is('#modalContainer')) { closeModal(); }
+    });
+
+    // ─── Modal open / close (DivisionGradeMaintenance pattern) ──────────────────
+    function openModal(url) {
+        $.get(url, function (html) {
+            $('#modalContent').html(html);
+            $('#modalContainer').show();
+        }).fail(function () {
+            showGovukAlert('An error occurred while loading the form.');
+        });
+    }
+
+    function closeModal() {
+        $('#modalContent').html('');
+        $('#modalContainer').hide();
+    }
+
+    function showModalErrors(errors, message) {
+        displayServerValidationErrors(errors, message || null, '#modalContent');
+    }
+
+    function showSuccess(message) {
+        showGovukAlert(message);
+    }
+
+    function showError(message) {
+        showGovukAlert(message);
+    }
+
+    // ─── Total calculation helpers ────────────────────────────────────────────────
+    function parseGovukAmount(text) {
+        // strips £, commas, spaces then parses
+        return parseFloat((text || '0').replace(/[£,\s]/g, '')) || 0;
+    }
+
+    function recalcTotalBid() {
+        var total = 0;
+        $('#gridContainer_budgetBidsGrid table tbody tr').each(function () {
+            var cell = $(this).find('td[data-property="GenBid"]');
+            if (cell.length) total += parseGovukAmount(cell.text().trim());
+        });
+        $('#fpsBrlTotalBid').val(total.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    }
+
+    function recalcTotalPurchases() {
+        var total = 0;
+        $('#gridContainer_purchasesGrid table tbody tr').each(function () {
+            var cell = $(this).find('td[data-property="Amount"]');
+            if (cell.length) total += parseGovukAmount(cell.text().trim());
+        });
+        $('#fpsBrlTotalPurchases').val(total.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    }
+
+    // Observe grid DOM changes to recalculate totals after AJAX reloads
+    $(document).ready(function () {
+        var bidObserver = new MutationObserver(function () { recalcTotalBid(); });
+        var budgetBidsNode = document.getElementById('gridContainer_budgetBidsGrid');
+        if (budgetBidsNode) bidObserver.observe(budgetBidsNode, { childList: true, subtree: true });
+
+        var purchaseObserver = new MutationObserver(function () { recalcTotalPurchases(); });
+        var purchasesNode = document.getElementById('gridContainer_purchasesGrid');
+        if (purchasesNode) purchaseObserver.observe(purchasesNode, { childList: true, subtree: true });
+    });
 
     // ─── If profitCentre already selected, load workgroups ──────────────────────
     @if (!string.IsNullOrWhiteSpace(Model.SelectedProfitCentre))
     {
         <text>
         $(document).ready(function () {
-            reloadGrid('workGroupGrid');
+            var mgr = getWorkGroupGridManager();
+            if (mgr) mgr.reloadGrid({ page: 1 });
         });
         </text>
     }
