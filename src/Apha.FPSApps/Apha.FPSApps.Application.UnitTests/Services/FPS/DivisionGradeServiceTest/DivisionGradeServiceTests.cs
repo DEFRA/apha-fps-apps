@@ -288,5 +288,61 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.DivisionGradeServiceTe
         }
 
         #endregion
+
+        #region GetAllDivisionGradeCodesAsync Tests
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_ReturnsDivisionGradeCodes()
+        {
+            // Arrange
+            var codes       = new List<string> { "A-VSD", "B-VSD", "C-VSD" };
+            var apiResponse = ApiResponseDto<List<string>>.SuccessResponse(codes);
+
+            _mockApiClient.GetAllDivisionGradeCodesAsync().Returns(apiResponse);
+
+            // Act
+            var result = await _sut.GetAllDivisionGradeCodesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(3, result.Data!.Count);
+            await _mockApiClient.Received(1).GetAllDivisionGradeCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_ReturnsEmpty_WhenNoCodes()
+        {
+            // Arrange
+            var apiResponse = ApiResponseDto<List<string>>.SuccessResponse([]);
+
+            _mockApiClient.GetAllDivisionGradeCodesAsync().Returns(apiResponse);
+
+            // Act
+            var result = await _sut.GetAllDivisionGradeCodesAsync();
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_PropagatesApiErrors()
+        {
+            // Arrange
+            var errors      = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
+            var apiResponse = ApiResponseDto<List<string>>.FailureResponse(errors, new ApiMetaDto());
+
+            _mockApiClient.GetAllDivisionGradeCodesAsync().Returns(apiResponse);
+
+            // Act
+            var result = await _sut.GetAllDivisionGradeCodesAsync();
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("ERROR", result.Errors!.First().Code);
+        }
+
+        #endregion
     }
 }

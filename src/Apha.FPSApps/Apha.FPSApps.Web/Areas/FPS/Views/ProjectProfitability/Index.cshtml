@@ -11,25 +11,13 @@
         <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
             <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
                 <div class="col-md-6">
-                    <nav aria-label="Breadcrumb">
-                        <a href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a> &gt; Programme Management &gt; Project Profitability
-                    </nav>
+                    
                 </div>
                 <div style="display: flex; justify-content: flex-end;" class="col-md-6">
                     <label class="fw-bold mt-2" for="programNo">Programme:</label>
-                    <select id="programNo" name="programNo"
+                    <select id="programNo" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
                             class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
-                        @foreach (var item in Model.ProgrammeList)
-                        {
-                            if (item.Value == Model.SelectedProgramNo)
-                            {
-                                <option value="@item.Value" selected>@item.Text</option>
-                            }
-                            else
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        }
+                        <option value="">-- Select Programme --</option>
                     </select>
                 </div>
             </div>
@@ -240,6 +228,12 @@
                     var val = $(this).val();
                     if (!val) return;
                     currentProgramNo = val;
+                    $.ajax({
+                        url: '@Url.Action("SaveProgrammeSession", "ProgrammeSelect", new { area = "FPS" })',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(val)
+                    });
                     reloadGrid();
                 });
 

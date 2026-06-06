@@ -14,7 +14,7 @@ var AnimalJobConfig = {
 
 function addAnimalPlan(btn) {
     if (AnimalJobConfig.requireJobCodeForAdd && !AnimalJobConfig.getJobCode()) {
-        alert('Please select a project first.');
+        showGovukAlert('Please select a project first.');
         return;
     }
     $.ajax({
@@ -28,7 +28,7 @@ function addAnimalPlan(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while opening the form.');
+                showGovukAlert('An error occurred while opening the form.');
             }
         }
     });
@@ -56,9 +56,10 @@ function saveAnimalPlan() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                alert(result.message);
                 closeModal();
-                AnimalJobConfig.onSaved();
+                showGovukAlert(result.message).then(function () {                   
+                    AnimalJobConfig.onSaved();
+                });
             } else {
                 displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
             }
@@ -67,7 +68,7 @@ function saveAnimalPlan() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while saving.');
+                showGovukAlert('An error occurred while saving.');
             }
         }
     });
@@ -87,7 +88,7 @@ function editAnimalPlan(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while fetching the record.');
+                showGovukAlert('An error occurred while fetching the record.');
             }
         }
     });
@@ -117,9 +118,10 @@ function updateAnimalPlan() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                alert(result.message);
                 closeModal();
-                AnimalJobConfig.onUpdated();
+                showGovukAlert(result.message).then(function () {                    
+                    AnimalJobConfig.onUpdated();
+                });
             } else {
                 displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
             }
@@ -128,7 +130,7 @@ function updateAnimalPlan() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                alert('An error occurred while saving.');
+                showGovukAlert('An error occurred while saving.');
             }
         }
     });

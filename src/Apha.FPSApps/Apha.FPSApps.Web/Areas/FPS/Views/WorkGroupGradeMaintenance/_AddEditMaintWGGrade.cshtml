@@ -1,0 +1,141 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.MaintWGGradeItem
+@{
+    var isEditMode = !string.IsNullOrWhiteSpace(Model?.WgGrade);
+    var title = isEditMode ? "Edit WG Grade" : "Add WG Grade";
+    var saveLabel = isEditMode ? "Update" : "Save";
+}
+
+<div class="modal-header">
+    <h5 class="modal-title" id="wgGradeModalTitle">@title</h5>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+
+<div class="modal-body">
+    <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title"
+         tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list"></ul>
+        </div>
+    </div>
+
+    <form id="wgGradeForm">
+        <input type="hidden" id="isEditMode" value="@(isEditMode ? "true" : "false")" />
+
+        <div class="govuk-form-group sup_margin_0">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="WgGrade">
+                WGGrade: <span class="sup_color_red">*</span>
+            </label>
+            @if (isEditMode)
+            {
+                <input type="text" class="govuk-input govuk-!-font-size-16" asp-for="WgGrade"
+                       required readonly />
+            }
+            else
+            {
+                <input type="text" class="govuk-input govuk-!-font-size-16" asp-for="WgGrade"
+                       required maxlength="50" />
+            }
+            <span asp-validation-for="WgGrade" class="govuk-error-message" style="display:none;"></span>
+        </div>
+
+        <div class="govuk-form-group sup_margin_0">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="ProfitCentreGrade">
+                PCGrade: <span class="sup_color_red">*</span>
+            </label>
+            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                    asp-for="ProfitCentreGrade" required aria-label="Select PC grade">
+                <option value="">-- Select --</option>
+            </select>
+            <span asp-validation-for="ProfitCentreGrade" class="govuk-error-message" style="display:none;"></span>
+        </div>
+
+        <div class="govuk-form-group sup_margin_0">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="GradeCode">
+                Grade: <span class="sup_color_red">*</span>
+            </label>
+            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                    asp-for="GradeCode" required aria-label="Select grade">
+                <option value="">-- Select --</option>
+            </select>
+            <span asp-validation-for="GradeCode" class="govuk-error-message" style="display:none;"></span>
+        </div>
+
+        <div class="govuk-form-group sup_margin_0">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Workgroup">
+                WG: <span class="sup_color_red">*</span>
+            </label>
+            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                    asp-for="Workgroup" required aria-label="Select workgroup">
+                <option value="">-- Select --</option>
+            </select>
+            <span asp-validation-for="Workgroup" class="govuk-error-message" style="display:none;"></span>
+        </div>
+    </form>
+</div>
+
+<div class="modal-footer sup_flex_space_center">
+    <button class="govuk-button govuk-button--secondary sup_margin_0"
+            data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0"
+            data-module="govuk-button" type="button" onclick="saveWGGrade()">@saveLabel</button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        loadPcGrades();
+        loadGradeCodes();
+        loadWorkgroups();
+    });
+
+    function loadPcGrades() {
+        var $select = $('#ProfitCentreGrade');
+        var current = '@Html.Raw(Model?.ProfitCentreGrade ?? string.Empty)';
+        $.ajax({
+            url: '@Url.Action("GetPcGrades", "WorkGroupGradeMaintenance", new { area = "FPS" })',
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    $.each(response.data, function (i, code) {
+                        $select.append($('<option></option>').val(code).text(code)
+                            .prop('selected', code === current));
+                    });
+                }
+            }
+        });
+    }
+
+    function loadGradeCodes() {
+        var $select = $('#GradeCode');
+        var current = '@Html.Raw(Model?.GradeCode ?? string.Empty)';
+        $.ajax({
+            url: '@Url.Action("GetGradeCodes", "WorkGroupGradeMaintenance", new { area = "FPS" })',
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    $.each(response.data, function (i, code) {
+                        $select.append($('<option></option>').val(code).text(code)
+                            .prop('selected', code === current));
+                    });
+                }
+            }
+        });
+    }
+
+    function loadWorkgroups() {
+        var $select = $('#Workgroup');
+        var current = '@Html.Raw(Model?.Workgroup ?? string.Empty)';
+        $.ajax({
+            url: '@Url.Action("GetWorkgroups", "WorkGroupGradeMaintenance", new { area = "FPS" })',
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data) {
+                    $.each(response.data, function (i, name) {
+                        $select.append($('<option></option>').val(name).text(name)
+                            .prop('selected', name === current));
+                    });
+                }
+            }
+        });
+    }
+</script>

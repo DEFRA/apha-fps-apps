@@ -1,15 +1,17 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using Xunit;
 
-namespace Apha.FPS.Api.UnitTests.Controller.AnimalControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.AnimalMasterControllerTest
 {
     public class AnimalControllerTests
     {
@@ -24,440 +26,292 @@ namespace Apha.FPS.Api.UnitTests.Controller.AnimalControllerTest
             _controller = new AnimalController(_serviceMock, _mapperMock);
         }
 
-        #region GetAnimalCostAsync
+        private static AnimalDto BuildDto(string animalType = "CATTLE") =>
+            new() { AnimalType = animalType, Species = "Bovine", SecurityLevel = "L1", DailyRate = 50m };
+
+        private static AnimalReq BuildReq(string animalType = "CATTLE") =>
+            new() { AnimalType = animalType, Species = "Bovine", SecurityLevel = "L1", DailyRate = 50m };
+
+        private static AnimalRes BuildRes(string animalType = "CATTLE") =>
+            new() { AnimalType = animalType, Species = "Bovine", SecurityLevel = "L1", DailyRate = 50m };
+
+        #region Constructor Tests
 
         [Fact]
-        public async Task GetAnimalCostAsync_HappyPath_ReturnsOk()
+        public void Constructor_ThrowsArgumentNullException_WhenServiceIsNull()
         {
-            // Arrange
-            var query = new PaginationReq<string>();
-            var mappedQuery = new QueryParameters<string>();
-            var serviceResult = new PaginatedResult<AnimalCostViewDto>();
-            var mappedResult = new PaginationRes<AnimalCostViewRes>();
-
-            _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
-            _serviceMock.GetAnimalCostAsync(mappedQuery, "JOB001").Returns(serviceResult);
-            _mapperMock.Map<PaginationRes<AnimalCostViewRes>>(serviceResult).Returns(mappedResult);
-
-            // Act
-            var result = await _controller.GetAnimalCostAsync(query, "JOB001");
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(mappedResult, okResult.Value);
+            Assert.Throws<ArgumentNullException>(() =>
+                new AnimalController(null!, _mapperMock));
         }
 
         [Fact]
-        public async Task GetAnimalCostAsync_EdgeCase_EmptyResult_ReturnsOk()
+        public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
-            // Arrange
-            var query = new PaginationReq<string>();
-            var mappedQuery = new QueryParameters<string>();
-            var serviceResult = new PaginatedResult<AnimalCostViewDto>();
-            var mappedResult = new PaginationRes<AnimalCostViewRes>();
-
-            _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
-            _serviceMock.GetAnimalCostAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>()).Returns(serviceResult);
-            _mapperMock.Map<PaginationRes<AnimalCostViewRes>>(serviceResult).Returns(mappedResult);
-
-            // Act
-            var result = await _controller.GetAnimalCostAsync(query, "");
-
-            // Assert
-            Assert.IsType<OkObjectResult>(result);
-        }
-
-        [Fact]
-        public async Task GetAnimalCostAsync_ServiceThrows_PropagatesException()
-        {
-            // Arrange
-            var query = new PaginationReq<string>();
-            _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
-            _serviceMock.GetAnimalCostAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
-                .Throws(new Exception("Service error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAnimalCostAsync(query, "JOB001"));
-        }
-
-        [Fact]
-        public async Task GetAnimalCostAsync_MapperThrows_PropagatesException()
-        {
-            // Arrange
-            var query = new PaginationReq<string>();
-            _mapperMock.Map<QueryParameters<string>>(query).Throws(new Exception("Mapping error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAnimalCostAsync(query, "JOB001"));
+            Assert.Throws<ArgumentNullException>(() =>
+                new AnimalController(_serviceMock, null!));
         }
 
         #endregion
 
-        #region GetAnimalLookupAsync
+        #region Access / Authorization Attribute Tests
 
         [Fact]
-        public async Task GetAnimalLookupAsync_HappyPath_ReturnsOk()
+        public void Controller_HasAuthorizeAttribute_WithExpectedRoles()
         {
-            // Arrange
-            var serviceResult = new List<AnimalDto>
+            var attrs = typeof(AnimalController)
+                .GetCustomAttributes(typeof(AuthorizeAttribute), true);
+            Assert.NotEmpty(attrs);
+            var auth = (AuthorizeAttribute)attrs[0];
+            Assert.Contains("API-FPSAdmin", auth.Roles);
+        }
+
+        [Fact]
+        public void GetAllAnimalsAsync_HasHttpGetAttribute()
+        {
+            var method = typeof(AnimalController).GetMethod(nameof(AnimalController.GetAllAnimalsAsync));
+            Assert.NotNull(method);
+            var attr = method!.GetCustomAttributes(typeof(HttpGetAttribute), true);
+            Assert.NotEmpty(attr);
+        }
+
+        [Fact]
+        public void GetAllAnimalsPagedAsync_HasHttpGetAttribute_WithPagedRoute()
+        {
+            var method = typeof(AnimalController).GetMethod(nameof(AnimalController.GetAllAnimalsPagedAsync));
+            Assert.NotNull(method);
+            var attr = method!.GetCustomAttributes(typeof(HttpGetAttribute), true)
+                .Cast<HttpGetAttribute>().FirstOrDefault();
+            Assert.NotNull(attr);
+            Assert.Equal("paged", attr!.Template);
+        }
+
+        [Fact]
+        public void CreateAnimal_HasHttpPostAttribute()
+        {
+            var method = typeof(AnimalController).GetMethod(nameof(AnimalController.CreateAnimal));
+            Assert.NotNull(method);
+            var attr = method!.GetCustomAttributes(typeof(HttpPostAttribute), true);
+            Assert.NotEmpty(attr);
+        }
+
+        [Fact]
+        public void UpdateAnimal_HasHttpPutAttribute()
+        {
+            var method = typeof(AnimalController).GetMethod(nameof(AnimalController.UpdateAnimal));
+            Assert.NotNull(method);
+            var attr = method!.GetCustomAttributes(typeof(HttpPutAttribute), true);
+            Assert.NotEmpty(attr);
+        }
+
+        [Fact]
+        public void DeleteAnimal_HasHttpDeleteAttribute()
+        {
+            var method = typeof(AnimalController).GetMethod(nameof(AnimalController.DeleteAnimal));
+            Assert.NotNull(method);
+            var attr = method!.GetCustomAttributes(typeof(HttpDeleteAttribute), true);
+            Assert.NotEmpty(attr);
+        }
+
+        #endregion
+
+        #region GetAllAnimalsAsync Tests
+
+        [Fact]
+        public async Task GetAllAnimalsAsync_ReturnsOk_WithMappedList()
+        {
+            var dtos = new List<AnimalDto> { BuildDto() };
+            var resList = new List<AnimalRes> { BuildRes() };
+
+            _serviceMock.GetAllAnimalsAsync().Returns(dtos);
+            _mapperMock.Map<List<AnimalRes>>(dtos).Returns(resList);
+
+            var result = await _controller.GetAllAnimalsAsync();
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(resList, ok.Value);
+            await _serviceMock.Received(1).GetAllAnimalsAsync();
+        }
+
+        [Fact]
+        public async Task GetAllAnimalsAsync_ReturnsEmptyList_WhenNoAnimals()
+        {
+            _serviceMock.GetAllAnimalsAsync().Returns(new List<AnimalDto>());
+            _mapperMock.Map<List<AnimalRes>>(Arg.Any<IEnumerable<AnimalDto>>())
+                .Returns(new List<AnimalRes>());
+
+            var result = await _controller.GetAllAnimalsAsync();
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(new List<AnimalRes>(), ok.Value);
+        }
+
+        [Fact]
+        public async Task GetAllAnimalsAsync_ThrowsException_WhenServiceThrows()
+        {
+            _serviceMock.GetAllAnimalsAsync().ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllAnimalsAsync());
+        }
+
+        #endregion
+
+        #region GetAllAnimalsPagedAsync Tests
+
+        [Fact]
+        public async Task GetAllAnimalsPagedAsync_ReturnsOk_WithPagedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paged = new PaginatedResult<AnimalDto>
             {
-                new AnimalDto { AnimalType = "CAT", DailyRate = 50.00m }
+                Data = [BuildDto()],
+                PaginationData = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
             };
-            var mappedResult = new List<AnimalRes>
+            var expected = new PaginationRes<AnimalRes>
             {
-                new AnimalRes { AnimalType = "CAT", DailyRate = 50.00m }
-            };
-
-            _serviceMock.GetAnimalLookupAsync().Returns(serviceResult);
-            _mapperMock.Map<List<AnimalRes>>(serviceResult).Returns(mappedResult);
-
-            // Act
-            var result = await _controller.GetAnimalLookupAsync();
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(mappedResult, okResult.Value);
-        }
-
-        [Fact]
-        public async Task GetAnimalLookupAsync_EdgeCase_EmptyList_ReturnsOk()
-        {
-            // Arrange
-            var serviceResult = new List<AnimalDto>();
-            var mappedResult = new List<AnimalRes>();
-
-            _serviceMock.GetAnimalLookupAsync().Returns(serviceResult);
-            _mapperMock.Map<List<AnimalRes>>(serviceResult).Returns(mappedResult);
-
-            // Act
-            var result = await _controller.GetAnimalLookupAsync();
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Empty((List<AnimalRes>)okResult.Value!);
-        }
-
-        [Fact]
-        public async Task GetAnimalLookupAsync_ServiceThrows_PropagatesException()
-        {
-            // Arrange
-            _serviceMock.GetAnimalLookupAsync().Throws(new Exception("Service error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAnimalLookupAsync());
-        }
-
-        [Fact]
-        public async Task GetAnimalLookupAsync_MapperThrows_PropagatesException()
-        {
-            // Arrange
-            var serviceResult = new List<AnimalDto>();
-            _serviceMock.GetAnimalLookupAsync().Returns(serviceResult);
-            _mapperMock.Map<List<AnimalRes>>(serviceResult).Throws(new Exception("Mapping error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAnimalLookupAsync());
-        }
-
-        #endregion
-
-        #region GetAnimalRateByIdAsync
-
-        [Fact]
-        public async Task GetAnimalRateByIdAsync_HappyPath_ReturnsOk()
-        {
-            // Arrange
-            _serviceMock.GetAnimalRateByIdAsync("CAT", "JOB001").Returns(Task.FromResult<decimal?>(75.50m));
-
-            // Act
-            var result = await _controller.GetAnimalRateByIdAsync("CAT", "JOB001");
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(75.50m, okResult.Value);
-        }
-
-        [Fact]
-        public async Task GetAnimalRateByIdAsync_NotFound_ReturnsNotFound()
-        {
-            // Arrange
-            _serviceMock.GetAnimalRateByIdAsync("UNKNOWN", "JOB001").Returns(Task.FromResult<decimal?>(null));
-
-            // Act
-            var result = await _controller.GetAnimalRateByIdAsync("UNKNOWN", "JOB001");
-
-            // Assert
-            Assert.IsType<NotFoundResult>(result);
-        }
-
-        [Fact]
-        public async Task GetAnimalRateByIdAsync_ServiceThrows_PropagatesException()
-        {
-            // Arrange
-            _serviceMock.GetAnimalRateByIdAsync("CAT", "JOB001").Throws(new Exception("Service error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAnimalRateByIdAsync("CAT", "JOB001"));
-        }
-
-        #endregion
-
-        #region AddAnimalCostAsync
-
-        [Fact]
-        public async Task AddAnimalCostAsync_HappyPath_ReturnsOk()
-        {
-            // Arrange
-            var req = new AnimalRequestReq { JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = 10 };
-            var dto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = 10 };
-            var resultDto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = 10 };
-            var mapped = new AnimalRequestRes { JobCode = "JOB001", AnimalType = "CAT" };
-
-            _mapperMock.Map<AnimalRequestDto>(req).Returns(dto);
-            _serviceMock.AddAnimalCostAsync(dto).Returns(resultDto);
-            _mapperMock.Map<AnimalRequestRes>(resultDto).Returns(mapped);
-
-            // Act
-            var result = await _controller.AddAnimalCostAsync(req);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(mapped, okResult.Value);
-        }
-
-        [Fact]
-        public async Task AddAnimalCostAsync_ServiceThrows_PropagatesException()
-        {
-            // Arrange
-            var req = new AnimalRequestReq { JobCode = "JOB001", AnimalType = "CAT" };
-            var dto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "CAT" };
-
-            _mapperMock.Map<AnimalRequestDto>(req).Returns(dto);
-            _serviceMock.AddAnimalCostAsync(dto).Throws(new Exception("Service error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.AddAnimalCostAsync(req));
-        }
-
-        [Fact]
-        public async Task AddAnimalCostAsync_MapperThrows_PropagatesException()
-        {
-            // Arrange
-            var req = new AnimalRequestReq { JobCode = "JOB001", AnimalType = "CAT" };
-            _mapperMock.Map<AnimalRequestDto>(req).Throws(new Exception("Mapping error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.AddAnimalCostAsync(req));
-        }
-
-        #endregion
-
-        #region UpdateAnimalCostAsync
-
-        [Fact]
-        public async Task UpdateAnimalCostAsync_HappyPath_ReturnsOk()
-        {
-            // Arrange
-            var req = new AnimalRequestReq { JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 7, NumberOfAnimals = 12 };
-            var dto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 7, NumberOfAnimals = 12 };
-            var resultDto = new AnimalRequestDto { JobCode = "JOB001", AnimalType = "CAT", NumberOfDays = 7, NumberOfAnimals = 12 };
-            var mapped = new AnimalRequestRes { JobCode = "JOB001", AnimalType = "CAT" };
-
-            _mapperMock.Map<AnimalRequestDto>(req).Returns(dto);
-            _serviceMock.UpdateAnimalCostAsync(dto).Returns(resultDto);
-            _mapperMock.Map<AnimalRequestRes>(resultDto).Returns(mapped);
-
-            // Act
-            var result = await _controller.UpdateAnimalCostAsync(req);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(mapped, okResult.Value);
-        }
-
-        [Fact]
-        public async Task UpdateAnimalCostAsync_ServiceThrows_PropagatesException()
-        {
-            // Arrange
-            var req = new AnimalRequestReq { JobCode = "JOB999", AnimalType = "CAT" };
-            var dto = new AnimalRequestDto { JobCode = "JOB999", AnimalType = "CAT" };
-
-            _mapperMock.Map<AnimalRequestDto>(req).Returns(dto);
-            _serviceMock.UpdateAnimalCostAsync(dto).Throws(new Exception("Service error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.UpdateAnimalCostAsync(req));
-        }
-
-        [Fact]
-        public async Task UpdateAnimalCostAsync_MapperThrows_PropagatesException()
-        {
-            // Arrange
-            var req = new AnimalRequestReq { JobCode = "JOB001", AnimalType = "CAT" };
-            _mapperMock.Map<AnimalRequestDto>(req).Throws(new Exception("Mapping error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.UpdateAnimalCostAsync(req));
-        }
-
-        #endregion
-
-        #region DeleteAnimalCostAsync
-
-        [Fact]
-        public async Task DeleteAnimalCostAsync_HappyPath_ReturnsOk()
-        {
-            // Arrange
-            _serviceMock.DeleteAnimalCostAsync(1).Returns(Task.FromResult(true));
-
-            // Act
-            var result = await _controller.DeleteAnimalCostAsync(1);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.True((bool)okResult.Value!);
-        }
-
-        [Fact]
-        public async Task DeleteAnimalCostAsync_NotFound_ThrowsKeyNotFoundException()
-        {
-            // Arrange
-            _serviceMock.DeleteAnimalCostAsync(999).Returns(Task.FromResult(false));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _controller.DeleteAnimalCostAsync(999)
-            );
-        }
-
-        [Fact]
-        public async Task DeleteAnimalCostAsync_ServiceThrows_PropagatesException()
-        {
-            // Arrange
-            _serviceMock.DeleteAnimalCostAsync(1).Throws(new Exception("Service error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.DeleteAnimalCostAsync(1));
-        }
-
-        #endregion
-
-        #region GetTotalAnimalCostAsync
-
-        [Fact]
-        public async Task GetTotalAnimalCostAsync_HappyPath_ReturnsOkWithTotal()
-        {
-            // Arrange
-            _serviceMock.GetTotalAnimalCostAsync("JOB001").Returns(Task.FromResult(250.00m));
-
-            // Act
-            var result = await _controller.GetTotalAnimalCostAsync("JOB001");
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(250.00m, okResult.Value);
-        }
-
-        [Fact]
-        public async Task GetTotalAnimalCostAsync_EdgeCase_ReturnsOkWithZero()
-        {
-            // Arrange
-            _serviceMock.GetTotalAnimalCostAsync("EMPTY").Returns(Task.FromResult(0m));
-
-            // Act
-            var result = await _controller.GetTotalAnimalCostAsync("EMPTY");
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(0m, okResult.Value);
-        }
-
-        [Fact]
-        public async Task GetTotalAnimalCostAsync_ServiceThrows_PropagatesException()
-        {
-            // Arrange
-            _serviceMock.GetTotalAnimalCostAsync("JOB001")
-                .Throws(new Exception("Service error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetTotalAnimalCostAsync("JOB001"));
-        }
-
-        #endregion
-
-        #region GetAnimalCostViewByIdAsync
-
-        [Fact]
-        public async Task GetAnimalCostViewByIdAsync_HappyPath_ReturnsOk()
-        {
-            // Arrange
-            var serviceResult = new AnimalCostViewDto
-            {
-                IndCounter     = 1,
-                JobCode        = "JOB001",
-                AnimalType     = "CAT",
-                NumberOfDays   = 5,
-                NumberOfAnimals = 2,
-                AnimalCost     = 100m
-            };
-            var mappedResult = new AnimalCostViewRes
-            {
-                IndCounter     = 1,
-                JobCode        = "JOB001",
-                AnimalType     = "CAT",
-                NumberOfDays   = 5,
-                NumberOfAnimals = 2,
-                AnimalCost     = 100m
+                Data = [BuildRes()],
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
             };
 
-            _serviceMock.GetAnimalCostViewByIdAsync(1, "JOB001").Returns(serviceResult);
-            _mapperMock.Map<AnimalCostViewRes>(serviceResult).Returns(mappedResult);
+            _serviceMock.GetAllAnimalsAsync(query).Returns(paged);
+            _mapperMock.Map<PaginationRes<AnimalRes>>(paged).Returns(expected);
 
-            // Act
-            var result = await _controller.GetAnimalCostViewByIdAsync(1, "JOB001");
+            var result = await _controller.GetAllAnimalsPagedAsync(query);
 
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(mappedResult, okResult.Value);
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expected, ok.Value);
+            await _serviceMock.Received(1).GetAllAnimalsAsync(query);
+        }
+
+        #endregion
+
+        #region GetAnimalByIdAsync Tests
+
+        [Fact]
+        public async Task GetAnimalByIdAsync_ReturnsOk_WhenFound()
+        {
+            var dto = BuildDto();
+            var res = BuildRes();
+
+            _serviceMock.GetAnimalByIdAsync("CATTLE").Returns(dto);
+            _mapperMock.Map<AnimalRes>(dto).Returns(res);
+
+            var result = await _controller.GetAnimalByIdAsync("CATTLE");
+
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(res, ok.Value);
         }
 
         [Fact]
-        public async Task GetAnimalCostViewByIdAsync_NullResult_ThrowsKeyNotFoundException()
+        public async Task GetAnimalByIdAsync_ThrowsArgumentException_WhenNotFound()
         {
-            // Arrange
-            _serviceMock.GetAnimalCostViewByIdAsync(999, "JOB001")
-                .Returns(Task.FromResult<AnimalCostViewDto?>(null));
+            _serviceMock.GetAnimalByIdAsync("NOTEXIST").Returns((AnimalDto?)null);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _controller.GetAnimalCostViewByIdAsync(999, "JOB001"));
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _controller.GetAnimalByIdAsync("NOTEXIST"));
+        }
+
+        #endregion
+
+        #region CreateAnimal Tests
+
+        [Fact]
+        public async Task CreateAnimal_ReturnsOk_WhenSuccessful()
+        {
+            var req = BuildReq();
+            var dto = BuildDto();
+            var addedDto = BuildDto();
+            var res = BuildRes();
+
+            _mapperMock.Map<AnimalDto>(req).Returns(dto);
+            _serviceMock.AddAnimalAsync(dto).Returns(addedDto);
+            _mapperMock.Map<AnimalRes>(addedDto).Returns(res);
+
+            var result = await _controller.CreateAnimal(req);
+
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(res, ok.Value);
+            await _serviceMock.Received(1).AddAnimalAsync(dto);
         }
 
         [Fact]
-        public async Task GetAnimalCostViewByIdAsync_ServiceThrows_PropagatesException()
+        public async Task CreateAnimal_ThrowsException_WhenServiceThrows()
         {
-            // Arrange
-            _serviceMock.GetAnimalCostViewByIdAsync(1, "JOB001")
-                .Throws(new Exception("Service error"));
+            var req = BuildReq();
+            var dto = BuildDto();
+            _mapperMock.Map<AnimalDto>(req).Returns(dto);
+            _serviceMock.AddAnimalAsync(dto).ThrowsAsync(new ArgumentException("Animal type is required."));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(
-                () => _controller.GetAnimalCostViewByIdAsync(1, "JOB001"));
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.CreateAnimal(req));
+        }
+
+        #endregion
+
+        #region UpdateAnimal Tests
+
+        [Fact]
+        public async Task UpdateAnimal_ReturnsOk_WhenSuccessful()
+        {
+            var req = BuildReq();
+            var dto = BuildDto();
+            var updatedDto = BuildDto();
+            var res = BuildRes();
+
+            _mapperMock.Map<AnimalDto>(req).Returns(dto);
+            _serviceMock.UpdateAnimalAsync(dto).Returns(updatedDto);
+            _mapperMock.Map<AnimalRes>(updatedDto).Returns(res);
+
+            var result = await _controller.UpdateAnimal(req);
+
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(res, ok.Value);
+            await _serviceMock.Received(1).UpdateAnimalAsync(dto);
         }
 
         [Fact]
-        public async Task GetAnimalCostViewByIdAsync_MapperThrows_PropagatesException()
+        public async Task UpdateAnimal_ThrowsKeyNotFoundException_WhenNotFound()
         {
-            // Arrange
-            var serviceResult = new AnimalCostViewDto { IndCounter = 1, JobCode = "JOB001" };
+            var req = BuildReq("NOTEXIST");
+            var dto = new AnimalDto { AnimalType = "NOTEXIST" };
+            _mapperMock.Map<AnimalDto>(req).Returns(dto);
+            _serviceMock.UpdateAnimalAsync(dto).ThrowsAsync(
+                new KeyNotFoundException("Animal 'NOTEXIST' not found."));
 
-            _serviceMock.GetAnimalCostViewByIdAsync(1, "JOB001").Returns(serviceResult);
-            _mapperMock.Map<AnimalCostViewRes>(serviceResult)
-                .Throws(new Exception("Mapping error"));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.UpdateAnimal(req));
+        }
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(
-                () => _controller.GetAnimalCostViewByIdAsync(1, "JOB001"));
+        #endregion
+
+        #region DeleteAnimal Tests
+
+        [Fact]
+        public async Task DeleteAnimal_ThrowsArgumentException_WhenAnimalTypeIsEmpty()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteAnimal(""));
+        }
+
+        [Fact]
+        public async Task DeleteAnimal_ThrowsArgumentException_WhenAnimalTypeIsWhiteSpace()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteAnimal("   "));
+        }
+
+        [Fact]
+        public async Task DeleteAnimal_ReturnsOk_WhenDeleted()
+        {
+            _serviceMock.DeleteAnimalAsync("CATTLE").Returns(true);
+
+            var result = await _controller.DeleteAnimal("CATTLE");
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(true, ok.Value);
+        }
+
+        [Fact]
+        public async Task DeleteAnimal_ThrowsArgumentException_WhenNotFound()
+        {
+            _serviceMock.DeleteAnimalAsync("NOTEXIST").Returns(false);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.DeleteAnimal("NOTEXIST"));
         }
 
         #endregion

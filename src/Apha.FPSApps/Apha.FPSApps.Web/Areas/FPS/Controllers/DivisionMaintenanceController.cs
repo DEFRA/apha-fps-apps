@@ -16,7 +16,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     /// MVC controller for Division maintenance operations.
     /// </summary>
     [Area("FPS")]
-    [Authorize(Roles = "FPSAdmin,FPSUser")]
+    [Authorize(Roles = "FPSAdmin")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class DivisionMaintenanceController : Controller
     {

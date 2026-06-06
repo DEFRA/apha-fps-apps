@@ -33,15 +33,10 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public double? Euroconvrate { get; set; }
 
         [Required(ErrorMessage = "Please choose Defra/Non-Defra")]
-        public short? IsDefraProject { get; set; }
-
-        public DateTime? EndDate { get; set; }
+        public short? IsDefraProject { get; set; }        
         public decimal? BudgetAmount { get; set; }
         public decimal? ActualCost { get; set; }
-        public string Status { get; set; } = "Active";
-        public DateTime CreatedDate { get; set; }
-        public string? CreatedBy { get; set; }
-
+       
         [BindNever] public List<SelectListItem> AvailablePrograms { get; set; } = new();
         [BindNever] public List<SelectListItem> AvailableCustomers { get; set; } = new();
         [BindNever] public List<SelectListItem> AvailableDiseases { get; set; } = new();

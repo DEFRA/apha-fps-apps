@@ -405,6 +405,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 profitCentreGrades: profitCentreGrades,
                 projectViews: projectViews,
                 programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
                 settings: settings);
 
             // Act
@@ -428,6 +430,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
                 profitCentreGrades: new List<ProfitCentreGrade>(),
                 projectViews: new List<ProjectView>(),
                 programViews: new List<ProgramView>(),
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
                 settings: settings);
 
             // Act

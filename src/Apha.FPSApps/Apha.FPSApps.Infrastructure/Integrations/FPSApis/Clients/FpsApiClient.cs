@@ -20,11 +20,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsAgencyApiClient FpsAgency { get; }
         public IFpsAdditionalCostApiClient FpsAdditionalCost { get; }
         public IFpsDivisionGradeApiClient FpsMaintDG { get; }
+        public IFpsAnimalApiClient FpsAnimalMaster { get; }
 
         public IFpsProfitCentreApiClient FpsProfitCentre { get; }
         public IFpsProfitCentreGradeApiClient FpsProfitCentreGrade { get; }
         public IFpsWorkGroupGradeApiClient FpsWorkGroupGrade { get; }
         public IFpsWorkGroupEmployeeApiClient FpsWorkGroupEmployee { get; }
+        public IFpsWorkgroupApiClient FpsWorkgroup { get; }
+        public IFpsProjectStaffPlanApiClient FpsProjectStaffPlan { get; }
+        public IFpsProjectGroupApiClient FpsProjectGroup { get; }
+
+        public IFpsWorkGroupGradeApiClient FpsWorkgroupGrade { get; }
         public IFpsWorkGroupApiClient FpsWorkGroup { get; }
         public IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         public IFpsPurchasesApiClient FpsPurchases { get; }
@@ -48,7 +54,12 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsProfitCentreGrade = new FpsProfitCentreGradeApiClient(http, mapper);
             FpsWorkGroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
             FpsWorkGroupEmployee = new FpsWorkGroupEmployeeApiClient(http, mapper);
+            FpsWorkgroup = new FpsWorkgroupApiClient(http, mapper);
             FpsMaintDG = new FpsDivisionGradeApiClient(http, mapper);
+            FpsProjectStaffPlan = new FpsProjectStaffPlanApiClient(http, mapper);
+            FpsAnimalMaster = new FpsAnimalApiClient(http, mapper);
+            FpsProjectGroup = new FpsProjectGroupApiClient(http, mapper);
+            FpsWorkgroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
             FpsWorkGroup = new FpsWorkGroupApiClient(http, mapper);
             FpsBudgetBids = new FpsBudgetBidsApiClient(http, mapper);
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);

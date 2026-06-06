@@ -69,5 +69,10 @@ namespace Apha.FPS.Application.Services
         {
             return await _divisionGradeRepository.GetAllGradeCodesAsync();
         }
+
+        public async Task<List<string>> GetAllDivisionGradeCodesAsync()
+        {
+            return await _divisionGradeRepository.GetAllDivisionGradeCodesAsync();
+        }
     }
 }

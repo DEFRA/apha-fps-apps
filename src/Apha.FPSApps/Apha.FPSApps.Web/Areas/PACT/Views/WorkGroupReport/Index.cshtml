@@ -1,0 +1,332 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Apha.FPSApps.Application.Dtos.PACT
+@model Apha.FPSApps.Web.Areas.PACT.Models.WorkGroupReportEmailViewModel
+
+@{
+    ViewData["Title"] = "PACT : Create Email Time Output Summary";
+}
+
+@* ── Page heading ────────────────────────────────────────────────────────── *@
+<div class="govuk-grid-row">
+    <div class="govuk-grid-row sup_margin_left_right_0">
+        <div class="govuk-grid-column-full">
+            <div class="govuk-grid-column-full">
+                <h1 class="govuk-grid-row sup_border-bottom" style="padding:10px 0 10px 10px">
+                    Create Email Time Output Summary
+                </h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Validation summary ──────────────────────────────────────────────────── *@
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+}
+
+
+@* ── Criteria bar ────────────────────────────────────────────────────────── *@
+<div class="govuk-grid-row sup-pad-top-all-10px sup_border govuk-!-margin-bottom-2 govuk-!-margin-top-0 govuk-!-padding-top-2 govuk-!-padding-bottom-2"
+     aria-label="Email time output summary criteria">
+
+    @* Profit Centre + Period *@
+    <div class="govuk-grid-column-one-third sup-pad-top-all-10px isProfitSummary period-dropdown govuk-!-padding-bottom-0 govuk-!-padding-top-0">
+
+        <div class="govuk-form-group govuk-!-margin-bottom-2">
+            <label class="govuk-label govuk-label--l govuk-!-margin-bottom-1" for="SelectedProfitCentre">
+                Profit Centre:
+            </label>
+            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                    id="SelectedProfitCentre"
+                    name="SelectedProfitCentre">
+                @{ var isFirstPc = true; }
+                @foreach (var pc in Model.ProfitCentreOptions)
+                {
+                    var isSelected = (!string.IsNullOrEmpty(Model.SelectedProfitCentre))
+                        ? Model.SelectedProfitCentre == pc.Value
+                        : isFirstPc;
+                    isFirstPc = false;
+                    if (isSelected)
+                    {
+                        <option value="@pc.Value" selected>@pc.Text</option>
+                    }
+                    else
+                    {
+                        <option value="@pc.Value">@pc.Text</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="govuk-form-group govuk-!-margin-bottom-0">
+            <label class="govuk-label govuk-label--l govuk-!-margin-bottom-1" for="for-period-input">
+                For Period:
+            </label>
+            @* formSend exists solely to carry the antiforgery token consumed by AJAX calls *@
+            <form id="formSend" method="post" style="display:none">
+                @Html.AntiForgeryToken()
+            </form>
+
+            @{
+                var periodsJson = System.Text.Json.JsonSerializer.Serialize(
+                    Model.CalenderMonthItems.OrderBy(m => m.AccntsPeriod).Select(m => new {
+                        period      = m.AccntsPeriod,
+                        monthName   = m.MonthName,
+                        monthNumber = m.MonthNumber
+                    }));
+            }
+
+            <div id="for-period-dropdown" class="govuk-form-group govuk-!-margin-bottom-0">
+                <input type="text"
+                       id="for-period-input"
+                       value="-- select period --"
+                       class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                       readonly
+                       aria-label="For Period" />
+                <input type="hidden" id="for-period-value" name="SelectedMonthNumber" value="@Model.SelectedMonthNumber" />
+
+                <div class="dropdown-panel" id="for-period-panel" style="display:none;">
+                    <input type="text"
+                           class="search-box govuk-input govuk-!-font-size-16"
+                           id="for-period-search"
+                           placeholder="Type to search and select period" />
+                    <table class="period-dropdown__table govuk-table govuk-!-font-size-16">
+                        <thead class="govuk-table__head">
+                            <tr class="govuk-table__row">
+                                <th class="govuk-table__header">AccntsPeriod</th>
+                                <th class="govuk-table__header">MonthName</th>
+                                <th class="govuk-table__header">MonthNumber</th>
+                            </tr>
+                        </thead>
+                        <tbody id="for-period-body" class="govuk-table__body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <script>window.__periodData = @Html.Raw(periodsJson);</script>
+        </div>
+
+    </div>
+
+    @* Time Sheets / Output Sheets *@
+    <div class="govuk-grid-column-one-third sup-pad-top-all-10px govuk-!-padding-top-0 govuk-!-padding-bottom-0">
+        <div class="govuk-form-group" id="timesheets-group">
+            <fieldset class="govuk-fieldset">
+                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                    <div class="govuk-checkboxes__item govuk-!-margin-bottom-4 govuk-!-margin-top-5">
+                        <input class="govuk-checkboxes__input"
+                               id="chk-timesheets"
+                               name="SendTimeSheet"
+                               type="checkbox"
+                               value="true"
+                               @(Model.SendTimeSheet ? "checked" : "") />
+                        <label class="govuk-label govuk-checkboxes__label" for="chk-timesheets">Time sheets</label>
+                    </div>
+                    <div class="govuk-checkboxes__item">
+                        <input class="govuk-checkboxes__input"
+                               id="chk-outputsheets"
+                               name="SendOutputSheet"
+                               type="checkbox"
+                               value="true"
+                               @(Model.SendOutputSheet ? "checked" : "") />
+                        <label class="govuk-label govuk-checkboxes__label" for="chk-outputsheets">Output sheets</label>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+    @* Time sheet layout *@
+    <div class="govuk-grid-column-one-third sup-pad-top-all-10px govuk-!-padding-top-0 govuk-!-padding-bottom-0">
+        <div class="govuk-form-group sup-highlighted-forms-blue-bg govuk-!-padding-bottom-2 govuk-!-padding-top-2 govuk-!-padding-left-4">
+            <fieldset class="govuk-fieldset" id="timesheetLayoutFieldset">
+                <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">Time sheet layout</legend>
+                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                    <div class="govuk-checkboxes__item">
+                        <input class="govuk-checkboxes__input"
+                               id="layout-flat"
+                               name="TimesheetLayoutFlat"
+                               type="checkbox"
+                               value="true"
+                               @(Model.TimesheetLayoutFlat ? "checked" : "") />
+                        <label class="govuk-label govuk-checkboxes__label" for="layout-flat">Flat-file</label>
+                    </div>
+                    <div class="govuk-checkboxes__item">
+                        <input class="govuk-checkboxes__input"
+                               id="layout-crosstab"
+                               name="TimesheetLayoutCrossTab"
+                               type="checkbox"
+                               value="true"
+                               @(Model.TimesheetLayoutCrossTab ? "checked" : "") />
+                        <label class="govuk-label govuk-checkboxes__label" for="layout-crosstab">Cross-tab</label>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+    </div>
+
+
+
+    @* ── Two-column body *@
+<div class="govuk-grid-row">
+
+    @* Left: work-groups DataGrid + action buttons *@
+    <div class="govuk-grid-column-two-thirds">
+
+        <div id="gridContainer_@Model.WorkGroupGrid.GridId" class="govuk-!-margin-top-2">
+            @await Html.PartialAsync("_DataGrid", Model.WorkGroupGrid)
+        </div>
+
+        @* Clear All Work Groups (left) + Send Emails (right) — isBtnSection CSS applies flex space-between *@
+        <div class="govuk-grid-row govuk-!-margin-top-2 isBtnSection">
+            <div class="govuk-grid-column-full">
+                <button id="btn-clear-all-workgroups"
+                        class="govuk-button govuk-button--secondary"
+                        type="button" data-module="govuk-button">
+                    Clear All Work Groups
+                </button>
+
+                <button id="btn-send-emails"
+                        class="govuk-button govuk-!-margin-right-2"
+                        type="button" data-module="govuk-button">
+                    Send Emails
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @* Right: For the current profit centre *@
+    <div class="govuk-grid-column-one-third">
+        <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_align_flexheading sup_decrease_font_size_s">
+            For the current profit centre
+        </h2>
+
+        <div class="govuk-body govuk-!-margin-top-4 pc-actions-panel">
+
+            <button id="btn-select-pc" class="govuk-button" type="button" data-module="govuk-button">
+                    Select PC&rsquo;s Work Groups
+                </button>
+
+                <button id="btn-clear-pc" class="govuk-button govuk-button--secondary" type="button" data-module="govuk-button">
+                    Clear PC&rsquo;s Work Groups
+                </button>
+
+        </div>
+    </div>
+</div>
+
+@* ── Email send results (populated by AJAX) ──────────────────────────────── *@
+<div id="sendResultsContainer" class="govuk-!-margin-top-4" style="display:none;">
+    <div class="govuk-body">
+        <h2 class="govuk-heading-m">Email Send Results</h2>
+        <div style="overflow-x: auto;">
+            <table class="govuk-table" id="sendResultsTable">
+                <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
+                        <th scope="col" class="govuk-table__header" style="width:200px">Work Group</th>
+                        <th scope="col" class="govuk-table__header" style="width:250px">Email Recipient</th>
+                        <th scope="col" class="govuk-table__header" style="width:100px">Status</th>
+                        <th scope="col" class="govuk-table__header">Reason / Note</th>
+                    </tr>
+                </thead>
+                <tbody class="govuk-table__body" id="sendResultsBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@* ── Edit email settings modal is loaded dynamically into #modalPopup ───── *@
+
+@section Scripts {
+    @* getWorkGroupGridExtraFilters must be global before _DataGrid grid manager is used *@
+    <script>
+        function getWorkGroupGridExtraFilters() {
+            return { profitCentre: document.getElementById('SelectedProfitCentre')?.value ?? '' };
+        }
+    </script>
+    <script>
+        // ── For Period custom dropdown ─────────────────────────────────────
+        (function () {
+            const periods = window.__periodData || [];
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const dropdown = document.getElementById('for-period-dropdown');
+                const input    = document.getElementById('for-period-input');
+                const hidden   = document.getElementById('for-period-value');
+                const panel    = document.getElementById('for-period-panel');
+                const search   = document.getElementById('for-period-search');
+                const tbody    = document.getElementById('for-period-body');
+
+                if (!dropdown || !input || !hidden || !panel || !search || !tbody) return;
+
+                // Pre-select if the model already has a value
+                const preselected = hidden.value;
+                if (preselected) {
+                    const match = periods.find(p => String(p.monthNumber) === String(preselected));
+                    if (match) {
+                        input.value = match.period + ' - ' + match.monthName;
+                    }
+                }
+
+                function renderRows(filter) {
+                    const term = (filter || '').toLowerCase();
+                    tbody.innerHTML = '';
+                    periods
+                        .filter(p =>
+                            String(p.period  || '').includes(term) ||
+                            (p.monthName || '').toLowerCase().includes(term) ||
+                            String(p.monthNumber || '').includes(term))
+                        .forEach(function (p) {
+                            const tr = document.createElement('tr');
+                            tr.className = 'govuk-table__row';
+                            tr.style.cursor = 'pointer';
+                            tr.innerHTML =
+                                '<td class="govuk-table__cell">' + (p.period      ?? '') + '</td>' +
+                                '<td class="govuk-table__cell">' + (p.monthName   ?? '') + '</td>' +
+                                '<td class="govuk-table__cell">' + (p.monthNumber ?? '') + '</td>';
+                            tr.addEventListener('click', function () {
+                                input.value         = p.period + ' - ' + p.monthName;
+                                hidden.value        = p.monthNumber;
+                                panel.style.display = 'none';
+                            });
+                            tbody.appendChild(tr);
+                        });
+                }
+
+                input.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    panel.style.display = 'block';
+                    panel.style.width   = input.offsetWidth + 'px';
+                    search.value        = '';
+                    search.focus();
+                    renderRows('');
+                });
+
+                search.addEventListener('input', function (e) {
+                    renderRows(e.target.value);
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!dropdown.contains(e.target)) {
+                        panel.style.display = 'none';
+                    }
+                });
+            });
+        }());
+    </script>
+    <script src="~/js/pact_js/work-group-report.js"></script>
+}

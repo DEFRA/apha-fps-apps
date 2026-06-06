@@ -1,5 +1,6 @@
 using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
@@ -16,8 +17,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public FpsWorkGroupGradeApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
-            _http = http;
-            _mapper = mapper;
+            _http = http ?? throw new ArgumentNullException(nameof(http));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkGroupGradeAsync(QueryParameters<string> query, string profitCentre)
@@ -49,5 +50,75 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
             }
         }
+
+        public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetAllWorkgroupGradesPagedAsync(QueryParameters<string> query)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedWorkgroupGrades, query);
+            var response = await _http.GetAsync<List<WorkgroupGradeRes>>(url);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<WorkgroupGradeDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<WorkgroupGradeDto>>>(response);
+            return ApiResponseDto<List<WorkgroupGradeDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<WorkgroupGradeDto>> GetByWgGradeAsync(string wgGrade)
+        {
+            var response = await _http.GetAsync<WorkgroupGradeRes>(string.Format(FpsApiEndpoints.GetWorkgroupGradeByCode, wgGrade));
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+            return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<WorkgroupGradeDto>> CreateAsync(WorkgroupGradeDto dto)
+        {
+            var request = _mapper.Map<WorkgroupGradeReq>(dto);
+            var response = await _http.PostAsync<WorkgroupGradeReq, WorkgroupGradeRes>(FpsApiEndpoints.CreateWorkgroupGrade, request);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+            return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<WorkgroupGradeDto>> UpdateAsync(string wgGrade, WorkgroupGradeDto dto)
+        {
+            var request = _mapper.Map<WorkgroupGradeReq>(dto);
+            var response = await _http.PutAsync<WorkgroupGradeReq, WorkgroupGradeRes>(string.Format(FpsApiEndpoints.UpdateWorkgroupGrade, wgGrade), request);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<WorkgroupGradeDto>>(response);
+            return ApiResponseDto<WorkgroupGradeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> DeleteAsync(string wgGrade)
+        {
+            var response = await _http.DeleteAsync<bool>(string.Format(FpsApiEndpoints.DeleteWorkgroupGrade, wgGrade));
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<string>>> GetAllGradeCodesAsync()
+        {
+            var response = await _http.GetAsync<List<string>>(FpsApiEndpoints.GetAllGradeCodes);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<string>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+            return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
     }
 }

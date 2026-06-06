@@ -1,6 +1,7 @@
 using Apha.Common.Helpers.Repository;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
+using Apha.Costbook.Core.Pagination;
 using Apha.Costbook.DataAccess.Data;
 using Apha.Costbook.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -46,7 +47,15 @@ public class AnimalRequirementRepositoryTests
 
         RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-        var repo = new AnimalRequirementRepository(mockContext.Object);
+        var settingsRepo = new Mock<ISettingsRepository>();
+        settingsRepo.Setup(x => x.GetSettingValueByIdAsync("CurrentYear"))
+            .ReturnsAsync(DefaultFpsYear.ToString());
+
+        var projectRepo = new Mock<IProjectRepository>();
+        projectRepo.Setup(x => x.GetInflationFactorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(1.0);
+
+        var repo = new AnimalRequirementRepository(mockContext.Object, settingsRepo.Object, projectRepo.Object);
         return (repo, animalReqMockSet, mockContext);
     }
 
@@ -182,7 +191,7 @@ public class AnimalRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsAnimals: []);
 
         // Act
-        var result = await repo.GetAnimalRatesAsync(isDefra: false);
+        var result = await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: false);
 
         // Assert
         Assert.NotNull(result);
@@ -200,12 +209,12 @@ public class AnimalRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
         // Act
-        var result = (await repo.GetAnimalRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
         Assert.Equal("CAT", result[0].AnimalType);
-        Assert.Equal(10.50, result[0].DailyRate);
+        Assert.Equal(10.50m, result[0].DailyRate);
     }
 
     [Fact]
@@ -219,11 +228,11 @@ public class AnimalRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
         // Act
-        var result = (await repo.GetAnimalRatesAsync(isDefra: true)).ToList();
+        var result = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: true)).ToList();
 
         // Assert
         Assert.Single(result);
-        Assert.Equal(15.00, result[0].DailyRate);
+        Assert.Equal(15.00m, result[0].DailyRate);
     }
 
     [Fact]
@@ -239,7 +248,7 @@ public class AnimalRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
         // Act
-        var result = (await repo.GetAnimalRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -259,12 +268,12 @@ public class AnimalRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
         // Act
-        var result = (await repo.GetAnimalRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
         Assert.Equal("HORSE", result[0].AnimalType);
-        Assert.Equal(50.0, result[0].DailyRate);
+        Assert.Equal(50.0m, result[0].DailyRate);
     }
 
     #endregion
@@ -314,13 +323,14 @@ public class AnimalRequirementRepositoryTests
     {
         // Arrange
         var (repo, _, _) = CreateRepository();
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024);
+        var result = await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Empty(result);
+        Assert.Empty(result.Data);
     }
 
     [Fact]
@@ -334,9 +344,10 @@ public class AnimalRequirementRepositoryTests
             new() { ArIdentity = 3, Project = "2024/001", Year = 2025, AnimalType = "BIRD", NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 5 }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -356,9 +367,10 @@ public class AnimalRequirementRepositoryTests
             new() { ProjectId = "2024/001", Programme = "Programme X", Euroconvrate = 1.20 }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs, projects: projects);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -375,9 +387,10 @@ public class AnimalRequirementRepositoryTests
             new() { ArIdentity = 1, Project = "2024/001", Year = 2024, AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = 2, DailyRate = 10 }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs, projects: []);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -394,9 +407,10 @@ public class AnimalRequirementRepositoryTests
             new() { ArIdentity = 1, Project = "2024/001", Year = 2024, AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = 3, DailyRate = 10.0 }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -412,9 +426,10 @@ public class AnimalRequirementRepositoryTests
             new() { ArIdentity = 1, Project = "2024/001", Year = 2024, AnimalType = "CAT", NumberOfDays = null, NumberOfAnimals = 3, DailyRate = 10.0 }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -427,20 +442,21 @@ public class AnimalRequirementRepositoryTests
         // Arrange
         var reqs = new List<AnimalRequirement>
         {
-            new() { ArIdentity = 1, Project = "2024/001", Year = 2024, AnimalType = "DOG", NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 1 },
+            new() { ArIdentity = 1, Project = "2024/001", Year = 2024, AnimalType = "DOG",  NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 1 },
             new() { ArIdentity = 2, Project = "2024/001", Year = 2024, AnimalType = "BIRD", NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 1 },
-            new() { ArIdentity = 3, Project = "2024/001", Year = 2024, AnimalType = "CAT", NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 1 }
+            new() { ArIdentity = 3, Project = "2024/001", Year = 2024, AnimalType = "CAT",  NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 1 }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Equal(3, result.Count);
         Assert.Equal("BIRD", result[0].AnimalType);
-        Assert.Equal("CAT", result[1].AnimalType);
-        Assert.Equal("DOG", result[2].AnimalType);
+        Assert.Equal("CAT",  result[1].AnimalType);
+        Assert.Equal("DOG",  result[2].AnimalType);
     }
 
     [Fact]
@@ -452,9 +468,10 @@ public class AnimalRequirementRepositoryTests
             new() { ArIdentity = 99, Project = "2024/001", Year = 2024, AnimalType = "CAT", NumberOfDays = 10, NumberOfAnimals = 3, DailyRate = 15.5 }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         var item = Assert.Single(result);
@@ -477,9 +494,10 @@ public class AnimalRequirementRepositoryTests
             new() { ArIdentity = 1, Project = "2024/001", Year = 2024, AnimalType = "CAT", NumberOfDays = 1, NumberOfAnimals = 1, DailyRate = 1 }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
         // Act
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024%2F001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024%2F001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -499,8 +517,9 @@ public class AnimalRequirementRepositoryTests
             new() { ArIdentity = 3, Project = "2024/001", Year = 2024, AnimalType = "BIRD", NumberOfDays = 3, NumberOfAnimals = 3, DailyRate = 5  }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         Assert.Equal(3, result.Count);
     }
@@ -513,8 +532,9 @@ public class AnimalRequirementRepositoryTests
             new() { ArIdentity = 1, Project = "2024/001", Year = 2024, AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = null, DailyRate = 10 }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         Assert.Single(result);
         Assert.Null(result[0].AnimalCost);
@@ -528,8 +548,9 @@ public class AnimalRequirementRepositoryTests
             new() { ArIdentity = 1, Project = "2024/001", Year = 2024, AnimalType = "CAT", NumberOfDays = 5, NumberOfAnimals = 3, DailyRate = null }
         };
         var (repo, _, _) = CreateRepository(animalRequirements: reqs);
+        var query = new PaginationParameters<string> { Page = -1 };
 
-        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetAnimalRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         Assert.Single(result);
         Assert.Null(result[0].AnimalCost);
@@ -637,7 +658,7 @@ public class AnimalRequirementRepositoryTests
         };
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
-        var result = (await repo.GetAnimalRatesAsync(isDefra: false)).ToList();
+        var result = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: false)).ToList();
 
         Assert.Single(result);
         Assert.Null(result[0].DailyRate);
@@ -653,11 +674,11 @@ public class AnimalRequirementRepositoryTests
         };
         var (repo, _, _) = CreateRepository(fpsAnimals: animals);
 
-        var resultDefra = (await repo.GetAnimalRatesAsync(isDefra: true)).ToList();
+        var resultDefra = (await repo.GetAnimalRatesAsync("2024/001", 2024, isDefra: true)).ToList();
 
         Assert.Equal(2, resultDefra.Count);
-        Assert.Equal(15.0, resultDefra.First(r => r.AnimalType == "CAT").DailyRate);
-        Assert.Equal(30.0, resultDefra.First(r => r.AnimalType == "DOG").DailyRate);
+        Assert.Equal(15.0m, resultDefra.First(r => r.AnimalType == "CAT").DailyRate);
+        Assert.Equal(30.0m, resultDefra.First(r => r.AnimalType == "DOG").DailyRate);
     }
 
     #endregion

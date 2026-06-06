@@ -103,6 +103,21 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
         }
 
+        /// <summary>
+        /// Retrieves a paginated list of projects for a given project group.
+        /// </summary>
+        [HttpGet("paged/by-project-group")]
+        public async Task<IActionResult> GetProjectsByProjectGroupAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string projectGroup)
+        {
+            if (string.IsNullOrWhiteSpace(projectGroup))
+                return BadRequest("projectGroup is required.");
+
+            var result = await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
         //Below methods moved from ProjectMaintenanceController
         [HttpGet]
         public async Task<ActionResult<List<ProjectRes>>> GetAllProjectsAsync()

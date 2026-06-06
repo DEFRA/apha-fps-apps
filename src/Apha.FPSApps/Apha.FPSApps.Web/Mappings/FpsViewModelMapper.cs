@@ -15,6 +15,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<StaffJobItemViewModel, StaffJobViewDto>().ReverseMap();
             CreateMap<PaginationModel, PaginationDto>().ReverseMap();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
+            CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
@@ -28,6 +29,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ActualProjectCostItem, ProjectSubContractDto>().ReverseMap();
             CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
             CreateMap<DivisionGradeItem, DivisionGradeDto>().ReverseMap();
+            CreateMap<ResourceCentreMaintenanceItem, ProfitCentreDto>().ReverseMap();
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
             CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();
             CreateMap<TestPlanActualItem, TestRequirementDto>().ReverseMap();
@@ -39,6 +41,9 @@ namespace Apha.FPSApps.Web.Mappings
             // Resource Set-Up
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 
+            // ProfitCentreGradeMaint
+            CreateMap<ProfitCentreGradeMaintItem, ProfitCentreGradeDto>().ReverseMap();
+
             // BudgetResourceLevel
             CreateMap<BudgetResourceCentreLevelItem, BidViewDto>().ReverseMap();
             CreateMap<PurchaseItem, PurchaseDto>().ReverseMap();
@@ -49,6 +54,23 @@ namespace Apha.FPSApps.Web.Mappings
 
             // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityItem>().ReverseMap();
+
+            // Staff Plan view
+            CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();
+
+            // Test Supplier
+            CreateMap<TestSupplierItem, Apha.FPSApps.Application.Dtos.PACT.TestSupplierViewDto>().ReverseMap();
+            CreateMap<TestSupplierItem, TestRequirementDto>()
+                .ForMember(d => d.TestCode, o => o.MapFrom(s => s.TestCode))
+                .ForMember(d => d.Buyer, o => o.MapFrom(s => s.Buyer))
+                .ForMember(d => d.UnitPrice, o => o.MapFrom(s => s.UnitPrice))
+                .ForMember(d => d.NoRequired, o => o.MapFrom(s => s.NoRequired))
+                .ForMember(d => d.ProjectBuyerCode, o => o.MapFrom(s => s.ProjectBuyerCode))
+                .ForMember(d => d.TestBuyerCode, o => o.MapFrom(s => s.TestBuyerCode))
+                .ForMember(d => d.Active, o => o.MapFrom(s => s.Active))
+                .ForMember(d => d.RecUnitPrice, o => o.MapFrom(s => s.RecUnitPrice))
+                .ReverseMap();
+            CreateMap<MaintWGGradeItem, WorkgroupGradeDto>().ReverseMap();
         }
     }
 }

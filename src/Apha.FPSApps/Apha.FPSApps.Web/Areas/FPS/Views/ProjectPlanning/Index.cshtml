@@ -6,33 +6,12 @@
 
 <div class="container-fluid">
 
-    <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-            <div class="row fps-sr-breadcrumb-row">
-                <div class="fps-sr-breadcrumb-flex">
-                    <div class="col-md-8">
-                        <nav class="govuk-breadcrumbs" aria-label="Breadcrumb">
-                            <ol class="govuk-breadcrumbs__list">
-                                <li class="govuk-breadcrumbs__list-item">
-                                    <a class="govuk-breadcrumbs__link" href="fpshome.html">Home</a>
-                                </li>
-                                <li class="govuk-breadcrumbs__list-item">@Model.SelectedProgramme</li>
-                                <li class="govuk-breadcrumbs__list-item">
-                                    <a class="govuk-breadcrumbs__link" href="program_management.html">Programme Management</a>
-                                </li>
-                                <li class="govuk-breadcrumbs__list-item">Plan Projects</li>
-                                <li class="govuk-breadcrumbs__list-item">Project Planning</li>
-                            </ol>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="govuk-grid-row">       
         <div class="govuk-grid-column-full govuk-!-padding-0">
             <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
                 Project Planning : <span class="projectcode_color">@Model.ProjectCode</span>
                 <input id="hdnProjectCode" type="hidden" value="@Model.ProjectCode" />
-                <a href="program_management.html" class="govuk-back-link sup_align_right">Back</a>
+                <a href="javascript:history.back()" class="govuk-back-link sup_align_right">Back</a>
             </h1>
         </div>
     </div>

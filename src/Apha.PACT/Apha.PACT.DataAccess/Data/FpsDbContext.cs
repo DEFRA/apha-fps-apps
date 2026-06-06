@@ -20,6 +20,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<TimeCodeValid> TimeCodeValids { get; set; }
         public virtual DbSet<WorkGroup> WorkGroups { get; set; }
         public virtual DbSet<ProjectInvoice> ProjectInvoices { get; set; }
+        public virtual DbSet<SummarisedWgTimeView> SummarisedWgTimeViews { get; set; }
         public virtual DbSet<ProjectSubContract> ProjectSubContracts { get; set; }
         public virtual DbSet<TestCapability> TestCapabilities { get; set; }
         public virtual DbSet<TestRequirement> TestRequirements { get; set; }
@@ -28,6 +29,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<TestRequirementLog> TestRequirementLogs { get; set; }
         public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
         public virtual DbSet<MonthlyOutputLog> MonthlyOutputLogs { get; set; }
+        public virtual DbSet<MonthlyTimeLog> MonthlyTimeLogs { get; set; }
         public virtual DbSet<MonthlyTime> MonthlyTimes { get; set; }
         public virtual DbSet<MonthlyInvoicesSummary> MonthlyInvoicesSummary { get; set; }
         public virtual DbSet<MonthlySubContractsSummary> MonthlySubContractsSummary { get; set; }
@@ -37,6 +39,12 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<CalenderMonth> CalenderMonths { get; set; }
         public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
         public virtual DbSet<WorkGroupStaffView> WorkGroupStaffViews { get; set; }
+        public virtual DbSet<WgSummarisedStaffTimeUsageView> WgSummarisedStaffTimeUsageViews { get; set; }
+        public virtual DbSet<WorkGroupStaffView> PactStaffViews { get; set; }        
+        public virtual DbSet<PactProfitCentreView> PactProfitCentreViews { get; set; }
+        public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }        
+        public virtual DbSet<RecreateSummaryLog> RecreateSummaryLogs { get; set; }
+        public virtual DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -76,6 +84,9 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectSubContractMap());
             modelBuilder.Entity<ProjectSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new MonthlyTimeLogMap());
+            modelBuilder.Entity<MonthlyTimeLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
             modelBuilder.Entity<MonthlyTime>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -102,6 +113,22 @@ namespace Apha.PACT.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new WorkGroupStaffViewMap());
             modelBuilder.Entity<WorkGroupStaffView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new WgSummarisedStaffTimeUsageViewMap());
+            modelBuilder.Entity<WgSummarisedStaffTimeUsageView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new SummarisedWgTimeViewMap());
+            modelBuilder.Entity<SummarisedWgTimeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);            
+
+            modelBuilder.ApplyConfiguration(new PactProfitCentreViewMap());
+
+            modelBuilder.ApplyConfiguration(new ProfitCentreMap());
+
+            modelBuilder.ApplyConfiguration(new UserMap());
+
+            modelBuilder.ApplyConfiguration(new RecreateSummaryLogMap());
+            modelBuilder.Entity<RecreateSummaryLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
         }
     }
 }

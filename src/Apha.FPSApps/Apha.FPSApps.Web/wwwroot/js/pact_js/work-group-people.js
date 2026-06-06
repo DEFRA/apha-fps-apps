@@ -18,10 +18,10 @@ function getPeopleGridManager() {
 
 /**
  * Returns extra filter parameters to be appended to each grid reload request.
- * @returns {{ workGroup: string, personName: string }}
+ * @returns {{ workGroup: string }}
  */
 function getPeopleGridExtraFilters() {
-    return { workGroup: currentWorkGroup || '', personName: currentPersonName || '' };
+    return { workGroup: currentWorkGroup || '' };
 }
 
 var currentWorkGroup  = null;
@@ -62,10 +62,11 @@ function onWorkGroupPickChange(workGroup) {
  * Clears the work group selection, updates the information panel,
  * and reloads the grid filtered to the selected person.
  * @param {string|null} personName - The selected person name, or null to clear.
+ * @param {string|null} personWorkGroup - The work group associated with the selected person.
  */
-function onPersonPickChange(personName) {
+function onPersonPickChange(personName, personWorkGroup) {
     currentPersonName = personName || null;
-    currentWorkGroup  = null;
+    currentWorkGroup  = personWorkGroup || null;
 
     document.getElementById('workGroupSelect').value = '';
     document.getElementById('selectedWorkgroup').value = '';
@@ -83,7 +84,7 @@ function onPersonPickChange(personName) {
         return;
     }
 
-    reloadPeopleGridByPerson(personName);
+    reloadPeopleGridByPerson(personName, personWorkGroup);
 }
 
 /**
@@ -125,8 +126,9 @@ function reloadAllPeopleGrid() {
  * Reloads the people grid filtered by the specified person name via AJAX,
  * replacing the grid container HTML with the returned partial view.
  * @param {string} personName - The person name to filter by.
+ * @param {string|null} personWorkGroup - The work group associated with the selected person.
  */
-function reloadPeopleGridByPerson(personName) {
+function reloadPeopleGridByPerson(personName, personWorkGroup) {
     $.ajax({
         url: '/PACT/WorkGroupPeople/LoadPeopleGrid',
         type: 'POST',
@@ -137,7 +139,7 @@ function reloadPeopleGridByPerson(personName) {
             Descending: false,
             Page: 1,
             PageSize: 10,
-            personName: personName
+            workGroup: personWorkGroup || null
         },
         success: function (html) {
             $('#gridContainer_peopleGrid').html(html);
@@ -156,6 +158,7 @@ function reloadPeopleGridByPerson(personName) {
  */
 function onPersonRowSelect(rowData) {
     var name = $(rowData).find('[data-property="Name"]').text().trim();
+    currentPersonName = name || null;
     document.getElementById('selectedPerson').value = name;
     document.getElementById('btnShowTimeByJob').disabled = !name;
 }
@@ -265,11 +268,12 @@ function initWorkGroupPeoplePage() {
     });
 
     $(document).on('click', '#personDropdownBody tr', function () {
-        var value = $(this).data('value');
-        var text  = $(this).find('td:first').text().trim();
+        var value     = $(this).attr('data-value');
+        var workGroup = $(this).attr('data-workgroup') || null;
+        var text      = $(this).find('td:first').text().trim();
         $pInput.val(text);
         $pPanel.hide();
-        onPersonPickChange(value);
+        onPersonPickChange(value, workGroup);
     });
 
     $(document).on('click', function (e) {
@@ -284,6 +288,22 @@ function initWorkGroupPeoplePage() {
             e.preventDefault();
             $(this).trigger('change');
         }
+    });
+
+    // ── Show Time by JobCode and Month button ──────────────────────────────
+    $('#btnShowTimeByJob').on('click', function () {
+        var $error = $('#workgroupValidationError');
+        var $input = $('#selectedWorkgroup');
+        if (!currentWorkGroup) {
+            $input.addClass('govuk-input--error');
+            $error.show();
+            alert('Please select a Work Group first.');
+            return;
+        }
+        $input.removeClass('govuk-input--error');
+        $error.hide();
+        var url = '/PACT/WorkGroupSummarisedStaffTimeUsage?workGroup=' + encodeURIComponent(currentWorkGroup) + '&staffName=' + encodeURIComponent(currentPersonName || '');
+        window.fpsNavigateTo(url);
     });
 
     // ── Show Time Records button ───────────────────────────────────────────
@@ -314,6 +334,21 @@ function initWorkGroupPeoplePage() {
         $input.removeClass('govuk-input--error');
         $error.hide();
         window.fpsNavigateTo('/PACT/WorkGroupValidTimeCode?workGroup=' + encodeURIComponent(currentWorkGroup));
+    });
+
+    // ── Show Summarised WorkGroup Time button ──────────────────────────────
+    $('#btnShowSummary').on('click', function () {
+        var $error = $('#workgroupValidationError');
+        var $input = $('#selectedWorkgroup');
+        if (!currentWorkGroup) {
+            $input.addClass('govuk-input--error');
+            $error.show();
+            alert('Please select a Work Group first.');
+            return;
+        }
+        $input.removeClass('govuk-input--error');
+        $error.hide();
+        window.fpsNavigateTo('/PACT/WorkGroupSummarisedTimeUsage?workGroup=' + encodeURIComponent(currentWorkGroup));
     });
 }
 

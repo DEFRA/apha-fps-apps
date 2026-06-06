@@ -245,13 +245,27 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<PagedData<WorkGroupStaff>> GetWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null)
         {
-            var queryStaff = _dbContext.WorkGroupStaffs
-                .AsNoTracking()
-                .AsQueryable();
+            IQueryable<WorkGroupStaff> queryStaff;
 
-            if (!string.IsNullOrWhiteSpace(workGroup))
-                queryStaff = queryStaff.Where(s => s.WorkGroupGrade == workGroup ||
-                    _dbContext.WorkgroupGrades.Any(g => g.WgGrade == s.WorkGroupGrade && g.Workgroup == workGroup));
+            if (string.IsNullOrWhiteSpace(workGroup))
+            {
+                queryStaff = _dbContext.WorkGroupStaffs.AsNoTracking();
+            }
+            else
+            {
+                queryStaff = _dbContext.Workgroups
+                    .AsNoTracking()
+                    .Join(_dbContext.PactWorkGroupGradeViews.AsNoTracking(),
+                        wg    => wg.WorkgroupName,
+                        grade => grade.WorkGroup,
+                        (wg, grade) => new { wg, grade })
+                    .Join(_dbContext.WorkGroupStaffs.AsNoTracking(),
+                        wgGrade => wgGrade.grade.WgGrade,
+                        staff   => staff.WorkGroupGrade,
+                        (wgGrade, staff) => new { wgGrade.wg, staff })
+                    .Where(x => x.wg.WorkgroupName == workGroup)
+                    .Select(x => x.staff);
+            }
 
             queryStaff = ApplyWorkGroupStaffFilter(queryStaff, query.Filter);
             queryStaff = (IQueryable<WorkGroupStaff>)ApplyWorkGroupStaffSorting(queryStaff, query.SortBy, query.Descending);
@@ -259,6 +273,14 @@ namespace Apha.FPS.DataAccess.Repositories
             var result = await queryStaff.ToListAsync();
             result = ApplyWorkGroupStaffNumericFilter(result, query.Filter);
             return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<IEnumerable<PactStaff>> GetPactStaffAsync()
+        {
+            return await _dbContext.PactStaffs
+                .AsNoTracking()
+                .OrderBy(s => s.Name)
+                .ToListAsync();
         }
 
         private static IQueryable<WorkGroupStaff> ApplyWorkGroupStaffFilter(IQueryable<WorkGroupStaff> query, string? filter)

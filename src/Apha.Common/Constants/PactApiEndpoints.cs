@@ -3,6 +3,7 @@ namespace Apha.Common.Constants
     public static class PactApiEndpoints
     {
         // Job Code
+        public const string GetAllJobCodes = "api/v1/jobcode";
         public const string GetJobCodesByProject = "api/v1/jobcode/project/{0}";
         public const string GetPagedJobCodes = "api/v1/jobcode/paged";
         public const string GetPagedJobCodesByProject = "api/v1/jobcode/paged?parentProject={0}";
@@ -32,6 +33,12 @@ namespace Apha.Common.Constants
         public const string GetAllWorkGroups = "api/v1/workgroup";
         public const string GetPagedWorkGroupTimeCodes = "api/v1/workgroup/paged/timecodes";
         public const string GetPagedWorkGroupValidTimeCodes = "api/v1/workgroup/paged/validtimecodes";
+        public const string GetWgSummarisedStaffTimeUsage = "api/v1/workgroup/staff/paged/summarisedtimeusage";
+        public const string GetPagedSummarisedWorkgroupTime = "api/v1/workgroup/paged/summarisedtimeusage";        
+        public const string GetPagedWorkGroupsByProfitCentre = "api/v1/workgroup/profitcentre";
+        public const string SetSendEmailForProfitCentreWorkGroups = "api/v1/workgroup/setsendemail/profitcentre";
+        public const string SetSendEmailForAllWorkGroups = "api/v1/workgroup/setsendemail/all";
+        public const string UpdateWorkGroupEmail = "api/v1/workgroup/{0}/email";        
 
         // Month
         public const string GetAllMonths = "api/v1/months";
@@ -47,6 +54,9 @@ namespace Apha.Common.Constants
         public const string DeleteTestOrProduct = "api/v1/testorproduct/{0}";
         public const string GetTestListOwners = "api/v1/testorproduct/owners";
         public const string GetAllTestorProducts = "api/v1/testorproduct";
+
+        // Recreate Summaries Log
+        public const string GetRecreateSummaryLog = "api/v1/recreatereleasesummary/recreatesummary/log";
 
         // Project Invoice
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
@@ -80,6 +90,7 @@ namespace Apha.Common.Constants
 
         // Test Requirement
         public const string GetPagedTestReqmt = "api/v1/testrequirement/paged/{0}";
+        public const string GetPagedBySupplierTestCode = "api/v1/testrequirement/supplier/paged/{0}";
         public const string GetPagedTestReqmtbyProject = "api/v1/testrequirement/pagedbyproject/{0}";
         public const string GetAllTestReqmtForExport = "api/v1/testrequirement/all/{0}";
         public const string GetTestReqmtById = "api/v1/testrequirement/{0}/{1}";
@@ -104,5 +115,11 @@ namespace Apha.Common.Constants
 
         // Monthly Output Log
         public const string SearchMonthlyOutputLog = "api/v1/monthlyoutput/log/search";
+
+        // Monthly Time Log (MT_LOG)
+        public const string SearchMonthlyTimeLog = "api/v1/monthlytime/log/search";
+
+        // Work Group Report Email
+        public const string SendEmails = "api/v1/workgroupreport/send";
     }
 }
