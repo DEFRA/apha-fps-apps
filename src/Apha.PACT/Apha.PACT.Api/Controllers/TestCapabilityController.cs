@@ -76,7 +76,10 @@ namespace Apha.PACT.Api.Controllers
         {
             var dto = _mapper.Map<TestCapabilityDto>(request);
             var result = await _service.AddTestCapabilityAsync(dto);
-            return Ok(_mapper.Map<TestCapabilityRes>(result));
+            return CreatedAtAction(
+                nameof(GetTestCapabilityById),
+                new { testCode = result.TestCode, workGroup = result.WorkGroup },
+                _mapper.Map<TestCapabilityRes>(result));
         }
 
         /// <summary>Updates an existing TestCapability record.</summary>

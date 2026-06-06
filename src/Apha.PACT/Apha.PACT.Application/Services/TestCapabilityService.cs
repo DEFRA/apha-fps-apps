@@ -74,7 +74,7 @@ namespace Apha.PACT.Application.Services
             var existing = await _testCapabilityRepository.GetByIdAsync(dto.TestCode, dto.WorkGroup);
             if (existing is not null)
                 throw new InvalidOperationException(
-                    $"A Test Capability record with TestCode '{dto.TestCode}' and WorkGroup '{dto.WorkGroup}' already exists.");
+                    $"A record already exists for Test Code '{dto.TestCode}' and Work Group '{dto.WorkGroup}'. Please use a different Test Code or Work Group, or update the existing record.");
 
             var entity = _mapper.Map<TestCapability>(dto);
             var created = await _testCapabilityRepository.AddAsync(entity);

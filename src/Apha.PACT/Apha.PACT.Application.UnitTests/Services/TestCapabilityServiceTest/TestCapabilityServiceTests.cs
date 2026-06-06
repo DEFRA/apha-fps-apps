@@ -179,6 +179,24 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             await _testCapabilityRepo.Received(1).GetPagedByTestCodeAsync(mappedParams, "TC1");
         }
 
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_NullTestCode_PassesNullToRepository()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+            var pagedData = new PagedData<TestCapability>([], new PaginationData());
+            var expected = new PaginatedResult<TestCapabilityDto>();
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedByTestCodeAsync(mappedParams, null).Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestCapabilityDto>>(pagedData).Returns(expected);
+
+            var result = await _sut.GetPagedByTestCodeAsync(query, null);
+
+            result.Should().Be(expected);
+            await _testCapabilityRepo.Received(1).GetPagedByTestCodeAsync(mappedParams, null);
+        }
+
         #endregion
 
         #region GetTestCapabilityByIdAsync
@@ -231,14 +249,16 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         }
 
         [Fact]
-        public async Task AddTestCapabilityAsync_DuplicateExists_ThrowsInvalidOperationException()
+        public async Task AddTestCapabilityAsync_DuplicateExists_ThrowsInvalidOperationExceptionWithUserFriendlyMessage()
         {
             var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
             var existing = new TestCapability { TestCode = "TC1", WorkGroup = "WG1" };
 
             _testCapabilityRepo.GetByIdAsync("TC1", "WG1").Returns(existing);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddTestCapabilityAsync(dto));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddTestCapabilityAsync(dto));
+            Assert.Contains("TC1", ex.Message);
+            Assert.Contains("WG1", ex.Message);
             await _testCapabilityRepo.DidNotReceive().AddAsync(Arg.Any<TestCapability>());
         }
 
@@ -314,7 +334,5 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
         }
 
         #endregion
-
-        
     }
 }

@@ -286,6 +286,175 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
 
         #endregion
 
+        #region GetPagedTestCapabilityByPortfolioAsync
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_WithNullPortfolio_ReturnsAllCapabilities()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, null);
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_WithSpecificPortfolio_FiltersResults()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "PP2", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("TC1", result.Data.First().TestCode);
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_WithPortfolioFilter_FiltersCorrectly()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "ALPHA", FpsYear = DefaultFpsYear },
+                new() { TestCode = "TC2", WorkGroup = "WG2", PlanPortfolio = "BETA", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"PlanPortfolio\":\"ALP\"}"
+            };
+
+            var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, null);
+
+            Assert.Single(result.Data);
+            Assert.Equal("ALPHA", result.Data.First().PlanPortfolio);
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_EmptyData_ReturnsEmptyPagedResult()
+        {
+            var repo = CreateRepository([]);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            Assert.Empty(result.Data);
+        }
+
+        #endregion
+
+        #region UpdateAsync
+
+        private static (FpsDbContext Context, TestCapabilityRepository Repo) CreateInMemoryContext(int fpsYear = DefaultFpsYear)
+        {
+            var options = new DbContextOptionsBuilder<FpsDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+            var context = new FpsDbContext(options, fpsRequestContext);
+            var repo = new TestCapabilityRepository(context, fpsRequestContext);
+            return (context, repo);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_SetsEntityFpsYearFromContext()
+        {
+            var (context, repo) = CreateInMemoryContext(fpsYear: 2025);
+            context.TestCapabilities.Add(new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = 2025 });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var result = await repo.UpdateAsync(entity);
+
+            Assert.Equal(2025, result.FpsYear);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_ReturnsTheSameEntityInstance()
+        {
+            var (context, repo) = CreateInMemoryContext();
+            context.TestCapabilities.Add(new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear });
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            var entity = new TestCapability { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
+            var result = await repo.UpdateAsync(entity);
+
+            Assert.Same(entity, result);
+        }
+
+        #endregion
+
+        #region ExistsAsync
+
+        [Fact]
+        public async Task ExistsAsync_MatchingTestCodeAndPortfolio_ReturnsTrue()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+
+            var result = await repo.ExistsAsync("TC1", "PP1");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_TestCodeNotFound_ReturnsFalse()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+
+            var result = await repo.ExistsAsync("MISSING", "PP1");
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_PortfolioNotFound_ReturnsFalse()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(capabilities);
+
+            var result = await repo.ExistsAsync("TC1", "PP_MISSING");
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_EmptyRepository_ReturnsFalse()
+        {
+            var repo = CreateRepository([]);
+
+            var result = await repo.ExistsAsync("TC1", "PP1");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
         #region DeleteAsync
 
         [Fact]
