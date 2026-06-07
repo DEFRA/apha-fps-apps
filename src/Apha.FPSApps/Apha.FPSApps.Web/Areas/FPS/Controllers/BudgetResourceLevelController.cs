@@ -4,7 +4,6 @@ using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,20 +18,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
     public class BudgetResourceLevelController : Controller
     {
-        private readonly IMapper _mapper;
         private readonly IWorkGroupService _workGroupService;
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IPurchasesService _purchasesService;
         private readonly IProfitCentreService _profitCentreService;
 
         public BudgetResourceLevelController(
-            IMapper mapper,
             IWorkGroupService workGroupService,
             IBudgetBidsService budgetBidsService,
             IPurchasesService purchasesService,
             IProfitCentreService profitCentreService)
         {
-            _mapper = mapper;
             _workGroupService = workGroupService;
             _budgetBidsService = budgetBidsService;
             _purchasesService = purchasesService;
@@ -434,7 +430,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         /// <summary>
         /// Exports a crosstab (pivot) of all Budget Bids for the given profit centre to Excel.
-       
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> ExportToExcel(string profitCentre)

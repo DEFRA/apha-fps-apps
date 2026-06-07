@@ -5,7 +5,6 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using System.Text.Json;
@@ -14,7 +13,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
 {
     public class BudgetResourceLevelControllerTests
     {
-        private readonly IMapper _mapper;
         private readonly IWorkGroupService _workGroupService;
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IPurchasesService _purchasesService;
@@ -23,14 +21,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
 
         public BudgetResourceLevelControllerTests()
         {
-            _mapper              = Substitute.For<IMapper>();
             _workGroupService    = Substitute.For<IWorkGroupService>();
             _budgetBidsService   = Substitute.For<IBudgetBidsService>();
             _purchasesService    = Substitute.For<IPurchasesService>();
             _profitCentreService = Substitute.For<IProfitCentreService>();
 
             _controller = new BudgetResourceLevelController(
-                _mapper,
                 _workGroupService,
                 _budgetBidsService,
                 _purchasesService,
