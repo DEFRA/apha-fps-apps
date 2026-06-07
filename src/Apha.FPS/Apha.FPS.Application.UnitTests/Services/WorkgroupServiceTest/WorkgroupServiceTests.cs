@@ -1,4 +1,6 @@
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Services;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
 using NSubstitute;
@@ -25,6 +27,14 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupServiceTest
         {
             Assert.Throws<ArgumentNullException>(() => new WorkGroupService(null!, _mockMapper));
         }
+
+        [Fact]
+        public void Constructor_WithNullMapper_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => new WorkGroupService(_mockRepository, null!));
+        }
+
+        #region GetAllWorkGroupNamesAsync Tests
 
         [Fact]
         public async Task GetAllWorkgroupNamesAsync_WithData_ReturnsWorkgroupNames()
@@ -65,5 +75,63 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupServiceTest
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 _sut.GetAllWorkGroupNamesAsync());
         }
+
+        #endregion
+
+        #region GetWorkGroupsAsync Tests
+
+        [Fact]
+        public async Task GetWorkGroupsAsync_WithValidProfitCentre_ReturnsMappedDtos()
+        {
+            // Arrange
+            var entities = new List<WorkGroupView>
+            {
+                new() { WorkgroupName = "WG01", ProfitCentre = "PC01" }
+            };
+            var dtos = new List<WorkGroupViewDto>
+            {
+                new() { WorkgroupName = "WG01", ProfitCentre = "PC01" }
+            };
+            _mockRepository.GetWorkGroupsByProfitCentreAsync("PC01").Returns(entities);
+            _mockMapper.Map<List<WorkGroupViewDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _sut.GetWorkGroupsAsync("PC01");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.Equal("WG01", result[0].WorkgroupName);
+            await _mockRepository.Received(1).GetWorkGroupsByProfitCentreAsync("PC01");
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsAsync_WithNull_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.GetWorkGroupsAsync(null!));
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsAsync_WithEmptyOrWhiteSpace_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetWorkGroupsAsync(""));
+            await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetWorkGroupsAsync("  "));
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsAsync_WithNoResults_ReturnsEmptyList()
+        {
+            // Arrange
+            _mockRepository.GetWorkGroupsByProfitCentreAsync("PC01").Returns(new List<WorkGroupView>());
+            _mockMapper.Map<List<WorkGroupViewDto>>(Arg.Any<List<WorkGroupView>>()).Returns(new List<WorkGroupViewDto>());
+
+            // Act
+            var result = await _sut.GetWorkGroupsAsync("PC01");
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        #endregion
     }
 }

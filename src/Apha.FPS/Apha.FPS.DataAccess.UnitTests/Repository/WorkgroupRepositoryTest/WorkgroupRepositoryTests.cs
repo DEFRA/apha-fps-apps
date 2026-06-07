@@ -33,6 +33,20 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             return new WorkGroupRepository(mockContext.Object, requestContext);
         }
 
+        #region Constructor Tests
+
+        [Fact]
+        public void Constructor_WithNullRequestContext_ThrowsArgumentNullException()
+        {
+            var dummyCtx = Substitute.For<IFpsRequestContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(dummyCtx);
+            Assert.Throws<ArgumentNullException>(() => new WorkGroupRepository(mockContext.Object, null!));
+        }
+
+        #endregion
+
+        #region GetAllWorkGroupNamesAsync Tests
+
         [Fact]
         public async Task GetAllWorkgroupNamesAsync_WithData_ReturnsOrderedNames()
         {
@@ -87,5 +101,144 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             Assert.Single(result);
             Assert.Equal("WG01", result[0]);
         }
+
+        #endregion
+
+        #region GetWorkGroupsByProfitCentreAsync Tests
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_WithMatchingData_ReturnsFilteredWorkGroups()
+        {
+            // Arrange
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkgroupName = "WG03", ProfitCentre = "PC02", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo = CreateRepository(wgViews: views);
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+            Assert.All(result, w => Assert.Equal("PC01", w.ProfitCentre));
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FiltersOutDifferentFpsYear()
+        {
+            // Arrange
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear,     UserEmail = DefaultUserEmail },
+                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear - 1, UserEmail = DefaultUserEmail }
+            };
+            var repo = CreateRepository(wgViews: views);
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("WG01", result[0].WorkgroupName);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FiltersOutDifferentUserEmail()
+        {
+            // Arrange
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = "other@example.com" }
+            };
+            var repo = CreateRepository(wgViews: views);
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("WG01", result[0].WorkgroupName);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_FiltersOutNullUserEmail()
+        {
+            // Arrange
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = null }
+            };
+            var repo = CreateRepository(wgViews: views);
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("WG01", result[0].WorkgroupName);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_IsCaseInsensitiveForEmail()
+        {
+            // Arrange
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = "TEST@EXAMPLE.COM" }
+            };
+            var repo = CreateRepository(wgViews: views, userEmail: "test@example.com");
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.Single(result);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_ReturnsOrderedByWorkgroupName()
+        {
+            // Arrange
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkgroupName = "WG03", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo = CreateRepository(wgViews: views);
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreAsync("PC01");
+
+            // Assert
+            Assert.Equal("WG01", result[0].WorkgroupName);
+            Assert.Equal("WG02", result[1].WorkgroupName);
+            Assert.Equal("WG03", result[2].WorkgroupName);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreAsync_WithNonMatchingProfitCentre_ReturnsEmpty()
+        {
+            // Arrange
+            var views = new List<WorkGroupView>
+            {
+                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+            };
+            var repo = CreateRepository(wgViews: views);
+
+            // Act
+            var result = await repo.GetWorkGroupsByProfitCentreAsync("NOTEXIST");
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        #endregion
     }
 }
