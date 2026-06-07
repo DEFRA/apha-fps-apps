@@ -25,6 +25,13 @@ namespace Apha.PACT.Api.Controllers
             _mapper = mapper;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var items = await _service.GetJobCodesAsync();
+            return Ok(_mapper.Map<IEnumerable<JobCodeRes>>(items));
+        }
+
         [HttpGet("project/{parentProject}")]
         public async Task<IActionResult> GetByProject(string parentProject)
         {

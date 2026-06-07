@@ -1,7 +1,9 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -20,25 +22,33 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IProgramService _programService;
         private readonly IProjectService _projectService;
+        private readonly IAppStateService _appStateService;
 
         public ProjectProfitabilityController(
             IMapper mapper,
             IProgramService programService,
-            IProjectService projectService)
+            IProjectService projectService,
+            IAppStateService appStateService)
         {
             _mapper = mapper;
             _programService = programService;
             _projectService = projectService;
+            _appStateService = appStateService;
         }
 
         public async Task<IActionResult> Index(string? programNo = null)
         {
             var programmeList = await GetProgrammeListAsync();
-            var isValid = !string.IsNullOrWhiteSpace(programNo)
-                && programmeList.Any(p => p.Value == programNo);
-            var selectedProgramNo = isValid
+
+            // Fall back to session if no programNo provided
+            if (string.IsNullOrWhiteSpace(programNo))
+                programNo = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProgramNo);
+
+            var selectedProgramNo = !string.IsNullOrWhiteSpace(programNo) && programmeList.Any(p => p.Value == programNo)
                 ? programNo!
                 : programmeList.FirstOrDefault()?.Value ?? string.Empty;
+
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProgramNo, selectedProgramNo);
 
             var grid = GetProfitabilityGridConfig();
 

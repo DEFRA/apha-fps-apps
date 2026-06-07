@@ -350,6 +350,97 @@ namespace Apha.PACT.Application.UnitTests.Services.TestRequirementServiceTest
 
         #endregion
 
+        #region GetPagedBySupplierTestCodeAsync
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_NullQuery_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _sut.GetPagedBySupplierTestCodeAsync(null!, "BLOOD", showRejected: false));
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_ValidQuery_CallsRepository()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mapped = new PaginationParameters<string>();
+            var pagedData = new PagedData<TestSupplierView>([], new PaginationData());
+            var expectedResult = new PaginatedResult<TestSupplierViewDto>();
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mapped);
+            _testReqmtRepo.GetPagedBySupplierTestCodeAsync(mapped, "BLOOD", false)
+                .Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestSupplierViewDto>>(pagedData).Returns(expectedResult);
+
+            var result = await _sut.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            result.Should().Be(expectedResult);
+            await _testReqmtRepo.Received(1).GetPagedBySupplierTestCodeAsync(mapped, "BLOOD", false);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_ShowRejectedTrue_PassesFlagToRepository()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mapped = new PaginationParameters<string>();
+            var pagedData = new PagedData<TestSupplierView>([], new PaginationData());
+            var expectedResult = new PaginatedResult<TestSupplierViewDto>();
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mapped);
+            _testReqmtRepo.GetPagedBySupplierTestCodeAsync(mapped, "BLOOD", true)
+                .Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestSupplierViewDto>>(pagedData).Returns(expectedResult);
+
+            var result = await _sut.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: true);
+
+            result.Should().Be(expectedResult);
+            await _testReqmtRepo.Received(1).GetPagedBySupplierTestCodeAsync(mapped, "BLOOD", true);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_WithItems_ReturnsMappedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mapped = new PaginationParameters<string>();
+            var views = new List<TestSupplierView>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", TestCost = 30m },
+                new() { TestCode = "BLOOD", Buyer = "PRJ2", TestCost = 20m }
+            };
+            var pagedData = new PagedData<TestSupplierView>(views, new PaginationData { TotalRecords = 2 });
+            var dtos = new List<TestSupplierViewDto>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", TestCost = 30m },
+                new() { TestCode = "BLOOD", Buyer = "PRJ2", TestCost = 20m }
+            };
+            var expectedResult = new PaginatedResult<TestSupplierViewDto>(dtos, new PaginationDto());
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mapped);
+            _testReqmtRepo.GetPagedBySupplierTestCodeAsync(mapped, "BLOOD", false).Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestSupplierViewDto>>(pagedData).Returns(expectedResult);
+
+            var result = await _sut.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            result.Should().Be(expectedResult);
+            result.Data.Should().HaveCount(2);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_RepositoryThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mapped = new PaginationParameters<string>();
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mapped);
+            _testReqmtRepo.GetPagedBySupplierTestCodeAsync(mapped, "BLOOD", false)
+                .ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(() =>
+                _sut.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false));
+        }
+
+        #endregion
+
         #region DeleteTestReqmtAsync
 
         [Fact]

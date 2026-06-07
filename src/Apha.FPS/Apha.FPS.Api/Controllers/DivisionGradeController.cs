@@ -87,5 +87,12 @@ namespace Apha.FPS.Api.Controllers
             var gradeCodes = await _maintDGService.GetAllGradeCodesAsync();
             return Ok(gradeCodes);
         }
+
+        [HttpGet("divisiongrades")]
+        public async Task<ActionResult<List<string>>> GetAllDivisionGradeCodesAsync()
+        {
+            var codes = await _maintDGService.GetAllDivisionGradeCodesAsync();
+            return Ok(codes);
+        }
     }
 }

@@ -163,5 +163,15 @@ namespace Apha.FPS.Api.Controllers
             var result = await _employeeService.GetWorkGroupStaffAsync(filter, workGroup);
             return Ok(_mapper.Map<PaginationRes<WorkGroupStaffRes>>(result));
         }
+
+        /// <summary>
+        /// Gets an unpaged list of all PACT staff for dropdown population.
+        /// </summary>
+        [HttpGet("PactStaff")]
+        public async Task<IActionResult> GetAllPactStaffAsync()
+        {
+            var result = await _employeeService.GetPactStaffAsync();
+            return Ok(_mapper.Map<List<PactStaffRes>>(result));
+        }
     }
 }

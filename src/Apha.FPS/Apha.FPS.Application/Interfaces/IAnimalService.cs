@@ -5,6 +5,15 @@ namespace Apha.FPS.Application.Interfaces
 {
     public interface IAnimalService
     {
+        // Animal Master CRUD
+        Task<IEnumerable<AnimalDto>> GetAllAnimalsAsync();
+        Task<PaginatedResult<AnimalDto>> GetAllAnimalsAsync(QueryParameters<string> query);
+        Task<AnimalDto?> GetAnimalByIdAsync(string animalType);
+        Task<AnimalDto> AddAnimalAsync(AnimalDto animalDto);
+        Task<AnimalDto> UpdateAnimalAsync(AnimalDto animalDto);
+        Task<bool> DeleteAnimalAsync(string animalType);
+
+        // Animal Cost (AnimalJob)
         Task<List<AnimalDto>> GetAnimalLookupAsync();
         Task<PaginatedResult<AnimalCostViewDto>> GetAnimalCostAsync(QueryParameters<string> query, string jobCode);
         Task<decimal> GetTotalAnimalCostAsync(string jobCode);
@@ -15,3 +24,4 @@ namespace Apha.FPS.Application.Interfaces
         Task<bool> DeleteAnimalCostAsync(int indCounter);
     }
 }
+

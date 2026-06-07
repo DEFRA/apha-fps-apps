@@ -60,6 +60,15 @@ namespace Apha.PACT.Application.Services
             return detail is null ? null : _mapper.Map<TestRequirementtDto>(detail);
         }
 
+        public async Task<PaginatedResult<TestSupplierViewDto>> GetPagedBySupplierTestCodeAsync(
+            QueryParameters<string> query, string testCode, bool showRejected)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var result = await _testReqmtRepository.GetPagedBySupplierTestCodeAsync(parameters, testCode, showRejected);
+            return _mapper.Map<PaginatedResult<TestSupplierViewDto>>(result);
+        }
+
         public async Task<TestRequirementtDto> AddTestReqmtAsync(TestRequirementtDto dto)
         {
             // ITrig: both fields null

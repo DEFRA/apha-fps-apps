@@ -275,6 +275,14 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        public async Task<IEnumerable<PactStaff>> GetPactStaffAsync()
+        {
+            return await _dbContext.PactStaffs
+                .AsNoTracking()
+                .OrderBy(s => s.Name)
+                .ToListAsync();
+        }
+
         private static IQueryable<WorkGroupStaff> ApplyWorkGroupStaffFilter(IQueryable<WorkGroupStaff> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))

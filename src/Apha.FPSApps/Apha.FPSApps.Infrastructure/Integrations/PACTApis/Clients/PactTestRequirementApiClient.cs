@@ -127,5 +127,20 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var dto = _mapper.Map<ApiResponseDto<TestRequirementDto>>(response);
             return ApiResponseDto<TestRequirementDto>.FailureResponse(dto.Errors, dto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<TestSupplierViewDto>>> GetPagedBySupplierTestCodeAsync(
+            QueryParameters<string> query, string testCode, bool showRejected)
+        {
+            var baseUrl = string.Format(PactApiEndpoints.GetPagedBySupplierTestCode,
+                Uri.EscapeDataString(testCode));
+            baseUrl += $"?showRejected={Uri.EscapeDataString(showRejected.ToString())}";
+            var url = QueryStringHelper.AddQueryString(baseUrl, query);
+            var response = await _http.GetAsync<List<TestSupplierViewRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<TestSupplierViewDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<TestSupplierViewDto>>>(response);
+            return ApiResponseDto<List<TestSupplierViewDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }

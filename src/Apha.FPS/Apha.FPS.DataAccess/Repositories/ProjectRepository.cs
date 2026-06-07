@@ -34,6 +34,38 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<PagedData<Project>> GetProjectsByProjectGroupAsync(PaginationParameters<string> query, string projectGroup)
+        {
+            var projectQuery = (from pg in _dbContext.ProjectGroupViews
+                               join pv in _dbContext.Projects on
+                               new { pg.ProjectGroupName } equals new { ProjectGroupName = pv.ProjectGroup }
+                               where EF.Functions.ILike(pg.UserEmail!, _requestContext.UserEmailId) && pg.ProjectGroupName == projectGroup
+                select(new Project
+                {
+                    ParentProject = pv.ParentProject ?? string.Empty,
+                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
+                    Program = pv.Program ?? string.Empty,
+                    Manager = pv.Manager,
+                    Customer = pv.Customer ?? string.Empty,
+                    Contract = pv.Contract ?? string.Empty,
+                    Disease = pv.Disease ?? string.Empty,
+                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                    ProjectGroup = pv.ProjectGroup,
+                    BudgetCvl = pv.BudgetCvl,
+                    CustIncome = pv.CustIncome,
+                    TransferIncome = pv.TransferIncome,
+                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,   
+                    IsDefraProject = pv.IsDefraProject,
+                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
+                })).AsQueryable();
+
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
         public async Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
         {
             var projectQuery = _dbContext.ProjectViews
