@@ -1,0 +1,59 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.ProfitCenterCostSummaryViewModel
+
+@{
+    ViewData["Title"] = "PACT : PC SOCT Query";
+}
+
+<div class="govuk-grid-column-full sup_border-bottom">
+    <h1 class="sup_margin_top_10 sup_padding_bottom_10">PC SOCT Query</h1>
+</div>
+
+@* Filter Header *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_flex_left_center sup_padding_bottom_10 sup_border-bottom" style="margin-top:10px;">
+
+    @* Period Selector dropdown *@
+    <div class="govuk-grid-column-one-third">
+        <label for="periodSelect" class="govuk-label govuk-!-font-weight-bold">Select Period</label>
+        <select id="periodSelect" class="govuk-select" style="width:100%;">
+            <option value="">Select a period</option>
+            @foreach (var period in Model.Periods)
+            {
+                <option value="@period.Value">@period.Text</option>
+            }
+        </select>
+    </div>
+
+</div>
+
+@* Profit Center Cost Summary Data Grid *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+    <div class="govuk-grid-column-three-quarters">
+        <div id="gridContainer_profitcenterSOCTQueryGrid">
+            <table class="govuk-table" id="profitCenterCostTable">
+                <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
+                        <th scope="col" class="govuk-table__header">Profit Centre</th>
+                        <th scope="col" class="govuk-table__header govuk-table__header--numeric">Cost (£)</th>
+                    </tr>
+                </thead>
+                <tbody class="govuk-table__body" id="profitCenterCostTableBody">
+                    <tr class="govuk-table__row">
+                        <td colspan="2" class="govuk-table__cell" style="text-align:center; padding:20px;">
+                            Loading data...
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot class="govuk-table__foot">
+                    <tr class="govuk-table__row">
+                        <th scope="row" class="govuk-table__header">Total</th>
+                        <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold" id="totalCost">£0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pact_js/profit-center-cost-summary.js"></script>
+}

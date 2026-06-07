@@ -59,6 +59,8 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimePivotRow>();
             CreateMap<SummarisedWgTimeSummaryDto, SummarisedWgTimeSummary>();
+
+            CreateMap<ProfitCentreCostDto, ProfitCenterCostItem>().ReverseMap();
         }
     }
 }

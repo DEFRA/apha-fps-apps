@@ -143,5 +143,48 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var failureDto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(failureDto.Errors, failureDto.Meta);
         }
+
+        public async Task<ApiResponseDto<IEnumerable<ProfitCentreCostDto>>> GetProfitCenterCostSummaryAsync(short? monthNumber = null)
+        {
+            var url = FpsApiEndpoints.GetProfitCenterCostSummary;
+            if (monthNumber.HasValue)
+            {
+                url = $"{url}?monthNumber={monthNumber.Value}";
+            }
+
+            var response = await _http.GetAsync<IEnumerable<ProfitCentreCostRes>>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<IEnumerable<ProfitCentreCostDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<ProfitCentreCostDto>>>(response);
+                return ApiResponseDto<IEnumerable<ProfitCentreCostDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        public async Task<ApiResponseDto<List<ProfitCentreCostDto>>> GetPagedProfitCenterCostSummaryAsync(
+            QueryParameters<string> query, short? monthNumber = null)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProfitCenterCostSummary, query);
+            if (monthNumber.HasValue)
+            {
+                url = $"{url}&monthNumber={monthNumber.Value}";
+            }
+
+            var response = await _http.GetAsync<List<ProfitCentreCostRes>>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(response);
+                return ApiResponseDto<List<ProfitCentreCostDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
     }
 }

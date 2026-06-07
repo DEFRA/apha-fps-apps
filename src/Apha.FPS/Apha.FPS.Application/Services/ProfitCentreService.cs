@@ -91,5 +91,40 @@ namespace Apha.FPS.Application.Services
         {
             return await _repository.UpdateProfitCentreSettingsAsync(profitCentre, timesheet, outputsheet, timesheetlayout);
         }
+
+        public async Task<IEnumerable<ProfitCentreCostDto>> GetProfitCenterCostSummaryAsync(short? monthNumber = null)
+        {
+            var result = await _repository.GetProfitCenterCostSummaryAsync(monthNumber);
+            return result.Select(r => new ProfitCentreCostDto
+            {
+                ProfitCentre = r.ProfitCentre,
+                Cost = r.Cost
+            });
+        }
+
+        public async Task<PaginatedResult<ProfitCentreCostDto>> GetPagedProfitCenterCostSummaryAsync(
+            QueryParameters<string> query, short? monthNumber = null)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+
+            var parameters = _mapper.Map<Apha.FPS.Core.Pagination.PaginationParameters<string>>(query);
+            var (data, totalCount) = await _repository.GetPagedProfitCenterCostSummaryAsync(parameters, monthNumber);
+
+            var dtos = data.Select(r => new ProfitCentreCostDto
+            {
+                ProfitCentre = r.ProfitCentre,
+                Cost = r.Cost
+            }).ToList();
+
+            var paginationData = new PaginationDto
+            {
+                PageNumber = query.Page,
+                PageSize = query.PageSize,
+                TotalRecords = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)query.PageSize)
+            };
+
+            return new PaginatedResult<ProfitCentreCostDto>(dtos, paginationData);
+        }
     }
 }

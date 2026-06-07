@@ -134,5 +134,33 @@ namespace Apha.FPS.Api.Controllers
             return Ok(success);
         }
 
+        /// <summary>
+        /// Returns profit centres with aggregated cost from TimeCostCalcs where Class = 'charge'.
+        /// Joins WorkGroup.ProfitCentre with TimeCostCalcs and calculates SUM(chargerate * time) grouped by ProfitCentre.
+        /// Optionally filters by month number.
+        /// </summary>
+        /// <param name="monthNumber">Optional month number to filter the cost calculations.</param>
+        [HttpGet("cost")]
+        public async Task<IActionResult> GetProfitCenterCostSummary([FromQuery] short? monthNumber = null)
+        {
+            var result = await _profitCentreService.GetProfitCenterCostSummaryAsync(monthNumber);
+            return Ok(_mapper.Map<IEnumerable<ProfitCentreCostRes>>(result));
+        }
+
+        /// <summary>
+        /// Returns paginated profit centres with aggregated cost from TimeCostCalcs where Class = 'charge'.
+        /// Supports pagination, sorting, and optional month filtering.
+        /// </summary>
+        /// <param name="query">Pagination and sorting parameters.</param>
+        /// <param name="monthNumber">Optional month number to filter the cost calculations.</param>
+        [HttpGet("cost/paged")]
+        public async Task<IActionResult> GetPagedProfitCenterCostSummary(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] short? monthNumber = null)
+        {
+            var result = await _profitCentreService.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+            return Ok(_mapper.Map<PaginationRes<ProfitCentreCostRes>>(result));
+        }
+
     }
 }
