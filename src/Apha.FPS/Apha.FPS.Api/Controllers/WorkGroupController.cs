@@ -1,5 +1,7 @@
+using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Interfaces;
 using Asp.Versioning;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,21 +14,31 @@ namespace Apha.FPS.Api.Controllers
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/workgroups")]
-    public class WorkgroupController : ControllerBase
+    public class WorkGroupController : ControllerBase
     {
-        private readonly IWorkgroupService _workgroupService;
+        private readonly IWorkGroupService _workGroupService;
+        private readonly IMapper _mapper;
 
-        public WorkgroupController(IWorkgroupService workgroupService)
+        public WorkGroupController(IWorkGroupService workGroupService, IMapper mapper)
         {
-            _workgroupService = workgroupService ?? throw new ArgumentNullException(nameof(workgroupService));
+            _workGroupService = workGroupService ?? throw new ArgumentNullException(nameof(workGroupService));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        /// <summary>Returns all Workgroup names for dropdown population.</summary>
+        /// <summary>Returns all WorkGroup names for dropdown population.</summary>
         [HttpGet("names")]
-        public async Task<ActionResult<List<string>>> GetAllWorkgroupNamesAsync()
+        public async Task<ActionResult<List<string>>> GetAllWorkGroupNamesAsync()
         {
-            var result = await _workgroupService.GetAllWorkgroupNamesAsync();
+            var result = await _workGroupService.GetAllWorkGroupNamesAsync();
             return Ok(result);
+        }
+
+        /// <summary>Returns workgroups filtered by profit centre.</summary>
+        [HttpGet]
+        public async Task<ActionResult<List<WorkGroupRes>>> GetWorkGroupsAsync([FromQuery] string profitCentre)
+        {
+            var result = await _workGroupService.GetWorkGroupsAsync(profitCentre);
+            return Ok(_mapper.Map<List<WorkGroupRes>>(result));
         }
     }
 }

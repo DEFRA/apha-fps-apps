@@ -10,11 +10,13 @@ namespace Apha.FPS.Application.Services
     {
         private readonly IBudgetBidsRepository _repository;
         private readonly IMapper _mapper;
+        private readonly IFpsRequestContext _requestContext;
 
-        public BudgetBidsService(IBudgetBidsRepository repository, IMapper mapper)
+        public BudgetBidsService(IBudgetBidsRepository repository, IMapper mapper, IFpsRequestContext requestContext)
         {
             _repository = repository;
             _mapper = mapper;
+            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
         public async Task<List<BidViewDto>> GetBidViewAsync(string workgroup)
@@ -35,6 +37,11 @@ namespace Apha.FPS.Application.Services
             ArgumentNullException.ThrowIfNull(bid);
             ArgumentOutOfRangeException.ThrowIfNegative(bid.GenBid);
 
+            var isAuthorized = await _repository.IsAuthorizedAsync(bid.WorkgroupName);
+            if (!isAuthorized)
+                throw new UnauthorizedAccessException(
+                    $"User does not have access to workgroup '{bid.WorkgroupName}'.");
+
             var existing = await _repository.GetBidByIdAsync(bid.WorkgroupName, bid.Account);
             if (existing != null)
                 throw new InvalidOperationException("Account already exists.");
@@ -49,6 +56,11 @@ namespace Apha.FPS.Application.Services
             ArgumentNullException.ThrowIfNull(bid);
             ArgumentOutOfRangeException.ThrowIfNegative(bid.GenBid);
 
+            var isAuthorized = await _repository.IsAuthorizedAsync(bid.WorkgroupName);
+            if (!isAuthorized)
+                throw new UnauthorizedAccessException(
+                    $"User does not have access to workgroup '{bid.WorkgroupName}'.");
+
             var existing = await _repository.GetBidByIdAsync(bid.WorkgroupName, bid.Account);
             if (existing == null)
                 throw new InvalidOperationException(
@@ -62,6 +74,12 @@ namespace Apha.FPS.Application.Services
         public async Task<bool> DeleteBidAsync(string workgroupName, string account)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(workgroupName);
+
+            var isAuthorized = await _repository.IsAuthorizedAsync(workgroupName);
+            if (!isAuthorized)
+                throw new UnauthorizedAccessException(
+                    $"User does not have access to workgroup '{workgroupName}'.");
+
             return await _repository.DeleteBidAsync(workgroupName, account);
         }
 

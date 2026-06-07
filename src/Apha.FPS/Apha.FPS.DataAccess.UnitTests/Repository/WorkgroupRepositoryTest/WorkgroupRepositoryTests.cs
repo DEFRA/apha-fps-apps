@@ -5,21 +5,32 @@ using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
 using NSubstitute;
 
-namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkgroupRepositoryTest
+namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 {
-    public class WorkgroupRepositoryTests
+    public class WorkGroupRepositoryTests
     {
-        private static WorkgroupRepository CreateRepository(IEnumerable<Workgroup>? workgroups = null)
+        private const string DefaultUserEmail = "test@example.com";
+        private const int    DefaultFpsYear   = 2024;
+
+        private static WorkGroupRepository CreateRepository(
+            IEnumerable<Workgroup>?      workgroups  = null,
+            IEnumerable<WorkGroupView>?  wgViews     = null,
+            string                       userEmail   = DefaultUserEmail,
+            int                          fpsYear     = DefaultFpsYear)
         {
             var requestContext = Substitute.For<IFpsRequestContext>();
-            requestContext.FpsYear.Returns(2024);
+            requestContext.FpsYear.Returns(fpsYear);
+            requestContext.UserEmailId.Returns(userEmail);
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
 
             var mockSet = RepositoryTestHelper.CreateMockDbSet(workgroups ?? Enumerable.Empty<Workgroup>());
             mockContext.Setup(x => x.Workgroups).Returns(mockSet.Object);
 
-            return new WorkgroupRepository(mockContext.Object);
+            var viewSet = RepositoryTestHelper.CreateMockDbSet(wgViews ?? Enumerable.Empty<WorkGroupView>());
+            mockContext.Setup(x => x.WorkGroupViews).Returns(viewSet.Object);
+
+            return new WorkGroupRepository(mockContext.Object, requestContext);
         }
 
         [Fact]
@@ -35,7 +46,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkgroupRepositoryTest
             var repo = CreateRepository(workgroups);
 
             // Act
-            var result = await repo.GetAllWorkgroupNamesAsync();
+            var result = await repo.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -52,7 +63,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkgroupRepositoryTest
             var repo = CreateRepository(new List<Workgroup>());
 
             // Act
-            var result = await repo.GetAllWorkgroupNamesAsync();
+            var result = await repo.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -70,7 +81,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkgroupRepositoryTest
             var repo = CreateRepository(workgroups);
 
             // Act
-            var result = await repo.GetAllWorkgroupNamesAsync();
+            var result = await repo.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.Single(result);

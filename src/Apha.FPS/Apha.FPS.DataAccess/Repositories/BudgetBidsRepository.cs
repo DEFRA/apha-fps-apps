@@ -14,11 +14,22 @@ namespace Apha.FPS.DataAccess.Repositories
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
+        public async Task<bool> IsAuthorizedAsync(string workgroupName)
+        {
+            return await _context.WorkGroupViews
+                .AnyAsync(w => w.WorkgroupName == workgroupName
+                            && w.FpsYear == _requestContext.FpsYear
+                            && w.UserEmail != null
+                            && w.UserEmail.ToLower() == _requestContext.UserEmailId);
+        }
+
         public async Task<List<BidView>> GetBidViewAsync(string workgroup)
         {
             var rows = await _context.BidViews
                 .AsNoTracking()
-                .Where(b => b.WorkgroupName == workgroup && b.FpsYear == _requestContext.FpsYear)
+                .Where(b => b.WorkgroupName == workgroup
+                         && b.FpsYear == _requestContext.FpsYear
+                         && b.UserEmail != null && b.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .OrderBy(b => b.Account)
                 .ToListAsync();
 
@@ -29,7 +40,9 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _context.Bids
                 .AsNoTracking()
-                .FirstOrDefaultAsync(b => b.WorkgroupName == workgroupName && b.Account == account);
+                .FirstOrDefaultAsync(b => b.WorkgroupName == workgroupName
+                    && b.Account == account
+                    && b.FpsYear == _requestContext.FpsYear);
         }
 
         public async Task<Bid> AddBidAsync(Bid bid)

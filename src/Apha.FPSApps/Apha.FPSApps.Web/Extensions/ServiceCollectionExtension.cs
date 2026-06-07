@@ -65,26 +65,22 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
-            services.AddScoped<IWorkgroupService, WorkgroupService>();
+            services.AddScoped<Apha.FPSApps.Application.Interfaces.FPS.IWorkGroupService, Apha.FPSApps.Application.Services.FPS.WorkGroupService>();
 
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
             services.AddScoped<IPactMonthlyTimeService, PactMonthlyTimeService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
-            services.AddScoped<IProjectMonthService, ProjectMonthService>();            
-            services.AddScoped<IWorkGroupService, WorkGroupService>();
-            services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
-            services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
+            services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
             services.AddScoped<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService, Apha.FPSApps.Application.Services.PACT.WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
-            services.AddScoped<Apha.FPSApps.Application.Interfaces.FPS.IWorkGroupService, Apha.FPSApps.Application.Services.FPS.WorkGroupService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
             return services;

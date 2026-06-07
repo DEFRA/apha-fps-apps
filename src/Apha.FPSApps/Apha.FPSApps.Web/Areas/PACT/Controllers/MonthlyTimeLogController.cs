@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IPactMonthlyTimeService _logService;
-        private readonly IWorkGroupService _workGroupService;
+        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workGroupService;
         private readonly ITestorProductService _testorProductService;
         private readonly IProjectService _projectService;
         private readonly IProjectJobCodeService _jobCodeService;
@@ -29,7 +29,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public MonthlyTimeLogController(
             IMapper mapper,
             IPactMonthlyTimeService logService,
-            IWorkGroupService workGroupService,
+            Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService workGroupService,
             ITestorProductService testorProductService,
             IProjectService projectService,
             IProjectJobCodeService jobCodeService,

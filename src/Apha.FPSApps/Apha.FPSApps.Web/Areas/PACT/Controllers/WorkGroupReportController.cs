@@ -18,13 +18,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     public class WorkGroupReportController : Controller
     {
         private readonly IWorkGroupReportEmailService _emailSendService;
-        private readonly IWorkGroupService _workGroupService;
+        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workGroupService;
         private readonly ICalenderMonthService _calenderMonthService;
         private readonly IProfitCentreService _profitCentreService;
 
         public WorkGroupReportController(
             IWorkGroupReportEmailService emailSendService,
-            IWorkGroupService workGroupService,
+            Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService workGroupService,
             ICalenderMonthService calenderMonthService,
             IProfitCentreService profitCentreService)
         {

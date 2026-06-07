@@ -18,6 +18,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _context.BidViews
                 .AnyAsync(b => b.WorkgroupName == workgroupName
+                            && b.FpsYear == _requestContext.FpsYear
                             && b.UserEmail != null
                             && b.UserEmail.ToLower() == userEmail);
         }
@@ -26,7 +27,9 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _context.Purchases
                 .AsNoTracking()
-                .Where(p => p.WorkgroupName == workgroupName && p.Account == account)
+                .Where(p => p.WorkgroupName == workgroupName
+                         && p.Account == account
+                         && p.FpsYear == _requestContext.FpsYear)
                 .OrderBy(p => p.ItemDescription)
                 .ToListAsync();
         }
@@ -37,7 +40,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.WorkgroupName == workgroupName
                     && p.Account == account
-                    && p.ItemDescription == itemDescription);
+                    && p.ItemDescription == itemDescription
+                    && p.FpsYear == _requestContext.FpsYear);
         }
 
         public async Task<Purchase> AddPurchaseAsync(Purchase purchase)
@@ -74,7 +78,8 @@ namespace Apha.FPS.DataAccess.Repositories
                     var existing = await _context.Purchases
                         .FirstOrDefaultAsync(p => p.WorkgroupName == workgroupName
                             && p.Account == account
-                            && p.ItemDescription == itemDescriptionOld);
+                            && p.ItemDescription == itemDescriptionOld
+                            && p.FpsYear == _requestContext.FpsYear);
 
                     existing!.ItemDescription = itemDescriptionNew;
                     existing.Amount = amount;
@@ -96,7 +101,8 @@ namespace Apha.FPS.DataAccess.Repositories
             var entity = await _context.Purchases
                 .FirstOrDefaultAsync(p => p.WorkgroupName == workgroupName
                     && p.Account == account
-                    && p.ItemDescription == itemDescription);
+                    && p.ItemDescription == itemDescription
+                    && p.FpsYear == _requestContext.FpsYear);
 
             if (entity == null)
                 return false;

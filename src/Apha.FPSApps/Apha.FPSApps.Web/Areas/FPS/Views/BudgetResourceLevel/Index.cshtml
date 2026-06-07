@@ -124,7 +124,7 @@
                         <!-- Left: WorkGroup selector -->
                         <div class="col-3 sup_border-right">
                             <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Select Work Group</h3>
-                            <br/>
+                           <br/>
                             <div id="gridContainer_workGroupGrid">
                                 @await Html.PartialAsync("_DataGrid", Model.WorkGroupGrid)
                             </div>
@@ -169,7 +169,8 @@
                                 <input id="fpsBrlSelectedAccount"
                                        class="govuk-input sup_width_auto"
                                        aria-label="Selected account" readonly value="@Model.SelectedAccount" />
-                                <span class="govuk-body govuk-!-margin-bottom-0">in Workgroup:</span>
+                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0">in Workgroup</h3>
+                              
                                 <input id="fpsBrlPurchasesWg"
                                        class="govuk-input sup_width_auto"
                                        aria-label="Selected workgroup for purchases" readonly value="@Model.SelectedWorkgroup" />

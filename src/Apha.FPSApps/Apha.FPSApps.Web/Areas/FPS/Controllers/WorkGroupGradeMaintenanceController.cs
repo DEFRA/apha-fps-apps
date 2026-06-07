@@ -23,9 +23,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IWorkGroupGradeService _wgGradeService;
         private readonly IProfitCentreGradeService _pcGradeService;
-        private readonly IWorkgroupService _workgroupService;
+        private readonly IWorkGroupService _workgroupService;
 
-        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkGroupGradeService wgGradeService, IProfitCentreGradeService pcGradeService, IWorkgroupService workgroupService)
+        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkGroupGradeService wgGradeService, IProfitCentreGradeService pcGradeService, IWorkGroupService workgroupService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _wgGradeService = wgGradeService ?? throw new ArgumentNullException(nameof(wgGradeService));
@@ -244,7 +244,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> GetWorkgroups()
         {
-            var result = await _workgroupService.GetAllWorkgroupNamesAsync();
+            var result = await _workgroupService.GetAllWorkGroupNamesAsync();
             return result.Success
                 ? Json(new { success = true, data = result.Data })
                 : Json(new { success = false, message = "Failed to load Workgroups" });

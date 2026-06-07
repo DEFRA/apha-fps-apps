@@ -4,6 +4,7 @@ namespace Apha.FPS.Core.Interfaces
 {
     public interface IBudgetBidsRepository
     {
+        Task<bool> IsAuthorizedAsync(string workgroupName);
         Task<List<BidView>> GetBidViewAsync(string workgroup);
         Task<Bid?> GetBidByIdAsync(string workgroupName, string account);
         Task<Bid> AddBidAsync(Bid bid);

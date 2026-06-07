@@ -1,26 +1,29 @@
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Interfaces;
+using AutoMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
+namespace Apha.FPS.Application.UnitTests.Services.WorkGroupServiceTest
 {
-    public class WorkgroupServiceTests
+    public class WorkGroupServiceTests
     {
-        private readonly IWorkgroupRepository _mockRepository;
-        private readonly WorkgroupService _sut;
+        private readonly IWorkGroupRepository _mockRepository;
+        private readonly IMapper _mockMapper;
+        private readonly WorkGroupService _sut;
 
-        public WorkgroupServiceTests()
+        public WorkGroupServiceTests()
         {
-            _mockRepository = Substitute.For<IWorkgroupRepository>();
-            _sut            = new WorkgroupService(_mockRepository);
+            _mockRepository = Substitute.For<IWorkGroupRepository>();
+            _mockMapper     = Substitute.For<IMapper>();
+            _sut            = new WorkGroupService(_mockRepository, _mockMapper);
         }
 
         [Fact]
         public void Constructor_WithNullRepository_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => new WorkgroupService(null!));
+            Assert.Throws<ArgumentNullException>(() => new WorkGroupService(null!, _mockMapper));
         }
 
         [Fact]
@@ -28,24 +31,24 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
         {
             // Arrange
             var names = new List<string> { "WG01", "WG02", "WG03" };
-            _mockRepository.GetAllWorkgroupNamesAsync().Returns(names);
+            _mockRepository.GetAllWorkGroupNamesAsync().Returns(names);
 
             // Act
-            var result = await _sut.GetAllWorkgroupNamesAsync();
+            var result = await _sut.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.Equal(names, result);
-            await _mockRepository.Received(1).GetAllWorkgroupNamesAsync();
+            await _mockRepository.Received(1).GetAllWorkGroupNamesAsync();
         }
 
         [Fact]
         public async Task GetAllWorkgroupNamesAsync_WithEmptyRepository_ReturnsEmptyList()
         {
             // Arrange
-            _mockRepository.GetAllWorkgroupNamesAsync().Returns(new List<string>());
+            _mockRepository.GetAllWorkGroupNamesAsync().Returns(new List<string>());
 
             // Act
-            var result = await _sut.GetAllWorkgroupNamesAsync();
+            var result = await _sut.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.Empty(result);
@@ -55,12 +58,12 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkgroupServiceTest
         public async Task GetAllWorkgroupNamesAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
-            _mockRepository.GetAllWorkgroupNamesAsync()
+            _mockRepository.GetAllWorkGroupNamesAsync()
                 .ThrowsAsync(new InvalidOperationException("DB failure"));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.GetAllWorkgroupNamesAsync());
+                _sut.GetAllWorkGroupNamesAsync());
         }
     }
 }

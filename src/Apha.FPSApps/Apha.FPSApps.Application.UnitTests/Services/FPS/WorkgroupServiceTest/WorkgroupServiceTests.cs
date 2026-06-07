@@ -4,26 +4,26 @@ using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupServiceTest
+namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupServiceTest
 {
-    public class WorkgroupServiceTests
+    public class WorkGroupServiceTests
     {
         private readonly IFpsApiClient _fpsClient;
-        private readonly IFpsWorkgroupApiClient _fpsWorkgroupApiClient;
-        private readonly WorkgroupService _sut;
+        private readonly IFpsWorkGroupApiClient _fpsWorkGroupApiClient;
+        private readonly WorkGroupService _sut;
 
-        public WorkgroupServiceTests()
+        public WorkGroupServiceTests()
         {
             _fpsClient            = Substitute.For<IFpsApiClient>();
-            _fpsWorkgroupApiClient = Substitute.For<IFpsWorkgroupApiClient>();
-            _fpsClient.FpsWorkgroup.Returns(_fpsWorkgroupApiClient);
-            _sut = new WorkgroupService(_fpsClient);
+            _fpsWorkGroupApiClient = Substitute.For<IFpsWorkGroupApiClient>();
+            _fpsClient.FpsWorkGroup.Returns(_fpsWorkGroupApiClient);
+            _sut = new WorkGroupService(_fpsClient);
         }
 
         [Fact]
         public void Constructor_WithNullClient_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => new WorkgroupService(null!));
+            Assert.Throws<ArgumentNullException>(() => new WorkGroupService(null!));
         }
 
         [Fact]
@@ -33,16 +33,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupServiceTest
             var names            = new List<string> { "WG01", "WG02" };
             var expectedResponse = ApiResponseDto<List<string>>.SuccessResponse(names);
 
-            _fpsWorkgroupApiClient.GetAllWorkgroupNamesAsync().Returns(expectedResponse);
+            _fpsWorkGroupApiClient.GetAllWorkGroupNamesAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetAllWorkgroupNamesAsync();
+            var result = await _sut.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _fpsWorkgroupApiClient.Received(1).GetAllWorkgroupNamesAsync();
+            await _fpsWorkGroupApiClient.Received(1).GetAllWorkGroupNamesAsync();
         }
 
         [Fact]
@@ -51,10 +51,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupServiceTest
             // Arrange
             var expectedResponse = ApiResponseDto<List<string>>.SuccessResponse(new List<string>());
 
-            _fpsWorkgroupApiClient.GetAllWorkgroupNamesAsync().Returns(expectedResponse);
+            _fpsWorkGroupApiClient.GetAllWorkGroupNamesAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetAllWorkgroupNamesAsync();
+            var result = await _sut.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -69,10 +69,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkgroupServiceTest
             var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
             var expectedResponse = ApiResponseDto<List<string>>.FailureResponse(errors, new ApiMetaDto());
 
-            _fpsWorkgroupApiClient.GetAllWorkgroupNamesAsync().Returns(expectedResponse);
+            _fpsWorkGroupApiClient.GetAllWorkGroupNamesAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetAllWorkgroupNamesAsync();
+            var result = await _sut.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.NotNull(result);

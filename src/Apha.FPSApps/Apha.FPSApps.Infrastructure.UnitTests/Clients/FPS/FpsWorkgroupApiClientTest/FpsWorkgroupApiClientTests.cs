@@ -6,31 +6,31 @@ using AutoMapper;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkgroupApiClientTest
+namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupApiClientTest
 {
-    public class FpsWorkgroupApiClientTests
+    public class FpsWorkGroupApiClientTests
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
-        private readonly FpsWorkgroupApiClient _client;
+        private readonly FpsWorkGroupApiClient _client;
 
-        public FpsWorkgroupApiClientTests()
+        public FpsWorkGroupApiClientTests()
         {
             _http   = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new FpsWorkgroupApiClient(_http, _mapper);
+            _client = new FpsWorkGroupApiClient(_http, _mapper);
         }
 
         [Fact]
         public void Constructor_WithNullHttp_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => new FpsWorkgroupApiClient(null!, _mapper));
+            Assert.Throws<ArgumentNullException>(() => new FpsWorkGroupApiClient(null!, _mapper));
         }
 
         [Fact]
         public void Constructor_WithNullMapper_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => new FpsWorkgroupApiClient(_http, null!));
+            Assert.Throws<ArgumentNullException>(() => new FpsWorkGroupApiClient(_http, null!));
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkgroupApiClien
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAllWorkgroupNamesAsync();
+            var result = await _client.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkgroupApiClien
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetAllWorkgroupNamesAsync();
+            var result = await _client.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -95,7 +95,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkgroupApiClien
             _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetAllWorkgroupNamesAsync();
+            var result = await _client.GetAllWorkGroupNamesAsync();
 
             // Assert
             Assert.NotNull(result);

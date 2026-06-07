@@ -154,7 +154,7 @@ namespace Apha.Common.Constants
         public const string GetAllPcGrades = "api/v1/pcgrades/allpcgrades";
 
         // Resource Set-Up — Workgroups
-        public const string GetAllWorkgroupNames = "api/v1/workgroups/names";
+        public const string GetAllWorkGroupNames = "api/v1/workgroups/names";
 
         // Resource Set-Up — WG Grades
         public const string GetWgGrades = "api/v1/wggrades?pcGrade={0}";
