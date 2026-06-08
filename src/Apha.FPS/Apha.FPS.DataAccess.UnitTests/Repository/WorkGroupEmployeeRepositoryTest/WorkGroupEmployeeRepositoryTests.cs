@@ -1,4 +1,4 @@
-using Apha.Common.Helpers.Repository;
+﻿using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -56,7 +56,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         [Fact]
         public async Task GetWorkGroupEmployeeAsync_WithMatchingWgGrade_ReturnsActiveEmployees()
         {
-            // Arrange
             var employees = new List<WorkGroupEmployee>
             {
                 new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
@@ -67,10 +66,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             var repo  = CreateRepository(employees);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            // Act
             var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, e => Assert.Equal(DefaultWgGrade, e.WorkGroupGrade));
@@ -79,7 +76,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         [Fact]
         public async Task GetWorkGroupEmployeeAsync_WithNoMatchingWgGrade_ReturnsEmpty()
         {
-            // Arrange
             var employees = new List<WorkGroupEmployee>
             {
                 new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = "OTHER", PersonStatus = "A" }
@@ -87,10 +83,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             var repo  = CreateRepository(employees);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            // Act
             var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Empty(result.Data);
         }
@@ -98,7 +92,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         [Fact]
         public async Task GetWorkGroupEmployeeAsync_WithPagination_ReturnsCorrectPage()
         {
-            // Arrange
             var employees = Enumerable.Range(1, 5).Select(i => new WorkGroupEmployee
             {
                 PactId         = $"P00{i}",
@@ -109,14 +102,151 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             var repo  = CreateRepository(employees);
             var query = new PaginationParameters<string> { Page = 2, PageSize = 2 };
 
-            // Act
             var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
 
-            // Assert
             Assert.NotNull(result);
-            Assert.Equal(2,  result.Data.Count());
-            Assert.Equal(5,  result.PaginationData.TotalRecords);
-            Assert.Equal(2,  result.PaginationData.PageNumber);
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(5, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.PageNumber);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_WithSpNumberFilter_ReturnsMatchingEmployees()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"SpNumber\":\"SP001\"}" };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            Assert.Single(result.Data);
+            Assert.Equal("SP001", result.Data.First().SpNumber);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_WithNameFilter_ReturnsMatchingEmployees()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var staffMembers = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith" },
+                new() { SPNumber = "SP002", FirstName = "Bob",   LastName = "Jones" }
+            };
+            var repo  = CreateRepository(employees, staffMembers);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"Name\":\"Smith\"}" };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            Assert.Single(result.Data);
+            Assert.Contains("Smith", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_WithNullFilter_ReturnsAllActiveEmployees()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortBySpNumberAscending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "spnumber", Descending = false };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal("SP001", list[0].SpNumber);
+            Assert.Equal("SP002", list[1].SpNumber);
+            Assert.Equal("SP003", list[2].SpNumber);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortBySpNumberDescending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
+                new() { PactId = "P003", SpNumber = "SP003", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var repo  = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "spnumber", Descending = true };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Equal("SP003", list[0].SpNumber);
+            Assert.Equal("SP002", list[1].SpNumber);
+            Assert.Equal("SP001", list[2].SpNumber);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByNameDescending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var staffMembers = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Anderson" },
+                new() { SPNumber = "SP002", FirstName = "Zara",  LastName = "Zebra" }
+            };
+            var repo  = CreateRepository(employees, staffMembers);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "name", Descending = true };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Contains("Zebra", list[0].Name);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeAsync_SortByNameAscending_ReturnsOrderedResults()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
+                new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var staffMembers = new List<Employee>
+            {
+                new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Anderson" },
+                new() { SPNumber = "SP002", FirstName = "Zara",  LastName = "Zebra" }
+            };
+            var repo  = CreateRepository(employees, staffMembers);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "name", Descending = false };
+
+            var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
+
+            var list = result.Data.ToList();
+            Assert.Contains("Anderson", list[0].Name);
         }
 
         #endregion
@@ -126,17 +256,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         [Fact]
         public async Task GetWorkGroupEmployeeByIdAsync_WithMatchingPactId_ReturnsEmployee()
         {
-            // Arrange
             var employees = new List<WorkGroupEmployee>
             {
                 new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
             };
             var repo = CreateRepository(employees);
 
-            // Act
             var result = await repo.GetWorkGroupEmployeeByIdAsync(DefaultPactId);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Equal(DefaultPactId, result!.PactId);
         }
@@ -144,13 +271,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         [Fact]
         public async Task GetWorkGroupEmployeeByIdAsync_WithNoMatchingPactId_ReturnsNull()
         {
-            // Arrange
             var repo = CreateRepository(new List<WorkGroupEmployee>());
 
-            // Act
             var result = await repo.GetWorkGroupEmployeeByIdAsync("NONEXISTENT");
 
-            // Assert
             Assert.Null(result);
         }
 
@@ -161,7 +285,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         [Fact]
         public async Task UpdateWorkGroupEmployeeAsync_WithValidEntity_UpdatesAndReturnsEntity()
         {
-            // Arrange
             var existing = new WorkGroupEmployee
             {
                 PactId         = DefaultPactId,
@@ -174,8 +297,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
                 HrsAvail       = 37.0,
                 MakeAvailable  = -1
             };
-            var employees = new List<WorkGroupEmployee> { existing };
-            var repo = CreateRepository(employees);
+            var repo = CreateRepository(new List<WorkGroupEmployee> { existing });
 
             var update = new WorkGroupEmployee
             {
@@ -187,25 +309,76 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
                 MakeAvailable = 0
             };
 
-            // Act
             var result = await repo.UpdateWorkGroupEmployeeAsync(update);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Equal(40.0, result.HrsPaid);
-            Assert.Equal(37.0, result.HrsAvail); // HrsPaid - (Leave + SickSpecial) = 40 - 3
+            Assert.Equal(37.0, result.HrsAvail);
         }
 
         [Fact]
         public async Task UpdateWorkGroupEmployeeAsync_WithNonExistentPactId_ThrowsKeyNotFoundException()
         {
-            // Arrange
             var repo   = CreateRepository(new List<WorkGroupEmployee>());
             var entity = new WorkGroupEmployee { PactId = "NONEXISTENT" };
 
-            // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
                 repo.UpdateWorkGroupEmployeeAsync(entity));
+        }
+
+        #endregion
+
+        #region HasAssociatedStaffAsync Tests
+
+        [Fact]
+        public async Task HasAssociatedStaffAsync_WithMatchingWgGrade_ReturnsTrue()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+            };
+            var repo = CreateRepository(employees);
+
+            var result = await repo.HasAssociatedStaffAsync(DefaultWgGrade);
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedStaffAsync_WithNoMatchingWgGrade_ReturnsFalse()
+        {
+            var employees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = "OTHER", PersonStatus = "A" }
+            };
+            var repo = CreateRepository(employees);
+
+            var result = await repo.HasAssociatedStaffAsync(DefaultWgGrade);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasAssociatedStaffAsync_WithEmptyRepository_ReturnsFalse()
+        {
+            var repo = CreateRepository(new List<WorkGroupEmployee>());
+
+            var result = await repo.HasAssociatedStaffAsync(DefaultWgGrade);
+
+            Assert.False(result);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData(null)]
+        public async Task HasAssociatedStaffAsync_WithNullOrWhitespaceWgGrade_ReturnsFalse(string? wgGrade)
+        {
+            var repo = CreateRepository(new List<WorkGroupEmployee>());
+
+            var result = await repo.HasAssociatedStaffAsync(wgGrade!);
+
+            Assert.False(result);
         }
 
         #endregion
@@ -215,30 +388,24 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         [Fact]
         public async Task DeleteWorkGroupEmployeeAsync_WithExistingPactId_ReturnsTrueAndRemoves()
         {
-            // Arrange
             var employees = new List<WorkGroupEmployee>
             {
                 new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
             };
             var repo = CreateRepository(employees);
 
-            // Act
             var result = await repo.DeleteWorkGroupEmployeeAsync(DefaultPactId);
 
-            // Assert
             Assert.True(result);
         }
 
         [Fact]
         public async Task DeleteWorkGroupEmployeeAsync_WithNonExistentPactId_ReturnsFalse()
         {
-            // Arrange
             var repo = CreateRepository(new List<WorkGroupEmployee>());
 
-            // Act
             var result = await repo.DeleteWorkGroupEmployeeAsync("NONEXISTENT");
 
-            // Assert
             Assert.False(result);
         }
 

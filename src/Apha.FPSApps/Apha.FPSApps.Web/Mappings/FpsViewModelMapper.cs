@@ -49,6 +49,20 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Staff Plan view
             CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();
+
+            // Test Supplier
+            CreateMap<TestSupplierItem, Apha.FPSApps.Application.Dtos.PACT.TestSupplierViewDto>().ReverseMap();
+            CreateMap<TestSupplierItem, TestRequirementDto>()
+                .ForMember(d => d.TestCode, o => o.MapFrom(s => s.TestCode))
+                .ForMember(d => d.Buyer, o => o.MapFrom(s => s.Buyer))
+                .ForMember(d => d.UnitPrice, o => o.MapFrom(s => s.UnitPrice))
+                .ForMember(d => d.NoRequired, o => o.MapFrom(s => s.NoRequired))
+                .ForMember(d => d.ProjectBuyerCode, o => o.MapFrom(s => s.ProjectBuyerCode))
+                .ForMember(d => d.TestBuyerCode, o => o.MapFrom(s => s.TestBuyerCode))
+                .ForMember(d => d.Active, o => o.MapFrom(s => s.Active))
+                .ForMember(d => d.RecUnitPrice, o => o.MapFrom(s => s.RecUnitPrice))
+                .ReverseMap();
+            CreateMap<MaintWGGradeItem, WorkgroupGradeDto>().ReverseMap();
         }
     }
 }

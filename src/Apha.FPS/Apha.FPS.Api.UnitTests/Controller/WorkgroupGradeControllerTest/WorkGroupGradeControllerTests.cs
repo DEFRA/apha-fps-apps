@@ -93,7 +93,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupGradeControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(true, okResult.Value);
+            Assert.True((bool)okResult.Value!);
             await _serviceMock.Received(1).DeleteWorkGroupGradeAsync(DefaultWgGrade);
         }
 

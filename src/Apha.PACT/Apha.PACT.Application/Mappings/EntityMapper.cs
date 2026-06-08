@@ -25,22 +25,22 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<TestCapability, TestCapabilityDto>().ReverseMap();
             CreateMap<TestRequirement, TestRequirementtDto>().ReverseMap();
             CreateMap<TestRequirementDetail, TestRequirementtDto>();
+            CreateMap<TestSupplierView, TestSupplierViewDto>().ReverseMap();
             CreateMap<TestorProduct, TestorProductDto>().ReverseMap();
-            CreateMap<Month, MonthDto>().ReverseMap();
             CreateMap<CalenderMonth, CalenderMonthDto>().ReverseMap();
             CreateMap<ProjectMonth, ProjectMonthDto>().ReverseMap();
             CreateMap<ProjectMonthFinal, ProjectMonthFinalDto>().ReverseMap();
             CreateMap<MonthlyOutputLog, MonthlyOutputLogDto>().ReverseMap();
             CreateMap<MonthlyTimeLog, MonthlyTimeLogDto>().ReverseMap();
-            CreateMap<MonthlyTimeLog, MonthlyTimeLogDto>().ReverseMap();
             CreateMap<MonthlyTimeLogFilter, MonthlyTimeLogFilterDto>().ReverseMap();
-            CreateMap<CalenderMonth, CalenderMonthDto>().ReverseMap();
             CreateMap<WorkGroupTimeCode, WorkGroupTimeCodeDto>().ReverseMap();
             CreateMap<WorkGroupValidTimeCode, WorkGroupValidTimeCodeDto>().ReverseMap();
             CreateMap<WgSummarisedStaffTimeUsageView, WgSummarisedStaffTimeUsageEntryDto>();
             CreateMap<SummarisedWgTimeView, SummarisedWgTimeDto>().ReverseMap();
             CreateMap<SummarisedWgTimeView, SummarisedWgTimeEntryDto>();
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimeRes>().ReverseMap();
+            CreateMap<RecreateSummaryLog, RecreateSummaryLogDto>().ReverseMap();
+            CreateMap<RecreateSummaryLogWithComment, RecreateSummaryLogDto>().ReverseMap();
         }
     }
 }

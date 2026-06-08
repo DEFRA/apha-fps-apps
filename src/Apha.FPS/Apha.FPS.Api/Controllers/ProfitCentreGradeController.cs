@@ -111,5 +111,13 @@ namespace Apha.FPS.Api.Controllers
             var result = await _profitCentreGradeService.GetAllProfitCentreCodesAsync();
             return Ok(result);
         }
+
+        /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
+        [HttpGet("allpcgrades")]
+        public async Task<ActionResult<List<string>>> GetAllPcGradesAsync()
+        {
+            var result = await _profitCentreGradeService.GetAllPcGradesAsync();
+            return Ok(result);
+        }
     }
 }

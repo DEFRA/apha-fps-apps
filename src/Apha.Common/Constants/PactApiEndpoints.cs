@@ -55,6 +55,9 @@ namespace Apha.Common.Constants
         public const string GetTestListOwners = "api/v1/testorproduct/owners";
         public const string GetAllTestorProducts = "api/v1/testorproduct";
 
+        // Recreate Summaries Log
+        public const string GetRecreateSummaryLog = "api/v1/recreatereleasesummary/recreatesummary/log";
+
         // Project Invoice
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
         public const string GetPagedProjectInvoiceManual = "api/v1/projectinvoice";
@@ -87,6 +90,7 @@ namespace Apha.Common.Constants
 
         // Test Requirement
         public const string GetPagedTestReqmt = "api/v1/testrequirement/paged/{0}";
+        public const string GetPagedBySupplierTestCode = "api/v1/testrequirement/supplier/paged/{0}";
         public const string GetPagedTestReqmtbyProject = "api/v1/testrequirement/pagedbyproject/{0}";
         public const string GetAllTestReqmtForExport = "api/v1/testrequirement/all/{0}";
         public const string GetTestReqmtById = "api/v1/testrequirement/{0}/{1}";
