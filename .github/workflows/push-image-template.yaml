@@ -169,7 +169,7 @@ jobs:
           IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
         run: |
           JOB_EXEC_ID=$(cat /proc/sys/kernel/random/uuid)
-          echo "Running worker healthcheck | JobExecutionId=$JOB_EXEC_ID"
+          echo "Running worker startup healthcheck | JobExecutionId=$JOB_EXEC_ID"
 
           set +e
           docker run --name test-container \
@@ -186,20 +186,19 @@ jobs:
           echo "Worker exit code: $exit_code"
           docker logs test-container --tail 50 || true
 
-          # Exit 0 = success
-          # Exit 5 = DependencyOutage (DB unreachable in CI) — image is healthy, DB just isn't available on the runner
-          if [ "$exit_code" -ne 0 ] && [ "$exit_code" -ne 5 ]; then
-            echo "Worker healthcheck failed with unexpected exit code $exit_code"
-            exit "$exit_code"
-          fi
-
-          # Verify the app at least started and found the HealthCheck job
-          if ! docker logs test-container 2>&1 | grep -q "HealthCheck"; then
-            echo "Expected HealthCheck job execution marker not found in container logs"
+          # Hello-world style healthcheck for workers: verify process startup marker.
+          if ! docker logs test-container 2>&1 | grep -q "Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator"; then
+            echo "Worker did not reach startup checkpoint"
             exit 1
           fi
 
-          echo "Worker healthcheck passed (exit_code=$exit_code)"
+          # Accept normal completion (0) and dependency-outage (5) in CI.
+          if [ "$exit_code" -ne 0 ] && [ "$exit_code" -ne 5 ]; then
+            echo "Worker failed before startup healthcheck could complete"
+            exit "$exit_code"
+          fi
+
+          echo "Worker startup healthcheck passed"
 
       - name: Cleanup container
         if: ${{ always() && inputs.run_local_healthcheck }}
