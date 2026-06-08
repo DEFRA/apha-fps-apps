@@ -1,6 +1,6 @@
 ---
 title: "BatchJobs + PACT API - End-to-End Demo Flow"
-version: "1.0"
+version: "1.1"
 audience: "Demo Participants, PACT Team, BatchJobs Team"
 ---
 
@@ -44,9 +44,14 @@ T+0s    | User clicks "Trigger RecreateSummaries" in Sample UI
         ↓
         PACT API Response: HTTP 202 Accepted
         {
+                                        "accepted": true,
+                                        "source": "pact.api",
+                                        "jobExecutionId": "a1b2c3d4e5f647a89b0c1d2e3f4a5b6c",
           "eventId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
+                                        "status": "TriggerAccepted",
           "acceptedAtUtc": "2026-06-03T14:30:00.123Z",
-          "jobName": "RecreateSummaries"
+                                        "jobName": "RecreateSummaries",
+                                        "message": "Trigger accepted for dispatch."
         }
         ↓
 T+0-2s  | Sample UI enters "Submitting" state
@@ -54,7 +59,7 @@ T+0-2s  | Sample UI enters "Submitting" state
         | Timeline: "Trigger submitted for RecreateSummaries by demo@local"
 
 T+1s    | Sample UI begins polling
-        | GET /api/batch-jobs/RecreateSummaries/status
+        | GET /api/v1/batch-jobs/RecreateSummaries/status?jobExecutionId=a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c
         ↓
         PACT API sees acceptedAtUtc but NO execution record in DB yet
         ↓
@@ -64,12 +69,13 @@ T+1s    | Sample UI begins polling
         {
           "jobName": "RecreateSummaries",
           "isRunning": false,
+                                        "sourceOfTruth": "StartupWatchdog",
+                                        "correlatedJobExecutionId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
           "lastExecution": null,
           "startupWatchdog": {
-            "isWatchdogActive": true,
             "projectedState": "TriggerAccepted",
-            "triggerAcceptedAtUtc": "2026-06-03T14:30:00.123Z",
-            "startupDeadlineUtc": "2026-06-03T14:33:00.123Z"
+                                                "acceptedAtUtc": "2026-06-03T14:30:00.123Z",
+                                                "startupDeadlineUtc": "2026-06-03T14:30:30.123Z"
           }
         }
         ↓
@@ -102,11 +108,10 @@ T+3s    | Sample UI polls again (every 2-5s during startup phase)
           "lastExecution": {
             "jobQueueId": "550e8400-e29b-41d4-a716-446655440000",
             "jobExecutionId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
-            "currentState": "Pending",
-            "stateTimestamp": "2026-06-03T14:30:02.500Z",
-            "startDateTime": "2026-06-03T14:30:02.000Z",
-            "endDateTime": null,
-            "requestedBy": "demo@local",
+                                                "status": "Pending",
+                                                "businessState": "Running",
+                                                "startedAt": "2026-06-03T14:30:02.000Z",
+                                                "completedAt": null,
             "errorMessage": null
           },
           "startupWatchdog": null
@@ -121,7 +126,7 @@ T+5s    | [BATCH JOBS WORKER BEGINS EXECUTION]
         | statusid=2 is "Running"
 
 T+6s    | Sample UI polls, receives "Running" from DB
-        | PACT Response shows lastExecution.currentState="Running"
+        | PACT Response shows lastExecution.status="Running"
         ↓
 T+6-7s  | Sample UI shows: "Running"
         | Timeline: "Status: Running (started 14:30:05)"
@@ -133,7 +138,7 @@ T+45s   | [BATCH JOBS WORKER COMPLETES]
         | Also sets: endDateTime = NOW(), updated_at = NOW()
 
 T+47s   | Sample UI polls (next scheduled poll at T+21s, T+36s, T+51s, ...)
-        | PACT Response shows lastExecution.currentState="Completed"
+        | PACT Response shows lastExecution.status="Completed"
         ↓
 T+47-48s| Sample UI shows: "Completed" (green checkmark)
         | Timeline: "Status: Completed successfully"
@@ -162,27 +167,26 @@ T+0s    | User triggers job (same as Scenario 1, T+0-3s)
 T+1-3s  | Sample UI polls; PACT still sees NO DB record
         | Watchdog projects "TriggerAccepted" (still within SLA)
 
-T+180s  | [NO BATCH JOBS RECORD EVER CREATED]
-        | Startup SLA deadline (180 seconds) has PASSED
+T+30s   | [NO BATCH JOBS RECORD EVER CREATED]
+        | Startup SLA deadline (30 seconds in dev/local) has PASSED
 
-T+181s  | Sample UI polls again
+T+31s  | Sample UI polls again
         ↓
-        PACT queries: acceptedAtUtc + 180s < now() ✓ TRUE
+        PACT queries: acceptedAtUtc + 30s < now() ✓ TRUE
         ↓
         Watchdog computes: "StartFailedTimeout"
         ↓
         PACT Response: HTTP 200
         {
           "startupWatchdog": {
-            "isWatchdogActive": true,
             "projectedState": "StartFailedTimeout",
-            "triggerAcceptedAtUtc": "2026-06-03T14:30:00.123Z",
-            "startupDeadlineUtc": "2026-06-03T14:33:00.123Z",
-            "evaluatedAtUtc": "2026-06-03T14:33:01.500Z"
+                                                "acceptedAtUtc": "2026-06-03T14:30:00.123Z",
+                                                "startupDeadlineUtc": "2026-06-03T14:30:30.123Z",
+                                                "evaluatedAtUtc": "2026-06-03T14:30:31.500Z"
           }
         }
         ↓
-T+181-182s | Sample UI shows: "StartFailedTimeout" (red)
+T+31-32s | Sample UI shows: "StartFailedTimeout" (red)
         | Timeline: "Status: StartFailedTimeout (watchdog)"
         | **Polling STOPS (terminal state: watchdog timeout)**
         | UI shows: "Retry RecreateSummaries" button becomes enabled
@@ -191,7 +195,7 @@ KEY INSIGHT:
 - Worker never wrote to database
 - Only PACT watchdog detected the failure
 - No "Pending" state ever persisted
-- Timeout proof: acceptedAtUtc=14:30:00 + 180s deadline exceeded
+- Timeout proof: acceptedAtUtc=14:30:00 + 30s dev/local deadline exceeded (600s in production)
 ```
 
 ---
@@ -215,7 +219,7 @@ T+40s   | [BATCH JOBS DETECTS ERROR]
         | Also stores: errorMessage="Database query timeout after 30s"
 
 T+41s   | Sample UI polls
-        | Receives currentState="Failed" with error message
+        | Receives lastExecution.status="Failed" with error message
         ↓
 T+41-42s | Sample UI shows: "Failed" (red)
         | Timeline: "Status: Failed - Database query timeout after 30s"
@@ -230,7 +234,7 @@ T+43s   | [RETRY SCHEDULER DETECTS FAILED STATE]
         | This signals: "Job failed, but retry is scheduled"
 
 T+44s   | Sample UI polls
-        | Receives currentState="Retry"
+        | Receives lastExecution.status="Retry"
         ↓
 T+44-45s | Sample UI shows: "Retry" (orange spinner)
         | Timeline: "Status: Retry (retry scheduler will move to Pending)"
@@ -241,7 +245,7 @@ T+45s   | [RETRY SCHEDULER AUTO-RESETS]
         | This means: job is queued again for retry execution
 
 T+46s   | Sample UI polls
-        | Receives currentState="Pending" (back to queued state)
+        | Receives lastExecution.status="Pending" (back to queued state)
         ↓
 T+46-47s | Sample UI shows: "Pending"
         | Timeline: "Status: Pending (queued at 14:35:46)"
@@ -319,13 +323,13 @@ During demo, verify each point:
 - [ ] Returns HTTP 400 Bad Request if job name invalid
 - [ ] Request body requires `jobName` and `requestedBy`
 
-### Status Endpoint (/api/batch-jobs/{jobName}/status)
+### Status Endpoint (/api/v1/batch-jobs/{jobName}/status)
 - [ ] Returns HTTP 200 with full PACT contract response
 - [ ] Response includes both `lastExecution` (DB) and `startupWatchdog` (computed)
-- [ ] `lastExecution` has field `currentState` (not `status`)
-- [ ] currentState values match 7 states: Pending, Running, Completed, Failed, Cancelled, Retry, Skipped
-- [ ] Watchdog computes: TriggerAccepted, WorkerProcessStarted, StartFailedTimeout
-- [ ] Watchdog `isWatchdogActive` is true only during startup window (no DB record yet)
+- [ ] `lastExecution` includes `status` (raw DB state) and `businessState` (UI projection)
+- [ ] `status` values match 7 states: Pending, Running, Completed, Failed, Cancelled, Retry, Skipped
+- [ ] Watchdog computes: TriggerAccepted, WorkerProcessStarted, StartFailedTimeout, WorkerProcessExited
+- [ ] Deterministic tracking is used with `jobExecutionId` query param
 
 ### Polling Strategy
 - [ ] Sample UI polls every 2-5s during startup (watchdog phase)
@@ -375,7 +379,7 @@ During demo, verify each point:
 
 3. **Point to raw API response**
    > "The right panel shows the actual PACT API response. Notice:
-   > - `lastExecution.currentState = 'Running'` (from database)
+        > - `lastExecution.status = 'Running'` (from database)
    > - `startupWatchdog = null` (no longer needed; execution visible in DB)"
 
 ### Scenario Showcase (20 seconds each)
@@ -384,7 +388,7 @@ During demo, verify each point:
    > "Click 'Show Scenario' and select 'Retry'. This shows what happens when a job fails but can retry. Note the state transitions: Running → Failed → Retry → Pending → (would resume Running)."
 
 5. **Show "StartFailedTimeout" scenario**
-   > "Select 'StartFailedTimeout'. This is when the worker never starts. PACT watchdog detects it after 180 seconds and declares failure without ever seeing a DB record."
+        > "Select 'StartFailedTimeout'. This is when the worker never starts. PACT watchdog detects it after the startup SLA (30 seconds in dev/local; 600 seconds in production) and declares failure without ever seeing a DB record."
 
 ### Closing (30 seconds)
 
@@ -398,7 +402,7 @@ During demo, verify each point:
 |-------|-------|-----|
 | Sample UI stuck in "Submitting" | PACT API not responding | Check localhost:5189 is running |
 | Watchdog timeout never fires | SLA too long or time not passing | Use scenario preview instead |
-| "currentState" field not in response | API not updated to formal contract | Verify PACT API code matches contract |
+| `lastExecution.status` field not in response | API not updated to formal contract | Verify PACT API code matches contract |
 | States missing from dropdown | Sample UI cache not refreshed | Hard refresh (Ctrl+Shift+R) |
 | Database doesn't show new states | Migration not applied | Run 106_add_missing_job_statuses.sql |
 
@@ -408,5 +412,5 @@ During demo, verify each point:
 
 **Demo Prepared By**: [BatchJobs Team]  
 **Contract Reviewed By**: [PACT API Lead]  
-**Date**: 2026-06-03  
-**Contract Version**: 1.0
+**Date**: 2026-06-08  
+**Contract Version**: 1.1

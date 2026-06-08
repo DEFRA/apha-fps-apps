@@ -24,6 +24,15 @@ builder.Services.Configure<EventPublisherOptions>(builder.Configuration.GetSecti
 builder.Services.AddAWSService<IAmazonEventBridge>();
 builder.Services.AddScoped<IEventPublisher, EventBridgePublisher>();
 
+var fpsEventPublisherOptions = builder.Configuration.GetSection("EventBridge").Get<EventPublisherOptions>()
+    ?? new EventPublisherOptions();
+
+if (builder.Environment.IsProduction() && fpsEventPublisherOptions.DryRun)
+{
+    throw new InvalidOperationException(
+        "EventBridge:DryRun must be false in Production for Apha.BatchJobs.Fps.Api.");
+}
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

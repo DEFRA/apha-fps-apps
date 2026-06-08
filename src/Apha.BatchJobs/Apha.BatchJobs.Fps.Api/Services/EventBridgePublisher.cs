@@ -27,11 +27,11 @@ public sealed class EventBridgePublisher : IEventPublisher
     {
         var payload = JsonSerializer.Serialize(new
         {
-            detail.JobExecutionId,
-            detail.JobName,
-            detail.RunMode,
-            detail.RequestedBy,
-            detail.RequestedAtUtc
+            jobExecutionId = detail.JobExecutionId,
+            jobName = detail.JobName,
+            runMode = detail.RunMode,
+            requestedBy = detail.RequestedBy,
+            requestedAtUtc = detail.RequestedAtUtc
         });
 
         if (_options.DryRun)

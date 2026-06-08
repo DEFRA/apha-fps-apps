@@ -1,9 +1,9 @@
 ---
 title: "BatchJobs Execution State Machine Contract (Formal Specification)"
-version: "1.0"
-date: "2026-06-03"
+version: "1.1"
+date: "2026-06-08"
 audience: "PACT API Team, BatchJobs Team"
-status: "APPROVED"
+status: "PENDING_SIGN_OFF"
 ---
 
 # BatchJobs Execution State Machine Contract
@@ -38,7 +38,7 @@ These states are **NOT stored in the database**. They are computed by PACT API a
 
 | State | API Projection Logic | When to Use | Display to User |
 |-------|----------------------|-------------|-----------------|
-| **TriggerAccepted** | `acceptedAtUtc` recorded; no DB execution record yet | During watchdog phase (0-3 min) | Yes (as "Pending/Queued") |
+| **TriggerAccepted** | `acceptedAtUtc` recorded; no DB execution record yet | During watchdog phase (0-30s dev/local, 0-600s production) | Yes (as "Pending/Queued") |
 | **WorkerProcessStarted** | Local dispatcher confirms process spawn (local mode only) | During startup (local dev/test only) | Optionally (debug mode) |
 | **StartFailedTimeout** | `acceptedAtUtc + startupSlaSeconds < now()` AND no DB record | After SLA deadline exceeded | Yes (as "Startup Timeout") |
 
@@ -53,7 +53,7 @@ CLIENT TRIGGER
       ↓
    TriggerAccepted (API projection)
       ↓
-   [WATCHDOG PHASE: 0-180s]
+  [WATCHDOG PHASE: 0-30s dev/local, 0-600s production]
    ├─→ Skipped (if lock/policy rejection)
    ├─→ StartFailedTimeout (if SLA deadline exceeded)
    └─→ Pending (when worker writes first DB record)
@@ -82,11 +82,12 @@ CLIENT TRIGGER
 ### 3.1 Endpoint Specification
 
 ```
-GET /api/batch-jobs/{jobName}/status
+GET /api/v1/batch-jobs/{jobName}/status?jobExecutionId={guid}
 ```
 
 **Query Parameters:**
 - `jobName` (string, required): Name of the batch job (e.g., "RecreateSummaries")
+- `jobExecutionId` (string, optional): Correlated execution ID. Deterministic mode when valid GUID; otherwise endpoint falls back to latest-by-job-name resolution.
 
 **Response: HTTP 200 OK**
 
@@ -94,28 +95,28 @@ GET /api/batch-jobs/{jobName}/status
 {
   "jobName": "RecreateSummaries",
   "isRunning": false,
-  "sourceOfTruth": "BatchJobs",
+  "sourceOfTruth": "StartupWatchdog",
   "correlatedJobExecutionId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
-  
-  "lastExecution": {
-    "jobQueueId": "550e8400-e29b-41d4-a716-446655440000",
-    "jobExecutionId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
-    "currentState": "Running",
-    "stateTimestamp": "2026-06-03T14:30:45.123Z",
-    "startDateTime": "2026-06-03T14:30:00.000Z",
-    "endDateTime": null,
-    "requestedBy": "user@example.com",
-    "errorMessage": null
+  "queryResolution": {
+    "mode": "CorrelatedExecutionId",
+    "isFallback": false,
+    "fallbackReason": null,
+    "requestedJobExecutionId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
+    "requestedJobExecutionIdIsValid": true
   },
-  
+  "lastExecution": null,
   "startupWatchdog": {
-    "isWatchdogActive": true,
-    "triggerAcceptedAtUtc": "2026-06-03T14:30:00.000Z",
-    "startupDeadlineUtc": "2026-06-03T14:35:00.000Z",
     "projectedState": "TriggerAccepted",
+    "acceptedAtUtc": "2026-06-03T14:30:00.000Z",
+    "startupDeadlineUtc": "2026-06-03T14:35:00.000Z",
     "evaluatedAtUtc": "2026-06-03T14:30:30.000Z",
     "startupSlaSeconds": 300,
-    "deliveryExhaustionConfirmed": false
+    "deliveryExhaustionConfirmed": false,
+    "deliveryExhaustionOwner": "IntegrationTransportReconciler",
+    "eventId": "aws-event-id",
+    "triggerStatus": "TriggerAccepted",
+    "workerExitCode": null,
+    "triggerStore": "Redis"
   }
 }
 ```
@@ -125,13 +126,13 @@ GET /api/batch-jobs/{jobName}/status
 | Field | Responsibility | Notes |
 |-------|-----------------|-------|
 | `jobName` | PACT | Echo of request parameter |
-| `isRunning` | PACT | `true` if `currentState == "Running"` |
-| `sourceOfTruth` | PACT | Always "BatchJobs" (for future multi-source support) |
+| `isRunning` | PACT | `true` for active states (`Pending`, `Running`, `Retry`) or active startup projections |
+| `sourceOfTruth` | PACT | `BatchJobs` or `StartupWatchdog` |
 | `correlatedJobExecutionId` | PACT | From last trigger acceptance or DB query |
-| `lastExecution.*` | PACT querying BatchJobs | From `fps.job_queue` + `fps.job_status` join |
-| `lastExecution.currentState` | **BatchJobs (via DB)** | Primary source of truth; 7 possible values |
+| `queryResolution.*` | PACT | Explains correlated mode vs latest-by-job-name fallback |
+| `lastExecution.*` | PACT querying BatchJobs | DB snapshot with raw `status` and UI-facing `businessState` |
 | `startupWatchdog.*` | **PACT computation** | Transient projections; set only if watchdog active |
-| `startupWatchdog.projectedState` | PACT | One of: `TriggerAccepted`, `WorkerProcessStarted`, `StartFailedTimeout` |
+| `startupWatchdog.projectedState` | PACT | One of: `TriggerAccepted`, `WorkerProcessStarted`, `StartFailedTimeout`, `WorkerProcessExited` |
 
 ### 3.3 Watchdog Algorithm (PACT Responsibility)
 
@@ -140,7 +141,7 @@ if (execution == null && acceptedAtUtc.HasValue)
 {
     var now = DateTime.UtcNow;
     var environment = hostEnvironment.EnvironmentName;
-    var startupSlaSeconds = environment.IsProduction() ? 600 : 180; // 10 min prod, 3 min dev
+    var startupSlaSeconds = environment.IsProduction() ? 600 : 30; // 10 min prod, 30 sec dev/local
     var startupDeadlineUtc = acceptedAtUtc.Value.AddSeconds(startupSlaSeconds);
     
     var isWatchdogActive = true;
@@ -161,14 +162,24 @@ if (execution == null && acceptedAtUtc.HasValue)
 
 ### 3.4 Error Responses
 
-**HTTP 404 Not Found** (when job name doesn't exist)
+**HTTP 200 OK** (no execution row found yet)
 ```json
-{ "error": "Job 'InvalidName' not found in system" }
+{
+  "jobName": "RecreateSummaries",
+  "isRunning": false,
+  "sourceOfTruth": "StartupWatchdog",
+  "lastExecution": null,
+  "startupWatchdog": {
+    "projectedState": "TriggerAccepted"
+  }
+}
 ```
 
-**HTTP 500 Internal Server Error** (DB connection failure)
+**HTTP 503 Service Unavailable** (status dependencies unavailable)
 ```json
-{ "error": "Unable to query execution status. Please retry." }
+{
+  "title": "Failed to fetch status: <dependency failure>"
+}
 ```
 
 ---
@@ -191,30 +202,44 @@ Content-Type: application/json
 
 ```json
 {
-  "eventId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
-  "acceptedAtUtc": "2026-06-03T14:30:00.123Z",
+  "accepted": true,
+  "source": "pact.api",
   "jobName": "RecreateSummaries",
-  "message": "Batch job trigger accepted"
+  "jobExecutionId": "f6ab2d5f8f6849d89b8b5ca73d4f0f17",
+  "eventId": "a1b2c3d4-e5f6-47a8-9b0c-1d2e3f4a5b6c",
+  "status": "TriggerAccepted",
+  "acceptedAtUtc": "2026-06-03T14:30:00.123Z",
+  "message": "Trigger accepted for dispatch."
 }
 ```
 
 ### 4.3 Rejection Responses
 
-**HTTP 409 Conflict** (job already running - lock collision)
+**HTTP 409 Conflict** (routing/policy conflict)
 ```json
 {
-  "error": "Job 'RecreateSummaries' is already running",
-  "currentExecution": {
-    "jobQueueId": "550e8400-e29b-41d4-a716-446655440000",
-    "startedAt": "2026-06-03T14:00:00.000Z"
-  }
+  "accepted": false,
+  "source": "pact.api",
+  "jobName": "RecreateSummaries",
+  "reason": "RoutingPolicyConflict"
 }
 ```
 
-**HTTP 400 Bad Request** (invalid job name)
+**HTTP 400 Bad Request** (validation failure)
 ```json
 {
-  "error": "Job 'InvalidName' not found"
+  "accepted": false,
+  "reason": "requestedBy is required."
+}
+```
+
+**HTTP 503 Service Unavailable** (dispatch failure before acceptance)
+```json
+{
+  "accepted": false,
+  "source": "pact.api",
+  "jobName": "RecreateSummaries",
+  "reason": "DispatchFailed"
 }
 ```
 
@@ -224,17 +249,17 @@ Content-Type: application/json
 
 ### 5.1 Recommended Polling Strategy
 
-**Phase 1: Startup/Watchdog Phase (0-180 seconds)**
+**Phase 1: Startup/Watchdog Phase (0-30 seconds in Dev/Local, 0-600 seconds in Production)**
 - Poll interval: 2-5 seconds
-- Stop condition: `currentState` enters one of {Running, Completed, Failed, Cancelled, Skipped} OR watchdog timeout
-- Display: Show `projectedState` from watchdog OR `currentState` if available
+- Stop condition: `lastExecution.status` enters one of {Pending, Running, Completed, Failed, Cancelled, Retry, Skipped} OR watchdog timeout
+- Display: Show `startupWatchdog.projectedState` while `lastExecution` is null, otherwise show `lastExecution.businessState` (or `lastExecution.status` for diagnostics)
 
 **Phase 2: Active Execution (Running)**
 - Poll interval: 15-30 seconds (longer to reduce load)
-- Stop condition: `currentState` is terminal (Completed, Failed, Cancelled)
+- Stop condition: `lastExecution.status` is terminal (Completed, Failed, Cancelled, Skipped)
 
 **Phase 3: Retry Detection**
-- If `currentState == "Retry"`: automatically repeat Phase 1
+- If `lastExecution.status == "Retry"`: automatically repeat Phase 1
 - Inform user: "Job failed; automatic retry scheduled"
 
 ### 5.2 State Display Mapping for UI
@@ -315,7 +340,7 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
 
 ### PACT API Team (Trigger/Status Layer)
 
-- ✅ Accept trigger requests; return 202 with `eventId` + `acceptedAtUtc`
+- ✅ Accept trigger requests; return 202 with `jobExecutionId`, `eventId`, `status`, and `acceptedAtUtc`
 - ✅ Persist trigger acceptance metadata
 - ✅ Compute watchdog projections during startup window
 - ✅ Query `fps.job_queue` to get current `lastExecution` state
@@ -331,7 +356,7 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
 
 ### Scenario 1: Normal Completion Flow
 ```
-✓ POST /trigger → 202 Accepted (eventId, acceptedAtUtc)
+✓ POST /trigger → 202 Accepted (jobExecutionId, eventId, status, acceptedAtUtc)
 ✓ GET /status → TriggerAccepted (watchdog)
 ✓ [0-3s] Worker writes Pending state
 ✓ GET /status → Pending (from DB)
@@ -392,16 +417,16 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
 
 ### PACT API Team Pre-Deployment
 - [ ] Watchdog algorithm implemented per Section 3.3
-- [ ] Startup SLA thresholds configured (180s dev, 600s prod)
+- [ ] Startup SLA thresholds configured (30s dev/local, 600s prod)
 - [ ] Status endpoint returns both DB state + watchdog projection
 - [ ] Lock conflict detection (409 response) implemented
-- [ ] Polling clients can handle all 7 state values + 3 transient states
+- [ ] Polling clients can handle all 7 state values + 4 transient states
 - [ ] Error responses formatted per Section 4.3
 - [ ] Load testing for rapid polling (2-5s intervals)
 
 ---
 
-## 10. Future Enhancements (Out of Scope for v1.0)
+## 10. Future Enhancements (Out of Scope for v1.1)
 
 - [ ] Event streaming (BatchJobs publishes state change events to event bus)
 - [ ] Delivery exhaustion tracking (for external trigger retries)
@@ -422,6 +447,6 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-06-03  
+**Document Version**: 1.1  
+**Last Updated**: 2026-06-08  
 **Next Review**: After first production deployment

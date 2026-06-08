@@ -93,6 +93,15 @@ builder.Services.Configure<EventPublisherOptions>(builder.Configuration.GetSecti
 builder.Services.Configure<TriggerDispatchOptions>(builder.Configuration.GetSection("TriggerDispatch"));
 builder.Services.Configure<TriggerStoreOptions>(builder.Configuration.GetSection("TriggerStore"));
 
+var pactEventPublisherOptions = builder.Configuration.GetSection("EventBridge").Get<EventPublisherOptions>()
+    ?? new EventPublisherOptions();
+
+if (builder.Environment.IsProduction() && pactEventPublisherOptions.DryRun)
+{
+    throw new InvalidOperationException(
+        "EventBridge:DryRun must be false in Production for Apha.BatchJobs.Pact.Api.");
+}
+
 var triggerStoreOptions = builder.Configuration.GetSection("TriggerStore").Get<TriggerStoreOptions>() ?? new TriggerStoreOptions();
 var useRedisTriggerStore = builder.Environment.IsProduction()
     || string.Equals(triggerStoreOptions.Provider, "Redis", StringComparison.OrdinalIgnoreCase);

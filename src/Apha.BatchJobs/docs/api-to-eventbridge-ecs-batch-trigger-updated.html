@@ -611,6 +611,39 @@
       <li>Worker outbound should be least-privilege for required dependencies (DB, Redis, HTTPS).</li>
     </ul>
 
+    <h3>9.4 Repository Alignment Checklist</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Control</th>
+          <th>Required Setting</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Event detail payload naming</td>
+          <td>Publish lower-camel fields in detail: jobExecutionId, jobName, runMode, requestedBy, requestedAtUtc.</td>
+          <td>Implemented in FPS and PACT EventBridge publishers.</td>
+        </tr>
+        <tr>
+          <td>Production dry-run protection</td>
+          <td>EventBridge:DryRun must be false when ASPNETCORE_ENVIRONMENT=Production.</td>
+          <td>Startup guardrail implemented in FPS and PACT APIs.</td>
+        </tr>
+        <tr>
+          <td>Approved event producers only</td>
+          <td>EventBridge source must be one of: fps.api, pact.api.</td>
+          <td>Legacy Apha.BatchJobs.Api dispatcher enforces source allow-list.</td>
+        </tr>
+        <tr>
+          <td>Legacy route gating</td>
+          <td>Disable legacy Apha.BatchJobs.Api trigger path outside Local/Development unless explicitly approved.</td>
+          <td>Guarded by BatchJobsApi:EnableLegacyDispatch (default false).</td>
+        </tr>
+      </tbody>
+    </table>
+
     <h2>10. Stakeholder Summary</h2>
     <p>
       This design separates concerns cleanly: PACT API owns trigger ingress, policy routing, and startup projection;
