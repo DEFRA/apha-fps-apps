@@ -66,7 +66,6 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             services.AddScoped<Apha.FPSApps.Application.Interfaces.FPS.IWorkGroupService, Apha.FPSApps.Application.Services.FPS.WorkGroupService>();
-
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
