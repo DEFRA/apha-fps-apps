@@ -457,10 +457,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
             stream.Position = 0;
-
             return File(stream.ToArray(),
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                $"qryBidxCrosstab.xlsx");
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"qryBidxCrosstab_{year}.xlsx");
+           
         }
 
         private async Task<Dictionary<string, Dictionary<string, decimal>>> BuildPivotAsync(List<string> workgroups)
