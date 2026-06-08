@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsStaffJob.CreateStaffJobAsync(staffJob);
         }
 
-        public async Task<ApiResponseDto<StaffJobDto>> UpdateStaffJobAsync(string staffId, StaffJobDto staffJob)
+        public async Task<ApiResponseDto<StaffJobDto>> UpdateStaffJobAsync(StaffJobDto staffJob)
         {
             return await _fpsClient.FpsStaffJob.UpdateStaffJobAsync(staffJob);
         }

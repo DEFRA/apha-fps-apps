@@ -14,7 +14,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<List<StaffJobViewDto>>> GetStaffJobsByJobCodeAsync(QueryParameters<string> query, string jobCode);
         Task<ApiResponseDto<StaffJobDto>> GetStaffJobAsync(string staffId, string jobCode);
         Task<ApiResponseDto<StaffJobDto>> CreateStaffJobAsync(StaffJobDto staffJob);
-        Task<ApiResponseDto<StaffJobDto>> UpdateStaffJobAsync(string staffId, StaffJobDto staffJob);
+        Task<ApiResponseDto<StaffJobDto>> UpdateStaffJobAsync(StaffJobDto staffJob);
         Task<ApiResponseDto<bool>> DeleteStaffJobAsync(string staffId, string jobCode);
     }
 }

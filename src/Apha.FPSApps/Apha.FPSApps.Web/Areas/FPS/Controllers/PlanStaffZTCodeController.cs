@@ -220,7 +220,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(string staffId, [FromBody] PlanStaffZTCodeItemViewModel item)
+        public async Task<IActionResult> Edit([FromBody] PlanStaffZTCodeItemViewModel item)
         {
             if (!ModelState.IsValid)
             {
@@ -262,7 +262,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 JobCode = item.JobCode,
                 PlannedHours = item.PlannedHours
             };
-            var result = await _planStaffZTCodeService.UpdateStaffJobAsync(staffId, dto);
+            var result = await _planStaffZTCodeService.UpdateStaffJobAsync(dto);
 
             if (result.Success)
             {

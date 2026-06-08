@@ -72,11 +72,11 @@
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
-        var ztStaffId        = '@Html.Raw(staffId)';
+        var ztStaffId = '@Html.Raw(staffId)';
         var ztStaffSummaryUrl = '@Url.Action("GetStaffSummary", "PlanStaffZTCode", new { area = "FPS" })';
-        var ztCreateUrl      = '@Url.Action("Create", "PlanStaffZTCode", new { area = "FPS" })';
-        var ztEditUrl        = '@Url.Action("Edit",   "PlanStaffZTCode", new { area = "FPS" })';
-        var ztDeleteUrl      = '@Url.Action("Delete", "PlanStaffZTCode", new { area = "FPS" })';
+        var ztCreateUrl= '@Url.Action("Create", "PlanStaffZTCode", new { area = "FPS" })';
+        var ztEditUrl= '@Url.Action("Edit", "PlanStaffZTCode", new { area = "FPS" })';
+        var ztDeleteUrl= '@Url.Action("Delete", "PlanStaffZTCode", new { area = "FPS" })';
 
         function addZtPlan(btn) {
             $.ajax({
@@ -168,7 +168,7 @@
             };
 
             $.ajax({
-                url: ztEditUrl + '?staffId=' + encodeURIComponent(staffId),
+                url: ztEditUrl,
                 type: 'POST',
                 data: JSON.stringify(data),
                 contentType: 'application/json; charset=utf-8',
@@ -227,14 +227,14 @@
             if (!ztStaffId || !ztStaffSummaryUrl) { return; }
             $.get(ztStaffSummaryUrl, { staffId: ztStaffId }, function (json) {
                 if (json.success) {
-                    setEl('ts-hrspaid',     json.hrsPaid);
-                    setEl('ts-leave',       json.leave);
+                    setEl('ts-hrspaid', json.hrsPaid);
+                    setEl('ts-leave', json.leave);
                     setEl('ts-sickspecial', json.sickSpecial);
-                    setEl('ts-hrsavail',    json.hrsAvail);
-                    setEl('ts-planned-zt',  json.plannedAdminZT);
-                    setEl('ts-free',        json.freeForChargeableWork);
-                    setEl('staff-name',     json.name);
-                    setEl('staff-grade',    json.workGroupGrade);
+                    setEl('ts-hrsavail', json.hrsAvail);
+                    setEl('ts-planned-zt', json.plannedAdminZT);
+                    setEl('ts-free', json.freeForChargeableWork);
+                    setEl('staff-name', json.name);
+                    setEl('staff-grade', json.workGroupGrade);
                 }
             });
         }
