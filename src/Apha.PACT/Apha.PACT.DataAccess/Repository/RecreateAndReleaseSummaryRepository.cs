@@ -75,5 +75,73 @@ namespace Apha.PACT.DataAccess.Repository
 
             return base.ApplyPaging(mappedData, parameters.Page, parameters.PageSize);
         }
+
+
+        public async Task<ReleaseSummary> GetReleaseSummariesAsync()
+        {
+            var releaseSummary = new ReleaseSummary()
+            {
+                ReleasePeriods = await GetReleasePeriodAsync(),
+                Setting = await GetSettingByIdAsync("SendEmail")
+            };
+
+            return releaseSummary;
+        }
+
+        private async Task<string?> GetSettingByIdAsync(string settingId)
+        {
+            var setting = await _context.Settings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == settingId);
+
+            return setting?.Setting;
+        }
+
+        private async Task<IList<ReleasePeriod>> GetReleasePeriodAsync()
+        {
+            return await _context.ReleasePeriods
+                            .AsNoTracking()
+                            .OrderBy(p => p.EndPeriod)
+                            .ToListAsync();
+        }
+        public async Task<ReleasePeriod?> SetFinalSummaryRunAsync(string? periodName, short? finalSummariesRun, string? sendEmail)
+        {
+            if (!string.IsNullOrWhiteSpace(sendEmail))
+            {
+                await UpdateSettingsAsync(sendEmail);
+                return new ReleasePeriod();
+            }
+            return await UpdateFinalSummaryRunAsync(periodName, finalSummariesRun ?? 0);
+        }
+
+        private async Task UpdateSettingsAsync(string sendEmail)
+        {
+            var settingValue = (sendEmail == "1" || sendEmail == "-1")
+                ? "-1"
+                : "0";
+
+            var setting = await _context.Settings.FindAsync("SendEmail");
+            setting?.Setting = settingValue;
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task<ReleasePeriod?> UpdateFinalSummaryRunAsync(string? periodName, short finalSummariesRun)
+        {
+            var fpsYear = _context.FilterFpsYear;
+            var releasePeriod = await _context.ReleasePeriods.FindAsync(periodName, fpsYear);
+
+            var finalSummariesRunValue = (finalSummariesRun == 1 || finalSummariesRun == -1)
+                ? (short)-1
+                : (short)0;
+
+            if (releasePeriod is not null)
+            {
+                releasePeriod.FinalSummariesRun = finalSummariesRunValue;
+
+                await _context.SaveChangesAsync();
+            }
+
+            return releasePeriod;
+        }
     }
 }
