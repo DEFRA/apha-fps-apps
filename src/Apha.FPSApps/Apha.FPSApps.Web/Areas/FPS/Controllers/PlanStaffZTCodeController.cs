@@ -113,7 +113,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var result = await _planStaffZTCodeService.GetZtJobCodesAsync();
             if (result.Success && result.Data != null)
             {
-                var items = result.Data.Select(j => new { value = j.JobCodeId, text = j.JobCodeName ?? j.JobCodeId });
+                var items = result.Data.Select(j => new { value = j.JobCode, text = j.Description ?? j.JobCode });
 
                 return Json(new { success = true, data = items });
             }
@@ -178,11 +178,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(string staffId, string? jobCode = null)
         {
-            var result = await _planStaffZTCodeService.GetStaffJobAsync(staffId, jobCode ?? string.Empty);
+            var result = await _planStaffZTCodeService.GetZtStaffJobDetailsByIdAsync(staffId, jobCode ?? string.Empty);
 
             if (result.Success && result.Data != null)
             {
-                var model = _mapper.Map<PlanStaffZTCodeItemViewModel>(result.Data);
+                var model = new PlanStaffZTCodeItemViewModel
+                {
+                    StaffID = result.Data.StaffID,
+                    JobCode = result.Data.JobCode ?? string.Empty,
+                    ZtDescription = result.Data.ZtDescription ?? result.Data.Name,
+                    PlannedHours = result.Data.PlannedHours
+                };
                 await PopulateZtDropdownAsync(model);
                 return PartialView("_AddEditPlanStaffZTCode", model);
             }
@@ -266,10 +272,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             model.ZtCodeList = ztResult.Data == null ? new List<SelectListItem>() :
                 ztResult.Data.Select(j => new SelectListItem
                 {
-                    Value = j.JobCodeId,
-                    Text = j.JobCodeName ?? j.JobCodeId,
-                    Selected = string.Equals(model.JobCode, j.JobCodeId, StringComparison.OrdinalIgnoreCase)
+                    Value = j.JobCode,
+                    Text = j.Description,
+                    Selected = string.Equals(model.JobCode, j.JobCode, StringComparison.OrdinalIgnoreCase)
                 }).ToList();
+
+            // Set description from the matched ZT code when not already populated (edit mode)
+            if (string.IsNullOrEmpty(model.ZtDescription) && !string.IsNullOrEmpty(model.JobCode) && ztResult.Data != null)
+            {
+                var matched = ztResult.Data.FirstOrDefault(j => string.Equals(j.JobCode, model.JobCode, StringComparison.OrdinalIgnoreCase));
+                if (matched != null)
+                {
+                    model.ZtDescription = matched.Description;
+                }
+            }
         }
 
         private async Task<DataGridConfig<PlanStaffZTCodeItemViewModel>> GetZtGridConfigAsync(

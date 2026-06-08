@@ -22,10 +22,10 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<JobCodeDto>>(jobCodes);            
         }
 
-        public async Task<IEnumerable<JobCodeDto>> GetZtCodeLookupAsync()
+        public async Task<IEnumerable<ZtJobCodeDto>> GetZtCodeLookupAsync()
         {
             var jobCodes = await _jobCodeRepository.GetZtJobCodesAsync();
-            return _mapper.Map<IEnumerable<JobCodeDto>>(jobCodes);
+            return _mapper.Map<IEnumerable<ZtJobCodeDto>>(jobCodes);
         }
     }
 }

@@ -79,6 +79,9 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
 
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
+
+            // ZT Job Code lookup
+            CreateMap<ZtJobCodeDto, ZtJobCodeRes>().ReverseMap();
         }
     }
 }

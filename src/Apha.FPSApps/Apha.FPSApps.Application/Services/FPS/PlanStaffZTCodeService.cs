@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Application.Services.FPS
             _fpsClient = fpsClient;
         }
 
-        public async Task<ApiResponseDto<IEnumerable<FpsJobCodeDto>>> GetZtJobCodesAsync()
+        public async Task<ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>> GetZtJobCodesAsync()
         {
             return await _fpsClient.FpsJobCode.GetZtJobCodesAsync();
         }
@@ -30,14 +30,14 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsStaffJob.GetZtTotalHoursByStaffIdAsync(staffId);
         }
 
-        public async Task<ApiResponseDto<List<StaffJobViewDto>>> GetZtStaffJobsByStaffIdAsync(string staffId)
-        {
-            return await _fpsClient.FpsStaffJob.GetZtStaffJobsByStaffIdAsync(staffId);
-        }
-
         public async Task<ApiResponseDto<List<ZtStaffJobViewDto>>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
         {
             return await _fpsClient.FpsStaffJob.GetZtStaffJobsByStaffIdPagedAsync(query, staffId);
+        }
+
+        public async Task<ApiResponseDto<ZtStaffJobViewDto>> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
+        {
+            return await _fpsClient.FpsStaffJob.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
         }
 
         public async Task<ApiResponseDto<List<StaffJobViewDto>>> GetStaffJobsByJobCodeAsync(QueryParameters<string> query, string jobCode)

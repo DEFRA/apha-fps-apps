@@ -8,9 +8,11 @@ namespace Apha.FPS.DataAccess.Repositories
     public class JobCodeRepository : IJobCodeRepository
     {
         private readonly FpsDbContext _dbContext;
-        public JobCodeRepository(FpsDbContext dbContext)
+        private readonly IFpsRequestContext _requestContext;
+        public JobCodeRepository(FpsDbContext dbContext, IFpsRequestContext requestContext)
         {
             _dbContext = dbContext;
+            _requestContext = requestContext;
         }
 
         public async Task<IEnumerable<JobCode>> GetAllJobCodesAsync()
@@ -21,13 +23,18 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<JobCode>> GetZtJobCodesAsync()
+        public async Task<IEnumerable<ZtJobCodeLookup>> GetZtJobCodesAsync()
         {
-            return await _dbContext.JobCodes
-                .AsNoTracking()
-                .Where(j => j.Type != null && j.Type.ToUpper() == "ZT")
-                .OrderBy(j => j.JobCodeId)
-                .ToListAsync();
+            var baseQuery = (from jc in _dbContext.ProjectViews
+                             where jc.Program != null && jc.Program.ToLower() == "zt_prog"
+                             && jc.UserEmail != null && jc.UserEmail.ToLower() == _requestContext.UserEmailId
+                             select new ZtJobCodeLookup
+                             {
+                                 JobCode = jc.ParentProject,
+                                 Description = jc.ProjectTitle
+                             }).Distinct().AsQueryable();
+
+            return await baseQuery.AsNoTracking().ToListAsync();
         }
     }
 }

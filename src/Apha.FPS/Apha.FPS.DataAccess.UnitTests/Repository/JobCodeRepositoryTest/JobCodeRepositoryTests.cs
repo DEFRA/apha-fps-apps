@@ -29,7 +29,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
             var jobCodesMockSet = RepositoryTestHelper.CreateMockDbSet(jobCodes);
             mockContext.Setup(x => x.JobCodes).Returns(jobCodesMockSet.Object);
 
-            return new JobCodeRepository(mockContext.Object);
+            return new JobCodeRepository(mockContext.Object, fpsYearContext);
         }
 
         #region GetAllJobCodesAsync

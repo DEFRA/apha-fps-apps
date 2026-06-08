@@ -19,15 +19,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<IEnumerable<FpsJobCodeDto>>> GetZtJobCodesAsync()
+        public async Task<ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>> GetZtJobCodesAsync()
         {
-            var response = await _http.GetAsync<IEnumerable<JobCodeRes>>(FpsApiEndpoints.GetZtJobCodes);
+            var response = await _http.GetAsync<IEnumerable<ZtJobCodeRes>>(FpsApiEndpoints.GetZtJobCodes);
             if (response.Success)
             {
-                return _mapper.Map<ApiResponseDto<IEnumerable<FpsJobCodeDto>>>(response);
+                return _mapper.Map<ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>>(response);
             }
-            var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<FpsJobCodeDto>>>(response);
-            return ApiResponseDto<IEnumerable<FpsJobCodeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>>(response);
+            return ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }

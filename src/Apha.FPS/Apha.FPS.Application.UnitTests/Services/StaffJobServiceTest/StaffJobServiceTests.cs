@@ -742,10 +742,10 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             };
 
             _mockMapper.Map<StaffJob>(inputDto).Returns(mappedEntity);
+            _mockRepository.GetByIdAsync(inputDto.StaffId, inputDto.JobCode).Returns((StaffJob?)null);
             _mockRepository.AddAsync(mappedEntity).Returns(repositoryResult);
             _mockMapper.Map<StaffJobDto>(repositoryResult).Returns(expectedDto);
 
-            // Act
             var result = await _sut.AddAsync(inputDto);
 
             // Assert
@@ -758,6 +758,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             await _mockRepository.Received(1).AddAsync(mappedEntity);
             _mockMapper.Received(1).Map<StaffJobDto>(repositoryResult);
         }
+
 
         [Fact]
         public async Task AddAsync_WithMinimalData_ShouldProcessSuccessfully()
@@ -788,6 +789,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             };
 
             _mockMapper.Map<StaffJob>(minimalDto).Returns(mappedEntity);
+            _mockRepository.GetByIdAsync(minimalDto.StaffId, minimalDto.JobCode).Returns((StaffJob?)null);
             _mockRepository.AddAsync(mappedEntity).Returns(repositoryResult);
             _mockMapper.Map<StaffJobDto>(repositoryResult).Returns(expectedDto);
 
@@ -819,6 +821,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             };
 
             _mockMapper.Map<StaffJob>(inputDto).Returns(mappedEntity);
+            _mockRepository.GetByIdAsync(inputDto.StaffId, inputDto.JobCode).Returns((StaffJob?)null);
             _mockRepository.AddAsync(mappedEntity)
             .ThrowsAsync(new Exception("Database connection failed"));
 
@@ -854,6 +857,62 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _sut.AddAsync(inputDto));
             await _mockRepository.DidNotReceive().AddAsync(Arg.Any<StaffJob>());
+        }
+
+        [Fact]
+        public async Task AddAsync_WhenEntryAlreadyExists_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = 40
+            };
+
+            var existingEntity = new StaffJob
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001"
+            };
+
+            _mockRepository.GetByIdAsync(inputDto.StaffId, inputDto.JobCode).Returns(existingEntity);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AddAsync(inputDto));
+            ex.Message.Should().Contain("STAFF001").And.Contain("JOB001");
+            await _mockRepository.DidNotReceive().AddAsync(Arg.Any<StaffJob>());
+        }
+
+        [Fact]
+        public async Task AddAsync_WhenNoExistingEntry_ProceedsToInsert()
+        {
+            // Arrange
+            var inputDto = new StaffJobDto
+            {
+                StaffId = "STAFF001",
+                JobCode = "JOB001",
+                PlannedHours = 40
+            };
+
+            var mappedEntity = new StaffJob { StaffId = "STAFF001", JobCode = "JOB001", PlannedHours = 40 };
+            var repositoryResult = new StaffJob { StaffId = "STAFF001", JobCode = "JOB001", PlannedHours = 40 };
+            var expectedDto = new StaffJobDto { StaffId = "STAFF001", JobCode = "JOB001", PlannedHours = 40 };
+
+            _mockRepository.GetByIdAsync(inputDto.StaffId, inputDto.JobCode).Returns((StaffJob?)null);
+            _mockMapper.Map<StaffJob>(inputDto).Returns(mappedEntity);
+            _mockRepository.AddAsync(mappedEntity).Returns(repositoryResult);
+            _mockMapper.Map<StaffJobDto>(repositoryResult).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.AddAsync(inputDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.StaffId.Should().Be("STAFF001");
+            result.JobCode.Should().Be("JOB001");
+            await _mockRepository.Received(1).GetByIdAsync(inputDto.StaffId, inputDto.JobCode);
+            await _mockRepository.Received(1).AddAsync(mappedEntity);
         }
 
         [Fact]

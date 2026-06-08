@@ -383,37 +383,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 .SumAsync(h => h ?? 0);
         }
 
-        public async Task<List<StaffJobView>> GetZtStaffJobsByStaffIdAsync(string staffId)
-        {
-            return await (from sj in _dbContext.StaffJobTblViews
-                          join jc in _dbContext.ProjectViews on sj.JobCode equals jc.ParentProject
-                          //where jc.Program == "zt_prog" && 
-                          //sj.StaffId == staffId && 
-                          //jc.UserEmail != null && jc.UserEmail.ToLower() == _requestContext.UserEmailId
-                          select new StaffJobView
-                          {
-                              StaffID = sj.StaffId,
-                              JobCode = sj.JobCode,
-                              PlannedHours = (double?)sj.PlannedHours ?? 0,
-                              Name = jc.ProjectTitle,
-                              SectorName = jc.Program,
-                              WorkGroup = jc.ParentProject,
-                              ChargeRate = jc.Program == "zt_Prog" ? (decimal?)sj.PlannedHours ?? 0 : 0,
-                              StaffCost = jc.Program == "zt_Prog" ? 0 : (decimal?)sj.PlannedHours ?? 0,
-                              GradeCode = null,
-                              WorkGroupGrade = null,
-                              Days = 0
-                          })
-                .Distinct()
-                .AsNoTracking()
-                .ToListAsync();
-        }
-
         public async Task<PagedData<ZtStaffJobView>> GetZtStaffJobsByStaffIdPagedAsync(PaginationParameters<string> query, string staffId)
         {
             var baseQuery = (from sj in _dbContext.StaffJobTblViews
                              join jc in _dbContext.ProjectViews on sj.JobCode equals jc.ParentProject
                              where sj.StaffId == staffId
+                             && (EF.Functions.ILike(jc.UserEmail!, _requestContext.UserEmailId))
                              select new ZtStaffJobView
                              {
                                  StaffID = sj.StaffId,
@@ -427,6 +402,25 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var result = await baseQuery.AsNoTracking().ToListAsync();
             return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<ZtStaffJobView?> GetZtStaffJobDetailsByIdAsync(string staffId, string JobCode)
+        {
+            var baseQuery = (from sj in _dbContext.StaffJobTblViews
+                             join jc in _dbContext.ProjectViews on sj.JobCode equals jc.ParentProject
+                             where sj.StaffId == staffId
+                             && (EF.Functions.ILike(jc.UserEmail!, _requestContext.UserEmailId))
+                             && sj.JobCode == JobCode
+                             select new ZtStaffJobView
+                             {
+                                 StaffID = sj.StaffId,
+                                 JobCode = sj.JobCode,
+                                 PlannedHours = (double?)sj.PlannedHours ?? 0,
+                                 Name = jc.ProjectTitle
+                             }).Distinct().AsQueryable();
+
+            var result = await baseQuery.AsNoTracking().FirstOrDefaultAsync();
+            return result;
         }
 
         private static IQueryable<ZtStaffJobView> ApplyZtSorting(IQueryable<ZtStaffJobView> query, string? sortBy, bool descending)

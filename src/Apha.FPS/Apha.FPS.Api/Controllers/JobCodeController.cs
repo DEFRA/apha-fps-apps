@@ -39,7 +39,7 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> GetZtCodesAsync()
         {
             var result = await _jobCodeService.GetZtCodeLookupAsync();
-            return Ok(_mapper.Map<IEnumerable<JobCodeRes>>(result));
+            return Ok(_mapper.Map<IEnumerable<ZtJobCodeRes>>(result));
         }
 
         /// <summary>

@@ -5,6 +5,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
     public interface IFpsJobCodeApiClient
     {
-        Task<ApiResponseDto<IEnumerable<FpsJobCodeDto>>> GetZtJobCodesAsync();
+        Task<ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>> GetZtJobCodesAsync();
     }
 }

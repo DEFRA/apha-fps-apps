@@ -10,8 +10,8 @@ namespace Apha.FPS.Core.Interfaces
         Task<List<StaffWorkgroupLookup>> GetStaffWorkgroupLookup();
         Task<StaffWorkgroupLookup?> GetStaffSummaryByIdAsync(string staffId);
         Task<double> GetZtTotalHoursByStaffIdAsync(string staffId);
-        Task<List<StaffJobView>> GetZtStaffJobsByStaffIdAsync(string staffId);
         Task<PagedData<ZtStaffJobView>> GetZtStaffJobsByStaffIdPagedAsync(PaginationParameters<string> query, string staffId);
+        Task<ZtStaffJobView?> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode);
         Task<decimal?> GetStaffChargeRate(string staffId, string jobcode);
         Task<StaffJob?> GetByIdAsync(string staffId, string jobCode);
         Task<StaffJobView?> GetViewByStaffIdAsync(string staffId, string jobCode);

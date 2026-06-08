@@ -125,6 +125,15 @@
                         return { code: d.value, description: d.text };
                     });
                     renderZtCodeRows('');
+
+                    // Sync description for the already-selected code (edit mode / pre-selected add)
+                    var currentCode = document.getElementById('JobCode').value;
+                    if (currentCode) {
+                        var match = ztCodeOptions.find(function (opt) { return opt.code === currentCode; });
+                        if (match) {
+                            document.getElementById('ZtDescription').value = match.description;
+                        }
+                    }
                 }
             })
             .catch(function (e) { console.error('Failed to load ZT codes', e); });

@@ -65,15 +65,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<double>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<StaffJobViewDto>>> GetZtStaffJobsByStaffIdAsync(string staffId)
-        {
-            var response = await _http.GetAsync<List<StaffJobViewRes>>(string.Format(FpsApiEndpoints.GetZtStaffJobsByStaffId, staffId));
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<StaffJobViewDto>>>(response);
-            var responseDto = _mapper.Map<ApiResponseDto<List<StaffJobViewDto>>>(response);
-            return ApiResponseDto<List<StaffJobViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-        }
-
         public async Task<ApiResponseDto<List<ZtStaffJobViewDto>>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetZtStaffJobsByStaffIdPaged, query);
@@ -83,6 +74,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 return _mapper.Map<ApiResponseDto<List<ZtStaffJobViewDto>>>(response);
             var responseDto = _mapper.Map<ApiResponseDto<List<ZtStaffJobViewDto>>>(response);
             return ApiResponseDto<List<ZtStaffJobViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<ZtStaffJobViewDto>> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
+        {
+            var response = await _http.GetAsync<ZtStaffJobViewRes>(string.Format(FpsApiEndpoints.GetZtStaffJobDetailsById, staffId, jobCode));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ZtStaffJobViewDto>>(response);
+            var responseDto = _mapper.Map<ApiResponseDto<ZtStaffJobViewDto>>(response);
+            return ApiResponseDto<ZtStaffJobViewDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<decimal?>> GetStaffChargeRate(string staffId, string jobcode)

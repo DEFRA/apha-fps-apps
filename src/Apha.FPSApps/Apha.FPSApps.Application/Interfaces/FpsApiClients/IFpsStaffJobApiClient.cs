@@ -10,8 +10,8 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>> GetStaffWorkgroupLookupAsync();
         Task<ApiResponseDto<StaffWorkgroupLookupDto>> GetStaffSummaryByIdAsync(string staffId);
         Task<ApiResponseDto<double>> GetZtTotalHoursByStaffIdAsync(string staffId);
-        Task<ApiResponseDto<List<StaffJobViewDto>>> GetZtStaffJobsByStaffIdAsync(string staffId);
         Task<ApiResponseDto<List<ZtStaffJobViewDto>>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId);
+        Task<ApiResponseDto<ZtStaffJobViewDto>> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode);
         Task<ApiResponseDto<decimal?>> GetStaffChargeRate(string staffId, string jobcode);
         Task<ApiResponseDto<decimal>> GetTotalStaffCostAsync(string jobCode);
         Task<ApiResponseDto<StaffJobDto>> GetStaffJobByIdAsync(string staffId, string jobCode);

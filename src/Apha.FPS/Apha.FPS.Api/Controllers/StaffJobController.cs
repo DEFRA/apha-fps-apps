@@ -83,16 +83,6 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Returns all ZT-type staff job rows for a specific staff member (the subform data).
-        /// </summary>
-        [HttpGet("ztstaffjobs")]
-        public async Task<IActionResult> GetZtStaffJobsByStaffIdAsync([FromQuery] string staffId)
-        {
-            var result = await _staffJobService.GetZtStaffJobsByStaffIdAsync(staffId);
-            return Ok(_mapper.Map<List<StaffJobViewRes>>(result));
-        }
-
-        /// <summary>
         /// Returns a paged, sorted and filtered list of ZT-type staff job rows for a specific staff member.
         /// </summary>
         [HttpGet("ztstaffjobs/paged")]
@@ -101,6 +91,18 @@ namespace Apha.FPS.Api.Controllers
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _staffJobService.GetZtStaffJobsByStaffIdPagedAsync(filter, staffId);
             return Ok(_mapper.Map<PaginationRes<ZtStaffJobViewRes>>(result));
+        }
+
+        /// <summary>
+        /// Returns a single ZT staff job record with description for a specific staff member and job code.
+        /// </summary>
+        [HttpGet("ztstaffjob/{staffId}/{jobCode}")]
+        public async Task<IActionResult> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
+        {
+            var result = await _staffJobService.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+            if (result == null)
+                throw new KeyNotFoundException($"ZT plan entry for staff '{staffId}' and job code '{jobCode}' not found.");
+            return Ok(_mapper.Map<ZtStaffJobViewRes>(result));
         }
 
         /// <summary>

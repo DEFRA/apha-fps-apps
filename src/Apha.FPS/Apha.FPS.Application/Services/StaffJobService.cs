@@ -5,7 +5,6 @@ using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
-using System.Reflection.Emit;
 
 namespace Apha.FPS.Application.Services
 {
@@ -50,17 +49,17 @@ namespace Apha.FPS.Application.Services
             return await _staffJobRepository.GetZtTotalHoursByStaffIdAsync(staffId);
         }
 
-        public async Task<List<StaffJobViewDto>> GetZtStaffJobsByStaffIdAsync(string staffId)
-        {
-            var rows = await _staffJobRepository.GetZtStaffJobsByStaffIdAsync(staffId);
-            return _mapper.Map<List<StaffJobViewDto>>(rows);
-        }
-
         public async Task<PaginatedResult<ZtStaffJobViewDto>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
         {
             var filter = _mapper.Map<PaginationParameters<string>>(query);
             var rows = await _staffJobRepository.GetZtStaffJobsByStaffIdPagedAsync(filter, staffId);
             return _mapper.Map<PaginatedResult<ZtStaffJobViewDto>>(rows);
+        }
+
+        public async Task<ZtStaffJobViewDto?> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
+        {
+            var result = await _staffJobRepository.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+            return result == null ? null : _mapper.Map<ZtStaffJobViewDto>(result);
         }
 
         public async Task<decimal?> GetStaffChargeRate(string staffId, string jobcode)
@@ -85,6 +84,11 @@ namespace Apha.FPS.Application.Services
         {
             ArgumentNullException.ThrowIfNull(staffJob);
             ArgumentOutOfRangeException.ThrowIfNegative(staffJob.PlannedHours);
+
+            var existing = await _staffJobRepository.GetByIdAsync(staffJob.StaffId, staffJob.JobCode);
+            if (existing != null)
+                throw new InvalidOperationException($"A ZT plan entry for staff '{staffJob.StaffId}' and job code '{staffJob.JobCode}' already exists.");
+
             var mapStaffJob = _mapper.Map<StaffJob>(staffJob);
             var staffWorkgroup = await _staffJobRepository.AddAsync(mapStaffJob);
             return _mapper.Map<StaffJobDto>(staffWorkgroup);
