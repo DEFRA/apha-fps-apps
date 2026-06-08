@@ -6,8 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Dynamic;
 using System.Linq.Expressions;
-using System.Xml.Linq;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
