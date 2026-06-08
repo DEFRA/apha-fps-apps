@@ -83,7 +83,7 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.TestCapabilities
                 .AsNoTracking()
                 .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(t => t.TestCode == testCode && t.WorkGroup == workGroup && t.FpsYear == _fpsRequestContext.FpsYear);
+                .FirstOrDefaultAsync(t => t.TestCode == testCode && t.WorkGroup == workGroup);
         }
 
         public async Task<TestCapability> AddAsync(TestCapability entity)
