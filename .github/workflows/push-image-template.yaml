@@ -130,9 +130,8 @@ jobs:
 
       - name: Wait for service to start
         if: ${{ inputs.run_local_healthcheck }}
-        run: >
+        run: |
           echo "Waiting for the service to start..."
-
           for i in {1..10}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || echo "000")
             echo "HTTP Status: $STATUS"
