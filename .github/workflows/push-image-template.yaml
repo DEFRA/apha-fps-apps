@@ -119,7 +119,7 @@ jobs:
           labels: |
             org.opencontainers.image.licenses=OGL-UK-3.0
 
-- name: Run container locally
+      - name: Run container locally
         if: ${{ inputs.run_local_healthcheck }}
         env:
           IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
@@ -127,6 +127,7 @@ jobs:
           docker build -t $REPOSITORY:$IMAGE_TAG --file $DOCKERFILE_PATH .
           echo "Running local image: $IMAGE_TAG"
           docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local $REPOSITORY:$IMAGE_TAG
+
       - name: Wait for service to start
         if: ${{ inputs.run_local_healthcheck }}
         run: >
@@ -144,6 +145,7 @@ jobs:
             echo "---------------------------------------"
             sleep 3
           done
+
       - name: Test application response
         if: ${{ inputs.run_local_healthcheck }}
         run: |
@@ -152,7 +154,8 @@ jobs:
       - name: Cleanup container
         if: ${{ always() && inputs.run_local_healthcheck }}
         run: |
-          docker rm -f test-container
+          docker rm -f test-container 2>/dev/null || true
+
       - name: Build and push Docker image manually
         env:
           IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
