@@ -133,11 +133,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
         #region CreateTestCapability
 
         [Fact]
-        public async Task CreateTestCapability_ValidRequest_ReturnsCreatedAtAction()
+        public async Task CreateTestCapability_ValidRequest_ReturnsOk()
         {
             var request = new TestCapabilityReq { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" };
             var dto = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1" };
-            var created = new TestCapabilityDto { TestCode = "TC1", WorkGroup = "WG1" };
+            var created = new TestCapabilityDto { TestCode = "TC1" };
             var mapped = new TestCapabilityRes { TestCode = "TC1" };
 
             _mapper.Map<TestCapabilityDto>(request).Returns(dto);
@@ -146,9 +146,8 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
 
             var result = await _controller.CreateTestCapability(request);
 
-            var createdResult = Assert.IsType<OkObjectResult>(result);
-            createdResult.Value.Should().Be(mapped);
-            Assert.Equal(createdResult.StatusCode, 200);
+            var ok = Assert.IsType<OkObjectResult>(result);
+            ok.Value.Should().Be(mapped);
         }
 
         [Fact]

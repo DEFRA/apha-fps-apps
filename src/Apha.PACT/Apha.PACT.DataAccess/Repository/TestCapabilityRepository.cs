@@ -82,7 +82,6 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.TestCapabilities
                 .AsNoTracking()
-                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(t => t.TestCode == testCode && t.WorkGroup == workGroup);
         }
 
