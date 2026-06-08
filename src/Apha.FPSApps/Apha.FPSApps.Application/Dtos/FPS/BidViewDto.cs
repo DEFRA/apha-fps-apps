@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Apha.FPSApps.Application.Dtos.FPS
 {
+    [ExcludeFromCodeCoverage]
     public class BidViewDto
     {
         public string WorkGroupName { get; set; } = null!;
