@@ -38,6 +38,13 @@
             }
         </select>
     </div>
+    <div class="govuk-grid-column-one-third">
+        <label class="govuk-label">&nbsp;</label>
+        <button class="govuk-button govuk-!-margin-bottom-0" type="button"
+                onclick="editPortfolioDetails()">
+            Edit Portfolio Details
+        </button>
+    </div>
 </div>
 
 @* Grid *@
@@ -81,7 +88,7 @@
                 showGovukAlert('Please select a Portfolio first.');
                 return;
             }
-            window.location.href = '/FPS/Project/Edit?parentProject=' + encodeURIComponent(currentPortfolio);
+            window.location.href = '/FPS/PortfolioNew/Index?parentProject=' + encodeURIComponent(currentPortfolio);
         }
 
         // ── CRUD ──────────────────────────────────────────────────────────────

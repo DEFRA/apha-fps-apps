@@ -267,21 +267,46 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Project?> UpdatePactPortfolioDetailsAsync(Project project)
         {
-            var entity = await _dbContext.Projects
-                .FirstOrDefaultAsync(p => p.ParentProject == project.ParentProject
-                    && p.FpsYear == _requestContext.FpsYear);
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            Project? entity = null;
 
-            if (entity == null) return null;
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    entity = await _dbContext.Projects
+                        .FirstOrDefaultAsync(p => p.ParentProject == project.ParentProject
+                            && p.FpsYear == _requestContext.FpsYear);
 
-            entity.ProjectTitle = project.ProjectTitle;
-            entity.Program = project.Program;
-            entity.Manager = project.Manager;
-            entity.Finished = project.Finished;
-            entity.Comments = project.Comments;
-            entity.BudgetCvl = project.BudgetCvl;
-            entity.TransferIncome = project.TransferIncome;
+                    if (entity == null) return;
 
-            await _dbContext.SaveChangesAsync();
+                    entity.ProjectTitle = project.ProjectTitle;
+                    entity.Program = project.Program;
+                    entity.Customer = project.Customer;
+                    entity.Manager = project.Manager;
+                    entity.Contract = project.Contract;
+                    entity.ProjectStatus = project.ProjectStatus;
+                    entity.Disease = project.Disease;
+                    entity.CustIncome = project.CustIncome;
+                    entity.Profit = project.Profit;
+                    entity.TransferIncome = project.TransferIncome;
+                    entity.BudgetCvl = project.BudgetCvl;
+                    entity.Finished = project.Finished;
+                    entity.Comments = project.Comments;
+
+                    NormalizeDateTimesToUnspecified(entity);
+                    _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U", _requestContext.UserEmailId));
+                    await _dbContext.SaveChangesAsync();
+
+                    await tx.CommitAsync();
+                }
+                catch
+                {
+                    await tx.RollbackAsync();
+                    throw;
+                }
+            });
             return entity;
         }
 
