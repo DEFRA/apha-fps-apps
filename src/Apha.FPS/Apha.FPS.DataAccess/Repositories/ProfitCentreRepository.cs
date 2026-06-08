@@ -281,7 +281,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
-        public async Task<(IEnumerable<(string ProfitCentre, decimal Cost)> Data, int TotalCount)> GetPagedProfitCenterCostSummaryAsync(
+        public async Task<PagedData<(string ProfitCentre, decimal Cost)>> GetPagedProfitCenterCostSummaryAsync(
             PaginationParameters<string> parameters, short? monthNumber = null)
         {
             ArgumentNullException.ThrowIfNull(parameters);
@@ -301,15 +301,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 _ => allData.OrderBy(x => x.ProfitCentre)
             };
 
-            var totalCount = allData.Count;
-
-            // Apply pagination
-            var pagedData = sortedData
-                .Skip((parameters.Page - 1) * parameters.PageSize)
-                .Take(parameters.PageSize)
-                .ToList();
-
-            return (pagedData, totalCount);
+            // Use base repository ApplyPaging helper to create PagedData<T>
+            return ApplyPaging(sortedData, parameters.Page, parameters.PageSize);
         }
 
         private static IQueryable<ProfitCentre> ApplyProfitCentreFilter(IQueryable<ProfitCentre> query, string? filter)

@@ -108,9 +108,9 @@ namespace Apha.FPS.Application.Services
             ArgumentNullException.ThrowIfNull(query);
 
             var parameters = _mapper.Map<Apha.FPS.Core.Pagination.PaginationParameters<string>>(query);
-            var (data, totalCount) = await _repository.GetPagedProfitCenterCostSummaryAsync(parameters, monthNumber);
+            var pagedData = await _repository.GetPagedProfitCenterCostSummaryAsync(parameters, monthNumber);
 
-            var dtos = data.Select(r => new ProfitCentreCostDto
+            var dtos = pagedData.Data.Select(r => new ProfitCentreCostDto
             {
                 ProfitCentre = r.ProfitCentre,
                 Cost = r.Cost
@@ -118,10 +118,10 @@ namespace Apha.FPS.Application.Services
 
             var paginationData = new PaginationDto
             {
-                PageNumber = query.Page,
-                PageSize = query.PageSize,
-                TotalRecords = totalCount,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)query.PageSize)
+                PageNumber = pagedData.PaginationData.PageNumber,
+                PageSize = pagedData.PaginationData.PageSize,
+                TotalRecords = pagedData.PaginationData.TotalRecords,
+                TotalPages = pagedData.PaginationData.TotalPages
             };
 
             return new PaginatedResult<ProfitCentreCostDto>(dtos, paginationData);

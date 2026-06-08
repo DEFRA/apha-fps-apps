@@ -1,5 +1,4 @@
-using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
@@ -7,9 +6,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
-using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
@@ -19,16 +16,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     public class ProfitCenterCostSummaryController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IFpsProfitCentreApiClient _profitCentreApiClient;
+        private readonly IProfitCentreService _profitCentreService;
         private readonly ICalenderMonthService _calenderMonthService;
 
         public ProfitCenterCostSummaryController(
             IMapper mapper,
-            IFpsProfitCentreApiClient profitCentreApiClient,
+            IProfitCentreService profitCentreService,
             ICalenderMonthService calenderMonthService)
         {
             _mapper = mapper;
-            _profitCentreApiClient = profitCentreApiClient;
+            _profitCentreService = profitCentreService;
             _calenderMonthService = calenderMonthService;
         }
 
@@ -45,14 +42,15 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var grid = await BuildProfitCenterCostGridAsync(defaultRequest, monthNumber);
 
             var viewModel = new ProfitCenterCostSummaryViewModel
-            {
-                Periods = periodsList,
+            {   
+                PeriodMonths = periodsList,
+                SelectedMonthNumber = monthNumber,
                 CostGrid = grid
             };
 
             return View(viewModel);
         }
-
+        
         /// <summary>
         /// Reloads the profit center cost data grid partial view based on the supplied pagination, sort, and filter parameters.
         /// </summary>
@@ -75,32 +73,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         /// <summary>
-        /// Gets profit centers with their aggregated costs, optionally filtered by month.
-        /// </summary>
-        /// <param name="monthNumber">Optional month number to filter the cost calculations.</param>
-        /// <returns>A JSON response containing profit center cost data, or <see cref="BadRequestResult"/> if the request fails.</returns>
-        [HttpGet]
-        public async Task<IActionResult> GetProfitCenterCostData([FromQuery] short? monthNumber = null)
-        {
-            if (!ModelState.IsValid)
-                return Json(new
-                {
-                    success = false,
-                    message = "Invalid request data",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                });
-
-            var response = await _profitCentreApiClient.GetProfitCenterCostSummaryAsync(monthNumber);
-
-            if (response.Success && response.Data != null)
-            {
-                return Ok(response.Data);
-            }
-
-            return BadRequest(new { errors = response.Errors });
-        }
-
-        /// <summary>
         /// Builds the profit center cost data grid configuration by fetching paged cost data from the service
         /// and applying any active pagination, sort, and filter state.
         /// </summary>
@@ -110,68 +82,83 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private async Task<DataGridConfig<ProfitCenterCostItem>> BuildProfitCenterCostGridAsync(
             PaginationFilter<string> request, short? monthNumber = null)
         {
-            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
-                             ?? new Dictionary<string, string>();
-
+            var grid = ProfitCenterCostGridConfig();
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _profitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+            var response = await _profitCentreService.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
 
-            var items = response.Success && response.Data != null
-                ? _mapper.Map<List<ProfitCenterCostItem>>(response.Data)
-                : [];
+            grid.Data = response.Data != null ? _mapper.Map<List<ProfitCenterCostItem>>(response.Data.data) : [];
 
-            var pagination = response.Pagination != null
-                ? _mapper.Map<PaginationModel>(response.Pagination)
-                : new PaginationModel();
-            pagination.SortColumn = request.SortBy;
-            pagination.SortDirection = request.Descending;
-
-            var queryParams = new List<string>();
-            if (monthNumber.HasValue)
-                queryParams.Add($"monthNumber={monthNumber.Value}");
-
-            string queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
-
-            return new DataGridConfig<ProfitCenterCostItem>
+            // Extract pagination from PaginatedResult (response.Data)
+            if (response.Data != null)
             {
-                GridId = "profitCenterCostGrid",
-                Title = "Profit Center Costs",
-                KeyProperty = "ProfitCentre",
-                ShowCheckboxColumn = false,
-                ShowPagination = true,
-                AllowAdd = false,
-                AllowEdit = false,
-                AllowDelete = false,
-                BindGridUrl = $"/PACT/ProfitCenterCostSummary/LoadProfitCenterCostGrid{queryString}",
-                Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<ProfitCenterCostItem>(),
-                Pagination = pagination,
-                CurrentFilters = filterDict
-            };
+                grid.Pagination = new PaginationModel
+                {
+                    PageNumber = response.Data.PageNumber,
+                    PageSize = response.Data.PageSize,
+                    TotalRecords = response.Data.TotalCount,
+                    SortColumn = request.SortBy,
+                    SortDirection = request.Descending
+                };
+            }
+            else
+            {
+                grid.Pagination = new PaginationModel
+                {
+                    SortColumn = request.SortBy,
+                    SortDirection = request.Descending
+                };
+            }
+
+            // Update BindGridUrl with monthNumber if present
+            if (monthNumber.HasValue)
+            {
+                grid.BindGridUrl = $"/PACT/ProfitCenterCostSummary/LoadProfitCenterCostGrid?monthNumber={monthNumber.Value}";
+            }
+
+            return grid;
         }
 
         /// <summary>
-        /// Retrieves an ordered list of all calendar months formatted as <see cref="SelectListItem"/> entries
+        /// Retrieves an ordered list of all calendar months formatted as <see cref="PeriodMonth"/> entries
         /// for use in period selector dropdown.
         /// </summary>
-        /// <returns>An ordered list of period select items in the format "number - name", or an empty list if none are available.</returns>
-        private async Task<List<SelectListItem>> GetPeriodsListAsync()
+        /// <returns>An ordered list of period items, or an empty list if none are available.</returns>
+        private async Task<List<PeriodMonth>> GetPeriodsListAsync()
         {
             var result = await _calenderMonthService.GetCalenderMonthsAsync();
 
             if (result.Success && result.Data != null && result.Data.Count > 0)
             {
-                return result.Data
-                    .OrderBy(m => m.MonthNumber)
-                    .Select(m => new SelectListItem
-                    {
-                        Value = m.MonthNumber.ToString(),
-                        Text = $"{m.MonthNumber} - {m.MonthName}"
-                    })
-                    .ToList();
+                var orderedData = result.Data.OrderBy(m => m.MonthNumber).ToList();
+                return _mapper.Map<List<PeriodMonth>>(orderedData);
             }
 
             return [];
         }
+
+        /// <summary>
+        /// Returns the static <see cref="DataGridConfig{ProfitCenterCostItem}"/> skeleton shared by
+        /// both <see cref="Index"/> and <see cref="LoadProfitCenterCostGrid"/>.
+        /// The configuration defines the grid identity, bound AJAX URL, column definitions,
+        /// and interaction flags; it intentionally contains no data or pagination state so
+        /// callers can populate those fields independently after calling this method.
+        /// </summary>
+        /// <returns>A new <see cref="DataGridConfig{ProfitCenterCostItem}"/> with static configuration applied.</returns>
+        private static DataGridConfig<ProfitCenterCostItem> ProfitCenterCostGridConfig() => new()
+        {
+            GridId = "profitCenterCostGrid",
+            Title = "",
+            KeyProperty = "ProfitCentre",
+            BindGridUrl = "/PACT/ProfitCenterCostSummary/LoadProfitCenterCostGrid",
+            ExtraFilterMethod = "getProfitCenterCostGridExtraFilters",
+            ShowCheckboxColumn = false,
+            AllowAdd = false,
+            AllowEdit = false,
+            AllowDelete = false,
+            AllowExport = false,
+            AllowRowSelection = false,
+            ShowPagination = true,
+            Columns = GridDataProvider.GetColumnsDefination<ProfitCenterCostItem>()
+        };
     }
 }

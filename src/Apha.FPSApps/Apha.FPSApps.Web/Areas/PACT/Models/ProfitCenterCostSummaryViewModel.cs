@@ -14,8 +14,21 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public List<SelectListItem> Periods { get; set; } = [];
 
         /// <summary>
+        /// The currently selected month number, if any.
+        /// </summary>
+        public short? SelectedMonthNumber { get; set; }
+
+        /// <summary>
         /// Data grid configuration for profit center costs.
         /// </summary>
         public DataGridConfig<ProfitCenterCostItem>? CostGrid { get; set; }
+
+        public List<PeriodMonth> PeriodMonths { get; set; } = new();
+
+    }
+    public class PeriodMonth
+    {
+        public string Period { get; set; } = null!;
+        public string? MonthNumber { get; set; }
     }
 }

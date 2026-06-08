@@ -1,205 +1,138 @@
-// Profit Center Cost Summary JavaScript
+/**
+ * profit-center-cost-summary.js
+ * Client-side logic for the PACT PC SOCT Query page.
+ * Handles the Period searchable dropdown and grid reload.
+ */
 
-(function () {
-    'use strict';
+var profitCenterCostGridId = null;
+var currentMonthNumber = null;
 
-    let profitCenterCostData = [];
+/**
+ * Returns the grid manager instance for the profit center cost grid.
+ * @returns {object|undefined} The grid manager, or undefined if not yet initialised.
+ */
+function getProfitCenterCostGridManager() {
+    return window['gridManager_' + profitCenterCostGridId];
+}
 
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function () {
-        initializePage();
+/**
+ * Returns extra filter parameters to be appended to each grid reload request.
+ * This function is called by the grid manager when reloading data.
+ * @returns {{ monthNumber: string|null }}
+ */
+function getProfitCenterCostGridExtraFilters() {
+    return { monthNumber: currentMonthNumber || null };
+}
+
+/**
+ * Called when a period is selected from the dropdown.
+ * Updates the current month number and reloads the grid with the selected period filter.
+ * @param {string|null} monthNumber - The selected month number, or null to clear.
+ */
+function onPeriodChange(monthNumber) {
+    currentMonthNumber = monthNumber || null;
+
+    if (!monthNumber) {
+        reloadAllProfitCenterCostGrid();
+        return;
+    }
+
+    reloadProfitCenterCostGrid(monthNumber);
+}
+
+/**
+ * Reloads the profit center cost grid filtered by the specified month number,
+ * resetting pagination, sort, and filter state.
+ * @param {string} monthNumber - The month number to filter by.
+ */
+function reloadProfitCenterCostGrid(monthNumber) {
+    var gm = getProfitCenterCostGridManager();
+    if (!gm) {
+        window.location.href = '/PACT/ProfitCenterCostSummary/Index?monthNumber=' + encodeURIComponent(monthNumber);
+        return;
+    }
+
+    gm.reloadGrid({
+        filter: '{}',
+        sortBy: '',
+        descending: false,
+        page: 1,
+        pageSize: 10
+    }, { monthNumber: monthNumber });
+}
+
+/**
+ * Reloads the profit center cost grid with no filter applied, showing all data.
+ * Resets pagination, sort, and filter state.
+ */
+function reloadAllProfitCenterCostGrid() {
+    var gm = getProfitCenterCostGridManager();
+    if (!gm) {
+        window.location.href = '/PACT/ProfitCenterCostSummary/Index';
+        return;
+    }
+
+    gm.reloadGrid({
+        filter: '{}',
+        sortBy: '',
+        descending: false,
+        page: 1,
+        pageSize: 10
+    });
+}
+
+/**
+ * Initialises the Period searchable dropdown.
+ * Intended to be called on document ready.
+ */
+function initProfitCenterCostSummaryPage() {
+    var $pInput  = $('#periodSelectDropdown');
+    var $pPanel  = $('#periodDropdownPanel');
+    var $pSearch = $('#periodSearchBox');
+    var $pRows   = $('#PeriodDropdownBody tr');
+
+    $pInput.on('click', function (e) {
+        e.stopPropagation();
+        $pPanel.toggle();
+        if ($pPanel.is(':visible')) {
+            $pSearch.val('').focus();
+            $pRows.show();
+        }
     });
 
-    /**
-     * Initialize the page - set up event listeners and fetch data
-     */
-    function initializePage() {
-        setupPeriodSelectorListener();
-        loadProfitCenterCostData();
-    }
+    $pSearch.on('click', function (e) { e.stopPropagation(); });
 
-    /**
-     * Set up event listener for period selector dropdown
-     */
-    function setupPeriodSelectorListener() {
-        const periodSelect = document.getElementById('periodSelect');
-        if (!periodSelect) return;
-
-        // Add event listener for period change
-        periodSelect.addEventListener('change', function () {
-            loadProfitCenterCostData();
+    $pSearch.on('input', function () {
+        var term = $(this).val().toLowerCase();
+        $pRows.each(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(term) > -1);
         });
-    }
+    });
 
-    /**
-     * Fetch profit center cost data from API
-     */
-    function loadProfitCenterCostData() {
-        const tableBody = document.getElementById('profitCenterCostTableBody');
-        if (!tableBody) return;
+    $(document).on('click', '#PeriodDropdownBody tr', function () {
+        var monthNumber = $(this).data('value');
+        var text = $(this).find('td:first').text().trim();
+        $pInput.val(text);
+        $pPanel.hide();
+        onPeriodChange(monthNumber);
+    });
 
-        // Show loading state
-        showLoadingState(tableBody);
-
-        // Get selected period value
-        const periodSelect = document.getElementById('periodSelect');
-        const monthNumber = periodSelect ? periodSelect.value : '';
-
-        // Build URL with optional month filter
-        let url = '/PACT/ProfitCenterCostSummary/GetProfitCenterCostData';
-        if (monthNumber) {
-            url += `?monthNumber=${encodeURIComponent(monthNumber)}`;
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('#periodSelectDropdown, #periodDropdownPanel').length) {
+            $pPanel.hide();
         }
+    });
 
-        // Fetch data from API
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data');
-                }
-                return response.json();
-            })
-            .then(data => {
-                profitCenterCostData = data || [];
-                renderProfitCenterCostTable(profitCenterCostData);
-            })
-            .catch(error => {
-                console.error('Error loading profit center cost data:', error);
-                showErrorState(tableBody);
-            });
-    }
-
-    /**
-     * Show loading state in table body
-     * @param {HTMLElement} tableBody - The table body element
-     */
-    function showLoadingState(tableBody) {
-        tableBody.innerHTML = '';
-        const row = createTableRow();
-        const cell = createTableCell('', 2, 'center');
-        cell.innerHTML = '<div class="govuk-!-margin-bottom-2">Loading profit center cost data...</div>';
-        row.appendChild(cell);
-        tableBody.appendChild(row);
-    }
-
-    /**
-     * Show error state in table body
-     * @param {HTMLElement} tableBody - The table body element
-     */
-    function showErrorState(tableBody) {
-        tableBody.innerHTML = '';
-        const row = createTableRow();
-        const cell = createTableCell('Error loading data. Please try again later.', 2, 'center');
-        cell.style.color = '#d4351c';
-        row.appendChild(cell);
-        tableBody.appendChild(row);
-    }
-
-    /**
-     * Show no data state in table body
-     * @param {HTMLElement} tableBody - The table body element
-     */
-    function showNoDataState(tableBody) {
-        tableBody.innerHTML = '';
-        const row = createTableRow();
-        const cell = createTableCell('No profit center cost data available.', 2, 'center');
-        row.appendChild(cell);
-        tableBody.appendChild(row);
-    }
-
-    /**
-     * Create a table row element
-     * @returns {HTMLTableRowElement}
-     */
-    function createTableRow() {
-        const row = document.createElement('tr');
-        row.className = 'govuk-table__row';
-        return row;
-    }
-
-    /**
-     * Create a table cell element
-     * @param {string} content - Cell content
-     * @param {number} colspan - Column span (optional)
-     * @param {string} align - Text alignment (optional)
-     * @returns {HTMLTableCellElement}
-     */
-    function createTableCell(content, colspan = 1, align = 'left') {
-        const cell = document.createElement('td');
-        cell.className = 'govuk-table__cell';
-        if (colspan > 1) {
-            cell.colSpan = colspan;
-        }
-        if (align === 'center') {
-            cell.style.textAlign = 'center';
-            cell.style.padding = '20px';
-        } else if (align === 'right') {
-            cell.classList.add('govuk-table__cell--numeric');
-        }
-        cell.textContent = content;
-        return cell;
-    }
-
-    /**
-     * Render the profit center cost table
-     * @param {Array} data - Array of profit center cost objects
-     */
-    function renderProfitCenterCostTable(data) {
-        const tableBody = document.getElementById('profitCenterCostTableBody');
-        const totalCostCell = document.getElementById('totalCost');
-
-        if (!tableBody) return;
-
-        // Clear existing rows
-        tableBody.innerHTML = '';
-
-        if (!data || data.length === 0) {
-            showNoDataState(tableBody);
-            if (totalCostCell) {
-                totalCostCell.textContent = '£0.00';
+    if (profitCenterCostGridId) {
+        $('#gridContainer_' + profitCenterCostGridId).on('keypress', '.grid-filter', function (e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                $(this).trigger('change');
             }
-            return;
-        }
-
-        // Sort data by profit center name
-        data.sort((a, b) => (a.profitCentre || '').localeCompare(b.profitCentre || ''));
-
-        let totalCost = 0;
-
-        // Create table rows
-        data.forEach(item => {
-            const row = createTableRow();
-
-            const profitCentreCell = createTableCell(item.profitCentre || 'N/A');
-
-            const cost = item.cost || 0;
-            const costCell = createTableCell(formatCurrency(cost), 1, 'right');
-
-            totalCost += cost;
-
-            row.appendChild(profitCentreCell);
-            row.appendChild(costCell);
-            tableBody.appendChild(row);
         });
-
-        // Update total
-        if (totalCostCell) {
-            totalCostCell.textContent = formatCurrency(totalCost);
-        }
     }
+}
 
-    /**
-     * Format number as currency (GBP)
-     * @param {number} value - The numeric value to format
-     * @returns {string} Formatted currency string
-     */
-    function formatCurrency(value) {
-        return new Intl.NumberFormat('en-GB', {
-            style: 'currency',
-            currency: 'GBP',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(value);
-    }
-
-})();
+$(document).ready(function () {
+    initProfitCenterCostSummaryPage();
+});

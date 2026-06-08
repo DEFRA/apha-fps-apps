@@ -140,7 +140,7 @@ namespace Apha.FPS.Api.Controllers
         /// Optionally filters by month number.
         /// </summary>
         /// <param name="monthNumber">Optional month number to filter the cost calculations.</param>
-        [HttpGet("cost")]
+        [HttpGet("summary")]
         public async Task<IActionResult> GetProfitCenterCostSummary([FromQuery] short? monthNumber = null)
         {
             var result = await _profitCentreService.GetProfitCenterCostSummaryAsync(monthNumber);

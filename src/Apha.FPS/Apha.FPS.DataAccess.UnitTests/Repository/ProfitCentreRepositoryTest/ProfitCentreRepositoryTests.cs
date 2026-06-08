@@ -804,5 +804,546 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
 
         #endregion
 
+        #region GetProfitCenterCostSummaryAsync Tests
+
+        private static ProfitCentreRepository CreateRepositoryWithTimeCostCalcs(
+            IEnumerable<TimeCostCalcs>? timeCostCalcs = null,
+            IEnumerable<Workgroup>? workgroups = null)
+        {
+            var requestContext = Substitute.For<IFpsRequestContext>();
+            requestContext.FpsYear.Returns(2024);
+            requestContext.UserEmailId.Returns("test@example.com");
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
+
+            var tccSet = RepositoryTestHelper.CreateMockDbSet(timeCostCalcs ?? []);
+            mockContext.Setup(x => x.TimeCostCalcs).Returns(tccSet.Object);
+
+            var wgSet = RepositoryTestHelper.CreateMockDbSet(workgroups ?? []);
+            mockContext.Setup(x => x.Workgroups).Returns(wgSet.Object);
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            return new ProfitCentreRepository(mockContext.Object, requestContext);
+        }
+
+        [Fact]
+        public async Task GetProfitCenterCostSummaryAsync_WithoutMonthNumber_ReturnsAllCostData()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC02" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG1", ChargeRate = 50m, Time = 5, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 200m, Time = 8, Class = "Charge", Month = 2 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+
+            // Act
+            var result = (await repo.GetProfitCenterCostSummaryAsync(null)).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            var pc01 = result.FirstOrDefault(x => x.ProfitCentre == "PC01");
+            var pc02 = result.FirstOrDefault(x => x.ProfitCentre == "PC02");
+            Assert.NotNull(pc01);
+            Assert.NotNull(pc02);
+            Assert.Equal(1250m, pc01.Cost); // (100 * 10) + (50 * 5)
+            Assert.Equal(1600m, pc02.Cost); // (200 * 8)
+        }
+
+        [Fact]
+        public async Task GetProfitCenterCostSummaryAsync_WithMonthNumber_ReturnsFilteredCostData()
+        {
+            // Arrange
+            const short monthNumber = 1;
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC02" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 200m, Time = 8, Class = "Charge", Month = 2 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+
+            // Act
+            var result = (await repo.GetProfitCenterCostSummaryAsync(monthNumber)).ToList();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("PC01", result[0].ProfitCentre);
+            Assert.Equal(1000m, result[0].Cost); // (100 * 10)
+        }
+
+        [Fact]
+        public async Task GetProfitCenterCostSummaryAsync_WithEmptyData_ReturnsEmptyEnumerable()
+        {
+            // Arrange
+            var repo = CreateRepositoryWithTimeCostCalcs([], []);
+
+            // Act
+            var result = await repo.GetProfitCenterCostSummaryAsync(null);
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetProfitCenterCostSummaryAsync_ExcludesNonChargeClass()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG1", ChargeRate = 50m, Time = 5, Class = "NonCharge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+
+            // Act
+            var result = (await repo.GetProfitCenterCostSummaryAsync(null)).ToList();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal(1000m, result[0].Cost); // Only (100 * 10), NonCharge excluded
+        }
+
+        [Fact]
+        public async Task GetProfitCenterCostSummaryAsync_HandlesNullChargeRate()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = null, Time = 10, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+
+            // Act
+            var result = (await repo.GetProfitCenterCostSummaryAsync(null)).ToList();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal(0m, result[0].Cost); // null ChargeRate treated as 0
+        }
+
+        [Fact]
+        public async Task GetProfitCenterCostSummaryAsync_HandlesNullTime()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = null, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+
+            // Act
+            var result = (await repo.GetProfitCenterCostSummaryAsync(null)).ToList();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal(0m, result[0].Cost); // null Time treated as 0
+        }
+
+        [Fact]
+        public async Task GetProfitCenterCostSummaryAsync_AggregatesMultipleRecordsPerProfitCentre()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC01" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 50m, Time = 20, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+
+            // Act
+            var result = (await repo.GetProfitCenterCostSummaryAsync(null)).ToList();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("PC01", result[0].ProfitCentre);
+            Assert.Equal(2000m, result[0].Cost); // (100 * 10) + (50 * 20)
+        }
+
+        [Fact]
+        public async Task GetProfitCenterCostSummaryAsync_WithZeroMonthNumber_ReturnsDataForMonthZero()
+        {
+            // Arrange
+            const short monthNumber = 0;
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 0 },
+                new() { WorkGroup = "WG1", ChargeRate = 50m, Time = 5, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+
+            // Act
+            var result = (await repo.GetProfitCenterCostSummaryAsync(monthNumber)).ToList();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal(1000m, result[0].Cost); // Only month 0 data
+        }
+
+        [Fact]
+        public async Task GetProfitCenterCostSummaryAsync_WithMaxMonthNumber_ReturnsDataForMonth12()
+        {
+            // Arrange
+            const short monthNumber = 12;
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 12 },
+                new() { WorkGroup = "WG1", ChargeRate = 50m, Time = 5, Class = "Charge", Month = 11 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+
+            // Act
+            var result = (await repo.GetProfitCenterCostSummaryAsync(monthNumber)).ToList();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal(1000m, result[0].Cost); // Only month 12 data
+        }
+
+        #endregion
+
+        #region GetPagedProfitCenterCostSummaryAsync Tests
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_ThrowsArgumentNullException_WhenParametersIsNull()
+        {
+            // Arrange
+            var repo = CreateRepositoryWithTimeCostCalcs([], []);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                repo.GetPagedProfitCenterCostSummaryAsync(null!, null));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithoutMonthNumber_ReturnsPagedData()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC02" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 200m, Time = 8, Class = "Charge", Month = 2 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, null);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.Equal(1, result.PaginationData.PageNumber);
+            Assert.Equal(10, result.PaginationData.PageSize);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthNumber_ReturnsFilteredPagedData()
+        {
+            // Arrange
+            const short monthNumber = 1;
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC02" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 200m, Time = 8, Class = "Charge", Month = 2 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 5 };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, monthNumber);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("PC01", result.Data.First().ProfitCentre);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithSortByProfitCentre_SortsAscending()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC03" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC01" },
+                new() { WorkgroupName = "WG3", ProfitCentre = "PC02" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG3", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "ProfitCentre",
+                Descending = false
+            };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, null);
+
+            // Assert
+            var dataList = result.Data.ToList();
+            Assert.Equal("PC01", dataList[0].ProfitCentre);
+            Assert.Equal("PC02", dataList[1].ProfitCentre);
+            Assert.Equal("PC03", dataList[2].ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithSortByProfitCentre_SortsDescending()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC02" },
+                new() { WorkgroupName = "WG3", ProfitCentre = "PC03" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG3", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "ProfitCentre",
+                Descending = true
+            };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, null);
+
+            // Assert
+            var dataList = result.Data.ToList();
+            Assert.Equal("PC03", dataList[0].ProfitCentre);
+            Assert.Equal("PC02", dataList[1].ProfitCentre);
+            Assert.Equal("PC01", dataList[2].ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithSortByCost_SortsAscending()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC02" },
+                new() { WorkgroupName = "WG3", ProfitCentre = "PC03" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 300m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG3", ChargeRate = 200m, Time = 10, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "Cost",
+                Descending = false
+            };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, null);
+
+            // Assert
+            var dataList = result.Data.ToList();
+            Assert.Equal(1000m, dataList[0].Cost); // PC02
+            Assert.Equal(2000m, dataList[1].Cost); // PC03
+            Assert.Equal(3000m, dataList[2].Cost); // PC01
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithSortByCost_SortsDescending()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC02" },
+                new() { WorkgroupName = "WG3", ProfitCentre = "PC03" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 300m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG3", ChargeRate = 200m, Time = 10, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "Cost",
+                Descending = true
+            };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, null);
+
+            // Assert
+            var dataList = result.Data.ToList();
+            Assert.Equal(3000m, dataList[0].Cost); // PC02
+            Assert.Equal(2000m, dataList[1].Cost); // PC03
+            Assert.Equal(1000m, dataList[2].Cost); // PC01
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithEmptyResult_ReturnsEmptyPagedData()
+        {
+            // Arrange
+            var repo = CreateRepositoryWithTimeCostCalcs([], []);
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, null);
+
+            // Assert
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithPagination_ReturnsCorrectPage()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC02" },
+                new() { WorkgroupName = "WG3", ProfitCentre = "PC03" },
+                new() { WorkgroupName = "WG4", ProfitCentre = "PC04" },
+                new() { WorkgroupName = "WG5", ProfitCentre = "PC05" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG3", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG4", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG5", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+            var parameters = new PaginationParameters<string> { Page = 2, PageSize = 2 };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, null);
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(5, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.PageNumber);
+            Assert.Equal(3, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithLargePageNumber_ReturnsEmptyPage()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+            var parameters = new PaginationParameters<string> { Page = 999, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, null);
+
+            // Assert
+            Assert.Empty(result.Data);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal(999, result.PaginationData.PageNumber);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithDefaultSorting_SortsByProfitCentre()
+        {
+            // Arrange
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkgroupName = "WG1", ProfitCentre = "PC03" },
+                new() { WorkgroupName = "WG2", ProfitCentre = "PC01" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, null);
+
+            // Assert
+            var dataList = result.Data.ToList();
+            Assert.Equal("PC01", dataList[0].ProfitCentre);
+            Assert.Equal("PC03", dataList[1].ProfitCentre);
+        }
+
+        #endregion
+
     }
 }

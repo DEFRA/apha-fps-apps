@@ -4,56 +4,69 @@
     ViewData["Title"] = "PACT : PC SOCT Query";
 }
 
-<div class="govuk-grid-column-full sup_border-bottom">
-    <h1 class="sup_margin_top_10 sup_padding_bottom_10">PC SOCT Query</h1>
-</div>
+@* Header with Period dropdown *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_padding_bottom_10 sup_border-bottom" style="margin-top:10px; align-items: flex-end;">
 
-@* Filter Header *@
-<div class="govuk-grid-row sup_margin_left_right_0 sup_flex_left_center sup_padding_bottom_10 sup_border-bottom" style="margin-top:10px;">
-
-    @* Period Selector dropdown *@
     <div class="govuk-grid-column-one-third">
-        <label for="periodSelect" class="govuk-label govuk-!-font-weight-bold">Select Period</label>
-        <select id="periodSelect" class="govuk-select" style="width:100%;">
-            <option value="">Select a period</option>
-            @foreach (var period in Model.Periods)
-            {
-                <option value="@period.Value">@period.Text</option>
-            }
-        </select>
+        <h1 class="govuk-heading-s sup_margin_bottom_0">PC SOCT Query</h1>
     </div>
 
+    @* Period dropdown *@
+    <div class="govuk-grid-column-one-third">
+        @*  <label for="periodSelectDropdown" class="govuk-label govuk-!-font-weight-bold">Select a Period</label>*@
+        <div style="position: relative; z-index: 50;">
+            <input type="text" id="periodSelectDropdown" placeholder="Select Period" autocomplete="off"
+                   class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly />
+            <div id="periodDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                <input type="text" id="periodSearchBox" placeholder="Type to search Period"
+                       style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                        <tr>
+                            <th style="padding:6px 8px; text-align:left;">Period</th>
+                            <th style="padding:6px 8px; text-align:left;">No</th>
+                        </tr>
+                    </thead>
+                    <tbody id="PeriodDropdownBody">
+                        @foreach (var period in Model.PeriodMonths)
+                        {
+                            <tr data-value="@period.MonthNumber" style="cursor:pointer;">
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@period.Period</td>
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@period.MonthNumber</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 @* Profit Center Cost Summary Data Grid *@
-<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+<div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-three-quarters">
-        <div id="gridContainer_profitcenterSOCTQueryGrid">
-            <table class="govuk-table" id="profitCenterCostTable">
-                <thead class="govuk-table__head">
-                    <tr class="govuk-table__row">
-                        <th scope="col" class="govuk-table__header">Profit Centre</th>
-                        <th scope="col" class="govuk-table__header govuk-table__header--numeric">Cost (£)</th>
-                    </tr>
-                </thead>
-                <tbody class="govuk-table__body" id="profitCenterCostTableBody">
-                    <tr class="govuk-table__row">
-                        <td colspan="2" class="govuk-table__cell" style="text-align:center; padding:20px;">
-                            Loading data...
-                        </td>
-                    </tr>
-                </tbody>
-                <tfoot class="govuk-table__foot">
-                    <tr class="govuk-table__row">
-                        <th scope="row" class="govuk-table__header">Total</th>
-                        <td class="govuk-table__cell govuk-table__cell--numeric govuk-!-font-weight-bold" id="totalCost">£0.00</td>
-                    </tr>
-                </tfoot>
-            </table>
+        <div id="gridContainer_profitCenterCostGrid">
+            @await Html.PartialAsync("_DataGrid", Model.CostGrid)
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script src="~/js/pact_js/profit-center-cost-summary.js"></script>
+    <script>
+        profitCenterCostGridId = '@Model.CostGrid.GridId';
+        currentMonthNumber = '@(Model.SelectedMonthNumber?.ToString() ?? "")';
+
+        $(document).ready(function() {
+            if (currentMonthNumber) {
+                var selectedRow = $('#PeriodDropdownBody tr[data-value="' + currentMonthNumber + '"]');
+                if (selectedRow.length) {
+                    var selectedText = selectedRow.find('td:first').text().trim();
+                    $('#periodSelectDropdown').val(selectedText);
+                }
+            }
+        });
+    </script>
 }
