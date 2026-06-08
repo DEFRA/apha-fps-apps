@@ -2,6 +2,7 @@
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
+using Apha.PIMS.Core.Pagination;
 using AutoMapper;
 
 namespace Apha.PIMS.Api.Mappings
@@ -11,8 +12,10 @@ namespace Apha.PIMS.Api.Mappings
         public RequestMapper()
         {
             CreateMap(typeof(PaginationReq<>), typeof(QueryParameters<>)).ReverseMap();
+            CreateMap(typeof(PaginationReq<>), typeof(PaginationParameters<>)).ReverseMap();
             CreateMap(typeof(PaginationRes<>), typeof(PaginatedResult<>)).ReverseMap();
             CreateMap<Pagination, PaginationDto>().ReverseMap();
+            CreateMap<Pagination, PaginationData>().ReverseMap();
 
             CreateMap<ProjectListViewDto, ProjectListRes>().ReverseMap();
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
@@ -33,6 +36,14 @@ namespace Apha.PIMS.Api.Mappings
             CreateMap<RiskDto, RiskRes>().ReverseMap();
             CreateMap<YearDto, YearRes>().ReverseMap();
             CreateMap<CommentTopicDto, CommentTopicRes>().ReverseMap();
+            CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
+            CreateMap<AnimalCostDto, AnimalCostRes>().ReverseMap();
+            CreateMap<TestCostDto, TestCostRes>().ReverseMap();
+            CreateMap<StaffCostDto, StaffCostRes>().ReverseMap();
+            CreateMap<ProjectYearDetailsDto, ProjectYearDetailsRes>().ReverseMap();
+            CreateMap<PactPayDto, PactPayRes>().ReverseMap();
+            CreateMap<MonthlyPactDto, MonthlyPactRes>().ReverseMap();
+            CreateMap<FpsYearTotalsDto, FpsYearTotalsRes>().ReverseMap();
         }
     }
 }

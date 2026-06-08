@@ -6,6 +6,8 @@ namespace Apha.PACT.Application.Interfaces
     public interface IRecreateAndReleaseSummaryService
     {
         Task<PaginatedResult<RecreateSummaryLogDto>> GetRecreateSummaryLogAsync(QueryParameters<string> query);
+        Task<ReleaseSummaryDto> GetReleaseSummariesAsync();
+        Task<ReleasePeriodDto?> SetFinalSummaryRunAsync(string? periodName, short? finalSummariesRun, string? sendEmail);
     }
     
 }

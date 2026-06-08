@@ -71,6 +71,9 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.RecUnitPrice, o => o.MapFrom(s => s.RecUnitPrice))
                 .ReverseMap();
             CreateMap<MaintWGGradeItem, WorkgroupGradeDto>().ReverseMap();
+
+            // Test Capability (FPS portfolio page — reuses PACT TestCapabilityDto)
+            CreateMap<Apha.FPSApps.Web.Areas.FPS.Models.TestCapabilityItem, Apha.FPSApps.Application.Dtos.PACT.TestCapabilityDto>().ReverseMap();
         }
     }
 }
