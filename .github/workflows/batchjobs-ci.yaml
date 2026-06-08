@@ -64,11 +64,15 @@ jobs:
       dockerfile_path: src/Apha.BatchJobs/Dockerfile
       dev_image_version_release: false
       tag_short_description: ""
-      run_local_healthcheck: false  #Need to check if this can done for batchjobs
+      run_local_healthcheck: true
+      healthcheck_strategy: worker
+      worker_healthcheck_job_name: HealthCheck
+      worker_healthcheck_run_mode: Manual
     secrets:
       AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
       AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
       AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
+      WORKER_HEALTHCHECK_CONNECTION_STRING: ${{ secrets.BATCHJOBS_HEALTHCHECK_CONNECTION_STRING }}
     permissions:
       id-token: write
       contents: write

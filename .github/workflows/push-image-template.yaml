@@ -26,6 +26,21 @@ on:
         required: false
         type: boolean
         default: true
+      healthcheck_strategy:
+        description: "Healthcheck strategy: 'http' for API-style /health check, 'worker' for one-shot worker execution check"
+        required: false
+        type: string
+        default: "http"
+      worker_healthcheck_job_name:
+        description: "Worker job name to execute when healthcheck_strategy is worker"
+        required: false
+        type: string
+        default: "HealthCheck"
+      worker_healthcheck_run_mode:
+        description: "Worker run mode to execute when healthcheck_strategy is worker"
+        required: false
+        type: string
+        default: "Manual"
   
     secrets:
       AWS_ENV_REGION:
@@ -34,6 +49,8 @@ on:
         required: true
       AWS_ENV_ROLE:
         required: true
+      WORKER_HEALTHCHECK_CONNECTION_STRING:
+        required: false
 
 env:
   REPOSITORY: ${{ inputs.repository }}
@@ -119,16 +136,23 @@ jobs:
           labels: |
             org.opencontainers.image.licenses=OGL-UK-3.0
 
-      - name: Run container locally
+      - name: Build local image for healthcheck
         if: ${{ inputs.run_local_healthcheck }}
         env:
           IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
         run: |
           docker build -t $REPOSITORY:$IMAGE_TAG --file $DOCKERFILE_PATH .
+
+      - name: Run API container locally
+        if: ${{ inputs.run_local_healthcheck && inputs.healthcheck_strategy == 'http' }}
+        env:
+          IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
+        run: |
           echo "Running local image: $IMAGE_TAG"
-          docker run -d --name test-container -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local $REPOSITORY:$IMAGE_TAG
+          docker run -d --name test-container-http -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=local $REPOSITORY:$IMAGE_TAG
+
       - name: Wait for service to start
-        if: ${{ inputs.run_local_healthcheck }}
+        if: ${{ inputs.run_local_healthcheck && inputs.healthcheck_strategy == 'http' }}
         run: >
           echo "Waiting for the service to start..."
 
@@ -140,18 +164,63 @@ jobs:
               break
             fi
             echo "--- Last 5 log lines from container ---"
-            docker logs test-container --tail 5 || true
+            docker logs test-container-http --tail 5 || true
             echo "---------------------------------------"
             sleep 3
           done
+
       - name: Test application response
-        if: ${{ inputs.run_local_healthcheck }}
+        if: ${{ inputs.run_local_healthcheck && inputs.healthcheck_strategy == 'http' }}
         run: |
           curl -i http://localhost:8080/health
+
+      - name: Run worker healthcheck execution
+        if: ${{ inputs.run_local_healthcheck && inputs.healthcheck_strategy == 'worker' }}
+        env:
+          IMAGE_TAG: ${{ steps.imgtag.outputs.image_tag }}
+          WORKER_HEALTHCHECK_CONNECTION_STRING: ${{ secrets.WORKER_HEALTHCHECK_CONNECTION_STRING }}
+          WORKER_HEALTHCHECK_JOB_NAME: ${{ inputs.worker_healthcheck_job_name }}
+          WORKER_HEALTHCHECK_RUN_MODE: ${{ inputs.worker_healthcheck_run_mode }}
+        run: |
+          if [ -z "$WORKER_HEALTHCHECK_CONNECTION_STRING" ]; then
+            echo "WORKER_HEALTHCHECK_CONNECTION_STRING secret is required when healthcheck_strategy=worker"
+            exit 1
+          fi
+
+          JOB_EXEC_ID="$(cat /proc/sys/kernel/random/uuid)"
+          echo "Running worker healthcheck | JobName=$WORKER_HEALTHCHECK_JOB_NAME | RunMode=$WORKER_HEALTHCHECK_RUN_MODE | JobExecutionId=$JOB_EXEC_ID"
+
+          set +e
+          docker run --name test-container-worker \
+            -e ASPNETCORE_ENVIRONMENT=Production \
+            -e ConnectionStrings__FPSConnectionString="$WORKER_HEALTHCHECK_CONNECTION_STRING" \
+            -e BATCH_JOB_NAME="$WORKER_HEALTHCHECK_JOB_NAME" \
+            -e BATCH_RUN_MODE="$WORKER_HEALTHCHECK_RUN_MODE" \
+            -e BATCH_REQUESTED_BY="github-actions" \
+            -e BATCH_JOB_EXECUTION_ID="$JOB_EXEC_ID" \
+            $REPOSITORY:$IMAGE_TAG
+          container_exit_code=$?
+          set -e
+
+          echo "Worker container exit code: $container_exit_code"
+          docker logs test-container-worker --tail 100 || true
+
+          if [ "$container_exit_code" -ne 0 ]; then
+            echo "Worker healthcheck failed with non-zero exit code"
+            exit "$container_exit_code"
+          fi
+
+          if [ "$WORKER_HEALTHCHECK_JOB_NAME" = "HealthCheck" ]; then
+            if ! docker logs test-container-worker | grep -q "HealthCheck Job Completed Successfully"; then
+              echo "Worker healthcheck did not emit expected completion message"
+              exit 1
+            fi
+          fi
+
       - name: Cleanup container
         if: ${{ always() && inputs.run_local_healthcheck }}
         run: |
-          docker rm -f test-container
+          docker rm -f test-container-http test-container-worker 2>/dev/null || true
 
       - name: Build and push Docker image manually
         env:
