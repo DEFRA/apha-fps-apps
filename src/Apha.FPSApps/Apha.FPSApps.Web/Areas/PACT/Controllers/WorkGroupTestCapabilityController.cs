@@ -8,7 +8,6 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 
@@ -38,18 +37,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Displays the WorkGroup-focused Test Capability view.
         /// </summary>
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string workGroup = "")
         {
             var workGroupsResponse = await _workGroupService.GetAllWorkGroupsAsync();
 
             var viewModel = new WorkGroupTestCapabilityViewModel
             {
+                SelectedWorkGroup = workGroup,
                 TestCapabilityGrid = BuildEmptyTestCapabilityGrid(),
                 WorkGroupOptions = workGroupsResponse.Success && workGroupsResponse.Data != null
-                    ? workGroupsResponse.Data
-                        .Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName))
-                        .ToList()
-                    : new List<SelectListItem>()
+                    ? _mapper.Map<List<WorkGroup>>(workGroupsResponse.Data)
+                    : new List<WorkGroup>()
             };
 
             return View(viewModel);
