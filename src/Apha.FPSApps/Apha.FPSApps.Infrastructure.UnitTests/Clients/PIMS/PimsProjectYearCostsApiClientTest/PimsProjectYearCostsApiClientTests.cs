@@ -879,6 +879,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Null(result.Data);
+            Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("Failed to retrieve staff plans", result.Errors[0].Message);
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
@@ -901,6 +902,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Null(result.Data);
+            Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("Failed to retrieve staff plans", result.Errors[0].Message);
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
@@ -1128,6 +1130,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Null(result.Data);
+            Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("Failed to retrieve project year details", result.Errors[0].Message);
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
@@ -1150,6 +1153,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Null(result.Data);
+            Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("Failed to retrieve project year details", result.Errors[0].Message);
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
@@ -1380,6 +1384,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Null(result.Data);
+            Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("Failed to retrieve monthly pact data", result.Errors[0].Message);
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
@@ -1402,6 +1407,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectYearCost
             Assert.NotNull(result);
             Assert.False(result.Success);
             Assert.Null(result.Data);
+            Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("Failed to retrieve monthly pact data", result.Errors[0].Message);
             Assert.Equal("INTERNAL_ERROR", result.Errors[0].Code);
