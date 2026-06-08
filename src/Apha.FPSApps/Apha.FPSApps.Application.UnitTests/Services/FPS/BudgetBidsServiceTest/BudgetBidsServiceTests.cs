@@ -227,6 +227,17 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
 
         #endregion
 
+        #region Constructor Tests
+
+        [Fact]
+        public void Constructor_WithNullFpsClient_ThrowsArgumentNullException()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => new BudgetBidsService(null!));
+            Assert.Equal("fpsClient", ex.ParamName);
+        }
+
+        #endregion
+
         #region GetAccountCategoriesAsync Tests
 
         [Fact]

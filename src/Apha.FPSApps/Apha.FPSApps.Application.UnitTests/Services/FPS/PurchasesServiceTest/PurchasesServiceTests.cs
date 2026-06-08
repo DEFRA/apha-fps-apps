@@ -21,6 +21,17 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PurchasesServiceTest
             _sut = new PurchasesService(_fpsClient);
         }
 
+        #region Constructor Tests
+
+        [Fact]
+        public void Constructor_WithNullFpsClient_ThrowsArgumentNullException()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => new PurchasesService(null!));
+            Assert.Equal("fpsClient", ex.ParamName);
+        }
+
+        #endregion
+
         #region GetPurchasesAsync Tests
 
         [Fact]
