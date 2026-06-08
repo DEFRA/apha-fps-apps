@@ -1196,7 +1196,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     Customer = "DEFRA", ProjectStatus = "A", Disease = "D", Contract = "C", IncomeAccountCode = "IA"
                 }
             };
-            var repo = CreateRepository(projects: projects, fpsYear: 2024);
+            var repo = CreateRepository(projects: projects, projectLogs: new List<ProjectLog>(), fpsYear: 2024);
             var updated = new Project
             {
                 ParentProject = "PP001", ProjectTitle = "New Title", Program = "P002", Manager = "New Manager",
@@ -1297,7 +1297,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     Disease = "D", Contract = "C", IncomeAccountCode = "IA"
                 }
             };
-            var repo = CreateRepository(projects: projects, fpsYear: 2024);
+            var repo = CreateRepository(projects: projects, projectLogs: new List<ProjectLog>(), fpsYear: 2024);
             var updated = new Project
             {
                 ParentProject = "PP001", ProjectTitle = "Updated Title",
