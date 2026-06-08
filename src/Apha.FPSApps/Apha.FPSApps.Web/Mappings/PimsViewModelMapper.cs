@@ -20,6 +20,35 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ProjectDetailsViewModel, ProjectDetailDto>().ReverseMap();
             CreateMap<ProjectDetailsViewModel, ProposedProjectDto>().ReverseMap();
             CreateMap<ProjectCommentItem, CommentDto>().ReverseMap();
+            // Plan grid item — maps from plan fields on the shared DTO
+            CreateMap<AdditionalCostDto, AdditionalCostPlanItem>().ReverseMap();
+
+            // Actuals grid item — maps from actuals fields on the shared DTO
+            CreateMap<AdditionalCostDto, AdditionalCostActualItem>().ReverseMap();
+
+            // Animal Plan grid item
+            CreateMap<AnimalCostDto, AnimalCostPlanItem>().ReverseMap();
+
+            // Animal Actuals grid item
+            CreateMap<AnimalCostDto, AnimalCostActualItem>().ReverseMap();
+
+            // Test Plan grid item
+            CreateMap<TestCostDto, TestCostPlanItem>().ReverseMap();
+
+            // Test Actuals grid item
+            CreateMap<TestCostDto, TestCostActualItem>().ReverseMap();
+
+            // Staff Plan grid item
+            CreateMap<StaffCostDto, StaffCostPlanItem>().ReverseMap();
+
+            // Staff Actuals grid item
+            CreateMap<StaffCostDto, StaffCostActualItem>().ReverseMap();
+
+            // Pact Pay grid item
+            CreateMap<PactPayDto, PactPayItem>().ReverseMap();
+
+            // Monthly Pact Data grid item
+            CreateMap<MonthlyPactDto, MonthlyPactItem>().ReverseMap();
         }
     }
 }

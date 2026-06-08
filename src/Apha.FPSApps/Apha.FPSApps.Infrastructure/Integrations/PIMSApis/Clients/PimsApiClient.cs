@@ -10,6 +10,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
         public IPimsProjectDetailsApiClient PimsProjectDetails { get; }
         public IPimsProjectCommentApiClient PimsProjectComment { get; }
         public IPimsProposedProjectApiClient PimsProposedProject { get; }
+        public IPimsProjectYearCostsApiClient PimsProjectYearCosts { get; }
 
         public PimsApiClient(IPimsHttpExecutor http, IMapper mapper)
         {
@@ -17,6 +18,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             PimsProjectDetails = new PimsProjectDetailsApiClient(http, mapper);
             PimsProjectComment = new PimsProjectCommentApiClient(http, mapper);
             PimsProposedProject = new PimsProposedProjectApiClient(http, mapper);
+            PimsProjectYearCosts = new PimsProjectYearCostsApiClient(http, mapper);
         }
     }
 }
