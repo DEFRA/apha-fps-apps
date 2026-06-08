@@ -28,7 +28,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             RepositoryTestHelper.SetupDbSetOperations(proposedProjectsMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-            mockContext.Setup(x => x.ProjectRadtrackdata).Returns(radtrackDataMockSet.Object);
+            mockContext.Setup(x => x.ProjectRadTrackData).Returns(radtrackDataMockSet.Object);
             mockContext.Setup(x => x.Risks).Returns(risksMockSet.Object);
             mockContext.Setup(x => x.ProposedProjects).Returns(proposedProjectsMockSet.Object);
 
@@ -59,7 +59,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectDetailsRepositoryTest
             RepositoryTestHelper.SetupDbSetOperations(proposedProjectsMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-            mockContext.Setup(x => x.ProjectRadtrackdata).Returns(radtrackDataMockSet.Object);
+            mockContext.Setup(x => x.ProjectRadTrackData).Returns(radtrackDataMockSet.Object);
             mockContext.Setup(x => x.Risks).Returns(risksMockSet.Object);
             mockContext.Setup(x => x.ProposedProjects).Returns(proposedProjectsMockSet.Object);
 
