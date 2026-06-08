@@ -16,8 +16,8 @@
         // Wire up the searchable dropdown
         initWorkGroupDropdown();
 
-        // URL parameter takes priority; fall back to server-rendered value
-        var workgroupParam = getUrlParameter('workgroup') || serverWorkGroup || '';
+        // Use server-rendered value; the Razor Page already reads the query string server-side
+        var workgroupParam = serverWorkGroup || '';
 
         if (workgroupParam) {
             preselectWorkGroup(workgroupParam);
@@ -189,14 +189,6 @@
             url += '&workgroup=' + encodeURIComponent(workgroup);
         }
         window.fpsNavigateTo(url);
-    }
-
-    // ── URL Parameter Helper ──────────────────────────────────────────────
-    function getUrlParameter(name) {
-        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-        var results = regex.exec(location.search);
-        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
     }
 
     // ── Public API ────────────────────────────────────────────────────────
