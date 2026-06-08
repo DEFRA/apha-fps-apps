@@ -50,28 +50,34 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 .ToList();
 
             short resolvedYear = year ?? (short)(yearsTask.Result.Data?.Max(y => y.Value) ?? DateTime.Now.Year);
-            string resolvedProject = parentproject ?? projectOptions.FirstOrDefault()?.Value ?? string.Empty;
+                string resolvedProject = parentproject ?? projectOptions.FirstOrDefault()?.Value ?? string.Empty;
 
-            PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
+                PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
 
-            Task<DataGridConfig<AdditionalCostPlanItem>> plansGridTask =
-                    BuildAdditionalPlansGridAsync(resolvedProject, resolvedYear, defaultRequest);
-                Task<DataGridConfig<AdditionalCostActualItem>> actualsGridTask =
-                    BuildAdditionalActualsGridAsync(resolvedProject, resolvedYear, defaultRequest);
-                Task<DataGridConfig<AnimalCostPlanItem>> animalPlansGridTask =
-                    BuildAnimalPlansGridAsync(resolvedProject, resolvedYear, defaultRequest);
-                Task<DataGridConfig<AnimalCostActualItem>> animalActualsGridTask =
-                    BuildAnimalActualsGridAsync(resolvedProject, resolvedYear, defaultRequest);
-                Task<DataGridConfig<TestCostPlanItem>> testPlansGridTask =
-                    BuildTestPlansGridAsync(resolvedProject, resolvedYear, defaultRequest);
-                Task<DataGridConfig<TestCostActualItem>> testActualsGridTask =
-                    BuildTestActualsGridAsync(resolvedProject, resolvedYear, defaultRequest);
-                Task<DataGridConfig<StaffCostPlanItem>> staffPlansGridTask =
-                    BuildStaffPlansGridAsync(resolvedProject, resolvedYear, defaultRequest);
-                Task<DataGridConfig<StaffCostActualItem>> staffActualsGridTask =
-                    BuildStaffActualsGridAsync(resolvedProject, resolvedYear, defaultRequest);
+                // Only the first tab (Monthly Pact Data) is server-rendered with real data.
+                // All other tabs use empty grids and are lazy-loaded via JS on first tab click.
+                DataGridConfig<MonthlyPactItem> monthlyPactGrid =
+                    await BuildMonthlyPactGridAsync(resolvedProject, resolvedYear, defaultRequest);
 
-                // Plan tab grids — served with empty data; lazy-loaded on first tab click
+                // Empty grids — data loaded via AJAX when the respective tab is clicked
+                DataGridConfig<AdditionalCostPlanItem> plansGrid =
+                    BuildEmptyGrid<AdditionalCostPlanItem>("additionalPlansGrid", "Additional Cost", "AcctCode", "/PIMS/ProjectYearCosts/LoadAdditionalPlansGrid");
+                DataGridConfig<AdditionalCostActualItem> actualsGrid =
+                    BuildEmptyGrid<AdditionalCostActualItem>("additionalActualsGrid", "Additional Actuals", "AcctCode", "/PIMS/ProjectYearCosts/LoadAdditionalActualsGrid");
+                DataGridConfig<AnimalCostPlanItem> animalPlansGrid =
+                    BuildEmptyGrid<AnimalCostPlanItem>("animalPlansGrid", "Animal Plan", "AnimalType", "/PIMS/ProjectYearCosts/LoadAnimalPlansGrid");
+                DataGridConfig<AnimalCostActualItem> animalActualsGrid =
+                    BuildEmptyGrid<AnimalCostActualItem>("animalActualsGrid", "Animal Actuals", "AcctCode", "/PIMS/ProjectYearCosts/LoadAnimalActualsGrid");
+                DataGridConfig<TestCostPlanItem> testPlansGrid =
+                    BuildEmptyGrid<TestCostPlanItem>("testPlansGrid", "Test Plan", "TestCode", "/PIMS/ProjectYearCosts/LoadTestPlansGrid");
+                DataGridConfig<TestCostActualItem> testActualsGrid =
+                    BuildEmptyGrid<TestCostActualItem>("testActualsGrid", "Test Actuals", "TestCode", "/PIMS/ProjectYearCosts/LoadTestActualsGrid");
+                DataGridConfig<StaffCostPlanItem> staffPlansGrid =
+                    BuildEmptyGrid<StaffCostPlanItem>("staffPlansGrid", "Staff Plan", "WgGrade", "/PIMS/ProjectYearCosts/LoadStaffPlansGrid");
+                DataGridConfig<StaffCostActualItem> staffActualsGrid =
+                    BuildEmptyGrid<StaffCostActualItem>("staffActualsGrid", "Staff Actuals", "JobCode", "/PIMS/ProjectYearCosts/LoadStaffActualsGrid");
+
+                // Plan tab grids — lazy-loaded on first tab click
                 DataGridConfig<StaffCostPlanItem> planStaffGrid =
                     BuildEmptyGrid<StaffCostPlanItem>("planStaffGrid", "Staff Plan", "WgGrade", "/PIMS/ProjectYearCosts/LoadPlanStaffGrid");
                 DataGridConfig<TestCostPlanItem> planTestGrid =
@@ -85,34 +91,27 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 DataGridConfig<PactPayItem> pactPayGrid =
                     BuildEmptyGrid<PactPayItem>("pactPayGrid", "Pact Pay", "Month", "/PIMS/ProjectYearCosts/LoadPactPayGrid");
 
-                // Monthly Pact Data tab grid — lazy-loaded on first tab click
-                DataGridConfig<MonthlyPactItem> monthlyPactGrid =
-                    BuildEmptyGrid<MonthlyPactItem>("monthlyPactGrid", "Monthly Pact Data", "MonthNo", "/PIMS/ProjectYearCosts/LoadMonthlyPactGrid");
-
-                await Task.WhenAll(plansGridTask, actualsGridTask, animalPlansGridTask, animalActualsGridTask,
-                    testPlansGridTask, testActualsGridTask, staffPlansGridTask, staffActualsGridTask);
-
-            return View(new ProjectYearCostsViewModel
-            {
-                Parentproject = resolvedProject,
-                SelectedYear = resolvedYear,
-                ProjectOptions = projectOptions,
-                YearOptions = yearOptions,
-                AdditionalPlansGrid = plansGridTask.Result,
-                AdditionalActualsGrid = actualsGridTask.Result,
-                AnimalPlansGrid = animalPlansGridTask.Result,
-                AnimalActualsGrid = animalActualsGridTask.Result,
-                TestPlansGrid = testPlansGridTask.Result,
-                TestActualsGrid = testActualsGridTask.Result,
-                StaffPlansGrid = staffPlansGridTask.Result,
-                StaffActualsGrid = staffActualsGridTask.Result,
-                PlanStaffGrid = planStaffGrid,
-                PlanTestGrid = planTestGrid,
-                PlanAnimalGrid = planAnimalGrid,
-                PlanAdditionalGrid = planAdditionalGrid,
-                PactPayGrid = pactPayGrid,
-                MonthlyPactGrid = monthlyPactGrid
-            });
+                return View(new ProjectYearCostsViewModel
+                {
+                    Parentproject = resolvedProject,
+                    SelectedYear = resolvedYear,
+                    ProjectOptions = projectOptions,
+                    YearOptions = yearOptions,
+                    AdditionalPlansGrid = plansGrid,
+                    AdditionalActualsGrid = actualsGrid,
+                    AnimalPlansGrid = animalPlansGrid,
+                    AnimalActualsGrid = animalActualsGrid,
+                    TestPlansGrid = testPlansGrid,
+                    TestActualsGrid = testActualsGrid,
+                    StaffPlansGrid = staffPlansGrid,
+                    StaffActualsGrid = staffActualsGrid,
+                    PlanStaffGrid = planStaffGrid,
+                    PlanTestGrid = planTestGrid,
+                    PlanAnimalGrid = planAnimalGrid,
+                    PlanAdditionalGrid = planAdditionalGrid,
+                    PactPayGrid = pactPayGrid,
+                    MonthlyPactGrid = monthlyPactGrid
+                });
         }
 
         [HttpPost]
@@ -966,5 +965,60 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat
                     .GetAbbreviatedMonthName((int)monthno)
                 : monthno.ToString();
+
+        [HttpGet]
+        public async Task<IActionResult> GetPlanVsActualsTotals(string project, short year)
+        {
+            QueryParameters<string> allRecords = new() { Page = 1, PageSize = int.MaxValue };
+
+            Task<ApiResponseDto<List<StaffCostDto>>> staffPlansTask =
+                _yearCostsService.GetStaffPlansAsync(project, year, allRecords);
+            Task<ApiResponseDto<List<StaffCostDto>>> staffActualsTask =
+                _yearCostsService.GetStaffActualsAsync(project, year, allRecords);
+            Task<ApiResponseDto<List<TestCostDto>>> testPlansTask =
+                _yearCostsService.GetTestPlansAsync(project, year, allRecords);
+            Task<ApiResponseDto<List<TestCostDto>>> testActualsTask =
+                _yearCostsService.GetTestActualsAsync(project, year, allRecords);
+            Task<ApiResponseDto<List<AnimalCostDto>>> animalPlansTask =
+                _yearCostsService.GetAnimalPlansAsync(project, year, allRecords);
+            Task<ApiResponseDto<List<AnimalCostDto>>> animalActualsTask =
+                _yearCostsService.GetAnimalActualsAsync(project, year, allRecords);
+            Task<ApiResponseDto<List<AdditionalCostDto>>> additionalPlansTask =
+                _yearCostsService.GetAdditionalPlansAsync(project, year, allRecords);
+            Task<ApiResponseDto<List<AdditionalCostDto>>> additionalActualsTask =
+                _yearCostsService.GetAdditionalActualsAsync(project, year, allRecords);
+
+            await Task.WhenAll(staffPlansTask, staffActualsTask, testPlansTask, testActualsTask,
+                               animalPlansTask, animalActualsTask, additionalPlansTask, additionalActualsTask);
+
+            decimal staffPlansTotal        = (staffPlansTask.Result.Data        ?? []).Sum(x => x.Cost       ?? 0m);
+            decimal staffActualsTotal      = (staffActualsTask.Result.Data      ?? []).Sum(x => x.ActualCost ?? 0m);
+            decimal testPlansTotal         = (testPlansTask.Result.Data         ?? []).Sum(x => x.Cost       ?? 0m);
+            decimal testActualsTotal       = (testActualsTask.Result.Data       ?? []).Sum(x => x.Charge     ?? 0m);
+            decimal animalPlansTotal       = (animalPlansTask.Result.Data       ?? []).Sum(x => (decimal)(x.Cost ?? 0d));
+            decimal animalActualsTotal     = (animalActualsTask.Result.Data     ?? []).Sum(x => x.Amount     ?? 0m);
+            decimal additionalPlansTotal   = (additionalPlansTask.Result.Data   ?? []).Sum(x => x.ItemCost   ?? 0m);
+            decimal additionalActualsTotal = (additionalActualsTask.Result.Data ?? []).Sum(x => x.Amount     ?? 0m);
+
+            return Json(new
+            {
+                staffPlansTotal        = staffPlansTotal.ToString("C"),
+                staffActualsTotal      = staffActualsTotal.ToString("C"),
+                testPlansTotal         = testPlansTotal.ToString("C"),
+                testActualsTotal       = testActualsTotal.ToString("C"),
+                animalPlansTotal       = animalPlansTotal.ToString("C"),
+                animalActualsTotal     = animalActualsTotal.ToString("C"),
+                additionalPlansTotal   = additionalPlansTotal.ToString("C"),
+                additionalActualsTotal = additionalActualsTotal.ToString("C")
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportToExcel(string project, short year)
+        {
+            byte[] bytes = await _yearCostsService.ExportProjectYearCostsToExcelAsync(project, year);
+            string fileName = $"ProjectYearCosts_{project}_{year}.xlsx";
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
     }
 }

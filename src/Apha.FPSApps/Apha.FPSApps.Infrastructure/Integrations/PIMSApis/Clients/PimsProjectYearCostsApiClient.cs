@@ -282,5 +282,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public Task<byte[]> ExportProjectYearCostsToExcelAsync(string project, short year)
+        {
+            string url = string.Format(PimsApiEndpoints.ExportProjectYearCostsToExcel, project, year);
+            return _http.GetFileAsync(url);
+        }
     }
 }

@@ -50,5 +50,8 @@ namespace Apha.FPSApps.Application.Services.PIMS
 
         public async Task<ApiResponseDto<FpsYearTotalsDto>> GetFpsYearTotalsAsync(string project, short year)
             => await _client.PimsProjectYearCosts.GetFpsYearTotalsAsync(project, year);
+
+        public Task<byte[]> ExportProjectYearCostsToExcelAsync(string project, short year)
+            => _client.PimsProjectYearCosts.ExportProjectYearCostsToExcelAsync(project, year);
     }
 }

@@ -453,6 +453,10 @@
                                 <div id="@($"gridContainer_{Model.StaffPlansGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.StaffPlansGrid)
                                 </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="staffPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
                             </div>
                         </div>
 
@@ -461,6 +465,10 @@
                             <div class="sup_border govuk-!-padding-3">
                                 <div id="@($"gridContainer_{Model.StaffActualsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.StaffActualsGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="staffActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
                             </div>
                         </div>
@@ -478,6 +486,10 @@
                                 <div id="@($"gridContainer_{Model.TestPlansGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.TestPlansGrid)
                                 </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="testPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
                             </div>
                         </div>
 
@@ -486,6 +498,10 @@
                             <div class="sup_border govuk-!-padding-3">
                                 <div id="@($"gridContainer_{Model.TestActualsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.TestActualsGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="testActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
                             </div>
                         </div>
@@ -508,6 +524,10 @@
                                 <div id="@($"gridContainer_{Model.AnimalPlansGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.AnimalPlansGrid)
                                 </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="animalPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
                             </div>
                         </div>
 
@@ -516,6 +536,10 @@
                             <div class="sup_border govuk-!-padding-3">
                                 <div id="@($"gridContainer_{Model.AnimalActualsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.AnimalActualsGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="animalActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
                                 </div>
                             </div>
                         </div>
@@ -535,6 +559,10 @@
                                 <div id="@($"gridContainer_{Model.AdditionalPlansGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.AdditionalPlansGrid)
                                 </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="additionalCostPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
                             </div>
                         </div>
 
@@ -543,7 +571,11 @@
                             <div class="sup_border govuk-!-padding-3">
                                 <div id="@($"gridContainer_{Model.AdditionalActualsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.AdditionalActualsGrid)
-                                </div>                                
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="additionalActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
                             </div>
                         </div>
 
@@ -685,16 +717,35 @@
             });
     }
 
-    // Server-rendered tabs — mark as loaded so filter-change reloads them
+    function refreshPlanVsActualsTotals() {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) return;
+
+        $.get('/PIMS/ProjectYearCosts/GetPlanVsActualsTotals', { project: project, year: year })
+            .done(function (data) {
+                document.getElementById('staffPlansTotalDisplay').textContent        = data.staffPlansTotal;
+                document.getElementById('staffActualsTotalDisplay').textContent      = data.staffActualsTotal;
+                document.getElementById('testPlansTotalDisplay').textContent         = data.testPlansTotal;
+                document.getElementById('testActualsTotalDisplay').textContent       = data.testActualsTotal;
+                document.getElementById('animalPlansTotalDisplay').textContent       = data.animalPlansTotal;
+                document.getElementById('animalActualsTotalDisplay').textContent     = data.animalActualsTotal;
+                document.getElementById('additionalCostPlansTotalDisplay').textContent = data.additionalPlansTotal;
+                document.getElementById('additionalActualsTotalDisplay').textContent = data.additionalActualsTotal;
+            });
+    }
+
+    // Only the first tab (Monthly Pact Data) is server-rendered; all others are lazy-loaded.
+    // Tabs are marked true once visited so filter changes also refresh them.
     var loadedTabs = {
-        'nav-monthlyPact':     true,  
-        'nav-pact-pay':        true,  
-        'nav-project-details': true,   
-        'nav-plan':            true,   
-        'nav-staff-plan':      true,
-        'nav-test-plan':       true,
-        'nav-animal-plan':     true,
-        'nav-additional-cost': true
+        'nav-monthlyPact':     true,
+        'nav-pact-pay':        false,
+        'nav-project-details': false,
+        'nav-plan':            false,
+        'nav-staff-plan':      false,
+        'nav-test-plan':       false,
+        'nav-animal-plan':     false,
+        'nav-additional-cost': false
     };
     // ── Panel visibility ──────────────────────────────────────────────────
     function showPanel(panelId) {
@@ -770,21 +821,25 @@
             var actualsGm = getActualsGridManager();
             if (plansGm)   plansGm.reloadGrid({ page: 1 });
             if (actualsGm) actualsGm.reloadGrid({ page: 1 });
+            refreshPlanVsActualsTotals();
         } else if (tabId === 'nav-animal-plan') {
             var animalPlansGm   = getAnimalPlansGridManager();
             var animalActualsGm = getAnimalActualsGridManager();
             if (animalPlansGm)   animalPlansGm.reloadGrid({ page: 1 });
             if (animalActualsGm) animalActualsGm.reloadGrid({ page: 1 });
+            refreshPlanVsActualsTotals();
         } else if (tabId === 'nav-test-plan') {
             var testPlansGm   = getTestPlansGridManager();
             var testActualsGm = getTestActualsGridManager();
             if (testPlansGm)   testPlansGm.reloadGrid({ page: 1 });
             if (testActualsGm) testActualsGm.reloadGrid({ page: 1 });
+            refreshPlanVsActualsTotals();
         } else if (tabId === 'nav-staff-plan') {
             var staffPlansGm   = getStaffPlansGridManager();
             var staffActualsGm = getStaffActualsGridManager();
             if (staffPlansGm)   staffPlansGm.reloadGrid({ page: 1 });
             if (staffActualsGm) staffActualsGm.reloadGrid({ page: 1 });
+            refreshPlanVsActualsTotals();
         } else if (tabId === 'nav-pact-pay') {
             var pactPayGm = getPactPayGridManager();
             if (pactPayGm) pactPayGm.reloadGrid({ page: 1 });
@@ -842,5 +897,16 @@
 
     document.getElementById('dpprojectSelect').addEventListener('change', refreshActiveTab);
     document.getElementById('dpyear').addEventListener('change', refreshActiveTab);
+
+    document.getElementById('btnExport').addEventListener('click', function () {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) {
+            alert('Please select a project and year before exporting.');
+            return;
+        }
+        window.location.href = '/PIMS/ProjectYearCosts/ExportToExcel?project=' +
+            encodeURIComponent(project) + '&year=' + encodeURIComponent(year);
+    });
 </script>
 }

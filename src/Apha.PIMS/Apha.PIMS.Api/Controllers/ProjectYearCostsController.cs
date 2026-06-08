@@ -142,5 +142,13 @@ namespace Apha.PIMS.Api.Controllers
                 if (result == null) return NotFound();
                 return Ok(_mapper.Map<FpsYearTotalsRes>(result));
             }
+                /// <summary>Exports Staff, Test, Animal and Additional Cost plan vs actuals as an Excel workbook (8 sheets).</summary>
+                [HttpGet("{project}/{year}/export-excel")]
+                public async Task<IActionResult> ExportToExcel(string project, short year)
+                {
+                    byte[] bytes = await _service.ExportProjectYearCostsToExcelAsync(project, year);
+                    string fileName = $"ProjectYearCosts_{project}_{year}.xlsx";
+                    return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                }
+            }
         }
-    }

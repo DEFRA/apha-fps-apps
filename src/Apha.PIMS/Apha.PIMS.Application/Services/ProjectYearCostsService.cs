@@ -5,6 +5,7 @@ using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
 using AutoMapper;
+using ClosedXML.Excel;
 
 namespace Apha.PIMS.Application.Services
 {
@@ -158,6 +159,337 @@ namespace Apha.PIMS.Application.Services
         {
             PagedData<ProjectMonthFinal> paged = await _repository.GetMonthlyPactDataAsync(project, year, paging);
             return BuildResult(_mapper.Map<List<MonthlyPactDto>>(paged.Data), paged.PaginationData);
+        }
+
+        public async Task<byte[]> ExportProjectYearCostsToExcelAsync(string project, short year)
+        {
+            PaginationParameters<string> allRecords = new() { Page = 1, PageSize = int.MaxValue };
+
+            PagedData<ProjectStaffPlan> staffPlansTask = await _repository.GetStaffPlansAsync(project, year, allRecords);
+            PagedData<TimeCostCalcs> staffActualsTask = await _repository.GetStaffActualsAsync(project, year, allRecords);
+            PagedData<TestReqmt> testPlansTask = await _repository.GetTestPlansAsync(project, year, allRecords);
+            PagedData<(MonthlyOutput Output, TestReqmt Reqmt)> testActualsTask = await _repository.GetTestActualsAsync(project, year, allRecords);
+            PagedData<ProjectAnimalPlan> animalPlansTask = await _repository.GetAnimalPlansAsync(project, year, allRecords);
+            PagedData<ProjSubContract> animalActualsTask = await _repository.GetAnimalActualsAsync(project, year, allRecords);
+            PagedData<AdditionalCosts> additionalPlansTask = await _repository.GetAdditionalPlansAsync(project, year, allRecords);
+            PagedData<ProjSubContract> additionalActualsTask = await _repository.GetAdditionalActualsAsync(project, year, allRecords);
+
+            using var workbook = new XLWorkbook();
+
+            BuildStaffPlanSheet(workbook, staffPlansTask.Data.ToList());
+            BuildStaffActualsSheet(workbook, staffActualsTask.Data.ToList());
+            BuildTestPlanSheet(workbook, testPlansTask.Data.ToList());
+            BuildTestActualsSheet(workbook, testActualsTask.Data.ToList());
+            BuildAnimalPlanSheet(workbook, animalPlansTask.Data.ToList());
+            BuildAnimalActualsSheet(workbook, animalActualsTask.Data.ToList());
+            BuildAdditionalPlanSheet(workbook, additionalPlansTask.Data.ToList());
+            BuildAdditionalActualsSheet(workbook, additionalActualsTask.Data.ToList());
+
+            using var stream = new System.IO.MemoryStream();
+            workbook.SaveAs(stream);
+            return stream.ToArray();
+        }
+
+        private static void ApplyHeaderStyle(IXLCell cell)
+        {
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#1d70b8");
+            cell.Style.Font.FontColor = XLColor.White;
+        }
+
+        private static void ApplyTotalsRowStyle(IXLCell cell)
+        {
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#f3f2f1");
+        }
+
+        private static void BuildStaffPlanSheet(XLWorkbook wb, List<ProjectStaffPlan> data)
+        {
+            var ws = wb.Worksheets.Add("StaffPlan");
+            string[] headers = ["WG Grade", "Name", "Planned Hours", "Rate", "Cost"];
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(1, i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderStyle(cell);
+            }
+
+            int row = 2;
+            foreach (var s in data)
+            {
+                ws.Cell(row, 1).Value = s.Workgroupgrade;
+                ws.Cell(row, 2).Value = s.Name;
+                ws.Cell(row, 3).Value = s.Plannedhours ?? 0d;
+                ws.Cell(row, 4).Value = (double)(s.Rate ?? 0m);
+                ws.Cell(row, 5).Value = (double)(s.Cost ?? 0m);
+                row++;
+            }
+
+            decimal totalCost = data.Sum(x => x.Cost ?? 0m);
+            var totalLabelCell = ws.Cell(row, 4);
+            totalLabelCell.Value = "Total";
+            ApplyTotalsRowStyle(totalLabelCell);
+            var totalValCell = ws.Cell(row, 5);
+            totalValCell.Value = (double)totalCost;
+            ApplyTotalsRowStyle(totalValCell);
+
+            ws.Columns().AdjustToContents();
+        }
+
+        private static void BuildStaffActualsSheet(XLWorkbook wb, List<TimeCostCalcs> data)
+        {
+            var ws = wb.Worksheets.Add("StaffActuals");
+            string[] headers = ["Job Code", "Name", "Work Group", "Grade Code", "Month", "Time (hrs)", "Charge Rate", "Actual Cost"];
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(1, i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderStyle(cell);
+            }
+
+            int row = 2;
+            foreach (var s in data)
+            {
+                decimal actualCost = s.Time.HasValue && s.Chargerate.HasValue
+                    ? Math.Round((decimal)s.Time.Value * s.Chargerate.Value, 2)
+                    : 0m;
+                ws.Cell(row, 1).Value = s.Jobcode;
+                ws.Cell(row, 2).Value = s.Name;
+                ws.Cell(row, 3).Value = s.Workgroup;
+                ws.Cell(row, 4).Value = s.Gradecode;
+                ws.Cell(row, 5).Value = s.Month;
+                ws.Cell(row, 6).Value = s.Time ?? 0d;
+                ws.Cell(row, 7).Value = (double)(s.Chargerate ?? 0m);
+                ws.Cell(row, 8).Value = (double)actualCost;
+                row++;
+            }
+
+            decimal totalActualCost = data.Sum(s =>
+                s.Time.HasValue && s.Chargerate.HasValue
+                    ? Math.Round((decimal)s.Time.Value * s.Chargerate.Value, 2)
+                    : 0m);
+            var totalLabelCell = ws.Cell(row, 7);
+            totalLabelCell.Value = "Total";
+            ApplyTotalsRowStyle(totalLabelCell);
+            var totalValCell = ws.Cell(row, 8);
+            totalValCell.Value = (double)totalActualCost;
+            ApplyTotalsRowStyle(totalValCell);
+
+            ws.Columns().AdjustToContents();
+        }
+
+        private static void BuildTestPlanSheet(XLWorkbook wb, List<TestReqmt> data)
+        {
+            var ws = wb.Worksheets.Add("TestPlan");
+            string[] headers = ["Test Code", "Buyer", "Unit Price", "No. Required", "Cost"];
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(1, i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderStyle(cell);
+            }
+
+            int row = 2;
+            foreach (var t in data)
+            {
+                decimal cost = t.Norequired.HasValue && t.Unitprice.HasValue
+                    ? t.Unitprice.Value * (decimal)t.Norequired.Value
+                    : 0m;
+                ws.Cell(row, 1).Value = t.Testcode;
+                ws.Cell(row, 2).Value = t.Buyer;
+                ws.Cell(row, 3).Value = (double)(t.Unitprice ?? 0m);
+                ws.Cell(row, 4).Value = t.Norequired ?? 0d;
+                ws.Cell(row, 5).Value = (double)cost;
+                row++;
+            }
+
+            decimal totalCost = data.Sum(t =>
+                t.Norequired.HasValue && t.Unitprice.HasValue
+                    ? t.Unitprice.Value * (decimal)t.Norequired.Value
+                    : 0m);
+            var totalLabelCell = ws.Cell(row, 4);
+            totalLabelCell.Value = "Total";
+            ApplyTotalsRowStyle(totalLabelCell);
+            var totalValCell = ws.Cell(row, 5);
+            totalValCell.Value = (double)totalCost;
+            ApplyTotalsRowStyle(totalValCell);
+
+            ws.Columns().AdjustToContents();
+        }
+
+        private static void BuildTestActualsSheet(XLWorkbook wb, List<(MonthlyOutput Output, TestReqmt Reqmt)> data)
+        {
+            var ws = wb.Worksheets.Add("TestActuals");
+            string[] headers = ["Test Code", "Buyer", "Work Group", "Month", "Volume", "Unit Price", "Charge"];
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(1, i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderStyle(cell);
+            }
+
+            int row = 2;
+            foreach (var (o, r) in data)
+            {
+                decimal charge = o.Volume.HasValue && r.Unitprice.HasValue
+                    ? r.Unitprice.Value * (decimal)o.Volume.Value
+                    : 0m;
+                ws.Cell(row, 1).Value = o.Testcode;
+                ws.Cell(row, 2).Value = o.Buyer;
+                ws.Cell(row, 3).Value = o.Workgroup;
+                ws.Cell(row, 4).Value = o.Month;
+                ws.Cell(row, 5).Value = o.Volume ?? 0d;
+                ws.Cell(row, 6).Value = (double)(r.Unitprice ?? 0m);
+                ws.Cell(row, 7).Value = (double)charge;
+                row++;
+            }
+
+            decimal totalCharge = data.Sum(x =>
+                x.Output.Volume.HasValue && x.Reqmt.Unitprice.HasValue
+                    ? x.Reqmt.Unitprice.Value * (decimal)x.Output.Volume.Value
+                    : 0m);
+            var totalLabelCell = ws.Cell(row, 6);
+            totalLabelCell.Value = "Total";
+            ApplyTotalsRowStyle(totalLabelCell);
+            var totalValCell = ws.Cell(row, 7);
+            totalValCell.Value = (double)totalCharge;
+            ApplyTotalsRowStyle(totalValCell);
+
+            ws.Columns().AdjustToContents();
+        }
+
+        private static void BuildAnimalPlanSheet(XLWorkbook wb, List<ProjectAnimalPlan> data)
+        {
+            var ws = wb.Worksheets.Add("AnimalPlan");
+            string[] headers = ["Animal Type", "Number of Days", "Number of Animals", "Rate", "Cost"];
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(1, i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderStyle(cell);
+            }
+
+            int row = 2;
+            foreach (var a in data)
+            {
+                ws.Cell(row, 1).Value = a.Animaltype;
+                ws.Cell(row, 2).Value = a.Numberofdays ?? 0d;
+                ws.Cell(row, 3).Value = a.Numberofanimals ?? 0d;
+                ws.Cell(row, 4).Value = (double)(a.Rate ?? 0m);
+                ws.Cell(row, 5).Value = (double)(a.Cost ?? 0m);
+                row++;
+            }
+
+            decimal totalCost = data.Sum(x => x.Cost ?? 0m);
+            var totalLabelCell = ws.Cell(row, 4);
+            totalLabelCell.Value = "Total";
+            ApplyTotalsRowStyle(totalLabelCell);
+            var totalValCell = ws.Cell(row, 5);
+            totalValCell.Value = (double)totalCost;
+            ApplyTotalsRowStyle(totalValCell);
+
+            ws.Columns().AdjustToContents();
+        }
+
+        private static void BuildAnimalActualsSheet(XLWorkbook wb, List<ProjSubContract> data)
+        {
+            var ws = wb.Worksheets.Add("AnimalActuals");
+
+            string[] headers = ["Month", "Acct Code", "Description", "Daily Rate", "Animal Days", "Amount"];
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(1, i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderStyle(cell);
+            }
+
+            int row = 2;
+            foreach (var a in data)
+            {
+                ws.Cell(row, 1).Value = a.Month ?? 0d;
+                ws.Cell(row, 2).Value = a.Acctcode;
+                ws.Cell(row, 3).Value = a.Description;
+                ws.Cell(row, 4).Value = (double)(a.DailyRate ?? 0m);
+                ws.Cell(row, 5).Value = a.AnimalDays ?? 0;
+                ws.Cell(row, 6).Value = (double)(a.Amount ?? 0m);
+                row++;
+            }
+
+            decimal totalAmount = data.Sum(x => x.Amount ?? 0m);
+            var totalLabelCell = ws.Cell(row, 5);
+            totalLabelCell.Value = "Total";
+            ApplyTotalsRowStyle(totalLabelCell);
+            var totalValCell = ws.Cell(row, 6);
+            totalValCell.Value = (double)totalAmount;
+            ApplyTotalsRowStyle(totalValCell);
+
+            ws.Columns().AdjustToContents();
+        }
+
+        private static void BuildAdditionalPlanSheet(XLWorkbook wb, List<AdditionalCosts> data)
+        {
+            var ws = wb.Worksheets.Add("AdditionalPlan");
+            string[] headers = ["Job Code", "Account", "Description", "Item Cost"];
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(1, i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderStyle(cell);
+            }
+
+            int row = 2;
+            foreach (var a in data)
+            {
+                ws.Cell(row, 1).Value = a.Jobcode;
+                ws.Cell(row, 2).Value = a.Account;
+                ws.Cell(row, 3).Value = a.Description;
+                ws.Cell(row, 4).Value = (double)a.Itemcost;
+                row++;
+            }
+
+            decimal totalCost = data.Sum(x => x.Itemcost);
+            var totalLabelCell = ws.Cell(row, 3);
+            totalLabelCell.Value = "Total";
+            ApplyTotalsRowStyle(totalLabelCell);
+            var totalValCell = ws.Cell(row, 4);
+            totalValCell.Value = (double)totalCost;
+            ApplyTotalsRowStyle(totalValCell);
+
+            ws.Columns().AdjustToContents();
+        }
+
+        private static void BuildAdditionalActualsSheet(XLWorkbook wb, List<ProjSubContract> data)
+        {
+            var ws = wb.Worksheets.Add("AdditionalActuals");
+
+            string[] headers = ["Month", "Acct Code", "Description", "Supplier", "Amount"];
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(1, i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderStyle(cell);
+            }
+
+            int row = 2;
+            foreach (var a in data)
+            {
+                ws.Cell(row, 1).Value = a.Month ?? 0d;
+                ws.Cell(row, 2).Value = a.Acctcode;
+                ws.Cell(row, 3).Value = a.Description;
+                ws.Cell(row, 4).Value = a.Supplier;
+                ws.Cell(row, 5).Value = (double)(a.Amount ?? 0m);
+                row++;
+            }
+
+            decimal totalAmount = data.Sum(x => x.Amount ?? 0m);
+            var totalLabelCell = ws.Cell(row, 4);
+            totalLabelCell.Value = "Total";
+            ApplyTotalsRowStyle(totalLabelCell);
+            var totalValCell = ws.Cell(row, 5);
+            totalValCell.Value = (double)totalAmount;
+            ApplyTotalsRowStyle(totalValCell);
+
+            ws.Columns().AdjustToContents();
         }
     }
 }
