@@ -1,14 +1,7 @@
-// Release Summary Page JavaScript
-
-// ── Selectors ─────────────────────────────────────────────────────────────────
-// Note: setFinalSummaryRunUrl is initialised in the Razor view.
-// DO NOT redeclare it here - it is set via inline script in Index.cshtml
 
 var GRID_SELECTOR = '#gridContainer_releaseSummariesGrid';
 var ROW_SELECTOR = GRID_SELECTOR + ' tbody tr';
 var CHECKBOX_CLASS = '.grid-checkbox';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getGridRows() {
     return $(ROW_SELECTOR);
@@ -18,9 +11,6 @@ function getRowCheckbox($row) {
     return $row.find(CHECKBOX_CLASS);
 }
 
-/**
- * Returns the index of the last checked row, or -1 if none are checked.
- */
 function getLastCheckedIndex() {
     var lastCheckedIndex = -1;
     getGridRows().each(function (index) {
@@ -31,9 +21,6 @@ function getLastCheckedIndex() {
     return lastCheckedIndex;
 }
 
-/**
- * Returns the index of the last checked row, excluding the given row index.
- */
 function getLastCheckedIndexExcluding(excludeIndex) {
     var lastCheckedIndex = -1;
     getGridRows().each(function (index) {
@@ -101,8 +88,6 @@ function onSendEmailChange() {
         }
     });
 }
-
-// ── Event handler ─────────────────────────────────────────────────────────────
 
 function onCheckboxChange() {
     var $checkbox = $(this);
