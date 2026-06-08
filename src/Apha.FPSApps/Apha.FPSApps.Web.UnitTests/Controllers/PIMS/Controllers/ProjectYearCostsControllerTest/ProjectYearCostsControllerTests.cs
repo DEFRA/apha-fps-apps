@@ -100,7 +100,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
                 .Returns(OkListResponse<AdditionalCostDto>());
         }
 
-        private T? GetJsonProperty<T>(JsonResult result, string propertyName)
+        private static T? GetJsonProperty<T>(JsonResult result, string propertyName)
         {
             string serialized = System.Text.Json.JsonSerializer.Serialize(result.Value);
             using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(serialized);
@@ -1391,9 +1391,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
                 .Returns(new ApiResponseDto<ProjectYearDetailsDto> { Success = true, Data = dto });
 
             JsonResult result = Assert.IsType<JsonResult>(await _controller.GetProjectYearDetails("PP001", 2024));
-            Assert.Equal("PP001",      GetJsonProperty<string>(result, "parentproject"));
-            Assert.Equal("Manager A",  GetJsonProperty<string>(result, "manager"));
-            Assert.Equal("Disease A",  GetJsonProperty<string>(result, "disease"));
+            Assert.Equal("PP001", GetJsonProperty<string>(result, "parentproject"));
+            Assert.Equal("Manager A", GetJsonProperty<string>(result, "manager"));
+            Assert.Equal("Disease A", GetJsonProperty<string>(result, "disease"));
             Assert.Equal("Contract A", GetJsonProperty<string>(result, "contract"));
         }
 
@@ -1591,7 +1591,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
 
             JsonResult result = Assert.IsType<JsonResult>(await _controller.GetMonthlyPactTotals("PP001", 2024));
             Assert.Equal(300m.ToString("C"), GetJsonProperty<string>(result, "totalCost"));
-            Assert.Equal(8d.ToString("N2"),  GetJsonProperty<string>(result, "totalHours"));
+            Assert.Equal(8d.ToString("N2"), GetJsonProperty<string>(result, "totalHours"));
         }
 
         [Fact]
@@ -1602,8 +1602,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
                 .Returns(new ApiResponseDto<List<MonthlyPactDto>> { Success = true, Data = null });
 
             JsonResult result = Assert.IsType<JsonResult>(await _controller.GetMonthlyPactTotals("PP001", 2024));
-            Assert.Equal(0m.ToString("C"),  GetJsonProperty<string>(result, "totalNonAnimals"));
-            Assert.Equal(0m.ToString("C"),  GetJsonProperty<string>(result, "totalCost"));
+            Assert.Equal(0m.ToString("C"), GetJsonProperty<string>(result, "totalNonAnimals"));
+            Assert.Equal(0m.ToString("C"), GetJsonProperty<string>(result, "totalCost"));
             Assert.Equal(0d.ToString("N2"), GetJsonProperty<string>(result, "totalHours"));
         }
 
@@ -1746,7 +1746,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
                 await _controller.GetMonthlyPactFpsPlanned("PP001", 2024));
             Assert.Equal(0m.ToString("C"), GetJsonProperty<string>(result, "staffCosts"));
             Assert.Equal(0m.ToString("C"), GetJsonProperty<string>(result, "testCosts"));
-            Assert.Equal(string.Empty,     GetJsonProperty<string>(result, "totalCostPct"));
+            Assert.Equal(string.Empty, GetJsonProperty<string>(result, "totalCostPct"));
         }
 
         #endregion
