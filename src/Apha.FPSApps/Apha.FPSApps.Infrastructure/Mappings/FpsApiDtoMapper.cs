@@ -105,6 +105,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
 
+            CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
+
+            // WorkgroupGrade  
+            CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
+                      
+
             // Job Code (ZT lookup)
             CreateMap<FpsZtJobCodeDto, ZtJobCodeRes>().ReverseMap();
         }

@@ -29,6 +29,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<TestRequirementLog> TestRequirementLogs { get; set; }
         public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
         public virtual DbSet<MonthlyOutputLog> MonthlyOutputLogs { get; set; }
+        public virtual DbSet<MonthlyTimeLog> MonthlyTimeLogs { get; set; }
         public virtual DbSet<MonthlyTime> MonthlyTimes { get; set; }
         public virtual DbSet<MonthlyInvoicesSummary> MonthlyInvoicesSummary { get; set; }
         public virtual DbSet<MonthlySubContractsSummary> MonthlySubContractsSummary { get; set; }
@@ -42,6 +43,8 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<WorkGroupStaffView> PactStaffViews { get; set; }        
         public virtual DbSet<PactProfitCentreView> PactProfitCentreViews { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }        
+        public virtual DbSet<RecreateSummaryLog> RecreateSummaryLogs { get; set; }
+        public virtual DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -81,6 +84,9 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectSubContractMap());
             modelBuilder.Entity<ProjectSubContract>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new MonthlyTimeLogMap());
+            modelBuilder.Entity<MonthlyTimeLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
             modelBuilder.Entity<MonthlyTime>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -117,6 +123,11 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new PactProfitCentreViewMap());
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
+
+            modelBuilder.ApplyConfiguration(new UserMap());
+
+            modelBuilder.ApplyConfiguration(new RecreateSummaryLogMap());
+            modelBuilder.Entity<RecreateSummaryLog>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
         }
     }

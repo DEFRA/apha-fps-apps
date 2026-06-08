@@ -40,5 +40,8 @@ namespace Apha.FPS.Core.Interfaces
 
         /// <summary>Returns all ProfitCentre codes from tblkpprofitcentre for the current FPS year.</summary>
         Task<List<string>> GetAllProfitCentreCodesAsync();
+
+        /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
+        Task<List<string>> GetAllPcGradesAsync();
     }
 }

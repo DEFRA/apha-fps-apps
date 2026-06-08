@@ -537,5 +537,132 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestRequirement
         }
 
         #endregion
+
+        #region GetPagedBySupplierTestCodeAsync Tests
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_WithSuccessResponse_ReturnsMappedDtoList()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var responseItems = new List<TestSupplierViewRes>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ001", UnitPrice = 10m, NoRequired = 3, TestCost = 30m, ProjectStatus = "Active" },
+                new() { TestCode = "BLOOD", Buyer = "PRJ002", UnitPrice = 5m,  NoRequired = 2, TestCost = 10m, ProjectStatus = "Active" }
+            };
+            var apiResponse = new ApiResponse<List<TestSupplierViewRes>> { Success = true, Data = responseItems };
+            var expectedDto = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse(
+                new List<TestSupplierViewDto>
+                {
+                    new() { TestCode = "BLOOD", Buyer = "PRJ001", TestCost = 30m },
+                    new() { TestCode = "BLOOD", Buyer = "PRJ002", TestCost = 10m }
+                });
+
+            _http.GetAsync<List<TestSupplierViewRes>>(Arg.Is<string>(url =>
+                url.Contains("BLOOD") && url.Contains("showRejected=False")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TestSupplierViewDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_ShowRejectedTrue_IncludesFlagInUrl()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<TestSupplierViewRes>> { Success = true, Data = [] };
+            var expectedDto = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse([]);
+
+            _http.GetAsync<List<TestSupplierViewRes>>(Arg.Is<string>(url =>
+                url.Contains("showRejected=True")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TestSupplierViewDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: true);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _http.Received(1).GetAsync<List<TestSupplierViewRes>>(
+                Arg.Is<string>(url => url.Contains("showRejected=True")));
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<TestSupplierViewRes>> { Success = true, Data = [] };
+            var expectedDto = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse([]);
+
+            _http.GetAsync<List<TestSupplierViewRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TestSupplierViewDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string>();
+            var errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
+            var apiResponse = new ApiResponse<List<TestSupplierViewRes>> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<List<TestSupplierViewDto>>
+            {
+                Success = false,
+                Errors = [new() { Message = "Not Found", Code = "NOT_FOUND" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<TestSupplierViewRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TestSupplierViewDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_TestCodeIsEscaped_UrlContainsEscapedCode()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            const string testCodeWithSpace = "BLOOD TEST";
+            var apiResponse = new ApiResponse<List<TestSupplierViewRes>> { Success = true, Data = [] };
+            var expectedDto = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse([]);
+
+            _http.GetAsync<List<TestSupplierViewRes>>(Arg.Is<string>(url =>
+                url.Contains("BLOOD%20TEST")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TestSupplierViewDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetPagedBySupplierTestCodeAsync(query, testCodeWithSpace, showRejected: false);
+
+            // Assert
+            Assert.NotNull(result);
+            await _http.Received(1).GetAsync<List<TestSupplierViewRes>>(
+                Arg.Is<string>(url => url.Contains("BLOOD%20TEST")));
+        }
+
+        #endregion
     }
 }

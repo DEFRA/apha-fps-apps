@@ -217,6 +217,95 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestRequirementServic
 
         #endregion
 
+        #region GetPagedBySupplierTestCodeAsync
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_DelegatesToApiClient_ReturnsResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse(
+            [
+                new TestSupplierViewDto { TestCode = "BLOOD", Buyer = "PRJ1", TestCost = 30m },
+                new TestSupplierViewDto { TestCode = "BLOOD", Buyer = "PRJ2", TestCost = 10m }
+            ]);
+            _apiClient.GetPagedBySupplierTestCodeAsync(query, "BLOOD", false).Returns(expected);
+
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            Assert.Equal(expected, result);
+            await _apiClient.Received(1).GetPagedBySupplierTestCodeAsync(query, "BLOOD", false);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_ShowRejectedTrue_PassesFlagToApiClient()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse([]);
+            _apiClient.GetPagedBySupplierTestCodeAsync(query, "BLOOD", true).Returns(expected);
+
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: true);
+
+            Assert.Equal(expected, result);
+            await _apiClient.Received(1).GetPagedBySupplierTestCodeAsync(query, "BLOOD", true);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse([]);
+            _apiClient.GetPagedBySupplierTestCodeAsync(query, "BLOOD", false).Returns(expected);
+
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Code = "NOT_FOUND" } };
+            var expected = ApiResponseDto<List<TestSupplierViewDto>>.FailureResponse(errors, new ApiMetaDto());
+            _apiClient.GetPagedBySupplierTestCodeAsync(query, "MISSING", false).Returns(expected);
+
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, "MISSING", showRejected: false);
+
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCodeAsync_AllDtoPropertiesPopulated_ReturnsAllValues()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dto = new TestSupplierViewDto
+            {
+                TestCode = "BLOOD",
+                Buyer = "PRJ1",
+                ProjectManager = "PM001",
+                NoRequired = 5.0,
+                UnitPrice = 20.0m,
+                TestCost = 100.0m,
+                ProjectStatus = "Active"
+            };
+            var expected = ApiResponseDto<List<TestSupplierViewDto>>.SuccessResponse([dto]);
+            _apiClient.GetPagedBySupplierTestCodeAsync(query, "BLOOD", false).Returns(expected);
+
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", showRejected: false);
+
+            var item = result.Data!.Single();
+            Assert.Equal("BLOOD", item.TestCode);
+            Assert.Equal("PRJ1", item.Buyer);
+            Assert.Equal("PM001", item.ProjectManager);
+            Assert.Equal(5.0, item.NoRequired);
+            Assert.Equal(20.0m, item.UnitPrice);
+            Assert.Equal(100.0m, item.TestCost);
+            Assert.Equal("Active", item.ProjectStatus);
+        }
+
+        #endregion
+
         #region GetTestReqmtPricingAsync
 
         [Fact]
