@@ -14,35 +14,44 @@ namespace Apha.FPS.Application.Services
 
         public BudgetBidsService(IBudgetBidsRepository repository, IMapper mapper, IFpsRequestContext requestContext)
         {
-            _repository = repository;
-            _mapper = mapper;
+            _repository     = repository    ?? throw new ArgumentNullException(nameof(repository));
+            _mapper         = mapper        ?? throw new ArgumentNullException(nameof(mapper));
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
-        public async Task<List<BidViewDto>> GetBidViewAsync(string workgroup)
+        public Task<List<BidViewDto>> GetBidViewAsync(string workgroup)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(workgroup);
+            return GetBidViewAsyncCore(workgroup);
+        }
+
+        private async Task<List<BidViewDto>> GetBidViewAsyncCore(string workgroup)
+        {
             var entities = await _repository.GetBidViewAsync(workgroup);
             return _mapper.Map<List<BidViewDto>>(entities);
         }
 
-        public async Task<BidDto?> GetBidByIdAsync(string workgroupName, string account)
+        public async Task<BidDto?> GetBidByIdAsync(string WorkGroupName, string account)
         {
-            var entity = await _repository.GetBidByIdAsync(workgroupName, account);
+            var entity = await _repository.GetBidByIdAsync(WorkGroupName, account);
             return _mapper.Map<BidDto>(entity);
         }
 
-        public async Task<BidDto> AddBidAsync(BidDto bid)
+        public Task<BidDto> AddBidAsync(BidDto bid)
         {
             ArgumentNullException.ThrowIfNull(bid);
             ArgumentOutOfRangeException.ThrowIfNegative(bid.GenBid);
+            return AddBidAsyncCore(bid);
+        }
 
-            var isAuthorized = await _repository.IsAuthorizedAsync(bid.WorkgroupName);
+        private async Task<BidDto> AddBidAsyncCore(BidDto bid)
+        {
+            var isAuthorized = await _repository.IsAuthorizedAsync(bid.WorkGroupName);
             if (!isAuthorized)
                 throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{bid.WorkgroupName}'.");
+                    $"User does not have access to workgroup '{bid.WorkGroupName}'.");
 
-            var existing = await _repository.GetBidByIdAsync(bid.WorkgroupName, bid.Account);
+            var existing = await _repository.GetBidByIdAsync(bid.WorkGroupName, bid.Account);
             if (existing != null)
                 throw new InvalidOperationException("Account already exists.");
 
@@ -51,36 +60,44 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<BidDto>(result);
         }
 
-        public async Task<BidDto> UpdateBidAsync(BidDto bid)
+        public Task<BidDto> UpdateBidAsync(BidDto bid)
         {
             ArgumentNullException.ThrowIfNull(bid);
             ArgumentOutOfRangeException.ThrowIfNegative(bid.GenBid);
+            return UpdateBidAsyncCore(bid);
+        }
 
-            var isAuthorized = await _repository.IsAuthorizedAsync(bid.WorkgroupName);
+        private async Task<BidDto> UpdateBidAsyncCore(BidDto bid)
+        {
+            var isAuthorized = await _repository.IsAuthorizedAsync(bid.WorkGroupName);
             if (!isAuthorized)
                 throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{bid.WorkgroupName}'.");
+                    $"User does not have access to workgroup '{bid.WorkGroupName}'.");
 
-            var existing = await _repository.GetBidByIdAsync(bid.WorkgroupName, bid.Account);
+            var existing = await _repository.GetBidByIdAsync(bid.WorkGroupName, bid.Account);
             if (existing == null)
                 throw new InvalidOperationException(
-                    $"Bid with Workgroup '{bid.WorkgroupName}' and Account '{bid.Account}' was not found.");
+                    $"Bid with Workgroup '{bid.WorkGroupName}' and Account '{bid.Account}' was not found.");
 
             var entity = _mapper.Map<Bid>(bid);
             var result = await _repository.UpdateBidAsync(entity);
             return _mapper.Map<BidDto>(result);
         }
 
-        public async Task<bool> DeleteBidAsync(string workgroupName, string account)
+        public Task<bool> DeleteBidAsync(string WorkGroupName, string account)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(workgroupName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(WorkGroupName);
+            return DeleteBidAsyncCore(WorkGroupName, account);
+        }
 
-            var isAuthorized = await _repository.IsAuthorizedAsync(workgroupName);
+        private async Task<bool> DeleteBidAsyncCore(string WorkGroupName, string account)
+        {
+            var isAuthorized = await _repository.IsAuthorizedAsync(WorkGroupName);
             if (!isAuthorized)
                 throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{workgroupName}'.");
+                    $"User does not have access to workgroup '{WorkGroupName}'.");
 
-            return await _repository.DeleteBidAsync(workgroupName, account);
+            return await _repository.DeleteBidAsync(WorkGroupName, account);
         }
 
         public async Task<List<AccountCategoryDto>> GetAccountCategoriesAsync()

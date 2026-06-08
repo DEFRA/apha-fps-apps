@@ -22,9 +22,14 @@ namespace Apha.FPS.Application.Services
         public async Task<List<string>> GetAllWorkGroupNamesAsync()
             => await _repository.GetAllWorkGroupNamesAsync();
 
-        public async Task<List<WorkGroupViewDto>> GetWorkGroupsAsync(string profitCentre)
+        public Task<List<WorkGroupViewDto>> GetWorkGroupsAsync(string profitCentre)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentre);
+            return GetWorkGroupsAsyncCore(profitCentre);
+        }
+
+        private async Task<List<WorkGroupViewDto>> GetWorkGroupsAsyncCore(string profitCentre)
+        {
             var entities = await _repository.GetWorkGroupsByProfitCentreAsync(profitCentre);
             return _mapper.Map<List<WorkGroupViewDto>>(entities);
         }

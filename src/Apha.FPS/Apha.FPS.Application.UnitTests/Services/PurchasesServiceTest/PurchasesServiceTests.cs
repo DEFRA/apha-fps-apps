@@ -43,11 +43,11 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
             // Arrange
             var entities = new List<Purchase>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = 2024 }
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = 2024 }
             };
             var dtos = new List<PurchaseDto>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m }
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m }
             };
             _repository.GetPurchasesAsync("WG01", "ACC1").Returns(entities);
             _mapper.Map<List<PurchaseDto>>(entities).Returns(dtos);
@@ -95,8 +95,8 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         public async Task GetPurchaseByIdAsync_WithExistingPurchase_ReturnsMappedDto()
         {
             // Arrange
-            var entity = new Purchase { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = 2024 };
-            var dto    = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var entity = new Purchase { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = 2024 };
+            var dto    = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns(entity);
             _mapper.Map<PurchaseDto>(entity).Returns(dto);
 
@@ -130,10 +130,10 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         public async Task AddPurchaseAsync_WithAuthorizedUserAndNewItem_ReturnsMappedDto()
         {
             // Arrange
-            var dto     = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var entity  = new Purchase   { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var added   = new Purchase   { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = 2024 };
-            var resultDto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto     = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var entity  = new Purchase   { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var added   = new Purchase   { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = 2024 };
+            var resultDto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
 
             _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns((Purchase?)null);
@@ -158,7 +158,7 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         [Fact]
         public async Task AddPurchaseAsync_WithNegativeAmount_ThrowsArgumentOutOfRangeException()
         {
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = -1m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = -1m };
             await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _sut.AddPurchaseAsync(dto));
         }
 
@@ -166,7 +166,7 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         public async Task AddPurchaseAsync_WhenNotAuthorized_ThrowsUnauthorizedAccessException()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(false);
 
             // Act & Assert
@@ -177,8 +177,8 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         public async Task AddPurchaseAsync_WhenItemAlreadyExists_ThrowsInvalidOperationException()
         {
             // Arrange
-            var dto      = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var existing = new Purchase { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
+            var dto      = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var existing = new Purchase { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
             _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns(existing);
 
@@ -196,15 +196,15 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
             // Arrange
             var dto = new PurchaseDto
             {
-                WorkgroupName      = "WG01",
+                WorkGroupName      = "WG01",
                 Account            = "ACC1",
                 ItemDescription    = "Item B",
                 Amount             = 200m,
                 OldItemDescription = "Item A"
             };
-            var existing  = new Purchase { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
-            var updated   = new Purchase { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, FpsYear = 2024 };
-            var resultDto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var existing  = new Purchase { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
+            var updated   = new Purchase { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, FpsYear = 2024 };
+            var resultDto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
 
             _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns(existing);
@@ -225,15 +225,15 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
             // Arrange
             var dto = new PurchaseDto
             {
-                WorkgroupName      = "WG01",
+                WorkGroupName      = "WG01",
                 Account            = "ACC1",
                 ItemDescription    = "Item A",
                 Amount             = 200m,
                 OldItemDescription = null
             };
-            var existing  = new Purchase { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
-            var updated   = new Purchase { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 200m, FpsYear = 2024 };
-            var resultDto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 200m };
+            var existing  = new Purchase { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
+            var updated   = new Purchase { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 200m, FpsYear = 2024 };
+            var resultDto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 200m };
 
             _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns(existing);
@@ -256,7 +256,7 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         [Fact]
         public async Task UpdatePurchaseAsync_WithNegativeAmount_ThrowsArgumentOutOfRangeException()
         {
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = -1m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = -1m };
             await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _sut.UpdatePurchaseAsync(dto));
         }
 
@@ -264,7 +264,7 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         public async Task UpdatePurchaseAsync_WhenNotAuthorized_ThrowsUnauthorizedAccessException()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(false);
 
             // Act & Assert
@@ -275,7 +275,7 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         public async Task UpdatePurchaseAsync_WhenItemNotFound_ThrowsInvalidOperationException()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns((Purchase?)null);
 

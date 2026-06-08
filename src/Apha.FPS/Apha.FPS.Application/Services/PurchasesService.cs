@@ -14,81 +14,98 @@ namespace Apha.FPS.Application.Services
 
         public PurchasesService(IPurchasesRepository repository, IMapper mapper, IFpsRequestContext requestContext)
         {
-            _repository = repository;
-            _mapper = mapper;
+            _repository     = repository    ?? throw new ArgumentNullException(nameof(repository));
+            _mapper         = mapper        ?? throw new ArgumentNullException(nameof(mapper));
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
-        public async Task<List<PurchaseDto>> GetPurchasesAsync(string workgroupName, string account)
+        public Task<List<PurchaseDto>> GetPurchasesAsync(string WorkGroupName, string account)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(workgroupName);
-            var entities = await _repository.GetPurchasesAsync(workgroupName, account);
+            ArgumentException.ThrowIfNullOrWhiteSpace(WorkGroupName);
+            return GetPurchasesAsyncCore(WorkGroupName, account);
+        }
+
+        private async Task<List<PurchaseDto>> GetPurchasesAsyncCore(string WorkGroupName, string account)
+        {
+            var entities = await _repository.GetPurchasesAsync(WorkGroupName, account);
             return _mapper.Map<List<PurchaseDto>>(entities);
         }
 
-        public async Task<PurchaseDto?> GetPurchaseByIdAsync(string workgroupName, string account, string itemDescription)
+        public async Task<PurchaseDto?> GetPurchaseByIdAsync(string WorkGroupName, string account, string itemDescription)
         {
-            var entity = await _repository.GetPurchaseByIdAsync(workgroupName, account, itemDescription);
+            var entity = await _repository.GetPurchaseByIdAsync(WorkGroupName, account, itemDescription);
             return _mapper.Map<PurchaseDto>(entity);
         }
 
-        public async Task<PurchaseDto> AddPurchaseAsync(PurchaseDto purchase)
+        public Task<PurchaseDto> AddPurchaseAsync(PurchaseDto purchase)
         {
             ArgumentNullException.ThrowIfNull(purchase);
             ArgumentOutOfRangeException.ThrowIfNegative(purchase.Amount);
+            return AddPurchaseAsyncCore(purchase);
+        }
 
+        private async Task<PurchaseDto> AddPurchaseAsyncCore(PurchaseDto purchase)
+        {
             var isAuthorized = await _repository.IsAuthorizedAsync(
-                purchase.WorkgroupName, _requestContext.UserEmailId.ToLower());
+                purchase.WorkGroupName, _requestContext.UserEmailId.ToLower());
             if (!isAuthorized)
                 throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{purchase.WorkgroupName}'.");
+                    $"User does not have access to workgroup '{purchase.WorkGroupName}'.");
 
-            var existing = await _repository.GetPurchaseByIdAsync(purchase.WorkgroupName, purchase.Account, purchase.ItemDescription);
+            var existing = await _repository.GetPurchaseByIdAsync(purchase.WorkGroupName, purchase.Account, purchase.ItemDescription);
             if (existing != null)
                 throw new InvalidOperationException(
-                    $"A purchase with Workgroup '{purchase.WorkgroupName}', Account '{purchase.Account}' and Item Description '{purchase.ItemDescription}' already exists.");
+                    $"A purchase with Workgroup '{purchase.WorkGroupName}', Account '{purchase.Account}' and Item Description '{purchase.ItemDescription}' already exists.");
 
             var entity = _mapper.Map<Purchase>(purchase);
             var result = await _repository.AddPurchaseAsync(entity);
             return _mapper.Map<PurchaseDto>(result);
         }
 
-        public async Task<PurchaseDto> UpdatePurchaseAsync(PurchaseDto purchase)
+        public Task<PurchaseDto> UpdatePurchaseAsync(PurchaseDto purchase)
         {
             ArgumentNullException.ThrowIfNull(purchase);
             ArgumentOutOfRangeException.ThrowIfNegative(purchase.Amount);
+            return UpdatePurchaseAsyncCore(purchase);
+        }
 
+        private async Task<PurchaseDto> UpdatePurchaseAsyncCore(PurchaseDto purchase)
+        {
             var isAuthorized = await _repository.IsAuthorizedAsync(
-                purchase.WorkgroupName, _requestContext.UserEmailId.ToLower());
+                purchase.WorkGroupName, _requestContext.UserEmailId.ToLower());
             if (!isAuthorized)
                 throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{purchase.WorkgroupName}'.");
+                    $"User does not have access to workgroup '{purchase.WorkGroupName}'.");
 
             var existing = await _repository.GetPurchaseByIdAsync(
-                purchase.WorkgroupName, purchase.Account, purchase.OldItemDescription ?? purchase.ItemDescription);
+                purchase.WorkGroupName, purchase.Account, purchase.OldItemDescription ?? purchase.ItemDescription);
 
             if (existing == null)
                 throw new InvalidOperationException(
-                    $"Purchase with Workgroup '{purchase.WorkgroupName}', Account '{purchase.Account}' and Item Description '{purchase.OldItemDescription ?? purchase.ItemDescription}' was not found.");
+                    $"Purchase with Workgroup '{purchase.WorkGroupName}', Account '{purchase.Account}' and Item Description '{purchase.OldItemDescription ?? purchase.ItemDescription}' was not found.");
 
             var result = await _repository.UpdatePurchaseAsync(
-                purchase.WorkgroupName, purchase.Account,
+                purchase.WorkGroupName, purchase.Account,
                 purchase.OldItemDescription ?? purchase.ItemDescription,
                 purchase.ItemDescription, purchase.Amount);
             return _mapper.Map<PurchaseDto>(result);
         }
 
-        public async Task<bool> DeletePurchaseAsync(string workgroupName, string account, string itemDescription)
+        public Task<bool> DeletePurchaseAsync(string WorkGroupName, string account, string itemDescription)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(workgroupName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(WorkGroupName);
+            return DeletePurchaseAsyncCore(WorkGroupName, account, itemDescription);
+        }
 
+        private async Task<bool> DeletePurchaseAsyncCore(string WorkGroupName, string account, string itemDescription)
+        {
             var isAuthorized = await _repository.IsAuthorizedAsync(
-                workgroupName, _requestContext.UserEmailId.ToLower());
+                WorkGroupName, _requestContext.UserEmailId.ToLower());
             if (!isAuthorized)
                 throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{workgroupName}'.");
+                    $"User does not have access to workgroup '{WorkGroupName}'.");
 
-            return await _repository.DeletePurchaseAsync(workgroupName, account, itemDescription);
+            return await _repository.DeletePurchaseAsync(WorkGroupName, account, itemDescription);
         }
     }
 }

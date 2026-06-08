@@ -11,7 +11,7 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         public BudgetBidsService(IFpsApiClient fpsClient)
         {
-            _fpsClient = fpsClient;
+            _fpsClient = fpsClient ?? throw new ArgumentNullException(nameof(fpsClient));
         }
 
         public async Task<ApiResponseDto<List<BidViewDto>>> GetBidViewAsync(string workgroup)
@@ -19,9 +19,9 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsBudgetBids.GetBidViewAsync(workgroup);
         }
 
-        public async Task<ApiResponseDto<BidDto>> GetBidByIdAsync(string workgroupName, string account)
+        public async Task<ApiResponseDto<BidDto>> GetBidByIdAsync(string WorkGroupName, string account)
         {
-            return await _fpsClient.FpsBudgetBids.GetBidByIdAsync(workgroupName, account);
+            return await _fpsClient.FpsBudgetBids.GetBidByIdAsync(WorkGroupName, account);
         }
 
         public async Task<ApiResponseDto<BidDto>> CreateBidAsync(BidDto bid)

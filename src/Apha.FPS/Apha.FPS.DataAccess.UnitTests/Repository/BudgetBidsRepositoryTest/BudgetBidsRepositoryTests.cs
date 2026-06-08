@@ -67,7 +67,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             // Arrange
             var views = new List<WorkGroupView>
             {
-                new() { WorkgroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+                new() { WorkGroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(wgViews: views);
 
@@ -84,7 +84,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             // Arrange
             var views = new List<WorkGroupView>
             {
-                new() { WorkgroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+                new() { WorkGroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(wgViews: views);
 
@@ -96,29 +96,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
         }
 
         [Fact]
-        public async Task IsAuthorizedAsync_WithDifferentFpsYear_ReturnsFalse()
-        {
-            // Arrange
-            var views = new List<WorkGroupView>
-            {
-                new() { WorkgroupName = "WG01", FpsYear = DefaultFpsYear - 1, UserEmail = DefaultUserEmail }
-            };
-            var repo = CreateRepository(wgViews: views);
-
-            // Act
-            var result = await repo.IsAuthorizedAsync("WG01");
-
-            // Assert
-            Assert.False(result);
-        }
-
-        [Fact]
         public async Task IsAuthorizedAsync_WithNullUserEmail_ReturnsFalse()
         {
             // Arrange
             var views = new List<WorkGroupView>
             {
-                new() { WorkgroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = null }
+                new() { WorkGroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = null }
             };
             var repo = CreateRepository(wgViews: views);
 
@@ -152,8 +135,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             // Arrange
             var bidViews = new List<BidView>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG01", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(bidViews: bidViews);
 
@@ -171,8 +154,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             // Arrange
             var bidViews = new List<BidView>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG02", Account = "ACC1", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG02", Account = "ACC1", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(bidViews: bidViews);
 
@@ -181,26 +164,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
 
             // Assert
             Assert.Single(result);
-            Assert.Equal("WG01", result[0].WorkgroupName);
-        }
-
-        [Fact]
-        public async Task GetBidViewAsync_FiltersOutDifferentFpsYear()
-        {
-            // Arrange
-            var bidViews = new List<BidView>
-            {
-                new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear,     UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG01", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear - 1, UserEmail = DefaultUserEmail }
-            };
-            var repo = CreateRepository(bidViews: bidViews);
-
-            // Act
-            var result = await repo.GetBidViewAsync("WG01");
-
-            // Assert
-            Assert.Single(result);
-            Assert.Equal("ACC1", result[0].Account);
+            Assert.Equal("WG01", result[0].WorkGroupName);
         }
 
         [Fact]
@@ -209,8 +173,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             // Arrange
             var bidViews = new List<BidView>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG01", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = null }
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m, FpsYear = DefaultFpsYear, UserEmail = null }
             };
             var repo = CreateRepository(bidViews: bidViews);
 
@@ -227,8 +191,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             // Arrange
             var bidViews = new List<BidView>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(bidViews: bidViews);
 
@@ -262,7 +226,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             // Arrange
             var bids = new List<Bid>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear }
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear }
             };
             var repo = CreateRepository(bids: bids);
 
@@ -271,7 +235,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal("WG01", result.WorkgroupName);
+            Assert.Equal("WG01", result.WorkGroupName);
             Assert.Equal("ACC1", result.Account);
         }
 
@@ -281,29 +245,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             // Arrange
             var bids = new List<Bid>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear }
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear }
             };
             var repo = CreateRepository(bids: bids);
 
             // Act
             var result = await repo.GetBidByIdAsync("WG01", "NOTEXIST");
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public async Task GetBidByIdAsync_FiltersOutDifferentFpsYear()
-        {
-            // Arrange
-            var bids = new List<Bid>
-            {
-                new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m, FpsYear = DefaultFpsYear - 1 }
-            };
-            var repo = CreateRepository(bids: bids);
-
-            // Act
-            var result = await repo.GetBidByIdAsync("WG01", "ACC1");
 
             // Assert
             Assert.Null(result);

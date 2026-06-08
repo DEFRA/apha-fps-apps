@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupServiceTest
         #region GetAllWorkGroupNamesAsync Tests
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithSuccessResponse_ReturnsWorkgroupNames()
+        public async Task GetAllWorkGroupNamesAsync_WithSuccessResponse_ReturnsWorkGroupNames()
         {
             // Arrange
             var names            = new List<string> { "WG01", "WG02" };
@@ -53,7 +53,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupServiceTest
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        public async Task GetAllWorkGroupNamesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
         {
             // Arrange
             var expectedResponse = ApiResponseDto<List<string>>.SuccessResponse(new List<string>());
@@ -70,7 +70,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupServiceTest
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task GetAllWorkGroupNamesAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
@@ -95,7 +95,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupServiceTest
         public async Task GetWorkGroupsAsync_WithSuccessResponse_ReturnsWorkGroups()
         {
             // Arrange
-            var wgList = new List<WorkGroupViewDto> { new() { WorkgroupName = "WG01", ProfitCentre = "PC01" } };
+            var wgList = new List<WorkGroupViewDto> { new() { WorkGroupName = "WG01", ProfitCentre = "PC01" } };
             var expectedResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(wgList);
 
             _fpsWorkGroupApiClient.GetWorkGroupsAsync("PC01").Returns(expectedResponse);
@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupServiceTest
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            Assert.Equal("WG01", result.Data![0].WorkgroupName);
+            Assert.Equal("WG01", result.Data![0].WorkGroupName);
             await _fpsWorkGroupApiClient.Received(1).GetWorkGroupsAsync("PC01");
         }
 

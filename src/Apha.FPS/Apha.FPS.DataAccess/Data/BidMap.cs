@@ -8,11 +8,11 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<Bid> builder)
         {
-            builder.HasKey(e => new { e.WorkgroupName, e.Account, e.FpsYear }).HasName("pk_tblbid");
+            builder.HasKey(e => new { e.WorkGroupName, e.Account, e.FpsYear }).HasName("pk_tblbid");
 
             builder.ToTable("tblbid", "fps");
 
-            builder.Property(e => e.WorkgroupName)
+            builder.Property(e => e.WorkGroupName)
                 .HasMaxLength(50)
                 .HasColumnName("workgroup");
 

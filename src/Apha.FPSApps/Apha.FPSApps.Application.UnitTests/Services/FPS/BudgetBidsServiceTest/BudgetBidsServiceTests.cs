@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         public async Task GetBidViewAsync_WithSuccessResponse_ReturnsBidViews()
         {
             // Arrange
-            var bidList = new List<BidViewDto> { new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m } };
+            var bidList = new List<BidViewDto> { new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m } };
             var expectedResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
             _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(expectedResponse);
 
@@ -82,7 +82,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         public async Task GetBidByIdAsync_WithSuccessResponse_ReturnsBid()
         {
             // Arrange
-            var dto = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var dto = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
             var expectedResponse = ApiResponseDto<BidDto>.SuccessResponse(dto);
             _fpsBudgetBidsApiClient.GetBidByIdAsync("WG01", "ACC1").Returns(expectedResponse);
 
@@ -119,7 +119,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         public async Task CreateBidAsync_WithSuccessResponse_ReturnsBid()
         {
             // Arrange
-            var bidDto = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var bidDto = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
             var expectedResponse = ApiResponseDto<BidDto>.SuccessResponse(bidDto);
             _fpsBudgetBidsApiClient.CreateBidAsync(bidDto).Returns(expectedResponse);
 
@@ -136,7 +136,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         public async Task CreateBidAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            var bidDto = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var bidDto = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
             var errors = new List<ApiErrorDto> { new() { Message = "Already exists", Code = "CONFLICT" } };
             var expectedResponse = ApiResponseDto<BidDto>.FailureResponse(errors, new ApiMetaDto());
             _fpsBudgetBidsApiClient.CreateBidAsync(bidDto).Returns(expectedResponse);
@@ -157,7 +157,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         public async Task UpdateBidAsync_WithSuccessResponse_ReturnsBid()
         {
             // Arrange
-            var bidDto = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 200m };
+            var bidDto = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
             var expectedResponse = ApiResponseDto<BidDto>.SuccessResponse(bidDto);
             _fpsBudgetBidsApiClient.UpdateBidAsync(bidDto).Returns(expectedResponse);
 
@@ -174,7 +174,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         public async Task UpdateBidAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            var bidDto = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 200m };
+            var bidDto = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
             var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
             var expectedResponse = ApiResponseDto<BidDto>.FailureResponse(errors, new ApiMetaDto());
             _fpsBudgetBidsApiClient.UpdateBidAsync(bidDto).Returns(expectedResponse);
@@ -195,7 +195,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         public async Task DeleteBidAsync_WithSuccessResponse_ReturnsTrue()
         {
             // Arrange
-            var bidDto = new BidDto { WorkgroupName = "WG01", Account = "ACC1" };
+            var bidDto = new BidDto { WorkGroupName = "WG01", Account = "ACC1" };
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
             _fpsBudgetBidsApiClient.DeleteBidAsync(bidDto).Returns(expectedResponse);
 
@@ -212,7 +212,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         public async Task DeleteBidAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            var bidDto = new BidDto { WorkgroupName = "WG01", Account = "ACC1" };
+            var bidDto = new BidDto { WorkGroupName = "WG01", Account = "ACC1" };
             var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
             var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
             _fpsBudgetBidsApiClient.DeleteBidAsync(bidDto).Returns(expectedResponse);

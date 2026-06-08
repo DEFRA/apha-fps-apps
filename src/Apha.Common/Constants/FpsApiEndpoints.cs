@@ -185,14 +185,14 @@ namespace Apha.Common.Constants
         public const string GetBidByWorkgroupAccount = "api/v1/budgetbids/{0}/{1}";
         public const string CreateBudgetBid = "api/v1/budgetbids";
         public const string UpdateBudgetBid = "api/v1/budgetbids";
-        public const string DeleteBudgetBid = "api/v1/budgetbids?workgroupName={0}&account={1}";
+        public const string DeleteBudgetBid = "api/v1/budgetbids?WorkGroupName={0}&account={1}";
         public const string GetBudgetBidsAccounts = "api/v1/budgetbids/accounts";
 
         // Generic Bid — Purchases
-        public const string GetGenericPurchases = "api/v1/purchases?workgroupName={0}&account={1}";
+        public const string GetGenericPurchases = "api/v1/purchases?WorkGroupName={0}&account={1}";
         public const string GetPurchaseByKeys = "api/v1/purchases/{0}/{1}/{2}";
         public const string CreateGenericPurchase = "api/v1/purchases";
         public const string UpdateGenericPurchase = "api/v1/purchases";
-        public const string DeleteGenericPurchase = "api/v1/purchases?workgroupName={0}&account={1}&itemDescription={2}";
+        public const string DeleteGenericPurchase = "api/v1/purchases?WorkGroupName={0}&account={1}&itemDescription={2}";
     }
 }

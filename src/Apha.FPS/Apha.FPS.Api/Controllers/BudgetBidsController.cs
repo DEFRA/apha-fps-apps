@@ -39,10 +39,10 @@ namespace Apha.FPS.Api.Controllers
         /// <summary>
         /// Returns a single bid by workgroup name and account.
         /// </summary>
-        [HttpGet("{workgroupName}/{account}")]
-        public async Task<IActionResult> GetBidByIdAsync(string workgroupName, string account)
+        [HttpGet("{WorkGroupName}/{account}")]
+        public async Task<IActionResult> GetBidByIdAsync(string WorkGroupName, string account)
         {
-            var result = await _service.GetBidByIdAsync(workgroupName, account);
+            var result = await _service.GetBidByIdAsync(WorkGroupName, account);
             if (result == null)
                 throw new KeyNotFoundException("Data not found.");
             return Ok(_mapper.Map<BidRes>(result));
@@ -74,9 +74,9 @@ namespace Apha.FPS.Api.Controllers
         /// Deletes a bid record by workgroup name and account.
         /// </summary>
         [HttpDelete]
-        public async Task<IActionResult> DeleteBidAsync([FromQuery] string workgroupName, [FromQuery] string account)
+        public async Task<IActionResult> DeleteBidAsync([FromQuery] string WorkGroupName, [FromQuery] string account)
         {
-            var isDeleted = await _service.DeleteBidAsync(workgroupName, account);
+            var isDeleted = await _service.DeleteBidAsync(WorkGroupName, account);
             if (!isDeleted)
                 throw new KeyNotFoundException("Data not found.");
             return Ok(isDeleted);

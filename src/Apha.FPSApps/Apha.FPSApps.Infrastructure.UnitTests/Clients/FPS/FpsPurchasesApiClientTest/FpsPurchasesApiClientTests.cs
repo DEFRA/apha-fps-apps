@@ -29,11 +29,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsPurchasesApiClien
         public async Task GetPurchasesAsync_WithSuccessResponse_ReturnsPurchases()
         {
             // Arrange
-            var res = new List<PurchaseRes> { new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m } };
+            var res = new List<PurchaseRes> { new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m } };
             var apiResponse = new ApiResponse<List<PurchaseRes>> { Success = true, Data = res };
             var expectedDto = ApiResponseDto<List<PurchaseDto>>.SuccessResponse(new List<PurchaseDto>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m }
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m }
             });
 
             _http.GetAsync<List<PurchaseRes>>(Arg.Is<string>(url => url.Contains("purchases")))
@@ -104,10 +104,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsPurchasesApiClien
         public async Task GetPurchaseByIdAsync_WithSuccessResponse_ReturnsPurchase()
         {
             // Arrange
-            var res = new PurchaseRes { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var res = new PurchaseRes { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             var apiResponse = new ApiResponse<PurchaseRes> { Success = true, Data = res };
             var expectedDto = ApiResponseDto<PurchaseDto>.SuccessResponse(
-                new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m });
+                new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m });
 
             _http.GetAsync<PurchaseRes>(Arg.Is<string>(url => url.Contains("WG01") && url.Contains("ACC1") && url.Contains("Item")))
                 .Returns(apiResponse);
@@ -157,9 +157,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsPurchasesApiClien
         public async Task CreatePurchaseAsync_WithSuccessResponse_ReturnsPurchase()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var req = new PurchaseReq { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var res = new PurchaseRes { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var req = new PurchaseReq { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var res = new PurchaseRes { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             var apiResponse = new ApiResponse<PurchaseRes> { Success = true, Data = res };
             var expectedDto = ApiResponseDto<PurchaseDto>.SuccessResponse(dto);
 
@@ -179,8 +179,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsPurchasesApiClien
         public async Task CreatePurchaseAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var req = new PurchaseReq { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var req = new PurchaseReq { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             var apiResponse = new ApiResponse<PurchaseRes>
             {
                 Success = false,
@@ -213,9 +213,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsPurchasesApiClien
         public async Task UpdatePurchaseAsync_WithSuccessResponse_ReturnsPurchase()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, OldItemDescription = "Item A" };
-            var req = new PurchaseReq { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, OldItemDescription = "Item A" };
-            var res = new PurchaseRes { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, OldItemDescription = "Item A" };
+            var req = new PurchaseReq { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, OldItemDescription = "Item A" };
+            var res = new PurchaseRes { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
             var apiResponse = new ApiResponse<PurchaseRes> { Success = true, Data = res };
             var expectedDto = ApiResponseDto<PurchaseDto>.SuccessResponse(dto);
 
@@ -235,8 +235,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsPurchasesApiClien
         public async Task UpdatePurchaseAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
-            var req = new PurchaseReq { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var req = new PurchaseReq { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
             var apiResponse = new ApiResponse<PurchaseRes>
             {
                 Success = false,
@@ -269,7 +269,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsPurchasesApiClien
         public async Task DeletePurchaseAsync_WithSuccessResponse_ReturnsTrue()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
             var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
@@ -289,7 +289,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsPurchasesApiClien
         public async Task DeletePurchaseAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
             var apiResponse = new ApiResponse<bool?>
             {
                 Success = false,

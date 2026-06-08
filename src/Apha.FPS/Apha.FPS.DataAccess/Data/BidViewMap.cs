@@ -11,7 +11,7 @@ namespace Apha.FPS.DataAccess.Data
             builder.HasNoKey();
             builder.ToView("vtblbid", "fps");
 
-            builder.Property(e => e.WorkgroupName).HasColumnName("workgroup");
+            builder.Property(e => e.WorkGroupName).HasColumnName("workgroup");
             builder.Property(e => e.Account).HasColumnName("account");
             builder.Property(e => e.GenBid).HasColumnType("money").HasColumnName("genbid");
             builder.Property(e => e.FpsYear).HasColumnName("fpsyear");

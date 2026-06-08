@@ -11,7 +11,7 @@
 
     if (isBudgetBid)
     {
-        isEditMode  = !string.IsNullOrEmpty(bid!.WorkgroupName) && !string.IsNullOrEmpty(bid.Account);
+        isEditMode  = !string.IsNullOrEmpty(bid!.WorkGroupName) && !string.IsNullOrEmpty(bid.Account);
         title       = isEditMode ? "Update Budget Bid"  : "Add Budget Bid";
         formId      = isEditMode ? "formEditBudgetBid"  : "formAddBudgetBid";
         saveLabel   = isEditMode ? "Update"             : "Save";
@@ -19,7 +19,7 @@
     }
     else
     {
-        isEditMode  = !string.IsNullOrEmpty(purchase!.WorkgroupName)
+        isEditMode  = !string.IsNullOrEmpty(purchase!.WorkGroupName)
                    && !string.IsNullOrEmpty(purchase.Account)
                    && !string.IsNullOrEmpty(purchase.ItemDescription);
         title       = isEditMode ? "Update Purchase"   : "Add Purchase";
@@ -46,10 +46,10 @@
     @if (isBudgetBid)
     {
         <form id="@formId">
-            <input type="hidden" name="WorkgroupName" id="WorkgroupName" value="@bid!.WorkgroupName" />
+            <input type="hidden" name="WorkGroupName" id="WorkGroupName" value="@bid!.WorkGroupName" />
             <div class="govuk-form-group sup_margin_bottom_10">
                 <label class="govuk-label govuk-!-font-weight-bold">Work Group</label>
-                <input type="text" class="govuk-input govuk-!-font-size-16" value="@bid.WorkgroupName" readonly />
+                <input type="text" class="govuk-input govuk-!-font-size-16" value="@bid.WorkGroupName" readonly />
             </div>
             <div class="govuk-form-group sup_margin_bottom_10">
                 <label class="govuk-label govuk-!-font-weight-bold">Account <span class="sup_error_text_color">*</span></label>
@@ -187,7 +187,7 @@
     else
     {
         <form class="row" id="@formId">
-            <input type="hidden" name="WorkgroupName" id="WorkgroupName" value="@purchase!.WorkgroupName" />
+            <input type="hidden" name="WorkGroupName" id="WorkGroupName" value="@purchase!.WorkGroupName" />
             <input type="hidden" name="Account"       id="Account"       value="@purchase.Account" />
             @if (isEditMode)
             {
@@ -195,7 +195,7 @@
             }
             <div class="govuk-form-group sup_margin_bottom_10 col-12">
                 <label class="govuk-label govuk-!-font-weight-bold">Work Group</label>
-                <input type="text" class="govuk-input govuk-!-font-size-16" value="@purchase.WorkgroupName" readonly />
+                <input type="text" class="govuk-input govuk-!-font-size-16" value="@purchase.WorkGroupName" readonly />
             </div>
             <div class="govuk-form-group sup_margin_bottom_10 col-12">
                 <label class="govuk-label govuk-!-font-weight-bold">Account</label>

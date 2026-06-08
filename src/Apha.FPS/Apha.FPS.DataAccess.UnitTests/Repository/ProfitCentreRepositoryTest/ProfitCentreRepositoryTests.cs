@@ -542,7 +542,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         {
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC01" }
             };
             var repo = CreateRepository(profitCentres: [BuildEntity("PC01")], workgroups: workgroups);
             var result = await repo.HasLinkedWorkgroupsAsync("PC01");

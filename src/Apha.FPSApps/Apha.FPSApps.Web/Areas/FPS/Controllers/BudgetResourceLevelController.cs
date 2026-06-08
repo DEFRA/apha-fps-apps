@@ -102,7 +102,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 var response = await _workGroupService.GetWorkGroupsAsync(profitCentre);
                 if (response.Success && response.Data != null)
-                    allItems = response.Data.Select(d => new WorkGroupItem { WorkgroupName = d.WorkgroupName, WorkGroup = d.WorkgroupName }).ToList();
+                    allItems = response.Data.Select(d => new WorkGroupItem { WorkGroupName = d.WorkGroupName, WorkGroup = d.WorkGroupName }).ToList();
             }
 
             var totalRecords = allItems.Count;
@@ -116,7 +116,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Title             = "Work Groups",
                 ShowCheckboxColumn = false,
                 ShowPagination    = true,
-                KeyProperty       = "WorkgroupName",
+                KeyProperty       = "WorkGroupName",
                 AllowAdd          = false,
                 AddFunction       = null,
                 AllowEdit         = false,
@@ -124,7 +124,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowDelete       = false,
                 DeleteFunction    = null,
                 ExtraFilterMethod = "getWorkGroupExtraFilters",
-                BindGridUrl       = "/FPS/BudgetResourceLevel/LoadWorkGroupGrid",
+                BindGridUrl       = Url.Action(nameof(LoadWorkGroupGrid), "BudgetResourceLevel", new { area = "FPS" })!,
                 Data              = pagedItems,
                 Columns           = GridDataProvider.GetColumnsDefination<WorkGroupItem>(null),
                 Pagination        = new PaginationModel
@@ -159,7 +159,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
                     allItems = response.Data.Select(d => new BudgetResourceCentreLevelItem
                     {
-                        WorkgroupName = d.WorkgroupName,
+                        WorkGroupName = d.WorkGroupName,
                         Account       = d.Account,
                         GenBid        = d.GenBid,
                         AccountList   = accountList
@@ -186,7 +186,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowDelete       = true,
                 DeleteFunction    = "deleteBudgetBid",
                 ExtraFilterMethod = "getBudgetBidExtraFilters",
-                BindGridUrl       = "/FPS/BudgetResourceLevel/LoadBudgetBidsGrid",
+                BindGridUrl       = Url.Action(nameof(LoadBudgetBidsGrid), "BudgetResourceLevel", new { area = "FPS" })!,
                 Data              = pagedItems,
                 Columns           = GridDataProvider.GetColumnsDefination<BudgetResourceCentreLevelItem>(null),
                 Pagination        = new PaginationModel
@@ -214,7 +214,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     allItems = response.Data.Select(d => new PurchaseItem
                     {
-                        WorkgroupName   = d.WorkgroupName,
+                        WorkGroupName   = d.WorkGroupName,
                         Account         = d.Account,
                         ItemDescription = d.ItemDescription,
                         Amount          = d.Amount
@@ -241,7 +241,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowDelete       = true,
                 DeleteFunction    = "deletePurchase",
                 ExtraFilterMethod = "getPurchaseExtraFilters",
-                BindGridUrl       = "/FPS/BudgetResourceLevel/LoadPurchasesGrid",
+                BindGridUrl       = Url.Action(nameof(LoadPurchasesGrid), "BudgetResourceLevel", new { area = "FPS" })!,
                 Data              = pagedItems,
                 Columns           = GridDataProvider.GetColumnsDefination<PurchaseItem>(null),
                 Pagination        = new PaginationModel
@@ -259,9 +259,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // ─────────────── BUDGET BIDS CRUD ───────────────
 
         [HttpGet]
-        public async Task<IActionResult> CreateBudgetBid(string workgroupName)
+        public async Task<IActionResult> CreateBudgetBid(string WorkGroupName)
         {
-            var model = new BudgetResourceCentreLevelItem { WorkgroupName = workgroupName };
+            var model = new BudgetResourceCentreLevelItem { WorkGroupName = WorkGroupName };
             await PopulateBidDropdownsAsync(model);
             return PartialView("_AddEditBudgetResourceLevel", BudgetResourceLevelItem.ForBudgetBid(model));
         }
@@ -280,7 +280,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var dto = new BidDto { WorkgroupName = model.WorkgroupName, Account = model.Account, GenBid = model.GenBid };
+            var dto = new BidDto { WorkGroupName = model.WorkGroupName, Account = model.Account, GenBid = model.GenBid };
             var result = await _budgetBidsService.CreateBidAsync(dto);
 
             return result.Success
@@ -289,15 +289,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditBudgetBid(string workgroupName, string account)
+        public async Task<IActionResult> EditBudgetBid(string WorkGroupName, string account)
         {
-            var result = await _budgetBidsService.GetBidByIdAsync(workgroupName, account);
+            var result = await _budgetBidsService.GetBidByIdAsync(WorkGroupName, account);
             if (!result.Success || result.Data == null)
                 return Json(new { success = false, message = "Failed to retrieve bid details." });
 
             var model = new BudgetResourceCentreLevelItem
             {
-                WorkgroupName = result.Data.WorkgroupName,
+                WorkGroupName = result.Data.WorkGroupName,
                 Account       = result.Data.Account,
                 GenBid        = result.Data.GenBid
             };
@@ -319,7 +319,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var dto = new BidDto { WorkgroupName = model.WorkgroupName, Account = model.Account, GenBid = model.GenBid };
+            var dto = new BidDto { WorkGroupName = model.WorkGroupName, Account = model.Account, GenBid = model.GenBid };
             var result = await _budgetBidsService.UpdateBidAsync(dto);
 
             return result.Success
@@ -328,9 +328,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteBudgetBid(string workgroupName, string account)
+        public async Task<IActionResult> DeleteBudgetBid(string WorkGroupName, string account)
         {
-            var dto = new BidDto { WorkgroupName = workgroupName, Account = account };
+            var dto = new BidDto { WorkGroupName = WorkGroupName, Account = account };
             var result = await _budgetBidsService.DeleteBidAsync(dto);
 
             return result.Success
@@ -341,9 +341,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // ─────────────── PURCHASES CRUD ───────────────
 
         [HttpGet]
-        public IActionResult CreatePurchase(string workgroupName, string account)
+        public IActionResult CreatePurchase(string WorkGroupName, string account)
         {
-            var model = new PurchaseItem { WorkgroupName = workgroupName, Account = account };
+            var model = new PurchaseItem { WorkGroupName = WorkGroupName, Account = account };
             return PartialView("_AddEditBudgetResourceLevel", BudgetResourceLevelItem.ForPurchase(model));
         }
 
@@ -361,7 +361,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var dto = new PurchaseDto { WorkgroupName = model.WorkgroupName, Account = model.Account, ItemDescription = model.ItemDescription, Amount = model.Amount };
+            var dto = new PurchaseDto { WorkGroupName = model.WorkGroupName, Account = model.Account, ItemDescription = model.ItemDescription, Amount = model.Amount };
             var result = await _purchasesService.CreatePurchaseAsync(dto);
 
             return result.Success
@@ -370,15 +370,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditPurchase(string workgroupName, string account, string itemDescription)
+        public async Task<IActionResult> EditPurchase(string WorkGroupName, string account, string itemDescription)
         {
-            var result = await _purchasesService.GetPurchaseByIdAsync(workgroupName, account, itemDescription);
+            var result = await _purchasesService.GetPurchaseByIdAsync(WorkGroupName, account, itemDescription);
             if (!result.Success || result.Data == null)
                 return Json(new { success = false, message = "Failed to retrieve purchase details." });
 
             var model = new PurchaseItem
             {
-                WorkgroupName   = result.Data.WorkgroupName,
+                WorkGroupName   = result.Data.WorkGroupName,
                 Account         = result.Data.Account,
                 ItemDescription = result.Data.ItemDescription,
                 Amount          = result.Data.Amount
@@ -402,7 +402,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var dto = new PurchaseDto
             {
-                WorkgroupName      = model.WorkgroupName,
+                WorkGroupName      = model.WorkGroupName,
                 Account            = model.Account,
                 ItemDescription    = model.ItemDescription,
                 Amount             = model.Amount,
@@ -416,9 +416,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeletePurchase(string workgroupName, string account, string itemDescription)
+        public async Task<IActionResult> DeletePurchase(string WorkGroupName, string account, string itemDescription)
         {
-            var dto = new PurchaseDto { WorkgroupName = workgroupName, Account = account, ItemDescription = itemDescription };
+            var dto = new PurchaseDto { WorkGroupName = WorkGroupName, Account = account, ItemDescription = itemDescription };
             var result = await _purchasesService.DeletePurchaseAsync(dto);
 
             return result.Success
@@ -432,22 +432,39 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// Exports a crosstab (pivot) of all Budget Bids for the given profit centre to Excel.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> ExportToExcel(string profitCentre)
+        public async Task<IActionResult> ExportToExcel(string profitCentre, int year)
         {
-            // 1. Fetch all workgroups for the profit centre
             var wgResponse = await _workGroupService.GetWorkGroupsAsync(profitCentre);
             var workgroups = wgResponse.Success && wgResponse.Data != null
-                ? wgResponse.Data.Select(w => w.WorkgroupName).OrderBy(w => w).ToList()
+                ? wgResponse.Data.Select(w => w.WorkGroupName).OrderBy(w => w).ToList()
                 : new List<string>();
 
-            // 2. Fetch all account categories (all rows of the crosstab)
             var accountResponse = await _budgetBidsService.GetAccountCategoriesAsync();
             var accounts = accountResponse.Success && accountResponse.Data != null
                 ? accountResponse.Data.OrderBy(a => a.AccShortName).ToList()
                 : new List<AccountCategoryDto>();
 
-            // 3. Fetch all bids for every workgroup
-            //    pivot[account][workgroup] = GenBid
+            var pivot = await BuildPivotAsync(workgroups);
+
+            using var workbook = new XLWorkbook();
+            var ws = workbook.Worksheets.Add("BudgetBidsCrosstab");
+
+            WriteHeaderRow(ws, workgroups);
+            WriteDataRows(ws, accounts, pivot, workgroups);
+
+            ws.Columns().AdjustToContents();
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            stream.Position = 0;
+
+            return File(stream.ToArray(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"qryBidxCrosstab.xlsx");
+        }
+
+        private async Task<Dictionary<string, Dictionary<string, decimal>>> BuildPivotAsync(List<string> workgroups)
+        {
             var pivot = new Dictionary<string, Dictionary<string, decimal>>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var wg in workgroups)
@@ -462,34 +479,35 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                         wgDict = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
                         pivot[bid.Account] = wgDict;
                     }
-                    wgDict[bid.WorkgroupName] = bid.GenBid;
+                    wgDict[bid.WorkGroupName] = bid.GenBid;
                 }
             }
 
-            // 4. Build the workbook
-            using var workbook = new XLWorkbook();
-            var ws = workbook.Worksheets.Add("BudgetBidsCrosstab");
+            return pivot;
+        }
 
-            // ── Header row ──────────────────────────────────────────────────────
-            // Col 1: AccShortName  Col 2: Row Summary  Col 3: <>  Col 4+: each workgroup
-            int headerRow = 1;
-            ws.Cell(headerRow, 1).Value = "AccShortName";
-            ws.Cell(headerRow, 2).Value = "Row Summary";
-            ws.Cell(headerRow, 3).Value = "<>";
+        private static void WriteHeaderRow(IXLWorksheet ws, List<string> workgroups)
+        {
+            ws.Cell(1, 1).Value = "AccShortName";
+            ws.Cell(1, 2).Value = "Row Summary";
+            ws.Cell(1, 3).Value = "<>";
 
             for (int i = 0; i < workgroups.Count; i++)
-                ws.Cell(headerRow, 4 + i).Value = workgroups[i];
+                ws.Cell(1, 4 + i).Value = workgroups[i];
 
-            var headerRange = ws.Range(headerRow, 1, headerRow, 3 + workgroups.Count);
-            headerRange.Style.Font.Bold = true;
+            ws.Range(1, 1, 1, 3 + workgroups.Count).Style.Font.Bold = true;
+        }
 
-            // ── Data rows ────────────────────────────────────────────────────────
+        private static void WriteDataRows(
+            IXLWorksheet ws,
+            List<AccountCategoryDto> accounts,
+            Dictionary<string, Dictionary<string, decimal>> pivot,
+            List<string> workgroups)
+        {
             int dataRow = 2;
             foreach (var account in accounts)
             {
                 pivot.TryGetValue(account.AccShortName, out var wgValues);
-
-                // Row Summary = sum of all bids for this account across all workgroups
                 decimal rowSummary = wgValues?.Values.Sum() ?? 0m;
 
                 ws.Cell(dataRow, 1).Value = account.AccShortName;
@@ -499,8 +517,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     ws.Cell(dataRow, 2).Value = rowSummary;
                     ws.Cell(dataRow, 2).Style.NumberFormat.Format = "£#,##0.00;-£#,##0.00";
                 }
-
-                // Col 3 (<>) is intentionally blank (matches Access crosstab)
 
                 for (int i = 0; i < workgroups.Count; i++)
                 {
@@ -513,19 +529,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
                 dataRow++;
             }
-
-            // ── Auto-fit columns ─────────────────────────────────────────────────
-            ws.Columns().AdjustToContents();
-
-            // ── Stream to response ───────────────────────────────────────────────
-            using var stream = new MemoryStream();
-            workbook.SaveAs(stream);
-            stream.Position = 0;
-
-            var fileName = "qryBidxCrosstab.xlsx";
-            return File(stream.ToArray(),
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                fileName);
         }
 
         // ─────────────── HELPERS ───────────────

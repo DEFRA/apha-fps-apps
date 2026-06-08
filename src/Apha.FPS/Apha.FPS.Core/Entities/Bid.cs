@@ -2,7 +2,7 @@ namespace Apha.FPS.Core.Entities
 {
     public partial class Bid
     {
-        public string WorkgroupName { get; set; } = null!;
+        public string WorkGroupName { get; set; } = null!;
 
         public string Account { get; set; } = null!;
 

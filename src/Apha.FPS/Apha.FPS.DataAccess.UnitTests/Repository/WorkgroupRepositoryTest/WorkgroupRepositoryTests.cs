@@ -48,14 +48,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         #region GetAllWorkGroupNamesAsync Tests
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithData_ReturnsOrderedNames()
+        public async Task GetAllWorkGroupNamesAsync_WithData_ReturnsOrderedNames()
         {
             // Arrange
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG03", ProfitCentre = "PC01", FpsYear = 2024 },
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = 2024 },
-                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = 2024 }
+                new() { WorkGroupName = "WG03", ProfitCentre = "PC01", FpsYear = 2024 },
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = 2024 },
+                new() { WorkGroupName = "WG02", ProfitCentre = "PC01", FpsYear = 2024 }
             };
             var repo = CreateRepository(workgroups);
 
@@ -71,7 +71,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithEmptyRepository_ReturnsEmptyList()
+        public async Task GetAllWorkGroupNamesAsync_WithEmptyRepository_ReturnsEmptyList()
         {
             // Arrange
             var repo = CreateRepository(new List<Workgroup>());
@@ -85,12 +85,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithSingleWorkgroup_ReturnsSingleName()
+        public async Task GetAllWorkGroupNamesAsync_WithSingleWorkgroup_ReturnsSingleName()
         {
             // Arrange
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = 2024 }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = 2024 }
             };
             var repo = CreateRepository(workgroups);
 
@@ -112,9 +112,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             // Arrange
             var views = new List<WorkGroupView>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG03", ProfitCentre = "PC02", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG03", ProfitCentre = "PC02", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(wgViews: views);
 
@@ -128,32 +128,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupsByProfitCentreAsync_FiltersOutDifferentFpsYear()
-        {
-            // Arrange
-            var views = new List<WorkGroupView>
-            {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear,     UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear - 1, UserEmail = DefaultUserEmail }
-            };
-            var repo = CreateRepository(wgViews: views);
-
-            // Act
-            var result = await repo.GetWorkGroupsByProfitCentreAsync("PC01");
-
-            // Assert
-            Assert.Single(result);
-            Assert.Equal("WG01", result[0].WorkgroupName);
-        }
-
-        [Fact]
         public async Task GetWorkGroupsByProfitCentreAsync_FiltersOutDifferentUserEmail()
         {
             // Arrange
             var views = new List<WorkGroupView>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = "other@example.com" }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = "other@example.com" }
             };
             var repo = CreateRepository(wgViews: views);
 
@@ -162,7 +143,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
             // Assert
             Assert.Single(result);
-            Assert.Equal("WG01", result[0].WorkgroupName);
+            Assert.Equal("WG01", result[0].WorkGroupName);
         }
 
         [Fact]
@@ -171,8 +152,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             // Arrange
             var views = new List<WorkGroupView>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = null }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = null }
             };
             var repo = CreateRepository(wgViews: views);
 
@@ -181,7 +162,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
             // Assert
             Assert.Single(result);
-            Assert.Equal("WG01", result[0].WorkgroupName);
+            Assert.Equal("WG01", result[0].WorkGroupName);
         }
 
         [Fact]
@@ -190,7 +171,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             // Arrange
             var views = new List<WorkGroupView>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = "TEST@EXAMPLE.COM" }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = "TEST@EXAMPLE.COM" }
             };
             var repo = CreateRepository(wgViews: views, userEmail: "test@example.com");
 
@@ -202,14 +183,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         }
 
         [Fact]
-        public async Task GetWorkGroupsByProfitCentreAsync_ReturnsOrderedByWorkgroupName()
+        public async Task GetWorkGroupsByProfitCentreAsync_ReturnsOrderedByWorkGroupName()
         {
             // Arrange
             var views = new List<WorkGroupView>
             {
-                new() { WorkgroupName = "WG03", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
-                new() { WorkgroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+                new() { WorkGroupName = "WG03", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail },
+                new() { WorkGroupName = "WG02", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(wgViews: views);
 
@@ -217,9 +198,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var result = await repo.GetWorkGroupsByProfitCentreAsync("PC01");
 
             // Assert
-            Assert.Equal("WG01", result[0].WorkgroupName);
-            Assert.Equal("WG02", result[1].WorkgroupName);
-            Assert.Equal("WG03", result[2].WorkgroupName);
+            Assert.Equal("WG01", result[0].WorkGroupName);
+            Assert.Equal("WG02", result[1].WorkGroupName);
+            Assert.Equal("WG03", result[2].WorkGroupName);
         }
 
         [Fact]
@@ -228,7 +209,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             // Arrange
             var views = new List<WorkGroupView>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(wgViews: views);
 

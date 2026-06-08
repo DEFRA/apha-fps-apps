@@ -23,7 +23,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Workgroups
                 .AsNoTracking()
-                .Select(e => e.WorkgroupName)
+                .Select(e => e.WorkGroupName)
                 .OrderBy(x => x)
                 .ToListAsync();
         }
@@ -33,10 +33,9 @@ namespace Apha.FPS.DataAccess.Repositories
             return await _dbContext.WorkGroupViews
                 .AsNoTracking()
                 .Where(w => w.ProfitCentre == profitCentre
-                         && w.FpsYear == _requestContext.FpsYear
                          && w.UserEmail != null && w.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .Distinct()
-                .OrderBy(w => w.WorkgroupName)
+                .OrderBy(w => w.WorkGroupName)
                 .ToListAsync();
         }
     }

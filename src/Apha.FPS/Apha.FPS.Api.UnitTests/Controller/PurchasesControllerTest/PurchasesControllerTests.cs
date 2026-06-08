@@ -45,8 +45,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.PurchasesControllerTest
         public async Task GetPurchasesAsync_WithData_ReturnsOkWithMappedResults()
         {
             // Arrange
-            var dtos = new List<PurchaseDto> { new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m } };
-            var res  = new List<PurchaseRes> { new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m } };
+            var dtos = new List<PurchaseDto> { new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m } };
+            var res  = new List<PurchaseRes> { new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m } };
             _service.GetPurchasesAsync("WG01", "ACC1").Returns(dtos);
             _mapper.Map<List<PurchaseRes>>(dtos).Returns(res);
 
@@ -82,8 +82,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.PurchasesControllerTest
         public async Task GetPurchaseByIdAsync_WithExistingPurchase_ReturnsOk()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var res = new PurchaseRes { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var res = new PurchaseRes { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _service.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns(dto);
             _mapper.Map<PurchaseRes>(dto).Returns(res);
 
@@ -114,10 +114,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.PurchasesControllerTest
         public async Task AddPurchaseAsync_WithValidRequest_ReturnsOk()
         {
             // Arrange
-            var req       = new PurchaseReq { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var dto       = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var resultDto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = 2024 };
-            var res       = new PurchaseRes { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var req       = new PurchaseReq { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto       = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var resultDto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = 2024 };
+            var res       = new PurchaseRes { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
 
             _mapper.Map<PurchaseDto>(req).Returns(dto);
             _service.AddPurchaseAsync(dto).Returns(resultDto);
@@ -135,8 +135,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.PurchasesControllerTest
         public async Task AddPurchaseAsync_WhenItemAlreadyExists_PropagatesException()
         {
             // Arrange
-            var req = new PurchaseReq { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var req = new PurchaseReq { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _mapper.Map<PurchaseDto>(req).Returns(dto);
             _service.AddPurchaseAsync(dto).ThrowsAsync(new InvalidOperationException("Item already exists."));
 
@@ -148,8 +148,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.PurchasesControllerTest
         public async Task AddPurchaseAsync_WhenUnauthorized_PropagatesException()
         {
             // Arrange
-            var req = new PurchaseReq { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var req = new PurchaseReq { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _mapper.Map<PurchaseDto>(req).Returns(dto);
             _service.AddPurchaseAsync(dto).ThrowsAsync(new UnauthorizedAccessException("Not authorized."));
 
@@ -165,10 +165,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.PurchasesControllerTest
         public async Task UpdatePurchaseAsync_WithValidRequest_ReturnsOk()
         {
             // Arrange
-            var req       = new PurchaseReq { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, OldItemDescription = "Item A" };
-            var dto       = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, OldItemDescription = "Item A" };
-            var resultDto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
-            var res       = new PurchaseRes { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var req       = new PurchaseReq { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, OldItemDescription = "Item A" };
+            var dto       = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, OldItemDescription = "Item A" };
+            var resultDto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var res       = new PurchaseRes { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
 
             _mapper.Map<PurchaseDto>(req).Returns(dto);
             _service.UpdatePurchaseAsync(dto).Returns(resultDto);
@@ -186,8 +186,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.PurchasesControllerTest
         public async Task UpdatePurchaseAsync_WhenItemNotFound_PropagatesException()
         {
             // Arrange
-            var req = new PurchaseReq { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var req = new PurchaseReq { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
             _mapper.Map<PurchaseDto>(req).Returns(dto);
             _service.UpdatePurchaseAsync(dto).ThrowsAsync(new InvalidOperationException("Item not found."));
 

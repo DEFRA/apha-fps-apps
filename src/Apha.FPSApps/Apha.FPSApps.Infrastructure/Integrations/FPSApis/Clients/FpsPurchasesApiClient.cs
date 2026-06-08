@@ -15,13 +15,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public FpsPurchasesApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
-            _http = http;
-            _mapper = mapper;
+            _http   = http   ?? throw new ArgumentNullException(nameof(http));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<ApiResponseDto<List<PurchaseDto>>> GetPurchasesAsync(string workgroupName, string account)
+        public async Task<ApiResponseDto<List<PurchaseDto>>> GetPurchasesAsync(string WorkGroupName, string account)
         {
-            var response = await _http.GetAsync<List<PurchaseRes>>(string.Format(FpsApiEndpoints.GetGenericPurchases, workgroupName, account));
+            var response = await _http.GetAsync<List<PurchaseRes>>(string.Format(FpsApiEndpoints.GetGenericPurchases, WorkGroupName, account));
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<PurchaseDto>>>(response);
@@ -30,9 +30,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<PurchaseDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<PurchaseDto>> GetPurchaseByIdAsync(string workgroupName, string account, string itemDescription)
+        public async Task<ApiResponseDto<PurchaseDto>> GetPurchaseByIdAsync(string WorkGroupName, string account, string itemDescription)
         {
-            var response = await _http.GetAsync<PurchaseRes>(string.Format(FpsApiEndpoints.GetPurchaseByKeys, workgroupName, account, itemDescription));
+            var response = await _http.GetAsync<PurchaseRes>(string.Format(FpsApiEndpoints.GetPurchaseByKeys, WorkGroupName, account, itemDescription));
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<PurchaseDto>>(response);
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<bool>> DeletePurchaseAsync(PurchaseDto purchase)
         {
-            var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteGenericPurchase, purchase.WorkgroupName, purchase.Account, purchase.ItemDescription));
+            var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteGenericPurchase, purchase.WorkGroupName, purchase.Account, purchase.ItemDescription));
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);

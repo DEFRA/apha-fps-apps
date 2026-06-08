@@ -30,19 +30,19 @@ namespace Apha.FPS.Api.Controllers
         /// Returns purchases for a given workgroup and account.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetPurchasesAsync([FromQuery] string workgroupName, [FromQuery] string account)
+        public async Task<IActionResult> GetPurchasesAsync([FromQuery] string WorkGroupName, [FromQuery] string account)
         {
-            var result = await _service.GetPurchasesAsync(workgroupName, account);
+            var result = await _service.GetPurchasesAsync(WorkGroupName, account);
             return Ok(_mapper.Map<List<PurchaseRes>>(result));
         }
 
         /// <summary>
         /// Returns a single purchase by workgroup name, account and item description.
         /// </summary>
-        [HttpGet("{workgroupName}/{account}/{itemDescription}")]
-        public async Task<IActionResult> GetPurchaseByIdAsync(string workgroupName, string account, string itemDescription)
+        [HttpGet("{WorkGroupName}/{account}/{itemDescription}")]
+        public async Task<IActionResult> GetPurchaseByIdAsync(string WorkGroupName, string account, string itemDescription)
         {
-            var result = await _service.GetPurchaseByIdAsync(workgroupName, account, itemDescription);
+            var result = await _service.GetPurchaseByIdAsync(WorkGroupName, account, itemDescription);
             if (result == null)
                 throw new KeyNotFoundException("Data not found.");
             return Ok(_mapper.Map<PurchaseRes>(result));
@@ -74,9 +74,9 @@ namespace Apha.FPS.Api.Controllers
         /// Deletes a purchase record.
         /// </summary>
         [HttpDelete]
-        public async Task<IActionResult> DeletePurchaseAsync([FromQuery] string workgroupName, [FromQuery] string account, [FromQuery] string itemDescription)
+        public async Task<IActionResult> DeletePurchaseAsync([FromQuery] string WorkGroupName, [FromQuery] string account, [FromQuery] string itemDescription)
         {
-            var isDeleted = await _service.DeletePurchaseAsync(workgroupName, account, itemDescription);
+            var isDeleted = await _service.DeletePurchaseAsync(WorkGroupName, account, itemDescription);
             if (!isDeleted)
                 throw new KeyNotFoundException("Data not found.");
             return Ok(isDeleted);

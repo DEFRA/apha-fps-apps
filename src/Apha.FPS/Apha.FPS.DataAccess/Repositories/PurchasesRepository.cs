@@ -14,34 +14,31 @@ namespace Apha.FPS.DataAccess.Repositories
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
-        public async Task<bool> IsAuthorizedAsync(string workgroupName, string userEmail)
+        public async Task<bool> IsAuthorizedAsync(string WorkGroupName, string userEmail)
         {
             return await _context.BidViews
-                .AnyAsync(b => b.WorkgroupName == workgroupName
-                            && b.FpsYear == _requestContext.FpsYear
+                .AnyAsync(b => b.WorkGroupName == WorkGroupName
                             && b.UserEmail != null
                             && b.UserEmail.ToLower() == userEmail);
         }
 
-        public async Task<List<Purchase>> GetPurchasesAsync(string workgroupName, string account)
+        public async Task<List<Purchase>> GetPurchasesAsync(string WorkGroupName, string account)
         {
             return await _context.Purchases
                 .AsNoTracking()
-                .Where(p => p.WorkgroupName == workgroupName
-                         && p.Account == account
-                         && p.FpsYear == _requestContext.FpsYear)
+                .Where(p => p.WorkGroupName == WorkGroupName
+                         && p.Account == account)
                 .OrderBy(p => p.ItemDescription)
                 .ToListAsync();
         }
 
-        public async Task<Purchase?> GetPurchaseByIdAsync(string workgroupName, string account, string itemDescription)
+        public async Task<Purchase?> GetPurchaseByIdAsync(string WorkGroupName, string account, string itemDescription)
         {
             return await _context.Purchases
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.WorkgroupName == workgroupName
+                .FirstOrDefaultAsync(p => p.WorkGroupName == WorkGroupName
                     && p.Account == account
-                    && p.ItemDescription == itemDescription
-                    && p.FpsYear == _requestContext.FpsYear);
+                    && p.ItemDescription == itemDescription);
         }
 
         public async Task<Purchase> AddPurchaseAsync(Purchase purchase)
@@ -67,7 +64,7 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<Purchase> UpdatePurchaseAsync(string workgroupName, string account, string itemDescriptionOld, string itemDescriptionNew, decimal amount)
+        public async Task<Purchase> UpdatePurchaseAsync(string WorkGroupName, string account, string itemDescriptionOld, string itemDescriptionNew, decimal amount)
         {
             var strategy = _context.Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
@@ -76,10 +73,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 try
                 {
                     var existing = await _context.Purchases
-                        .FirstOrDefaultAsync(p => p.WorkgroupName == workgroupName
+                        .FirstOrDefaultAsync(p => p.WorkGroupName == WorkGroupName
                             && p.Account == account
-                            && p.ItemDescription == itemDescriptionOld
-                            && p.FpsYear == _requestContext.FpsYear);
+                            && p.ItemDescription == itemDescriptionOld);
 
                     existing!.ItemDescription = itemDescriptionNew;
                     existing.Amount = amount;
@@ -96,13 +92,12 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<bool> DeletePurchaseAsync(string workgroupName, string account, string itemDescription)
+        public async Task<bool> DeletePurchaseAsync(string WorkGroupName, string account, string itemDescription)
         {
             var entity = await _context.Purchases
-                .FirstOrDefaultAsync(p => p.WorkgroupName == workgroupName
+                .FirstOrDefaultAsync(p => p.WorkGroupName == WorkGroupName
                     && p.Account == account
-                    && p.ItemDescription == itemDescription
-                    && p.FpsYear == _requestContext.FpsYear);
+                    && p.ItemDescription == itemDescription);
 
             if (entity == null)
                 return false;

@@ -11,17 +11,17 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         public PurchasesService(IFpsApiClient fpsClient)
         {
-            _fpsClient = fpsClient;
+            _fpsClient = fpsClient ?? throw new ArgumentNullException(nameof(fpsClient));
         }
 
-        public async Task<ApiResponseDto<List<PurchaseDto>>> GetPurchasesAsync(string workgroupName, string account)
+        public async Task<ApiResponseDto<List<PurchaseDto>>> GetPurchasesAsync(string WorkGroupName, string account)
         {
-            return await _fpsClient.FpsPurchases.GetPurchasesAsync(workgroupName, account);
+            return await _fpsClient.FpsPurchases.GetPurchasesAsync(WorkGroupName, account);
         }
 
-        public async Task<ApiResponseDto<PurchaseDto>> GetPurchaseByIdAsync(string workgroupName, string account, string itemDescription)
+        public async Task<ApiResponseDto<PurchaseDto>> GetPurchaseByIdAsync(string WorkGroupName, string account, string itemDescription)
         {
-            return await _fpsClient.FpsPurchases.GetPurchaseByIdAsync(workgroupName, account, itemDescription);
+            return await _fpsClient.FpsPurchases.GetPurchaseByIdAsync(WorkGroupName, account, itemDescription);
         }
 
         public async Task<ApiResponseDto<PurchaseDto>> CreatePurchaseAsync(PurchaseDto purchase)

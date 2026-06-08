@@ -59,7 +59,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.PurchasesRepositoryTest
             // Arrange
             var bidViews = new List<BidView>
             {
-                new() { WorkgroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+                new() { WorkGroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(bidViews: bidViews);
 
@@ -76,7 +76,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.PurchasesRepositoryTest
             // Arrange
             var bidViews = new List<BidView>
             {
-                new() { WorkgroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
+                new() { WorkGroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
             };
             var repo = CreateRepository(bidViews: bidViews);
 
@@ -88,29 +88,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.PurchasesRepositoryTest
         }
 
         [Fact]
-        public async Task IsAuthorizedAsync_WithDifferentFpsYear_ReturnsFalse()
-        {
-            // Arrange
-            var bidViews = new List<BidView>
-            {
-                new() { WorkgroupName = "WG01", FpsYear = DefaultFpsYear - 1, UserEmail = DefaultUserEmail }
-            };
-            var repo = CreateRepository(bidViews: bidViews);
-
-            // Act
-            var result = await repo.IsAuthorizedAsync("WG01", DefaultUserEmail);
-
-            // Assert
-            Assert.False(result);
-        }
-
-        [Fact]
         public async Task IsAuthorizedAsync_WithNullUserEmail_ReturnsFalse()
         {
             // Arrange
             var bidViews = new List<BidView>
             {
-                new() { WorkgroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = null }
+                new() { WorkGroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = null }
             };
             var repo = CreateRepository(bidViews: bidViews);
 
@@ -131,8 +114,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.PurchasesRepositoryTest
             // Arrange
             var purchases = new List<Purchase>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear },
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, FpsYear = DefaultFpsYear }
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear },
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, FpsYear = DefaultFpsYear }
             };
             var repo = CreateRepository(purchases: purchases);
 
@@ -150,8 +133,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.PurchasesRepositoryTest
             // Arrange
             var purchases = new List<Purchase>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Zebra", Amount = 100m, FpsYear = DefaultFpsYear },
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Alpha", Amount = 200m, FpsYear = DefaultFpsYear }
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Zebra", Amount = 100m, FpsYear = DefaultFpsYear },
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Alpha", Amount = 200m, FpsYear = DefaultFpsYear }
             };
             var repo = CreateRepository(purchases: purchases);
 
@@ -164,32 +147,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.PurchasesRepositoryTest
         }
 
         [Fact]
-        public async Task GetPurchasesAsync_FiltersOutDifferentFpsYear()
-        {
-            // Arrange
-            var purchases = new List<Purchase>
-            {
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear },
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, FpsYear = DefaultFpsYear - 1 }
-            };
-            var repo = CreateRepository(purchases: purchases);
-
-            // Act
-            var result = await repo.GetPurchasesAsync("WG01", "ACC1");
-
-            // Assert
-            Assert.Single(result);
-            Assert.Equal("Item A", result[0].ItemDescription);
-        }
-
-        [Fact]
         public async Task GetPurchasesAsync_FiltersOutDifferentWorkgroup()
         {
             // Arrange
             var purchases = new List<Purchase>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear },
-                new() { WorkgroupName = "WG02", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear }
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear },
+                new() { WorkGroupName = "WG02", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear }
             };
             var repo = CreateRepository(purchases: purchases);
 
@@ -223,7 +187,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.PurchasesRepositoryTest
             // Arrange
             var purchases = new List<Purchase>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear }
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear }
             };
             var repo = CreateRepository(purchases: purchases);
 
@@ -241,29 +205,12 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.PurchasesRepositoryTest
             // Arrange
             var purchases = new List<Purchase>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear }
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear }
             };
             var repo = CreateRepository(purchases: purchases);
 
             // Act
             var result = await repo.GetPurchaseByIdAsync("WG01", "ACC1", "NOTEXIST");
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public async Task GetPurchaseByIdAsync_FiltersOutDifferentFpsYear()
-        {
-            // Arrange
-            var purchases = new List<Purchase>
-            {
-                new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear - 1 }
-            };
-            var repo = CreateRepository(purchases: purchases);
-
-            // Act
-            var result = await repo.GetPurchaseByIdAsync("WG01", "ACC1", "Item A");
 
             // Assert
             Assert.Null(result);

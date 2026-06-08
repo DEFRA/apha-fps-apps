@@ -5,7 +5,9 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using NSubstitute;
 using System.Text.Json;
 
@@ -31,6 +33,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
                 _budgetBidsService,
                 _purchasesService,
                 _profitCentreService);
+
+            // Stub IUrlHelper so Url.Action() calls made by the S1075 fix do not throw in tests
+            var urlHelper = Substitute.For<IUrlHelper>();
+            urlHelper.Action(Arg.Any<UrlActionContext>()).Returns(callInfo =>
+            {
+                var ctx = callInfo.Arg<UrlActionContext>();
+                return $"/FPS/BudgetResourceLevel/{ctx.Action}";
+            });
+            _controller.Url = urlHelper;
         }
 
         private static T? GetJsonResultValue<T>(JsonResult jsonResult)
@@ -53,7 +64,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             _workGroupService.GetWorkGroupsAsync(profitCentre)
                 .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>
                 {
-                    new() { WorkgroupName = "WG01", ProfitCentre = profitCentre }
+                    new() { WorkGroupName = "WG01", ProfitCentre = profitCentre }
                 }));
         }
 
@@ -62,7 +73,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             _budgetBidsService.GetBidViewAsync(workgroup)
                 .Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(new List<BidViewDto>
                 {
-                    new() { WorkgroupName = workgroup, Account = "ACC1", GenBid = 100m }
+                    new() { WorkGroupName = workgroup, Account = "ACC1", GenBid = 100m }
                 }));
             _budgetBidsService.GetAccountCategoriesAsync()
                 .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>
@@ -76,7 +87,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             _purchasesService.GetPurchasesAsync(workgroup, account)
                 .Returns(ApiResponseDto<List<PurchaseDto>>.SuccessResponse(new List<PurchaseDto>
                 {
-                    new() { WorkgroupName = workgroup, Account = account, ItemDescription = "Item A", Amount = 50m }
+                    new() { WorkGroupName = workgroup, Account = account, ItemDescription = "Item A", Amount = 50m }
                 }));
         }
 
@@ -380,8 +391,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task CreateBudgetBid_Post_WithValidModel_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new BudgetResourceCentreLevelItem { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
-            var dto   = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var model = new BudgetResourceCentreLevelItem { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var dto   = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
             _budgetBidsService.CreateBidAsync(Arg.Any<BidDto>())
                 .Returns(ApiResponseDto<BidDto>.SuccessResponse(dto));
 
@@ -418,7 +429,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task CreateBudgetBid_Post_WhenServiceFails_ReturnsJsonError()
         {
             // Arrange
-            var model = new BudgetResourceCentreLevelItem { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var model = new BudgetResourceCentreLevelItem { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
             _budgetBidsService.CreateBidAsync(Arg.Any<BidDto>())
                 .Returns(ApiResponseDto<BidDto>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Failed to create bid.", Code = "ERR" } },
@@ -443,7 +454,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task EditBudgetBid_Get_WithExistingBid_ReturnsPartialView()
         {
             // Arrange
-            var dto = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var dto = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
             _budgetBidsService.GetBidByIdAsync("WG01", "ACC1")
                 .Returns(ApiResponseDto<BidDto>.SuccessResponse(dto));
             _budgetBidsService.GetAccountCategoriesAsync()
@@ -479,8 +490,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task EditBudgetBid_Post_WithValidModel_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new BudgetResourceCentreLevelItem { WorkgroupName = "WG01", Account = "ACC1", GenBid = 200m };
-            var dto   = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 200m };
+            var model = new BudgetResourceCentreLevelItem { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
+            var dto   = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
             _budgetBidsService.UpdateBidAsync(Arg.Any<BidDto>())
                 .Returns(ApiResponseDto<BidDto>.SuccessResponse(dto));
 
@@ -516,7 +527,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task EditBudgetBid_Post_WhenServiceFails_ReturnsJsonError()
         {
             // Arrange
-            var model = new BudgetResourceCentreLevelItem { WorkgroupName = "WG01", Account = "ACC1", GenBid = 200m };
+            var model = new BudgetResourceCentreLevelItem { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
             _budgetBidsService.UpdateBidAsync(Arg.Any<BidDto>())
                 .Returns(ApiResponseDto<BidDto>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Failed to update bid.", Code = "ERR" } },
@@ -589,7 +600,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             Assert.Equal("_AddEditBudgetResourceLevel", partialView.ViewName);
             var model = Assert.IsType<BudgetResourceLevelItem>(partialView.Model);
             Assert.Equal(BudgetResourceLevelModalType.Purchase, model.ModalType);
-            Assert.Equal("WG01", model.Purchase!.WorkgroupName);
+            Assert.Equal("WG01", model.Purchase!.WorkGroupName);
             Assert.Equal("ACC1", model.Purchase.Account);
         }
 
@@ -597,8 +608,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task CreatePurchase_Post_WithValidModel_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new PurchaseItem { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            var dto   = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var model = new PurchaseItem { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto   = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _purchasesService.CreatePurchaseAsync(Arg.Any<PurchaseDto>())
                 .Returns(ApiResponseDto<PurchaseDto>.SuccessResponse(dto));
 
@@ -634,7 +645,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task CreatePurchase_Post_WhenServiceFails_ReturnsJsonError()
         {
             // Arrange
-            var model = new PurchaseItem { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var model = new PurchaseItem { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _purchasesService.CreatePurchaseAsync(Arg.Any<PurchaseDto>())
                 .Returns(ApiResponseDto<PurchaseDto>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Failed to create purchase.", Code = "ERR" } },
@@ -659,7 +670,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task EditPurchase_Get_WithExistingPurchase_ReturnsPartialView()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             _purchasesService.GetPurchaseByIdAsync("WG01", "ACC1", "Item A")
                 .Returns(ApiResponseDto<PurchaseDto>.SuccessResponse(dto));
 
@@ -693,8 +704,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task EditPurchase_Post_WithValidModel_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new PurchaseItem { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
-            var dto   = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var model = new PurchaseItem { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var dto   = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
             _purchasesService.UpdatePurchaseAsync(Arg.Any<PurchaseDto>())
                 .Returns(ApiResponseDto<PurchaseDto>.SuccessResponse(dto));
 
@@ -730,7 +741,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task EditPurchase_Post_WhenServiceFails_ReturnsJsonError()
         {
             // Arrange
-            var model = new PurchaseItem { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var model = new PurchaseItem { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
             _purchasesService.UpdatePurchaseAsync(Arg.Any<PurchaseDto>())
                 .Returns(ApiResponseDto<PurchaseDto>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Failed to update purchase.", Code = "ERR" } },
@@ -799,12 +810,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             SetupDefaultBidView("WG01");
 
             // Act
-            var result = await _controller.ExportToExcel("PC01");
+            var result = await _controller.ExportToExcel("PC01", 2024);
 
             // Assert
             var fileResult = Assert.IsType<FileContentResult>(result);
             Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileResult.ContentType);
-            Assert.Equal("qryBidxCrosstab.xlsx", fileResult.FileDownloadName);
+            Assert.Equal("qryBidxCrosstab_2024.xlsx", fileResult.FileDownloadName);
             Assert.NotEmpty(fileResult.FileContents);
         }
 
@@ -820,7 +831,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
                     new List<AccountCategoryDto> { new() { AccShortName = "ACC1" } }));
 
             // Act
-            var result = await _controller.ExportToExcel("PC01");
+            var result = await _controller.ExportToExcel("PC01", 2024);
 
             // Assert
             var fileResult = Assert.IsType<FileContentResult>(result);
@@ -841,7 +852,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
                 .Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(new List<BidViewDto>()));
 
             // Act
-            var result = await _controller.ExportToExcel("PC01");
+            var result = await _controller.ExportToExcel("PC01", 2024);
 
             // Assert
             var fileResult = Assert.IsType<FileContentResult>(result);

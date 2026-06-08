@@ -42,7 +42,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
         #region GetAllWorkGroupNamesAsync Tests
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithData_ReturnsOk()
+        public async Task GetAllWorkGroupNamesAsync_WithData_ReturnsOk()
         {
             // Arrange
             var names = new List<string> { "WG01", "WG02" };
@@ -58,7 +58,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithEmptyResult_ReturnsOkWithEmptyList()
+        public async Task GetAllWorkGroupNamesAsync_WithEmptyResult_ReturnsOkWithEmptyList()
         {
             // Arrange
             _serviceMock.GetAllWorkGroupNamesAsync().Returns(new List<string>());
@@ -73,7 +73,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WhenServiceThrows_PropagatesException()
+        public async Task GetAllWorkGroupNamesAsync_WhenServiceThrows_PropagatesException()
         {
             // Arrange
             _serviceMock.GetAllWorkGroupNamesAsync()
@@ -94,11 +94,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
             // Arrange
             var dtos = new List<WorkGroupViewDto>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01" }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01" }
             };
             var res = new List<WorkGroupRes>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01" }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01" }
             };
             _serviceMock.GetWorkGroupsAsync("PC01").Returns(dtos);
             _mapperMock.Map<List<WorkGroupRes>>(dtos).Returns(res);
@@ -110,7 +110,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkgroupControllerTest
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             var data = Assert.IsType<List<WorkGroupRes>>(okResult.Value);
             Assert.Single(data);
-            Assert.Equal("WG01", data[0].WorkgroupName);
+            Assert.Equal("WG01", data[0].WorkGroupName);
         }
 
         [Fact]

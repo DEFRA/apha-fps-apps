@@ -8,7 +8,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class BudgetResourceCentreLevelItem
     {
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
-        public string WorkgroupName { get; set; } = string.Empty;
+        public string WorkGroupName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Account is required")]
         [Display(Name = "Account")]

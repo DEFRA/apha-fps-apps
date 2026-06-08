@@ -6,7 +6,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class PurchaseItem
     {
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
-        public string WorkgroupName { get; set; } = string.Empty;
+        public string WorkGroupName { get; set; } = string.Empty;
 
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public string Account { get; set; } = string.Empty;

@@ -29,11 +29,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsBudgetBidsApiClie
         public async Task GetBidViewAsync_WithSuccessResponse_ReturnsBidViews()
         {
             // Arrange
-            var res = new List<BidViewRes> { new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m } };
+            var res = new List<BidViewRes> { new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m } };
             var apiResponse = new ApiResponse<List<BidViewRes>> { Success = true, Data = res };
             var expectedDto = ApiResponseDto<List<BidViewDto>>.SuccessResponse(new List<BidViewDto>
             {
-                new() { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m }
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m }
             });
 
             _http.GetAsync<List<BidViewRes>>(Arg.Is<string>(url => url.Contains("budgetbids")))
@@ -104,9 +104,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsBudgetBidsApiClie
         public async Task GetBidByIdAsync_WithSuccessResponse_ReturnsBid()
         {
             // Arrange
-            var res = new BidRes { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var res = new BidRes { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
             var apiResponse = new ApiResponse<BidRes> { Success = true, Data = res };
-            var expectedDto = ApiResponseDto<BidDto>.SuccessResponse(new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m });
+            var expectedDto = ApiResponseDto<BidDto>.SuccessResponse(new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m });
 
             _http.GetAsync<BidRes>(Arg.Is<string>(url => url.Contains("WG01") && url.Contains("ACC1")))
                 .Returns(apiResponse);
@@ -157,9 +157,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsBudgetBidsApiClie
         public async Task CreateBidAsync_WithSuccessResponse_ReturnsBid()
         {
             // Arrange
-            var bidDto  = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
-            var bidReq  = new BidReq { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
-            var bidRes  = new BidRes { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var bidDto  = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var bidReq  = new BidReq { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var bidRes  = new BidRes { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
             var apiResponse = new ApiResponse<BidRes> { Success = true, Data = bidRes };
             var expectedDto = ApiResponseDto<BidDto>.SuccessResponse(bidDto);
 
@@ -179,8 +179,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsBudgetBidsApiClie
         public async Task CreateBidAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var bidDto = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
-            var bidReq = new BidReq { WorkgroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var bidDto = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
+            var bidReq = new BidReq { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
             var apiResponse = new ApiResponse<BidRes>
             {
                 Success = false,
@@ -214,9 +214,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsBudgetBidsApiClie
         public async Task UpdateBidAsync_WithSuccessResponse_ReturnsBid()
         {
             // Arrange
-            var bidDto  = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 200m };
-            var bidReq  = new BidReq { WorkgroupName = "WG01", Account = "ACC1", GenBid = 200m };
-            var bidRes  = new BidRes { WorkgroupName = "WG01", Account = "ACC1", GenBid = 200m };
+            var bidDto  = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
+            var bidReq  = new BidReq { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
+            var bidRes  = new BidRes { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
             var apiResponse = new ApiResponse<BidRes> { Success = true, Data = bidRes };
             var expectedDto = ApiResponseDto<BidDto>.SuccessResponse(bidDto);
 
@@ -236,8 +236,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsBudgetBidsApiClie
         public async Task UpdateBidAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var bidDto = new BidDto { WorkgroupName = "WG01", Account = "ACC1", GenBid = 200m };
-            var bidReq = new BidReq { WorkgroupName = "WG01", Account = "ACC1", GenBid = 200m };
+            var bidDto = new BidDto { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
+            var bidReq = new BidReq { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
             var apiResponse = new ApiResponse<BidRes>
             {
                 Success = false,
@@ -270,7 +270,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsBudgetBidsApiClie
         public async Task DeleteBidAsync_WithSuccessResponse_ReturnsTrue()
         {
             // Arrange
-            var bidDto = new BidDto { WorkgroupName = "WG01", Account = "ACC1" };
+            var bidDto = new BidDto { WorkGroupName = "WG01", Account = "ACC1" };
             var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
             var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
 
@@ -290,7 +290,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsBudgetBidsApiClie
         public async Task DeleteBidAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var bidDto = new BidDto { WorkgroupName = "WG01", Account = "ACC1" };
+            var bidDto = new BidDto { WorkGroupName = "WG01", Account = "ACC1" };
             var apiResponse = new ApiResponse<bool?>
             {
                 Success = false,

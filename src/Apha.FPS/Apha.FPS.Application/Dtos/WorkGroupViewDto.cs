@@ -2,7 +2,7 @@ namespace Apha.FPS.Application.Dtos
 {
     public class WorkGroupViewDto
     {
-        public string WorkgroupName { get; set; } = null!;
+        public string WorkGroupName { get; set; } = null!;
 
         public string ProfitCentre { get; set; } = null!;
 

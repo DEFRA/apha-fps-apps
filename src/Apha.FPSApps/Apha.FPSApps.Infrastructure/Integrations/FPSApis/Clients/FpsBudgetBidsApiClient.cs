@@ -15,8 +15,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public FpsBudgetBidsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
-            _http = http;
-            _mapper = mapper;
+            _http   = http   ?? throw new ArgumentNullException(nameof(http));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         public async Task<ApiResponseDto<List<BidViewDto>>> GetBidViewAsync(string workgroup)
@@ -30,9 +30,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<BidViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<BidDto>> GetBidByIdAsync(string workgroupName, string account)
+        public async Task<ApiResponseDto<BidDto>> GetBidByIdAsync(string WorkGroupName, string account)
         {
-            var response = await _http.GetAsync<BidRes>(string.Format(FpsApiEndpoints.GetBidByWorkgroupAccount, workgroupName, account));
+            var response = await _http.GetAsync<BidRes>(string.Format(FpsApiEndpoints.GetBidByWorkgroupAccount, WorkGroupName, account));
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<BidDto>>(response);
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<bool>> DeleteBidAsync(BidDto bid)
         {
-            var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteBudgetBid, bid.WorkgroupName, bid.Account));
+            var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteBudgetBid, bid.WorkGroupName, bid.Account));
 
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<bool>>(response);

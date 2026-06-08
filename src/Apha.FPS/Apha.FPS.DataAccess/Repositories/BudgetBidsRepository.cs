@@ -14,11 +14,10 @@ namespace Apha.FPS.DataAccess.Repositories
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
-        public async Task<bool> IsAuthorizedAsync(string workgroupName)
+        public async Task<bool> IsAuthorizedAsync(string WorkGroupName)
         {
             return await _context.WorkGroupViews
-                .AnyAsync(w => w.WorkgroupName == workgroupName
-                            && w.FpsYear == _requestContext.FpsYear
+                .AnyAsync(w => w.WorkGroupName == WorkGroupName
                             && w.UserEmail != null
                             && w.UserEmail.ToLower() == _requestContext.UserEmailId);
         }
@@ -27,8 +26,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var rows = await _context.BidViews
                 .AsNoTracking()
-                .Where(b => b.WorkgroupName == workgroup
-                         && b.FpsYear == _requestContext.FpsYear
+                .Where(b => b.WorkGroupName == workgroup
                          && b.UserEmail != null && b.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .OrderBy(b => b.Account)
                 .ToListAsync();
@@ -36,13 +34,12 @@ namespace Apha.FPS.DataAccess.Repositories
             return rows.DistinctBy(b => b.Account).ToList();
         }
 
-        public async Task<Bid?> GetBidByIdAsync(string workgroupName, string account)
+        public async Task<Bid?> GetBidByIdAsync(string WorkGroupName, string account)
         {
             return await _context.Bids
                 .AsNoTracking()
-                .FirstOrDefaultAsync(b => b.WorkgroupName == workgroupName
-                    && b.Account == account
-                    && b.FpsYear == _requestContext.FpsYear);
+                .FirstOrDefaultAsync(b => b.WorkGroupName == WorkGroupName
+                    && b.Account == account);
         }
 
         public async Task<Bid> AddBidAsync(Bid bid)
@@ -77,7 +74,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 try
                 {
                     var existing = await _context.Bids
-                        .FirstOrDefaultAsync(b => b.WorkgroupName == bid.WorkgroupName && b.Account == bid.Account);
+                        .FirstOrDefaultAsync(b => b.WorkGroupName == bid.WorkGroupName && b.Account == bid.Account);
 
                     existing!.GenBid = bid.GenBid;
 
@@ -93,10 +90,10 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<bool> DeleteBidAsync(string workgroupName, string account)
+        public async Task<bool> DeleteBidAsync(string WorkGroupName, string account)
         {
             var entity = await _context.Bids
-                .FirstOrDefaultAsync(b => b.WorkgroupName == workgroupName && b.Account == account);
+                .FirstOrDefaultAsync(b => b.WorkGroupName == WorkGroupName && b.Account == account);
 
             if (entity == null)
                 return false;

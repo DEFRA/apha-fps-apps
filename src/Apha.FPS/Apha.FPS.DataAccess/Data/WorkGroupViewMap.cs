@@ -11,7 +11,7 @@ namespace Apha.FPS.DataAccess.Data
             builder.HasNoKey();
             builder.ToView("vworkgroup", "fps");
 
-            builder.Property(e => e.WorkgroupName).HasColumnName("workgroup");
+            builder.Property(e => e.WorkGroupName).HasColumnName("workgroup");
             builder.Property(e => e.ProfitCentre).HasColumnName("profitcentre");
             builder.Property(e => e.CostCentre).HasColumnName("costcentre");
             builder.Property(e => e.Owner).HasColumnName("owner");

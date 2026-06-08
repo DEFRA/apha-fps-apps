@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PurchasesServiceTest
         public async Task GetPurchasesAsync_WithSuccessResponse_ReturnsPurchases()
         {
             // Arrange
-            var list = new List<PurchaseDto> { new() { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m } };
+            var list = new List<PurchaseDto> { new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m } };
             var expectedResponse = ApiResponseDto<List<PurchaseDto>>.SuccessResponse(list);
             _fpsPurchasesApiClient.GetPurchasesAsync("WG01", "ACC1").Returns(expectedResponse);
 
@@ -82,7 +82,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PurchasesServiceTest
         public async Task GetPurchaseByIdAsync_WithSuccessResponse_ReturnsPurchase()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             var expectedResponse = ApiResponseDto<PurchaseDto>.SuccessResponse(dto);
             _fpsPurchasesApiClient.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns(expectedResponse);
 
@@ -119,7 +119,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PurchasesServiceTest
         public async Task CreatePurchaseAsync_WithSuccessResponse_ReturnsPurchase()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             var expectedResponse = ApiResponseDto<PurchaseDto>.SuccessResponse(dto);
             _fpsPurchasesApiClient.CreatePurchaseAsync(dto).Returns(expectedResponse);
 
@@ -136,7 +136,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PurchasesServiceTest
         public async Task CreatePurchaseAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             var errors = new List<ApiErrorDto> { new() { Message = "Already exists", Code = "CONFLICT" } };
             var expectedResponse = ApiResponseDto<PurchaseDto>.FailureResponse(errors, new ApiMetaDto());
             _fpsPurchasesApiClient.CreatePurchaseAsync(dto).Returns(expectedResponse);
@@ -157,7 +157,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PurchasesServiceTest
         public async Task UpdatePurchaseAsync_WithSuccessResponse_ReturnsPurchase()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, OldItemDescription = "Item A" };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, OldItemDescription = "Item A" };
             var expectedResponse = ApiResponseDto<PurchaseDto>.SuccessResponse(dto);
             _fpsPurchasesApiClient.UpdatePurchaseAsync(dto).Returns(expectedResponse);
 
@@ -174,7 +174,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PurchasesServiceTest
         public async Task UpdatePurchaseAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
             var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
             var expectedResponse = ApiResponseDto<PurchaseDto>.FailureResponse(errors, new ApiMetaDto());
             _fpsPurchasesApiClient.UpdatePurchaseAsync(dto).Returns(expectedResponse);
@@ -195,7 +195,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PurchasesServiceTest
         public async Task DeletePurchaseAsync_WithSuccessResponse_ReturnsTrue()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
             _fpsPurchasesApiClient.DeletePurchaseAsync(dto).Returns(expectedResponse);
 
@@ -212,7 +212,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PurchasesServiceTest
         public async Task DeletePurchaseAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
-            var dto = new PurchaseDto { WorkgroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
+            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
             var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
             var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
             _fpsPurchasesApiClient.DeletePurchaseAsync(dto).Returns(expectedResponse);

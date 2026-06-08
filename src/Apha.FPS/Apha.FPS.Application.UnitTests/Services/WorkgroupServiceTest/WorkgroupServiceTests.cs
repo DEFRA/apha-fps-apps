@@ -37,7 +37,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupServiceTest
         #region GetAllWorkGroupNamesAsync Tests
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithData_ReturnsWorkgroupNames()
+        public async Task GetAllWorkGroupNamesAsync_WithData_ReturnsWorkGroupNames()
         {
             // Arrange
             var names = new List<string> { "WG01", "WG02", "WG03" };
@@ -52,7 +52,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupServiceTest
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithEmptyRepository_ReturnsEmptyList()
+        public async Task GetAllWorkGroupNamesAsync_WithEmptyRepository_ReturnsEmptyList()
         {
             // Arrange
             _mockRepository.GetAllWorkGroupNamesAsync().Returns(new List<string>());
@@ -65,7 +65,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupServiceTest
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WhenRepositoryThrows_PropagatesException()
+        public async Task GetAllWorkGroupNamesAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
             _mockRepository.GetAllWorkGroupNamesAsync()
@@ -86,11 +86,11 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupServiceTest
             // Arrange
             var entities = new List<WorkGroupView>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01" }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01" }
             };
             var dtos = new List<WorkGroupViewDto>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01" }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01" }
             };
             _mockRepository.GetWorkGroupsByProfitCentreAsync("PC01").Returns(entities);
             _mockMapper.Map<List<WorkGroupViewDto>>(entities).Returns(dtos);
@@ -101,7 +101,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupServiceTest
             // Assert
             Assert.NotNull(result);
             Assert.Single(result);
-            Assert.Equal("WG01", result[0].WorkgroupName);
+            Assert.Equal("WG01", result[0].WorkGroupName);
             await _mockRepository.Received(1).GetWorkGroupsByProfitCentreAsync("PC01");
         }
 

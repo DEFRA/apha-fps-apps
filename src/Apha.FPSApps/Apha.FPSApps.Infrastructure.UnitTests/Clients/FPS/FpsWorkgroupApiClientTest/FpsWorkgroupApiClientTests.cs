@@ -36,7 +36,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupApiClien
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithSuccessResponse_ReturnsWorkgroupNames()
+        public async Task GetAllWorkGroupNamesAsync_WithSuccessResponse_ReturnsWorkGroupNames()
         {
             // Arrange
             var names       = new List<string> { "WG01", "WG02" };
@@ -59,7 +59,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupApiClien
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        public async Task GetAllWorkGroupNamesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<string>> { Success = true, Data = new List<string>() };
@@ -78,7 +78,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupApiClien
         }
 
         [Fact]
-        public async Task GetAllWorkgroupNamesAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        public async Task GetAllWorkGroupNamesAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
             var apiResponse = new ApiResponse<List<string>>
@@ -109,11 +109,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupApiClien
         public async Task GetWorkGroupsAsync_WithSuccessResponse_ReturnsWorkGroups()
         {
             // Arrange
-            var res = new List<WorkGroupRes> { new() { WorkgroupName = "WG01", ProfitCentre = "PC01" } };
+            var res = new List<WorkGroupRes> { new() { WorkGroupName = "WG01", ProfitCentre = "PC01" } };
             var apiResponse = new ApiResponse<List<WorkGroupRes>> { Success = true, Data = res };
             var expectedDto = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>
             {
-                new() { WorkgroupName = "WG01", ProfitCentre = "PC01" }
+                new() { WorkGroupName = "WG01", ProfitCentre = "PC01" }
             });
 
             _http.GetAsync<List<WorkGroupRes>>(Arg.Is<string>(url => url.Contains("PC01")))
@@ -127,7 +127,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsWorkGroupApiClien
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            Assert.Equal("WG01", result.Data![0].WorkgroupName);
+            Assert.Equal("WG01", result.Data![0].WorkGroupName);
         }
 
         [Fact]

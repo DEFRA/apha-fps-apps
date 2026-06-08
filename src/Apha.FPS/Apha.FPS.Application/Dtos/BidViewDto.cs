@@ -2,7 +2,7 @@ namespace Apha.FPS.Application.Dtos
 {
     public class BidViewDto
     {
-        public string WorkgroupName { get; set; } = null!;
+        public string WorkGroupName { get; set; } = null!;
 
         public string Account { get; set; } = null!;
 

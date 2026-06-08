@@ -1,4 +1,4 @@
-﻿namespace Apha.Common.Utilities.ExcelExport
+namespace Apha.Common.Utilities.ExcelExport
 {
     public interface IExcelExportService
     {
@@ -7,13 +7,13 @@
             string sheetName = "Sheet1");
 
         byte[] BuildTimeSheetExcel(
-            string workGroupName,
+            string WorkGroupName,
             short monthNumber,
             IEnumerable<WorkGroupTimeSheetRow> rows,
             short layout);
 
         byte[] BuildOutputSheetExcel(
-            string workGroupName,
+            string WorkGroupName,
             short monthNumber,
             IEnumerable<WorkGroupOutputSheetRow> rows);        
 
