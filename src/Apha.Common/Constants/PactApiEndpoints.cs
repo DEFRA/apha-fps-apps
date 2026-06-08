@@ -58,6 +58,10 @@ namespace Apha.Common.Constants
         // Recreate Summaries Log
         public const string GetRecreateSummaryLog = "api/v1/recreatereleasesummary/recreatesummary/log";
 
+        // Release Summaries
+        public const string GetReleaseSummaries = "api/v1/recreatereleasesummary/releasesummary";
+        public const string SetFinalSummaryRun = "api/v1/recreatereleasesummary/releasesummary/finalrun";
+
         // Project Invoice
         public const string GetPagedProjectInvoices = "api/v1/projectinvoice?parentProject={0}";
         public const string GetPagedProjectInvoiceManual = "api/v1/projectinvoice";

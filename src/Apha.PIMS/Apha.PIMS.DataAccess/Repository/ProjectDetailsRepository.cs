@@ -19,7 +19,7 @@ namespace Apha.PIMS.DataAccess.Repository
         public async Task<ProjectDetail?> GetPimsDetailAsync(string parentproject)
         {
             return await (
-                from rd in _dbContext.ProjectRadtrackdata
+                from rd in _dbContext.ProjectRadTrackData
                 join risk in _dbContext.Risks
                     on rd.Riskid equals risk.Riskid into riskGroup
                 from risk in riskGroup.DefaultIfEmpty()     // LEFT JOIN — Riskid is nullable
@@ -59,7 +59,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 Closeddate     = entity.ClosedDate
             };
 
-            _dbContext.ProjectRadtrackdata.Add(radtrackData);
+            _dbContext.ProjectRadTrackData.Add(radtrackData);
             await _dbContext.SaveChangesAsync();
             return entity;
         }
@@ -67,7 +67,7 @@ namespace Apha.PIMS.DataAccess.Repository
         // WRITE: Update g_tlkpproject_radtrackdata using EF change tracking
         public async Task<ProjectDetail> UpdatePimsDetailAsync(ProjectDetail entity)
         {
-            var existing = await _dbContext.ProjectRadtrackdata
+            var existing = await _dbContext.ProjectRadTrackData
                 .FirstOrDefaultAsync(r => r.Parentproject == entity.Parentproject);
 
             if (existing is not null)
@@ -151,7 +151,7 @@ namespace Apha.PIMS.DataAccess.Repository
                     proposed.ForEach(x => x.Parentproject = newCode);
                 }
 
-                var radTrackOld = await _dbContext.ProjectRadtrackdata
+                var radTrackOld = await _dbContext.ProjectRadTrackData
                     .Where(x => x.Parentproject == oldCode)
                     .ToListAsync();
                

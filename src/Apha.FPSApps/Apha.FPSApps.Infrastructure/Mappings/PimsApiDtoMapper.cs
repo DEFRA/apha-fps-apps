@@ -46,6 +46,30 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Year
             CreateMap<YearRes, YearDto>().ReverseMap();
+
+            // Additional Cost
+            CreateMap<AdditionalCostRes, AdditionalCostDto>().ReverseMap();
+
+            // Animal Cost
+            CreateMap<AnimalCostRes, AnimalCostDto>().ReverseMap();
+
+            // Test Cost
+            CreateMap<TestCostRes, TestCostDto>().ReverseMap();
+
+            // Staff Cost
+            CreateMap<StaffCostRes, StaffCostDto>().ReverseMap();
+
+            // Project Year Details
+            CreateMap<ProjectYearDetailsRes, ProjectYearDetailsDto>().ReverseMap();
+
+            // Pact Pay
+            CreateMap<PactPayRes, PactPayDto>().ReverseMap();
+
+            // Monthly Pact Data
+            CreateMap<MonthlyPactRes, MonthlyPactDto>().ReverseMap();
+
+            // FPS Year Totals
+            CreateMap<FpsYearTotalsRes, FpsYearTotalsDto>().ReverseMap();
         }
     }
 }
