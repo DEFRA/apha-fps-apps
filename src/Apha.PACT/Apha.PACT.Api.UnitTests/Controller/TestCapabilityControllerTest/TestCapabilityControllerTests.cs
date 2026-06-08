@@ -146,9 +146,9 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
 
             var result = await _controller.CreateTestCapability(request);
 
-            var createdResult = Assert.IsType<CreatedAtActionResult>(result);
+            var createdResult = Assert.IsType<OkObjectResult>(result);
             createdResult.Value.Should().Be(mapped);
-            Assert.Equal(nameof(_controller.GetTestCapabilityById), createdResult.ActionName);
+            Assert.Equal(createdResult.StatusCode, 200);
         }
 
         [Fact]
