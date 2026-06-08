@@ -72,7 +72,7 @@ jobs:
       AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
       AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
       AWS_ENV_ROLE: ${{ secrets.AWS_ENV_ROLE }}
-      WORKER_HEALTHCHECK_CONNECTION_STRING: ${{ secrets.BATCHJOBS_HEALTHCHECK_CONNECTION_STRING }}
+      WORKER_HEALTHCHECK_CONNECTION_STRING: ${{ secrets.BATCHJOBS_HEALTHCHECK_CONNECTION_STRING || secrets.FPS_CONNECTION_STRING || secrets.FPS_CONNECTIONSTRING }}
     permissions:
       id-token: write
       contents: write
