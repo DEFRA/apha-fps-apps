@@ -3,6 +3,7 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Xunit;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 
@@ -46,7 +47,16 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
         var connectionString = builder.ConnectionString;
 
         var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
+        try
+        {
+            await connection.OpenAsync();
+        }
+        catch (Exception ex)
+        {
+            await connection.DisposeAsync();
+            Skip.If(true, $"Integration DB unavailable: {ex.Message}");
+            throw;
+        }
         var transaction = await connection.BeginTransactionAsync();
 
         var options = new DbContextOptionsBuilder<BatchJobsDbContext>()

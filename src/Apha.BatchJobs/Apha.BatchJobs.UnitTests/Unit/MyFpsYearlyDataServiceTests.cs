@@ -3,6 +3,7 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -132,7 +133,7 @@ public sealed class MyFpsYearlyDataServiceTests
         Assert.Equal(new[] { 1, 2, 3 }, executionOrder);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task IsYearAvailableAsync_WhenYearClearlyInvalid_ShouldReturnFalse()
     {
         await using var context = CreatePostgresContext(GetConnectionString());
@@ -161,7 +162,7 @@ public sealed class MyFpsYearlyDataServiceTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => subject.IsYearAvailableAsync(2026, CancellationToken.None));
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task DeleteYearDataAsync_WhenYearHasNoRows_ShouldReturnZero_AndRollback()
     {
         await using var context = CreatePostgresContext(GetConnectionString());
@@ -192,7 +193,7 @@ public sealed class MyFpsYearlyDataServiceTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => subject.DeleteYearDataAsync(2026, CancellationToken.None));
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RefreshProjectAllOnlyAsync_WhenLoader24ReturnsRows_ShouldReturnLoaderRows_AndRollback()
     {
         await using var context = CreatePostgresContext(GetConnectionString());
@@ -306,7 +307,7 @@ public sealed class MyFpsYearlyDataServiceTests
     private static async Task AssertCanConnectAsync(BatchJobsDbContext context)
     {
         var canConnect = await context.Database.CanConnectAsync();
-        Assert.True(canConnect, "Integration DB unavailable for MyFpsYearlyDataServiceTests.");
+        Skip.IfNot(canConnect, "Integration DB unavailable for MyFpsYearlyDataServiceTests.");
     }
 
     private static List<IMabArchiveLoader> CreateSequentialLoaders(int start, int end)

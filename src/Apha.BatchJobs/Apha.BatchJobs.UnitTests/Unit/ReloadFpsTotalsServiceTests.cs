@@ -4,6 +4,7 @@ using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Xunit;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -50,7 +51,7 @@ public sealed class ReloadFpsTotalsServiceTests
         Assert.Equal("logger", ex.ParamName);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RebuildSourceTotalsAsync_WhenNoSourceRowsAndStrictIsolationDisabled_ShouldReturnZero()
     {
         await using var context = CreateDbContext(GetConnectionString());
@@ -66,7 +67,7 @@ public sealed class ReloadFpsTotalsServiceTests
         Assert.Equal(0, rows);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RebuildSourceTotalsAsync_WhenNoSourceRowsAndStrictIsolationEnabled_ShouldReturnZero()
     {
         await using var context = CreateDbContext(GetConnectionString());
@@ -82,7 +83,7 @@ public sealed class ReloadFpsTotalsServiceTests
         Assert.Equal(0, rows);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RebuildSourceTotalsAsync_WhenExecutedWithinTransaction_ShouldComplete_AndRollback()
     {
         await using var context = CreateDbContext(GetConnectionString());
@@ -142,7 +143,7 @@ public sealed class ReloadFpsTotalsServiceTests
     private static async Task AssertCanConnectAsync(BatchJobsDbContext context)
     {
         var canConnect = await context.Database.CanConnectAsync();
-        Assert.True(canConnect, "Integration DB unavailable for ReloadFpsTotalsServiceTests.");
+        Skip.IfNot(canConnect, "Integration DB unavailable for ReloadFpsTotalsServiceTests.");
     }
 }
 
