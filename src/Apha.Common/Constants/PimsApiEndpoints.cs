@@ -30,5 +30,20 @@ namespace Apha.Common.Constants
         public const string UpdateComment = "api/v1/projectcomment/{0}";
         public const string DeleteComment = "api/v1/projectcomment/{0}";
         public const string GetCommentTopics = "api/v1/projectcomment/commenttopics";
+
+        // Project Year Costs
+        public const string GetAdditionalActuals = "api/v1/projectyearcosts/{0}/{1}/additionalactuals";
+        public const string GetAdditionalPlans = "api/v1/projectyearcosts/{0}/{1}/additionalplans";
+        public const string GetAnimalActuals = "api/v1/projectyearcosts/{0}/{1}/animalactuals";
+        public const string GetAnimalPlans = "api/v1/projectyearcosts/{0}/{1}/animalplans";
+        public const string GetTestActuals = "api/v1/projectyearcosts/{0}/{1}/testactuals";
+        public const string GetTestPlans = "api/v1/projectyearcosts/{0}/{1}/testplans";
+        public const string GetStaffPlans = "api/v1/projectyearcosts/{0}/{1}/staffplans";
+        public const string GetStaffActuals = "api/v1/projectyearcosts/{0}/{1}/staffactuals";
+        public const string GetProjectYearDetails = "api/v1/projectyearcosts/{0}/{1}/projectyeardetails";
+        public const string GetPactPay = "api/v1/projectyearcosts/{0}/{1}/pactpay";
+        public const string GetMonthlyPactData = "api/v1/projectyearcosts/{0}/{1}/monthlypactdata";
+        public const string GetFpsYearTotals = "api/v1/projectyearcosts/{0}/{1}/fpsyeartotals";
+        public const string ExportProjectYearCostsToExcel = "api/v1/projectyearcosts/{0}/{1}/export-excel";
     }
 }

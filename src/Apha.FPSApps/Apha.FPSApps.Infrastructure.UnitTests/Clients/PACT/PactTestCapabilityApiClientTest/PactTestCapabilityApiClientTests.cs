@@ -255,5 +255,60 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
         }
 
         #endregion                     
+
+        #region GetPagedTestCapabilityByPortfolioAsync
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_WithValidParams_ReturnsMappedList()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<TestCapabilityRes>> { Success = true, Data = [new TestCapabilityRes { TestCode = "TC1", WorkGroup = "WG1" }] };
+            var expectedDto = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse([new TestCapabilityDto { TestCode = "TC1" }]);
+
+            _http.GetAsync<List<TestCapabilityRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/testcapability/paged/portfolio") && url.Contains("PP1")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TestCapabilityDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            Assert.True(result.Success);
+            await _http.Received(1).GetAsync<List<TestCapabilityRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/testcapability/paged/portfolio")));
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_WithNullPortfolio_OmitsPortfolioQueryParam()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<TestCapabilityRes>> { Success = true, Data = [] };
+            var expectedDto = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse([]);
+
+            _http.GetAsync<List<TestCapabilityRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/testcapability/paged/portfolio") && !url.Contains("portfolio=")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TestCapabilityDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetPagedTestCapabilityByPortfolioAsync(query, null);
+
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            var query = new QueryParameters<string>();
+            var apiResponse = new ApiResponse<List<TestCapabilityRes>> { Success = false, Errors = [new ApiError { Code = "ERR" }] };
+            var mappedDto = new ApiResponseDto<List<TestCapabilityDto>> { Success = false, Errors = [new ApiErrorDto { Code = "ERR" }], Meta = new ApiMetaDto() };
+
+            _http.GetAsync<List<TestCapabilityRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TestCapabilityDto>>>(apiResponse).Returns(mappedDto);
+
+            var result = await _client.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
     }
 }
