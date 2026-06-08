@@ -9,6 +9,7 @@ on:
     paths:
       - 'src/Apha.BatchJobs/**'
       - '.github/workflows/batchjobs-ci.yaml'
+      - '.github/workflows/push-image-template.yaml'
 
 permissions: {}   # disables all default permissions
 
