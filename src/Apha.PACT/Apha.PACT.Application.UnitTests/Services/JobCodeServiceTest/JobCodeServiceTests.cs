@@ -26,6 +26,59 @@ namespace Apha.PACT.Application.UnitTests.Services.JobCodeServiceTest
             _sut = new JobCodeService(_mockRepository, _mockTimeCodeValidRepository, _mockMapper);
         }
 
+        #region GetJobCodesAsync
+
+        [Fact]
+        public async Task GetJobCodesAsync_WithItems_ReturnsMappedDtos()
+        {
+            var entities = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", ParentProject = "PRJ1" },
+                new() { JobCodeId = "JC2", ParentProject = "PRJ2" }
+            };
+            var dtos = new List<JobCodeDto>
+            {
+                new() { JobCodeId = "JC1", ParentProject = "PRJ1" },
+                new() { JobCodeId = "JC2", ParentProject = "PRJ2" }
+            };
+
+            _mockRepository.GetJobCodesAsync().Returns(entities);
+            _mockMapper.Map<IEnumerable<JobCodeDto>>(entities).Returns(dtos);
+
+            var result = await _sut.GetJobCodesAsync();
+
+            result.Should().BeEquivalentTo(dtos);
+            await _mockRepository.Received(1).GetJobCodesAsync();
+            _mockMapper.Received(1).Map<IEnumerable<JobCodeDto>>(entities);
+        }
+
+        [Fact]
+        public async Task GetJobCodesAsync_EmptyRepository_ReturnsEmptyCollection()
+        {
+            var entities = new List<JobCode>();
+            var dtos = new List<JobCodeDto>();
+
+            _mockRepository.GetJobCodesAsync().Returns(entities);
+            _mockMapper.Map<IEnumerable<JobCodeDto>>(entities).Returns(dtos);
+
+            var result = await _sut.GetJobCodesAsync();
+
+            result.Should().BeEmpty();
+            await _mockRepository.Received(1).GetJobCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetJobCodesAsync_RepositoryThrows_PropagatesException()
+        {
+            _mockRepository.GetJobCodesAsync().ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetJobCodesAsync());
+
+            await _mockRepository.Received(1).GetJobCodesAsync();
+        }
+
+        #endregion
+
         #region GetJobCodesByProjectAsync
 
         [Fact]

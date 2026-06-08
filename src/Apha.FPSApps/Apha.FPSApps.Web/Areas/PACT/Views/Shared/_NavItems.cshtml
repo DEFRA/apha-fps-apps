@@ -66,14 +66,24 @@
                 <div class="dropdown-menu" id="time-data">
                     <a class="dropdown-item" href="#">Time record data entry</a>
                     <a class="dropdown-item" href="#">Output record data entry</a>
-                    <a class="dropdown-item" href="#">Create &amp; email time &amp; output summaries</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="WorkGroupReport" asp-action="Index">Create &amp; email time &amp; output summaries</a>
                     <a class="dropdown-item" href="#">Create &amp; print individual COS90s</a>
                     <a class="dropdown-item" asp-area="PACT" asp-controller="MonthlyOutputLog" asp-action="Index">Search Audit Log for Monthly Output Change</a>
-                    <a class="dropdown-item" href="#">Search Audit Log for Monthly Time Change</a>
+                    <a class="dropdown-item" asp-area="PACT" asp-controller="MonthlyTimeLog" asp-action="Index">Search Audit Log for Monthly Time Change</a>
                 </div>
             </div>
 
             <!-- Reports -->
-            <div class="nav-item">
-                <button class="nav-button" allow-edit="true">Reports</button>
+            <div class="nav-item dropdown">
+                <button class="nav-button dropdown-toggle" data-dropdown="report" allow-edit="true">
+                    <div class="align-menu-text"><span>Reports</span>
+                        <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow for dropdown menu" width="12" /></span>
+                    </div>
+                </button>
+                <div class="dropdown-menu" id="report">
+                    <a class="dropdown-item" href="#">Release Summaries</a>
+                    <a class="dropdown-item" href="#">Recreate Summaries</a>
+        <a class="dropdown-item" asp-area="PACT" asp-controller="RecreateSummaryLog" asp-action="Index">Log of Releases</a>
+                    <a class="dropdown-item" href="#">PC SOCT query</a>
+                </div>
             </div>

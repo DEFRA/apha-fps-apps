@@ -13,5 +13,7 @@ namespace Apha.PACT.Application.Interfaces
         Task<TestRequirementtDto> AddTestReqmtAsync(TestRequirementtDto dto);
         Task<TestRequirementtDto> UpdateTestReqmtAsync(TestRequirementtDto dto);
         Task<bool> DeleteTestReqmtAsync(string testCode, string buyer);
+        Task<PaginatedResult<TestSupplierViewDto>> GetPagedBySupplierTestCodeAsync(
+            QueryParameters<string> query, string testCode, bool showRejected);
     }
 }

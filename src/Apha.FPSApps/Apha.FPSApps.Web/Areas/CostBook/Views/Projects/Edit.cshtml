@@ -76,9 +76,7 @@
                     <form asp-area="CostBook" asp-controller="Projects" asp-action="Edit" asp-route-id="@Model.ProjectId" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
-                        <input type="hidden" name="CreatedDate" value="@Model.CreatedDate.ToString("o")" />
-                        <input type="hidden" name="CreatedBy" value="@Model.CreatedBy" />
-                        <input type="hidden" name="Status" value="@Model.Status" />
+                        
 
                         @if (!ViewData.ModelState.IsValid)
                         {
@@ -136,7 +134,7 @@
                                 <label asp-for="Programme" class="govuk-label label_width mb-0 pt-1">Programme:</label>
                                 <div>
                                     <select asp-for="Programme" asp-items="Model.AvailablePrograms" class="govuk-select width-200 margin_left_5 ">
-                                        
+                                                <option value="">Select Programme</option>
                                     </select>
                                     <span asp-validation-for="Programme" class="govuk-error-message"></span>
                                 </div>
@@ -147,14 +145,14 @@
                                 <label asp-for="CustomerName" class="govuk-label label_width mb-0 pt-1">Customer Name:</label>
                                 <div class="me-4">
                                     <select asp-for="CustomerName" asp-items="Model.AvailableCustomers" class="govuk-select width-200 margin_left_5">
-                                        
+                                                <option value="">Select Customer</option>
                                     </select>
                                     <span asp-validation-for="CustomerName" class="govuk-error-message"></span>
                                 </div>
                                 <label asp-for="Disease" class="govuk-label label_width mb-0 pt-1">Disease:</label>
                                 <div>
                                             <select asp-for="Disease" asp-items="Model.AvailableDiseases" class="govuk-select width-200 margin_left_5">
-                                               
+                                                <option value="">Select Disease</option>
                                             </select>
                                             <span asp-validation-for="Disease" class="govuk-error-message"></span>
                                     
@@ -220,7 +218,7 @@
                                 <label asp-for="PreparedBy" class="govuk-label label_width mb-0 pt-1">Prepared by:</label>
                                 <div>
                                     <select asp-for="PreparedBy" asp-items="Model.AvailableStaff" class="govuk-select inline-select" >
-                                      
+                                                            <option value="">Select PreparedBy </option>
                                     </select>
                                     <span asp-validation-for="PreparedBy" class="govuk-error-message"></span>
                                 </div>

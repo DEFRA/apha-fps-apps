@@ -11,5 +11,6 @@ namespace Apha.FPS.Core.Interfaces
         Task<DivisionGrade> UpdateAsync(string originalCode, DivisionGrade divisionGrade);
         Task<bool> DeleteAsync(string divisionGradeCode);
         Task<List<string>> GetAllGradeCodesAsync();
+        Task<List<string>> GetAllDivisionGradeCodesAsync();
     }
 }

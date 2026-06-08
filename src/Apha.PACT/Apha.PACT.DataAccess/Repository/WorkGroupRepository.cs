@@ -9,15 +9,35 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class WorkGroupRepository : BaseRepository, IWorkGroupRepository
     {
+
         public WorkGroupRepository(FpsDbContext context) : base(context)
         {
+
         }
+
+        private const string WorkGroupColumn     = "WorkGroup";
+        private const string ParentProjectColumn = "ParentProject";
+        private const string TimeCodeColumn      = "TimeCode";
+        private const string PactStaffIdColumn   = "PACTStaffID";
+        private const string NameColumn          = "Name";
+        private const string MonthColumn         = "Month";
+        private const string HoursColumn         = "Hours";
+        private const string ManagerColumn       = "Manager";
 
         public async Task<IEnumerable<WorkGroup>> GetAllWorkGroupsAsync()
         {
             return await _context.WorkGroups
                 .AsNoTracking()
                 .OrderBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<SummarisedWgTimeView>> GetSummarisedWorkgroupTimeAsync(
+            string workGroup)
+        {
+            return await _context.SummarisedWgTimeViews
+                .AsNoTracking()
+                .Where(e => e.WorkGroup == workGroup)
                 .ToListAsync();
         }
 
@@ -49,25 +69,25 @@ namespace Apha.PACT.DataAccess.Repository
                 baseQuery = baseQuery.Where(e => e.WorkGroup == workGroup);
 
             if (monthNumber.HasValue)
-                baseQuery = baseQuery.Where(e => e.Month == monthNumber.Value);
+                baseQuery = baseQuery.Where(e => (int)e.Month == monthNumber.Value);
 
             baseQuery = ApplyWorkGroupTimeCodeFilter(baseQuery, query.Filter);
 
             if (!string.IsNullOrWhiteSpace(query.SortBy))
                 baseQuery = (query.SortBy, query.Descending) switch
                 {
-                    ("PACTStaffID",   true)  => baseQuery.OrderByDescending(e => e.PACTStaffID),
-                    ("PACTStaffID",   false) => baseQuery.OrderBy(e => e.PACTStaffID),
-                    ("WorkGroup",     true)  => baseQuery.OrderByDescending(e => e.WorkGroup),
-                    ("WorkGroup",     false) => baseQuery.OrderBy(e => e.WorkGroup),
-                    ("ParentProject", true)  => baseQuery.OrderByDescending(e => e.ParentProject),
-                    ("ParentProject", false) => baseQuery.OrderBy(e => e.ParentProject),
-                    ("TimeCode",      true)  => baseQuery.OrderByDescending(e => e.TimeCode),
-                    ("TimeCode",      false) => baseQuery.OrderBy(e => e.TimeCode),
-                    ("Month",         true)  => baseQuery.OrderByDescending(e => e.Month),
-                    ("Month",         false) => baseQuery.OrderBy(e => e.Month),
-                    ("Hours",         true)  => baseQuery.OrderByDescending(e => e.Hours),
-                    ("Hours",         false) => baseQuery.OrderBy(e => e.Hours),
+                    (PactStaffIdColumn, true)  => baseQuery.OrderByDescending(e => e.PACTStaffID),
+                    (PactStaffIdColumn, false) => baseQuery.OrderBy(e => e.PACTStaffID),
+                    (WorkGroupColumn,      true)  => baseQuery.OrderByDescending(e => e.WorkGroup),
+                    (WorkGroupColumn,      false) => baseQuery.OrderBy(e => e.WorkGroup),
+                    (ParentProjectColumn,  true)  => baseQuery.OrderByDescending(e => e.ParentProject),
+                    (ParentProjectColumn,  false) => baseQuery.OrderBy(e => e.ParentProject),
+                    (TimeCodeColumn,       true)  => baseQuery.OrderByDescending(e => e.TimeCode),
+                    (TimeCodeColumn,       false) => baseQuery.OrderBy(e => e.TimeCode),
+                    (MonthColumn,     true)  => baseQuery.OrderByDescending(e => e.Month),
+                    (MonthColumn,     false) => baseQuery.OrderBy(e => e.Month),
+                    (HoursColumn,     true)  => baseQuery.OrderByDescending(e => e.Hours),
+                    (HoursColumn,     false) => baseQuery.OrderBy(e => e.Hours),
                     (_,               true)  => baseQuery.OrderByDescending(e => e.Name),
                     _                        => baseQuery.OrderBy(e => e.Name),
                 };
@@ -103,22 +123,210 @@ namespace Apha.PACT.DataAccess.Repository
             if (!string.IsNullOrWhiteSpace(query.SortBy))
                 baseQuery = (query.SortBy, query.Descending) switch
                 {
-                    ("WorkGroup",     true)  => baseQuery.OrderByDescending(e => e.WorkGroup),
-                    ("WorkGroup",     false) => baseQuery.OrderBy(e => e.WorkGroup),
-                    ("TimeCode",      true)  => baseQuery.OrderByDescending(e => e.TimeCode),
-                    ("TimeCode",      false) => baseQuery.OrderBy(e => e.TimeCode),
-                    ("ParentProject", true)  => baseQuery.OrderByDescending(e => e.ParentProject),
-                    ("ParentProject", false) => baseQuery.OrderBy(e => e.ParentProject),
-                    ("Manager",       true)  => baseQuery.OrderByDescending(e => e.Manager),
-                    ("Manager",       false) => baseQuery.OrderBy(e => e.Manager),
-                    (_,               true)  => baseQuery.OrderByDescending(e => e.ParentProject),
-                    _                        => baseQuery.OrderBy(e => e.ParentProject),
+                    (WorkGroupColumn,      true)  => baseQuery.OrderByDescending(e => e.WorkGroup),
+                    (WorkGroupColumn,      false) => baseQuery.OrderBy(e => e.WorkGroup),
+                    (TimeCodeColumn,       true)  => baseQuery.OrderByDescending(e => e.TimeCode),
+                    (TimeCodeColumn,       false) => baseQuery.OrderBy(e => e.TimeCode),
+                    (ParentProjectColumn,  true)  => baseQuery.OrderByDescending(e => e.ParentProject),
+                    (ParentProjectColumn,  false) => baseQuery.OrderBy(e => e.ParentProject),
+                    (ManagerColumn,        true)  => baseQuery.OrderByDescending(e => e.Manager),
+                    (ManagerColumn,        false) => baseQuery.OrderBy(e => e.Manager),
+                    (_,                    true)  => baseQuery.OrderByDescending(e => e.ParentProject),
+                    _                             => baseQuery.OrderBy(e => e.ParentProject),
                 };
             else
                 baseQuery = baseQuery.OrderBy(e => e.ParentProject);
 
             var result = await baseQuery.ToListAsync();
             return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<IEnumerable<WgSummarisedStaffTimeUsageView>> GetWgSummarisedStaffTimeUsageAsync(
+            string staffName)
+        {
+            return await _context.WgSummarisedStaffTimeUsageViews
+                .AsNoTracking()
+                .Where(e => e.Name == staffName)
+                .ToListAsync();
+        }
+
+        public async Task<PactProfitCentreView?> GetProfitCentreAsync(string profitCentre)
+        {
+            return await _context.PactProfitCentreViews
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProfitCentre == profitCentre);
+        }
+
+        public async Task<IEnumerable<WorkGroup>> GetWorkGroupsForEmailAsync(string profitCentre)
+        {
+            return await _context.WorkGroups
+                .AsNoTracking()
+                .Where(w => w.ProfitCentre == profitCentre && w.SendEmail == 1)
+                .OrderBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<TimeSheetTemplateRow>> GetTimeSheetTemplateAsync(
+            string workGroup, short month, short layout)
+        {
+            if (layout == 2)
+            {
+                var flat = await (
+                    from t in _context.TimeCodeValids
+                    join wg in _context.PactWorkGroupGradeViews on t.WorkGroup equals wg.WorkGroup
+                    join s in _context.PactStaffViews on wg.WgGrade equals s.WorkGroupGrade
+                    join jc in _context.JobCodes on t.JobCode equals jc.JobCodeId into jcGroup
+                    from jc in jcGroup.DefaultIfEmpty()
+                    join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode into tpGroup
+                    from tp in tpGroup.DefaultIfEmpty()
+                    where t.WorkGroup == workGroup
+                          && t.Active
+                          && s.PersonStatus != "I"
+                    orderby t.TimeCode, t.ParentProject, s.Name
+                    select new
+                    {
+                        t.TimeCode,
+                        t.ParentProject,
+                        StaffName = s.Name,
+                        Description = jc != null ? jc.JobCodeName : tp.ItemDescription
+                    })
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                var rows = flat
+                    .GroupBy(x => new { x.TimeCode, x.ParentProject })
+                    .OrderBy(g => g.Key.TimeCode).ThenBy(g => g.Key.ParentProject)
+                    .Select(g => new TimeSheetTemplateRow
+                    {
+                        StaffName = string.Join(", ", g.Select(x => x.StaffName).Distinct().OrderBy(n => n)),
+                        TimeCode = g.Key.TimeCode,
+                        Description = g.Select(x => x.Description).FirstOrDefault(d => d != null),
+                        ParentProject = g.Key.ParentProject,
+                        Month = month,
+                        Hours = null
+                    })
+                    .ToList();
+
+                return rows;
+            }
+            else
+            {
+                var rows = await (
+                    from t in _context.TimeCodeValids
+                    join wg in _context.PactWorkGroupGradeViews on t.WorkGroup equals wg.WorkGroup
+                    join s in _context.PactStaffViews on wg.WgGrade equals s.WorkGroupGrade
+                    where t.WorkGroup == workGroup && t.Active
+                    orderby t.WorkGroup, s.Name, t.TimeCode, t.ParentProject
+                    select new TimeSheetTemplateRow
+                    {
+                        StaffName = s.Name ?? string.Empty,
+                        TimeCode = t.TimeCode,
+                        Description = null,
+                        ParentProject = t.ParentProject,
+                        Month = month,
+                        Hours = null
+                    })
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                return rows;
+            }
+        }
+
+        public async Task<IEnumerable<OutputSheetTemplateRow>> GetOutputSheetTemplateAsync(
+            string workGroup, short month)
+        {
+            var rows = await (
+                from tc in _context.TestCapabilities
+                join tr in _context.TestRequirements on tc.TestCode equals tr.TestCode
+                join tp in _context.TestorProducts on tc.TestCode equals tp.ItemCode
+                where tc.WorkGroup == workGroup && tr.Active != 0
+                orderby tc.TestCode, tr.Buyer
+                select new OutputSheetTemplateRow
+                {
+                    TestCode = tc.TestCode,
+                    ItemDescription = tp.ItemDescription,
+                    Buyer = tr.Buyer,
+                    Month = month,
+                    Volume = null
+                })
+                .AsNoTracking()
+                .ToListAsync();
+
+            return rows;
+        }
+
+        public async Task<PagedData<WorkGroup>> GetWorkGroupsByProfitCentreAsync(
+            PaginationParameters<string> query, string profitCentre)
+        {
+            var baseQuery = _context.WorkGroups
+                .AsNoTracking()
+                .Where(w => w.ProfitCentre == profitCentre && w.FpsYear == _context.FilterFpsYear);
+
+            baseQuery = ApplyWorkGroupFilter(baseQuery, query.Filter);
+
+            // SendEmailYes / SendEmailNo are view-model-only computed properties that have no
+            // corresponding column on the WorkGroup entity; fall back to WorkGroupName for those.
+            var sortBy = query.SortBy is nameof(WorkGroup.WorkGroupName) or nameof(WorkGroup.EmailRecipient)
+                ? query.SortBy
+                : nameof(WorkGroup.WorkGroupName);
+
+            baseQuery = query.Descending
+                ? baseQuery.OrderByDescending(e => EF.Property<object>(e, sortBy))
+                : baseQuery.OrderBy(e => EF.Property<object>(e, sortBy));
+
+            var result = await baseQuery.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<bool> SetSendEmailForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
+        {
+            var fpsYear = _context.FilterFpsYear;
+            var affectedRows = await _context.WorkGroups
+                .Where(wg => wg.FpsYear == fpsYear
+                          && _context.ProfitCentres
+                                .Any(pc => pc.ProfitCentreId == profitCentre
+                                        && pc.ProfitCentreId == wg.ProfitCentre))
+                .ExecuteUpdateAsync(s => s.SetProperty(w => w.SendEmail, flag));
+            return affectedRows >= 0;
+        }
+
+        public async Task<bool> SetSendEmailForAllWorkGroupsAsync(short flag)
+        {
+            var fpsYear = _context.FilterFpsYear;
+            var affectedRows = await _context.WorkGroups
+                .Where(w => w.FpsYear == fpsYear)
+                .ExecuteUpdateAsync(s => s.SetProperty(w => w.SendEmail, flag));
+            return affectedRows >= 0;
+        }
+
+        public async Task<bool> UpdateWorkGroupEmailAsync(string workGroupName, short sendEmail, string? emailRecipient)
+        {
+            var fpsYear = _context.FilterFpsYear;
+            var affectedRows = await _context.WorkGroups
+                .Where(w => w.WorkGroupName == workGroupName && w.FpsYear == fpsYear)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(w => w.SendEmail, sendEmail)
+                    .SetProperty(w => w.EmailRecipient, emailRecipient));
+            return affectedRows >= 0;
+        }
+
+        private static IQueryable<WorkGroup> ApplyWorkGroupFilter(
+            IQueryable<WorkGroup> query, string? filterJson)
+        {
+            if (string.IsNullOrWhiteSpace(filterJson)) return query;
+
+            var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
+            if (filters is null) return query;
+
+            if (filters.TryGetValue("WorkGroupName", out var workGroupName) && !string.IsNullOrWhiteSpace(workGroupName))
+                query = query.Where(w => EF.Functions.ILike(w.WorkGroupName, $"%{workGroupName}%"));
+
+            if (filters.TryGetValue("EmailRecipient", out var emailRecipient) && !string.IsNullOrWhiteSpace(emailRecipient))
+                query = query.Where(w => w.EmailRecipient != null &&
+                                         EF.Functions.ILike(w.EmailRecipient, $"%{emailRecipient}%"));
+
+            return query;
         }
 
         private static IQueryable<WorkGroupValidTimeCode> ApplyWorkGroupValidTimeCodeFilter(
@@ -129,16 +337,16 @@ namespace Apha.PACT.DataAccess.Repository
             var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
             if (filters is null) return query;
 
-            if (filters.TryGetValue("WorkGroup", out var workGroup) && !string.IsNullOrWhiteSpace(workGroup))
+            if (filters.TryGetValue(WorkGroupColumn, out var workGroup) && !string.IsNullOrWhiteSpace(workGroup))
                 query = query.Where(e => EF.Functions.ILike(e.WorkGroup, $"%{workGroup}%"));
 
-            if (filters.TryGetValue("TimeCode", out var timeCode) && !string.IsNullOrWhiteSpace(timeCode))
+            if (filters.TryGetValue(TimeCodeColumn, out var timeCode) && !string.IsNullOrWhiteSpace(timeCode))
                 query = query.Where(e => EF.Functions.ILike(e.TimeCode, $"%{timeCode}%"));
 
-            if (filters.TryGetValue("ParentProject", out var parentProject) && !string.IsNullOrWhiteSpace(parentProject))
+            if (filters.TryGetValue(ParentProjectColumn, out var parentProject) && !string.IsNullOrWhiteSpace(parentProject))
                 query = query.Where(e => EF.Functions.ILike(e.ParentProject, $"%{parentProject}%"));
 
-            if (filters.TryGetValue("Manager", out var manager) && !string.IsNullOrWhiteSpace(manager))
+            if (filters.TryGetValue(ManagerColumn, out var manager) && !string.IsNullOrWhiteSpace(manager))
                 query = query.Where(e => EF.Functions.ILike(e.Manager!, $"%{manager}%"));
 
             return query;
@@ -152,19 +360,19 @@ namespace Apha.PACT.DataAccess.Repository
             var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
             if (filters is null) return query;
 
-            if (filters.TryGetValue("PACTStaffID", out var pactStaffId) && !string.IsNullOrWhiteSpace(pactStaffId))
+            if (filters.TryGetValue(PactStaffIdColumn, out var pactStaffId) && !string.IsNullOrWhiteSpace(pactStaffId))
                 query = query.Where(e => EF.Functions.ILike(e.PACTStaffID, $"%{pactStaffId}%"));
 
-            if (filters.TryGetValue("Name", out var name) && !string.IsNullOrWhiteSpace(name))
+            if (filters.TryGetValue(NameColumn, out var name) && !string.IsNullOrWhiteSpace(name))
                 query = query.Where(e => EF.Functions.ILike(e.Name!, $"%{name}%"));
 
-            if (filters.TryGetValue("WorkGroup", out var workGroupFilter) && !string.IsNullOrWhiteSpace(workGroupFilter))
+            if (filters.TryGetValue(WorkGroupColumn, out var workGroupFilter) && !string.IsNullOrWhiteSpace(workGroupFilter))
                 query = query.Where(e => EF.Functions.ILike(e.WorkGroup!, $"%{workGroupFilter}%"));
 
-            if (filters.TryGetValue("ParentProject", out var parentProject) && !string.IsNullOrWhiteSpace(parentProject))
+            if (filters.TryGetValue(ParentProjectColumn, out var parentProject) && !string.IsNullOrWhiteSpace(parentProject))
                 query = query.Where(e => EF.Functions.ILike(e.ParentProject, $"%{parentProject}%"));
 
-            if (filters.TryGetValue("TimeCode", out var timeCode) && !string.IsNullOrWhiteSpace(timeCode))
+            if (filters.TryGetValue(TimeCodeColumn, out var timeCode) && !string.IsNullOrWhiteSpace(timeCode))
                 query = query.Where(e => EF.Functions.ILike(e.TimeCode, $"%{timeCode}%"));
 
             return query;

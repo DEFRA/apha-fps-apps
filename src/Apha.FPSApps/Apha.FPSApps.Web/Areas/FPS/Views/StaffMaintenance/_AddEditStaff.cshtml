@@ -1,7 +1,10 @@
 ﻿@model Apha.FPSApps.Web.Areas.FPS.Models.EmployeeViewModel
+@{
+    var isEdit = !string.IsNullOrEmpty(Model?.SPNumber);
+}
 
 <div class="modal-header">
-    <h5 class="modal-title" id="projectModalTitle">@(string.IsNullOrEmpty(Model?.SPNumber) ? "Add" : "Edit") Staff Plan</h5>
+    <h5 class="modal-title" id="projectModalTitle">@(isEdit ? "Edit" : "Add") Staff Plan</h5>
     <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
 </div>
 
@@ -18,11 +21,11 @@
 
     <form id="staffForm">
         <!-- Hidden field to track if it's edit mode -->
-        <input type="hidden" id="isEditMode" value="@(!string.IsNullOrEmpty(Model?.SPNumber) ? "true" : "false")" />
+        <input type="hidden" id="isEditMode" value="@(isEdit ? "true" : "false")" />
         <div class="row g-3">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" asp-for="SPNumber">SP Number <span class="sup_color_red">*</span></label>
-                <input type="text" class="govuk-input" maxlength="10" required asp-for="SPNumber" />
+                <input type="text" class="govuk-input" maxlength="10" required asp-for="SPNumber" readonly="@isEdit" />
                 <span asp-validation-for="SPNumber" class="govuk-error-message" style="display:none;"></span>
             </div>
 
@@ -49,5 +52,5 @@
 
 <div class="modal-footer sup_flex_space_center">
     <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
-    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="savestaffplan()">@(string.IsNullOrEmpty(Model?.SPNumber) ? "Save" : "Update")</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" onclick="savestaffplan()">@(isEdit ? "Update" : "Save")</button>
 </div>

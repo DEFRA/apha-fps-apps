@@ -13,6 +13,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
         private readonly IFpsApiClient _fpsClient;
         private readonly IFpsProjectApiClient _fpsProjectApiClient;
         private readonly IFpsLookupApiClient _fpsLookupApiClient;
+        private readonly IFpsProjectGroupApiClient _fpsProjectGroupApiClient;
         private readonly ProjectService _projectService;
 
         public ProjectServiceTests()
@@ -20,8 +21,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
             _fpsClient = Substitute.For<IFpsApiClient>();
             _fpsProjectApiClient = Substitute.For<IFpsProjectApiClient>();
             _fpsLookupApiClient = Substitute.For<IFpsLookupApiClient>();
+            _fpsProjectGroupApiClient = Substitute.For<IFpsProjectGroupApiClient>();
             _fpsClient.FpsProject.Returns(_fpsProjectApiClient);
             _fpsClient.FpsLookup.Returns(_fpsLookupApiClient);
+            _fpsClient.FpsProjectGroup.Returns(_fpsProjectGroupApiClient);
             _projectService = new ProjectService(_fpsClient);
         }
 
@@ -944,20 +947,20 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
 
         #endregion
 
-        #region GetProjectGroupsAsync (via FpsProject) Tests
+        #region GetProjectGroupsAsync (via FpsProjectGroup) Tests
 
         [Fact]
         public async Task GetProjectGroupsAsync_WithSuccess_ReturnsProjectGroupList()
         {
             var data = new List<ProjectGroupDto> { new() { ProjectGroupName = "GRP1", ProjectGroup = "G1" } };
             var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(data);
-            _fpsProjectApiClient.GetProjectGroupsAsync().Returns(expectedResponse);
+            _fpsProjectGroupApiClient.GetAllProjectGroupsAsync().Returns(expectedResponse);
 
             var result = await _projectService.GetProjectGroupsAsync();
 
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _fpsProjectApiClient.Received(1).GetProjectGroupsAsync();
+            await _fpsProjectGroupApiClient.Received(1).GetAllProjectGroupsAsync();
         }
 
         [Fact]
@@ -965,11 +968,116 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
         {
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
             var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(errors, new ApiMetaDto());
-            _fpsProjectApiClient.GetProjectGroupsAsync().Returns(expectedResponse);
+            _fpsProjectGroupApiClient.GetAllProjectGroupsAsync().Returns(expectedResponse);
 
             var result = await _projectService.GetProjectGroupsAsync();
 
             Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetProjectGroupsByUserAsync (via FpsProjectGroup) Tests
+
+        [Fact]
+        public async Task GetProjectGroupsByUserAsync_WithSuccess_ReturnsProjectGroupList()
+        {
+            var data = new List<ProjectGroupDto> { new() { ProjectGroupName = "GRP1", ProjectGroup = "G1" } };
+            var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(data);
+            _fpsProjectGroupApiClient.GetProjectGroupsByUserAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetProjectGroupsByUserAsync();
+
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _fpsProjectGroupApiClient.Received(1).GetProjectGroupsByUserAsync();
+        }
+
+        [Fact]
+        public async Task GetProjectGroupsByUserAsync_WhenApiFails_ReturnsFailure()
+        {
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectGroupApiClient.GetProjectGroupsByUserAsync().Returns(expectedResponse);
+
+            var result = await _projectService.GetProjectGroupsByUserAsync();
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetProjectsByProjectGroupAsync (via FpsProjectGroup) Tests
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupAsync_WithSuccessResponse_ReturnsProjectList()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projectGroup = "GRP1";
+            var projects = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project", ProjectGroup = "GRP1" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Project",  ProjectGroup = "GRP1" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                projects,
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
+            );
+            _fpsProjectGroupApiClient.GetProjectsByProjectGroupAsync(query, projectGroup).Returns(expectedResponse);
+
+            var result = await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsProjectGroupApiClient.Received(1).GetProjectsByProjectGroupAsync(query, projectGroup);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projectGroup = "GRP1";
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                new List<ProjectDto>(),
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }
+            );
+            _fpsProjectGroupApiClient.GetProjectsByProjectGroupAsync(query, projectGroup).Returns(expectedResponse);
+
+            var result = await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projectGroup = "GRP1";
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsProjectGroupApiClient.GetProjectsByProjectGroupAsync(query, projectGroup).Returns(expectedResponse);
+
+            var result = await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
+
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupAsync_CallsFpsProjectGroupApiClient_WithCorrectArguments()
+        {
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "parentproject" };
+            var projectGroup = "GRP2";
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>());
+            _fpsProjectGroupApiClient.GetProjectsByProjectGroupAsync(query, projectGroup).Returns(expectedResponse);
+
+            await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
+
+            await _fpsProjectGroupApiClient.Received(1).GetProjectsByProjectGroupAsync(query, projectGroup);
         }
 
         #endregion

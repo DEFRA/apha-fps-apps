@@ -1,6 +1,7 @@
 using Apha.Common.Helpers.Repository;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
+using Apha.Costbook.Core.Pagination;
 using Apha.Costbook.DataAccess.Data;
 using Apha.Costbook.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -44,7 +45,15 @@ public class TestRequirementRepositoryTests
 
         RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-        var repo = new TestRequirementRepository(mockContext.Object, mockFpsYearContext.Object);
+        var settingsRepo = new Mock<ISettingsRepository>();
+        settingsRepo.Setup(x => x.GetSettingValueByIdAsync("CurrentYear"))
+            .ReturnsAsync(fpsYear.ToString());
+
+        var projectRepo = new Mock<IProjectRepository>();
+        projectRepo.Setup(x => x.GetInflationFactorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(1.0);
+
+        var repo = new TestRequirementRepository(mockContext.Object, mockFpsYearContext.Object, settingsRepo.Object, projectRepo.Object);
         return (repo, testReqMockSet, mockContext);
     }
 
@@ -175,7 +184,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: []);
 
         // Act
-        var result = await repo.GetTestCodeLookupsAsync(isDefra: false);
+        var result = await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false);
 
         // Assert
         Assert.NotNull(result);
@@ -194,7 +203,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -213,7 +222,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -231,7 +240,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -249,7 +258,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: true)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: true)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -269,7 +278,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -289,7 +298,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -311,7 +320,7 @@ public class TestRequirementRepositoryTests
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
         // Act
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         // Assert
         Assert.Single(result);
@@ -327,13 +336,14 @@ public class TestRequirementRepositoryTests
     {
         // Arrange
         var (repo, _, _) = CreateRepository();
+        var query = new PaginationParameters<string>();
 
         // Act
-        var result = await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024);
+        var result = await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Empty(result);
+        Assert.Empty(result.Data);
     }
 
     [Fact]
@@ -347,9 +357,10 @@ public class TestRequirementRepositoryTests
             new() { Project = "2024/001", Year = 2025, TestCode = "TC003", UnitPrice = 50, NumberOfTests = 1 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs);
+        var query = new PaginationParameters<string>();
 
         // Act
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -365,9 +376,10 @@ public class TestRequirementRepositoryTests
             new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = 100, NumberOfTests = 5 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs);
+        var query = new PaginationParameters<string>();
 
         // Act
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -387,9 +399,10 @@ public class TestRequirementRepositoryTests
             new() { ItemCode = "TC001", ItemDescription = "Blood Test", FpsYear = DefaultFpsYear, UnitPriceVla = 100m, DefraUnitPrice = 150m }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs, fpsTestorProducts: products);
+        var query = new PaginationParameters<string>();
 
         // Act
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -405,9 +418,10 @@ public class TestRequirementRepositoryTests
             new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = 100, NumberOfTests = 5 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs, fpsTestorProducts: []);
+        var query = new PaginationParameters<string>();
 
         // Act
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -427,9 +441,10 @@ public class TestRequirementRepositoryTests
             new() { ProjectId = "2024/001", Programme = "Programme Z", Euroconvrate = 1.10 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs, projects: projects);
+        var query = new PaginationParameters<string>();
 
         // Act
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -446,9 +461,10 @@ public class TestRequirementRepositoryTests
             new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = 100, NumberOfTests = 5 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs, projects: []);
+        var query = new PaginationParameters<string>();
 
         // Act
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -467,9 +483,10 @@ public class TestRequirementRepositoryTests
             new() { Project = "2024/001", Year = 2024, TestCode = "MM001", UnitPrice = 30, NumberOfTests = 3 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs);
+        var query = new PaginationParameters<string>();
 
         // Act
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Equal(3, result.Count);
@@ -487,9 +504,10 @@ public class TestRequirementRepositoryTests
             new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = 100, NumberOfTests = 1 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs);
+        var query = new PaginationParameters<string>();
 
         // Act
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024%2F001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024%2F001", 2024, query)).Data.ToList();
 
         // Assert
         Assert.Single(result);
@@ -504,9 +522,10 @@ public class TestRequirementRepositoryTests
             new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = 75.5, NumberOfTests = 4 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs);
+        var query = new PaginationParameters<string>();
 
         // Act
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         // Assert
         var item = Assert.Single(result);
@@ -530,8 +549,9 @@ public class TestRequirementRepositoryTests
             new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = null, NumberOfTests = 5 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs);
+        var query = new PaginationParameters<string>();
 
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         Assert.Single(result);
         Assert.Null(result[0].TestCost);
@@ -545,8 +565,9 @@ public class TestRequirementRepositoryTests
             new() { Project = "2024/001", Year = 2024, TestCode = "TC001", UnitPrice = 100, NumberOfTests = null }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs);
+        var query = new PaginationParameters<string>();
 
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         Assert.Single(result);
         Assert.Null(result[0].TestCost);
@@ -562,8 +583,9 @@ public class TestRequirementRepositoryTests
             new() { Project = "2024/001", Year = 2024, TestCode = "CC001", UnitPrice = 30, NumberOfTests = 3 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs);
+        var query = new PaginationParameters<string>();
 
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         Assert.Equal(3, result.Count);
     }
@@ -580,8 +602,9 @@ public class TestRequirementRepositoryTests
             new() { ItemCode = "TC001", ItemDescription = "Old Year Product", FpsYear = 9999, UnitPriceVla = 100m, DefraUnitPrice = 150m }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs, fpsTestorProducts: products);
+        var query = new PaginationParameters<string>();
 
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         Assert.Single(result);
         Assert.Null(result[0].TestDescription);
@@ -599,8 +622,9 @@ public class TestRequirementRepositoryTests
             new() { ProjectId = "2024/001", Programme = "PRG-A", Euroconvrate = 1.25 }
         };
         var (repo, _, _) = CreateRepository(testRequirements: reqs, projects: projects);
+        var query = new PaginationParameters<string>();
 
-        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024)).ToList();
+        var result = (await repo.GetTestRequirementsByProjectYearAsync("2024/001", 2024, query)).Data.ToList();
 
         Assert.Single(result);
         Assert.Equal("PRG-A", result[0].Programme);
@@ -664,7 +688,7 @@ public class TestRequirementRepositoryTests
         };
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: false)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: false)).ToList();
 
         Assert.Single(result);
         Assert.Null(result[0].UnitPrice);
@@ -680,7 +704,7 @@ public class TestRequirementRepositoryTests
         };
         var (repo, _, _) = CreateRepository(fpsTestorProducts: products);
 
-        var result = (await repo.GetTestCodeLookupsAsync(isDefra: true)).ToList();
+        var result = (await repo.GetTestCodeLookupsAsync("2024/001", 2024, isDefra: true)).ToList();
 
         Assert.Equal(2, result.Count);
         Assert.Equal(15m, result[0].UnitPrice);

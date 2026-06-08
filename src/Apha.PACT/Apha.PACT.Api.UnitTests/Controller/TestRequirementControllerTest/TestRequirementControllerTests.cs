@@ -25,6 +25,106 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestRequirementControllerTest
             _controller = new TestRequirementController(_service, _mapper);
         }
 
+        #region GetPagedBySupplierTestCode
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCode_HappyPath_ReturnsOkWithPaginatedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<TestSupplierViewDto>();
+            var mapped = new PaginationRes<TestSupplierViewRes>();
+
+            _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", false).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestSupplierViewRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPagedBySupplierTestCode(query, "BLOOD");
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            ok.Value.Should().Be(mapped);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCode_ShowRejectedTrue_PassesFlagToService()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<TestSupplierViewDto>();
+            var mapped = new PaginationRes<TestSupplierViewRes>();
+
+            _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", true).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestSupplierViewRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPagedBySupplierTestCode(query, "BLOOD", showRejected: true);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            ok.Value.Should().Be(mapped);
+            await _service.Received(1).GetPagedBySupplierTestCodeAsync(query, "BLOOD", true);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCode_WithItems_ReturnsMappedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<TestSupplierViewDto>
+            {
+                new() { TestCode = "BLOOD", Buyer = "PRJ1", TestCost = 30m },
+                new() { TestCode = "BLOOD", Buyer = "PRJ2", TestCost = 20m }
+            };
+            var serviceResult = new PaginatedResult<TestSupplierViewDto>(dtos, new PaginationDto());
+            var mapped = new PaginationRes<TestSupplierViewRes>();
+
+            _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", false).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestSupplierViewRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPagedBySupplierTestCode(query, "BLOOD");
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            ok.Value.Should().Be(mapped);
+            await _service.Received(1).GetPagedBySupplierTestCodeAsync(query, "BLOOD", false);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCode_EmptyResult_ReturnsOkWithEmptyResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<TestSupplierViewDto>([], new PaginationDto());
+            var mapped = new PaginationRes<TestSupplierViewRes>();
+
+            _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", false).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestSupplierViewRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPagedBySupplierTestCode(query, "BLOOD");
+
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCode_ServiceThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string>();
+            _service.GetPagedBySupplierTestCodeAsync(query, "BLOOD", false)
+                .ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.GetPagedBySupplierTestCode(query, "BLOOD"));
+        }
+
+        [Fact]
+        public async Task GetPagedBySupplierTestCode_ShowRejectedDefaultsFalse_CallsServiceWithFalse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 5 };
+            var serviceResult = new PaginatedResult<TestSupplierViewDto>();
+            var mapped = new PaginationRes<TestSupplierViewRes>();
+
+            _service.GetPagedBySupplierTestCodeAsync(query, "URINE", false).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestSupplierViewRes>>(serviceResult).Returns(mapped);
+
+            await _controller.GetPagedBySupplierTestCode(query, "URINE");
+
+            await _service.Received(1).GetPagedBySupplierTestCodeAsync(query, "URINE", false);
+        }
+
+        #endregion
+
         #region GetPagedTestReqmt
 
         [Fact]

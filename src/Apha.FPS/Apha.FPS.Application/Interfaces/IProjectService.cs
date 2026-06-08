@@ -16,6 +16,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<ProjectDto?> UpdatePactPortfolioDetailsAsync(ProjectDto projectDto);
         Task<bool> DeleteProjectAsync(string parentProject);
         Task<PaginatedResult<ProjectDto>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);
+        Task<PaginatedResult<ProjectDto>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup);
 
         // ProgrammeNewProject operations
         Task<bool> CheckProjectExistsAsync(string newProject);

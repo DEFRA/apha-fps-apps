@@ -246,7 +246,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, null);
+            var result = await _controller.LoadPeopleGrid(request, null);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -262,7 +262,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            await _controller.LoadPeopleGrid(request, "WG1", null);
+            await _controller.LoadPeopleGrid(request, "WG1");
 
             // Assert
             await _employeeService.Received(1).GetWorkGroupStaffAsync(
@@ -270,7 +270,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         }
 
         [Fact]
-        public async Task LoadPeopleGrid_WithPersonName_CallsEmployeeServiceWithoutWorkGroup()
+        public async Task LoadPeopleGrid_WithNoWorkGroup_CallsEmployeeServiceWithoutWorkGroup()
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
@@ -289,7 +289,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
                 .Returns(new PaginationModel());
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, "Alice");
+            var result = await _controller.LoadPeopleGrid(request, null);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -305,7 +305,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, null);
+            var result = await _controller.LoadPeopleGrid(request, null);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -322,7 +322,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             _controller.ModelState.AddModelError("Page", "Invalid page");
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, null);
+            var result = await _controller.LoadPeopleGrid(request, null);
 
             // Assert
             Assert.IsType<JsonResult>(result);
@@ -338,7 +338,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, null);
+            var result = await _controller.LoadPeopleGrid(request, null);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -355,7 +355,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, null);
+            var result = await _controller.LoadPeopleGrid(request, null);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -371,7 +371,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, null);
+            var result = await _controller.LoadPeopleGrid(request, null);
 
             // Assert
             Assert.IsType<PartialViewResult>(result);
@@ -386,7 +386,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            await _controller.LoadPeopleGrid(request, "WG1", "Alice");
+            await _controller.LoadPeopleGrid(request, "WG1");
 
             // Assert: workGroup is non-null so FetchByWorkGroupAsync path is taken
             await _employeeService.Received(1).GetWorkGroupStaffAsync(
@@ -402,7 +402,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, null);
+            var result = await _controller.LoadPeopleGrid(request, null);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -503,7 +503,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, "WG1", null);
+            var result = await _controller.LoadPeopleGrid(request, "WG1");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -522,7 +522,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, "WG1", null);
+            var result = await _controller.LoadPeopleGrid(request, "WG1");
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -533,10 +533,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
 
         #endregion
 
-        #region FetchByPersonNameAsync failure paths
+        #region FetchAllWorkGroupPeoplesAsync paths (no workGroup filter)
 
         [Fact]
-        public async Task LoadPeopleGrid_WithPersonName_ServiceFails_ReturnsPartialWithEmptyGrid()
+        public async Task LoadPeopleGrid_NoWorkGroup_ServiceFails_ReturnsPartialWithEmptyGrid()
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
@@ -545,7 +545,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, "Alice");
+            var result = await _controller.LoadPeopleGrid(request, null);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -555,7 +555,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         }
 
         [Fact]
-        public async Task LoadPeopleGrid_WithPersonName_ServiceReturnsNull_ReturnsPartialWithEmptyGrid()
+        public async Task LoadPeopleGrid_NoWorkGroup_ServiceReturnsNull_ReturnsPartialWithEmptyGrid()
         {
             // Arrange
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
@@ -564,7 +564,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
             SetupPeopleGridMapper();
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, "Alice");
+            var result = await _controller.LoadPeopleGrid(request, null);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
@@ -574,9 +574,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
         }
 
         [Fact]
-        public async Task LoadPeopleGrid_WithPersonName_FilterExcludesNonMatchingNames()
+        public async Task LoadPeopleGrid_NoWorkGroup_ReturnsAllStaffUnfiltered()
         {
-            // Arrange
+            // Arrange — FetchByPersonNameAsync was removed; no workGroup now returns all staff unfiltered.
             var request = new PaginationFilter<string> { Page = 1, PageSize = 10, Filter = "{}" };
             var people = new List<WorkGroupStaffDto>
             {
@@ -596,13 +596,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupPeopleControllerT
                 });
 
             // Act
-            var result = await _controller.LoadPeopleGrid(request, null, "Alice");
+            var result = await _controller.LoadPeopleGrid(request, null);
 
-            // Assert: mapper called with only the Alice entry (Bob filtered out)
+            // Assert: mapper is called with the full unfiltered list (both Alice and Bob)
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
             _mapper.Received(1).Map<List<WorkGroupPeopleItem>>(
-                Arg.Is<List<WorkGroupStaffDto>>(l => l.Count == 1 && l[0].Name == "Alice"));
+                Arg.Is<List<WorkGroupStaffDto>>(l => l.Count == 2));
         }
 
         #endregion

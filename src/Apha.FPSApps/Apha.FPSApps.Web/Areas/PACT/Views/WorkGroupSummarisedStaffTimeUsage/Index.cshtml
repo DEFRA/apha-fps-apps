@@ -1,0 +1,124 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.WgSummarisedStaffTimeUsageViewModel
+
+@{
+    ViewData["Title"] = "PACT : Work Group Time By Job Code";
+}
+
+@* ── Header info (mirrors Access FormHeader: WorkGroup / HrsPaid) ── *@
+
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full  sup_flex_space_center sup_border-bottom">
+        <div class="sup_flex_center_start govuk-grid-column-full sup_p_0 sup_margin_0">
+            <h1 class="sup_padding_bottom_10 govuk-grid-column-one-third sup_p_0">Time Usage "Spreadsheet" for </h1>
+            <div class="govuk-grid-column-three-quarters sup_margin_tb_5 sup_padding_right_8 sup_flex_gap_10">
+                <div class="govuk-!-width-one-half">
+                    <input type="text" id="txtselectedPersonname" class="govuk-input govuk-!-font-size-16" asp-for="@Model.SelectedPersonName" readonly="" disabled="">
+                </div>
+                <div>
+                    <input type="text" id="txtselectedWG" class="govuk-input govuk-!-font-size-16" asp-for="@Model.SelectedWorkGroup" readonly="" disabled="">
+                </div>
+                <div class="govuk-grid-column-two-thirds sup_flex_align_center">
+                    <span class="sup_bold_100">Standard Hours</span>
+                    <input type="text" id="txtStandardhours" class="govuk-input govuk-!-font-size-16" value="@Model.HrsPaid.ToString("0.##")" readonly="" disabled="">
+                </div>
+            </div>
+        </div>
+        <div class="govuk-grid-column-one-half">
+            <a asp-area="PACT"
+               asp-controller="WorkGroupPeople"
+               asp-action="Index"
+               asp-route-workGroup="@Model.SelectedWorkGroup"
+               class="govuk-back-link sup_align_right sup_margin_0">
+                Back
+            </a>
+            </div>
+    </div>
+</div>
+
+@* ── Data Grid ──────────────────────────────────────────────────────────── *@
+<div class="govuk-grid-row sup_margin_left_right_0" style="margin-top:20px;">
+    <div class="govuk-grid-column-full">
+        <div id="spreadsheetContainer1">
+            <div id="gridContainer_timeUsageGrid">
+                @await Html.PartialAsync("_DataGrid", Model.Grid)
+            </div>
+
+            @* ── Footer Summary ──────────────────────────────────────────────── *@
+            @if (Model.Grid.Data != null && Model.Grid.Data.Any())
+            {
+                var s      = Model.Summary;
+                var months = new[] { "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar" };
+                var totals = new[] { s.TotalApril, s.TotalMay, s.TotalJune, s.TotalJuly, s.TotalAugust, s.TotalSeptember, s.TotalOctober, s.TotalNovember, s.TotalDecember, s.TotalJanuary, s.TotalFebruary, s.TotalMarch };
+                var pcts   = new[] { s.PercentAllocatedApril, s.PercentAllocatedMay, s.PercentAllocatedJune, s.PercentAllocatedJuly, s.PercentAllocatedAugust, s.PercentAllocatedSeptember, s.PercentAllocatedOctober, s.PercentAllocatedNovember, s.PercentAllocatedDecember, s.PercentAllocatedJanuary, s.PercentAllocatedFebruary, s.PercentAllocatedMarch };
+
+                        
+                                <div id="columnTotalsContainer" class="column-totals-container">
+                                    <div class="column-total-label">Total time for the Month:</div>
+                                    @for (int i = 0; i < 12; i++)
+                                    {
+                                        <div class="column-total">@(totals[i] == 0 ? "" : totals[i].ToString("0.##"))</div>
+                                    }
+                                    <div class="column-total">@s.GrandTotalTime.ToString("0.##")</div>
+                                    <div class="column-total">£@s.GrandTotalCost.ToString("N2")</div>
+                                    
+                                </div>
+
+                        <div id="columnStandardHoursContainer" class="column-totals-container">
+                            <div class="column-total-label">Standard Hours:</div>
+                            @for (int i = 0; i < 12; i++)
+                                    {
+                                <div class="column-total" id="stndHrs_april">
+                                    @(totals[i] == 0 ? "" : s.StandardHoursPerMonth.ToString("0.##"))
+                                </div>                        
+                                        }
+                             <div class="column-total" id="stndHrs_time">@(s.TotalStandardHours == 0 ? "" : s.TotalStandardHours.ToString("0.##"))</div>
+                            <div class="column-total" id="stndHrs_cost">&nbsp;</div>
+                         </div>
+                     
+                        <div id="columnStndHrsAllocatedContainer" class="column-totals-container">
+                            <div class="column-total-label">% of Standard Hrs Allocated</div>
+                    
+                            
+                   
+                        @for (int i = 0; i < 12; i++)
+                        {
+                                <div class="column-total">
+                                    
+                                    @(totals[i] == 0 ? "" : pcts[i].ToString("0.#") + "%")</div>
+                        }
+                            <div class="column-total">@(s.GrandTotalPercentAllocated == 0 ? "" : s.GrandTotalPercentAllocated.ToString("0.#") + "%")</div>
+                            <div class="column-total"></div>
+                     
+                        </div> 
+           
+            }
+        </div>
+    </div>
+    <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+        <div class="govuk-grid-column-one-quarter sup_mr_0_pr_0">
+            <div class="sup_flex_between_center">
+                <label for="txtJobCode" class="govuk-label govuk-!-font-weight-bold sup_visually_hidden">Selected Project:</label>
+                <input type="text" id="txtJobCode" class="govuk-input govuk-!-font-size-16" readonly="">
+                <span class="sup_margin_left_10">is</span>
+            </div>
+        </div>
+
+        <div class="govuk-grid-column-one-half">
+            <label for="txtJobTitle" class="govuk-label govuk-!-font-weight-bold sup_visually_hidden">Project Description:</label>
+            <input type="text" id="txtJobTitle" class="govuk-input govuk-!-font-size-16" readonly="">
+        </div>
+    </div>
+</div>
+
+@* ── Grid extra-filter: server-rendered values consumed by the external JS file ── *@
+<input type="hidden" id="hiddenJobTitleLookup" value='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.JobTitleLookup ?? new Dictionary<string, string>()))' />
+
+<script>
+    var currentWorkGroup   = '@Html.Raw(Model.SelectedWorkGroup ?? "")';
+    var currentStaffName   = '@Html.Raw(Model.SelectedPersonName ?? "")';
+    var jobTitleLookup     = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.JobTitleLookup ?? new Dictionary<string, string>()))
+</script>
+
+@section Scripts {
+    <script src="~/js/pact_js/work-group-summarised-staffTimeUsage.js"></script>
+}

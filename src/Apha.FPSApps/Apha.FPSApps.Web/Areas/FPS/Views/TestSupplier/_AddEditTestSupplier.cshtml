@@ -1,0 +1,99 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.TestSupplierItem
+
+<div class="modal-header flex-space-center">
+    <h3 class="govuk-heading-s" style="margin:0;">Edit Test Supplier Entry</h3>
+    <button type="button" class="btn-close" onclick="$('#modalPopup').removeClass('show')">×</button>
+</div>
+
+<div class="modal-body" style="overflow:hidden; padding:8px 8px 0 8px;">
+    <form id="testSupplierForm" class="govuk-grid-column-full">
+
+        <input type="hidden" name="TestCode" value="@Model.TestCode" />
+        <input type="hidden" name="Buyer" value="@Model.Buyer" />
+        <input type="hidden" name="NoRequired" value="@Model.NoRequired" />
+        <input type="hidden" name="Active" value="@Model.Active" />
+        <input type="hidden" name="ProjectBuyerCode" value="@Model.ProjectBuyerCode" />
+        <input type="hidden" name="TestBuyerCode" value="@Model.TestBuyerCode" />
+
+        <!-- Validation error summary -->
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="ts-error-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="ts-error-title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
+        <!-- Row 1: TestCode | Buyer -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold" for="TestCodeDisplay">Test Code</label>
+                    <input class="govuk-input govuk-!-font-size-16" id="TestCodeDisplay"
+                           value="@Model.TestCode" readonly />
+                </div>
+            </div>
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold" for="BuyerDisplay">Buyer</label>
+                    <input class="govuk-input govuk-!-font-size-16" id="BuyerDisplay"
+                           value="@Model.Buyer" readonly />
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: Unit Price (editable) | No. Required (readonly) -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold" for="UnitPrice">Unit Price</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input govuk-!-font-size-16" id="UnitPrice" name="UnitPrice"
+                               type="number" step="0.01" min="0"
+                               value="@(Model.UnitPrice.HasValue ? Model.UnitPrice.Value.ToString("F2") : "")" />
+                    </div>
+                    <span data-valmsg-for="UnitPrice"
+                          class="govuk-error-message field-validation-valid" style="display:none;"></span>
+                </div>
+            </div>
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold" for="NoRequiredDisplay">No. Required</label>
+                    <input class="govuk-input govuk-!-font-size-16" id="NoRequiredDisplay"
+                           value="@Model.NoRequired" readonly />
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: Project Status | Test Cost -->
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold" for="ProjectStatusDisplay">Project Status</label>
+                    <input class="govuk-input govuk-!-font-size-16" id="ProjectStatusDisplay"
+                           value="@(Model.ProjectStatus ?? "")" readonly />
+                </div>
+            </div>
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold" for="TestCostDisplay">Test Cost</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input govuk-!-font-size-16" id="TestCostDisplay"
+                               value="@(Model.TestCost.HasValue ? Model.TestCost.Value.ToString("F2") : "")" readonly />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            onclick="$('#modalPopup').removeClass('show')">Cancel</button>
+    <button type="button" class="govuk-button sup_margin_0" onclick="saveTestSupplier()" allow-edit="true">
+        Update
+    </button>
+</div>
