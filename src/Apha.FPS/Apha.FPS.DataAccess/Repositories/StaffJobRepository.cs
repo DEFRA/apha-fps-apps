@@ -406,17 +406,17 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<ZtStaffJobView?> GetZtStaffJobDetailsByIdAsync(string staffId, string JobCode)
         {
-            var baseQuery = (from sj in _dbContext.StaffJobTblViews
-                             join jc in _dbContext.ProjectViews on sj.JobCode equals jc.ParentProject
-                             where sj.StaffId == staffId
-                             && (EF.Functions.ILike(jc.UserEmail!, _requestContext.UserEmailId))
-                             && sj.JobCode == JobCode
+            var baseQuery = (from vsjt in _dbContext.StaffJobTblViews
+                             join vjc in _dbContext.ProjectViews on vsjt.JobCode equals vjc.ParentProject
+                             where vsjt.StaffId == staffId
+                             && (EF.Functions.ILike(vjc.UserEmail!, _requestContext.UserEmailId))
+                             && vsjt.JobCode == JobCode
                              select new ZtStaffJobView
                              {
-                                 StaffID = sj.StaffId,
-                                 JobCode = sj.JobCode,
-                                 PlannedHours = (double?)sj.PlannedHours ?? 0,
-                                 Name = jc.ProjectTitle
+                                 StaffID = vsjt.StaffId,
+                                 JobCode = vsjt.JobCode,
+                                 PlannedHours = (double?)vsjt.PlannedHours ?? 0,
+                                 Name = vjc.ProjectTitle
                              }).Distinct().AsQueryable();
 
             var result = await baseQuery.AsNoTracking().FirstOrDefaultAsync();
