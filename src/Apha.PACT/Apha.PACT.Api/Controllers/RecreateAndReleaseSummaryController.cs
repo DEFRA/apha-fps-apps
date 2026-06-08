@@ -48,7 +48,7 @@ namespace Apha.PACT.Api.Controllers
         /// Retrieves all release summary periods from <c>tblPeriod</c>.
         /// </summary>
         /// <returns><c>200 OK</c> with a list of <see cref="ReleasePeriodRes"/>.</returns>
-        [HttpGet("/api/v{version:apiVersion}/releasesummary")]
+        [HttpGet("releasesummary")]
         public async Task<IActionResult> GetReleaseSummaries()
         {
             var result = await _service.GetReleaseSummariesAsync();
@@ -60,7 +60,7 @@ namespace Apha.PACT.Api.Controllers
         /// </summary>
         /// <param name="request">The period name and new flag value.</param>
         /// <returns><c>200 OK</c> with the updated <see cref="ReleasePeriodRes"/> on success; <c>404 Not Found</c> if the period does not exist.</returns>
-        [HttpPut("/api/v{version:apiVersion}/releasesummary/finalrun")]
+        [HttpPut("releasesummary/finalrun")]
         public async Task<IActionResult> SetFinalSummaryRun([FromBody] ReleasePeriodReq request)
         {
             var result = await _service.SetFinalSummaryRunAsync(request.PeriodName, request.FinalSummariesRun, request.SendEmail);

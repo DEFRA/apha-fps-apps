@@ -17,11 +17,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly IMapper _mapper;
         private readonly IReleaseSummaryService _releaseSummaryService;
 
-        /// <summary>
-        /// Initialises a new instance of <see cref="ReleaseSummaryController"/>.
-        /// </summary>
-        /// <param name="mapper">AutoMapper instance used to map DTOs to view-model types.</param>
-        /// <param name="releaseSummaryService">Application service that retrieves and updates release summary data from the PACT API.</param>
         public ReleaseSummaryController(IMapper mapper, IReleaseSummaryService releaseSummaryService)
         {
             _mapper = mapper;
@@ -29,9 +24,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         /// <summary>
-        /// Renders the Release Summaries page with a grid of all release periods.
+        /// Displays the Release Summary index page, including the current setting
+        /// and a data grid populated with all available release periods.
         /// </summary>
-        /// <returns>A <see cref="ViewResult"/> containing a <see cref="ReleaseSummaryViewModel"/> with the populated grid.</returns>
+        /// <returns>The Index view bound to a <see cref="ReleaseSummaryViewModel"/>.</returns>
         public async Task<IActionResult> Index()
         {
             var response = await _releaseSummaryService.GetReleaseSummariesAsync();
@@ -41,11 +37,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ReleaseSummaryGrid = MapToGridConfig(response.Data?.ReleasePeriods)
             });
         }
-
+       
         /// <summary>
-        /// Handles partial-page grid refreshes for the release summaries grid.
+        /// Fetches the latest release summary data and returns the <c>_DataGrid</c> partial view
+        /// for use in AJAX-driven grid refresh scenarios.
         /// </summary>
-        /// <returns>A <see cref="PartialViewResult"/> rendering the <c>_DataGrid</c> partial with updated data.</returns>
+        /// <returns>A partial view containing the refreshed release summary data grid.</returns>
         [HttpPost]
         public async Task<IActionResult> LoadReleaseSummaryGrid()
         {
@@ -54,11 +51,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         /// <summary>
-        /// Updates the <c>FinalSummariesRun</c> flag for a release period.
+        /// Updates the final summary run flag for the specified release period and optionally
+        /// triggers an email notification.
         /// </summary>
-        /// <param name="periodName">The period name (PK) to update.</param>
-        /// <param name="finalSummariesRun">The new flag value (0 or 1).</param>
-        /// <returns><c>200 OK</c> with the updated <c>finalSummariesRun</c> value on success; <c>400 Bad Request</c> on failure.</returns>
+        /// <param name="periodName">The name of the release period to update.</param>
+        /// <param name="finalSummariesRun">The value indicating whether final summaries have been run.</param>
+        /// <param name="sendEmail">A flag indicating whether an email notification should be sent.</param>
+        /// <returns>
+        /// <see cref="OkResult"/> containing the updated <c>FinalSummariesRun</c> value on success;
+        /// otherwise <see cref="BadRequestResult"/> with the error details.
+        /// </returns>
         [HttpPost]
         public async Task<IActionResult> SetFinalSummaryRun(string? periodName = null, short? finalSummariesRun = null, string? sendEmail = null)
         {
@@ -69,6 +71,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return BadRequest(response.Errors);
         }
 
+        /// <summary>
+        /// Maps a list of <see cref="ReleasePeriodDto"/> objects to a
+        /// <see cref="DataGridConfig{T}"/> containing the grid configuration and row data.
+        /// Returns an empty grid configuration when <paramref name="data"/> is <see langword="null"/>.
+        /// </summary>
+        /// <param name="data">The release period data to populate the grid with.</param>
+        /// <returns>A <see cref="DataGridConfig{ReleasePeriodItem}"/> ready for rendering.</returns>
         private static DataGridConfig<ReleasePeriodItem> MapToGridConfig(IReadOnlyList<ReleasePeriodDto>? data)
         {
             var grid = ReleaseSummaryGridConfig();
@@ -87,6 +96,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return grid;
         }
 
+        /// <summary>
+        /// Builds and returns the default <see cref="DataGridConfig{T}"/> for the release summary grid,
+        /// including column definitions, grid identity, and behaviour flags.
+        /// </summary>
+        /// <returns>A pre-configured <see cref="DataGridConfig{ReleasePeriodItem}"/> instance.</returns>
         private static DataGridConfig<ReleasePeriodItem> ReleaseSummaryGridConfig() => new()
         {
             GridId = "releaseSummariesGrid",

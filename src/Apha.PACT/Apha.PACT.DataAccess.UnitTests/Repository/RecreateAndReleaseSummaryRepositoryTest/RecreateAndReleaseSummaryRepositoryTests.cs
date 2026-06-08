@@ -930,7 +930,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
             // Assert
             Assert.NotNull(result);
-            Assert.IsAssignableFrom<IList<ReleasePeriod>>(result.ReleasePeriods);
+            Assert.IsType<IList<ReleasePeriod>>(result.ReleasePeriods, exactMatch: false);
         }
 
         [Fact]
