@@ -65,7 +65,8 @@ jobs:
       dockerfile_path: src/Apha.BatchJobs/Dockerfile
       dev_image_version_release: false
       tag_short_description: ""
-      run_local_healthcheck: false
+      run_local_healthcheck: true
+      healthcheck_mode: worker
     secrets:
       AWS_ENV_REGION: ${{ secrets.AWS_ENV_REGION }}
       AWS_ENV_ACCOUNT: ${{ secrets.AWS_ENV_ACCOUNT }}
