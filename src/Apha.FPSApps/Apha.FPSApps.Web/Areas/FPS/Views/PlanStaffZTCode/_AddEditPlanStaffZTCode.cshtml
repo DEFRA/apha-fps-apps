@@ -1,16 +1,18 @@
 @model Apha.FPSApps.Web.Areas.FPS.Models.PlanStaffZTCodeItemViewModel
+
 @{
-    var isEditMode  = !string.IsNullOrEmpty(Model.StaffID);
-    var title       = isEditMode ? "Edit ZT Plan"    : "Add ZT Plan";
-    var formId      = isEditMode ? "editZtPlanForm"  : "addZtPlanForm";
-    var saveLabel   = isEditMode ? "Update"          : "Save";
-    var saveAction  = isEditMode ? "updateZtPlan()"  : "saveZtPlan()";
+    var isEditMode = !string.IsNullOrEmpty(Model.StaffID);
+    var title = isEditMode ? "Edit ZT Plan" : "Add ZT Plan";
+    var formId = isEditMode ? "editZtPlanForm" : "addZtPlanForm";
+    var saveLabel = isEditMode ? "Update" : "Save";
+    var saveAction = isEditMode ? "updateZtPlan()" : "saveZtPlan()";
 }
 
 <div class="modal-header">
     <h5 class="modal-title">@title</h5>
     <button type="button" class="btn-close btn-red" onclick="closeZtModal()">X</button>
 </div>
+
 <div class="modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
     <div class="govuk-error-summary" role="alert"
          aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
@@ -21,10 +23,12 @@
             <ul class="govuk-list govuk-error-summary__list"></ul>
         </div>
     </div>
+
     <div class="row g-3">
         <form id="@formId">
             <input type="hidden" name="StaffID" value="@Model.StaffID" />
 
+            @* ZT Code dropdown *@
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" for="JobCode">ZT Code <span class="sup_color_red">*</span></label>
                 <div class="tableselectdropdown">
@@ -32,8 +36,11 @@
                            value="@Model.JobCode" readonly required>
                     <div class="multicolumn-dropdown-panel" id="modal-zt-code-panel" style="display:none;">
                         <div class="search-box-wrapper">
-                            <input type="text" class="search-box" id="modal-zt-code-search" placeholder="Type to search and select ZT code">
-                            <button type="button" class="govuk-button govuk-button--secondary clear-search-btn" id="modal-zt-code-clear" aria-label="Clear search">X</button>
+                            <input type="text" class="search-box" id="modal-zt-code-search"
+                                   placeholder="Type to search and select ZT code">
+                            <button type="button"
+                                    class="govuk-button govuk-button--secondary clear-search-btn"
+                                    id="modal-zt-code-clear" aria-label="Clear search">X</button>
                         </div>
                         <table class="govuk-table custom-table" style="margin-bottom:0;">
                             <thead class="govuk-table__head">
@@ -49,12 +56,14 @@
                 <span asp-validation-for="JobCode" class="govuk-error-message" style="display:none;"></span>
             </div>
 
+            @* ZT Description (read-only) *@
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" for="ZtDescription">ZT Description</label>
                 <input type="text" id="ZtDescription" name="ZtDescription" class="govuk-input"
                        value="@Model.ZtDescription" readonly>
             </div>
 
+            @* Planned Hours *@
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label" for="PlannedHours">Hrs <span class="sup_color_red">*</span></label>
                 <input type="number" min="0" step="0.5" id="PlannedHours" name="PlannedHours"
@@ -64,9 +73,12 @@
         </form>
     </div>
 </div>
+
 <div class="modal-footer sup_flex_space_center">
-    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" type="button" onclick="closeZtModal()">Cancel</button>
-    <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="@saveAction">@saveLabel</button>
+    <button class="govuk-button govuk-button--secondary sup_margin_0"
+            data-module="govuk-button" type="button" onclick="closeZtModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0"
+            data-module="govuk-button" type="button" onclick="@saveAction">@saveLabel</button>
 </div>
 
 <script>
@@ -76,26 +88,38 @@
 
         function renderZtCodeRows(filterText) {
             var body = document.getElementById('modal-zt-code-body');
-            if (!body) { return; }
+            if (!body) return;
+
             var term = (filterText || '').toLowerCase();
             body.innerHTML = '';
+
             ztCodeOptions
                 .filter(function (item) {
                     return item.code.toLowerCase().indexOf(term) !== -1 ||
-                        item.description.toLowerCase().indexOf(term) !== -1;
+                           item.description.toLowerCase().indexOf(term) !== -1;
                 })
                 .forEach(function (item) {
                     var tr = document.createElement('tr');
                     tr.className = 'govuk-table__row';
                     tr.style.cursor = 'pointer';
-                    tr.innerHTML =
-                        '<td class="govuk-table__cell">' + item.code + '</td>' +
-                        '<td class="govuk-table__cell">' + item.description + '</td>';
+
+                    var tdCode = document.createElement('td');
+                    tdCode.className = 'govuk-table__cell';
+                    tdCode.textContent = item.code;
+
+                    var tdDesc = document.createElement('td');
+                    tdDesc.className = 'govuk-table__cell';
+                    tdDesc.textContent = item.description;
+
+                    tr.appendChild(tdCode);
+                    tr.appendChild(tdDesc);
+
                     tr.addEventListener('click', function () {
                         document.getElementById('JobCode').value = item.code;
                         document.getElementById('ZtDescription').value = item.description;
                         hidePanel();
                     });
+
                     body.appendChild(tr);
                 });
         }
@@ -103,7 +127,8 @@
         function showPanel() {
             var panel = document.getElementById('modal-zt-code-panel');
             var input = document.getElementById('JobCode');
-            if (!panel || !input) { return; }
+            if (!panel || !input) return;
+
             panel.style.display = 'block';
             panel.style.width = input.offsetWidth + 'px';
             document.getElementById('modal-zt-code-search').value = '';
@@ -113,10 +138,10 @@
 
         function hidePanel() {
             var panel = document.getElementById('modal-zt-code-panel');
-            if (panel) { panel.style.display = 'none'; }
+            if (panel) panel.style.display = 'none';
         }
 
-        // Load codes then bind events
+        // Load ZT codes and bind events
         fetch(ztCodesUrl)
             .then(function (r) { return r.json(); })
             .then(function (json) {
@@ -126,10 +151,12 @@
                     });
                     renderZtCodeRows('');
 
-                    // Sync description for the already-selected code (edit mode / pre-selected add)
+                    // Sync description for the already-selected code (edit mode)
                     var currentCode = document.getElementById('JobCode').value;
                     if (currentCode) {
-                        var match = ztCodeOptions.find(function (opt) { return opt.code === currentCode; });
+                        var match = ztCodeOptions.find(function (opt) {
+                            return opt.code === currentCode;
+                        });
                         if (match) {
                             document.getElementById('ZtDescription').value = match.description;
                         }
@@ -138,24 +165,35 @@
             })
             .catch(function (e) { console.error('Failed to load ZT codes', e); });
 
+        // Event: open dropdown panel
         document.getElementById('JobCode').addEventListener('click', function (e) {
             e.stopPropagation();
             showPanel();
         });
+
+        // Event: filter as user types
         document.getElementById('modal-zt-code-search').addEventListener('input', function (e) {
             renderZtCodeRows(e.target.value);
         });
+
+        // Event: clear search
         document.getElementById('modal-zt-code-clear').addEventListener('click', function () {
             document.getElementById('modal-zt-code-search').value = '';
             renderZtCodeRows('');
             document.getElementById('modal-zt-code-search').focus();
         });
+
+        // Prevent panel clicks from closing the dropdown
         document.getElementById('modal-zt-code-panel').addEventListener('click', function (e) {
             e.stopPropagation();
         });
+
+        // Close dropdown when clicking outside
         document.addEventListener('click', function (e) {
             var wrapper = document.querySelector('.tableselectdropdown');
-            if (wrapper && !wrapper.contains(e.target)) { hidePanel(); }
+            if (wrapper && !wrapper.contains(e.target)) {
+                hidePanel();
+            }
         });
     })();
 </script>

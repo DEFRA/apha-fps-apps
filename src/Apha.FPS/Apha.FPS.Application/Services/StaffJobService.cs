@@ -87,7 +87,8 @@ namespace Apha.FPS.Application.Services
 
             var existing = await _staffJobRepository.GetByIdAsync(staffJob.StaffId, staffJob.JobCode);
             if (existing != null)
-                throw new InvalidOperationException($"A ZT plan entry for staff '{staffJob.StaffId}' and job code '{staffJob.JobCode}' already exists.");
+                throw new InvalidOperationException($"A staff job entry for staff '" +
+                    $"{staffJob.StaffId}' and job code '{staffJob.JobCode}' already exists.");
 
             var mapStaffJob = _mapper.Map<StaffJob>(staffJob);
             var staffWorkgroup = await _staffJobRepository.AddAsync(mapStaffJob);

@@ -68,7 +68,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<List<ZtStaffJobViewDto>>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetZtStaffJobsByStaffIdPaged, query);
-            url += "&staffId=" + Uri.EscapeDataString(staffId);
+            url = QueryStringHelper.AddQueryString(url, new { staffId });
             var response = await _http.GetAsync<List<ZtStaffJobViewRes>>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ZtStaffJobViewDto>>>(response);

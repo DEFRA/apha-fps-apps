@@ -8,7 +8,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     {
         [Display(Name = "Staff ID")]
         [GridColumn(IsVisible = false)]
-        public string? StaffID { get; set; }
+        public string StaffID { get; set; } = null!;
 
         [Required(ErrorMessage = "ZT Code is required")]
         [Display(Name = "ZT Code")]

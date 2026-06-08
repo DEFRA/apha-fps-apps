@@ -2,14 +2,15 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
-using Apha.FPSApps.Web.Models.Components.DataGrid;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
@@ -150,9 +151,27 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
+            var errors = new List<object>();
+
+            if (string.IsNullOrWhiteSpace(item.StaffID))
+                errors.Add(new { field = nameof(item.StaffID), message = "StaffID is required." });
+
+            if (string.IsNullOrWhiteSpace(item.JobCode))
+                errors.Add(new { field = nameof(item.JobCode), message = "JobCode is required." });
+
+            if (errors.Count > 0)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors
+                });
+            }
+
             var dto = new StaffJobDto
             {
-                StaffId = item.StaffID ?? string.Empty,
+                StaffId = item.StaffID,
                 JobCode = item.JobCode,
                 PlannedHours = item.PlannedHours
             };
@@ -184,8 +203,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 var model = new PlanStaffZTCodeItemViewModel
                 {
-                    StaffID = result.Data.StaffID,
-                    JobCode = result.Data.JobCode ?? string.Empty,
+                    StaffID = result.Data.StaffID!,
+                    JobCode = result.Data.JobCode!,
                     ZtDescription = result.Data.ZtDescription ?? result.Data.Name,
                     PlannedHours = result.Data.PlannedHours
                 };
@@ -219,9 +238,27 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
+            var errors = new List<object>();
+
+            if (string.IsNullOrWhiteSpace(item.StaffID))
+                errors.Add(new { field = nameof(item.StaffID), message = "StaffID is required." });
+
+            if (string.IsNullOrWhiteSpace(item.JobCode))
+                errors.Add(new { field = nameof(item.JobCode), message = "JobCode is required." });
+
+            if (errors.Count > 0)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors
+                });
+            }
+
             var dto = new StaffJobDto
             {
-                StaffId = item.StaffID ?? string.Empty,
+                StaffId = item.StaffID,
                 JobCode = item.JobCode,
                 PlannedHours = item.PlannedHours
             };
