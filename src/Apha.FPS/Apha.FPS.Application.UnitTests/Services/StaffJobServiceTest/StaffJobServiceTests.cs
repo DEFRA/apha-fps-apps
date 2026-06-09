@@ -1157,6 +1157,282 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
 
         #endregion
 
+        #region GetZtTotalHoursByStaffIdAsync Tests
+
+        [Fact]
+        public async Task GetZtTotalHoursByStaffIdAsync_WithValidStaffId_ReturnsTotalHours()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var expectedTotal = 120.5;
+            _mockRepository.GetZtTotalHoursByStaffIdAsync(staffId).Returns(expectedTotal);
+
+            // Act
+            var result = await _sut.GetZtTotalHoursByStaffIdAsync(staffId);
+
+            // Assert
+            result.Should().Be(expectedTotal);
+            await _mockRepository.Received(1).GetZtTotalHoursByStaffIdAsync(staffId);
+        }
+
+        [Fact]
+        public async Task GetZtTotalHoursByStaffIdAsync_WithNoZtJobs_ReturnsZero()
+        {
+            // Arrange
+            var staffId = "STAFF999";
+            _mockRepository.GetZtTotalHoursByStaffIdAsync(staffId).Returns(0.0);
+
+            // Act
+            var result = await _sut.GetZtTotalHoursByStaffIdAsync(staffId);
+
+            // Assert
+            result.Should().Be(0.0);
+            await _mockRepository.Received(1).GetZtTotalHoursByStaffIdAsync(staffId);
+        }
+
+        [Fact]
+        public async Task GetZtTotalHoursByStaffIdAsync_WhenRepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            _mockRepository.GetZtTotalHoursByStaffIdAsync(staffId)
+                .Throws(new InvalidOperationException("Database connection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _sut.GetZtTotalHoursByStaffIdAsync(staffId));
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetZtTotalHoursByStaffIdAsync(staffId);
+        }
+
+        #endregion
+
+        #region GetZtStaffJobsByStaffIdPagedAsync Tests
+
+        [Fact]
+        public async Task GetZtStaffJobsByStaffIdPagedAsync_WithValidParams_ReturnsPagedResult()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedPaginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var repositoryResult = new PagedData<ZtStaffJobView>
+            {
+                Data = new List<ZtStaffJobView>
+                {
+                    new ZtStaffJobView { StaffID = staffId, JobCode = "ZT001", PlannedHours = 40, Name = "Admin" },
+                    new ZtStaffJobView { StaffID = staffId, JobCode = "ZT002", PlannedHours = 20, Name = "Training" }
+                },
+                PaginationData = new PaginationData
+                {
+                    TotalPages = 1,
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalRecords = 2
+                }
+            };
+
+            var expectedResult = new PaginatedResult<ZtStaffJobViewDto>
+            {
+                Data = new List<ZtStaffJobViewDto>
+                {
+                    new ZtStaffJobViewDto { StaffID = staffId, JobCode = "ZT001", PlannedHours = 40, Name = "Admin" },
+                    new ZtStaffJobViewDto { StaffID = staffId, JobCode = "ZT002", PlannedHours = 20, Name = "Training" }
+                },
+                PaginationData = new PaginationDto
+                {
+                    TotalPages = 1,
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalRecords = 2
+                }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedPaginationParams);
+            _mockRepository.GetZtStaffJobsByStaffIdPagedAsync(mappedPaginationParams, staffId).Returns(repositoryResult);
+            _mockMapper.Map<PaginatedResult<ZtStaffJobViewDto>>(repositoryResult).Returns(expectedResult);
+
+            // Act
+            var result = await _sut.GetZtStaffJobsByStaffIdPagedAsync(queryFilter, staffId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().HaveCount(2);
+            result.PaginationData.TotalRecords.Should().Be(2);
+            result.Data.First().JobCode.Should().Be("ZT001");
+
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(queryFilter);
+            await _mockRepository.Received(1).GetZtStaffJobsByStaffIdPagedAsync(mappedPaginationParams, staffId);
+            _mockMapper.Received(1).Map<PaginatedResult<ZtStaffJobViewDto>>(repositoryResult);
+        }
+
+        [Fact]
+        public async Task GetZtStaffJobsByStaffIdPagedAsync_WithEmptyResult_ReturnsEmptyPaginatedResult()
+        {
+            // Arrange
+            var staffId = "STAFF999";
+            var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedPaginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var emptyRepositoryResult = new PagedData<ZtStaffJobView>
+            {
+                Data = new List<ZtStaffJobView>(),
+                PaginationData = new PaginationData
+                {
+                    TotalPages = 0,
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalRecords = 0
+                }
+            };
+
+            var emptyExpectedResult = new PaginatedResult<ZtStaffJobViewDto>
+            {
+                Data = new List<ZtStaffJobViewDto>(),
+                PaginationData = new PaginationDto
+                {
+                    TotalPages = 0,
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalRecords = 0
+                }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedPaginationParams);
+            _mockRepository.GetZtStaffJobsByStaffIdPagedAsync(mappedPaginationParams, staffId).Returns(emptyRepositoryResult);
+            _mockMapper.Map<PaginatedResult<ZtStaffJobViewDto>>(emptyRepositoryResult).Returns(emptyExpectedResult);
+
+            // Act
+            var result = await _sut.GetZtStaffJobsByStaffIdPagedAsync(queryFilter, staffId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().BeEmpty();
+            result.PaginationData.TotalRecords.Should().Be(0);
+
+            await _mockRepository.Received(1).GetZtStaffJobsByStaffIdPagedAsync(mappedPaginationParams, staffId);
+        }
+
+        [Fact]
+        public async Task GetZtStaffJobsByStaffIdPagedAsync_WhenRepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedPaginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedPaginationParams);
+            _mockRepository.GetZtStaffJobsByStaffIdPagedAsync(mappedPaginationParams, staffId)
+                .Throws(new InvalidOperationException("Database connection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _sut.GetZtStaffJobsByStaffIdPagedAsync(queryFilter, staffId));
+
+            exception.Message.Should().Be("Database connection failed");
+        }
+
+        #endregion
+
+        #region GetZtStaffJobDetailsByIdAsync Tests
+
+        [Fact]
+        public async Task GetZtStaffJobDetailsByIdAsync_WhenFound_ReturnsDto()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var jobCode = "ZT001";
+
+            var entity = new ZtStaffJobView
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                PlannedHours = 40,
+                Name = "Admin Work"
+            };
+
+            var expectedDto = new ZtStaffJobViewDto
+            {
+                StaffID = staffId,
+                JobCode = jobCode,
+                PlannedHours = 40,
+                Name = "Admin Work"
+            };
+
+            _mockRepository.GetZtStaffJobDetailsByIdAsync(staffId, jobCode)
+                .Returns(Task.FromResult<ZtStaffJobView?>(entity));
+            _mockMapper.Map<ZtStaffJobViewDto>(entity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.StaffID.Should().Be(staffId);
+            result.JobCode.Should().Be(jobCode);
+            result.PlannedHours.Should().Be(40);
+
+            await _mockRepository.Received(1).GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+            _mockMapper.Received(1).Map<ZtStaffJobViewDto>(entity);
+        }
+
+        [Fact]
+        public async Task GetZtStaffJobDetailsByIdAsync_WhenNotFound_ReturnsNull()
+        {
+            // Arrange
+            var staffId = "STAFF999";
+            var jobCode = "ZT999";
+
+            _mockRepository.GetZtStaffJobDetailsByIdAsync(staffId, jobCode)
+                .Returns(Task.FromResult<ZtStaffJobView?>(null));
+
+            // Act
+            var result = await _sut.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+
+            // Assert
+            Assert.Null(result);
+            await _mockRepository.Received(1).GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+        }
+
+        [Fact]
+        public async Task GetZtStaffJobDetailsByIdAsync_WhenRepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            var staffId = "STAFF001";
+            var jobCode = "ZT001";
+
+            _mockRepository.GetZtStaffJobDetailsByIdAsync(staffId, jobCode)
+                .ThrowsAsync(new InvalidOperationException("Database connection failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _sut.GetZtStaffJobDetailsByIdAsync(staffId, jobCode));
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+        }
+
+        [Theory]
+        [InlineData("S001", "ZT001")]
+        [InlineData("S002", "ZT002")]
+        [InlineData("", "ZT001")]
+        public async Task GetZtStaffJobDetailsByIdAsync_WithVariousIds_CallsRepository(string staffId, string jobCode)
+        {
+            // Arrange
+            _mockRepository.GetZtStaffJobDetailsByIdAsync(staffId, jobCode)
+                .Returns(Task.FromResult<ZtStaffJobView?>(null));
+
+            // Act
+            await _sut.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+
+            // Assert
+            await _mockRepository.Received(1).GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+        }
+
+        #endregion
+
     }
 }
 

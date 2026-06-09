@@ -623,5 +623,113 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         }
 
         #endregion
+
+        #region GetZtStaffJobsByStaffIdPagedAsync
+
+        [Fact]
+        public async Task GetZtStaffJobsByStaffIdPagedAsync_HappyPath_ReturnsOk()
+        {
+            var query = new PaginationReq<string>();
+            var serviceResult = new PaginatedResult<ZtStaffJobViewDto>();
+            var mappedResult = new PaginationRes<ZtStaffJobViewRes>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
+            _serviceMock.GetZtStaffJobsByStaffIdPagedAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>()).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ZtStaffJobViewRes>>(serviceResult).Returns(mappedResult);
+
+            var result = await _controller.GetZtStaffJobsByStaffIdPagedAsync(query, "S001");
+
+            Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, ((OkObjectResult)result).Value);
+        }
+
+        [Fact]
+        public async Task GetZtStaffJobsByStaffIdPagedAsync_EdgeCase_EmptyResult()
+        {
+            var query = new PaginationReq<string>();
+            var serviceResult = new PaginatedResult<ZtStaffJobViewDto>();
+            var mappedResult = new PaginationRes<ZtStaffJobViewRes>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
+            _serviceMock.GetZtStaffJobsByStaffIdPagedAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>()).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ZtStaffJobViewRes>>(serviceResult).Returns(mappedResult);
+
+            var result = await _controller.GetZtStaffJobsByStaffIdPagedAsync(query, "S001");
+
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetZtStaffJobsByStaffIdPagedAsync_Error_ServiceThrows()
+        {
+            var query = new PaginationReq<string>();
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
+            _serviceMock.GetZtStaffJobsByStaffIdPagedAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>()).Throws(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetZtStaffJobsByStaffIdPagedAsync(query, "S001"));
+        }
+
+        [Fact]
+        public async Task GetZtStaffJobsByStaffIdPagedAsync_Error_MapperThrows()
+        {
+            var query = new PaginationReq<string>();
+            _mapperMock.Map<QueryParameters<string>>(query).Throws(new Exception("Mapping error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetZtStaffJobsByStaffIdPagedAsync(query, "S001"));
+        }
+
+        #endregion
+
+        #region GetZtStaffJobDetailsByIdAsync
+
+        [Fact]
+        public async Task GetZtStaffJobDetailsByIdAsync_HappyPath_ReturnsOk()
+        {
+            var dto = new ZtStaffJobViewDto { StaffID = "S1", JobCode = "ZT1", PlannedHours = 40 };
+            var mapped = new ZtStaffJobViewRes { StaffID = "S1", JobCode = "ZT1", PlannedHours = 40 };
+
+            _serviceMock.GetZtStaffJobDetailsByIdAsync("S1", "ZT1").Returns(dto);
+            _mapperMock.Map<ZtStaffJobViewRes>(dto).Returns(mapped);
+
+            var result = await _controller.GetZtStaffJobDetailsByIdAsync("S1", "ZT1");
+
+            Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, ((OkObjectResult)result).Value);
+        }
+
+        [Fact]
+        public async Task GetZtStaffJobDetailsByIdAsync_EdgeCase_NullResult_ThrowsKeyNotFound()
+        {
+            _serviceMock.GetZtStaffJobDetailsByIdAsync("S1", "ZT1").Returns((ZtStaffJobViewDto)null!);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.GetZtStaffJobDetailsByIdAsync("S1", "ZT1"));
+        }
+
+        [Fact]
+        public async Task GetZtStaffJobDetailsByIdAsync_Error_ServiceThrows()
+        {
+            _serviceMock.GetZtStaffJobDetailsByIdAsync("S1", "ZT1").Throws(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetZtStaffJobDetailsByIdAsync("S1", "ZT1"));
+        }
+
+        [Theory]
+        [InlineData("S001", "ZT001")]
+        [InlineData("S002", "ZT002")]
+        [InlineData("EMP123", "ZT_TEST")]
+        public async Task GetZtStaffJobDetailsByIdAsync_WithVariousIds_CallsService(string staffId, string jobCode)
+        {
+            var dto = new ZtStaffJobViewDto { StaffID = staffId, JobCode = jobCode };
+            var mapped = new ZtStaffJobViewRes();
+
+            _serviceMock.GetZtStaffJobDetailsByIdAsync(staffId, jobCode).Returns(dto);
+            _mapperMock.Map<ZtStaffJobViewRes>(dto).Returns(mapped);
+
+            await _controller.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+
+            await _serviceMock.Received(1).GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+        }
+
+        #endregion
     }
 }
