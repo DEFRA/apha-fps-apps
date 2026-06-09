@@ -24,8 +24,4 @@
     <ProjectReference Include="..\Apha.PIMS.DataAccess\Apha.PIMS.DataAccess.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>

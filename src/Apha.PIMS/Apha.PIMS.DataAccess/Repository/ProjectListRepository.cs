@@ -135,7 +135,24 @@ namespace Apha.PIMS.DataAccess.Repository
                 .OrderByDescending(p => p.Year)
                 .ToListAsync();
         }
-
+        public async Task<List<ProjectListMilestone>> GetAllProjectsForMilestone()
+        {
+            return await _context.ProjectRadTrackData
+                .AsNoTracking()
+                .Join(_context.ProjectLatestDetails,
+                      g => g.Parentproject,
+                      v => v.ParentProject,
+                      (g, v) => new ProjectListMilestone
+                      {
+                          Parentproject = g.Parentproject,
+                          Program = v.Program,
+                          Customer = v.Customer,
+                          ProjectGroup = v.ProjectGroup,
+                          Formrequired = g.Formrequired
+                      })
+                .OrderBy(x => x.Parentproject)
+                .ToListAsync();
+        }
         private static IQueryable<ProjectListView> ApplyFilter(IQueryable<ProjectListView> query, string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter) || filter == "{}")
