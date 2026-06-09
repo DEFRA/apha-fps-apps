@@ -49,7 +49,7 @@
                                 Set Up Components
                             </button>
                             <button class="govuk-button sup_margin_0" type="button"
-                                    onclick="savePortfolio()">
+                                    onclick="saveAndReturn()">
                                 Save
                             </button>
                         </div>
@@ -284,6 +284,13 @@
         function setupComponents() {
             var parentProject = document.getElementById('portfolioNewForm').dataset.parentProject;
             window.location.href = '/FPS/TestCapability/Index?portfolio=' + encodeURIComponent(parentProject);
+        }
+
+        function saveAndReturn() {
+            var parentProject = document.getElementById('portfolioNewForm').dataset.parentProject;
+            savePortfolio(function () {
+                window.location.href = '/FPS/TestCapability/Index?portfolio=' + encodeURIComponent(parentProject);
+            });
         }
 
         function savePortfolio(onSuccess) {
