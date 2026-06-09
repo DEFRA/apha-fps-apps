@@ -1433,8 +1433,101 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
 
         #endregion
 
+        #region GetStaffSummaryByIdAsync Tests
+
+        [Fact]
+        public async Task GetStaffSummaryByIdAsync_WhenFound_ReturnsMappedDto()
+        {
+            // Arrange
+            var entity = new StaffWorkgroupLookup
+            {
+                StaffID = "S001",
+                Name = "John Doe",
+                WorkGroupGrade = "Grade A",
+                HrsAvail = 1500,
+                HrsPaid = 1800,
+                Leave = 200,
+                SickSpecial = 50
+            };
+            var expectedDto = new StaffWorkgroupLookupDto
+            {
+                StaffID = "S001",
+                Name = "John Doe",
+                WorkGroupGrade = "Grade A",
+                HrsAvail = 1500,
+                HrsPaid = 1800,
+                Leave = 200,
+                SickSpecial = 50
+            };
+
+            _mockRepository.GetStaffSummaryByIdAsync("S001")
+                .Returns(Task.FromResult<StaffWorkgroupLookup?>(entity));
+            _mockMapper.Map<StaffWorkgroupLookupDto>(entity)
+                .Returns(expectedDto);
+
+            // Act
+            var result = await _sut.GetStaffSummaryByIdAsync("S001");
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.StaffID.Should().Be("S001");
+            result.Name.Should().Be("John Doe");
+            result.WorkGroupGrade.Should().Be("Grade A");
+
+            await _mockRepository.Received(1).GetStaffSummaryByIdAsync("S001");
+            _mockMapper.Received(1).Map<StaffWorkgroupLookupDto>(entity);
+        }
+
+        [Fact]
+        public async Task GetStaffSummaryByIdAsync_WhenNotFound_ReturnsNull()
+        {
+            // Arrange
+            _mockRepository.GetStaffSummaryByIdAsync("UNKNOWN")
+                .Returns(Task.FromResult<StaffWorkgroupLookup?>(null));
+
+            // Act
+            var result = await _sut.GetStaffSummaryByIdAsync("UNKNOWN");
+
+            // Assert
+            result.Should().BeNull();
+
+            await _mockRepository.Received(1).GetStaffSummaryByIdAsync("UNKNOWN");
+            _mockMapper.DidNotReceive().Map<StaffWorkgroupLookupDto>(Arg.Any<StaffWorkgroupLookup>());
+        }
+
+        [Fact]
+        public async Task GetStaffSummaryByIdAsync_WhenRepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            _mockRepository.GetStaffSummaryByIdAsync("S001")
+                .Returns(Task.FromException<StaffWorkgroupLookup?>(new Exception("DB error")));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(
+                () => _sut.GetStaffSummaryByIdAsync("S001"));
+
+            ex.Message.Should().Be("DB error");
+            await _mockRepository.Received(1).GetStaffSummaryByIdAsync("S001");
+        }
+
+        [Theory]
+        [InlineData("S001")]
+        [InlineData("EMP_123")]
+        [InlineData("")]
+        public async Task GetStaffSummaryByIdAsync_WithVariousIds_CallsRepository(string staffId)
+        {
+            // Arrange
+            _mockRepository.GetStaffSummaryByIdAsync(staffId)
+                .Returns(Task.FromResult<StaffWorkgroupLookup?>(null));
+
+            // Act
+            await _sut.GetStaffSummaryByIdAsync(staffId);
+
+            // Assert
+            await _mockRepository.Received(1).GetStaffSummaryByIdAsync(staffId);
+        }
+
+        #endregion
+
     }
 }
-
-
-

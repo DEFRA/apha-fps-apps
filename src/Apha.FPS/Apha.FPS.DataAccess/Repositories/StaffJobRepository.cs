@@ -402,13 +402,13 @@ namespace Apha.FPS.DataAccess.Repositories
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<ZtStaffJobView?> GetZtStaffJobDetailsByIdAsync(string staffId, string JobCode)
+        public async Task<ZtStaffJobView?> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
         {
             var baseQuery = (from vsjt in _dbContext.StaffJobTblViews
                              join vjc in _dbContext.ProjectViews on vsjt.JobCode equals vjc.ParentProject
                              where vsjt.StaffId == staffId
                              && (EF.Functions.ILike(vjc.UserEmail!, _requestContext.UserEmailId))
-                             && vsjt.JobCode == JobCode
+                             && vsjt.JobCode == jobCode
                              select new ZtStaffJobView
                              {
                                  StaffID = vsjt.StaffId,

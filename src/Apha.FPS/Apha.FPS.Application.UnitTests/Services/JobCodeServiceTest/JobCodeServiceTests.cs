@@ -7,7 +7,6 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-
 namespace Apha.FPS.Application.UnitTests.Services.JobCodeServiceTest
 {
     public class JobCodeServiceTests
@@ -121,5 +120,108 @@ namespace Apha.FPS.Application.UnitTests.Services.JobCodeServiceTest
             await _mockRepository.Received(1).GetAllJobCodesAsync();
             _mockMapper.DidNotReceive().Map<IEnumerable<JobCodeDto>>(Arg.Any<IEnumerable<JobCode>>());
         }
+
+        #region GetZtCodeLookupAsync
+
+        [Fact]
+        public async Task GetZtCodeLookupAsync_WithValidData_ReturnsMappedDtoList()
+        {
+            // Arrange
+            var ztEntities = new List<ZtJobCodeLookup>
+            {
+                new() { JobCode = "ZT001", Description = "ZT Project 1" },
+                new() { JobCode = "ZT002", Description = "ZT Project 2" }
+            };
+
+            var expectedDtos = new List<ZtJobCodeDto>
+            {
+                new() { JobCode = "ZT001", Description = "ZT Project 1" },
+                new() { JobCode = "ZT002", Description = "ZT Project 2" }
+            };
+
+            _mockRepository.GetZtJobCodesAsync()
+                .Returns(Task.FromResult<IEnumerable<ZtJobCodeLookup>>(ztEntities));
+
+            _mockMapper.Map<IEnumerable<ZtJobCodeDto>>(ztEntities)
+                .Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetZtCodeLookupAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(2);
+            result.First().JobCode.Should().Be("ZT001");
+            result.First().Description.Should().Be("ZT Project 1");
+
+            await _mockRepository.Received(1).GetZtJobCodesAsync();
+            _mockMapper.Received(1).Map<IEnumerable<ZtJobCodeDto>>(ztEntities);
+        }
+
+        [Fact]
+        public async Task GetZtCodeLookupAsync_WithEmptyList_ReturnsEmptyDtoList()
+        {
+            // Arrange
+            var emptyEntities = new List<ZtJobCodeLookup>();
+            var emptyDtos = new List<ZtJobCodeDto>();
+
+            _mockRepository.GetZtJobCodesAsync()
+                .Returns(Task.FromResult<IEnumerable<ZtJobCodeLookup>>(emptyEntities));
+
+            _mockMapper.Map<IEnumerable<ZtJobCodeDto>>(emptyEntities)
+                .Returns(emptyDtos);
+
+            // Act
+            var result = await _sut.GetZtCodeLookupAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetZtJobCodesAsync();
+            _mockMapper.Received(1).Map<IEnumerable<ZtJobCodeDto>>(emptyEntities);
+        }
+
+        [Fact]
+        public async Task GetZtCodeLookupAsync_WhenRepositoryReturnsNull_ReturnsNull()
+        {
+            // Arrange
+            _mockRepository.GetZtJobCodesAsync()
+                .Returns(Task.FromResult<IEnumerable<ZtJobCodeLookup>>(null!));
+
+            _mockMapper.Map<IEnumerable<ZtJobCodeDto>>(null)
+                .Returns((IEnumerable<ZtJobCodeDto>?)null);
+
+            // Act
+            var result = await _sut.GetZtCodeLookupAsync();
+
+            // Assert
+            result.Should().BeNull();
+
+            await _mockRepository.Received(1).GetZtJobCodesAsync();
+            _mockMapper.Received(1).Map<IEnumerable<ZtJobCodeDto>>(null);
+        }
+
+        [Fact]
+        public async Task GetZtCodeLookupAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetZtJobCodesAsync()
+                .Returns(Task.FromException<IEnumerable<ZtJobCodeLookup>>(expectedException));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetZtCodeLookupAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+
+            await _mockRepository.Received(1).GetZtJobCodesAsync();
+            _mockMapper.DidNotReceive().Map<IEnumerable<ZtJobCodeDto>>(Arg.Any<IEnumerable<ZtJobCodeLookup>>());
+        }
+
+        #endregion
     }
 }

@@ -731,5 +731,97 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         }
 
         #endregion
+
+        #region GetZtTotalHoursByStaffIdAsync
+
+        [Fact]
+        public async Task GetZtTotalHoursByStaffIdAsync_HappyPath_ReturnsOk()
+        {
+            _serviceMock.GetZtTotalHoursByStaffIdAsync("S1").Returns(120.5);
+
+            var result = await _controller.GetZtTotalHoursByStaffIdAsync("S1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(120.5, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetZtTotalHoursByStaffIdAsync_ZeroHours_ReturnsOkWithZero()
+        {
+            _serviceMock.GetZtTotalHoursByStaffIdAsync("S1").Returns(0.0);
+
+            var result = await _controller.GetZtTotalHoursByStaffIdAsync("S1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(0.0, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetZtTotalHoursByStaffIdAsync_ServiceThrows_PropagatesException()
+        {
+            _serviceMock.GetZtTotalHoursByStaffIdAsync("S1").Throws(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetZtTotalHoursByStaffIdAsync("S1"));
+        }
+
+        [Fact]
+        public async Task GetZtTotalHoursByStaffIdAsync_CallsServiceOnce()
+        {
+            _serviceMock.GetZtTotalHoursByStaffIdAsync("S1").Returns(50.0);
+
+            await _controller.GetZtTotalHoursByStaffIdAsync("S1");
+
+            await _serviceMock.Received(1).GetZtTotalHoursByStaffIdAsync("S1");
+        }
+
+        #endregion
+
+        #region GetStaffSummaryByIdAsync
+
+        [Fact]
+        public async Task GetStaffSummaryByIdAsync_HappyPath_ReturnsOk()
+        {
+            var dto = new StaffWorkgroupLookupDto { StaffID = "S1", Name = "John", WorkGroupGrade = "A1" };
+            var mapped = new StaffWorkgroupLookupRes { StaffID = "S1", Name = "John", WorkGroupGrade = "A1" };
+
+            _serviceMock.GetStaffSummaryByIdAsync("S1").Returns(dto);
+            _mapperMock.Map<StaffWorkgroupLookupRes>(dto).Returns(mapped);
+
+            var result = await _controller.GetStaffSummaryByIdAsync("S1");
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetStaffSummaryByIdAsync_NotFound_ReturnsNotFound()
+        {
+            _serviceMock.GetStaffSummaryByIdAsync("S1").Returns((StaffWorkgroupLookupDto?)null);
+
+            var result = await _controller.GetStaffSummaryByIdAsync("S1");
+
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task GetStaffSummaryByIdAsync_ServiceThrows_PropagatesException()
+        {
+            _serviceMock.GetStaffSummaryByIdAsync("S1").Throws(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetStaffSummaryByIdAsync("S1"));
+        }
+
+        [Fact]
+        public async Task GetStaffSummaryByIdAsync_CallsServiceOnce()
+        {
+            _serviceMock.GetStaffSummaryByIdAsync("S1").Returns(new StaffWorkgroupLookupDto());
+            _mapperMock.Map<StaffWorkgroupLookupRes>(Arg.Any<StaffWorkgroupLookupDto>()).Returns(new StaffWorkgroupLookupRes());
+
+            await _controller.GetStaffSummaryByIdAsync("S1");
+
+            await _serviceMock.Received(1).GetStaffSummaryByIdAsync("S1");
+        }
+
+        #endregion
     }
 }
