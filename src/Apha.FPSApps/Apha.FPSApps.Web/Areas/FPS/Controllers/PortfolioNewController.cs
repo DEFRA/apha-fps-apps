@@ -61,7 +61,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var dto = _mapper.Map<ProjectDto>(model);
-            var response = await _projectService.UpdatePactPortfolioAsync(dto);
+            var response = await _projectService.UpdateFpsPortfolioAsync(dto);
             if (response.Success)
                 return Json(new { success = true, data = response.Data, message = "Portfolio details saved successfully." });
 

@@ -285,6 +285,48 @@ namespace Apha.FPS.DataAccess.Repositories
             return entity;
         }
 
+        public async Task<Project?> UpdateFpsPortfolioDetailsAsync(Project project)
+        {
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
+            Project? entity = null;
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                    entity = await _dbContext.Projects
+                        .FirstOrDefaultAsync(p => p.ParentProject == project.ParentProject
+                            && p.FpsYear == _requestContext.FpsYear);
+
+                    if (entity == null) return;
+
+                    entity.ProjectTitle = project.ProjectTitle;
+                    entity.Program = project.Program;
+                    entity.Manager = project.Manager;
+                    entity.Disease = project.Disease;
+                    entity.ProjectStatus = project.ProjectStatus;
+                    entity.TransferIncome = project.TransferIncome;
+                    entity.CustIncome = project.CustIncome;
+                    entity.Profit = project.Profit;
+                    entity.Contract = project.Contract;
+                    entity.Customer = project.Customer;
+
+                    NormalizeDateTimesToUnspecified(entity);
+                    _dbContext.ProjectLogs.Add(MapProjectToLog(entity, "U", _requestContext.UserEmailId));
+                    await _dbContext.SaveChangesAsync();
+
+                    await tx.CommitAsync();
+                }
+                catch
+                {
+                    await tx.RollbackAsync();
+                    throw;
+                }
+            });
+            return entity;
+        }
+
         public async Task<bool> DeleteProjectAsync(string parentProject)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
