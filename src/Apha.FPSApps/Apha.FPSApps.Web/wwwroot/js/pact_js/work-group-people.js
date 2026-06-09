@@ -7,7 +7,10 @@
 
 var peopleGridId = null;
 var preselectedWorkGroup = null;
-
+let workGroupSelectDropdown = null;
+let selectedWorkgroup = null;
+let personSelectDropdown = null;
+let selectedPerson = null;
 /**
  * Returns the grid manager instance for the people grid.
  * @returns {object|undefined} The grid manager, or undefined if not yet initialised.
@@ -37,9 +40,9 @@ function onWorkGroupPickChange(workGroup) {
     currentWorkGroup  = workGroup || null;
     currentPersonName = null;
 
-    document.getElementById('personSelect').value = '';
+   // document.getElementById('personSelect').value = '';
     document.getElementById('selectedWorkgroup').value = workGroup || '';
-    document.getElementById('selectedPerson').value = '';
+    document.getElementById('selectedPerson').value = '';//personSelectDropdown
     document.getElementById('btnShowTimeByJob').disabled = true;
 
     var hasWg = !!workGroup;
@@ -68,7 +71,7 @@ function onPersonPickChange(personName, personWorkGroup) {
     currentPersonName = personName || null;
     currentWorkGroup  = personWorkGroup || null;
 
-    document.getElementById('workGroupSelect').value = '';
+  //  document.getElementById('workGroupSelect').value = '';
     document.getElementById('selectedWorkgroup').value = '';
     ['btnShowSummary', 'btnShowTimeRecords', 'btnShowTimeCodes', 'btnShowTestOutputs']
         .forEach(function (id) {
@@ -353,7 +356,7 @@ function initWorkGroupPeoplePage() {
 }
 
 $(document).ready(function () {
-    initWorkGroupPeoplePage();
+   // initWorkGroupPeoplePage();
 
     // Wire up the "Show me valid Test Outputs" button
     $('#btnShowTestOutputs').on('click', navigateToTestCapabilities);
@@ -372,8 +375,77 @@ $(document).ready(function () {
 
     // Re-select first row whenever the grid manager reloads the grid
     document.addEventListener('gridReloaded', function (e) {
+      //  initializeMultiColumnDropdown();
         if (e.detail && e.detail.gridId === peopleGridId) {
             selectFirstPersonRow();
         }
     });
+});
+
+
+function initializeMultiColumnDropdown() {
+    /*Multicolumn dropdown functionality for program selection*/
+    workGroupSelectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'workGroupSelectDropdown',
+        containerSelector: '#workGroupSelectMultiDropdown',//name as per cshtml div id
+        placeholder: 'Select Workgroup',
+        showSerialNumber: false,
+        searchPlaceholder: 'Type to search work group',
+        labelText: '',//this label will come at the top of dropdown, can be set as per requirement
+        columns: [
+            { field: 'WorkGroupName', header: 'Work Group', width: '80px' },
+            { field: 'ProfitCentre', header: 'Profit Centre', width: '150px' },
+        ],
+        data: workgroupOptionsListData,
+        displayField: 'WorkGroupName',
+        valueField: 'WorkGroupName',
+        clearButtonClearsSelection: true,//this will only clear searchbox and not selected value
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                selectedWorkgroup = selectedItem.WorkGroupName; 
+                onWorkGroupPickChange(selectedItem.WorkGroupName);
+                const workGroupSelectDropdown_input = document.getElementById('workGroupSelectDropdown_input');
+                workGroupSelectDropdown_input.value = selectedWorkgroup;  
+                const personSelectDropdown_input = document.getElementById('personSelectDropdown_input');
+                personSelectDropdown_input.value = '';
+            },
+        }
+    });
+
+    /*Multicolumn dropdown functionality for program selection*/
+    personSelectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'personSelectDropdown',
+        containerSelector: '#personSelectMultiDropdown',//name as per cshtml div id
+        placeholder: 'Select Person',
+        showSerialNumber: false,
+        searchPlaceholder: 'Type to search person',
+        labelText: '',//this label will come at the top of dropdown, can be set as per requirement
+        columns: [
+            { field: 'Name', header: 'Name', width: '80px' },
+            { field: 'WorkGroupGrade', header: 'Work Group Grade', width: '80px' },
+            { field: 'WorkGroup', header: 'Work Group', width: '150px' },
+        ],
+        data: personOptionsListData,
+        displayField: 'Name',
+        valueField: 'Name',
+        clearButtonClearsSelection: true,//this will only clear searchbox and not selected value
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                selectedPerson = selectedItem.Name;
+                const personSelectDropdown_input = document.getElementById('personSelectDropdown_input');
+                personSelectDropdown_input.value = selectedPerson; 
+                const workGroupSelectDropdown_input = document.getElementById('workGroupSelectDropdown_input');
+                workGroupSelectDropdown_input.value = '';
+                onPersonPickChange(selectedItem.Name, selectedItem.WorkGroup); 
+               
+
+            },
+        }
+    });
+   
+}
+
+
+document.addEventListener('DOMContentLoaded', async function () {
+    initializeMultiColumnDropdown();
 });
