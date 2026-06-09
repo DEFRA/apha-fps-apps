@@ -342,7 +342,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     items = rowsResult.Data.Select(d => new PlanStaffZTCodeItemViewModel
                     {
-                        StaffID = d.StaffID,
+                        StaffID = staffId,
                         JobCode = d.JobCode ?? string.Empty,
                         ZtDescription = d.ZtDescription ?? d.Name,
                         PlannedHours = d.PlannedHours
