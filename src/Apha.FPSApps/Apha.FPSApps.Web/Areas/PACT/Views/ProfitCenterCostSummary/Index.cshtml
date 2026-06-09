@@ -55,7 +55,7 @@
 @section Scripts {
     <script src="~/js/pact_js/profit-center-cost-summary.js"></script>
     <script>
-        profitCenterCostGridId = '@Model.CostGrid.GridId';
+        profitCenterCostGridId = '@(Model.CostGrid?.GridId ?? "")';
         currentMonthNumber = '@(Model.SelectedMonthNumber?.ToString() ?? "")';
     </script>
 }
