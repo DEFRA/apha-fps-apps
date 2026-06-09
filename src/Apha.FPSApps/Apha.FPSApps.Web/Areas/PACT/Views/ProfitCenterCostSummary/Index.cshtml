@@ -13,7 +13,6 @@
 
     @* Period dropdown *@
     <div class="govuk-grid-column-one-third">
-        @*  <label for="periodSelectDropdown" class="govuk-label govuk-!-font-weight-bold">Select a Period</label>*@
         <div style="position: relative; z-index: 50;">
             <input type="text" id="periodSelectDropdown" placeholder="Select Period" autocomplete="off"
                    class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly />
@@ -58,15 +57,5 @@
     <script>
         profitCenterCostGridId = '@Model.CostGrid.GridId';
         currentMonthNumber = '@(Model.SelectedMonthNumber?.ToString() ?? "")';
-
-        $(document).ready(function() {
-            if (currentMonthNumber) {
-                var selectedRow = $('#PeriodDropdownBody tr[data-value="' + currentMonthNumber + '"]');
-                if (selectedRow.length) {
-                    var selectedText = selectedRow.find('td:first').text().trim();
-                    $('#periodSelectDropdown').val(selectedText);
-                }
-            }
-        });
     </script>
 }

@@ -131,6 +131,15 @@ function initProfitCenterCostSummaryPage() {
             }
         });
     }
+
+    // Set the selected period if a month number is already selected
+    if (currentMonthNumber) {
+        var selectedRow = $('#PeriodDropdownBody tr[data-value="' + currentMonthNumber + '"]');
+        if (selectedRow.length) {
+            var selectedText = selectedRow.find('td:first').text().trim();
+            $('#periodSelectDropdown').val(selectedText);
+        }
+    }
 }
 
 $(document).ready(function () {

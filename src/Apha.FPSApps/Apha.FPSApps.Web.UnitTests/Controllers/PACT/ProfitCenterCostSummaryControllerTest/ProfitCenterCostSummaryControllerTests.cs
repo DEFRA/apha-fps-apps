@@ -190,7 +190,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         {
             // Arrange
             _calenderMonthService.GetCalenderMonthsAsync()
-                .Returns(ApiResponseDto<List<CalenderMonthDto>>.FailureResponse(null, new ApiMetaDto()));
+                .Returns(ApiResponseDto<List<CalenderMonthDto>>.FailureResponse(null!, new ApiMetaDto()));
             SetupDefaultCostSummaryResponse();
             SetupDefaultMapper();
 
@@ -208,7 +208,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         {
             // Arrange
             _calenderMonthService.GetCalenderMonthsAsync()
-                .Returns(ApiResponseDto<List<CalenderMonthDto>>.SuccessResponse(null));
+                .Returns(ApiResponseDto<List<CalenderMonthDto>>.SuccessResponse(null!));
             SetupDefaultCostSummaryResponse();
             SetupDefaultMapper();
 
@@ -479,7 +479,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             // Arrange
             var request = new PaginationFilter<string> { Filter = DefaultFilterJson };
             _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
-                .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(null));
+                .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(null!));
             SetupDefaultMapper();
 
             // Act
@@ -536,7 +536,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 Descending = false
             };
             _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
-                .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(null));
+                .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(null!));
             SetupDefaultMapper();
 
             // Act
