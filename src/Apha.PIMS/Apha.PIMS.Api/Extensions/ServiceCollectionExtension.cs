@@ -25,6 +25,7 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
             services.AddScoped<ICommentService, CommentService>();
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
+            services.AddScoped<IMilestoneService, MilestoneService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -36,6 +37,7 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<IProjectDetailsRepository, ProjectDetailsRepository>();
             services.AddScoped<ICommentRepository, CommentRepository>();
             services.AddScoped<IProjectYearCostsRepository, ProjectYearCostsRepository>();
+            services.AddScoped<IMilestoneRepository, MilestoneRepository>();
             return services;
         }
     }
