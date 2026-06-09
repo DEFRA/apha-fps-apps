@@ -23,15 +23,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
 
         private readonly IMapper _mapper;
         private readonly IProfitCentreService _profitCentreService;
-        private readonly ICalenderMonthService _calenderMonthService;
+        private readonly IReleaseSummaryService _releaseSummaryService;
         private readonly ProfitCenterCostSummaryController _controller;
 
         public ProfitCenterCostSummaryControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
             _profitCentreService = Substitute.For<IProfitCentreService>();
-            _calenderMonthService = Substitute.For<ICalenderMonthService>();
-            _controller = new ProfitCenterCostSummaryController(_mapper, _profitCentreService, _calenderMonthService);
+            _releaseSummaryService = Substitute.For<IReleaseSummaryService>();
+            _controller = new ProfitCenterCostSummaryController(_mapper, _profitCentreService, _releaseSummaryService);
         }
 
         // ── Helpers ────────────────────────────────────────────────────────────
@@ -44,26 +44,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 .Returns([]);
         }
 
-        private void SetupPeriodMonthsMapper(List<CalenderMonthDto> periods)
+        private void SetupDefaultReleaseSummaryResponse()
         {
-            _mapper.Map<List<PeriodMonth>>(Arg.Any<List<CalenderMonthDto>>())
-                .Returns(periods.Select(p => new PeriodMonth
-                {
-                    Period = p.MonthName,
-                    MonthNumber = p.MonthNumber.ToString()
-                }).ToList());
-        }
-
-        private void SetupDefaultCalenderMonthsResponse()
-        {
-            var periods = new List<CalenderMonthDto>
+            var periods = new List<ReleasePeriodDto>
             {
-                new() { MonthName = "Period 1", MonthNumber = 1 },
-                new() { MonthName = "Period 2", MonthNumber = 2 }
+                new() { PeriodName = "Period 1", StartPeriod = 1, EndPeriod = 1 },
+                new() { PeriodName = "Period 2", StartPeriod = 2, EndPeriod = 2 }
             };
-            _calenderMonthService.GetCalenderMonthsAsync()
-                .Returns(ApiResponseDto<List<CalenderMonthDto>>.SuccessResponse(periods));
-            SetupPeriodMonthsMapper(periods);
+            var releaseSummary = new ReleaseSummaryDto
+            {
+                ReleasePeriods = periods,
+                Setting = null
+            };
+            _releaseSummaryService.GetReleaseSummariesAsync()
+                .Returns(ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(releaseSummary));
         }
 
         private void SetupDefaultCostSummaryResponse(short? monthNumber = null)
@@ -90,11 +84,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         #region Index
 
         [Fact]
-        public async Task Index_WithoutMonthNumber_ReturnsViewResultWithViewModel()
+        public async Task Index_WithoutMonthNumber_ReturnsViewResultWithNullGrid()
         {
             // Arrange
-            SetupDefaultCalenderMonthsResponse();
-            SetupDefaultCostSummaryResponse();
+            SetupDefaultReleaseSummaryResponse();
             SetupDefaultMapper();
 
             // Act
@@ -104,15 +97,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
             Assert.NotNull(model);
-            Assert.NotNull(model.CostGrid);
-            Assert.Equal(ExpectedGridId, model.CostGrid.GridId);
+            Assert.Null(model.CostGrid);
         }
 
         [Fact]
         public async Task Index_WithMonthNumber_PassesMonthNumberToService()
         {
             // Arrange
-            SetupDefaultCalenderMonthsResponse();
+            SetupDefaultReleaseSummaryResponse();
             SetupDefaultCostSummaryResponse(TestMonthNumber);
             SetupDefaultMapper();
 
@@ -129,7 +121,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         public async Task Index_WithMonthNumber_SetsSelectedMonthNumberInViewModel()
         {
             // Arrange
-            SetupDefaultCalenderMonthsResponse();
+            SetupDefaultReleaseSummaryResponse();
             SetupDefaultCostSummaryResponse(TestMonthNumber);
             SetupDefaultMapper();
 
@@ -146,16 +138,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         public async Task Index_Always_PopulatesPeriodMonths()
         {
             // Arrange
-            var periods = new List<CalenderMonthDto>
+            var periods = new List<ReleasePeriodDto>
             {
-                new() { MonthName = "Period 1", MonthNumber = 1 },
-                new() { MonthName = "Period 2", MonthNumber = 2 },
-                new() { MonthName = "Period 3", MonthNumber = 3 }
+                new() { PeriodName = "Period 1", StartPeriod = 1, EndPeriod = 1 },
+                new() { PeriodName = "Period 2", StartPeriod = 2, EndPeriod = 2 },
+                new() { PeriodName = "Period 3", StartPeriod = 3, EndPeriod = 3 }
             };
-            _calenderMonthService.GetCalenderMonthsAsync()
-                .Returns(ApiResponseDto<List<CalenderMonthDto>>.SuccessResponse(periods));
-            SetupPeriodMonthsMapper(periods);
-            SetupDefaultCostSummaryResponse();
+            var releaseSummary = new ReleaseSummaryDto
+            {
+                ReleasePeriods = periods,
+                Setting = null
+            };
+            _releaseSummaryService.GetReleaseSummariesAsync()
+                .Returns(ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(releaseSummary));
             SetupDefaultMapper();
 
             // Act
@@ -168,85 +163,79 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         }
 
         [Fact]
-        public async Task Index_WhenCalenderMonthServiceReturnsEmpty_ReturnsEmptyPeriodMonths()
+        public async Task Index_WhenReleaseSummaryServiceReturnsEmpty_ReturnsEmptyPeriodMonths()
         {
             // Arrange
-            _calenderMonthService.GetCalenderMonthsAsync()
-                .Returns(ApiResponseDto<List<CalenderMonthDto>>.SuccessResponse([]));
-            SetupDefaultCostSummaryResponse();
-            SetupDefaultMapper();
-
-            // Act
-            var result = await _controller.Index();
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
-            Assert.Empty(model.PeriodMonths);
-        }
-
-        [Fact]
-        public async Task Index_WhenCalenderMonthServiceFails_ReturnsEmptyPeriodMonths()
-        {
-            // Arrange
-            _calenderMonthService.GetCalenderMonthsAsync()
-                .Returns(ApiResponseDto<List<CalenderMonthDto>>.FailureResponse(null!, new ApiMetaDto()));
-            SetupDefaultCostSummaryResponse();
-            SetupDefaultMapper();
-
-            // Act
-            var result = await _controller.Index();
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
-            Assert.Empty(model.PeriodMonths);
-        }
-
-        [Fact]
-        public async Task Index_WhenCalenderMonthServiceReturnsNull_ReturnsEmptyPeriodMonths()
-        {
-            // Arrange
-            _calenderMonthService.GetCalenderMonthsAsync()
-                .Returns(ApiResponseDto<List<CalenderMonthDto>>.SuccessResponse(null!));
-            SetupDefaultCostSummaryResponse();
-            SetupDefaultMapper();
-
-            // Act
-            var result = await _controller.Index();
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
-            Assert.Empty(model.PeriodMonths);
-        }
-
-        [Fact]
-        public async Task Index_OrdersPeriodMonthsByMonthNumber()
-        {
-            // Arrange
-            var periods = new List<CalenderMonthDto>
+            var releaseSummary = new ReleaseSummaryDto
             {
-                new() { MonthName = "Period 3", MonthNumber = 3 },
-                new() { MonthName = "Period 1", MonthNumber = 1 },
-                new() { MonthName = "Period 2", MonthNumber = 2 }
+                ReleasePeriods = [],
+                Setting = null
             };
-            _calenderMonthService.GetCalenderMonthsAsync()
-                .Returns(ApiResponseDto<List<CalenderMonthDto>>.SuccessResponse(periods));
+            _releaseSummaryService.GetReleaseSummariesAsync()
+                .Returns(ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(releaseSummary));
+            SetupDefaultMapper();
 
-            // Setup mapper to preserve order
-            _mapper.Map<List<PeriodMonth>>(Arg.Any<List<CalenderMonthDto>>())
-                .Returns(callInfo =>
-                {
-                    var input = callInfo.Arg<List<CalenderMonthDto>>();
-                    return input.Select(p => new PeriodMonth
-                    {
-                        Period = p.MonthName,
-                        MonthNumber = p.MonthNumber.ToString()
-                    }).ToList();
-                });
+            // Act
+            var result = await _controller.Index();
 
-            SetupDefaultCostSummaryResponse();
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
+            Assert.Empty(model.PeriodMonths);
+        }
+
+        [Fact]
+        public async Task Index_WhenReleaseSummaryServiceFails_ReturnsEmptyPeriodMonths()
+        {
+            // Arrange
+            _releaseSummaryService.GetReleaseSummariesAsync()
+                .Returns(ApiResponseDto<ReleaseSummaryDto>.FailureResponse(null!, new ApiMetaDto()));
+            SetupDefaultMapper();
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
+            Assert.Empty(model.PeriodMonths);
+        }
+
+        [Fact]
+        public async Task Index_WhenReleaseSummaryServiceReturnsNull_ReturnsEmptyPeriodMonths()
+        {
+            // Arrange
+            _releaseSummaryService.GetReleaseSummariesAsync()
+                .Returns(ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(null!));
+            SetupDefaultMapper();
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
+            Assert.Empty(model.PeriodMonths);
+        }
+
+        [Fact]
+        public async Task Index_OrdersPeriodMonthsByEndPeriod()
+        {
+            // Arrange
+            var periods = new List<ReleasePeriodDto>
+            {
+                new() { PeriodName = "Period 3", StartPeriod = 3, EndPeriod = 3 },
+                new() { PeriodName = "Period 1", StartPeriod = 1, EndPeriod = 1 },
+                new() { PeriodName = "Period 2", StartPeriod = 2, EndPeriod = 2 }
+            };
+            var releaseSummary = new ReleaseSummaryDto
+            {
+                ReleasePeriods = periods,
+                Setting = null
+            };
+            _releaseSummaryService.GetReleaseSummariesAsync()
+                .Returns(ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(releaseSummary));
+
             SetupDefaultMapper();
 
             // Act
@@ -256,16 +245,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
             Assert.Equal("Period 1", model.PeriodMonths[0].Period);
+            Assert.Equal("1", model.PeriodMonths[0].MonthNumber);
             Assert.Equal("Period 2", model.PeriodMonths[1].Period);
+            Assert.Equal("2", model.PeriodMonths[1].MonthNumber);
             Assert.Equal("Period 3", model.PeriodMonths[2].Period);
+            Assert.Equal("3", model.PeriodMonths[2].MonthNumber);
         }
 
         [Fact]
-        public async Task Index_PopulatesCostGridWithData()
+        public async Task Index_WithMonthNumber_PopulatesCostGridWithData()
         {
             // Arrange
-            SetupDefaultCalenderMonthsResponse();
-            SetupDefaultCostSummaryResponse();
+            SetupDefaultReleaseSummaryResponse();
+            SetupDefaultCostSummaryResponse(TestMonthNumber);
             SetupDefaultMapper();
 
             var costData = new List<ProfitCentreCostDto>
@@ -281,7 +273,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 }).ToList());
 
             // Act
-            var result = await _controller.Index();
+            var result = await _controller.Index(TestMonthNumber);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -291,15 +283,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         }
 
         [Fact]
-        public async Task Index_ConfiguresGridProperties()
+        public async Task Index_WithMonthNumber_ConfiguresGridProperties()
         {
             // Arrange
-            SetupDefaultCalenderMonthsResponse();
-            SetupDefaultCostSummaryResponse();
+            SetupDefaultReleaseSummaryResponse();
+            SetupDefaultCostSummaryResponse(TestMonthNumber);
             SetupDefaultMapper();
 
             // Act
-            var result = await _controller.Index();
+            var result = await _controller.Index(TestMonthNumber);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);

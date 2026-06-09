@@ -60,6 +60,7 @@ namespace Apha.Common.Constants
 
         // Release Summaries
         public const string GetReleaseSummaries = "api/v1/recreatereleasesummary/releasesummary";
+        public const string GetReleasePeriods = "api/v1/recreatereleasesummary/releaseperiods";
         public const string SetFinalSummaryRun = "api/v1/recreatereleasesummary/releasesummary/finalrun";
 
         // Project Invoice

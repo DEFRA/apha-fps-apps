@@ -88,6 +88,10 @@ namespace Apha.PACT.DataAccess.Repository
             return releaseSummary;
         }
 
+        public async Task<IList<ReleasePeriod>> GetReleasePeriodsAsync()
+        {
+            return await GetReleasePeriodAsync();
+        }
         private async Task<string?> GetSettingByIdAsync(string settingId)
         {
             var setting = await _context.Settings

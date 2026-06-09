@@ -58,11 +58,6 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<WgSummarisedStaffTimeUsageRowDto, WgSummarisedStaffTimeUsageRow>().ReverseMap();
             CreateMap<WgSummarisedStaffTimeUsageSummaryDto, WgSummarisedStaffTimeUsageSummary>().ReverseMap();
 
-            // Mapping for Profit Center Cost Summary Period dropdown
-            CreateMap<CalenderMonthDto, PeriodMonth>()
-                .ForMember(dest => dest.MonthNumber, opt => opt.MapFrom(src => src.MonthNumber.ToString()))
-                .ForMember(dest => dest.Period, opt => opt.MapFrom(src => $"{src.MonthNumber} - {src.MonthName}"));
-
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimePivotRow>();
             CreateMap<SummarisedWgTimeSummaryDto, SummarisedWgTimeSummary>();
 

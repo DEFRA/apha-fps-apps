@@ -23,12 +23,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         /// </summary>
         public DataGridConfig<ProfitCenterCostItem>? CostGrid { get; set; }
 
-        public List<PeriodMonth> PeriodMonths { get; set; } = new();
+        /// <summary>
+        /// List of release periods with Period name and MonthNumber.
+        /// </summary>
+        public List<(string Period, string MonthNumber)> PeriodMonths { get; set; } = new();
 
-    }
-    public class PeriodMonth
-    {
-        public string Period { get; set; } = null!;
-        public string? MonthNumber { get; set; }
     }
 }

@@ -47,7 +47,16 @@
 <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-three-quarters">
         <div id="gridContainer_profitCenterCostGrid">
-            @await Html.PartialAsync("_DataGrid", Model.CostGrid)
+            @if (Model.CostGrid != null)
+            {
+                @await Html.PartialAsync("_DataGrid", Model.CostGrid)
+            }
+            else
+            {
+                <div class="govuk-inset-text" style="margin-top: 20px;">
+                    <p class="govuk-body">No data available</p>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -55,7 +64,7 @@
 @section Scripts {
     <script src="~/js/pact_js/profit-center-cost-summary.js"></script>
     <script>
-        profitCenterCostGridId = '@(Model.CostGrid?.GridId ?? "")';
-        currentMonthNumber = '@(Model.SelectedMonthNumber?.ToString() ?? "")';
+        profitCenterCostGridId = '@(Model.CostGrid != null ? Model.CostGrid.GridId : "")';
+        currentMonthNumber = '@(Model.SelectedMonthNumber.HasValue ? Model.SelectedMonthNumber.Value.ToString() : "")';
     </script>
 }
