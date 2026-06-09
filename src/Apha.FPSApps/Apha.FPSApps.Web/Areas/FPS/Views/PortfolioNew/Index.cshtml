@@ -98,6 +98,11 @@
                                                placeholder="Type to search manager">
                                     </div>
                                     <table>
+                                        <thead>
+                                            <tr>
+                                                <th style="padding:6px 8px; text-align:left;">Name</th>
+                                            </tr>
+                                        </thead>
                                         <tbody id="manager-body">
                                             @foreach (var item in Model.ManagerList)
                                             {
@@ -166,6 +171,11 @@
                                                placeholder="Type to search contract">
                                     </div>
                                     <table>
+                                        <thead>
+                                            <tr>
+                                                <th style="padding:6px 8px; text-align:left;">Name</th>
+                                            </tr>
+                                        </thead>
                                         <tbody id="contract-body">
                                             @foreach (var item in Model.ContractList)
                                             {
