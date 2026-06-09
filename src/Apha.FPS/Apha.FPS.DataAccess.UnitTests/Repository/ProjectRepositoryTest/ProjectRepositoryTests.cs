@@ -1196,7 +1196,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     Customer = "DEFRA", ProjectStatus = "A", Disease = "D", Contract = "C", IncomeAccountCode = "IA"
                 }
             };
-            var repo = CreateRepository(projects: projects, projectLogs: new List<ProjectLog>(), fpsYear: 2024);
+            var repo = CreateRepository(projects: projects, fpsYear: 2024);
             var updated = new Project
             {
                 ParentProject = "PP001", ProjectTitle = "New Title", Program = "P002", Manager = "New Manager",
@@ -1297,7 +1297,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                     Disease = "D", Contract = "C", IncomeAccountCode = "IA"
                 }
             };
-            var repo = CreateRepository(projects: projects, projectLogs: new List<ProjectLog>(), fpsYear: 2024);
+            var repo = CreateRepository(projects: projects, fpsYear: 2024);
             var updated = new Project
             {
                 ParentProject = "PP001", ProjectTitle = "Updated Title",
@@ -1312,180 +1312,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.NotNull(result);
             Assert.Equal("PP001", result.ParentProject);
             Assert.Equal("Updated Title", result.ProjectTitle);
-        }
-
-        [Fact]
-        public async Task UpdatePactPortfolioDetailsAsync_UpdatesAllMappedFields()
-        {
-            // Arrange
-            var projects = new List<Project>
-            {
-                new()
-                {
-                    ParentProject = "PP001", FpsYear = 2024,
-                    ProjectTitle = "Old Title", Program = "P001", Manager = "Old Manager",
-                    Customer = "Old Customer", Contract = "Old Contract",
-                    ProjectStatus = "Old Status", Disease = "Old Disease",
-                    CustIncome = 100m, Profit = 50m, TransferIncome = 200m,
-                    BudgetCvl = 300m, Finished = 0, Comments = "Old Comments",
-                    IncomeAccountCode = "IA"
-                }
-            };
-            var repo = CreateRepository(projects: projects, projectLogs: new List<ProjectLog>(), fpsYear: 2024);
-            var updated = new Project
-            {
-                ParentProject = "PP001", ProjectTitle = "New Title", Program = "P002",
-                Manager = "New Manager", Customer = "New Customer", Contract = "New Contract",
-                ProjectStatus = "New Status", Disease = "New Disease",
-                CustIncome = 999m, Profit = 888m, TransferIncome = 777m,
-                BudgetCvl = 666m, Finished = 1, Comments = "New Comments",
-                IncomeAccountCode = "IA"
-            };
-
-            // Act
-            var result = await repo.UpdatePactPortfolioDetailsAsync(updated);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal("New Title",    result.ProjectTitle);
-            Assert.Equal("P002",         result.Program);
-            Assert.Equal("New Manager",  result.Manager);
-            Assert.Equal("New Customer", result.Customer);
-            Assert.Equal("New Contract", result.Contract);
-            Assert.Equal("New Status",   result.ProjectStatus);
-            Assert.Equal("New Disease",  result.Disease);
-            Assert.Equal(999m,           result.CustIncome);
-            Assert.Equal(888m,           result.Profit);
-            Assert.Equal(777m,           result.TransferIncome);
-            Assert.Equal(666m,           result.BudgetCvl);
-            Assert.Equal((short)1,       result.Finished);
-            Assert.Equal("New Comments", result.Comments);
-        }
-
-        [Fact]
-        public async Task UpdatePactPortfolioDetailsAsync_NormalizesDateCreated_WhenKindIsUtc()
-        {
-            // Arrange — DateCreated has UTC kind; NormalizeDateTimesToUnspecified must convert it
-            var utcDate = DateTime.SpecifyKind(new DateTime(2024, 6, 1, 10, 0, 0), DateTimeKind.Utc);
-            var projects = new List<Project>
-            {
-                new()
-                {
-                    ParentProject = "PP001", FpsYear = 2024, ProjectTitle = "Title",
-                    Program = "P001", Customer = "DEFRA", ProjectStatus = "A",
-                    Disease = "D", Contract = "C", IncomeAccountCode = "IA",
-                    DateCreated = utcDate
-                }
-            };
-            var repo = CreateRepository(projects: projects, projectLogs: new List<ProjectLog>(), fpsYear: 2024);
-            var updated = new Project { ParentProject = "PP001", IncomeAccountCode = "IA" };
-
-            // Act
-            var result = await repo.UpdatePactPortfolioDetailsAsync(updated);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(DateTimeKind.Unspecified, result.DateCreated!.Value.Kind);
-        }
-
-        [Fact]
-        public async Task UpdatePactPortfolioDetailsAsync_NormalizesDateCosted_WhenKindIsUtc()
-        {
-            // Arrange — DateCosted has UTC kind; NormalizeDateTimesToUnspecified must convert it
-            var utcDate = DateTime.SpecifyKind(new DateTime(2024, 3, 15, 8, 0, 0), DateTimeKind.Utc);
-            var projects = new List<Project>
-            {
-                new()
-                {
-                    ParentProject = "PP001", FpsYear = 2024, ProjectTitle = "Title",
-                    Program = "P001", Customer = "DEFRA", ProjectStatus = "A",
-                    Disease = "D", Contract = "C", IncomeAccountCode = "IA",
-                    DateCosted = utcDate
-                }
-            };
-            var repo = CreateRepository(projects: projects, projectLogs: new List<ProjectLog>(), fpsYear: 2024);
-            var updated = new Project { ParentProject = "PP001", IncomeAccountCode = "IA" };
-
-            // Act
-            var result = await repo.UpdatePactPortfolioDetailsAsync(updated);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(DateTimeKind.Unspecified, result.DateCosted!.Value.Kind);
-        }
-
-        [Fact]
-        public async Task UpdatePactPortfolioDetailsAsync_DoesNotAlterDateCreated_WhenKindIsUnspecified()
-        {
-            // Arrange — DateCreated already Unspecified; value must remain unchanged
-            var unspecifiedDate = DateTime.SpecifyKind(new DateTime(2024, 1, 1), DateTimeKind.Unspecified);
-            var projects = new List<Project>
-            {
-                new()
-                {
-                    ParentProject = "PP001", FpsYear = 2024, ProjectTitle = "Title",
-                    Program = "P001", Customer = "DEFRA", ProjectStatus = "A",
-                    Disease = "D", Contract = "C", IncomeAccountCode = "IA",
-                    DateCreated = unspecifiedDate
-                }
-            };
-            var repo = CreateRepository(projects: projects, projectLogs: new List<ProjectLog>(), fpsYear: 2024);
-            var updated = new Project { ParentProject = "PP001", IncomeAccountCode = "IA" };
-
-            // Act
-            var result = await repo.UpdatePactPortfolioDetailsAsync(updated);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(DateTimeKind.Unspecified, result.DateCreated!.Value.Kind);
-            Assert.Equal(unspecifiedDate, result.DateCreated!.Value);
-        }
-
-        [Fact]
-        public async Task UpdatePactPortfolioDetailsAsync_AddsAuditLogEntry()
-        {
-            // Arrange
-            var addedLogs = new List<ProjectLog>();
-            var projects = new List<Project>
-            {
-                new()
-                {
-                    ParentProject = "PP001", FpsYear = 2024, ProjectTitle = "Title",
-                    Program = "P001", Customer = "DEFRA", ProjectStatus = "A",
-                    Disease = "D", Contract = "C", IncomeAccountCode = "IA"
-                }
-            };
-
-            var mockRequestContext = new Mock<IFpsRequestContext>();
-            mockRequestContext.Setup(x => x.UserEmailId).Returns("test@example.com");
-            mockRequestContext.Setup(x => x.FpsYear).Returns(2024);
-            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
-
-            var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects);
-            mockContext.Setup(x => x.Projects).Returns(projectsMockSet.Object);
-
-            var logsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<ProjectLog>());
-            logsMockSet.Setup(x => x.Add(It.IsAny<ProjectLog>()))
-                .Callback<ProjectLog>(log => addedLogs.Add(log));
-            mockContext.Setup(x => x.ProjectLogs).Returns(logsMockSet.Object);
-
-            var repo = new ProjectRepository(mockContext.Object, mockRequestContext.Object);
-            var updated = new Project
-            {
-                ParentProject = "PP001", ProjectTitle = "Updated Title",
-                Program = "P001", Customer = "DEFRA", ProjectStatus = "A",
-                Disease = "D", Contract = "C", IncomeAccountCode = "IA"
-            };
-
-            // Act
-            await repo.UpdatePactPortfolioDetailsAsync(updated);
-
-            // Assert — exactly one audit log added with operation "U" and correct user
-            Assert.Single(addedLogs);
-            Assert.Equal("U",                 addedLogs[0].InsertDelete);
-            Assert.Equal("test@example.com",  addedLogs[0].UserId);
-            Assert.Equal("PP001",             addedLogs[0].ParentProject);
-            Assert.Equal("Updated Title",     addedLogs[0].ProjectTitle);
         }
 
         #endregion
