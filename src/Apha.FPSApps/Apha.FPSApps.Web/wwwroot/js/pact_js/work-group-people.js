@@ -36,7 +36,7 @@ var currentPersonName = null;
  * toggles the work group action buttons, and reloads the grid.
  * @param {string|null} workGroup - The selected work group name, or null to clear.
  */
-function onWorkGroupPickChange(workGroup) {
+function onWorkGroupPickChange(workGroup) { 
     currentWorkGroup  = workGroup || null;
     currentPersonName = null;
 
@@ -374,9 +374,9 @@ $(document).ready(function () {
     selectFirstPersonRow();
 
     // Re-select first row whenever the grid manager reloads the grid
-    document.addEventListener('gridReloaded', function (e) {
+    document.addEventListener('gridReloaded', function (e) { 
       //  initializeMultiColumnDropdown();
-        if (e.detail && e.detail.gridId === peopleGridId) {
+        if (e.detail && e.detail.gridId === peopleGridId) { 
             selectFirstPersonRow();
         }
     });
@@ -409,6 +409,10 @@ function initializeMultiColumnDropdown() {
                 const personSelectDropdown_input = document.getElementById('personSelectDropdown_input');
                 personSelectDropdown_input.value = '';
             },
+            onClear: function (dropdown) { 
+                onWorkGroupPickChange(dropdown.originalData[0].WorkGroupName);
+            }
+
         }
     });
 
@@ -440,6 +444,9 @@ function initializeMultiColumnDropdown() {
                
 
             },
+            onClear: function (dropdown) {
+                onPersonPickChange(dropdown.originalData[0].Name, null);  
+            }
         }
     });
    
