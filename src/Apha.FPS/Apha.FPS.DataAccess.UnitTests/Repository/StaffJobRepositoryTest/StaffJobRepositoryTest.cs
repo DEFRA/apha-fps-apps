@@ -548,7 +548,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
             staffJobLogsMockSet.Verify(m => m.Add(It.Is<StaffJobLog>(log =>
                 log.StaffId == "S001" &&
                 log.JobCode == "JOB001" &&
-                log.InsertDelete == "U")), Times.Once);
+                log.InsertDelete == "I")), Times.Once);
             RepositoryTestHelper.VerifySaveChanges(mockContext);
         }
 
