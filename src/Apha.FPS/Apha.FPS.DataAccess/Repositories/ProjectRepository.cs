@@ -36,11 +36,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<PagedData<Project>> GetProjectsByProjectGroupAsync(PaginationParameters<string> query, string projectGroup)
         {
-            var projectQuery = (from pg in _dbContext.ProjectGroupViews
-                               join pv in _dbContext.Projects on
-                               new { pg.ProjectGroupName } equals new { ProjectGroupName = pv.ProjectGroup }
-                               where EF.Functions.ILike(pg.UserEmail!, _requestContext.UserEmailId) && pg.ProjectGroupName == projectGroup
-                select(new Project
+            var projectQuery = _dbContext.ProjectViews
+                .AsNoTracking()
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.ProjectGroup == projectGroup)
+                .Select(pv => new Project
                 {
                     ParentProject = pv.ParentProject ?? string.Empty,
                     ProjectTitle = pv.ProjectTitle ?? string.Empty,
@@ -52,12 +51,12 @@ namespace Apha.FPS.DataAccess.Repositories
                     ProjectStatus = pv.ProjectStatus ?? string.Empty,
                     ProjectGroup = pv.ProjectGroup,
                     BudgetCvl = pv.BudgetCvl,
-                    CustIncome = pv.CustIncome,
-                    TransferIncome = pv.TransferIncome,
-                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,   
-                    IsDefraProject = pv.IsDefraProject,
+                    CustIncome = pv.CustIncome ?? 0,
+                    TransferIncome = pv.TransferIncome ?? 0,
+                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,
+                    IsDefraProject = pv.IsDefraProject ?? 0,
                     IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
-                })).AsQueryable();
+                }).AsQueryable();
 
             projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);

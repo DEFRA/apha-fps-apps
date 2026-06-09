@@ -40,9 +40,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             _appStateService = appStateService;
         }
 
-        public async Task<IActionResult> Index(string? programNo = null, string? source = null)
+        public async Task<IActionResult> Index(string? programNo = null)
         {
-            var isProjectGroupMode = string.Equals(source, "projectgroup", StringComparison.OrdinalIgnoreCase);
+            var programmeList = await GetProgrammeListAsync();
+
+            // Fall back to session if no programNo provided
+            if (string.IsNullOrWhiteSpace(programNo))
+                programNo = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProgramNo);
+
+            var selectedProgramNo = !string.IsNullOrWhiteSpace(programNo) && programmeList.Any(p => p.Value == programNo)
+                ? programNo
+                : programmeList.FirstOrDefault()?.Value ?? string.Empty;
+
+            await _appStateService.SetSessionAsync(SessionKeys.SelectedProgramNo, selectedProgramNo);
 
             var selectedProjectCode = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProjectCode)
                 ?? string.Empty;
@@ -50,7 +60,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var projectsGrid = new DataGridConfig<ProgramProjectItem>
             {
                 GridId = "programProjectGrid",
-                Title = isProjectGroupMode ? "Projects within Project Group" : "Projects within Programme",
+                Title = "Projects within Programme",
                 KeyProperty = "ParentProject",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
@@ -70,40 +80,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var model = new ProgramProjectViewModel
             {
+                SelectedProgramNo = selectedProgramNo,
                 SelectedProjectCode = selectedProjectCode,
-                ProjectsGrid = projectsGrid,
-                IsProjectGroupMode = isProjectGroupMode
+                ProgrammeList = programmeList,
+                ProjectsGrid = projectsGrid
             };
-
-            if (isProjectGroupMode)
-            {
-                var projectGroupList = await GetProjectGroupListAsync();
-                var selectedProjectGroup = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProjectGroup)
-                    ?? string.Empty;
-                selectedProjectGroup = !string.IsNullOrWhiteSpace(selectedProjectGroup) && projectGroupList.Any(p => p.Value == selectedProjectGroup)
-                    ? selectedProjectGroup : projectGroupList.FirstOrDefault()?.Value ?? string.Empty;
-
-                await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectGroup, selectedProjectGroup);
-
-                model.ProjectGroupList = projectGroupList;
-                model.SelectedProjectGroup = selectedProjectGroup;
-            }
-            else
-            {
-                var programmeList = await GetProgrammeListAsync();
-
-                if (string.IsNullOrWhiteSpace(programNo))
-                    programNo = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProgramNo);
-
-                var selectedProgramNo = !string.IsNullOrWhiteSpace(programNo) && programmeList.Any(p => p.Value == programNo)
-                    ? programNo
-                    : programmeList.FirstOrDefault()?.Value ?? string.Empty;
-
-                await _appStateService.SetSessionAsync(SessionKeys.SelectedProgramNo, selectedProgramNo);
-
-                model.ProgrammeList = programmeList;
-                model.SelectedProgramNo = selectedProgramNo;
-            }
 
             return View(model);
         }
@@ -172,11 +153,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         /// <summary>
         /// Loads the full editable projects DataGrid for the Plan Projects Individually page.
-        /// Supports both programme mode (programNo) and project group mode (projectGroup).
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> LoadProgramProjectGrid(
-            PaginationFilter<string> request, string? programNo = null, string? projectGroup = null)
+            PaginationFilter<string> request, string? programNo = null)
         {
             if (!string.IsNullOrEmpty(programNo) && programNo.Length > 20)
                 return Json(new { success = false, message = "Invalid programme number." });
@@ -196,25 +176,24 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 : null;
 
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            var projectsData = await _projectService.GetProjectsByProgramAsync(
+                queryParameters, programNo ?? string.Empty);
 
-            var isProjectGroupMode = !string.IsNullOrWhiteSpace(projectGroup);
+            var projectItems = new List<ProgramProjectItem>();
+            if (projectsData.Success && projectsData.Data != null)
+            {
+                projectItems = _mapper.Map<List<ProgramProjectItem>>(projectsData.Data);
+            }
 
-            var apiResult = isProjectGroupMode
-                ? await _projectService.GetProjectsByProjectGroupAsync(queryParameters, projectGroup!)
-                : await _projectService.GetProjectsByProgramAsync(queryParameters, programNo ?? string.Empty);
-
-            var projectItems = apiResult.Success && apiResult.Data != null
-                ? _mapper.Map<List<ProgramProjectItem>>(apiResult.Data)
-                : new List<ProgramProjectItem>();
-
-            var paginationModel = _mapper.Map<PaginationModel>(apiResult.Pagination) ?? new PaginationModel();
+            var paginationModel = _mapper.Map<PaginationModel>(projectsData.Pagination)
+                ?? new PaginationModel();
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
             var gridConfig = new DataGridConfig<ProgramProjectItem>
             {
                 GridId = "programProjectGrid",
-                Title = isProjectGroupMode ? "Projects within Project Group" : "Projects within Programme",
+                Title = "Projects within Programme",
                 KeyProperty = "ParentProject",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
@@ -259,33 +238,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         /// <summary>
-        /// GET: returns summed financial totals across all projects in a programme or project group.
+        /// GET: returns summed financial totals across all projects in a programme.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetProjectTotals(string? programNo, string? projectGroup = null)
+        public async Task<IActionResult> GetProjectTotals(string? programNo)
         {
             var zero = new { budgetCvl = 0M, budgetExt = 0M, transferIncome = 0M, planCaseWorkDebit = 0M };
-
-            var query = new QueryParameters<string> { Page = 1, PageSize = 9999 };
-
-            if (!string.IsNullOrWhiteSpace(projectGroup))
-            {
-                var pgResult = await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
-                if (!pgResult.Success || pgResult.Data == null)
-                    return Json(zero);
-
-                return Json(new
-                {
-                    budgetCvl         = pgResult.Data.Sum(p => p.BudgetCvl ?? 0M),
-                    budgetExt         = pgResult.Data.Sum(p => p.BudgetExt ?? 0M),
-                    transferIncome    = pgResult.Data.Sum(p => (decimal)p.TransferIncome),
-                    planCaseWorkDebit = pgResult.Data.Sum(p => p.PlanCaseWorkDebit ?? 0M)
-                });
-            }
 
             if (string.IsNullOrWhiteSpace(programNo))
                 return Json(zero);
 
+            var query = new QueryParameters<string> { Page = 1, PageSize = 9999 };
             var result = await _projectService.GetProjectsByProgramAsync(query, programNo);
 
             if (!result.Success || result.Data == null)
@@ -446,16 +409,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 : new List<SelectListItem>();
         }
 
-        /// <summary>
-        /// POST: saves the selected project group to session (called client-side via AJAX in project group mode).
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> SaveProjectGroupSession([FromBody] string projectGroup)
-        {
-            await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectGroup, projectGroup);
-            return Ok();
-        }
-
         private async Task<List<SelectListItem>> GetProgrammeListAsync()
         {
             var result = await _programService.GetAllProgramsAsync();
@@ -472,23 +425,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
             return new List<SelectListItem>();
         }
-            private async Task<List<SelectListItem>> GetProjectGroupListAsync()
-            {
-                var result = await _projectService.GetProjectGroupsByUserAsync();
-                if (result.Success && result.Data != null)
-                {
-                    return result.Data
-                        .OrderBy(g => g.ProjectGroupName)
-                        .Where(g => !string.IsNullOrWhiteSpace(g.ProjectGroupName))
-                        .Select(g => new SelectListItem
-                        {
-                            Value = g.ProjectGroupName,
-                            Text  = g.ProjectGroupName
-                        })
-                        .ToList();
-                }
-                return new List<SelectListItem>();
-            }
-        }
     }
+}
 
