@@ -8,23 +8,29 @@
 }
 
 <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-bottom-3">
-    <div class="govuk-grid-column-full">
-        <h1 class="govuk-heading-m sup_border-bottom govuk-!-margin-bottom-2">
+    <div class="govuk-grid-column-full govuk-!-padding-left-0 govuk-!-padding-right-0">
+        <h1 class="govuk-heading-m sup_border-bottom govuk-!-padding-2">
             Plan Staff Against ZT Codes
         </h1>
-        <div><button onclick="history.back()">Go Back</button></div>
+        <div class="govuk-grid-column-full">
+            <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0 isFloatLeft isListWidth">
+                <div class="govuk-summary-list__row isFloatLeft  govuk-!-margin-right-2">
+                    <dt class="isFloatLeft govuk-!-margin-right-1">Staff Name</dt>
+                    <dd class="isFloatLeft" id="staff-name">@ViewBag.StaffName</dd>
+                </div>
+                <div class="govuk-summary-list__row isFloatLeft">
+                    <dt class="isFloatLeft govuk-!-margin-right-1">Grade</dt>
+                    <dd class="isFloatLeft" id="staff-grade">@ViewBag.WorkGroupGrade</dd>
+                </div>
+            </dl>
+
+  
+
+            <a href="#" class="govuk-back-link isFloatRight" onclick="history.back()">Back</a>
+            @* <button onclick="history.back()">Go Back</button> *@
+        </div>
         
-        <dl class="govuk-summary-list govuk-summary-list--no-border sup_flex_row govuk-!-margin-bottom-0" style="gap: 2rem;">
-            <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">Staff Name</dt>
-                <dd class="govuk-summary-list__value" id="staff-name">@ViewBag.StaffName</dd>
-            </div>
-            <div class="govuk-summary-list__row">
-                <dt class="govuk-summary-list__key">Grade</dt>
-                <dd class="govuk-summary-list__value" id="staff-grade">@ViewBag.WorkGroupGrade</dd>
-            </div>
-        </dl>
-    </div>
+        </div>
 </div>
 
 
@@ -166,6 +172,7 @@
             var data = {
                 StaffID:      staffId,
                 JobCode:      form.find('[name="JobCode"]').val(),
+                OriginalJobCode: form.find('[name="OriginalJobCode"]').val(),
                 ZtDescription: form.find('[name="ZtDescription"]').val(),
                 PlannedHours: parseFloatOrZero(form.find('[name="PlannedHours"]').val())
             };

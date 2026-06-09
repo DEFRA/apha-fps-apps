@@ -205,6 +205,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     StaffID = result.Data.StaffID!,
                     JobCode = result.Data.JobCode!,
+                    OriginalJobCode = result.Data.JobCode,
                     ZtDescription = result.Data.ZtDescription ?? result.Data.Name,
                     PlannedHours = result.Data.PlannedHours
                 };
@@ -260,6 +261,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 StaffId = item.StaffID,
                 JobCode = item.JobCode,
+                OriginalJobCode = item.OriginalJobCode,
                 PlannedHours = item.PlannedHours
             };
             var result = await _planStaffZTCodeService.UpdateStaffJobAsync(dto);

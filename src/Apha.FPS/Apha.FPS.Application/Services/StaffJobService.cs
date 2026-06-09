@@ -99,6 +99,24 @@ namespace Apha.FPS.Application.Services
         {
             ArgumentNullException.ThrowIfNull(staffJob);
             ArgumentOutOfRangeException.ThrowIfNegative(staffJob.PlannedHours);
+
+            // If the JobCode has changed (user selected a different ZT code), we need to
+            // delete the old record and create a new one because JobCode is part of the composite primary key.
+            var lookupJobCode = !string.IsNullOrWhiteSpace(staffJob.OriginalJobCode)
+                ? staffJob.OriginalJobCode
+                : staffJob.JobCode;
+
+            if (!string.Equals(lookupJobCode, staffJob.JobCode, StringComparison.OrdinalIgnoreCase))
+            {
+                // Delete the old entry using the original key
+                await _staffJobRepository.DeleteAsync(staffJob.StaffId, lookupJobCode);
+
+                // Create a new entry with the new JobCode
+                var newStaffJob = _mapper.Map<StaffJob>(staffJob);
+                var created = await _staffJobRepository.AddAsync(newStaffJob);
+                return _mapper.Map<StaffJobDto>(created);
+            }
+
             var mapStaffJob = _mapper.Map<StaffJob>(staffJob);
             var staffWorkgroup = await _staffJobRepository.UpdateAsync(mapStaffJob);
             return _mapper.Map<StaffJobDto>(staffWorkgroup);

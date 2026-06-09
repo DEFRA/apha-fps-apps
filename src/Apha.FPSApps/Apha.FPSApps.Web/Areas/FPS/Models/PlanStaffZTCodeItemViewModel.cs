@@ -15,6 +15,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 1, Width = 160, IsFilterable = false)]
         public string JobCode { get; set; } = null!;
 
+        /// <summary>
+        /// Retains the original JobCode value before edit so the API can locate the record by its composite key.
+        /// </summary>
+        [GridColumn(IsVisible = false)]
+        public string? OriginalJobCode { get; set; }
+
         [Display(Name = "ZT Description")]
         [GridColumn(Order = 2, Width = 200, IsFilterable = false)]
         public string? ZtDescription { get; set; }

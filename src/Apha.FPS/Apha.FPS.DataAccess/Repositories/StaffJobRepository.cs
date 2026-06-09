@@ -199,7 +199,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     existingStaffJob.PlannedHours = staffJob.PlannedHours;
                     existingStaffJob.FpsYear = _requestContext.FpsYear;
 
-                    var logEntry = CreateStaffJobLogEntry(existingStaffJob.StaffId, existingStaffJob.JobCode, existingStaffJob.PlannedHours, "U");
+                    var logEntry = CreateStaffJobLogEntry(existingStaffJob.StaffId, existingStaffJob.JobCode, existingStaffJob.PlannedHours, "I");
 
                     _dbContext.StaffJobLogs.Add(logEntry);
                     await _dbContext.SaveChangesAsync();
