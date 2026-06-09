@@ -22,10 +22,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
         }
 
         private static BudgetBidsRepository CreateRepository(
-            IEnumerable<WorkGroupView>?  wgViews          = null,
-            IEnumerable<BidView>?        bidViews         = null,
-            IEnumerable<Bid>?            bids             = null,
+            IEnumerable<WorkGroupView>?   wgViews           = null,
+            IEnumerable<BidView>?         bidViews          = null,
+            IEnumerable<Bid>?             bids              = null,
             IEnumerable<AccountCategory>? accountCategories = null,
+            IEnumerable<Purchase>?        purchases         = null,
             int    fpsYear   = DefaultFpsYear,
             string userEmail = DefaultUserEmail)
         {
@@ -43,6 +44,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
 
             var catSet = RepositoryTestHelper.CreateMockDbSet(accountCategories ?? Enumerable.Empty<AccountCategory>());
             mockContext.Setup(x => x.AccountCategories).Returns(catSet.Object);
+
+            var purchaseSet = RepositoryTestHelper.CreateMockDbSet(purchases ?? Enumerable.Empty<Purchase>());
+            mockContext.Setup(x => x.Purchases).Returns(purchaseSet.Object);
 
             return new BudgetBidsRepository(mockContext.Object, mockCtx.Object);
         }
@@ -254,6 +258,92 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
 
             // Assert
             Assert.Null(result);
+        }
+
+        #endregion
+
+        #region HasRelatedPurchasesAsync Tests
+
+        [Fact]
+        public async Task HasRelatedPurchasesAsync_WhenMatchingPurchaseExists_ReturnsTrue()
+        {
+            // Arrange
+            var purchases = new List<Purchase>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(purchases: purchases);
+
+            // Act
+            var result = await repo.HasRelatedPurchasesAsync("WG01", "ACC1");
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task HasRelatedPurchasesAsync_WhenNoPurchasesExist_ReturnsFalse()
+        {
+            // Arrange
+            var repo = CreateRepository(purchases: new List<Purchase>());
+
+            // Act
+            var result = await repo.HasRelatedPurchasesAsync("WG01", "ACC1");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasRelatedPurchasesAsync_WhenDifferentWorkgroup_ReturnsFalse()
+        {
+            // Arrange
+            var purchases = new List<Purchase>
+            {
+                new() { WorkGroupName = "WG99", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(purchases: purchases);
+
+            // Act
+            var result = await repo.HasRelatedPurchasesAsync("WG01", "ACC1");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasRelatedPurchasesAsync_WhenDifferentAccount_ReturnsFalse()
+        {
+            // Arrange
+            var purchases = new List<Purchase>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACCOTHER", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(purchases: purchases);
+
+            // Act
+            var result = await repo.HasRelatedPurchasesAsync("WG01", "ACC1");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task HasRelatedPurchasesAsync_WhenMultiplePurchasesForSameKey_ReturnsTrue()
+        {
+            // Arrange
+            var purchases = new List<Purchase>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = DefaultFpsYear },
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(purchases: purchases);
+
+            // Act
+            var result = await repo.HasRelatedPurchasesAsync("WG01", "ACC1");
+
+            // Assert
+            Assert.True(result);
         }
 
         #endregion

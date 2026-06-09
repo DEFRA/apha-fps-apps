@@ -8,24 +8,21 @@
 
 
 <main id="main-content">
-    <div class="container-fluid">
-        <!-- Page Title + Resource Centre selector -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div class="row align-items-center sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2">
-                    <div class="col">
-                        <h1 class="govuk-heading-s govuk-!-margin-bottom-0 govuk-!-padding-left-4">
-                            Budget Bids for Resource Centre
-                            @if (!string.IsNullOrWhiteSpace(Model.SelectedProfitCentre))
-                            {
-                                <span class="govuk-link">@Model.SelectedProfitCentre</span>
-                            }
-                        </h1>
-                    </div>
-                    <div class="col-auto d-flex align-items-center justify-content-end">
+    <div class="govuk-grid-row sup_margin_left_right_0">
+        <div class="govuk-grid-column-full">
+            <h1 class="govuk-grid-row sup_border-bottom govuk-!-font-size-19 sup_pad_top_bottom_5_10">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <span>
+                        Budget Bids for Resource Centre
+                        @if (!string.IsNullOrWhiteSpace(Model.SelectedProfitCentre))
+                        {
+                            <span class="govuk-link" style="margin-left: 5px;">@Model.SelectedProfitCentre</span>
+                        }
+                    </span>
+                    <div class="d-flex align-items-center" style="margin-left: auto;">
                         <form asp-action="Index" asp-controller="BudgetResourceLevel" asp-area="FPS" method="get" style="display: flex; align-items: center;">
                             <input type="hidden" name="year" value="@FpsYearContext.Year" />
-                            <label class="fw-bold me-2 mb-0" for="profitCentreSelect">Resource Centre:</label>
+                            <label class="govuk-label sup_visually_hidden" for="profitCentreSelect">Resource Centre</label>
                             <select id="profitCentreSelect"
                                     name="profitCentre"
                                     asp-items="Model.ProfitCentreList"
@@ -37,82 +34,103 @@
                         </form>
                     </div>
                 </div>
+            </h1>
+        </div>
+    </div>
+
+    <!-- Three-panel layout: WorkGroups | Budget Bids | Purchases -->
+    <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_10 sup_margin_top_0">
+
+        <!-- Left: WorkGroup selector -->
+        <div class="govuk-grid-column-one-third sup_p_0">
+            <div class="sup_border sup_margin_bottom_10" style="margin-right: 10px;">
+                <div class="sup_justify_content sup_padding_right_left_10 sup_margin_tb_13">
+                    <h2 class="govuk-!-font-size-16 sup_margin_5">(1) First Select a WorkGroup</h2>
+                </div>
+                <div class="table_scroll_wrapper sup_height_250">
+                    <div id="gridContainer_workGroupGrid">
+                        @await Html.PartialAsync("_DataGrid", Model.WorkGroupGrid)
+                    </div>
+                </div>
+            </div>
+            <div class="sup_padding_16 d-flex flex-column align-items-center gap-2">
+                <button type="button" class="govuk-button govuk-!-margin-bottom-0 w-50" onclick="selectByAccount()">
+                    Select by Account<br />(Rather than WorkGroup)
+                </button>
+                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0 w-50" onclick="viewReport()">
+                    View Report
+                </button>
+                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0 w-50" onclick="sendToExcel()">
+                    <img  width="16" />&nbsp;Send To Excel
+                </button>
             </div>
         </div>
 
-        <!-- Three-panel layout: WorkGroups | Budget Bids | Purchases -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div class="data-table-container sup_border govuk-!-margin-left-2 govuk-!-padding-3">
-                    <div class="row align-items-start g-0">
-
-                        <!-- Left: WorkGroup selector -->
-                        <div class="col-3 sup_border-right">
-                            <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Select Work Group</h3>
-                           <br/>
-                            <div id="gridContainer_workGroupGrid">
-                                @await Html.PartialAsync("_DataGrid", Model.WorkGroupGrid)
-                            </div>
-                            <div class="sup_flex_column sup_gap_8 sup_margin_top_10 d-flex align-items-center">
-                                <button type="button" class="govuk-button govuk-!-margin-bottom-0" style="width: 50%;" onclick="selectByAccount()">
-                                    Select by Account<br />(Rather than WorkGroup)
-                                </button>
-                                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0" style="width: 50%;" onclick="viewReport()">
-                                    View Report
-                                </button>
-                                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0" style="width: 50%;" onclick="sendToExcel()">
-                                    &#128196; Send To Excel
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Centre: Budget Bids grid -->
-                        <div class="col-5 sup_border-right">
-                            <div class="sup_flex_align_center sup_gap_16 govuk-!-margin-bottom-2">
-                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0">Budget Bids for Work Group</h3>
-                                <input id="fpsBrlSelectedWg"
-                                       class="govuk-input sup_width_auto"
-                                       aria-label="Selected work group" readonly value="@Model.SelectedWorkgroup" />
-                            </div>
-                            <div id="gridContainer_budgetBidsGrid">
-                                @await Html.PartialAsync("_DataGrid", Model.BudgetBidsGrid)
-                            </div>
-                            <div class="d-flex align-items-center gap-2 govuk-!-margin-top-2" style="border-top: 1px solid #b1b4b6; padding-top: 5px;">
-                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0">Total Bid for Workgroup:</label>
-                                <div class="govuk-input__wrapper" style="margin-bottom: 0;">
-                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                    <input id="fpsBrlTotalBid" type="text" class="govuk-input sup_width_140 sup_text_align_right" readonly
-                                           value="@Model.TotalBid.ToString("N2")" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right: Purchases grid -->
-                        <div class="col-4">
-                            <div class="sup_flex_align_center sup_gap_8 govuk-!-margin-bottom-2">
-                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0">Purchases in</h3>
-                                <input id="fpsBrlSelectedAccount"
-                                       class="govuk-input sup_width_auto"
-                                       aria-label="Selected account" readonly value="@Model.SelectedAccount" />
-                                <h3 class="govuk-heading-s govuk-!-margin-bottom-0">in Workgroup</h3>
-                              
-                                <input id="fpsBrlPurchasesWg"
-                                       class="govuk-input sup_width_auto"
-                                       aria-label="Selected workgroup for purchases" readonly value="@Model.SelectedWorkgroup" />
-                            </div>
-                            <div id="gridContainer_purchasesGrid">
-                                @await Html.PartialAsync("_DataGrid", Model.PurchasesGrid)
-                            </div>
-                            <div class="d-flex align-items-center gap-2 govuk-!-margin-top-2" style="border-top: 1px solid #b1b4b6; padding-top: 5px;">
-                                <label class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0">Total Purchases:</label>
-                                <div class="govuk-input__wrapper" style="margin-bottom: 0;">
-                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                    <input id="fpsBrlTotalPurchases" type="text" class="govuk-input sup_width_140 sup_text_align_right" readonly
-                                           value="@Model.TotalPurchases.ToString("N2")" />
-                                </div>
-                            </div>
-                        </div>
+        <!-- Centre: Budget Bids grid    "~/images/file-export-solid-full.svg"-->
+        <div class="govuk-grid-column-one-third sup_p_0">
+            <div class="sup_border sup_margin_right_10">
+                <div class="sup_flex_end_space sup_p_5 sup_border-bottom">
+                    <div class="sup_flex_between_center sup_width_auto sup_padding_right_left_5 govuk-grid-column-full">
+                        <label class="govuk-!-font-size-16 sup_margin_0 govuk-!-font-weight-bold" for="fpsBrlSelectedWg">(2) Now Update the Budgets for WG</label>
+                        <input id="fpsBrlSelectedWg"
+                               type="text"
+                               class="govuk-input govuk-!-font-size-16 sup_max_width_8em sup_margin_left_5"
+                               aria-label="Selected work group" readonly value="@Model.SelectedWorkgroup" />
                     </div>
+                    <button type="button" class="govuk-button sup_margin_0 govuk-!-margin-bottom-2" onclick="addBudgetBid()">
+                        + Add
+                    </button>
+                </div>
+                <div class="table_scroll_wrapper">
+                    <div id="gridContainer_budgetBidsGrid">
+                        @await Html.PartialAsync("_DataGrid", Model.BudgetBidsGrid)
+                    </div>
+                </div>
+            </div>
+            <div class="sup_padding_16 sup_flex_start_center sup_margin_top_10">
+                <label class="govuk-body-s sup_margin_0" for="fpsBrlTotalBid">Total Bid for Workgroup: </label>
+                <div class="govuk-input__wrapper">
+                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                    <input id="fpsBrlTotalBid" type="text" class="govuk-input govuk-!-font-size-16 sup_text_align_right" readonly
+                           value="@Model.TotalBid.ToString("N2")" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Purchases grid -->
+        <div class="govuk-grid-column-one-third sup_p_0">
+            <div class="sup_border">
+                <div class="sup_flex_end_space sup_p_5 sup_border-bottom">
+                    <div class="sup_flex_between_center sup_padding_right_left_5 govuk-grid-column-full">
+                        <div>
+                            <label class="govuk-!-font-size-16 sup_margin_0 govuk-!-font-weight-bold">(3) Purchases in</label>
+                            <input id="fpsBrlSelectedAccount"
+                                   type="text"
+                                   class="govuk-input govuk-!-font-size-16 govuk-input--width-5"
+                                   aria-label="Selected account" readonly value="@Model.SelectedAccount" />
+                            <label class="govuk-!-font-size-16 sup_margin_0 govuk-!-font-weight-bold">in Workgroup</label>
+                            <input id="fpsBrlPurchasesWg"
+                                   type="text"
+                                   class="govuk-input govuk-!-font-size-16 govuk-input--width-5"
+                                   aria-label="Selected workgroup for purchases" readonly value="@Model.SelectedWorkgroup" />
+                        </div>
+                        <button type="button" class="govuk-button sup_margin_0 govuk-!-margin-bottom-2" onclick="addPurchase()">
+                            + Add
+                        </button>
+                    </div>
+                </div>
+                <div class="table_scroll_wrapper">
+                    <div id="gridContainer_purchasesGrid">
+                        @await Html.PartialAsync("_DataGrid", Model.PurchasesGrid)
+                    </div>
+                </div>
+            </div>
+            <div class="sup_padding_16 sup_flex_start_center sup_margin_top_10">
+                <label class="govuk-body-s sup_margin_0" for="fpsBrlTotalPurchases">Total Purchases: </label>
+                <div class="govuk-input__wrapper">
+                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                    <input id="fpsBrlTotalPurchases" type="text" class="govuk-input govuk-!-font-size-16 sup_text_align_right" readonly
+                           value="@Model.TotalPurchases.ToString("N2")" />
                 </div>
             </div>
         </div>

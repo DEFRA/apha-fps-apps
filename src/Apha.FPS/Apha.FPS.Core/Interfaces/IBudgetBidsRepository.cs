@@ -7,6 +7,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> IsAuthorizedAsync(string WorkGroupName);
         Task<List<BidView>> GetBidViewAsync(string workgroup);
         Task<Bid?> GetBidByIdAsync(string WorkGroupName, string account);
+        Task<bool> HasRelatedPurchasesAsync(string WorkGroupName, string account);
         Task<Bid> AddBidAsync(Bid bid);
         Task<Bid> UpdateBidAsync(Bid bid);
         Task<bool> DeleteBidAsync(string WorkGroupName, string account);

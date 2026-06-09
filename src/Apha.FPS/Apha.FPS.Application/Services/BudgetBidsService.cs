@@ -97,6 +97,11 @@ namespace Apha.FPS.Application.Services
                 throw new UnauthorizedAccessException(
                     $"User does not have access to workgroup '{WorkGroupName}'.");
 
+            var hasRelatedPurchases = await _repository.HasRelatedPurchasesAsync(WorkGroupName, account);
+            if (hasRelatedPurchases)
+                throw new InvalidOperationException(
+                    "This record cannot be deleted as it has a related entry in the Purchase table.");
+
             return await _repository.DeleteBidAsync(WorkGroupName, account);
         }
 

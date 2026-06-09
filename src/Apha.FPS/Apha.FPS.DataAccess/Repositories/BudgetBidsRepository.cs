@@ -42,6 +42,12 @@ namespace Apha.FPS.DataAccess.Repositories
                     && b.Account == account);
         }
 
+        public async Task<bool> HasRelatedPurchasesAsync(string WorkGroupName, string account)
+        {
+            return await _context.Purchases
+                .AnyAsync(p => p.WorkGroupName == WorkGroupName && p.Account == account);
+        }
+
         public async Task<Bid> AddBidAsync(Bid bid)
         {
             bid.FpsYear = _requestContext.FpsYear;

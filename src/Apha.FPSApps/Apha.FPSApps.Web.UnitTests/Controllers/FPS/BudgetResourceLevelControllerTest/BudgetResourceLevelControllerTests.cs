@@ -304,7 +304,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             var partialView = Assert.IsType<PartialViewResult>(result);
             var config = Assert.IsType<DataGridConfig<BudgetResourceCentreLevelItem>>(partialView.Model);
             Assert.Equal("budgetBidsGrid", config.GridId);
-            Assert.True(config.AllowAdd);
+            Assert.False(config.AllowAdd);
             Assert.True(config.AllowEdit);
             Assert.True(config.AllowDelete);
         }
@@ -583,6 +583,27 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             var value = GetJsonResultValue<JsonResponse>(jsonResult);
             Assert.NotNull(value);
             Assert.False(value.success);
+        }
+
+        [Fact]
+        public async Task DeleteBudgetBid_WhenRelatedPurchasesExist_ReturnsValidationMessage()
+        {
+            // Arrange
+            const string validationMessage = "This record cannot be deleted as it has a related entry in the Purchase table.";
+            _budgetBidsService.DeleteBidAsync(Arg.Any<BidDto>())
+                .Returns(ApiResponseDto<bool>.FailureResponse(
+                    new List<ApiErrorDto> { new() { Message = validationMessage, Code = "BUSINESS_RULE_VIOLATION" } },
+                    new ApiMetaDto()));
+
+            // Act
+            var result = await _controller.DeleteBudgetBid("WG01", "ACC1");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value.success);
+            Assert.Equal(validationMessage, value.message);
         }
 
         #endregion
