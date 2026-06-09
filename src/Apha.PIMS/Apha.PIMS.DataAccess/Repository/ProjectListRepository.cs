@@ -167,19 +167,19 @@ namespace Apha.PIMS.DataAccess.Repository
             if (dict.TryGetValue("Parentproject", out var parentproject) && parentproject != null)
             {
                 string val = parentproject.ToString()!;
-                query = query.Where(x => x.Parentproject.Contains(val));
+                query = query.Where(x => EF.Functions.ILike(x.Parentproject, $"%{val}%"));
             }
 
             if (dict.TryGetValue("Program", out var program) && program != null)
             {
                 string val = program.ToString()!;
-                query = query.Where(x => x.Program != null && x.Program.Contains(val));
+                query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{val}%"));
             }
 
             if (dict.TryGetValue("Customer", out var customer) && customer != null)
             {
                 string val = customer.ToString()!;
-                query = query.Where(x => x.Customer != null && x.Customer.Contains(val));
+                query = query.Where(x => x.Customer != null && EF.Functions.ILike(x.Customer, $"%{val}%"));
             }
 
             return query;
