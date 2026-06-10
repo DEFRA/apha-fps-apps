@@ -12,5 +12,8 @@ namespace Apha.FPS.Core.Entities
         public string Name { get; set; } = string.Empty;
         public string WorkGroupGrade { get; set; } = string.Empty;
         public double HrsAvail { get; set; }
+        public double HrsPaid { get; set; }
+        public double Leave { get; set; }
+        public double SickSpecial { get; set; }
     }
 }

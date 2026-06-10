@@ -25,5 +25,6 @@ namespace Apha.FPS.Application.Interfaces
         Task DeleteProjectAndChildrenAsync(string parentProject);
 
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
+        Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
     }
 }

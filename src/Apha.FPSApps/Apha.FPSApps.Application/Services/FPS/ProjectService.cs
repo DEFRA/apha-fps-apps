@@ -106,5 +106,9 @@ namespace Apha.FPSApps.Application.Services.FPS
         public Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(
             QueryParameters<string> query, string programNo, string workTypeFilter)
             => _fpsClient.FpsProject.GetProjectProfitabilityAsync(query, programNo, workTypeFilter);
+
+        public Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(
+            QueryParameters<string> query, string projectGroup, string workTypeFilter)
+            => _fpsClient.FpsProject.GetProjectGroupProfitabilityAsync(query, projectGroup, workTypeFilter);
     }
 }

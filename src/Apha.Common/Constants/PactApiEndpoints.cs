@@ -4,6 +4,7 @@ namespace Apha.Common.Constants
     {
         // Job Code
         public const string GetAllJobCodes = "api/v1/jobcode";
+        public const string GetZtJobCodes = "api/v1/jobcode/zt";
         public const string GetJobCodesByProject = "api/v1/jobcode/project/{0}";
         public const string GetPagedJobCodes = "api/v1/jobcode/paged";
         public const string GetPagedJobCodesByProject = "api/v1/jobcode/paged?parentProject={0}";

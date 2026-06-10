@@ -12,7 +12,7 @@ namespace Apha.PACT.Api.Controllers
     /// <summary>
     /// API controller for Monthly TIME Log of Imports (MT_LOG) operations.
     /// </summary>
-    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin, API-PACTShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/monthlytime")]

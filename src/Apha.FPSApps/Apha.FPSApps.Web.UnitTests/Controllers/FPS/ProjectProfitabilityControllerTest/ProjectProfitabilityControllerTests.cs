@@ -228,7 +228,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
             _mapper.Map<PaginationModel>(apiResponse.Pagination).Returns(new PaginationModel());
 
             // Act
-            var result = await _controller.LoadProjectProfitabilityGrid(request, programNo, "all");
+            var result = await _controller.LoadProjectProfitabilityGrid(request, programNo, null, "all");
 
             // Assert
             var partialResult = Assert.IsType<PartialViewResult>(result);
@@ -242,7 +242,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
             var request = MakeGridRequest();
 
             // Act
-            var result = await _controller.LoadProjectProfitabilityGrid(request, null, "all");
+            var result = await _controller.LoadProjectProfitabilityGrid(request, null, null, "all");
 
             // Assert
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
@@ -258,7 +258,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
             var request = MakeGridRequest();
 
             // Act
-            var result = await _controller.LoadProjectProfitabilityGrid(request, programNo, "all");
+            var result = await _controller.LoadProjectProfitabilityGrid(request, programNo, null, "all");
 
             // Assert
             Assert.IsType<BadRequestObjectResult>(result);
@@ -278,7 +278,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
             _projectService.GetProjectProfitabilityAsync(query, programNo, "all").Returns(failResponse);
 
             // Act
-            var result = await _controller.LoadProjectProfitabilityGrid(request, programNo, "all");
+            var result = await _controller.LoadProjectProfitabilityGrid(request, programNo, null, "all");
 
             // Assert
             var statusResult = Assert.IsType<ObjectResult>(result);
@@ -300,7 +300,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
 
             // Act
-            var result = await _controller.LoadProjectProfitabilityGrid(request, programNo, "all");
+            var result = await _controller.LoadProjectProfitabilityGrid(request, programNo, null, "all");
 
             // Assert
             var partialResult = Assert.IsType<PartialViewResult>(result);
@@ -334,7 +334,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
                 .Returns(apiResponse);
 
             // Act
-            var result = await _controller.GetProfitabilitySummary(programNo, "all");
+            var result = await _controller.GetProfitabilitySummary(programNo, null, "all");
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -348,7 +348,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
         public async Task GetProfitabilitySummary_WhenProgramNoIsNull_ReturnsOkWithNullTarget()
         {
             // Act
-            var result = await _controller.GetProfitabilitySummary(null!, "all");
+            var result = await _controller.GetProfitabilitySummary(null!, null, "all");
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -363,7 +363,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
         public async Task GetProfitabilitySummary_WhenProgramNoIsWhitespace_ReturnsOkWithNullTarget(string programNo)
         {
             // Act
-            var result = await _controller.GetProfitabilitySummary(programNo, "all");
+            var result = await _controller.GetProfitabilitySummary(programNo, null, "all");
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
@@ -384,7 +384,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
                 .Returns(failResponse);
 
             // Act
-            var result = await _controller.GetProfitabilitySummary(programNo, "all");
+            var result = await _controller.GetProfitabilitySummary(programNo, null, "all");
 
             // Assert
             var statusResult = Assert.IsType<ObjectResult>(result);
@@ -404,7 +404,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
                 .Returns(emptyResponse);
 
             // Act
-            var result = await _controller.GetProfitabilitySummary(programNo, "all");
+            var result = await _controller.GetProfitabilitySummary(programNo, null, "all");
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -429,7 +429,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityControl
                 .Returns(apiResponse);
 
             // Act
-            var result = await _controller.GetProfitabilitySummary(programNo, "all");
+            var result = await _controller.GetProfitabilitySummary(programNo, null, "all");
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);

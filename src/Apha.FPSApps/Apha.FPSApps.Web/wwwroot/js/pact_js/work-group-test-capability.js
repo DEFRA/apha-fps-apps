@@ -10,21 +10,70 @@
     var testCapabilityGridId = null;
 
     // ── Initialization ────────────────────────────────────────────────────
-    function initialize(gridId) {
+    function initialize(gridId, serverWorkGroup) {
         testCapabilityGridId = gridId;
 
-        // Check if workgroup is passed as query parameter
-        var workgroupParam = getUrlParameter('workgroup');
+        // Wire up the searchable dropdown
+        initWorkGroupDropdown();
+
+        // Use server-rendered value; the Razor Page already reads the query string server-side
+        var workgroupParam = serverWorkGroup || '';
 
         if (workgroupParam) {
-            // Set the dropdown value
-            $('#selectedWorkgroup').val(workgroupParam);
+            preselectWorkGroup(workgroupParam);
             currentWorkGroup = workgroupParam;
             // Load the grid with the workgroup
             reloadTestCapabilityGrid(workgroupParam);
         } else {
             // Clear grid on load if no workgroup specified
             clearTestCapabilityGrid();
+        }
+    }
+
+    // ── Searchable WorkGroup Dropdown ─────────────────────────────────────
+    function initWorkGroupDropdown() {
+        var $wgInput  = $('#workGroupSelect');
+        var $wgPanel  = $('#workGroupDropdownPanel');
+        var $wgSearch = $('#workGroupSearchBox');
+        var $wgRows   = $('#workGroupDropdownBody tr');
+
+        $wgInput.on('click', function (e) {
+            e.stopPropagation();
+            $wgPanel.toggle();
+            if ($wgPanel.is(':visible')) {
+                $wgSearch.val('').focus();
+                $wgRows.show();
+            }
+        });
+
+        $wgSearch.on('click', function (e) { e.stopPropagation(); });
+
+        $wgSearch.on('input', function () {
+            var term = $(this).val().toLowerCase();
+            $wgRows.each(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(term) > -1);
+            });
+        });
+
+        $(document).on('click', '#workGroupDropdownBody tr', function () {
+            var value = $(this).data('value');
+            var text  = $(this).find('td:first').text().trim();
+            $wgInput.val(text);
+            $wgPanel.hide();
+            onWorkGroupChange(value);
+        });
+
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('#workGroupSelect, #workGroupDropdownPanel').length) {
+                $wgPanel.hide();
+            }
+        });
+    }
+
+    function preselectWorkGroup(workGroup) {
+        var $matchRow = $('#workGroupDropdownBody tr[data-value="' + workGroup + '"]');
+        if ($matchRow.length) {
+            $('#workGroupSelect').val($matchRow.find('td:first').text().trim());
         }
     }
 
@@ -92,7 +141,7 @@
 
     // ── Navigation ────────────────────────────────────────────────────────
     function navigateToTestCapability() {
-        var workgroup = currentWorkGroup || $('#selectedWorkgroup').val();
+        var workgroup = currentWorkGroup || $('#workGroupSelect').val();
         if (workgroup) {
             window.fpsNavigateTo('/PACT/TestCapability?workgroup=' + encodeURIComponent(workgroup));
         } else {
@@ -132,7 +181,7 @@
         }
 
         // Get the current workgroup to pass as context for back navigation
-        var workgroup = currentWorkGroup || $('#selectedWorkgroup').val();
+        var workgroup = currentWorkGroup || $('#workGroupSelect').val();
 
         // Navigate to Portfolio Maintenance with selected portfolio and workgroup context
         var url = '/PACT/PortfolioMaintenance?portfolio=' + encodeURIComponent(portfolio);
@@ -140,14 +189,6 @@
             url += '&workgroup=' + encodeURIComponent(workgroup);
         }
         window.fpsNavigateTo(url);
-    }
-
-    // ── URL Parameter Helper ──────────────────────────────────────────────
-    function getUrlParameter(name) {
-        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-        var results = regex.exec(location.search);
-        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
     }
 
     // ── Public API ────────────────────────────────────────────────────────
