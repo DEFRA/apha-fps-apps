@@ -1100,6 +1100,13 @@ namespace Apha.FPS.DataAccess.Repositories
             UserId = userId
         };
 
+        private record ProjectProfitabilityEntry(
+            string? ParentProject,
+            decimal? BudgetCvl,
+            decimal? Profit,
+            string? ProjectStatus,
+            string? Program);
+
         /// <summary>
         /// Returns paginated project profitability data for a given programme.
         /// Translates qryProjectProfitability3: Projects + Programs + aggregate cost sub-queries.
@@ -1124,26 +1131,75 @@ namespace Apha.FPS.DataAccess.Repositories
             projectQuery = ApplyProfitabilityFilter(projectQuery, query.Filter);
 
             var projects = await projectQuery
-                .Select(p => new
-                {
-                    p.ParentProject,
-                    p.BudgetCvl,
-                    p.Profit,
-                    p.ProjectStatus,
-                    p.Program
-                })
+                .Select(p => new ProjectProfitabilityEntry(p.ParentProject, p.BudgetCvl, p.Profit, p.ProjectStatus, p.Program))
                 .ToListAsync();
 
             if (projects.Count == 0)
                 return ApplyPaging(new List<ProjectProfitabilityView>(), query.Page, query.PageSize);
-
-            var projectCodes = projects.Select(p => p.ParentProject).ToList();
 
             var programme = await _dbContext.Programs
                 .AsNoTracking()
                 .Where(pg => pg.ProgramNo == programNo)
                 .Select(pg => new { pg.ProgramNo, pg.Target })
                 .FirstOrDefaultAsync();
+
+            var programmeTargetMap = programme != null
+                ? new Dictionary<string, decimal?> { { programme.ProgramNo!, programme.Target } }
+                : new Dictionary<string, decimal?>();
+
+            return await ComputeProfitabilityAsync(query, projects, programmeTargetMap);
+        }
+
+        /// <summary>
+        /// Returns paginated project profitability data for a given project group.
+        /// Same cost logic as GetProjectProfitabilityAsync but filtered by ProjectGroup instead of ProgramNo.
+        /// ProgrammeTarget is resolved per-project from each project's attached Programme.
+        /// workTypeFilter: "all" | "approved" | "not-approved"
+        /// </summary>
+        public async Task<PagedData<ProjectProfitabilityView>> GetProjectGroupProfitabilityAsync(
+            PaginationParameters<string> query, string projectGroup, string workTypeFilter)
+        {
+            var projectQuery = (from pg in _dbContext.ProjectGroupViews
+                                join pv in _dbContext.Projects on
+                                new { pg.ProjectGroupName } equals new { ProjectGroupName = pv.ProjectGroup }
+                                where EF.Functions.ILike(pg.UserEmail!, _requestContext.UserEmailId)
+                                      && pg.ProjectGroupName == projectGroup
+                                select pv).AsQueryable();
+
+            if (workTypeFilter == "approved")
+                projectQuery = projectQuery.Where(p => p.ProjectStatus == "Approved");
+            else if (workTypeFilter == "not-approved")
+                projectQuery = projectQuery.Where(p => p.ProjectStatus == "Not Approved");
+
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+
+            var projects = await projectQuery
+                .Select(p => new ProjectProfitabilityEntry(p.ParentProject, p.BudgetCvl, p.Profit, p.ProjectStatus, p.Program))
+                .ToListAsync();
+
+            if (projects.Count == 0)
+                return ApplyPaging(new List<ProjectProfitabilityView>(), query.Page, query.PageSize);
+
+            var distinctProgramNos = projects
+                .Select(p => p.Program)
+                .Where(p => p != null)
+                .Distinct()
+                .ToList();
+
+            var programmeTargetMap = await _dbContext.Programs
+                .AsNoTracking()
+                .Where(pg => distinctProgramNos.Contains(pg.ProgramNo))
+                .ToDictionaryAsync(pg => pg.ProgramNo!, pg => pg.Target);
+
+            return await ComputeProfitabilityAsync(query, projects, programmeTargetMap);
+        }
+
+        private async Task<PagedData<ProjectProfitabilityView>> ComputeProfitabilityAsync(
+            PaginationParameters<string> query,
+            List<ProjectProfitabilityEntry> projects,
+            Dictionary<string, decimal?> programmeTargetMap)
+        {
+            var projectCodes = projects.Select(p => p.ParentProject).ToList();
 
             // Calculate staff costs by summing Cost from TimeCostCalcsViews per Project (JobCode)
             var staffCosts = await (
@@ -1219,14 +1275,13 @@ namespace Apha.FPS.DataAccess.Repositories
                     g => g.Sum(x => (decimal)(x.NumberOfAnimals * x.NumberOfDays) * (x.Cost ?? 0m)));
 
             var staffMap = staffCosts
-                .Where(e=>e.sectorCharge == 1m)
+                .Where(e => e.sectorCharge == 1m)
                 .GroupBy(x => x.JobCode)
                 .ToDictionary(
                     g => g.Key,
                     g => g.Sum(x => (decimal)x.PlannedHours * (x.ChargeRate ?? 0m) * x.sectorCharge));
             var additionalMap = additionalCosts.ToDictionary(x => x.JobCode, x => x.TotalAdditional);
             var testMap = testCosts.ToDictionary(x => x.JobCode, x => x.TotalTest);
-
 
             var results = projects.Select(p =>
             {
@@ -1251,7 +1306,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     TargetProfit = profit,
                     OffTarget = jcProfit - profit,
                     ProgramNo = p.Program,
-                    ProgrammeTarget = programme?.Target,
+                    ProgrammeTarget = p.Program != null && programmeTargetMap.TryGetValue(p.Program, out var tgt) ? tgt : null,
                     ProjectStatus = p.ProjectStatus
                 };
             }).ToList();

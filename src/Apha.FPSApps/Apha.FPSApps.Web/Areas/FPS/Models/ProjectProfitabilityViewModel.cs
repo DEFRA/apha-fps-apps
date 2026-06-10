@@ -12,5 +12,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public decimal? ProgrammeTarget { get; set; }
         public decimal ProgrammeSurplusShortfall { get; set; }
         public DataGridConfig<ProjectProfitabilityItem> ProfitabilityGrid { get; set; } = new();
+        public bool IsProjectGroupMode { get; set; }
+        public string SelectedProjectGroup { get; set; } = string.Empty;
+        public List<SelectListItem> ProjectGroupList { get; set; } = new();
     }
 }
