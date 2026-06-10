@@ -359,35 +359,35 @@ namespace Apha.PACT.Application.UnitTests.Services.JobCodeServiceTest
         [Fact]
         public async Task GetZtCodeLookupAsync_WithItems_ReturnsMappedDtos()
         {
-            var entities = new List<ZtJobCodeLookup>
+            var entities = new List<JobCodeZtLookup>
             {
                 new() { JobCode = "ZT001", Description = "ZT Project 1" },
                 new() { JobCode = "ZT002", Description = "ZT Project 2" }
             };
-            var dtos = new List<ZtJobCodeDto>
+            var dtos = new List<JobCodeZtDto>
             {
                 new() { JobCode = "ZT001", Description = "ZT Project 1" },
                 new() { JobCode = "ZT002", Description = "ZT Project 2" }
             };
 
             _mockRepository.GetZtJobCodesAsync().Returns(entities);
-            _mockMapper.Map<IEnumerable<ZtJobCodeDto>>(entities).Returns(dtos);
+            _mockMapper.Map<IEnumerable<JobCodeZtDto>>(entities).Returns(dtos);
 
             var result = await _sut.GetZtCodeLookupAsync();
 
             result.Should().BeEquivalentTo(dtos);
             await _mockRepository.Received(1).GetZtJobCodesAsync();
-            _mockMapper.Received(1).Map<IEnumerable<ZtJobCodeDto>>(entities);
+            _mockMapper.Received(1).Map<IEnumerable<JobCodeZtDto>>(entities);
         }
 
         [Fact]
         public async Task GetZtCodeLookupAsync_EmptyRepository_ReturnsEmptyCollection()
         {
-            var entities = new List<ZtJobCodeLookup>();
-            var dtos = new List<ZtJobCodeDto>();
+            var entities = new List<JobCodeZtLookup>();
+            var dtos = new List<JobCodeZtDto>();
 
             _mockRepository.GetZtJobCodesAsync().Returns(entities);
-            _mockMapper.Map<IEnumerable<ZtJobCodeDto>>(entities).Returns(dtos);
+            _mockMapper.Map<IEnumerable<JobCodeZtDto>>(entities).Returns(dtos);
 
             var result = await _sut.GetZtCodeLookupAsync();
 

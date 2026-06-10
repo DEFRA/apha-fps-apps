@@ -15,7 +15,7 @@ namespace Apha.FPS.Application.Mappings
 
             CreateMap<PaginationData, PaginationDto>().ReverseMap();
             CreateMap<StaffJobView, StaffJobViewDto>().ReverseMap();
-            CreateMap<ZtStaffJobView, ZtStaffJobViewDto>()
+            CreateMap<StaffJobZtView, StaffJobZtViewDto>()
                 .ForMember(dest => dest.ZtDescription, opt => opt.MapFrom(src => src.Name))
                 .ReverseMap();
             CreateMap<StaffWorkgroupLookup, StaffWorkgroupLookupDto>().ReverseMap();

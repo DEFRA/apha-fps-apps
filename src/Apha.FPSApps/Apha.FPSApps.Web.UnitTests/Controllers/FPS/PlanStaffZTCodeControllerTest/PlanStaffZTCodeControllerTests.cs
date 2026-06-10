@@ -49,7 +49,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.PlanStaffZTCodeControllerTe
             };
             var staffResponse = ApiResponseDto<StaffWorkgroupLookupDto>.SuccessResponse(staffSummary);
             var ztTotalResponse = ApiResponseDto<double>.SuccessResponse(10.0);
-            var ztJobsResponse = ApiResponseDto<List<ZtStaffJobViewDto>>.SuccessResponse(new List<ZtStaffJobViewDto>());
+            var ztJobsResponse = ApiResponseDto<List<StaffJobZtViewDto>>.SuccessResponse(new List<StaffJobZtViewDto>());
 
             _planStaffZTCodeService.GetStaffSummaryByIdAsync(staffId).Returns(staffResponse);
             _planStaffZTCodeService.GetZtTotalHoursByStaffIdAsync(staffId).Returns(ztTotalResponse);
@@ -68,7 +68,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.PlanStaffZTCodeControllerTe
         public async Task Index_WithNullStaffId_ReturnsViewResult()
         {
             // Arrange
-            var ztJobsResponse = ApiResponseDto<List<ZtStaffJobViewDto>>.SuccessResponse(new List<ZtStaffJobViewDto>());
+            var ztJobsResponse = ApiResponseDto<List<StaffJobZtViewDto>>.SuccessResponse(new List<StaffJobZtViewDto>());
             _planStaffZTCodeService.GetZtStaffJobsByStaffIdPagedAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
                 .Returns(ztJobsResponse);
 
@@ -174,12 +174,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.PlanStaffZTCodeControllerTe
         public async Task GetZtCodes_WithSuccessResponse_ReturnsSuccessJson()
         {
             // Arrange
-            var ztCodes = new List<FpsZtJobCodeDto>
+            var ztCodes = new List<FpsJobCodeZtDto>
             {
-                new FpsZtJobCodeDto { JobCode = "ZT001", Description = "Admin Work" },
-                new FpsZtJobCodeDto { JobCode = "ZT002", Description = "Training" }
+                new FpsJobCodeZtDto { JobCode = "ZT001", Description = "Admin Work" },
+                new FpsJobCodeZtDto { JobCode = "ZT002", Description = "Training" }
             };
-            var expectedResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.SuccessResponse(ztCodes);
+            var expectedResponse = ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>.SuccessResponse(ztCodes);
 
             _planStaffZTCodeService.GetZtJobCodesAsync().Returns(expectedResponse);
 
@@ -201,7 +201,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.PlanStaffZTCodeControllerTe
             {
                 new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }
             };
-            var expectedResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>.FailureResponse(errors, new ApiMetaDto());
 
             _planStaffZTCodeService.GetZtJobCodesAsync().Returns(expectedResponse);
 
@@ -222,11 +222,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.PlanStaffZTCodeControllerTe
         public async Task Create_Get_WithJobCode_ReturnsPartialViewWithModel()
         {
             // Arrange
-            var ztCodes = new List<FpsZtJobCodeDto>
+            var ztCodes = new List<FpsJobCodeZtDto>
             {
-                new FpsZtJobCodeDto { JobCode = "ZT001", Description = "Admin Work" }
+                new FpsJobCodeZtDto { JobCode = "ZT001", Description = "Admin Work" }
             };
-            var ztResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.SuccessResponse(ztCodes);
+            var ztResponse = ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>.SuccessResponse(ztCodes);
             _planStaffZTCodeService.GetZtJobCodesAsync().Returns(ztResponse);
 
             // Act
@@ -243,7 +243,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.PlanStaffZTCodeControllerTe
         public async Task Create_Get_WithNullJobCode_ReturnsPartialViewWithEmptyJobCode()
         {
             // Arrange
-            var ztResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.SuccessResponse(new List<FpsZtJobCodeDto>());
+            var ztResponse = ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>.SuccessResponse(new List<FpsJobCodeZtDto>());
             _planStaffZTCodeService.GetZtJobCodesAsync().Returns(ztResponse);
 
             // Act
@@ -361,7 +361,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.PlanStaffZTCodeControllerTe
             // Arrange
             var staffId = "S001";
             var jobCode = "ZT001";
-            var ztDetail = new ZtStaffJobViewDto
+            var ztDetail = new StaffJobZtViewDto
             {
                 StaffID = staffId,
                 JobCode = jobCode,
@@ -369,12 +369,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.PlanStaffZTCodeControllerTe
                 Name = "Admin Work",
                 ZtDescription = "Administrative Tasks"
             };
-            var detailResponse = ApiResponseDto<ZtStaffJobViewDto>.SuccessResponse(ztDetail);
-            var ztCodes = new List<FpsZtJobCodeDto>
+            var detailResponse = ApiResponseDto<StaffJobZtViewDto>.SuccessResponse(ztDetail);
+            var ztCodes = new List<FpsJobCodeZtDto>
             {
-                new FpsZtJobCodeDto { JobCode = "ZT001", Description = "Admin Work" }
+                new FpsJobCodeZtDto { JobCode = "ZT001", Description = "Admin Work" }
             };
-            var ztResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.SuccessResponse(ztCodes);
+            var ztResponse = ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>.SuccessResponse(ztCodes);
 
             _planStaffZTCodeService.GetZtStaffJobDetailsByIdAsync(staffId, jobCode).Returns(detailResponse);
             _planStaffZTCodeService.GetZtJobCodesAsync().Returns(ztResponse);
@@ -401,7 +401,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.PlanStaffZTCodeControllerTe
             {
                 new ApiErrorDto { Message = "Not Found", Code = "NOT_FOUND" }
             };
-            var detailResponse = ApiResponseDto<ZtStaffJobViewDto>.FailureResponse(errors, new ApiMetaDto());
+            var detailResponse = ApiResponseDto<StaffJobZtViewDto>.FailureResponse(errors, new ApiMetaDto());
 
             _planStaffZTCodeService.GetZtStaffJobDetailsByIdAsync(staffId, jobCode).Returns(detailResponse);
 

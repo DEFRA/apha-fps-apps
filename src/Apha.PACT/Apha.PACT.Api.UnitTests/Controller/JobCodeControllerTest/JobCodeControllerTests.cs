@@ -285,19 +285,19 @@ namespace Apha.PACT.Api.UnitTests.Controller.JobCodeControllerTest
         [Fact]
         public async Task GetZtCodesAsync_HappyPath_ReturnsOk()
         {
-            var dtos = new List<ZtJobCodeDto>
+            var dtos = new List<JobCodeZtDto>
             {
                 new() { JobCode = "ZT001", Description = "ZT Project 1" },
                 new() { JobCode = "ZT002", Description = "ZT Project 2" }
             };
-            var mapped = new List<ZtJobCodeRes>
+            var mapped = new List<JobCodeZtRes>
             {
                 new() { JobCode = "ZT001", Description = "ZT Project 1" },
                 new() { JobCode = "ZT002", Description = "ZT Project 2" }
             };
 
             _serviceMock.GetZtCodeLookupAsync().Returns(dtos);
-            _mapperMock.Map<IEnumerable<ZtJobCodeRes>>(dtos).Returns(mapped);
+            _mapperMock.Map<IEnumerable<JobCodeZtRes>>(dtos).Returns(mapped);
 
             var result = await _controller.GetZtCodesAsync();
 
@@ -308,11 +308,11 @@ namespace Apha.PACT.Api.UnitTests.Controller.JobCodeControllerTest
         [Fact]
         public async Task GetZtCodesAsync_EmptyList_ReturnsOkWithEmptyCollection()
         {
-            var dtos = new List<ZtJobCodeDto>();
-            var mapped = new List<ZtJobCodeRes>();
+            var dtos = new List<JobCodeZtDto>();
+            var mapped = new List<JobCodeZtRes>();
 
             _serviceMock.GetZtCodeLookupAsync().Returns(dtos);
-            _mapperMock.Map<IEnumerable<ZtJobCodeRes>>(dtos).Returns(mapped);
+            _mapperMock.Map<IEnumerable<JobCodeZtRes>>(dtos).Returns(mapped);
 
             var result = await _controller.GetZtCodesAsync();
 

@@ -89,7 +89,7 @@ namespace Apha.FPS.Api.Controllers
         {
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _staffJobService.GetZtStaffJobsByStaffIdPagedAsync(filter, staffId);
-            return Ok(_mapper.Map<PaginationRes<ZtStaffJobViewRes>>(result));
+            return Ok(_mapper.Map<PaginationRes<StaffJobZtViewRes>>(result));
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace Apha.FPS.Api.Controllers
             var result = await _staffJobService.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
             if (result == null)
                 throw new KeyNotFoundException($"ZT plan entry for staff '{staffId}' and job code '{jobCode}' not found.");
-            return Ok(_mapper.Map<ZtStaffJobViewRes>(result));
+            return Ok(_mapper.Map<StaffJobZtViewRes>(result));
         }
 
         /// <summary>

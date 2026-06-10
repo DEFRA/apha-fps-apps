@@ -34,12 +34,12 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
         public async Task GetZtJobCodesAsync_WithSuccessResponse_ReturnsZtJobCodes()
         {
             // Arrange
-            var ztCodes = new List<FpsZtJobCodeDto>
+            var ztCodes = new List<FpsJobCodeZtDto>
             {
-                new FpsZtJobCodeDto { JobCode = "ZT001", Description = "Admin Work" },
-                new FpsZtJobCodeDto { JobCode = "ZT002", Description = "Training" }
+                new FpsJobCodeZtDto { JobCode = "ZT001", Description = "Admin Work" },
+                new FpsJobCodeZtDto { JobCode = "ZT002", Description = "Training" }
             };
-            var expectedResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.SuccessResponse(ztCodes);
+            var expectedResponse = ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>.SuccessResponse(ztCodes);
 
             _pactJobCodeApiClient.GetZtJobCodesAsync().Returns(expectedResponse);
 
@@ -58,8 +58,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
         public async Task GetZtJobCodesAsync_WithEmptyResult_ReturnsEmptyList()
         {
             // Arrange
-            var expectedResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.SuccessResponse(
-                new List<FpsZtJobCodeDto>());
+            var expectedResponse = ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>.SuccessResponse(
+                new List<FpsJobCodeZtDto>());
 
             _pactJobCodeApiClient.GetZtJobCodesAsync().Returns(expectedResponse);
 
@@ -80,7 +80,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
             {
                 new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }
             };
-            var expectedResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>.FailureResponse(errors, new ApiMetaDto());
 
             _pactJobCodeApiClient.GetZtJobCodesAsync().Returns(expectedResponse);
 
@@ -226,12 +226,12 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
             // Arrange
             var staffId = "S001";
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var ztJobs = new List<ZtStaffJobViewDto>
+            var ztJobs = new List<StaffJobZtViewDto>
             {
-                new ZtStaffJobViewDto { StaffID = staffId, JobCode = "ZT001", PlannedHours = 40, Name = "Admin Work" },
-                new ZtStaffJobViewDto { StaffID = staffId, JobCode = "ZT002", PlannedHours = 20, Name = "Training" }
+                new StaffJobZtViewDto { StaffID = staffId, JobCode = "ZT001", PlannedHours = 40, Name = "Admin Work" },
+                new StaffJobZtViewDto { StaffID = staffId, JobCode = "ZT002", PlannedHours = 20, Name = "Training" }
             };
-            var expectedResponse = ApiResponseDto<List<ZtStaffJobViewDto>>.SuccessResponse(ztJobs,
+            var expectedResponse = ApiResponseDto<List<StaffJobZtViewDto>>.SuccessResponse(ztJobs,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 });
 
             _fpsStaffJobApiClient.GetZtStaffJobsByStaffIdPagedAsync(query, staffId).Returns(expectedResponse);
@@ -254,7 +254,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
             // Arrange
             var staffId = "S999";
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var expectedResponse = ApiResponseDto<List<ZtStaffJobViewDto>>.SuccessResponse(new List<ZtStaffJobViewDto>());
+            var expectedResponse = ApiResponseDto<List<StaffJobZtViewDto>>.SuccessResponse(new List<StaffJobZtViewDto>());
 
             _fpsStaffJobApiClient.GetZtStaffJobsByStaffIdPagedAsync(query, staffId).Returns(expectedResponse);
 
@@ -277,7 +277,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
             {
                 new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }
             };
-            var expectedResponse = ApiResponseDto<List<ZtStaffJobViewDto>>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<List<StaffJobZtViewDto>>.FailureResponse(errors, new ApiMetaDto());
 
             _fpsStaffJobApiClient.GetZtStaffJobsByStaffIdPagedAsync(query, staffId).Returns(expectedResponse);
 
@@ -300,7 +300,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
             // Arrange
             var staffId = "S001";
             var jobCode = "ZT001";
-            var ztDetail = new ZtStaffJobViewDto
+            var ztDetail = new StaffJobZtViewDto
             {
                 StaffID = staffId,
                 JobCode = jobCode,
@@ -308,7 +308,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
                 Name = "Admin Work",
                 ZtDescription = "Administrative Tasks"
             };
-            var expectedResponse = ApiResponseDto<ZtStaffJobViewDto>.SuccessResponse(ztDetail);
+            var expectedResponse = ApiResponseDto<StaffJobZtViewDto>.SuccessResponse(ztDetail);
 
             _fpsStaffJobApiClient.GetZtStaffJobDetailsByIdAsync(staffId, jobCode).Returns(expectedResponse);
 
@@ -335,7 +335,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
             {
                 new ApiErrorDto { Message = "Not Found", Code = "NOT_FOUND" }
             };
-            var expectedResponse = ApiResponseDto<ZtStaffJobViewDto>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<StaffJobZtViewDto>.FailureResponse(errors, new ApiMetaDto());
 
             _fpsStaffJobApiClient.GetZtStaffJobDetailsByIdAsync(staffId, jobCode).Returns(expectedResponse);
 

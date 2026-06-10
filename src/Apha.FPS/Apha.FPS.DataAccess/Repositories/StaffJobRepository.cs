@@ -381,13 +381,13 @@ namespace Apha.FPS.DataAccess.Repositories
                 .SumAsync(h => h ?? 0);
         }
 
-        public async Task<PagedData<ZtStaffJobView>> GetZtStaffJobsByStaffIdPagedAsync(PaginationParameters<string> query, string staffId)
+        public async Task<PagedData<StaffJobZtView>> GetZtStaffJobsByStaffIdPagedAsync(PaginationParameters<string> query, string staffId)
         {
             var baseQuery = (from sj in _dbContext.StaffJobTblViews
                              join jc in _dbContext.ProjectViews on sj.JobCode equals jc.ParentProject
                              where sj.StaffId == staffId
                              && (EF.Functions.ILike(jc.UserEmail!, _requestContext.UserEmailId))
-                             select new ZtStaffJobView
+                             select new StaffJobZtView
                              {
                                  StaffID = sj.StaffId,
                                  JobCode = sj.JobCode,
@@ -402,14 +402,14 @@ namespace Apha.FPS.DataAccess.Repositories
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        public async Task<ZtStaffJobView?> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
+        public async Task<StaffJobZtView?> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
         {
             var baseQuery = (from vsjt in _dbContext.StaffJobTblViews
                              join vjc in _dbContext.ProjectViews on vsjt.JobCode equals vjc.ParentProject
                              where vsjt.StaffId == staffId
                              && (EF.Functions.ILike(vjc.UserEmail!, _requestContext.UserEmailId))
                              && vsjt.JobCode == jobCode
-                             select new ZtStaffJobView
+                             select new StaffJobZtView
                              {
                                  StaffID = vsjt.StaffId,
                                  JobCode = vsjt.JobCode,
@@ -421,7 +421,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return result;
         }
 
-        private static IQueryable<ZtStaffJobView> ApplyZtSorting(IQueryable<ZtStaffJobView> query, string? sortBy, bool descending)
+        private static IQueryable<StaffJobZtView> ApplyZtSorting(IQueryable<StaffJobZtView> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
                 return query;
@@ -435,7 +435,7 @@ namespace Apha.FPS.DataAccess.Repositories
             };
         }
 
-        private static IQueryable<ZtStaffJobView> ApplyZtStaffJobFilter(IQueryable<ZtStaffJobView> query, string? filter)
+        private static IQueryable<StaffJobZtView> ApplyZtStaffJobFilter(IQueryable<StaffJobZtView> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return query;

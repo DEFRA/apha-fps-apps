@@ -1,6 +1,6 @@
-namespace Apha.Common.Contracts.PACT
+namespace Apha.PACT.Application.Dtos
 {
-    public class ZtJobCodeRes
+    public class JobCodeZtDto
     {
         public string? JobCode { get; set; }
         public string? Description { get; set; }

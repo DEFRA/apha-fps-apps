@@ -18,7 +18,7 @@ namespace Apha.PACT.Api.Mappings
 
             CreateMap<JobCodeReq, JobCodeDto>().ReverseMap();
             CreateMap<JobCodeRes, JobCodeDto>().ReverseMap();
-            CreateMap<ZtJobCodeRes, ZtJobCodeDto>().ReverseMap();
+            CreateMap<JobCodeZtRes, JobCodeZtDto>().ReverseMap();
             CreateMap<TimeCodeValidReq, TimeCodeValidDto>().ReverseMap();
             CreateMap<TimeCodeValidRes, TimeCodeValidDto>().ReverseMap();
             CreateMap<WorkGroupRes, WorkGroupDto>().ReverseMap();

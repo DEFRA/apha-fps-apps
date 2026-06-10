@@ -630,12 +630,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         public async Task GetZtStaffJobsByStaffIdPagedAsync_HappyPath_ReturnsOk()
         {
             var query = new PaginationReq<string>();
-            var serviceResult = new PaginatedResult<ZtStaffJobViewDto>();
-            var mappedResult = new PaginationRes<ZtStaffJobViewRes>();
+            var serviceResult = new PaginatedResult<StaffJobZtViewDto>();
+            var mappedResult = new PaginationRes<StaffJobZtViewRes>();
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
             _serviceMock.GetZtStaffJobsByStaffIdPagedAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>()).Returns(serviceResult);
-            _mapperMock.Map<PaginationRes<ZtStaffJobViewRes>>(serviceResult).Returns(mappedResult);
+            _mapperMock.Map<PaginationRes<StaffJobZtViewRes>>(serviceResult).Returns(mappedResult);
 
             var result = await _controller.GetZtStaffJobsByStaffIdPagedAsync(query, "S001");
 
@@ -647,12 +647,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         public async Task GetZtStaffJobsByStaffIdPagedAsync_EdgeCase_EmptyResult()
         {
             var query = new PaginationReq<string>();
-            var serviceResult = new PaginatedResult<ZtStaffJobViewDto>();
-            var mappedResult = new PaginationRes<ZtStaffJobViewRes>();
+            var serviceResult = new PaginatedResult<StaffJobZtViewDto>();
+            var mappedResult = new PaginationRes<StaffJobZtViewRes>();
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(new QueryParameters<string>());
             _serviceMock.GetZtStaffJobsByStaffIdPagedAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>()).Returns(serviceResult);
-            _mapperMock.Map<PaginationRes<ZtStaffJobViewRes>>(serviceResult).Returns(mappedResult);
+            _mapperMock.Map<PaginationRes<StaffJobZtViewRes>>(serviceResult).Returns(mappedResult);
 
             var result = await _controller.GetZtStaffJobsByStaffIdPagedAsync(query, "S001");
 
@@ -685,11 +685,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         [Fact]
         public async Task GetZtStaffJobDetailsByIdAsync_HappyPath_ReturnsOk()
         {
-            var dto = new ZtStaffJobViewDto { StaffID = "S1", JobCode = "ZT1", PlannedHours = 40 };
-            var mapped = new ZtStaffJobViewRes { StaffID = "S1", JobCode = "ZT1", PlannedHours = 40 };
+            var dto = new StaffJobZtViewDto { StaffID = "S1", JobCode = "ZT1", PlannedHours = 40 };
+            var mapped = new StaffJobZtViewRes { StaffID = "S1", JobCode = "ZT1", PlannedHours = 40 };
 
             _serviceMock.GetZtStaffJobDetailsByIdAsync("S1", "ZT1").Returns(dto);
-            _mapperMock.Map<ZtStaffJobViewRes>(dto).Returns(mapped);
+            _mapperMock.Map<StaffJobZtViewRes>(dto).Returns(mapped);
 
             var result = await _controller.GetZtStaffJobDetailsByIdAsync("S1", "ZT1");
 
@@ -700,7 +700,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         [Fact]
         public async Task GetZtStaffJobDetailsByIdAsync_EdgeCase_NullResult_ThrowsKeyNotFound()
         {
-            _serviceMock.GetZtStaffJobDetailsByIdAsync("S1", "ZT1").Returns((ZtStaffJobViewDto)null!);
+            _serviceMock.GetZtStaffJobDetailsByIdAsync("S1", "ZT1").Returns((StaffJobZtViewDto)null!);
 
             await Assert.ThrowsAsync<KeyNotFoundException>(() => _controller.GetZtStaffJobDetailsByIdAsync("S1", "ZT1"));
         }
@@ -719,11 +719,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.StaffJobControllerTest
         [InlineData("EMP123", "ZT_TEST")]
         public async Task GetZtStaffJobDetailsByIdAsync_WithVariousIds_CallsService(string staffId, string jobCode)
         {
-            var dto = new ZtStaffJobViewDto { StaffID = staffId, JobCode = jobCode };
-            var mapped = new ZtStaffJobViewRes();
+            var dto = new StaffJobZtViewDto { StaffID = staffId, JobCode = jobCode };
+            var mapped = new StaffJobZtViewRes();
 
             _serviceMock.GetZtStaffJobDetailsByIdAsync(staffId, jobCode).Returns(dto);
-            _mapperMock.Map<ZtStaffJobViewRes>(dto).Returns(mapped);
+            _mapperMock.Map<StaffJobZtViewRes>(dto).Returns(mapped);
 
             await _controller.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
 

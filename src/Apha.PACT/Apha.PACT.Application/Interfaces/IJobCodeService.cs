@@ -13,6 +13,6 @@ namespace Apha.PACT.Application.Interfaces
         Task<JobCodeDto> CreateJobCodeAsync(JobCodeDto jobCode);
         Task<JobCodeDto> UpdateJobCodeAsync(JobCodeDto jobCode);
         Task<bool> DeleteJobCodeAsync(string jobCodeId);
-        Task<IEnumerable<ZtJobCodeDto>> GetZtCodeLookupAsync();
+        Task<IEnumerable<JobCodeZtDto>> GetZtCodeLookupAsync();
     }
 }

@@ -1,11 +1,10 @@
-namespace Apha.FPSApps.Application.Dtos.FPS
+namespace Apha.FPS.Core.Entities
 {
-    public class ZtStaffJobViewDto
+    public class StaffJobZtView
     {
         public string? StaffID { get; set; }
         public string? JobCode { get; set; }
         public double PlannedHours { get; set; }
         public string? Name { get; set; }
-        public string? ZtDescription { get; set; }
     }
 }

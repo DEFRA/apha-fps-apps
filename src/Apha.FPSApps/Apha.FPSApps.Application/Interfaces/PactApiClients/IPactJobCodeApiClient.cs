@@ -15,6 +15,6 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
         Task<ApiResponseDto<JobCodeDto>> CreateJobCodeAsync(JobCodeDto jobCode);
         Task<ApiResponseDto<JobCodeDto>> UpdateJobCodeAsync(JobCodeDto jobCode);
         Task<ApiResponseDto<bool>> DeleteJobCodeAsync(string jobCodeId);
-        Task<ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>> GetZtJobCodesAsync();
+        Task<ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>> GetZtJobCodesAsync();
     }
 }

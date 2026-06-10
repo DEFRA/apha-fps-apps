@@ -49,17 +49,17 @@ namespace Apha.FPS.Application.Services
             return await _staffJobRepository.GetZtTotalHoursByStaffIdAsync(staffId);
         }
 
-        public async Task<PaginatedResult<ZtStaffJobViewDto>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
+        public async Task<PaginatedResult<StaffJobZtViewDto>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
         {
             var filter = _mapper.Map<PaginationParameters<string>>(query);
             var rows = await _staffJobRepository.GetZtStaffJobsByStaffIdPagedAsync(filter, staffId);
-            return _mapper.Map<PaginatedResult<ZtStaffJobViewDto>>(rows);
+            return _mapper.Map<PaginatedResult<StaffJobZtViewDto>>(rows);
         }
 
-        public async Task<ZtStaffJobViewDto?> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
+        public async Task<StaffJobZtViewDto?> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
         {
             var result = await _staffJobRepository.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
-            return result == null ? null : _mapper.Map<ZtStaffJobViewDto>(result);
+            return result == null ? null : _mapper.Map<StaffJobZtViewDto>(result);
         }
 
         public async Task<decimal?> GetStaffChargeRate(string staffId, string jobcode)

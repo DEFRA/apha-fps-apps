@@ -1,6 +1,6 @@
-namespace Apha.PACT.Application.Dtos
+namespace Apha.PACT.Core.Entities
 {
-    public class ZtJobCodeDto
+    public class JobCodeZtLookup
     {
         public string? JobCode { get; set; }
         public string? Description { get; set; }

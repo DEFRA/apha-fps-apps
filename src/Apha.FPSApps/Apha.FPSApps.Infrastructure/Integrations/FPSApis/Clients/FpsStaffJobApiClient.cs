@@ -65,24 +65,24 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<double>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<ZtStaffJobViewDto>>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
+        public async Task<ApiResponseDto<List<StaffJobZtViewDto>>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetZtStaffJobsByStaffIdPaged, query);
             url = QueryStringHelper.AddQueryString(url, new { staffId });
-            var response = await _http.GetAsync<List<ZtStaffJobViewRes>>(url);
+            var response = await _http.GetAsync<List<StaffJobZtViewRes>>(url);
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<ZtStaffJobViewDto>>>(response);
-            var responseDto = _mapper.Map<ApiResponseDto<List<ZtStaffJobViewDto>>>(response);
-            return ApiResponseDto<List<ZtStaffJobViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                return _mapper.Map<ApiResponseDto<List<StaffJobZtViewDto>>>(response);
+            var responseDto = _mapper.Map<ApiResponseDto<List<StaffJobZtViewDto>>>(response);
+            return ApiResponseDto<List<StaffJobZtViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<ZtStaffJobViewDto>> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
+        public async Task<ApiResponseDto<StaffJobZtViewDto>> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
         {
-            var response = await _http.GetAsync<ZtStaffJobViewRes>(string.Format(FpsApiEndpoints.GetZtStaffJobDetailsById, staffId, jobCode));
+            var response = await _http.GetAsync<StaffJobZtViewRes>(string.Format(FpsApiEndpoints.GetZtStaffJobDetailsById, staffId, jobCode));
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<ZtStaffJobViewDto>>(response);
-            var responseDto = _mapper.Map<ApiResponseDto<ZtStaffJobViewDto>>(response);
-            return ApiResponseDto<ZtStaffJobViewDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+                return _mapper.Map<ApiResponseDto<StaffJobZtViewDto>>(response);
+            var responseDto = _mapper.Map<ApiResponseDto<StaffJobZtViewDto>>(response);
+            return ApiResponseDto<StaffJobZtViewDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<decimal?>> GetStaffChargeRate(string staffId, string jobcode)

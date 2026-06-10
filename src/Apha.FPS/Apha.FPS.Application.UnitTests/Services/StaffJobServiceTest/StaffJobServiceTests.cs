@@ -1218,12 +1218,12 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedPaginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var repositoryResult = new PagedData<ZtStaffJobView>
+            var repositoryResult = new PagedData<StaffJobZtView>
             {
-                Data = new List<ZtStaffJobView>
+                Data = new List<StaffJobZtView>
                 {
-                    new ZtStaffJobView { StaffID = staffId, JobCode = "ZT001", PlannedHours = 40, Name = "Admin" },
-                    new ZtStaffJobView { StaffID = staffId, JobCode = "ZT002", PlannedHours = 20, Name = "Training" }
+                    new StaffJobZtView { StaffID = staffId, JobCode = "ZT001", PlannedHours = 40, Name = "Admin" },
+                    new StaffJobZtView { StaffID = staffId, JobCode = "ZT002", PlannedHours = 20, Name = "Training" }
                 },
                 PaginationData = new PaginationData
                 {
@@ -1234,12 +1234,12 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
                 }
             };
 
-            var expectedResult = new PaginatedResult<ZtStaffJobViewDto>
+            var expectedResult = new PaginatedResult<StaffJobZtViewDto>
             {
-                Data = new List<ZtStaffJobViewDto>
+                Data = new List<StaffJobZtViewDto>
                 {
-                    new ZtStaffJobViewDto { StaffID = staffId, JobCode = "ZT001", PlannedHours = 40, Name = "Admin" },
-                    new ZtStaffJobViewDto { StaffID = staffId, JobCode = "ZT002", PlannedHours = 20, Name = "Training" }
+                    new StaffJobZtViewDto { StaffID = staffId, JobCode = "ZT001", PlannedHours = 40, Name = "Admin" },
+                    new StaffJobZtViewDto { StaffID = staffId, JobCode = "ZT002", PlannedHours = 20, Name = "Training" }
                 },
                 PaginationData = new PaginationDto
                 {
@@ -1252,7 +1252,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
 
             _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedPaginationParams);
             _mockRepository.GetZtStaffJobsByStaffIdPagedAsync(mappedPaginationParams, staffId).Returns(repositoryResult);
-            _mockMapper.Map<PaginatedResult<ZtStaffJobViewDto>>(repositoryResult).Returns(expectedResult);
+            _mockMapper.Map<PaginatedResult<StaffJobZtViewDto>>(repositoryResult).Returns(expectedResult);
 
             // Act
             var result = await _sut.GetZtStaffJobsByStaffIdPagedAsync(queryFilter, staffId);
@@ -1265,7 +1265,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
 
             _mockMapper.Received(1).Map<PaginationParameters<string>>(queryFilter);
             await _mockRepository.Received(1).GetZtStaffJobsByStaffIdPagedAsync(mappedPaginationParams, staffId);
-            _mockMapper.Received(1).Map<PaginatedResult<ZtStaffJobViewDto>>(repositoryResult);
+            _mockMapper.Received(1).Map<PaginatedResult<StaffJobZtViewDto>>(repositoryResult);
         }
 
         [Fact]
@@ -1276,9 +1276,9 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedPaginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            var emptyRepositoryResult = new PagedData<ZtStaffJobView>
+            var emptyRepositoryResult = new PagedData<StaffJobZtView>
             {
-                Data = new List<ZtStaffJobView>(),
+                Data = new List<StaffJobZtView>(),
                 PaginationData = new PaginationData
                 {
                     TotalPages = 0,
@@ -1288,9 +1288,9 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
                 }
             };
 
-            var emptyExpectedResult = new PaginatedResult<ZtStaffJobViewDto>
+            var emptyExpectedResult = new PaginatedResult<StaffJobZtViewDto>
             {
-                Data = new List<ZtStaffJobViewDto>(),
+                Data = new List<StaffJobZtViewDto>(),
                 PaginationData = new PaginationDto
                 {
                     TotalPages = 0,
@@ -1302,7 +1302,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
 
             _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedPaginationParams);
             _mockRepository.GetZtStaffJobsByStaffIdPagedAsync(mappedPaginationParams, staffId).Returns(emptyRepositoryResult);
-            _mockMapper.Map<PaginatedResult<ZtStaffJobViewDto>>(emptyRepositoryResult).Returns(emptyExpectedResult);
+            _mockMapper.Map<PaginatedResult<StaffJobZtViewDto>>(emptyRepositoryResult).Returns(emptyExpectedResult);
 
             // Act
             var result = await _sut.GetZtStaffJobsByStaffIdPagedAsync(queryFilter, staffId);
@@ -1345,7 +1345,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             var staffId = "STAFF001";
             var jobCode = "ZT001";
 
-            var entity = new ZtStaffJobView
+            var entity = new StaffJobZtView
             {
                 StaffID = staffId,
                 JobCode = jobCode,
@@ -1353,7 +1353,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
                 Name = "Admin Work"
             };
 
-            var expectedDto = new ZtStaffJobViewDto
+            var expectedDto = new StaffJobZtViewDto
             {
                 StaffID = staffId,
                 JobCode = jobCode,
@@ -1362,8 +1362,8 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             };
 
             _mockRepository.GetZtStaffJobDetailsByIdAsync(staffId, jobCode)
-                .Returns(Task.FromResult<ZtStaffJobView?>(entity));
-            _mockMapper.Map<ZtStaffJobViewDto>(entity).Returns(expectedDto);
+                .Returns(Task.FromResult<StaffJobZtView?>(entity));
+            _mockMapper.Map<StaffJobZtViewDto>(entity).Returns(expectedDto);
 
             // Act
             var result = await _sut.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
@@ -1375,7 +1375,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             result.PlannedHours.Should().Be(40);
 
             await _mockRepository.Received(1).GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
-            _mockMapper.Received(1).Map<ZtStaffJobViewDto>(entity);
+            _mockMapper.Received(1).Map<StaffJobZtViewDto>(entity);
         }
 
         [Fact]
@@ -1386,7 +1386,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
             var jobCode = "ZT999";
 
             _mockRepository.GetZtStaffJobDetailsByIdAsync(staffId, jobCode)
-                .Returns(Task.FromResult<ZtStaffJobView?>(null));
+                .Returns(Task.FromResult<StaffJobZtView?>(null));
 
             // Act
             var result = await _sut.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
@@ -1422,7 +1422,7 @@ namespace Apha.FPS.Application.UnitTests.Services.StaffJobServiceTest
         {
             // Arrange
             _mockRepository.GetZtStaffJobDetailsByIdAsync(staffId, jobCode)
-                .Returns(Task.FromResult<ZtStaffJobView?>(null));
+                .Returns(Task.FromResult<StaffJobZtView?>(null));
 
             // Act
             await _sut.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);

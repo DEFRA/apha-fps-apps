@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PaginationDto, Pagination>().ReverseMap();
 
             CreateMap<StaffJobViewDto, StaffJobViewRes>().ReverseMap();
-            CreateMap<ZtStaffJobViewDto, ZtStaffJobViewRes>().ReverseMap();
+            CreateMap<StaffJobZtViewDto, StaffJobZtViewRes>().ReverseMap();
             CreateMap<StaffWorkgroupLookupDto, StaffWorkgroupLookupRes>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobReq>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();
@@ -113,7 +113,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
 
             // Job Code (ZT lookup) - now served from PACT API
-            CreateMap<FpsZtJobCodeDto, Apha.Common.Contracts.PACT.ZtJobCodeRes>().ReverseMap();
+            CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
         }
     }
 }

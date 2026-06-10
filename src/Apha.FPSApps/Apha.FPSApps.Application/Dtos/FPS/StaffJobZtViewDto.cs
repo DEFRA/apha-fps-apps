@@ -1,6 +1,6 @@
-namespace Apha.FPS.Application.Dtos
+namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public class ZtStaffJobViewDto
+    public class StaffJobZtViewDto
     {
         public string? StaffID { get; set; }
         public string? JobCode { get; set; }
