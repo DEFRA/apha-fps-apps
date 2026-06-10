@@ -3,6 +3,7 @@ using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using AutoMapper;
 
 namespace Apha.FPS.Application.Services
@@ -92,18 +93,12 @@ namespace Apha.FPS.Application.Services
             return await _repository.UpdateProfitCentreSettingsAsync(profitCentre, timesheet, outputsheet, timesheetlayout);
         }
 
-        public async Task<IEnumerable<ProfitCentreCostDto>> GetProfitCenterCostSummaryAsync(double monthNumber)
-        {
-            var result = await _repository.GetProfitCenterCostSummaryAsync(monthNumber);
-            return _mapper.Map<IEnumerable<ProfitCentreCostDto>>(result);
-        }
-
         public async Task<PaginatedResult<ProfitCentreCostDto>> GetPagedProfitCenterCostSummaryAsync(
             QueryParameters<string> query, double monthNumber)
         {
             ArgumentNullException.ThrowIfNull(query);
 
-            var parameters = _mapper.Map<Apha.FPS.Core.Pagination.PaginationParameters<string>>(query);
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
             var pagedData = await _repository.GetPagedProfitCenterCostSummaryAsync(parameters, monthNumber);
 
             return _mapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData);

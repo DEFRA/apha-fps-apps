@@ -45,7 +45,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .AsQueryable()
                 .Distinct();
-                
+
             profitCentresQuery = ApplyProfitCentreFilter(profitCentresQuery, query.Filter);
             profitCentresQuery = ApplyProfitCentreSorting(profitCentresQuery, query.SortBy, query.Descending);
 
@@ -247,7 +247,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return true;
         }
 
-        public async Task<IEnumerable<ProfitCentreCostSummary>> GetProfitCenterCostSummaryAsync(double monthNumber)
+        private async Task<IEnumerable<ProfitCentreCostSummary>> GetProfitCenterCostSummaryAsync(double monthNumber)
         {
             // Fetch data with basic filtering, then perform calculation in memory
             var query = from tcc in _dbContext.TimeCostCalcs

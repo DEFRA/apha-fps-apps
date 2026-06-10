@@ -14,7 +14,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     }
     public class PeriodMonth
     {
-        public string Period { get; set; } = null!;
-        public string? MonthNumber { get; set; }
+        public string PeriodName { get; set; } = null!;
+        public string? EndPeriod { get; set; }
     }
 }

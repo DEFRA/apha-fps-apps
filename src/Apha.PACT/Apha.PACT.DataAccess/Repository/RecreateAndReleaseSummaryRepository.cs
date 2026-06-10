@@ -81,17 +81,14 @@ namespace Apha.PACT.DataAccess.Repository
         {
             var releaseSummary = new ReleaseSummary()
             {
-                ReleasePeriods = await GetReleasePeriodAsync(),
+                ReleasePeriods = await GetReleasePeriodsAsync(),
                 Setting = await GetSettingByIdAsync("SendEmail")
             };
 
             return releaseSummary;
         }
 
-        public async Task<IList<ReleasePeriod>> GetReleasePeriodsAsync()
-        {
-            return await GetReleasePeriodAsync();
-        }
+      
         private async Task<string?> GetSettingByIdAsync(string settingId)
         {
             var setting = await _context.Settings
@@ -101,7 +98,7 @@ namespace Apha.PACT.DataAccess.Repository
             return setting?.Setting;
         }
 
-        private async Task<IList<ReleasePeriod>> GetReleasePeriodAsync()
+        public async Task<IList<ReleasePeriod>> GetReleasePeriodsAsync()
         {
             return await _context.ReleasePeriods
                             .AsNoTracking()

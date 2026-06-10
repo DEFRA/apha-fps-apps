@@ -16,7 +16,6 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> HasLinkedWorkgroupsAsync(string profitCentreId);
         Task<IEnumerable<ProfitCentre>> GetAllProfitCentresAsync();        
         Task<bool> UpdateProfitCentreSettingsAsync(string profitCentre, int timesheet, int outputsheet, short timesheetlayout);
-        Task<IEnumerable<ProfitCentreCostSummary>> GetProfitCenterCostSummaryAsync(double monthNumber);
         Task<PagedData<ProfitCentreCostSummary>> GetPagedProfitCenterCostSummaryAsync(
             PaginationParameters<string> parameters, double monthNumber);
     }

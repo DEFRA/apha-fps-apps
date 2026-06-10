@@ -827,69 +827,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
             return new ProfitCentreRepository(mockContext.Object, requestContext);
         }
 
-        [Fact]
-        public async Task GetProfitCenterCostSummaryAsync_WithMonthNumber_ReturnsFilteredCostData()
-        {
-            // Arrange
-            const short monthNumber = 1;
-            var workgroups = new List<Workgroup>
-            {
-                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
-                new() { WorkgroupName = "WG2", ProfitCentre = "PC02" }
-            };
-            var timeCostCalcs = new List<TimeCostCalcs>
-            {
-                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
-                new() { WorkGroup = "WG2", ChargeRate = 200m, Time = 8, Class = "Charge", Month = 2 }
-            };
-            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
-
-            // Act
-            var result = (await repo.GetProfitCenterCostSummaryAsync(monthNumber)).ToList();
-
-            // Assert
-            Assert.Single(result);
-            Assert.Equal("PC01", result[0].ProfitCentre);
-            Assert.Equal(1000m, result[0].Cost); // (100 * 10)
-        }
-
-        [Fact]
-        public async Task GetProfitCenterCostSummaryAsync_WithEmptyData_ReturnsEmptyEnumerable()
-        {
-            // Arrange
-            var repo = CreateRepositoryWithTimeCostCalcs([], []);
-
-            // Act
-            var result = await repo.GetProfitCenterCostSummaryAsync(0.0);
-
-            // Assert
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public async Task GetProfitCenterCostSummaryAsync_WithMaxMonthNumber_ReturnsDataForMonth12()
-        {
-            // Arrange
-            const short monthNumber = 12;
-            var workgroups = new List<Workgroup>
-            {
-                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
-            };
-            var timeCostCalcs = new List<TimeCostCalcs>
-            {
-                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 12 },
-                new() { WorkGroup = "WG1", ChargeRate = 50m, Time = 5, Class = "Charge", Month = 11 }
-            };
-            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
-
-            // Act
-            var result = (await repo.GetProfitCenterCostSummaryAsync(monthNumber)).ToList();
-
-            // Assert
-            Assert.Single(result);
-            Assert.Equal(1000m, result[0].Cost); // Only month 12 data
-        }
-
         #endregion
 
         #region GetPagedProfitCenterCostSummaryAsync Tests

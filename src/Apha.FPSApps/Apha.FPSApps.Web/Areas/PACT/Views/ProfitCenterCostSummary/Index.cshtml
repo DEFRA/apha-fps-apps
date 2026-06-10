@@ -31,9 +31,9 @@
                     <tbody id="PeriodDropdownBody">
                         @foreach (var period in Model.PeriodMonths)
                         {
-                            <tr data-value="@period.MonthNumber" style="cursor:pointer;">
-                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@period.Period</td>
-                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@period.MonthNumber</td>
+                            <tr data-value="@period.EndPeriod" style="cursor:pointer;">
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@period.PeriodName</td>
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@period.EndPeriod</td>
                             </tr>
                         }
                     </tbody>

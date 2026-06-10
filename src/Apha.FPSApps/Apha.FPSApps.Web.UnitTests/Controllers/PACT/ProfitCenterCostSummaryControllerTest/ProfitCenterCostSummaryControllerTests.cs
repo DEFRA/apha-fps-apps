@@ -48,8 +48,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                     var periods = callInfo.Arg<List<ReleasePeriodDto>>();
                     return periods.Select(p => new PeriodMonth
                     {
-                        Period = p.PeriodName,
-                        MonthNumber = p.EndPeriod.ToString()
+                        PeriodName = p.PeriodName,
+                        EndPeriod = p.EndPeriod.ToString()
                     }).ToList();
                 });
         }
@@ -202,12 +202,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
-            Assert.Equal("Period 1", model.PeriodMonths[0].Period);
-            Assert.Equal("1", model.PeriodMonths[0].MonthNumber);
-            Assert.Equal("Period 2", model.PeriodMonths[1].Period);
-            Assert.Equal("2", model.PeriodMonths[1].MonthNumber);
-            Assert.Equal("Period 3", model.PeriodMonths[2].Period);
-            Assert.Equal("3", model.PeriodMonths[2].MonthNumber);
+            Assert.Equal("Period 1", model.PeriodMonths[0].PeriodName);
+            Assert.Equal("1", model.PeriodMonths[0].EndPeriod);
+            Assert.Equal("Period 2", model.PeriodMonths[1].PeriodName);
+            Assert.Equal("2", model.PeriodMonths[1].EndPeriod);
+            Assert.Equal("Period 3", model.PeriodMonths[2].PeriodName);
+            Assert.Equal("3", model.PeriodMonths[2].EndPeriod);
         }
 
         #endregion
