@@ -45,6 +45,7 @@ namespace Apha.Common.Utilities.ExcelExport
                 var gradeCode = first?.GradeCode ?? string.Empty;
                 var monthName = new DateTime(year, monthNumber, 1).ToString("MMMM");
                 var daysInMonth = DateTime.DaysInMonth(year, monthNumber);
+                var accntsPeriod = (short)(((monthNumber + 8) % 12) + 1);
 
                 worksheet.Column(1).Width = 23.5703125;
                 worksheet.Column(2).Width = 16.140625;
@@ -63,7 +64,7 @@ namespace Apha.Common.Utilities.ExcelExport
                 worksheet.Cell(2, 11).Value = "Month:";
                 worksheet.Cell(3, 11).Value = "Period:";
                 worksheet.Cell(2, 14).Value = monthName;
-                worksheet.Cell(3, 14).Value = monthNumber;
+                worksheet.Cell(3, 14).Value = accntsPeriod;
 
                 worksheet.Cell(6, 1).Value = "Time Code:";
                 worksheet.Cell(6, 2).Value = "Project Code:";

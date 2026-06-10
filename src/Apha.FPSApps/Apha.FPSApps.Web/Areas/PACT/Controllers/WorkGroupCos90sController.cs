@@ -64,7 +64,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 CalenderMonthItems  = calenderMonthItems,
                 YearOptions         = yearOptions,
                 SelectedProfitCentre = firstPc,
-                SelectedYear = yearOptions.FirstOrDefault()
+                SelectedYear = yearOptions.Contains((short)DateTime.Now.Year)
+                    ? (short)DateTime.Now.Year
+                    : yearOptions.FirstOrDefault()
             };
 
             if (!string.IsNullOrWhiteSpace(firstPc))
