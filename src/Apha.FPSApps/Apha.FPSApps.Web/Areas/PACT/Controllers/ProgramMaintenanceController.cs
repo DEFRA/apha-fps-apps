@@ -14,8 +14,8 @@ using FpsDto = Apha.FPSApps.Application.Dtos.FPS;
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    [Authorize(Roles = "PACTAdmin,PACTUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class ProgramMaintenanceController : Controller
     {
         private readonly IMapper _mapper;

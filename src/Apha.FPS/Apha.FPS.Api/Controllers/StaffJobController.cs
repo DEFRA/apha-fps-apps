@@ -15,7 +15,7 @@ namespace Apha.FPS.Api.Controllers
     /// API controller for managing staff job assignments and related data.
     /// </summary>
     /// 
-   [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+   [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
    [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/staffjob")]
