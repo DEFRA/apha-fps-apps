@@ -106,7 +106,7 @@ namespace Apha.PACT.DataAccess.Repository
         {
             var baseQuery = (from jc in _context.ProjectViews
                              where jc.Program != null && jc.Program.ToLower() == "zt_prog"
-                             && jc.UserEmail != null && jc.UserEmail.ToLower() == _fpsRequestContext.UserEmailId
+                             && jc.UserEmail != null && EF.Functions.ILike(jc.UserEmail, _fpsRequestContext.UserEmailId)
                              select new ZtJobCodeLookup
                              {
                                  JobCode = jc.ParentProject,

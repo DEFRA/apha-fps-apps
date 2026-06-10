@@ -113,7 +113,6 @@ namespace Apha.Common.Constants
         public const string GetStaffJobViewById = "api/v1/staffjob/view?staffId={0}&jobcode={1}";
         public const string GetStaffSummaryById = "api/v1/staffjob/staffsummary?staffId={0}";
         public const string GetZtTotalHoursByStaffId = "api/v1/staffjob/zttotalhours?staffId={0}";
-        public const string GetZtStaffJobsByStaffId = "api/v1/staffjob/ztstaffjobs?staffId={0}";
         public const string GetZtStaffJobsByStaffIdPaged = "api/v1/staffjob/ztstaffjobs/paged";
         public const string GetZtStaffJobDetailsById = "api/v1/staffjob/ztstaffjob/{0}/{1}";
 
