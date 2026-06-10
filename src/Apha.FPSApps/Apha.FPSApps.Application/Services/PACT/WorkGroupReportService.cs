@@ -18,5 +18,10 @@ namespace Apha.FPSApps.Application.Services.PACT
         {
             return await _pactClient.PactWorkGroupReport.SendEmailsAsync(profitCentre, monthNumber);
         }
+
+        public async Task<ApiResponseDto<WorkGroupCos90sExportResultDto>> ExportCos90sAsync(string profitCentre, short monthNumber, short year, string? pactId)
+        {
+            return await _pactClient.PactWorkGroupReport.ExportCos90sAsync(profitCentre, monthNumber, year, pactId);
+        }
     }
 }

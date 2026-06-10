@@ -19,6 +19,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     public class WorkGroupCos90sController : Controller
     {
         private readonly IWorkGroupService _workGroupService;
+        private readonly IWorkGroupReportService _workGroupReportService;
         private readonly IMonthHourService _monthHourService;
         private readonly IProfitCentreService _profitCentreService;
         private readonly ICalenderMonthService _calenderMonthService;
@@ -27,6 +28,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         public WorkGroupCos90sController(
             IWorkGroupService workGroupService,
+            IWorkGroupReportService workGroupReportService,
             IMonthHourService monthHourService,
             IProfitCentreService profitCentreService,
             ICalenderMonthService calenderMonthService,
@@ -34,6 +36,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             IMapper mapper)
         {
             _workGroupService = workGroupService;
+            _workGroupReportService = workGroupReportService;
             _monthHourService = monthHourService;
             _profitCentreService = profitCentreService;
             _calenderMonthService = calenderMonthService;
@@ -244,6 +247,61 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return setResult.Success
                 ? Ok(new { success = true })
                 : StatusCode(500, new { error = "Failed to update COS90 flag." });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ExportCos90s(string? selectedProfitCentre, short? selectedMonthNumber, short? selectedYear, string? pactId)
+        {
+            if (string.IsNullOrWhiteSpace(selectedProfitCentre))
+                ModelState.AddModelError(nameof(WorkGroupCos90sViewModel.SelectedProfitCentre), "Profit Centre is required.");
+
+            if (!selectedMonthNumber.HasValue || selectedMonthNumber.Value <= 0)
+                ModelState.AddModelError(nameof(WorkGroupCos90sViewModel.SelectedMonthNumber), "For Period is required.");
+
+            if (!selectedYear.HasValue || selectedYear.Value <= 0)
+                ModelState.AddModelError(nameof(WorkGroupCos90sViewModel.SelectedYear), "In Year is required.");
+
+            if (!ModelState.IsValid)
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any() && kvp.Key != "$")
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
+                            message = e.ErrorMessage
+                        }))
+                });
+
+            var response = await _workGroupReportService.ExportCos90sAsync(
+                selectedProfitCentre!,
+                selectedMonthNumber!.Value,
+                selectedYear!.Value,
+                pactId);
+
+            if (!response.Success || response.Data == null || response.Data.Content == null || response.Data.Content.Length == 0)
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Failed to generate COS90 Excel.",
+                    errors = new[]
+                    {
+                        new { field = string.Empty, message = "Failed to generate COS90 Excel." }
+                    }
+                });
+
+            var contentType = string.IsNullOrWhiteSpace(response.Data.ContentType)
+                ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                : response.Data.ContentType;
+
+            var fileName = string.IsNullOrWhiteSpace(response.Data.FileName)
+                ? $"COS90_{selectedProfitCentre}_{selectedYear}_{selectedMonthNumber:D2}.xlsx"
+                : response.Data.FileName;
+
+            return File(response.Data.Content, contentType, fileName);
         }
 
         // ── Private helpers ─────────────────────────────────────────────────

@@ -113,6 +113,7 @@ namespace Apha.Common.Constants
 
         // Work Group Report Email
         public const string SendEmails = "api/v1/workgroupreport/send";
+        public const string ExportCos90s = "api/v1/workgroupreport/cos90s/export";
 
         // COS90
         public const string GetWorkGroupsFlaggedForCos90 = "api/v1/workgroup/cos90/flagged";

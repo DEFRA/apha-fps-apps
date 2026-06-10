@@ -414,5 +414,50 @@ namespace Apha.PACT.DataAccess.Repository
                 .ExecuteUpdateAsync(s => s.SetProperty(w => w.Cos90, flag));
             return updated >= 0;
         }
+
+        public async Task<IEnumerable<WorkGroupCos90sExportRow>> GetCos90ExportRowsAsync(string profitCentre, short monthNumber, short year, string? pactId)
+        {
+            var query =
+                from staff in _context.WorkGroupStaffViews.AsNoTracking()
+                join wgGrade in _context.PactWorkGroupGradeViews.AsNoTracking() on staff.WorkGroupGrade equals wgGrade.WgGrade
+                join tcv in _context.TimeCodeValids.AsNoTracking() on wgGrade.WorkGroup equals tcv.WorkGroup                
+                join job in _context.JobCodes.AsNoTracking() on tcv.TimeCode equals job.JobCodeId into jobJoin
+                from job in jobJoin.DefaultIfEmpty()
+                join top in _context.TestorProducts.AsNoTracking() on tcv.TimeCode equals top.ItemCode into topJoin
+                from top in topJoin.DefaultIfEmpty()
+                where //wgGrade.Cos90 == 1
+                      //&& wg.ProfitCentre == profitCentre
+                      //&& 
+                        tcv.Active
+                      && staff.PersonStatus != "I"
+                select new WorkGroupCos90sExportRow
+                {
+                    ProfitCentre = "",//wg.ProfitCentre,
+                    WorkGroupName = wgGrade.WorkGroup ?? string.Empty,
+                    PactId = staff.PactId ?? string.Empty,
+                    StaffName = staff.Name ?? string.Empty,
+                    TimeCode = tcv.TimeCode,
+                    Description = job.JobCodeName ?? top.ItemDescription,
+                    ParentProject = tcv.ParentProject,
+                    GradeCode = wgGrade.GradeCode,
+                    SpNumber = staff.SpNumber,
+                    Hours = null,
+                    Month = monthNumber,
+                    Year = year
+                };
+
+            if (!string.IsNullOrWhiteSpace(pactId))
+                query = query.Where(r => r.PactId == pactId);
+
+            if (year > 0)
+                query = query.Where(r => r.Year == year);
+
+            return await query
+                .Distinct()
+                .OrderBy(r => r.StaffName)
+                .ThenBy(r => r.TimeCode)
+                .ThenBy(r => r.ParentProject)
+                .ToListAsync();
+        }
     }
 }

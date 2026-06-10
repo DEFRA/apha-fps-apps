@@ -24,5 +24,6 @@ namespace Apha.PACT.Core.Interfaces
         Task<bool> SetCos90ForProfitCentreWorkGroupsAsync(string profitCentre, short flag);
         Task<bool> SetCos90ForAllWorkGroupsAsync(short flag);
         Task<bool> SetCos90ForWorkGroupAsync(string profitCentre, string workGroupName, short flag);
+        Task<IEnumerable<WorkGroupCos90sExportRow>> GetCos90ExportRowsAsync(string profitCentre, short monthNumber, short year, string? pactId);
     }
 }

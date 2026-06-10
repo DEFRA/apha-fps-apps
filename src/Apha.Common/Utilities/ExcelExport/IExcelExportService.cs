@@ -15,7 +15,14 @@
         byte[] BuildOutputSheetExcel(
             string workGroupName,
             short monthNumber,
-            IEnumerable<WorkGroupOutputSheetRow> rows);        
+            IEnumerable<WorkGroupOutputSheetRow> rows);
+
+        byte[] BuildWorkGroupCos90sExcel(
+            IEnumerable<WorkGroupCos90sExportRow> rows,
+            short monthNumber,
+            short year,
+            string? profitCentre,
+            string? pactId);
 
         byte[] ExportToExcelMultiSheet(IEnumerable<ExcelSheetDefinition> sheets);
     }

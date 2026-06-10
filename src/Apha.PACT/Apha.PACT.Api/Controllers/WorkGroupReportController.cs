@@ -36,5 +36,18 @@ namespace Apha.PACT.Api.Controllers
             var results = await _service.SendEmailsAsync(request.ProfitCentre, request.MonthNumber, cancellationToken);
             return Ok(_mapper.Map<IEnumerable<WorkGroupReportEmailResultRes>>(results));
         }
+
+        [HttpPost("cos90s/export")]
+        public async Task<IActionResult> ExportCos90s([FromBody] WorkGroupCos90sExportReq request, CancellationToken cancellationToken)
+        {
+            var result = await _service.ExportCos90sAsync(
+                request.ProfitCentre,
+                request.MonthNumber,
+                request.Year,
+                request.PactId,
+                cancellationToken);
+
+            return Ok(_mapper.Map<WorkGroupCos90sExportRes>(result));
+        }
     }
 }

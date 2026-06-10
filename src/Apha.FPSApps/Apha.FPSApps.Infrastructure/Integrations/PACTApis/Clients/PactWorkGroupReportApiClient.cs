@@ -36,5 +36,25 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var dto = _mapper.Map<ApiResponseDto<List<WorkGroupReportEmailResultDto>>>(response);
             return ApiResponseDto<List<WorkGroupReportEmailResultDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
+
+        public async Task<ApiResponseDto<WorkGroupCos90sExportResultDto>> ExportCos90sAsync(string profitCentre, short monthNumber, short year, string? pactId)
+        {
+            var request = new WorkGroupCos90sExportReq
+            {
+                ProfitCentre = profitCentre,
+                MonthNumber = monthNumber,
+                Year = year,
+                PactId = pactId
+            };
+
+            var response = await _http.PostAsync<WorkGroupCos90sExportReq, WorkGroupCos90sExportRes>(
+                PactApiEndpoints.ExportCos90s, request);
+
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<WorkGroupCos90sExportResultDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<WorkGroupCos90sExportResultDto>>(response);
+            return ApiResponseDto<WorkGroupCos90sExportResultDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }

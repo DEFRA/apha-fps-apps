@@ -247,8 +247,81 @@ $(function () {
         $('#workingHoursModal').removeClass('show');
     });
 
-    // ── Excel COS90s (placeholder) ──────────────────────────────────────
+    // ── Excel COS90s ────────────────────────────────────────────────────
     $('#btn-excel-cos90').on('click', function () {
-        alert('Excel COS90s generation is not yet implemented.');
+        clearValidationErrors();
+
+        var payload = {
+            selectedProfitCentre: $('#SelectedProfitCentre').val() || '',
+            selectedMonthNumber: $('#for-period-value').val() || '',
+            selectedYear: $('#dpInYear').val() || '',
+            pactId: $('#dpWgMemberList').val() || ''
+        };
+
+        if (!payload.selectedProfitCentre) {
+            displayServerValidationErrors({ SelectedProfitCentre: 'Profit Centre is required.' }, 'There is a problem');
+            return;
+        }
+
+        if (!payload.selectedMonthNumber) {
+            displayServerValidationErrors({ SelectedMonthNumber: 'For Period is required.' }, 'There is a problem');
+            return;
+        }
+
+        if (!payload.selectedYear) {
+            displayServerValidationErrors({ SelectedYear: 'In Year is required.' }, 'There is a problem');
+            return;
+        }
+
+        var token = $('input[name="__RequestVerificationToken"]').first().val();
+
+        $.ajax({
+            url: '/PACT/WorkGroupCos90s/ExportCos90s',
+            type: 'POST',
+            data: payload,
+            headers: { 'RequestVerificationToken': token },
+            xhrFields: { responseType: 'blob' },
+            success: function (blob, _status, xhr) {
+                var disposition = xhr.getResponseHeader('Content-Disposition') || '';
+                var fileNameMatch = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(disposition);
+                var fileName = fileNameMatch
+                    ? decodeURIComponent(fileNameMatch[1] || fileNameMatch[2])
+                    : 'COS90.xlsx';
+
+                var url = window.URL.createObjectURL(blob);
+                var link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            },
+            error: function (xhr) {
+                var contentType = xhr.getResponseHeader('Content-Type') || '';
+
+                if (contentType.indexOf('application/json') >= 0 && xhr.response) {
+                    var reader = new FileReader();
+                    reader.onload = function () {
+                        try {
+                            var result = JSON.parse(reader.result);
+                            var errors = result && result.errors ? result.errors : null;
+
+                            if (errors) {
+                                displayServerValidationErrors(errors, 'There is a problem');
+                                return;
+                            }
+                        } catch (_e) {
+                        }
+
+                        alert('Failed to generate COS90 Excel.');
+                    };
+                    reader.readAsText(xhr.response);
+                    return;
+                }
+
+                alert('Failed to generate COS90 Excel.');
+            }
+        });
     });
 });
