@@ -1,0 +1,87 @@
+@model Apha.FPSApps.Web.Areas.PIMS.Models.MilestoneFormDatesItem
+@{
+    string? yearReadonly = ViewBag.IsAddingNew == true ? null : "readonly";
+}
+
+<div id="editFormDatesModal" class="govuk-edit-modal">
+    <div class="govuk-edit-modal-dialog" style="max-width: 580px;">
+        <div class="govuk-edit-modal__header">
+            <h3 class="govuk-edit-modal__title">
+                @(ViewBag.IsAddingNew == true ? "Add Financial Year Record" : "Edit Financial Year Record")
+            </h3>
+            <button type="button" onclick="closeFormDatesModal()"
+                    aria-label="Close" class="govuk-edit-modal__close-btn">
+                ✕
+            </button>
+        </div>
+        <div class="govuk-edit-modal__body">
+            <form id="editFormDatesForm" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ParentProject" />
+
+                <div class="govuk-error-summary" role="alert"
+                     aria-labelledby="editFormDatesErrorTitle" tabindex="-1" style="display: none;">
+                    <h2 class="govuk-error-summary__title" id="editFormDatesErrorTitle">
+                        There is a problem
+                    </h2>
+                    <div class="govuk-error-summary__body">
+                        <ul class="govuk-list govuk-error-summary__list"></ul>
+                    </div>
+                </div>
+
+                <div class="govuk-form-group govuk-!-margin-bottom-4" id="fgFinYear">
+                    <label class="govuk-label font-size-16" asp-for="Year">
+                        Financial Year <span class="sup_color_red">*</span>
+                    </label>
+                    <input class="govuk-input" asp-for="Year"
+                           type="text" placeholder="e.g. 2026"
+                           maxlength="4" pattern="\d{4}" min="1900" max="2100"
+                           style="width: 100%;"
+                           required="@(yearReadonly is null ? "required" : null)"
+                           readonly="@yearReadonly" />
+                    <span asp-validation-for="Year" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px;">
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Jun">Jun</label>
+                        <input class="govuk-input govuk-input--width-20" asp-for="Jun" type="date" />
+                    </div>
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Sep">Sep</label>
+                        <input class="govuk-input govuk-input--width-20" asp-for="Sep" type="date" />
+                    </div>
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Dec">Dec</label>
+                        <input class="govuk-input govuk-input--width-20" asp-for="Dec" type="date" />
+                    </div>
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Jan">Jan</label>
+                        <input class="govuk-input govuk-input--width-20" asp-for="Jan" type="date" />
+                    </div>
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Feb">Feb</label>
+                        <input class="govuk-input govuk-input--width-20" asp-for="Feb" type="date" />
+                    </div>
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Mar">Mar</label>
+                        <input class="govuk-input govuk-input--width-20" asp-for="Mar" type="date" />
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="govuk-edit-modal__footer">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary font-size-16"
+                    onclick="closeFormDatesModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button font-size-16"
+                    id="saveFormDatesBtn"
+                    onclick="saveMilestoneFormDates()">
+                @(ViewBag.IsAddingNew == true ? "Save" : "Update")
+            </button>
+        </div>
+    </div>
+</div>
