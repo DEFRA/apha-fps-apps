@@ -13,6 +13,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<ProjectDto>> GetProjectByIdAsync(string parentProject);
         Task<ApiResponseDto<ProjectDto>> CreateProjectAsync(ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(ProjectDto project);
+        Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdatePactProjectAsync(ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdatePactPortfolioAsync(ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdateFpsPortfolioAsync(ProjectDto project);
@@ -28,7 +29,6 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
 
         // Merged from IProgrammeNewProjectService
         Task<ApiResponseDto<ProjectDto>> GetProgrammeNewProjectByIdAsync(string parentProject);
-        Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project);
         Task<ApiResponseDto<bool>> DeleteProjectAndChildrenAsync(string parentProject);
         Task<ApiResponseDto<bool>> ChangeProjectCodeAsync(string oldCode, string newCode);
         Task<ApiResponseDto<bool>> CheckProjectExistsAsync(string code);

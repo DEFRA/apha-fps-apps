@@ -36,6 +36,9 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(ProjectDto project)
             => await _fpsClient.FpsProject.UpdateProjectAsync(project);
 
+        public Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project)
+            => _fpsClient.FpsProject.UpdateProjectAsync(parentProject, project);
+
         public async Task<ApiResponseDto<ProjectDto>> UpdatePactProjectAsync(ProjectDto project)
             => await _fpsClient.FpsProject.UpdatePactProjectAsync(project);
 
@@ -75,9 +78,6 @@ namespace Apha.FPSApps.Application.Services.FPS
         // Merged from ProgrammeNewProjectService
         public Task<ApiResponseDto<ProjectDto>> GetProgrammeNewProjectByIdAsync(string parentProject)
             => _fpsClient.FpsProject.GetProjectByIdAsync(parentProject);
-
-        public Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project)
-            => _fpsClient.FpsProject.UpdateProjectAsync(parentProject, project);
 
         public Task<ApiResponseDto<bool>> DeleteProjectAndChildrenAsync(string parentProject)
             => _fpsClient.FpsProject.DeleteProjectAndChildrenAsync(parentProject);
