@@ -503,7 +503,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.StaffJobServiceTest
             _fpsStaffJobApiClient.UpdateStaffJobAsync(updatedStaffJob).Returns(expectedResponse);
 
             // Act
-            var result = await _staffJobService.UpdateStaffJobAsync(updatedStaffJob);
+            var result = await _staffJobService.UpdateStaffJobAsync(staffId, updatedStaffJob);
 
             // Assert
             Assert.NotNull(result);
@@ -528,7 +528,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.StaffJobServiceTest
             _fpsStaffJobApiClient.UpdateStaffJobAsync(staffJob).Returns(expectedResponse);
 
             // Act
-            var result = await _staffJobService.UpdateStaffJobAsync(staffJob);
+            var result = await _staffJobService.UpdateStaffJobAsync(staffJob.StaffId, staffJob);
 
             // Assert
             Assert.NotNull(result);
@@ -553,7 +553,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.StaffJobServiceTest
             _fpsStaffJobApiClient.UpdateStaffJobAsync(staffJob).Returns(expectedResponse);
 
             // Act
-            await _staffJobService.UpdateStaffJobAsync(staffJob);
+            await _staffJobService.UpdateStaffJobAsync(staffId, staffJob);
 
             // Assert
             await _fpsStaffJobApiClient.Received(1).UpdateStaffJobAsync(Arg.Is<StaffJobDto>(s =>
@@ -577,7 +577,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.StaffJobServiceTest
             _fpsStaffJobApiClient.UpdateStaffJobAsync(staffJob).Returns(expectedResponse);
 
             // Act
-            var result = await _staffJobService.UpdateStaffJobAsync(staffJob);
+            var result = await _staffJobService.UpdateStaffJobAsync(staffJob.StaffId, staffJob);
 
             // Assert
             Assert.NotNull(result);
@@ -706,7 +706,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.StaffJobServiceTest
             _fpsStaffJobApiClient.UpdateStaffJobAsync(staffJob).Returns(expectedResponse);
 
             // Act
-            await _staffJobService.UpdateStaffJobAsync(staffJob);
+            await _staffJobService.UpdateStaffJobAsync(staffJob.StaffId, staffJob);
 
             // Assert
             await _fpsStaffJobApiClient.Received(1).UpdateStaffJobAsync(staffJob);

@@ -185,7 +185,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 JobCode = staffJobItem.JobCode,
                 PlannedHours = staffJobItem.PlannedHours
             };
-            var result = await _staffJobService.UpdateStaffJobAsync(staffJobDto);
+            var result = await _staffJobService.UpdateStaffJobAsync(staffId, staffJobDto);
 
             if (result.Success)
             {

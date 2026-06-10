@@ -13,7 +13,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<decimal?>> GetStaffChargeRate(string staffId, string jobcode);
         Task<ApiResponseDto<decimal>> GetTotalStaffCostAsync(string jobCode);
         Task<ApiResponseDto<StaffJobDto>> CreateStaffJobAsync(StaffJobDto staffJob);
-        Task<ApiResponseDto<StaffJobDto>> UpdateStaffJobAsync(StaffJobDto staffJob);
+        Task<ApiResponseDto<StaffJobDto>> UpdateStaffJobAsync(string staffId, StaffJobDto staffJob);
         Task<ApiResponseDto<bool>> DeleteStaffJobAsync(string staffId, string jobCode);
     }
 }
