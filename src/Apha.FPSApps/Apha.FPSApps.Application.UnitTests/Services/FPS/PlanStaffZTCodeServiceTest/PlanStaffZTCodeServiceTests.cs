@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
@@ -11,18 +12,20 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
     public class PlanStaffZTCodeServiceTests
     {
         private readonly IFpsApiClient _fpsClient;
+        private readonly IPactApiClient _pactClient;
         private readonly IFpsStaffJobApiClient _fpsStaffJobApiClient;
-        private readonly IFpsJobCodeApiClient _fpsJobCodeApiClient;
+        private readonly IPactJobCodeApiClient _pactJobCodeApiClient;
         private readonly PlanStaffZTCodeService _sut;
 
         public PlanStaffZTCodeServiceTests()
         {
             _fpsClient = Substitute.For<IFpsApiClient>();
+            _pactClient = Substitute.For<IPactApiClient>();
             _fpsStaffJobApiClient = Substitute.For<IFpsStaffJobApiClient>();
-            _fpsJobCodeApiClient = Substitute.For<IFpsJobCodeApiClient>();
+            _pactJobCodeApiClient = Substitute.For<IPactJobCodeApiClient>();
             _fpsClient.FpsStaffJob.Returns(_fpsStaffJobApiClient);
-            _fpsClient.FpsJobCode.Returns(_fpsJobCodeApiClient);
-            _sut = new PlanStaffZTCodeService(_fpsClient);
+            _pactClient.PactJobCode.Returns(_pactJobCodeApiClient);
+            _sut = new PlanStaffZTCodeService(_fpsClient, _pactClient);
         }
 
         #region GetZtJobCodesAsync Tests
@@ -38,7 +41,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
             };
             var expectedResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.SuccessResponse(ztCodes);
 
-            _fpsJobCodeApiClient.GetZtJobCodesAsync().Returns(expectedResponse);
+            _pactJobCodeApiClient.GetZtJobCodesAsync().Returns(expectedResponse);
 
             // Act
             var result = await _sut.GetZtJobCodesAsync();
@@ -48,7 +51,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Equal(2, result.Data.Count());
-            await _fpsJobCodeApiClient.Received(1).GetZtJobCodesAsync();
+            await _pactJobCodeApiClient.Received(1).GetZtJobCodesAsync();
         }
 
         [Fact]
@@ -58,7 +61,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
             var expectedResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.SuccessResponse(
                 new List<FpsZtJobCodeDto>());
 
-            _fpsJobCodeApiClient.GetZtJobCodesAsync().Returns(expectedResponse);
+            _pactJobCodeApiClient.GetZtJobCodesAsync().Returns(expectedResponse);
 
             // Act
             var result = await _sut.GetZtJobCodesAsync();
@@ -79,7 +82,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PlanStaffZTCodeService
             };
             var expectedResponse = ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _fpsJobCodeApiClient.GetZtJobCodesAsync().Returns(expectedResponse);
+            _pactJobCodeApiClient.GetZtJobCodesAsync().Returns(expectedResponse);
 
             // Act
             var result = await _sut.GetZtJobCodesAsync();

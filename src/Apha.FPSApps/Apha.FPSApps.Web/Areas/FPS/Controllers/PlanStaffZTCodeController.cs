@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
@@ -30,28 +29,32 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         public async Task<IActionResult> Index(string staffId)
         {
-            ViewBag.StaffId = staffId ?? string.Empty;
+            var model = new PlanStaffZTCodePageViewModel
+            {
+                StaffId = staffId ?? string.Empty
+            };
+
             if (!string.IsNullOrWhiteSpace(staffId))
             {
                 var staffResult = await _planStaffZTCodeService.GetStaffSummaryByIdAsync(staffId);
                 if (staffResult.Success && staffResult.Data != null)
                 {
-                    ViewBag.StaffName = staffResult.Data.Name;
-                    ViewBag.WorkGroupGrade = staffResult.Data.WorkGroupGrade;
-                    ViewBag.HrsPaid = staffResult.Data.HrsPaid;
-                    ViewBag.Leave = staffResult.Data.Leave;
-                    ViewBag.SickSpecial = staffResult.Data.SickSpecial;
-                    ViewBag.HrsAvail = staffResult.Data.HrsAvail;
+                    model.Name = staffResult.Data.Name;
+                    model.WorkGroupGrade = staffResult.Data.WorkGroupGrade;
+                    model.HrsPaid = staffResult.Data.HrsPaid;
+                    model.Leave = staffResult.Data.Leave;
+                    model.SickSpecial = staffResult.Data.SickSpecial;
+                    model.HrsAvail = staffResult.Data.HrsAvail;
                 }
                 var ztTotalResult = await _planStaffZTCodeService.GetZtTotalHoursByStaffIdAsync(staffId);
                 if (ztTotalResult.Success)
                 {
-                    ViewBag.PlannedAdminZT = ztTotalResult.Data;
-                    ViewBag.FreeForChargeableWork = ((double?)ViewBag.HrsAvail ?? 0.0) - ztTotalResult.Data;
+                    model.PlannedAdminZT = ztTotalResult.Data;
                 }
             }
-            var gridConfig = await GetZtGridConfigAsync(staffId ?? string.Empty);
-            return View(gridConfig);
+
+            model.GridConfig = await GetZtGridConfigAsync(staffId ?? string.Empty);
+            return View(model);
         }
 
         /// <summary>

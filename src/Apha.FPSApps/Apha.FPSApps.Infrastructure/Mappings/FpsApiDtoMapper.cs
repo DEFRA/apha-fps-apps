@@ -1,5 +1,6 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
+using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -109,10 +110,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // WorkgroupGrade  
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
-                      
 
-            // Job Code (ZT lookup)
-            CreateMap<FpsZtJobCodeDto, ZtJobCodeRes>().ReverseMap();
+
+            // Job Code (ZT lookup) - now served from PACT API
+            CreateMap<FpsZtJobCodeDto, Apha.Common.Contracts.PACT.ZtJobCodeRes>().ReverseMap();
         }
     }
 }

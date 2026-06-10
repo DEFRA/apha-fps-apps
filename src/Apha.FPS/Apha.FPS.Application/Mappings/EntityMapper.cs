@@ -26,7 +26,6 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<ProjectView, Project>().ReverseMap();
             CreateMap<JobCode, JobCodeDto>().ReverseMap();
             CreateMap<JobCode, Apha.Common.Contracts.FPS.JobCodeRes>().ReverseMap();
-            CreateMap<ZtJobCodeLookup, ZtJobCodeDto>().ReverseMap();
             CreateMap<Contract, ContractDto>().ReverseMap();
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
             CreateMap<Animal, AnimalDto>().ReverseMap();

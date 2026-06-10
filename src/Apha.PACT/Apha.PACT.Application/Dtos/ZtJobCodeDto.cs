@@ -1,4 +1,4 @@
-namespace Apha.FPS.Application.Dtos
+namespace Apha.PACT.Application.Dtos
 {
     public class ZtJobCodeDto
     {

@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.FPS
@@ -9,15 +10,17 @@ namespace Apha.FPSApps.Application.Services.FPS
     public class PlanStaffZTCodeService : IPlanStaffZTCodeService
     {
         private readonly IFpsApiClient _fpsClient;
+        private readonly IPactApiClient _pactClient;
 
-        public PlanStaffZTCodeService(IFpsApiClient fpsClient)
+        public PlanStaffZTCodeService(IFpsApiClient fpsClient, IPactApiClient pactClient)
         {
             _fpsClient = fpsClient;
+            _pactClient = pactClient;
         }
 
         public async Task<ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>> GetZtJobCodesAsync()
         {
-            return await _fpsClient.FpsJobCode.GetZtJobCodesAsync();
+            return await _pactClient.PactJobCode.GetZtJobCodesAsync();
         }
 
         public async Task<ApiResponseDto<StaffWorkgroupLookupDto>> GetStaffSummaryByIdAsync(string staffId)

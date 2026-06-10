@@ -353,5 +353,58 @@ namespace Apha.PACT.Application.UnitTests.Services.JobCodeServiceTest
         }
 
         #endregion
+
+        #region GetZtCodeLookupAsync
+
+        [Fact]
+        public async Task GetZtCodeLookupAsync_WithItems_ReturnsMappedDtos()
+        {
+            var entities = new List<ZtJobCodeLookup>
+            {
+                new() { JobCode = "ZT001", Description = "ZT Project 1" },
+                new() { JobCode = "ZT002", Description = "ZT Project 2" }
+            };
+            var dtos = new List<ZtJobCodeDto>
+            {
+                new() { JobCode = "ZT001", Description = "ZT Project 1" },
+                new() { JobCode = "ZT002", Description = "ZT Project 2" }
+            };
+
+            _mockRepository.GetZtJobCodesAsync().Returns(entities);
+            _mockMapper.Map<IEnumerable<ZtJobCodeDto>>(entities).Returns(dtos);
+
+            var result = await _sut.GetZtCodeLookupAsync();
+
+            result.Should().BeEquivalentTo(dtos);
+            await _mockRepository.Received(1).GetZtJobCodesAsync();
+            _mockMapper.Received(1).Map<IEnumerable<ZtJobCodeDto>>(entities);
+        }
+
+        [Fact]
+        public async Task GetZtCodeLookupAsync_EmptyRepository_ReturnsEmptyCollection()
+        {
+            var entities = new List<ZtJobCodeLookup>();
+            var dtos = new List<ZtJobCodeDto>();
+
+            _mockRepository.GetZtJobCodesAsync().Returns(entities);
+            _mockMapper.Map<IEnumerable<ZtJobCodeDto>>(entities).Returns(dtos);
+
+            var result = await _sut.GetZtCodeLookupAsync();
+
+            result.Should().BeEmpty();
+            await _mockRepository.Received(1).GetZtJobCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetZtCodeLookupAsync_RepositoryThrows_PropagatesException()
+        {
+            _mockRepository.GetZtJobCodesAsync().ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetZtCodeLookupAsync());
+
+            await _mockRepository.Received(1).GetZtJobCodesAsync();
+        }
+
+        #endregion
     }
 }

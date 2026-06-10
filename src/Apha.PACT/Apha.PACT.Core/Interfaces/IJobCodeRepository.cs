@@ -13,5 +13,6 @@ namespace Apha.PACT.Core.Interfaces
         Task<JobCode> CreateJobCodeAsync(JobCode jobCode);
         Task<JobCode> UpdateJobCodeAsync(JobCode jobCode);
         Task<bool> DeleteJobCodeAsync(string jobCodeId);
+        Task<IEnumerable<ZtJobCodeLookup>> GetZtJobCodesAsync();
     }
 }

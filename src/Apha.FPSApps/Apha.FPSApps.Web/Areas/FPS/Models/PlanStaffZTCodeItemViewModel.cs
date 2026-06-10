@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
+
     public class PlanStaffZTCodeItemViewModel
     {
         [Display(Name = "Staff ID")]
@@ -50,6 +51,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double HrsAvail { get; set; }
         public double PlannedAdminZT { get; set; }   // sum of planned ZT hours = Admin
         public double FreeForChargeableWork => HrsAvail - PlannedAdminZT;  // Remainder
+
+        // Grid configuration
+        public DataGridConfig<PlanStaffZTCodeItemViewModel> GridConfig { get; set; } = new();
 
         public List<PlanStaffZTCodeItemViewModel> Items { get; set; } = new();
         public List<SelectListItem> ZtCodeList { get; set; } = new();

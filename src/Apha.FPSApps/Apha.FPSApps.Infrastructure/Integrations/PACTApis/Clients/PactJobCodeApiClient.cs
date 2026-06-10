@@ -2,6 +2,7 @@ using Apha.Common.Constants;
 using Apha.Common.Contracts.PACT;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
@@ -119,6 +120,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var dto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
 
+        }
+
+        public async Task<ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>> GetZtJobCodesAsync()
+        {
+            var response = await _http.GetAsync<IEnumerable<ZtJobCodeRes>>(PactApiEndpoints.GetZtJobCodes);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>>(response);
+            }
+            var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>>(response);
+            return ApiResponseDto<IEnumerable<FpsZtJobCodeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }

@@ -83,5 +83,11 @@ namespace Apha.PACT.Application.Services
 
             return await _repository.DeleteJobCodeAsync(jobCodeId);
         }
+
+        public async Task<IEnumerable<ZtJobCodeDto>> GetZtCodeLookupAsync()
+        {
+            var jobCodes = await _repository.GetZtJobCodesAsync();
+            return _mapper.Map<IEnumerable<ZtJobCodeDto>>(jobCodes);
+        }
     }
 }

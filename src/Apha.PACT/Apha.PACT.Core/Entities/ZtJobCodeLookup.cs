@@ -1,6 +1,6 @@
-namespace Apha.Common.Contracts.FPS
+namespace Apha.PACT.Core.Entities
 {
-    public class ZtJobCodeRes
+    public class ZtJobCodeLookup
     {
         public string? JobCode { get; set; }
         public string? Description { get; set; }

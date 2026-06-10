@@ -171,10 +171,6 @@ namespace Apha.Common.Constants
         public const string DeleteWgEmployee = "api/v1/wgstaff/{0}";
         public const string DeleteWgGrade = "api/v1/wggrades/{0}";
 
-        // Job Codes
-        public const string GetZtJobCodes = "api/v1/jobcode/zt";
-        public const string GetAllJobCodes = "api/v1/jobcode";
-
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
 

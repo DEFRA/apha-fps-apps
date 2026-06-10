@@ -82,10 +82,6 @@ namespace Apha.FPS.Api.Mappings
 
             CreateMap<PactStaffDto, PactStaffRes>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
-             
-
-            // ZT Job Code lookup
-            CreateMap<ZtJobCodeDto, ZtJobCodeRes>().ReverseMap();
         }
     }
 }

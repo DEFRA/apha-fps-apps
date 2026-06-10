@@ -1,10 +1,9 @@
 @using Apha.FPSApps.Web.Areas.FPS.Models
 @using Apha.FPSApps.Web.Models.Components.DataGrid
-@model DataGridConfig<PlanStaffZTCodeItemViewModel>
+@model PlanStaffZTCodePageViewModel
 
 @{
     ViewData["Title"] = "Plan Staff ZT Codes";
-    var staffId = ViewBag.StaffId as string ?? string.Empty;
 }
 
 <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-bottom-3">
@@ -16,24 +15,23 @@
             <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0 isFloatLeft isListWidth">
                 <div class="govuk-summary-list__row isFloatLeft  govuk-!-margin-right-2">
                     <dt class="isFloatLeft govuk-!-margin-right-1">Staff Name</dt>
-                    <dd class="isFloatLeft" id="staff-name">@ViewBag.StaffName</dd>
+                    <dd class="isFloatLeft" id="staff-name">@Model.Name</dd>
                 </div>
                 <div class="govuk-summary-list__row isFloatLeft">
                     <dt class="isFloatLeft govuk-!-margin-right-1">Grade</dt>
-                    <dd class="isFloatLeft" id="staff-grade">@ViewBag.WorkGroupGrade</dd>
+                    <dd class="isFloatLeft" id="staff-grade">@Model.WorkGroupGrade</dd>
                 </div>
             </dl>
             <a href="JavaScript:history.back()" class="govuk-back-link isFloatRight">Back</a>
         </div>
-        
-        </div>
+    </div>
 </div>
 
 
 <div class="govuk-grid-row govuk-!-margin-top-3 sup_margin_left_right_0">
     <div class="govuk-grid-column-three-quarters">
-        <div id="@($"gridContainer_{Model.GridId}")">
-            @await Html.PartialAsync("_DataGrid", Model)
+        <div id="@($"gridContainer_{Model.GridConfig.GridId}")">
+            @await Html.PartialAsync("_DataGrid", Model.GridConfig)
         </div>
     </div>
 
@@ -46,27 +44,27 @@
                 <dl class="govuk-summary-list govuk-!-margin-bottom-0">
                     <div class="govuk-summary-list__row">
                         <dt class="govuk-summary-list__key">HrsPaid</dt>
-                        <dd class="govuk-summary-list__value" id="ts-hrspaid">@ViewBag.HrsPaid</dd>
+                        <dd class="govuk-summary-list__value" id="ts-hrspaid">@Model.HrsPaid</dd>
                     </div>
                     <div class="govuk-summary-list__row">
                         <dt class="govuk-summary-list__key">Leave</dt>
-                        <dd class="govuk-summary-list__value" id="ts-leave">@ViewBag.Leave</dd>
+                        <dd class="govuk-summary-list__value" id="ts-leave">@Model.Leave</dd>
                     </div>
                     <div class="govuk-summary-list__row">
                         <dt class="govuk-summary-list__key">SickSpecial</dt>
-                        <dd class="govuk-summary-list__value" id="ts-sickspecial">@ViewBag.SickSpecial</dd>
+                        <dd class="govuk-summary-list__value" id="ts-sickspecial">@Model.SickSpecial</dd>
                     </div>
                     <div class="govuk-summary-list__row">
                         <dt class="govuk-summary-list__key">HrsAvail</dt>
-                        <dd class="govuk-summary-list__value" id="ts-hrsavail">@ViewBag.HrsAvail</dd>
+                        <dd class="govuk-summary-list__value" id="ts-hrsavail">@Model.HrsAvail</dd>
                     </div>
                     <div class="govuk-summary-list__row">
                         <dt class="govuk-summary-list__key">Planned Admin [ZT]</dt>
-                        <dd class="govuk-summary-list__value" id="ts-planned-zt">@ViewBag.PlannedAdminZT</dd>
+                        <dd class="govuk-summary-list__value" id="ts-planned-zt">@Model.PlannedAdminZT</dd>
                     </div>
                     <div class="govuk-summary-list__row">
                         <dt class="govuk-summary-list__key">Free for Chargeable Work</dt>
-                        <dd class="govuk-summary-list__value" id="ts-free">@ViewBag.FreeForChargeableWork</dd>
+                        <dd class="govuk-summary-list__value" id="ts-free">@Model.FreeForChargeableWork</dd>
                     </div>
                 </dl>
             </div>
@@ -77,7 +75,7 @@
 @section Scripts {
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
-        var ztStaffId = '@Html.Raw(staffId)';
+        var ztStaffId = '@Html.Raw(Model.StaffId)';
         var ztStaffSummaryUrl = '@Url.Action("GetStaffSummary", "PlanStaffZTCode", new { area = "FPS" })';
         var ztCreateUrl= '@Url.Action("Create", "PlanStaffZTCode", new { area = "FPS" })';
         var ztEditUrl= '@Url.Action("Edit", "PlanStaffZTCode", new { area = "FPS" })';
