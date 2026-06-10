@@ -1,4 +1,3 @@
-using Apha.Common.Utilities.ExcelExport;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -14,8 +13,8 @@ using Newtonsoft.Json;
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
+    [Authorize(Roles = "PACTAdmin,PACTUser")]
+    [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
     public class WorkGroupTestCapabilityController : Controller
     {
         private readonly IMapper _mapper;
