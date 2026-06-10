@@ -14,7 +14,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {    
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class ProjectPlanningController : Controller
     {
         private readonly IMapper _mapper;
