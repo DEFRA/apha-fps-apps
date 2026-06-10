@@ -17,6 +17,7 @@ namespace Apha.PIMS.DataAccess.Data
             entity.Property(e => e.Program).HasColumnName("program");
             entity.Property(e => e.Customer).HasColumnName("customer");
             entity.Property(e => e.Active).HasColumnName("active");
+            entity.Property(e => e.ProjectGroup).HasColumnName("projectgroup");
         }
     }
 }

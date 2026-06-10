@@ -1,0 +1,922 @@
+﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PIMS.Models.ProjectYearCostsViewModel
+
+@{
+    ViewData["Title"] = "PIMS : Yearly Finances";
+}
+
+<div class="govuk-grid-row sup_border-bottom" style="padding: 0">
+    <h5 class="govuk-heading-s sup_margin_0"
+        style="padding: 10px 0 5px 24px; border-bottom: 2px solid #1d70b8">
+        Yearly Finances
+    </h5>
+</div>
+
+<div class="d-flex govuk-!-padding-top-2">
+
+    <!-- ── Side Navigation ──────────────────────────────────── -->
+    @await Html.PartialAsync("_SideNav", new Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
+    {
+        Parentproject = Model.Parentproject
+    })
+
+    <!-- ── Main Content ─────────────────────────────────────── -->
+    <main class="main-content" style="padding-top: 0">
+
+        <!-- ── Filters row ─────────────────────────────────── -->
+        <div class="govuk-grid-row govuk-!-margin-bottom-3" id="search-grid">
+            <div class="sup_search_panel sup_p_0 sup_border_b_0"
+                 style="overflow: visible; border: 0; padding: 0">
+                <div class="govuk-grid-column-full sup_flex_between_center"
+                     style="align-items: flex-end">
+                    <div class="govuk-grid-row"
+                         style="margin: 8px; display: flex; align-items: flex-end;">
+
+                        <div style="margin: 0 7px; flex: 1;">
+                            <label for="dpprojectSelect" class="govuk-label tab-font-size">
+                                Select a Project
+                            </label>
+                            <select id="dpprojectSelect"
+                                    class="govuk-select project-dropdown tab-font-size"
+                                    style="width: 100%;">
+                                <option value="">Select a Project</option>
+                                @foreach (var item in Model.ProjectOptions)
+                                {
+                                    if (item.Value == Model.Parentproject)
+                                    {
+                                        <option value="@item.Value" selected="selected">@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div style="margin: 0 5px; flex: 1;">
+                            <label for="dpyear" class="govuk-label tab-font-size">Year</label>
+                            <select id="dpyear"
+                                    class="govuk-select project-dropdown tab-font-size"
+                                    style="width: 100%;">
+                                <option value="">Year</option>
+                                @foreach (var item in Model.YearOptions)
+                                {
+                                    if (item.Value == Model.SelectedYear.ToString())
+                                    {
+                                        <option value="@item.Value" selected="selected">@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div style="margin: 0 5px; flex-shrink: 0;">
+                            <label class="govuk-label govuk-visually-hidden" for="btnExport">Export</label>
+                            <button id="btnExport" type="button" class="govuk-button"
+                                    style="padding: 5px 10px; font-size: 16px; line-height: 1.2; margin-bottom: 2px;">
+                                Export
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tabs ─────────────────────────────────────────── -->
+        <div class="govuk-template__body js-enabled govuk-frontend-supported">
+            <div class="govuk-tabs" data-module="govuk-tabs">
+                <ul class="govuk-tabs__list">
+                    <li class="govuk-tabs__list-item govuk-tabs__list-item--selected tab-3-side-border" id="tab_nav-monthlyPact">
+                        <a class="govuk-tabs__tab" href="#nav-monthlyPact" role="tab"
+                           aria-controls="nav-monthlyPact" style="font-size: 14px; text-decoration: none">
+                            Monthly Pact Data
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-pact-pay">
+                        <a class="govuk-tabs__tab" href="#nav-pact-pay" role="tab"
+                           aria-controls="nav-pact-pay" style="font-size: 14px; text-decoration: none">
+                            Pact Pay
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-project-details">
+                        <a class="govuk-tabs__tab" href="#nav-project-details" role="tab"
+                           aria-controls="nav-project-details" style="font-size: 14px; text-decoration: none">
+                            Project Details
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-plan">
+                        <a class="govuk-tabs__tab" href="#nav-plan" role="tab"
+                           aria-controls="nav-plan" style="font-size: 14px; text-decoration: none">
+                            Plan
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-staff-plan">
+                        <a class="govuk-tabs__tab" href="#nav-staff-plan" role="tab"
+                           aria-controls="nav-staff-plan" style="font-size: 14px; text-decoration: none">
+                            Staff Plan vs Actuals
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-test-plan">
+                        <a class="govuk-tabs__tab" href="#nav-test-plan" role="tab"
+                           aria-controls="nav-test-plan" style="font-size: 14px; text-decoration: none">
+                            Test Plan vs Actuals
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border" id="tab_nav-animal-plan">
+                        <a class="govuk-tabs__tab" href="#nav-animal-plan" role="tab"
+                           aria-controls="nav-animal-plan" style="font-size: 14px; text-decoration: none">
+                            Animal Plan vs Actuals
+                        </a>
+                    </li>
+                    <li class="govuk-tabs__list-item tab-3-side-border"
+                        id="tab_nav-additional-cost">
+                        <a class="govuk-tabs__tab" href="#nav-additional-cost" role="tab"
+                           aria-controls="nav-additional-cost" style="font-size: 14px; text-decoration: none">
+                            Additional Cost Plan vs Actuals
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Placeholder panels -->
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
+                     id="nav-monthlyPact" role="tabpanel" aria-labelledby="tab_nav-monthlyPact">
+                    <div class="govuk-grid-row">
+                        <div class="govuk-grid-column-full">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.MonthlyPactGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.MonthlyPactGrid)
+                                </div>
+                                <!-- Totals row outside the scrollable grid -->
+                                <div class="mpp-totals-wrapper" style="overflow-x: auto; overflow-y: hidden; margin-top: 0; border: none; border-radius: 0;">
+                                    <table class="govuk-table govuk-table--bordered custom-table"
+                                        id="monthly-data-totals" style="width: 100%;">
+                                        <thead style="visibility: collapse;">
+                                            <tr>
+                                                <th style="width: 80px;"></th>
+                                                <th style="width: 100px;"></th>
+                                                <th style="width: 110px;"></th>
+                                                <th style="width: 90px;"></th>
+                                                <th style="width: 110px;"></th>
+                                                <th style="width: 90px;"></th>
+                                                <th style="width: 110px;"></th>
+                                                <th style="width: 90px;"></th>
+                                                <th style="width: 90px;"></th>
+                                                <th style="width: 80px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="govuk-table__body tab-font-size">
+                                            <tr class="govuk-table__row" id="tableMPPTotalRow">
+                                                <td class="govuk-table__cell mpp-label-cell"></td>
+                                                <td class="govuk-table__cell mpp-label-cell">Totals</td>
+                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                    id="mpp-total-proj-specific">£0.00</td>
+                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                    id="mpp-total-animals">£0.00</td>
+                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                    id="mpp-total-timecosts">£0.00</td>
+                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                    id="mpp-total-transfercosts">
+                                                    £0.00
+                                                </td>
+                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                    id="mpp-total-total-costs">£0.00</td>
+                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                    id="mpp-total-total-hours">0</td>
+                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                    id="mpp-total-invoices">£0.00</td>
+                                                <td class="govuk-table__cell govuk-!-text-align-right"
+                                                    id="mpp-total-coiw">£0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- FPS Planned Cost section -->
+                                <div class="govuk-!-margin-top-3">
+                                    <strong class="govuk-body tab-font-bold-size">FPS Planned Cost</strong>
+                                </div>
+                                <table class="govuk-table govuk-table--s custom-table govuk-table--bordered"
+                                       style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 4px;">
+                                    <thead class="govuk-table__head tab-font-bold-size">
+                                        <tr class="govuk-table__row">
+                                            <th class="govuk-table__header govuk-!-text-align-right">Staff Costs</th>
+                                            <th class="govuk-table__header govuk-!-text-align-right">Test Costs</th>
+                                            <th class="govuk-table__header govuk-!-text-align-right">Exceptional Costs</th>
+                                            <th class="govuk-table__header govuk-!-text-align-right">Animal Costs</th>
+                                            <th class="govuk-table__header govuk-!-text-align-right">Total Costs</th>
+                                            <th class="govuk-table__header govuk-!-text-align-right">Cust Income</th>
+                                            <th class="govuk-table__header govuk-!-text-align-right">Total Income</th>
+                                            <th class="govuk-table__header govuk-!-text-align-right">Budget VLA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="govuk-table__body tab-font-size">
+                                        <tr class="govuk-table__row">
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-staff-costs">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-test-costs">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-exceptional-costs">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-animal-costs">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-total-costs">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-cust-income">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-total-income">£0.00</td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right" id="fps-budget-vla">£0.00</td>
+                                        </tr>
+                                        <tr class="govuk-table__row govuk-!-font-weight-bold">
+                                            <td colspan="7" class="govuk-table__cell govuk-!-text-align-right" style="vertical-align: middle;">
+                                                Total Cost as Percentage of VLA Budget
+                                            </td>
+                                            <td class="govuk-table__cell govuk-!-text-align-right">
+                                                <input class="govuk-input govuk-input--width-10"
+                                                       id="fps-total-cost-pct" type="text" value=""
+                                                       aria-label="Total cost as percentage of VLA budget"
+                                                       style="max-width: 110px;" readonly />
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
+                     id="nav-pact-pay" role="tabpanel" aria-labelledby="tab_nav-pact-pay">
+                    <div class="govuk-grid-row">
+                        <div class="govuk-grid-column-full">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.PactPayGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.PactPayGrid)
+                                </div>
+                                <table id="pactPayFooterTable" class="govuk-table govuk-table--s custom-table govuk-table--bordered"
+                                       style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 0;">
+                                    <colgroup id="pactPayFooterColgroup">
+                                        <col style="width: 11.6%;" />
+                                        <col style="width: 15.9%;" />
+                                        <col style="width: 17.4%;" />
+                                        <col style="width: 17.4%;" />
+                                        <col style="width: 17.4%;" />
+                                        <col style="width: 20.3%;" />
+                                    </colgroup>
+                                    <thead class="govuk-visually-hidden">
+                                        <tr>
+                                            <th scope="col" class="govuk-table__header"></th>
+                                            <th scope="col" class="govuk-table__header"></th>
+                                            <th scope="col" class="govuk-table__header">Pay</th>
+                                            <th scope="col" class="govuk-table__header">Non-Pay</th>
+                                            <th scope="col" class="govuk-table__header">Overhead</th>
+                                            <th scope="col" class="govuk-table__header">Staff Costs</th>
+                                        </tr>
+                                    </thead>
+                                    <tfoot class="govuk-table__foot tab-font-bold-size">
+                                        <tr class="govuk-table__row">
+                                            <td class="govuk-table__cell" colspan="2">Totals</td>
+                                            <td class="govuk-table__cell govuk-text-align-right" id="pactPayTotalPay">£0.00</td>
+                                            <td class="govuk-table__cell govuk-text-align-right" id="pactPayTotalNonPay">£0.00</td>
+                                            <td class="govuk-table__cell govuk-text-align-right" id="pactPayTotalOverhead">£0.00</td>
+                                            <td class="govuk-table__cell govuk-text-align-right" id="pactPayTotalStaffCosts">£0.00</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                <div class="sup_total_footer" style="display:none;"><!-- kept for CSS compatibility --></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2"
+                     id="nav-project-details" role="tabpanel" aria-labelledby="tab_nav-project-details"
+                     style="overflow-y: auto; max-height: 500px;">
+                    <form class="govuk-form" style="width: 100%; display: flex;">
+                        <fieldset class="govuk-fieldset"
+                                  style="width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; grid-auto-flow: dense;">
+
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-year">Year</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-year" name="year" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-disease">Disease</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-disease" name="disease" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-project">Project</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-project" name="project" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-contract">Contract</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-contract" name="contract" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-manager">Manager</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-manager" name="manager" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-finished">Finished</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-finished" name="finished" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-transferincome">Transfer Income</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-transferincome" name="transferincome" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-custincome">Cust Income</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-custincome" name="custincome" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-feecost">FE Cost</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-feecost" name="feecost" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-profit">Profit</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-profit" name="profit" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-carryover">Carry Over</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-carryover" name="carryover" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-budgetcvl">Budget CVL</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-budgetcvl" name="budgetcvl" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-caseworksub">Casework Sub</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-caseworksub" name="caseworksub" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-costcentre">Cost Centre</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-costcentre" name="costcentre" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-pvsincome">PVS Income</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-pvsincome" name="pvsincome" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-oracleproject">Oracle Project</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-oracleproject" name="oracleproject" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-plancasework">Plan Casework</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-plancasework" name="plancasework" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-subaccountcod">Sub Account</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-subaccountcod" name="subaccountcod" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-source">Source</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-source" name="source" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-project-group">Project Group</label>
+                                <input class="govuk-input govuk-!-font-size-16" id="pd-project-group" name="projectgroup" type="text" readonly>
+                            </div>
+                            <div class="govuk-form-group">
+                                <div class="govuk-checkboxes govuk-checkboxes--small">
+                                    <div class="govuk-checkboxes__item">
+                                        <input class="govuk-checkboxes__input" id="pd-defraproject" name="defraproject" type="checkbox" disabled>
+                                        <label class="govuk-label govuk-!-font-size-16 govuk-checkboxes__label" for="pd-defraproject">Defra Project</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="govuk-form-group" style="grid-column: span 3;">
+                                <label class="govuk-label govuk-!-font-size-16" for="pd-comments">Comments</label>
+                                <textarea class="govuk-textarea govuk-!-font-size-16" id="pd-comments" name="comments" rows="2" readonly></textarea>
+                            </div>
+
+                        </fieldset>
+                    </form>
+                </div>
+
+                <!-- ── Plan tab ──────────────────────────────────────────────────────────
+                     Lazy-loaded: grids are rendered with empty data sets.
+                     JS calls reloadGrid on first click and on filter change.          -->
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
+                     id="nav-plan" role="tabpanel" aria-labelledby="tab_nav-plan">
+                    <div class="govuk-grid-row govuk-!-margin-bottom-3">
+
+                        <!-- Staff Plan (top-left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.PlanStaffGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.PlanStaffGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="planStaffGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Test Plan (top-right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.PlanTestGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.PlanTestGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="planTestGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="govuk-grid-row">
+
+                        <!-- Animal Plan (bottom-left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.PlanAnimalGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.PlanAnimalGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="planAnimalGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Cost Plan (bottom-right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.PlanAdditionalGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.PlanAdditionalGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="planAdditionalGridTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
+                     id="nav-staff-plan" role="tabpanel"
+                     aria-labelledby="tab_nav-staff-plan">
+                    <div class="govuk-grid-row">
+
+                        <!-- Staff Plan (left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.StaffPlansGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.StaffPlansGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="staffPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Staff Actuals (right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.StaffActualsGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.StaffActualsGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="staffActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
+                     id="nav-test-plan" role="tabpanel"
+                     aria-labelledby="tab_nav-test-plan">
+                    <div class="govuk-grid-row">
+
+                        <!-- Test Plan (left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.TestPlansGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.TestPlansGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="testPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Test Actuals (right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.TestActualsGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.TestActualsGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="testActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ── Animal Plan vs Actuals tab ─────────────────────────────────────────
+                     NOTE: panel starts hidden (GOV.UK tabs controls visibility via JS).
+                     Grids are server-rendered so data is already present; reloadGrid is
+                     called on filter change exactly like the Additional Cost tab.        -->
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
+                     id="nav-animal-plan" role="tabpanel"
+                     aria-labelledby="tab_nav-animal-plan">
+                    <div class="govuk-grid-row">
+
+                        <!-- Animal Plan (left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.AnimalPlansGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.AnimalPlansGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="animalPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Animal Actuals (right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.AnimalActualsGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.AnimalActualsGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="animalActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ── Additional Cost Plan vs Actuals tab ─────────────────────────────── -->
+                <div class="govuk-tabs__panel govuk-tabs__panel--hidden govuk-!-padding-2 min-height-380"
+                     id="nav-additional-cost" role="tabpanel"
+                     aria-labelledby="tab_nav-additional-cost">
+                    <div class="govuk-grid-row">
+
+                        <!-- Additional Cost Plan (left) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.AdditionalPlansGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.AdditionalPlansGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="additionalCostPlansTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Actuals (right) -->
+                        <div class="govuk-grid-column-one-half">
+                            <div class="sup_border govuk-!-padding-3">
+                                <div id="@($"gridContainer_{Model.AdditionalActualsGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.AdditionalActualsGrid)
+                                </div>
+                                <div class="sup_total_footer">
+                                    <span class="sup_total_footer__label">Total</span>
+                                    <span id="additionalActualsTotalDisplay" class="sup_total_footer__value">£0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div><!-- /govuk-tabs -->
+        </div>
+
+    </main>
+</div>
+
+@section Scripts {
+<script>
+    var plansGridId            = '@Model.AdditionalPlansGrid.GridId';
+    var actualsGridId          = '@Model.AdditionalActualsGrid.GridId';
+    var animalPlansGridId      = '@Model.AnimalPlansGrid.GridId';
+    var animalActualsGridId    = '@Model.AnimalActualsGrid.GridId';
+    var testPlansGridId        = '@Model.TestPlansGrid.GridId';
+    var testActualsGridId      = '@Model.TestActualsGrid.GridId';
+    var staffPlansGridId       = '@Model.StaffPlansGrid.GridId';
+    var staffActualsGridId     = '@Model.StaffActualsGrid.GridId';
+    var planStaffGridId        = '@Model.PlanStaffGrid.GridId';
+    var planTestGridId         = '@Model.PlanTestGrid.GridId';
+    var planAnimalGridId       = '@Model.PlanAnimalGrid.GridId';
+    var planAdditionalGridId   = '@Model.PlanAdditionalGrid.GridId';
+    var pactPayGridId          = '@Model.PactPayGrid.GridId';
+    var monthlyPactGridId      = '@Model.MonthlyPactGrid.GridId';
+
+    // ── Sidebar ──────────────────────────────────────────────────────
+    function toggleSidebar() {
+        document.querySelector('.sidenav').classList.toggle('collapsed');
+    }
+
+    function getYearCostsExtraFilters() {
+        return {
+            project: document.getElementById('dpprojectSelect').value,
+            year:    document.getElementById('dpyear').value
+        };
+    }
+
+    function getPlansGridManager()          { return window['gridManager_' + plansGridId]; }
+    function getActualsGridManager()        { return window['gridManager_' + actualsGridId]; }
+    function getAnimalPlansGridManager()    { return window['gridManager_' + animalPlansGridId]; }
+    function getAnimalActualsGridManager()  { return window['gridManager_' + animalActualsGridId]; }
+    function getTestPlansGridManager()      { return window['gridManager_' + testPlansGridId]; }
+    function getTestActualsGridManager()    { return window['gridManager_' + testActualsGridId]; }
+    function getStaffPlansGridManager()     { return window['gridManager_' + staffPlansGridId]; }
+    function getStaffActualsGridManager()   { return window['gridManager_' + staffActualsGridId]; }
+    function getPlanStaffGridManager()      { return window['gridManager_' + planStaffGridId]; }
+    function getPlanTestGridManager()       { return window['gridManager_' + planTestGridId]; }
+    function getPlanAnimalGridManager()     { return window['gridManager_' + planAnimalGridId]; }
+    function getPlanAdditionalGridManager() { return window['gridManager_' + planAdditionalGridId]; }
+    function getPactPayGridManager()        { return window['gridManager_' + pactPayGridId]; }
+    function getMonthlyPactGridManager()   { return window['gridManager_' + monthlyPactGridId]; }
+
+    function syncPactPayFooterColumns() {
+        // Read the actual rendered widths from the grid header <th> elements
+        // and apply them to the footer table colgroup so totals align exactly.
+        var gridContainer = document.getElementById('gridContainer_' + pactPayGridId);
+        if (!gridContainer) return;
+        var headerCells = gridContainer.querySelectorAll('table thead tr:first-child th');
+        if (!headerCells || headerCells.length === 0) return;
+
+        var cols = document.querySelectorAll('#pactPayFooterColgroup col');
+        var totalWidth = 0;
+        headerCells.forEach(function (th) { totalWidth += th.offsetWidth; });
+        if (totalWidth === 0) return;
+
+        headerCells.forEach(function (th, i) {
+            if (cols[i]) {
+                cols[i].style.width = ((th.offsetWidth / totalWidth) * 100).toFixed(2) + '%';
+            }
+        });
+    }
+
+    function refreshPactPayTotals() {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) return;
+
+        $.get('/PIMS/ProjectYearCosts/GetPactPayTotals', { project: project, year: year })
+            .done(function (data) {
+                document.getElementById('pactPayTotalPay').textContent        = data.payTotal;
+                document.getElementById('pactPayTotalNonPay').textContent     = data.nonPayTotal;
+                document.getElementById('pactPayTotalOverhead').textContent   = data.overheadTotal;
+                document.getElementById('pactPayTotalStaffCosts').textContent = data.staffCostsTotal;
+            });
+    }
+
+    function refreshPlanTotals() {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) return;
+
+        $.get('/PIMS/ProjectYearCosts/GetPlanTotals', { project: project, year: year })
+            .done(function (data) {
+                document.getElementById('planStaffGridTotalDisplay').textContent      = data.staffTotal;
+                document.getElementById('planTestGridTotalDisplay').textContent       = data.testTotal;
+                document.getElementById('planAnimalGridTotalDisplay').textContent     = data.animalTotal;
+                document.getElementById('planAdditionalGridTotalDisplay').textContent = data.additionalTotal;
+            });
+    }
+
+    function refreshMonthlyPactTotals() {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) return;
+
+        $.get('/PIMS/ProjectYearCosts/GetMonthlyPactTotals', { project: project, year: year })
+            .done(function (data) {
+                document.getElementById('mpp-total-proj-specific').textContent = data.totalNonAnimals;
+                document.getElementById('mpp-total-animals').textContent       = data.totalAnimals;
+                document.getElementById('mpp-total-timecosts').textContent     = data.totalTimeCosts;
+                document.getElementById('mpp-total-transfercosts').textContent    = data.totalTransferCosts;
+                document.getElementById('mpp-total-total-costs').textContent   = data.totalCost;
+                document.getElementById('mpp-total-total-hours').textContent   = data.totalHours;
+                document.getElementById('mpp-total-invoices').textContent      = data.totalInvoices;
+                document.getElementById('mpp-total-coiw').textContent          = data.totalCoiw;
+            });
+    }
+
+    function refreshMonthlyPactFpsPlanned() {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) return;
+
+        $.get('/PIMS/ProjectYearCosts/GetMonthlyPactFpsPlanned', { project: project, year: year })
+            .done(function (data) {
+                document.getElementById('fps-staff-costs').textContent      = data.staffCosts;
+                document.getElementById('fps-test-costs').textContent       = data.testCosts;
+                document.getElementById('fps-exceptional-costs').textContent= data.exceptionalCosts;
+                document.getElementById('fps-animal-costs').textContent     = data.animalCosts;
+                document.getElementById('fps-total-costs').textContent      = data.totalCosts;
+                document.getElementById('fps-cust-income').textContent      = data.custIncome;
+                document.getElementById('fps-total-income').textContent     = data.totalIncome;
+                document.getElementById('fps-budget-vla').textContent       = data.budgetVla;
+                document.getElementById('fps-total-cost-pct').value         = data.totalCostPct;
+            });
+    }
+
+    function refreshPlanVsActualsTotals() {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) return;
+
+        $.get('/PIMS/ProjectYearCosts/GetPlanVsActualsTotals', { project: project, year: year })
+            .done(function (data) {
+                document.getElementById('staffPlansTotalDisplay').textContent        = data.staffPlansTotal;
+                document.getElementById('staffActualsTotalDisplay').textContent      = data.staffActualsTotal;
+                document.getElementById('testPlansTotalDisplay').textContent         = data.testPlansTotal;
+                document.getElementById('testActualsTotalDisplay').textContent       = data.testActualsTotal;
+                document.getElementById('animalPlansTotalDisplay').textContent       = data.animalPlansTotal;
+                document.getElementById('animalActualsTotalDisplay').textContent     = data.animalActualsTotal;
+                document.getElementById('additionalCostPlansTotalDisplay').textContent = data.additionalPlansTotal;
+                document.getElementById('additionalActualsTotalDisplay').textContent = data.additionalActualsTotal;
+            });
+    }
+
+    // Only the first tab (Monthly Pact Data) is server-rendered; all others are lazy-loaded.
+    // Tabs are marked true once visited so filter changes also refresh them.
+    var loadedTabs = {
+        'nav-monthlyPact':     true,
+        'nav-pact-pay':        false,
+        'nav-project-details': false,
+        'nav-plan':            false,
+        'nav-staff-plan':      false,
+        'nav-test-plan':       false,
+        'nav-animal-plan':     false,
+        'nav-additional-cost': false
+    };
+    // ── Panel visibility ──────────────────────────────────────────────────
+    function showPanel(panelId) {
+        document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
+            if (p.id === panelId) {
+                p.classList.remove('govuk-tabs__panel--hidden');
+                p.style.display = 'block';
+            } else {
+                p.classList.add('govuk-tabs__panel--hidden');
+                p.style.display = 'none';
+            }
+        });
+
+        document.querySelectorAll('.govuk-tabs__list-item').forEach(function (li) {
+            li.classList.remove('govuk-tabs__list-item--selected');
+        });
+        var activeLink = document.querySelector('.govuk-tabs__tab[aria-controls="' + panelId + '"]');
+        if (activeLink) {
+            activeLink.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
+        }
+    }
+
+    function refreshActiveTab() {
+        var activePanel = document.querySelector('.govuk-tabs__panel:not(.govuk-tabs__panel--hidden)');
+        if (!activePanel) return;
+        refreshTabById(activePanel.id);
+    }
+
+    function loadProjectDetails(project, year) {
+        if (!project || !year) return;
+        $.get('/PIMS/ProjectYearCosts/GetProjectYearDetails', { project: project, year: year })
+            .done(function (r) {
+                document.getElementById('pd-year').value           = r.year              ?? '';
+                document.getElementById('pd-project').value        = r.parentproject     ?? '';
+                document.getElementById('pd-manager').value        = r.manager           ?? '';
+                document.getElementById('pd-disease').value        = r.disease           ?? '';
+                document.getElementById('pd-contract').value       = r.contract          ?? '';
+                document.getElementById('pd-finished').value       = r.finished          ?? '';
+                document.getElementById('pd-transferincome').value = r.transferincome    ?? '';
+                document.getElementById('pd-custincome').value     = r.custincome        ?? '';
+                document.getElementById('pd-feecost').value        = r.feccost           ?? '';
+                document.getElementById('pd-profit').value         = r.profit            ?? '';
+                document.getElementById('pd-carryover').value      = r.carryover         ?? '';
+                document.getElementById('pd-budgetcvl').value      = r.budgetcvl         ?? '';
+                document.getElementById('pd-caseworksub').value    = r.caseworksub       ?? '';
+                document.getElementById('pd-costcentre').value     = r.costcentre        ?? '';
+                document.getElementById('pd-pvsincome').value      = r.pvsincome         ?? '';
+                document.getElementById('pd-oracleproject').value  = r.oracleprojectcode ?? '';
+                document.getElementById('pd-plancasework').value   = r.plancaseworkdebit ?? '';
+                document.getElementById('pd-subaccountcod').value  = r.subaccountcode    ?? '';
+                document.getElementById('pd-source').value         = r.source            ?? '';
+                document.getElementById('pd-project-group').value  = r.projectgroup      ?? '';
+                // Access Yes/No stores -1 for True, 0 for False (smallint)
+                document.getElementById('pd-defraproject').checked = r.isdefraproject === -1;
+                document.getElementById('pd-comments').value       = r.comments          ?? '';
+            });
+    }
+
+    function refreshTabById(tabId) {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) return;
+
+        if (tabId === 'nav-project-details') {
+            loadProjectDetails(project, year);
+        } else if (tabId === 'nav-monthlyPact') {
+            var monthlyPactGm = getMonthlyPactGridManager();
+            if (monthlyPactGm) monthlyPactGm.reloadGrid({ page: 1 });
+            refreshMonthlyPactTotals();
+            refreshMonthlyPactFpsPlanned();
+        } else if (tabId === 'nav-additional-cost') {
+            var plansGm   = getPlansGridManager();
+            var actualsGm = getActualsGridManager();
+            if (plansGm)   plansGm.reloadGrid({ page: 1 });
+            if (actualsGm) actualsGm.reloadGrid({ page: 1 });
+            refreshPlanVsActualsTotals();
+        } else if (tabId === 'nav-animal-plan') {
+            var animalPlansGm   = getAnimalPlansGridManager();
+            var animalActualsGm = getAnimalActualsGridManager();
+            if (animalPlansGm)   animalPlansGm.reloadGrid({ page: 1 });
+            if (animalActualsGm) animalActualsGm.reloadGrid({ page: 1 });
+            refreshPlanVsActualsTotals();
+        } else if (tabId === 'nav-test-plan') {
+            var testPlansGm   = getTestPlansGridManager();
+            var testActualsGm = getTestActualsGridManager();
+            if (testPlansGm)   testPlansGm.reloadGrid({ page: 1 });
+            if (testActualsGm) testActualsGm.reloadGrid({ page: 1 });
+            refreshPlanVsActualsTotals();
+        } else if (tabId === 'nav-staff-plan') {
+            var staffPlansGm   = getStaffPlansGridManager();
+            var staffActualsGm = getStaffActualsGridManager();
+            if (staffPlansGm)   staffPlansGm.reloadGrid({ page: 1 });
+            if (staffActualsGm) staffActualsGm.reloadGrid({ page: 1 });
+            refreshPlanVsActualsTotals();
+        } else if (tabId === 'nav-pact-pay') {
+            var pactPayGm = getPactPayGridManager();
+            if (pactPayGm) pactPayGm.reloadGrid({ page: 1 });
+            refreshPactPayTotals();
+            setTimeout(syncPactPayFooterColumns, 400);
+        } else if (tabId === 'nav-plan') {
+            var planStaffGm      = getPlanStaffGridManager();
+            var planTestGm       = getPlanTestGridManager();
+            var planAnimalGm     = getPlanAnimalGridManager();
+            var planAdditionalGm = getPlanAdditionalGridManager();
+            if (planStaffGm)      planStaffGm.reloadGrid({ page: 1 });
+            if (planTestGm)       planTestGm.reloadGrid({ page: 1 });
+            if (planAnimalGm)     planAnimalGm.reloadGrid({ page: 1 });
+            if (planAdditionalGm) planAdditionalGm.reloadGrid({ page: 1 });
+            refreshPlanTotals();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        localStorage.removeItem('monthlyPactGrid_colWidths');
+
+        // ── Wire up tab clicks ────────────────────────────────────────────
+        document.querySelectorAll('.govuk-tabs__tab').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var panelId = this.getAttribute('aria-controls');
+                if (!panelId) return;
+
+                showPanel(panelId);
+
+                // Mark as loaded on first visit so filter changes also refresh it
+                if (!loadedTabs[panelId]) {
+                    loadedTabs[panelId] = true;
+                }
+                refreshTabById(panelId);
+            });
+        });
+
+            // ── On arrival, honour the URL hash or default to monthlyPact ─
+            var hash = window.location.hash ? window.location.hash.substring(1) : 'nav-monthlyPact';
+        var targetPanel = document.getElementById(hash);
+            var defaultPanel = hash && targetPanel ? hash : 'nav-monthlyPact';
+
+        document.querySelectorAll('.govuk-tabs__panel').forEach(function (p) {
+            p.classList.add('govuk-tabs__panel--hidden');
+            p.style.display = 'none';
+        });
+        showPanel(defaultPanel);
+
+        if (loadedTabs[defaultPanel]) {
+            setTimeout(function () { refreshTabById(defaultPanel); }, 300);
+        }
+    });
+
+    document.getElementById('dpprojectSelect').addEventListener('change', refreshActiveTab);
+    document.getElementById('dpyear').addEventListener('change', refreshActiveTab);
+
+    document.getElementById('btnExport').addEventListener('click', function () {
+        var project = document.getElementById('dpprojectSelect').value;
+        var year    = document.getElementById('dpyear').value;
+        if (!project || !year) {
+            alert('Please select a project and year before exporting.');
+            return;
+        }
+        window.location.href = '/PIMS/ProjectYearCosts/ExportToExcel?project=' +
+            encodeURIComponent(project) + '&year=' + encodeURIComponent(year);
+    });
+</script>
+}

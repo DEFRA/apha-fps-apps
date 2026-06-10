@@ -61,6 +61,9 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
             services.AddScoped<IProjectCommentService, ProjectCommentService>();
             services.AddScoped<IProposedProjectService, ProposedProjectService>();
+            services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
+            services.AddScoped<IMilestoneService, MilestoneService>();
+
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
@@ -73,7 +76,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
             services.AddScoped<IPactMonthlyTimeService, PactMonthlyTimeService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
-            services.AddScoped<IProjectMonthService, ProjectMonthService>();            
+            services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
@@ -82,6 +85,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
+            services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

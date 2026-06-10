@@ -6,5 +6,6 @@ namespace Apha.PIMS.Core.Entities
         public string? Program { get; set; }
         public string? Customer { get; set; }
         public string? Active { get; set; }
+        public string? ProjectGroup { get; set; }
     }
 }

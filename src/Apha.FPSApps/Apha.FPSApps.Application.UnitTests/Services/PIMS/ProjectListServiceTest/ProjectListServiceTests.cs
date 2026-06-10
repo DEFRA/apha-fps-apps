@@ -353,6 +353,166 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectListServiceTes
 
         #endregion
 
+        #region GetAllProjectsListAsync Tests
+
+        [Fact]
+        public async Task GetAllProjectsListAsync_WithSuccessResponse_ReturnsProjectList()
+        {
+            // Arrange
+            var projects = new List<ProjectListViewDto>
+            {
+                new() { Parentproject = "PP001", Program = "Program A", Customer = "Customer A", OnFps = "Yes" },
+                new() { Parentproject = "PP002", Program = "Program B", Customer = "Customer B", OnFps = "No" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(projects);
+
+            _pimsProjectListApiClient.GetAllProjectsListAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectListService.GetAllProjectsListAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _pimsProjectListApiClient.Received(1).GetAllProjectsListAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProjectsListAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<ProjectListViewDto>>.SuccessResponse(new List<ProjectListViewDto>());
+
+            _pimsProjectListApiClient.GetAllProjectsListAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectListService.GetAllProjectsListAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            await _pimsProjectListApiClient.Received(1).GetAllProjectsListAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProjectsListAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto>
+            {
+                new() { Message = "API Error", Code = "API_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectListViewDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _pimsProjectListApiClient.GetAllProjectsListAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectListService.GetAllProjectsListAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            await _pimsProjectListApiClient.Received(1).GetAllProjectsListAsync();
+        }
+
+        #endregion
+
+        #region GetAllProjectsForMilestoneAsync Tests
+
+        [Fact]
+        public async Task GetAllProjectsForMilestoneAsync_WithSuccessResponse_ReturnsMilestoneList()
+        {
+            // Arrange
+            var milestones = new List<ProjectListMilestoneDto>
+            {
+                new() { Parentproject = "PP001", Program = "Program A", Customer = "Customer A", ProjectGroup = "GRP1" },
+                new() { Parentproject = "PP002", Program = "Program B", Customer = "Customer B", ProjectGroup = "GRP2" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectListMilestoneDto>>.SuccessResponse(milestones);
+
+            _pimsProjectListApiClient.GetAllProjectsForMilestoneAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectListService.GetAllProjectsForMilestoneAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            Assert.Equal("GRP1", result.Data![0].ProjectGroup);
+            await _pimsProjectListApiClient.Received(1).GetAllProjectsForMilestoneAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForMilestoneAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<ProjectListMilestoneDto>>.SuccessResponse(new List<ProjectListMilestoneDto>());
+
+            _pimsProjectListApiClient.GetAllProjectsForMilestoneAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectListService.GetAllProjectsForMilestoneAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            await _pimsProjectListApiClient.Received(1).GetAllProjectsForMilestoneAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForMilestoneAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto>
+            {
+                new() { Message = "API Error", Code = "API_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectListMilestoneDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _pimsProjectListApiClient.GetAllProjectsForMilestoneAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectListService.GetAllProjectsForMilestoneAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            await _pimsProjectListApiClient.Received(1).GetAllProjectsForMilestoneAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForMilestoneAsync_MapsProjectGroupCorrectly()
+        {
+            // Arrange
+            var milestones = new List<ProjectListMilestoneDto>
+            {
+                new() { Parentproject = "PP001", Program = "Program A", Customer = "Customer A", ProjectGroup = null }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectListMilestoneDto>>.SuccessResponse(milestones);
+
+            _pimsProjectListApiClient.GetAllProjectsForMilestoneAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectListService.GetAllProjectsForMilestoneAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            Assert.Null(result.Data![0].ProjectGroup);
+            await _pimsProjectListApiClient.Received(1).GetAllProjectsForMilestoneAsync();
+        }
+
+        #endregion
+
         #region Constructor Tests
 
         [Fact]

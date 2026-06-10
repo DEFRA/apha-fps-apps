@@ -8,7 +8,6 @@
 
 	<ItemGroup>
 		<Folder Include="Contracts\Costbook\" />
-		<Folder Include="Contracts\PIMS\" />
 	</ItemGroup>
 
 	<ItemGroup>

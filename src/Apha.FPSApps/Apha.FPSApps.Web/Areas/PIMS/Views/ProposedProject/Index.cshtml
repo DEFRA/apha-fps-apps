@@ -59,16 +59,12 @@
         </p>
 
         <!-- Project (required) -->
-        <div class="govuk-form-group @(ViewData.ModelState["Parentproject"]?.Errors.Count > 0 ? "govuk-form-group--error" : "")">
+        <div class="govuk-form-group govuk-!-margin-bottom-6">
             <label class="govuk-label govuk-!-font-weight-bold" asp-for="Parentproject">
-                Project <span class="app-required" aria-hidden="true">*</span>
-            </label>
-            <span asp-validation-for="Parentproject" class="govuk-error-message"></span>
-            <input class="govuk-input govuk-!-font-size-16 @(ViewData.ModelState["Parentproject"]?.Errors.Count > 0 ? "govuk-input--error" : "")"
-                   asp-for="Parentproject"
-                   type="text"
-                   autocomplete="off"
-                   maxlength="20" />
+                Project
+
+                <span class="app-required">*</span>
+            </label><input class="govuk-input govuk-!-font-size-16" asp-for="Parentproject" type="text" autocomplete="off" maxlength="20" required /><span asp-validation-for="Parentproject" class="govuk-error-message" style="display:none;"></span>
         </div>
 
         <!-- Title -->
@@ -152,16 +148,26 @@
     </form>
 </div>
 
+<script src="~/js/ajax-form-validation.js"></script>
+
 @section Scripts {
     <script>
         $(document).ready(function () {
+            $('#pimsformNewProject').on('submit', function (e) {
+                var $form = $(this);
+                clearValidationErrors($form);
+                if (!isFormValid($form)) {
+                    e.preventDefault();
+                    displayClientValidationErrors($form, $form);
+                }
+            });
             @if (TempData["SuccessMessage"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["SuccessMessage"])');</text>
+                    <text>showGovukAlert('@Html.Raw(TempData["SuccessMessage"])');</text>
             }
             @if (TempData["Error"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
+                    <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
             }
         });
     </script>
