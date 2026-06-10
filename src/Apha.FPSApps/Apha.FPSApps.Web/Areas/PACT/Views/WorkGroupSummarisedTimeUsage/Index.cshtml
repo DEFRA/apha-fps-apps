@@ -15,8 +15,11 @@
             </div>
         </div>
         <div class="govuk-grid-column-one-half">
-            <a asp-area="PACT" asp-controller="WorkGroupPeople" asp-action="Index"
-               class="govuk-back-link sup_align_right sup_margin_0">Back</a>
+            <a asp-area="PACT"
+            asp-controller="WorkGroupPeople"
+            asp-action="Index"
+            asp-route-workGroup="@Model.SelectedWorkgroup"
+            class="govuk-back-link sup_align_right sup_margin_0">Back</a>
         </div>
     </div>
 </div>

@@ -1,5 +1,4 @@
 using Apha.FPSApps.Web.Models.Components.DataGrid;
-using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
@@ -16,9 +15,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public DataGridConfig<WorkGroupTestCapabilityItem> TestCapabilityGrid { get; set; } = new();
 
         /// <summary>
-        /// Available WorkGroup options for dropdown
+        /// Available WorkGroup options for the searchable dropdown
         /// </summary>
-        public List<SelectListItem> WorkGroupOptions { get; set; } = new();
-
+        public List<WorkGroup> WorkGroupOptions { get; set; } = new();
+        public string SelectedWorkGroup { get; set; } = string.Empty;
     }
 }
