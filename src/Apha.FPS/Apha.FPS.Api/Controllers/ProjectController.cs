@@ -197,6 +197,24 @@ namespace Apha.FPS.Api.Controllers
             var result = await _projectService.GetProjectProfitabilityAsync(filter, programNo, workTypeFilter);
             return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityRes>>(result));
         }
+
+        /// <summary>
+        /// Returns paginated project profitability rows for the given project group.
+        /// workTypeFilter: "all" (default) | "approved" | "not-approved"
+        /// </summary>
+        [HttpGet("profitability/by-project-group/{projectGroup}")]
+        public async Task<IActionResult> GetProjectGroupProfitabilityAsync(
+            [FromQuery] PaginationReq<string> query,
+            string projectGroup,
+            [FromQuery] string workTypeFilter = "all")
+        {
+            if (string.IsNullOrWhiteSpace(projectGroup))
+                throw new ArgumentException("projectGroup is required.");
+
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _projectService.GetProjectGroupProfitabilityAsync(filter, projectGroup, workTypeFilter);
+            return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityRes>>(result));
+        }
     }
 
     public record ChangeProjectCodeReq(string OldCode, string NewCode);
