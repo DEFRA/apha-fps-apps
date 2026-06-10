@@ -700,14 +700,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.StaffJobServiceTest
         public async Task UpdateStaffJobAsync_IgnoresStaffIdParameter_DelegatesToApiClient()
         {
             // Arrange — service passes the DTO directly; the staffId route param is not forwarded
-            var staffId = "S001";
             var staffJob = new StaffJobDto { StaffId = "S001", JobCode = "JOB001", PlannedHours = 10.0 };
             var expectedResponse = ApiResponseDto<StaffJobDto>.SuccessResponse(staffJob);
 
             _fpsStaffJobApiClient.UpdateStaffJobAsync(staffJob).Returns(expectedResponse);
 
             // Act
-            await _staffJobService.UpdateStaffJobAsync(staffId, staffJob);
+            await _staffJobService.UpdateStaffJobAsync(staffJob.StaffId, staffJob);
 
             // Assert
             await _fpsStaffJobApiClient.Received(1).UpdateStaffJobAsync(staffJob);

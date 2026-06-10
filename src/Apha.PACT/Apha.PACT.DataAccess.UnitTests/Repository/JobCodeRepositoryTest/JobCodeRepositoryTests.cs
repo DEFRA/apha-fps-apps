@@ -560,5 +560,100 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
         }
 
         #endregion
+
+        #region GetZtJobCodesAsync
+
+        private static JobCodeRepository CreateRepositoryWithProjectViews(
+            IEnumerable<ProjectView> projectViews,
+            string userEmail,
+            int fpsYear = DefaultTestFpsYear)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+            fpsRequestContext.UserEmailId.Returns(userEmail);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            var jobCodesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<JobCode>());
+            mockContext.Setup(x => x.JobCodes).Returns(jobCodesMockSet.Object);
+
+            var projectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
+            mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
+
+            return new JobCodeRepository(mockContext.Object, fpsRequestContext);
+        }
+
+        [Fact]
+        public async Task GetZtJobCodesAsync_WithMatchingRecords_ReturnsLookups()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "ZT001", ProjectTitle = "ZT Project 1", Program = "zt_prog", UserEmail = "user@test.com", FpsYear = DefaultTestFpsYear },
+                new() { ParentProject = "ZT002", ProjectTitle = "ZT Project 2", Program = "zt_prog", UserEmail = "user@test.com", FpsYear = DefaultTestFpsYear },
+                new() { ParentProject = "OTHER", ProjectTitle = "Non-ZT", Program = "other_prog", UserEmail = "user@test.com", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepositoryWithProjectViews(projectViews, "user@test.com");
+
+            var result = (await repo.GetZtJobCodesAsync()).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.JobCode == "ZT001" && r.Description == "ZT Project 1");
+            Assert.Contains(result, r => r.JobCode == "ZT002" && r.Description == "ZT Project 2");
+        }
+
+        [Fact]
+        public async Task GetZtJobCodesAsync_NoMatchingProgram_ReturnsEmpty()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "PRJ1", ProjectTitle = "Other Project", Program = "other_prog", UserEmail = "user@test.com", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepositoryWithProjectViews(projectViews, "user@test.com");
+
+            var result = await repo.GetZtJobCodesAsync();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetZtJobCodesAsync_NoMatchingEmail_ReturnsEmpty()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "ZT001", ProjectTitle = "ZT Project 1", Program = "zt_prog", UserEmail = "other@test.com", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepositoryWithProjectViews(projectViews, "user@test.com");
+
+            var result = await repo.GetZtJobCodesAsync();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetZtJobCodesAsync_EmptyTable_ReturnsEmpty()
+        {
+            var repo = CreateRepositoryWithProjectViews([], "user@test.com");
+
+            var result = await repo.GetZtJobCodesAsync();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetZtJobCodesAsync_CaseInsensitiveProgram_ReturnsMatches()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "ZT001", ProjectTitle = "ZT Project 1", Program = "ZT_PROG", UserEmail = "user@test.com", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepositoryWithProjectViews(projectViews, "user@test.com");
+
+            var result = (await repo.GetZtJobCodesAsync()).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("ZT001", result[0].JobCode);
+        }
+
+        #endregion
     }
 }

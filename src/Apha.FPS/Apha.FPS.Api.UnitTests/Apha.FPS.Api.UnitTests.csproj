@@ -39,5 +39,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controller\JobCodeControllerTest\" />
+  </ItemGroup>
+
 
   </Project>

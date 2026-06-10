@@ -6,7 +6,6 @@ using Apha.FPS.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
@@ -58,6 +57,51 @@ namespace Apha.FPS.Api.Controllers
         {
             var result = await _staffJobService.GetStaffWorkgroupLookup();
             return Ok(_mapper.Map<List<StaffWorkgroupLookupRes>>(result));
+        }
+
+        /// <summary>
+        /// Retrieves the time-summary data (HrsPaid, Leave, SickSpecial, HrsAvail) for a specific staff member.
+        /// </summary>
+        [HttpGet("staffsummary")]
+        public async Task<IActionResult> GetStaffSummaryByIdAsync([FromQuery] string staffId)
+        {
+            var result = await _staffJobService.GetStaffSummaryByIdAsync(staffId);
+            if (result == null)
+                return NotFound();
+            return Ok(_mapper.Map<StaffWorkgroupLookupRes>(result));
+        }
+
+        /// <summary>
+        /// Returns the total planned ZT hours for a specific staff member.
+        /// </summary>
+        [HttpGet("zttotalhours")]
+        public async Task<IActionResult> GetZtTotalHoursByStaffIdAsync([FromQuery] string staffId)
+        {
+            var total = await _staffJobService.GetZtTotalHoursByStaffIdAsync(staffId);
+            return Ok(total);
+        }
+
+        /// <summary>
+        /// Returns a paged, sorted and filtered list of ZT-type staff job rows for a specific staff member.
+        /// </summary>
+        [HttpGet("ztstaffjobs/paged")]
+        public async Task<IActionResult> GetZtStaffJobsByStaffIdPagedAsync([FromQuery] PaginationReq<string> query, [FromQuery] string staffId)
+        {
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _staffJobService.GetZtStaffJobsByStaffIdPagedAsync(filter, staffId);
+            return Ok(_mapper.Map<PaginationRes<StaffJobZtViewRes>>(result));
+        }
+
+        /// <summary>
+        /// Returns a single ZT staff job record with description for a specific staff member and job code.
+        /// </summary>
+        [HttpGet("ztstaffjob/{staffId}/{jobCode}")]
+        public async Task<IActionResult> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
+        {
+            var result = await _staffJobService.GetZtStaffJobDetailsByIdAsync(staffId, jobCode);
+            if (result == null)
+                throw new KeyNotFoundException($"ZT plan entry for staff '{staffId}' and job code '{jobCode}' not found.");
+            return Ok(_mapper.Map<StaffJobZtViewRes>(result));
         }
 
         /// <summary>
