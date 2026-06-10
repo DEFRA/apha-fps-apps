@@ -58,7 +58,7 @@ namespace Apha.FPSApps.Application.Services.FPS
         }
 
         public async Task<ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>> GetPagedProfitCenterCostSummaryAsync(
-            QueryParameters<string> query, short? monthNumber = null)
+            QueryParameters<string> query, double monthNumber)
             => await _fpsClient.FpsProfitCentre.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
     }
 }

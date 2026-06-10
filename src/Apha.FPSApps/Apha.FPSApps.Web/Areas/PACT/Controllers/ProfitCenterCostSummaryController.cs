@@ -30,50 +30,33 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         /// <summary>
-        /// Renders the Profit Center Cost Summary page with period selector and data grid.
-        /// Grid is only loaded when a period (monthNumber) is selected.
+        /// Renders the Profit Center Cost Summary page with period selector.
+        /// Grid data is loaded dynamically when a period is selected via JavaScript.
         /// </summary>
-        /// <param name="monthNumber">Optional month number to pre-filter the grid.</param>
-        /// <returns>The Index view populated with period dropdown options and grid configuration.</returns>
-        public async Task<IActionResult> Index(short? monthNumber = null)
+        /// <returns>The Index view populated with period dropdown options.</returns>
+        public async Task<IActionResult> Index()
         {
-            var periodsList = await GetPeriodsListAsync();
-
-            DataGridConfig<ProfitCenterCostItem>? grid = null;
-            // Only load grid data if a period is selected
-            if (monthNumber.HasValue)
-            {
-                var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
-                grid = await BuildProfitCenterCostGridAsync(defaultRequest, monthNumber);
-            }
+            var periodsList = await GetPeriodsAsync();
 
             var viewModel = new ProfitCenterCostSummaryViewModel
             {   
                 PeriodMonths = periodsList,
-                SelectedMonthNumber = monthNumber,
-                CostGrid = grid
+                SelectedMonthNumber = null,
+                CostGrid = null
             };
 
             return View(viewModel);
         }
-        
+
         /// <summary>
         /// Reloads the profit center cost data grid partial view based on the supplied pagination, sort, and filter parameters.
         /// </summary>
         /// <param name="request">Pagination and filter parameters submitted from the data grid.</param>
-        /// <param name="monthNumber">Optional month number to filter profit center costs.</param>
+        /// <param name="monthNumber">Month number to filter profit center costs.</param>
         /// <returns>A partial view containing the refreshed data grid, or <see cref="BadRequestResult"/> if the model state is invalid.</returns>
         [HttpPost]
-        public async Task<IActionResult> LoadProfitCenterCostGrid(PaginationFilter<string> request, short? monthNumber = null)
+        public async Task<IActionResult> LoadProfitCenterCostGrid(PaginationFilter<string> request, double monthNumber)
         {
-            if (!ModelState.IsValid)
-                return Json(new
-                {
-                    success = false,
-                    message = "Invalid request data",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                });
-
             var gridConfig = await BuildProfitCenterCostGridAsync(request, monthNumber);
             return PartialView("_DataGrid", gridConfig);
         }
@@ -90,22 +73,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             if (result.Success && result.Data != null && result.Data.Count > 0)
             {
-                var orderedPeriods = result.Data
-                    .OrderBy(p => p.EndPeriod)
-                    .Select(p => new
-                    {
-                        period = p.PeriodName,
-                        monthNumber = p.EndPeriod?.ToString() ?? string.Empty,
-                        startPeriod = p.StartPeriod,
-                        endPeriod = p.EndPeriod,
-                        periodType = p.PeriodType
-                    })
-                    .ToList();
-
-                return Json(orderedPeriods);
+                var orderedPeriods = result.Data.OrderBy(p => p.EndPeriod).ToList();
+                var periodItems = _mapper.Map<List<ReleasePeriodItem>>(orderedPeriods);
+                return Json(periodItems);
             }
 
-            return Json(new List<object>());
+            return Json(new List<ReleasePeriodItem>());
         }
 
         /// <summary>
@@ -113,10 +86,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// and applying any active pagination, sort, and filter state.
         /// </summary>
         /// <param name="request">Pagination and filter parameters for the grid query.</param>
-        /// <param name="monthNumber">Optional month number to filter cost calculations.</param>
+        /// <param name="monthNumber">Month number to filter cost calculations.</param>
         /// <returns>A fully configured <see cref="DataGridConfig{T}"/> ready for rendering.</returns>
         private async Task<DataGridConfig<ProfitCenterCostItem>> BuildProfitCenterCostGridAsync(
-            PaginationFilter<string> request, short? monthNumber = null)
+            PaginationFilter<string> request, double monthNumber)
         {
             var grid = ProfitCenterCostGridConfig();
             var query = _mapper.Map<QueryParameters<string>>(request);
@@ -145,31 +118,27 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 };
             }
 
-            // Update BindGridUrl with monthNumber if present
-            if (monthNumber.HasValue)
-            {
-                grid.BindGridUrl = $"/PACT/ProfitCenterCostSummary/LoadProfitCenterCostGrid?monthNumber={monthNumber.Value}";
-            }
+            // Update BindGridUrl with monthNumber
+            grid.BindGridUrl = monthNumber == 0 
+                ? "/PACT/ProfitCenterCostSummary/LoadProfitCenterCostGrid"
+                : $"/PACT/ProfitCenterCostSummary/LoadProfitCenterCostGrid?monthNumber={monthNumber}";
 
             return grid;
         }
 
         /// <summary>
-        /// Retrieves an ordered list of release periods formatted as tuples
+        /// Retrieves an ordered list of release periods formatted as PeriodMonth objects
         /// for use in period selector dropdown.
         /// </summary>
-        /// <returns>An ordered list of period tuples (Period, MonthNumber), or an empty list if none are available.</returns>
-        private async Task<List<(string Period, string MonthNumber)>> GetPeriodsListAsync()
+        /// <returns>An ordered list of PeriodMonth objects, or an empty list if none are available.</returns>
+        private async Task<List<PeriodMonth>> GetPeriodsAsync()
         {
-            var result = await _releaseSummaryService.GetReleaseSummariesAsync();
+            var result = await _releaseSummaryService.GetReleasePeriodsAsync();
 
-            if (result.Success && result.Data != null && result.Data.ReleasePeriods != null && result.Data.ReleasePeriods.Count > 0)
+            if (result.Success && result.Data != null && result.Data.Count > 0)
             {
-                var orderedData = result.Data.ReleasePeriods.OrderBy(p => p.EndPeriod).ToList();
-                return orderedData.Select(p => (
-                    Period: p.PeriodName,
-                    MonthNumber: p.EndPeriod?.ToString() ?? string.Empty
-                )).ToList();
+                var orderedPeriods = result.Data.OrderBy(p => p.EndPeriod).ToList();
+                return _mapper.Map<List<PeriodMonth>>(orderedPeriods);
             }
 
             return [];

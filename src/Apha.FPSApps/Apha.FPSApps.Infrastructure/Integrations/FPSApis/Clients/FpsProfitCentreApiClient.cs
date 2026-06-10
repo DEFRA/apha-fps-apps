@@ -144,13 +144,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<bool>.FailureResponse(failureDto.Errors, failureDto.Meta);
         }
 
-        public async Task<ApiResponseDto<IEnumerable<ProfitCentreCostDto>>> GetProfitCenterCostSummaryAsync(short? monthNumber = null)
+        public async Task<ApiResponseDto<IEnumerable<ProfitCentreCostDto>>> GetProfitCenterCostSummaryAsync(double monthNumber)
         {
-            var url = FpsApiEndpoints.GetProfitCenterCostSummary;
-            if (monthNumber.HasValue)
-            {
-                url = $"{url}?monthNumber={monthNumber.Value}";
-            }
+            var url = $"{FpsApiEndpoints.GetProfitCenterCostSummary}?monthNumber={monthNumber}";
 
             var response = await _http.GetAsync<IEnumerable<ProfitCentreCostRes>>(url);
 
@@ -166,13 +162,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         }
 
         public async Task<ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>> GetPagedProfitCenterCostSummaryAsync(
-            QueryParameters<string> query, short? monthNumber = null)
+            QueryParameters<string> query, double monthNumber)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProfitCenterCostSummary, query);
-            if (monthNumber.HasValue)
-            {
-                url = $"{url}&monthNumber={monthNumber.Value}";
-            }
+            url = $"{url}&monthNumber={monthNumber}";
 
             var response = await _http.GetAsync<List<ProfitCentreCostRes>>(url);
 

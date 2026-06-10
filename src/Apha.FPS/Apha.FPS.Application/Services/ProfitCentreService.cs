@@ -92,29 +92,21 @@ namespace Apha.FPS.Application.Services
             return await _repository.UpdateProfitCentreSettingsAsync(profitCentre, timesheet, outputsheet, timesheetlayout);
         }
 
-        public async Task<IEnumerable<ProfitCentreCostDto>> GetProfitCenterCostSummaryAsync(short? monthNumber = null)
+        public async Task<IEnumerable<ProfitCentreCostDto>> GetProfitCenterCostSummaryAsync(double monthNumber)
         {
             var result = await _repository.GetProfitCenterCostSummaryAsync(monthNumber);
-            return result.Select(r => new ProfitCentreCostDto
-            {
-                ProfitCentre = r.ProfitCentre,
-                Cost = r.Cost
-            });
+            return _mapper.Map<IEnumerable<ProfitCentreCostDto>>(result);
         }
 
         public async Task<PaginatedResult<ProfitCentreCostDto>> GetPagedProfitCenterCostSummaryAsync(
-            QueryParameters<string> query, short? monthNumber = null)
+            QueryParameters<string> query, double monthNumber)
         {
             ArgumentNullException.ThrowIfNull(query);
 
             var parameters = _mapper.Map<Apha.FPS.Core.Pagination.PaginationParameters<string>>(query);
             var pagedData = await _repository.GetPagedProfitCenterCostSummaryAsync(parameters, monthNumber);
 
-            var dtos = pagedData.Data.Select(r => new ProfitCentreCostDto
-            {
-                ProfitCentre = r.ProfitCentre,
-                Cost = r.Cost
-            }).ToList();
+            var dtos = pagedData.Data.Select(r => _mapper.Map<ProfitCentreCostDto>(r)).ToList();
 
             var paginationData = new PaginationDto
             {

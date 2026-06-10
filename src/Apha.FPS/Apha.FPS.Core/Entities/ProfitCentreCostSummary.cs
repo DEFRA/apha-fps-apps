@@ -1,8 +1,9 @@
-namespace Apha.FPSApps.Application.Dtos.FPS
+namespace Apha.FPS.Core.Entities
 {
-    public class ProfitCentreCostDto
+    public class ProfitCentreCostSummary
     {
         public string ProfitCentre { get; set; } = null!;
+
         public decimal Cost { get; set; }
     }
 }

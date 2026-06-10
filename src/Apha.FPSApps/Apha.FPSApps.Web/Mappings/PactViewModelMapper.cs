@@ -65,6 +65,15 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.Comments));
 
             CreateMap<ProfitCentreCostDto, ProfitCenterCostItem>().ReverseMap();
+
+            CreateMap<ReleasePeriodDto, PeriodMonth>()
+                .ForMember(dest => dest.Period, opt => opt.MapFrom(src => src.PeriodName))
+                .ForMember(dest => dest.MonthNumber, opt => opt.MapFrom(src => src.EndPeriod.HasValue ? src.EndPeriod.Value.ToString() : string.Empty));
+
+            CreateMap<ReleasePeriodDto, ReleasePeriodItem>()
+                .ForMember(dest => dest.Period, opt => opt.MapFrom(src => src.PeriodName))
+                .ForMember(dest => dest.MonthNumber, opt => opt.MapFrom(src => src.EndPeriod.HasValue ? src.EndPeriod.Value.ToString() : string.Empty))
+                .ForMember(dest => dest.PeriodType, opt => opt.MapFrom(src => src.PeriodType));
         }
     }
 }

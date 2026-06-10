@@ -9,11 +9,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
     public class ProfitCenterCostSummaryViewModel
     {
         /// <summary>
-        /// List of calendar periods for the period selector dropdown.
-        /// </summary>
-        public List<SelectListItem> Periods { get; set; } = [];
-
-        /// <summary>
         /// The currently selected month number, if any.
         /// </summary>
         public short? SelectedMonthNumber { get; set; }
@@ -26,7 +21,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         /// <summary>
         /// List of release periods with Period name and MonthNumber.
         /// </summary>
-        public List<(string Period, string MonthNumber)> PeriodMonths { get; set; } = new();
-
+        public List<PeriodMonth> PeriodMonths { get; set; } = new();
+    }
+    public class PeriodMonth
+    {
+        public string Period { get; set; } = null!;
+        public string? MonthNumber { get; set; }
     }
 }

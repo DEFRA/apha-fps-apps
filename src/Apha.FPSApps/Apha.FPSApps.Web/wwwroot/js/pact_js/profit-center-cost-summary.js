@@ -48,7 +48,8 @@ function onPeriodChange(monthNumber) {
 function reloadProfitCenterCostGrid(monthNumber) {
     var gm = getProfitCenterCostGridManager();
     if (!gm) {
-        window.location.href = '/PACT/ProfitCenterCostSummary/Index?monthNumber=' + encodeURIComponent(monthNumber);
+        // Grid not yet initialized - load it via AJAX
+        loadInitialGrid(monthNumber);
         return;
     }
 
@@ -62,13 +63,48 @@ function reloadProfitCenterCostGrid(monthNumber) {
 }
 
 /**
+ * Loads the grid for the first time when a period is selected.
+ * @param {string} monthNumber - The month number to filter by.
+ */
+function loadInitialGrid(monthNumber) {
+    $.ajax({
+        url: '/PACT/ProfitCenterCostSummary/LoadProfitCenterCostGrid',
+        type: 'POST',
+        data: {
+            filter: '{}',
+            sortBy: '',
+            descending: false,
+            page: 1,
+            pageSize: 10,
+            monthNumber: monthNumber
+        },
+        success: function (html) {
+            $('#gridContainer_profitCenterCostGrid').html(html);
+            // Update the global grid ID variable after loading
+            profitCenterCostGridId = 'profitCenterCostGrid';
+        },
+        error: function (xhr, status, error) {
+            console.error('Failed to load grid:', error);
+            $('#gridContainer_profitCenterCostGrid').html(
+                '<div class="govuk-error-message">Failed to load data. Please try again.</div>'
+            );
+        }
+    });
+}
+
+/**
  * Reloads the profit center cost grid with no filter applied, showing all data.
  * Resets pagination, sort, and filter state.
  */
 function reloadAllProfitCenterCostGrid() {
     var gm = getProfitCenterCostGridManager();
     if (!gm) {
-        window.location.href = '/PACT/ProfitCenterCostSummary/Index';
+        // No grid to reload - just clear the container
+        $('#gridContainer_profitCenterCostGrid').html(
+            '<div class="govuk-inset-text" style="margin-top: 20px;">' +
+            '<p class="govuk-body">Please select a period from the dropdown above to view the Profit Center Cost Summary data.</p>' +
+            '</div>'
+        );
         return;
     }
 

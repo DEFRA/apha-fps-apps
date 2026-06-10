@@ -26,5 +26,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [Display(Name = "Final Summaries Run")]
         [GridColumn(Order = 4, Width = 160, Type = GridColumnType.Checkbox)]
         public short? FinalSummariesRun { get; set; }
+
+        // Additional properties for JSON API response
+        public string Period { get; set; } = null!;
+        public string MonthNumber { get; set; } = null!;
+        public string? PeriodType { get; set; }
     }
 }

@@ -472,16 +472,23 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         public async Task GetProfitCenterCostSummaryAsync_WithoutMonthNumber_ReturnsAllCostData()
         {
             // Arrange
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>
+            const double monthNumber = 1.0;
+            var repositoryData = new List<ProfitCentreCostSummary>
             {
-                ("PC01", 1000.50m),
-                ("PC02", 2500.75m)
+                new() { ProfitCentre = "PC01", Cost = 1000.50m },
+                new() { ProfitCentre = "PC02", Cost = 2500.75m }
+            };
+            var expectedDtos = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1000.50m },
+                new() { ProfitCentre = "PC02", Cost = 2500.75m }
             };
 
-            _mockRepository.GetProfitCenterCostSummaryAsync(null).Returns(repositoryData);
+            _mockRepository.GetProfitCenterCostSummaryAsync(monthNumber).Returns(repositoryData);
+            _mockMapper.Map<IEnumerable<ProfitCentreCostDto>>(repositoryData).Returns(expectedDtos);
 
             // Act
-            var result = await _sut.GetProfitCenterCostSummaryAsync(null);
+            var result = await _sut.GetProfitCenterCostSummaryAsync(monthNumber);
 
             // Assert
             var resultList = result.ToList();
@@ -490,20 +497,25 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             resultList[0].Cost.Should().Be(1000.50m);
             resultList[1].ProfitCentre.Should().Be("PC02");
             resultList[1].Cost.Should().Be(2500.75m);
-            await _mockRepository.Received(1).GetProfitCenterCostSummaryAsync(null);
+            await _mockRepository.Received(1).GetProfitCenterCostSummaryAsync(monthNumber);
         }
 
         [Fact]
         public async Task GetProfitCenterCostSummaryAsync_WithMonthNumber_ReturnsFilteredCostData()
         {
             // Arrange
-            const short monthNumber = 3;
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>
+            const double monthNumber = 3.0;
+            var repositoryData = new List<ProfitCentreCostSummary>
             {
-                ("PC01", 1500.00m)
+                new() { ProfitCentre = "PC01", Cost = 1500.00m }
+            };
+            var expectedDtos = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1500.00m }
             };
 
             _mockRepository.GetProfitCenterCostSummaryAsync(monthNumber).Returns(repositoryData);
+            _mockMapper.Map<IEnumerable<ProfitCentreCostDto>>(repositoryData).Returns(expectedDtos);
 
             // Act
             var result = await _sut.GetProfitCenterCostSummaryAsync(monthNumber);
@@ -520,41 +532,47 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         public async Task GetProfitCenterCostSummaryAsync_WithEmptyResult_ReturnsEmptyEnumerable()
         {
             // Arrange
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>();
+            const double monthNumber = 1.0;
+            var repositoryData = new List<ProfitCentreCostSummary>();
 
-            _mockRepository.GetProfitCenterCostSummaryAsync(null).Returns(repositoryData);
+            _mockRepository.GetProfitCenterCostSummaryAsync(monthNumber).Returns(repositoryData);
 
             // Act
-            var result = await _sut.GetProfitCenterCostSummaryAsync(null);
+            var result = await _sut.GetProfitCenterCostSummaryAsync(monthNumber);
 
             // Assert
             result.Should().BeEmpty();
-            await _mockRepository.Received(1).GetProfitCenterCostSummaryAsync(null);
+            await _mockRepository.Received(1).GetProfitCenterCostSummaryAsync(monthNumber);
         }
 
         [Fact]
         public async Task GetProfitCenterCostSummaryAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
-            _mockRepository.GetProfitCenterCostSummaryAsync(Arg.Any<short?>())
+            _mockRepository.GetProfitCenterCostSummaryAsync(Arg.Any<double>())
                 .ThrowsAsync(new InvalidOperationException("Database connection failed"));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.GetProfitCenterCostSummaryAsync(null));
+                _sut.GetProfitCenterCostSummaryAsync(1.0));
         }
 
         [Fact]
         public async Task GetProfitCenterCostSummaryAsync_WithZeroMonthNumber_ReturnsCostData()
         {
             // Arrange
-            const short monthNumber = 0;
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>
+            const double monthNumber = 0.0;
+            var repositoryData = new List<ProfitCentreCostSummary>
             {
-                ("PC01", 500.00m)
+                new() { ProfitCentre = "PC01", Cost = 500.00m }
+            };
+            var expectedDtos = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 500.00m }
             };
 
             _mockRepository.GetProfitCenterCostSummaryAsync(monthNumber).Returns(repositoryData);
+            _mockMapper.Map<IEnumerable<ProfitCentreCostDto>>(repositoryData).Returns(expectedDtos);
 
             // Act
             var result = await _sut.GetProfitCenterCostSummaryAsync(monthNumber);
@@ -569,14 +587,20 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         public async Task GetProfitCenterCostSummaryAsync_WithMaxMonthNumber_ReturnsCostData()
         {
             // Arrange
-            const short monthNumber = 12;
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>
+            const double monthNumber = 12.0;
+            var repositoryData = new List<ProfitCentreCostSummary>
             {
-                ("PC01", 3000.00m),
-                ("PC02", 1000.00m)
+                new() { ProfitCentre = "PC01", Cost = 3000.00m },
+                new() { ProfitCentre = "PC02", Cost = 1000.00m }
+            };
+            var expectedDtos = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 3000.00m },
+                new() { ProfitCentre = "PC02", Cost = 1000.00m }
             };
 
             _mockRepository.GetProfitCenterCostSummaryAsync(monthNumber).Returns(repositoryData);
+            _mockMapper.Map<IEnumerable<ProfitCentreCostDto>>(repositoryData).Returns(expectedDtos);
 
             // Act
             var result = await _sut.GetProfitCenterCostSummaryAsync(monthNumber);
@@ -590,17 +614,25 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         public async Task GetProfitCenterCostSummaryAsync_MapsDataCorrectly_WithMultipleRecords()
         {
             // Arrange
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>
+            const double monthNumber = 1.0;
+            var repositoryData = new List<ProfitCentreCostSummary>
             {
-                ("PC01", 100.00m),
-                ("PC02", 200.00m),
-                ("PC03", 300.00m)
+                new() { ProfitCentre = "PC01", Cost = 100.00m },
+                new() { ProfitCentre = "PC02", Cost = 200.00m },
+                new() { ProfitCentre = "PC03", Cost = 300.00m }
+            };
+            var expectedDtos = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 100.00m },
+                new() { ProfitCentre = "PC02", Cost = 200.00m },
+                new() { ProfitCentre = "PC03", Cost = 300.00m }
             };
 
-            _mockRepository.GetProfitCenterCostSummaryAsync(null).Returns(repositoryData);
+            _mockRepository.GetProfitCenterCostSummaryAsync(monthNumber).Returns(repositoryData);
+            _mockMapper.Map<IEnumerable<ProfitCentreCostDto>>(repositoryData).Returns(expectedDtos);
 
             // Act
-            var result = await _sut.GetProfitCenterCostSummaryAsync(null);
+            var result = await _sut.GetProfitCenterCostSummaryAsync(monthNumber);
 
             // Assert
             var resultList = result.ToList();
@@ -618,21 +650,22 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         {
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                _sut.GetPagedProfitCenterCostSummaryAsync(null!, null));
+                _sut.GetPagedProfitCenterCostSummaryAsync(null!, 1.0));
         }
 
         [Fact]
         public async Task GetPagedProfitCenterCostSummaryAsync_WithoutMonthNumber_ReturnsPagedData()
         {
             // Arrange
+            const double monthNumber = 1.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>
+            var repositoryData = new List<ProfitCentreCostSummary>
             {
-                ("PC01", 1000.00m),
-                ("PC02", 2000.00m)
+                new() { ProfitCentre = "PC01", Cost = 1000.00m },
+                new() { ProfitCentre = "PC02", Cost = 2000.00m }
             };
-            var pagedData = new PagedData<(string ProfitCentre, decimal Cost)>
+            var pagedData = new PagedData<ProfitCentreCostSummary>
             {
                 Data = repositoryData,
                 PaginationData = new PaginationData
@@ -645,10 +678,12 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             };
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, null).Returns(pagedData);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
+            _mockMapper.Map<ProfitCentreCostDto>(repositoryData[0]).Returns(new ProfitCentreCostDto { ProfitCentre = "PC01", Cost = 1000.00m });
+            _mockMapper.Map<ProfitCentreCostDto>(repositoryData[1]).Returns(new ProfitCentreCostDto { ProfitCentre = "PC02", Cost = 2000.00m });
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
 
             // Assert
             result.Data.Should().HaveCount(2);
@@ -658,21 +693,21 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             result.PaginationData.PageSize.Should().Be(10);
             result.PaginationData.TotalRecords.Should().Be(2);
             result.PaginationData.TotalPages.Should().Be(1);
-            await _mockRepository.Received(1).GetPagedProfitCenterCostSummaryAsync(mappedParams, null);
+            await _mockRepository.Received(1).GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber);
         }
 
         [Fact]
         public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthNumber_ReturnsFilteredPagedData()
         {
             // Arrange
-            const short monthNumber = 3;
+            const double monthNumber = 3.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 5 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 5 };
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>
+            var repositoryData = new List<ProfitCentreCostSummary>
             {
-                ("PC01", 1500.00m)
+                new() { ProfitCentre = "PC01", Cost = 1500.00m }
             };
-            var pagedData = new PagedData<(string ProfitCentre, decimal Cost)>
+            var pagedData = new PagedData<ProfitCentreCostSummary>
             {
                 Data = repositoryData,
                 PaginationData = new PaginationData
@@ -686,6 +721,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
+            _mockMapper.Map<ProfitCentreCostDto>(repositoryData[0]).Returns(new ProfitCentreCostDto { ProfitCentre = "PC01", Cost = 1500.00m });
 
             // Act
             var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
@@ -702,9 +738,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
         public async Task GetPagedProfitCenterCostSummaryAsync_WithEmptyResult_ReturnsEmptyPagedData()
         {
             // Arrange
+            const double monthNumber = 1.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var pagedData = new PagedData<(string ProfitCentre, decimal Cost)>
+            var pagedData = new PagedData<ProfitCentreCostSummary>
             {
                 Data = [],
                 PaginationData = new PaginationData
@@ -717,10 +754,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             };
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, null).Returns(pagedData);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
 
             // Assert
             result.Data.Should().BeEmpty();
@@ -735,19 +772,19 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             var mappedParams = new PaginationParameters<string>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, Arg.Any<short?>())
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, Arg.Any<double>())
                 .ThrowsAsync(new InvalidOperationException("Database error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _sut.GetPagedProfitCenterCostSummaryAsync(query, null));
+                _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0));
         }
 
         [Fact]
         public async Task GetPagedProfitCenterCostSummaryAsync_WithSortingAndPaging_ReturnsSortedPagedData()
         {
             // Arrange
-            const short monthNumber = 6;
+            const double monthNumber = 6.0;
             var query = new QueryParameters<string>
             {
                 Page = 2,
@@ -762,12 +799,12 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
                 SortBy = "ProfitCentre",
                 Descending = true
             };
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>
+            var repositoryData = new List<ProfitCentreCostSummary>
             {
-                ("PC05", 500.00m),
-                ("PC04", 400.00m)
+                new() { ProfitCentre = "PC05", Cost = 500.00m },
+                new() { ProfitCentre = "PC04", Cost = 400.00m }
             };
-            var pagedData = new PagedData<(string ProfitCentre, decimal Cost)>
+            var pagedData = new PagedData<ProfitCentreCostSummary>
             {
                 Data = repositoryData,
                 PaginationData = new PaginationData
@@ -799,7 +836,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             // Arrange
             var query = new QueryParameters<string> { Page = 999, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 999, PageSize = 10 };
-            var pagedData = new PagedData<(string ProfitCentre, decimal Cost)>
+            var pagedData = new PagedData<ProfitCentreCostSummary>
             {
                 Data = [],
                 PaginationData = new PaginationData
@@ -812,10 +849,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             };
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, null).Returns(pagedData);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, 0.0).Returns(pagedData);
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             result.Data.Should().BeEmpty();
@@ -829,11 +866,11 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 1 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 1 };
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>
+            var repositoryData = new List<ProfitCentreCostSummary>
             {
-                ("PC01", 1000.00m)
+                new() { ProfitCentre = "PC01", Cost = 1000.00m }
             };
-            var pagedData = new PagedData<(string ProfitCentre, decimal Cost)>
+            var pagedData = new PagedData<ProfitCentreCostSummary>
             {
                 Data = repositoryData,
                 PaginationData = new PaginationData
@@ -846,10 +883,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             };
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, null).Returns(pagedData);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, 0.0).Returns(pagedData);
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             result.Data.Should().HaveCount(1);
@@ -863,11 +900,11 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             // Arrange
             var query = new QueryParameters<string> { Page = 3, PageSize = 20 };
             var mappedParams = new PaginationParameters<string> { Page = 3, PageSize = 20 };
-            var repositoryData = new List<(string ProfitCentre, decimal Cost)>
+            var repositoryData = new List<ProfitCentreCostSummary>
             {
-                ("PC01", 100.00m)
+                new() { ProfitCentre = "PC01", Cost = 100.00m }
             };
-            var pagedData = new PagedData<(string ProfitCentre, decimal Cost)>
+            var pagedData = new PagedData<ProfitCentreCostSummary>
             {
                 Data = repositoryData,
                 PaginationData = new PaginationData
@@ -880,10 +917,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
             };
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, null).Returns(pagedData);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, 0.0).Returns(pagedData);
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             result.PaginationData.PageNumber.Should().Be(3);

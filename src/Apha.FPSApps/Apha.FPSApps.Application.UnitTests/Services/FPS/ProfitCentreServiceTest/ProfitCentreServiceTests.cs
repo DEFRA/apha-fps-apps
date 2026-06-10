@@ -414,10 +414,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 2, 1, 10);
             var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
 
-            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(expectedResponse);
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.NotNull(result);
@@ -425,14 +425,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             Assert.NotNull(result.Data);
             Assert.Equal(2, result.Data.data.Count());
             Assert.Equal(2, result.Data.TotalCount);
-            await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(query, null);
+            await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(query, 0.0);
         }
 
         [Fact]
         public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthNumber_PassesMonthNumberToApiClient()
         {
             // Arrange
-            const short monthNumber = 3;
+            const double monthNumber = 3.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var costData = new List<ProfitCentreCostDto>
             {
@@ -450,27 +450,27 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             Assert.True(result.Success);
             await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(
                 Arg.Any<QueryParameters<string>>(),
-                Arg.Is<short?>(m => m == monthNumber));
+                Arg.Is<double>(m => m == monthNumber));
         }
 
         [Fact]
-        public async Task GetPagedProfitCenterCostSummaryAsync_WithoutMonthNumber_PassesNullToApiClient()
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithZeroMonthNumber_PassesZeroToApiClient()
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>([], 0, 1, 10);
             var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
 
-            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(expectedResponse);
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.True(result.Success);
             await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(
                 Arg.Any<QueryParameters<string>>(),
-                Arg.Is<short?>(m => m == null));
+                Arg.Is<double>(m => m == 0.0));
         }
 
         [Fact]
@@ -484,10 +484,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             };
             var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(expectedResponse);
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.NotNull(result);
@@ -505,10 +505,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>([], 0, 1, 10);
             var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
 
-            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(expectedResponse);
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.True(result.Success);
@@ -531,10 +531,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>([], 0, 2, 5);
             var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
 
-            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(expectedResponse);
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
             // Act
-            await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(
@@ -543,7 +543,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
                     q.PageSize == 5 &&
                     q.SortBy == "Cost" &&
                     q.Descending == true),
-                Arg.Any<short?>());
+                Arg.Any<double>());
         }
 
         [Fact]
@@ -559,10 +559,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 10, 2, 2);
             var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
 
-            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(expectedResponse);
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.True(result.Success);
@@ -577,7 +577,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
         public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthZero_PassesZeroToApiClient()
         {
             // Arrange
-            const short monthNumber = 0;
+            const double monthNumber = 0.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>([], 0, 1, 10);
             var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
@@ -591,14 +591,14 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             Assert.True(result.Success);
             await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(
                 Arg.Any<QueryParameters<string>>(),
-                Arg.Is<short?>(m => m == 0));
+                Arg.Is<double>(m => m == 0.0));
         }
 
         [Fact]
         public async Task GetPagedProfitCenterCostSummaryAsync_WithMaxMonthNumber_PassesToApiClient()
         {
             // Arrange
-            const short monthNumber = 12;
+            const double monthNumber = 12.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>([], 0, 1, 10);
             var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
@@ -612,7 +612,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             Assert.True(result.Success);
             await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(
                 Arg.Any<QueryParameters<string>>(),
-                Arg.Is<short?>(m => m == 12));
+                Arg.Is<double>(m => m == 12.0));
         }
 
         [Fact]
@@ -628,10 +628,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 2, 1, 10);
             var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
 
-            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(expectedResponse);
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
             // Act
-            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, null);
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.True(result.Success);

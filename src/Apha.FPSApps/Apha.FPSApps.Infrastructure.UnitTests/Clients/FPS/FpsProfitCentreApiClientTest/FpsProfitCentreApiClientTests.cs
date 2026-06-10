@@ -496,21 +496,21 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<IEnumerable<ProfitCentreCostDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetProfitCenterCostSummaryAsync();
+            var result = await _client.GetProfitCenterCostSummaryAsync(0.0);
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count());
             await _http.Received(1).GetAsync<IEnumerable<ProfitCentreCostRes>>(
-                Arg.Is<string>(url => !url.Contains("monthNumber")));
+                Arg.Is<string>(url => url.Contains("monthNumber=0")));
         }
 
         [Fact]
         public async Task GetProfitCenterCostSummaryAsync_WithMonthNumber_AppendsQueryParameter()
         {
             // Arrange
-            const short monthNumber = 3;
+            const double monthNumber = 3.0;
             var resList = new List<ProfitCentreCostRes>
             {
                 new() { ProfitCentre = "PC01", Cost = 1500m }
@@ -554,7 +554,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<IEnumerable<ProfitCentreCostDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetProfitCenterCostSummaryAsync();
+            var result = await _client.GetProfitCenterCostSummaryAsync(0.0);
 
             // Assert
             Assert.False(result.Success);
@@ -572,7 +572,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<IEnumerable<ProfitCentreCostDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
-            var result = await _client.GetProfitCenterCostSummaryAsync();
+            var result = await _client.GetProfitCenterCostSummaryAsync(0.0);
 
             // Assert
             Assert.True(result.Success);
@@ -583,7 +583,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
         public async Task GetProfitCenterCostSummaryAsync_WithMonthZero_AppendsZeroQueryParameter()
         {
             // Arrange
-            const short monthNumber = 0;
+            const double monthNumber = 0.0;
             var apiResponse = new ApiResponse<IEnumerable<ProfitCentreCostRes>> { Success = true, Data = new List<ProfitCentreCostRes>() };
             var expectedDto = ApiResponseDto<IEnumerable<ProfitCentreCostDto>>.SuccessResponse(new List<ProfitCentreCostDto>());
 
@@ -629,7 +629,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query);
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.NotNull(result);
@@ -645,7 +645,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
         public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthNumber_AppendsQueryParameter()
         {
             // Arrange
-            const short monthNumber = 5;
+            const double monthNumber = 5.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
             {
@@ -688,7 +688,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
-            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query);
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.False(result.Success);
@@ -713,7 +713,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query);
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.True(result.Success);
@@ -739,7 +739,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query);
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.True(result.Success);
@@ -774,7 +774,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query);
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.True(result.Success);
@@ -805,7 +805,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query);
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             Assert.True(result.Success);
@@ -835,7 +835,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
 
             // Act
-            await _client.GetPagedProfitCenterCostSummaryAsync(query);
+            await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
 
             // Assert
             await _http.Received(1).GetAsync<List<ProfitCentreCostRes>>(
@@ -846,7 +846,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
         public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthZero_AppendsZeroQueryParameter()
         {
             // Arrange
-            const short monthNumber = 0;
+            const double monthNumber = 0.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
             {

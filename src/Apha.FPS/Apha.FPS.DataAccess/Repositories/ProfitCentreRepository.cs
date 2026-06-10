@@ -247,42 +247,36 @@ namespace Apha.FPS.DataAccess.Repositories
             return true;
         }
 
-        public async Task<IEnumerable<(string ProfitCentre, decimal Cost)>> GetProfitCenterCostSummaryAsync(short? monthNumber = null)
+        public async Task<IEnumerable<ProfitCentreCostSummary>> GetProfitCenterCostSummaryAsync(double monthNumber)
         {
             // Fetch data with basic filtering, then perform calculation in memory
             var query = from tcc in _dbContext.TimeCostCalcs
                         join wg in _dbContext.Workgroups on tcc.WorkGroup equals wg.WorkgroupName
-                        where tcc.Class == "Charge"
+                        where tcc.Class == "Charge" && tcc.Month == monthNumber
                         select new
                         {
                             wg.ProfitCentre,
                             tcc.ChargeRate,
-                            tcc.Time,
-                            tcc.Month
+                            tcc.Time
                         };
-
-            // Apply month filter if provided
-            if (monthNumber.HasValue)
-            {
-                query = query.Where(x => x.Month == monthNumber.Value);
-            }
 
             var data = await query.ToListAsync();
 
             // Group and calculate in memory to avoid PostgreSQL type casting issues
             var result = data
                 .GroupBy(x => x.ProfitCentre)
-                .Select(g => (
-                    ProfitCentre: g.Key,
-                    Cost: g.Sum(x => (x.ChargeRate ?? 0m) * (decimal)(x.Time ?? 0))
-                ))
+                .Select(g => new ProfitCentreCostSummary
+                {
+                    ProfitCentre = g.Key,
+                    Cost = g.Sum(x => (x.ChargeRate ?? 0m) * (decimal)(x.Time ?? 0))
+                })
                 .ToList();
 
             return result;
         }
 
-        public async Task<PagedData<(string ProfitCentre, decimal Cost)>> GetPagedProfitCenterCostSummaryAsync(
-            PaginationParameters<string> parameters, short? monthNumber = null)
+        public async Task<PagedData<ProfitCentreCostSummary>> GetPagedProfitCenterCostSummaryAsync(
+            PaginationParameters<string> parameters, double monthNumber)
         {
             ArgumentNullException.ThrowIfNull(parameters);
 

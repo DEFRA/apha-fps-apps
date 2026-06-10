@@ -42,6 +42,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 .Returns(new QueryParameters<string>());
             _mapper.Map<List<ProfitCenterCostItem>>(Arg.Any<List<ProfitCentreCostDto>>())
                 .Returns([]);
+            _mapper.Map<List<PeriodMonth>>(Arg.Any<List<ReleasePeriodDto>>())
+                .Returns(callInfo =>
+                {
+                    var periods = callInfo.Arg<List<ReleasePeriodDto>>();
+                    return periods.Select(p => new PeriodMonth
+                    {
+                        Period = p.PeriodName,
+                        MonthNumber = p.EndPeriod.ToString()
+                    }).ToList();
+                });
         }
 
         private void SetupDefaultReleaseSummaryResponse()
@@ -51,16 +61,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 new() { PeriodName = "Period 1", StartPeriod = 1, EndPeriod = 1 },
                 new() { PeriodName = "Period 2", StartPeriod = 2, EndPeriod = 2 }
             };
-            var releaseSummary = new ReleaseSummaryDto
-            {
-                ReleasePeriods = periods,
-                Setting = null
-            };
-            _releaseSummaryService.GetReleaseSummariesAsync()
-                .Returns(ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(releaseSummary));
+
+            _releaseSummaryService.GetReleasePeriodsAsync()
+                .Returns(ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(periods.AsReadOnly()));
         }
 
-        private void SetupDefaultCostSummaryResponse(short? monthNumber = null)
+        private void SetupDefaultCostSummaryResponse(double? monthNumber = null)
         {
             var costData = new List<ProfitCentreCostDto>
             {
@@ -68,7 +74,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 new() { ProfitCentre = TestProfitCentre2, Cost = 2000m }
             };
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 2, 1, 10);
-            _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), monthNumber)
+            _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), monthNumber ?? 0.0)
                 .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult));
 
             _mapper.Map<List<ProfitCenterCostItem>>(Arg.Any<List<ProfitCentreCostDto>>())
@@ -84,7 +90,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         #region Index
 
         [Fact]
-        public async Task Index_WithoutMonthNumber_ReturnsViewResultWithNullGrid()
+        public async Task Index_ReturnsViewResultWithNullGrid()
         {
             // Arrange
             SetupDefaultReleaseSummaryResponse();
@@ -98,40 +104,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
             Assert.NotNull(model);
             Assert.Null(model.CostGrid);
-        }
-
-        [Fact]
-        public async Task Index_WithMonthNumber_PassesMonthNumberToService()
-        {
-            // Arrange
-            SetupDefaultReleaseSummaryResponse();
-            SetupDefaultCostSummaryResponse(TestMonthNumber);
-            SetupDefaultMapper();
-
-            // Act
-            var result = await _controller.Index(TestMonthNumber);
-
-            // Assert
-            await _profitCentreService.Received(1).GetPagedProfitCenterCostSummaryAsync(
-                Arg.Any<QueryParameters<string>>(),
-                TestMonthNumber);
-        }
-
-        [Fact]
-        public async Task Index_WithMonthNumber_SetsSelectedMonthNumberInViewModel()
-        {
-            // Arrange
-            SetupDefaultReleaseSummaryResponse();
-            SetupDefaultCostSummaryResponse(TestMonthNumber);
-            SetupDefaultMapper();
-
-            // Act
-            var result = await _controller.Index(TestMonthNumber);
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
-            Assert.Equal(TestMonthNumber, model.SelectedMonthNumber);
+            Assert.Null(model.SelectedMonthNumber);
         }
 
         [Fact]
@@ -144,13 +117,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 new() { PeriodName = "Period 2", StartPeriod = 2, EndPeriod = 2 },
                 new() { PeriodName = "Period 3", StartPeriod = 3, EndPeriod = 3 }
             };
-            var releaseSummary = new ReleaseSummaryDto
-            {
-                ReleasePeriods = periods,
-                Setting = null
-            };
-            _releaseSummaryService.GetReleaseSummariesAsync()
-                .Returns(ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(releaseSummary));
+            _releaseSummaryService.GetReleasePeriodsAsync()
+                .Returns(ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(periods.AsReadOnly()));
             SetupDefaultMapper();
 
             // Act
@@ -166,13 +134,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         public async Task Index_WhenReleaseSummaryServiceReturnsEmpty_ReturnsEmptyPeriodMonths()
         {
             // Arrange
-            var releaseSummary = new ReleaseSummaryDto
-            {
-                ReleasePeriods = [],
-                Setting = null
-            };
-            _releaseSummaryService.GetReleaseSummariesAsync()
-                .Returns(ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(releaseSummary));
+            _releaseSummaryService.GetReleasePeriodsAsync()
+                .Returns(ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(new List<ReleasePeriodDto>().AsReadOnly()));
             SetupDefaultMapper();
 
             // Act
@@ -188,8 +151,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         public async Task Index_WhenReleaseSummaryServiceFails_ReturnsEmptyPeriodMonths()
         {
             // Arrange
-            _releaseSummaryService.GetReleaseSummariesAsync()
-                .Returns(ApiResponseDto<ReleaseSummaryDto>.FailureResponse(null!, new ApiMetaDto()));
+            _releaseSummaryService.GetReleasePeriodsAsync()
+                .Returns(ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.FailureResponse(null!, new ApiMetaDto()));
             SetupDefaultMapper();
 
             // Act
@@ -205,8 +168,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         public async Task Index_WhenReleaseSummaryServiceReturnsNull_ReturnsEmptyPeriodMonths()
         {
             // Arrange
-            _releaseSummaryService.GetReleaseSummariesAsync()
-                .Returns(ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(null!));
+            _releaseSummaryService.GetReleasePeriodsAsync()
+                .Returns(ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(null!));
             SetupDefaultMapper();
 
             // Act
@@ -228,13 +191,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 new() { PeriodName = "Period 1", StartPeriod = 1, EndPeriod = 1 },
                 new() { PeriodName = "Period 2", StartPeriod = 2, EndPeriod = 2 }
             };
-            var releaseSummary = new ReleaseSummaryDto
-            {
-                ReleasePeriods = periods,
-                Setting = null
-            };
-            _releaseSummaryService.GetReleaseSummariesAsync()
-                .Returns(ApiResponseDto<ReleaseSummaryDto>.SuccessResponse(releaseSummary));
+            _releaseSummaryService.GetReleasePeriodsAsync()
+                .Returns(ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(periods.AsReadOnly()));
 
             SetupDefaultMapper();
 
@@ -252,64 +210,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             Assert.Equal("3", model.PeriodMonths[2].MonthNumber);
         }
 
-        [Fact]
-        public async Task Index_WithMonthNumber_PopulatesCostGridWithData()
-        {
-            // Arrange
-            SetupDefaultReleaseSummaryResponse();
-            SetupDefaultCostSummaryResponse(TestMonthNumber);
-            SetupDefaultMapper();
-
-            var costData = new List<ProfitCentreCostDto>
-            {
-                new() { ProfitCentre = TestProfitCentre1, Cost = 1000m },
-                new() { ProfitCentre = TestProfitCentre2, Cost = 2000m }
-            };
-            _mapper.Map<List<ProfitCenterCostItem>>(Arg.Any<List<ProfitCentreCostDto>>())
-                .Returns(costData.Select(c => new ProfitCenterCostItem
-                {
-                    ProfitCentre = c.ProfitCentre,
-                    Cost = c.Cost
-                }).ToList());
-
-            // Act
-            var result = await _controller.Index(TestMonthNumber);
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
-            Assert.NotNull(model.CostGrid);
-            Assert.Equal(2, model.CostGrid.Data.Count);
-        }
-
-        [Fact]
-        public async Task Index_WithMonthNumber_ConfiguresGridProperties()
-        {
-            // Arrange
-            SetupDefaultReleaseSummaryResponse();
-            SetupDefaultCostSummaryResponse(TestMonthNumber);
-            SetupDefaultMapper();
-
-            // Act
-            var result = await _controller.Index(TestMonthNumber);
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<ProfitCenterCostSummaryViewModel>(viewResult.Model);
-            var grid = model.CostGrid;
-
-            Assert.NotNull(grid);
-            Assert.Equal(ExpectedGridId, grid.GridId);
-            Assert.Equal("ProfitCentre", grid.KeyProperty);
-            Assert.False(grid.AllowAdd);
-            Assert.False(grid.AllowEdit);
-            Assert.False(grid.AllowDelete);
-            Assert.False(grid.AllowExport);
-            Assert.False(grid.AllowRowSelection);
-            Assert.True(grid.ShowPagination);
-            Assert.Equal("getProfitCenterCostGridExtraFilters", grid.ExtraFilterMethod);
-        }
-
         #endregion
 
         // ── LoadProfitCenterCostGrid ───────────────────────────────────────────
@@ -325,26 +225,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             SetupDefaultMapper();
 
             // Act
-            var result = await _controller.LoadProfitCenterCostGrid(request);
+            var result = await _controller.LoadProfitCenterCostGrid(request, 0.0);
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partialViewResult.ViewName);
-        }
-
-        [Fact]
-        public async Task LoadProfitCenterCostGrid_WithInvalidModelState_ReturnsJsonError()
-        {
-            // Arrange
-            var request = new PaginationFilter<string> { Filter = DefaultFilterJson };
-            _controller.ModelState.AddModelError("TestError", "Test error message");
-
-            // Act
-            var result = await _controller.LoadProfitCenterCostGrid(request);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            Assert.NotNull(jsonResult.Value);
         }
 
         [Fact]
@@ -365,20 +250,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         }
 
         [Fact]
-        public async Task LoadProfitCenterCostGrid_WithoutMonthNumber_PassesNullToService()
+        public async Task LoadProfitCenterCostGrid_WithZeroMonthNumber_PassesZeroToService()
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = DefaultFilterJson };
-            SetupDefaultCostSummaryResponse(null);
+            SetupDefaultCostSummaryResponse(0.0);
             SetupDefaultMapper();
 
             // Act
-            await _controller.LoadProfitCenterCostGrid(request, null);
+            await _controller.LoadProfitCenterCostGrid(request, 0.0);
 
             // Assert
             await _profitCentreService.Received(1).GetPagedProfitCenterCostSummaryAsync(
                 Arg.Any<QueryParameters<string>>(),
-                null);
+                0.0);
         }
 
         [Fact]
@@ -395,7 +280,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             SetupDefaultMapper();
 
             // Act
-            await _controller.LoadProfitCenterCostGrid(request);
+            await _controller.LoadProfitCenterCostGrid(request, 0.0);
 
             // Assert
             _mapper.Received(1).Map<QueryParameters<string>>(Arg.Is<PaginationFilter<string>>(
@@ -412,7 +297,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 new() { ProfitCentre = TestProfitCentre1, Cost = 1500m }
             };
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 1, 1, 10);
-            _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), 0.0)
                 .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult));
 
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -421,7 +306,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 .Returns([new ProfitCenterCostItem { ProfitCentre = TestProfitCentre1, Cost = 1500m }]);
 
             // Act
-            var result = await _controller.LoadProfitCenterCostGrid(request);
+            var result = await _controller.LoadProfitCenterCostGrid(request, 0.0);
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
@@ -444,7 +329,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 new() { ProfitCentre = TestProfitCentre1, Cost = 1000m }
             };
             var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 15, 2, 5);
-            _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), 0.0)
                 .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult));
 
             SetupDefaultMapper();
@@ -452,7 +337,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 .Returns([new ProfitCenterCostItem { ProfitCentre = TestProfitCentre1, Cost = 1000m }]);
 
             // Act
-            var result = await _controller.LoadProfitCenterCostGrid(request);
+            var result = await _controller.LoadProfitCenterCostGrid(request, 0.0);
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
@@ -470,12 +355,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = DefaultFilterJson };
-            _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), 0.0)
                 .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(null!));
             SetupDefaultMapper();
 
             // Act
-            var result = await _controller.LoadProfitCenterCostGrid(request);
+            var result = await _controller.LoadProfitCenterCostGrid(request, 0.0);
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
@@ -505,11 +390,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = DefaultFilterJson };
-            SetupDefaultCostSummaryResponse(null);
+            SetupDefaultCostSummaryResponse(0.0);
             SetupDefaultMapper();
 
             // Act
-            var result = await _controller.LoadProfitCenterCostGrid(request, null);
+            var result = await _controller.LoadProfitCenterCostGrid(request, 0.0);
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
@@ -527,12 +412,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 SortBy = "ProfitCentre",
                 Descending = false
             };
-            _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), null)
+            _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), 0.0)
                 .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(null!));
             SetupDefaultMapper();
 
             // Act
-            var result = await _controller.LoadProfitCenterCostGrid(request);
+            var result = await _controller.LoadProfitCenterCostGrid(request, 0.0);
 
             // Assert
             var partialViewResult = Assert.IsType<PartialViewResult>(result);

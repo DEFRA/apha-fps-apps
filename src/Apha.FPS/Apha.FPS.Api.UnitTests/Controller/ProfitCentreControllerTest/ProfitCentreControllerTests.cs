@@ -480,9 +480,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
         #region GetProfitCenterCostSummary Tests
 
         [Fact]
-        public async Task GetProfitCenterCostSummary_WithoutMonthNumber_ReturnsOkWithAllData()
+        public async Task GetProfitCenterCostSummary_WithMonthNumber_ReturnsOkWithAllData()
         {
             // Arrange
+            const double monthNumber = 1.0;
             var dtos = new List<ProfitCentreCostDto>
             {
                 new() { ProfitCentre = "PC01", Cost = 1000.50m },
@@ -494,23 +495,23 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
                 new() { ProfitCentre = "PC02", Cost = 2500.75m }
             };
 
-            _serviceMock.GetProfitCenterCostSummaryAsync(null).Returns(dtos);
+            _serviceMock.GetProfitCenterCostSummaryAsync(monthNumber).Returns(dtos);
             _mapperMock.Map<IEnumerable<ProfitCentreCostRes>>(dtos).Returns(expectedRes);
 
             // Act
-            var result = await _controller.GetProfitCenterCostSummary(null);
+            var result = await _controller.GetProfitCenterCostSummary(monthNumber);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             okResult.Value.Should().BeEquivalentTo(expectedRes);
-            await _serviceMock.Received(1).GetProfitCenterCostSummaryAsync(null);
+            await _serviceMock.Received(1).GetProfitCenterCostSummaryAsync(monthNumber);
         }
 
         [Fact]
         public async Task GetProfitCenterCostSummary_WithMonthNumber_ReturnsOkWithFilteredData()
         {
             // Arrange
-            const short monthNumber = 3;
+            const double monthNumber = 3.0;
             var dtos = new List<ProfitCentreCostDto>
             {
                 new() { ProfitCentre = "PC01", Cost = 1500.00m }
@@ -536,14 +537,15 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
         public async Task GetProfitCenterCostSummary_WithEmptyResult_ReturnsOkWithEmptyList()
         {
             // Arrange
+            const double monthNumber = 1.0;
             var dtos = new List<ProfitCentreCostDto>();
             var expectedRes = new List<ProfitCentreCostRes>();
 
-            _serviceMock.GetProfitCenterCostSummaryAsync(null).Returns(dtos);
+            _serviceMock.GetProfitCenterCostSummaryAsync(monthNumber).Returns(dtos);
             _mapperMock.Map<IEnumerable<ProfitCentreCostRes>>(dtos).Returns(expectedRes);
 
             // Act
-            var result = await _controller.GetProfitCenterCostSummary(null);
+            var result = await _controller.GetProfitCenterCostSummary(monthNumber);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -554,19 +556,19 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
         public async Task GetProfitCenterCostSummary_WhenServiceThrows_PropagatesException()
         {
             // Arrange
-            _serviceMock.GetProfitCenterCostSummaryAsync(Arg.Any<short?>())
+            _serviceMock.GetProfitCenterCostSummaryAsync(Arg.Any<double>())
                 .ThrowsAsync(new InvalidOperationException("Database connection failed"));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _controller.GetProfitCenterCostSummary(null));
+                _controller.GetProfitCenterCostSummary(1.0));
         }
 
         [Fact]
         public async Task GetProfitCenterCostSummary_WithZeroMonthNumber_ReturnsOkWithData()
         {
             // Arrange
-            const short monthNumber = 0;
+            const double monthNumber = 0.0;
             var dtos = new List<ProfitCentreCostDto>
             {
                 new() { ProfitCentre = "PC01", Cost = 500.00m }
@@ -591,7 +593,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
         public async Task GetProfitCenterCostSummary_WithMaxMonthNumber_ReturnsOkWithData()
         {
             // Arrange
-            const short monthNumber = 12;
+            const double monthNumber = 12.0;
             var dtos = new List<ProfitCentreCostDto>
             {
                 new() { ProfitCentre = "PC01", Cost = 3000.00m }
@@ -617,9 +619,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
         #region GetPagedProfitCenterCostSummary Tests
 
         [Fact]
-        public async Task GetPagedProfitCenterCostSummary_WithoutMonthNumber_ReturnsOkWithPagedData()
+        public async Task GetPagedProfitCenterCostSummary_WithMonthNumber_ReturnsOkWithPagedData()
         {
             // Arrange
+            const double monthNumber = 1.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var dtos = new List<ProfitCentreCostDto>
             {
@@ -638,25 +641,25 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
                 PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
             };
 
-            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(serviceResult);
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<ProfitCentreCostRes>>(serviceResult).Returns(expectedResponse);
 
             // Act
-            var result = await _controller.GetPagedProfitCenterCostSummary(query, null);
+            var result = await _controller.GetPagedProfitCenterCostSummary(query, monthNumber);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginationRes<ProfitCentreCostRes>>(okResult.Value);
             response.Data.Should().HaveCount(2);
             response.PaginationData.TotalRecords.Should().Be(2);
-            await _serviceMock.Received(1).GetPagedProfitCenterCostSummaryAsync(query, null);
+            await _serviceMock.Received(1).GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
         }
 
         [Fact]
         public async Task GetPagedProfitCenterCostSummary_WithMonthNumber_ReturnsOkWithFilteredPagedData()
         {
             // Arrange
-            const short monthNumber = 3;
+            const double monthNumber = 3.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 5 };
             var dtos = new List<ProfitCentreCostDto>
             {
@@ -691,7 +694,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
         public async Task GetPagedProfitCenterCostSummary_WithSortingAndPaging_ReturnsOkWithSortedData()
         {
             // Arrange
-            const short monthNumber = 6;
+            const double monthNumber = 6.0;
             var query = new QueryParameters<string>
             {
                 Page = 2,
@@ -734,6 +737,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
         public async Task GetPagedProfitCenterCostSummary_WithEmptyResult_ReturnsOkWithEmptyPagedData()
         {
             // Arrange
+            const double monthNumber = 1.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var dtos = new List<ProfitCentreCostDto>();
             var pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 };
@@ -744,11 +748,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
                 PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 0 }
             };
 
-            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(serviceResult);
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<ProfitCentreCostRes>>(serviceResult).Returns(expectedResponse);
 
             // Act
-            var result = await _controller.GetPagedProfitCenterCostSummary(query, null);
+            var result = await _controller.GetPagedProfitCenterCostSummary(query, monthNumber);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -762,18 +766,19 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, Arg.Any<short?>())
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, Arg.Any<double>())
                 .ThrowsAsync(new InvalidOperationException("Database error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _controller.GetPagedProfitCenterCostSummary(query, null));
+                _controller.GetPagedProfitCenterCostSummary(query, 1.0));
         }
 
         [Fact]
         public async Task GetPagedProfitCenterCostSummary_WithLargePageNumber_ReturnsOkWithEmptyPage()
         {
             // Arrange
+            const double monthNumber = 1.0;
             var query = new QueryParameters<string> { Page = 999, PageSize = 10 };
             var dtos = new List<ProfitCentreCostDto>();
             var pagination = new PaginationDto { PageNumber = 999, PageSize = 10, TotalRecords = 50 };
@@ -784,11 +789,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
                 PaginationData = new Pagination { PageNumber = 999, PageSize = 10, TotalRecords = 50 }
             };
 
-            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(serviceResult);
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<ProfitCentreCostRes>>(serviceResult).Returns(expectedResponse);
 
             // Act
-            var result = await _controller.GetPagedProfitCenterCostSummary(query, null);
+            var result = await _controller.GetPagedProfitCenterCostSummary(query, monthNumber);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -801,6 +806,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
         public async Task GetPagedProfitCenterCostSummary_WithMinimumPageSize_ReturnsOkWithSingleItem()
         {
             // Arrange
+            const double monthNumber = 1.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 1 };
             var dtos = new List<ProfitCentreCostDto>
             {
@@ -817,11 +823,11 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
                 PaginationData = new Pagination { PageNumber = 1, PageSize = 1, TotalRecords = 10 }
             };
 
-            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, null).Returns(serviceResult);
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(serviceResult);
             _mapperMock.Map<PaginationRes<ProfitCentreCostRes>>(serviceResult).Returns(expectedResponse);
 
             // Act
-            var result = await _controller.GetPagedProfitCenterCostSummary(query, null);
+            var result = await _controller.GetPagedProfitCenterCostSummary(query, monthNumber);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
