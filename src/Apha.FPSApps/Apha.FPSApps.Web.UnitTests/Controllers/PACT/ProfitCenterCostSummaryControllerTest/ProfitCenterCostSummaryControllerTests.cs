@@ -321,6 +321,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             var request = new PaginationFilter<string>
             {
                 Filter = DefaultFilterJson,
+                Page = 2,
+                PageSize = 5,
                 SortBy = "Cost",
                 Descending = true
             };

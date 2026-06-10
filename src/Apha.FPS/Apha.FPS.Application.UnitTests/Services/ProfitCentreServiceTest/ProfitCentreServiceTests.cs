@@ -677,10 +677,25 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
                 }
             };
 
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = new List<ProfitCentreCostDto>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 1000.00m },
+                    new() { ProfitCentre = "PC02", Cost = 2000.00m }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalRecords = 2,
+                    TotalPages = 1
+                }
+            };
+
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
-            _mockMapper.Map<ProfitCentreCostDto>(repositoryData[0]).Returns(new ProfitCentreCostDto { ProfitCentre = "PC01", Cost = 1000.00m });
-            _mockMapper.Map<ProfitCentreCostDto>(repositoryData[1]).Returns(new ProfitCentreCostDto { ProfitCentre = "PC02", Cost = 2000.00m });
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
 
             // Act
             var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
@@ -719,9 +734,24 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
                 }
             };
 
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = new List<ProfitCentreCostDto>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 1500.00m }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 1,
+                    PageSize = 5,
+                    TotalRecords = 1,
+                    TotalPages = 1
+                }
+            };
+
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
-            _mockMapper.Map<ProfitCentreCostDto>(repositoryData[0]).Returns(new ProfitCentreCostDto { ProfitCentre = "PC01", Cost = 1500.00m });
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
 
             // Act
             var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
@@ -752,9 +782,21 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
                     TotalPages = 0
                 }
             };
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = [],
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalRecords = 0,
+                    TotalPages = 0
+                }
+            };
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
 
             // Act
             var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
@@ -815,9 +857,25 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
                     TotalPages = 2
                 }
             };
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = new List<ProfitCentreCostDto>
+                {
+                    new() { ProfitCentre = "PC05", Cost = 500.00m },
+                    new() { ProfitCentre = "PC04", Cost = 400.00m }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 2,
+                    PageSize = 5,
+                    TotalRecords = 10,
+                    TotalPages = 2
+                }
+            };
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
 
             // Act
             var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
@@ -847,9 +905,21 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
                     TotalPages = 5
                 }
             };
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = [],
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 999,
+                    PageSize = 10,
+                    TotalRecords = 50,
+                    TotalPages = 5
+                }
+            };
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, 0.0).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
 
             // Act
             var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
@@ -881,9 +951,24 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
                     TotalPages = 10
                 }
             };
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = new List<ProfitCentreCostDto>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 1000.00m }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 1,
+                    PageSize = 1,
+                    TotalRecords = 10,
+                    TotalPages = 10
+                }
+            };
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, 0.0).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
 
             // Act
             var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
@@ -915,9 +1000,24 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
                     TotalPages = 3
                 }
             };
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = new List<ProfitCentreCostDto>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 100.00m }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 3,
+                    PageSize = 20,
+                    TotalRecords = 55,
+                    TotalPages = 3
+                }
+            };
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
             _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, 0.0).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
 
             // Act
             var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
