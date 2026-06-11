@@ -125,6 +125,13 @@ namespace Apha.PIMS.DataAccess.Repository
 
             return years;
         }
+
+        public async Task<Project?> GetFpsProjectByIdAsync(string parentproject)
+        {
+            return await _dbContext.Projects
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Parentproject == parentproject);
+        }
         private async Task<bool> ChangeProjectCodeAsync(string oldCode, string newCode)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();

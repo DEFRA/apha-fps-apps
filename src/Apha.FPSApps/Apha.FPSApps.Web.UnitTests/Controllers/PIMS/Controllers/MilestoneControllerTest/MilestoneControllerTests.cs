@@ -68,6 +68,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
                 .Returns([]);
             _mapper.Map<List<MilestoneFormDatesItem>>(Arg.Any<List<MilestoneFormDatesDto>>())
                 .Returns([]);
+
+            _milestoneService.GetLogMilestonesAsync(
+                    Arg.Any<QueryParameters<string>>(),
+                    Arg.Any<string?>(),
+                    Arg.Any<string?>(),
+                    Arg.Any<string?>())
+                .Returns(new ApiResponseDto<List<LogMilestoneDto>> { Success = true, Data = [] });
+            _mapper.Map<List<LogMilestoneItem>>(Arg.Any<List<LogMilestoneDto>>()).Returns([]);
         }
 
         /// <summary>Sets up mocks for the LoadMilestoneGrid / LoadMilestoneFormDatesGrid path.</summary>
@@ -86,6 +94,39 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
             _mapper.Map<List<MilestoneItem>>(Arg.Any<List<MilestoneDto>>()).Returns([]);
             _mapper.Map<List<MilestoneFormDatesItem>>(Arg.Any<List<MilestoneFormDatesDto>>()).Returns([]);
+        }
+
+        /// <summary>Sets up mocks for the LogIndex path.</summary>
+        private void SetupSuccessfulLogIndexMocks(
+            List<ProjectListMilestoneDto>? projects      = null,
+            List<LogMilestoneDto>?         logMilestones = null)
+        {
+            var projectList = projects ?? [new ProjectListMilestoneDto { Parentproject = "PP001" }];
+            _projectListService.GetAllProjectsForMilestoneAsync()
+                .Returns(new ApiResponseDto<List<ProjectListMilestoneDto>> { Success = true, Data = projectList });
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _milestoneService.GetLogMilestonesAsync(
+                    Arg.Any<QueryParameters<string>>(),
+                    Arg.Any<string?>(),
+                    Arg.Any<string?>(),
+                    Arg.Any<string?>())
+                .Returns(new ApiResponseDto<List<LogMilestoneDto>> { Success = true, Data = logMilestones ?? [] });
+            _mapper.Map<List<LogMilestoneItem>>(Arg.Any<List<LogMilestoneDto>>()).Returns([]);
+        }
+
+        /// <summary>Sets up mocks for the LoadLogMilestonesGrid path.</summary>
+        private void SetupLogGridMocks(List<LogMilestoneDto>? logMilestones = null)
+        {
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string>());
+            _milestoneService.GetLogMilestonesAsync(
+                    Arg.Any<QueryParameters<string>>(),
+                    Arg.Any<string?>(),
+                    Arg.Any<string?>(),
+                    Arg.Any<string?>())
+                .Returns(new ApiResponseDto<List<LogMilestoneDto>> { Success = true, Data = logMilestones ?? [] });
+            _mapper.Map<List<LogMilestoneItem>>(Arg.Any<List<LogMilestoneDto>>()).Returns([]);
         }
 
         private static PaginationFilter<string> DefaultFilter()
@@ -905,6 +946,224 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
             // Assert
             Assert.IsType<JsonResult>(result);
+        }
+
+        #endregion
+
+        // ── LogIndex ─────────────────────────────────────────────────────────
+
+        #region LogIndex
+
+        [Fact]
+        public async Task LogIndex_ReturnsViewResult()
+        {
+            // Arrange
+            SetupSuccessfulLogIndexMocks();
+
+            // Act
+            var result = await _controller.LogIndex("PP001");
+
+            // Assert
+            Assert.IsType<ViewResult>(result);
+        }
+
+        [Fact]
+        public async Task LogIndex_ReturnsViewResultWithMilestoneViewModel()
+        {
+            // Arrange
+            SetupSuccessfulLogIndexMocks();
+
+            // Act
+            var result = await _controller.LogIndex("PP001");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.IsType<MilestoneViewModel>(viewResult.Model);
+        }
+
+        [Fact]
+        public async Task LogIndex_SetsParentprojectFromParameter()
+        {
+            // Arrange
+            SetupSuccessfulLogIndexMocks();
+
+            // Act
+            var result = await _controller.LogIndex("PP001");
+
+            // Assert
+            var model = Assert.IsType<MilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.Equal("PP001", model.Parentproject);
+        }
+
+        [Fact]
+        public async Task LogIndex_WhenNoProject_SetsEmptyParentproject()
+        {
+            // Arrange
+            SetupSuccessfulLogIndexMocks();
+
+            // Act
+            var result = await _controller.LogIndex(null);
+
+            // Assert
+            var model = Assert.IsType<MilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.Equal(string.Empty, model.Parentproject);
+        }
+
+        [Fact]
+        public async Task LogIndex_PopulatesProjectOptions()
+        {
+            // Arrange
+            var projects = new List<ProjectListMilestoneDto>
+            {
+                new() { Parentproject = "PP001" },
+                new() { Parentproject = "PP002" }
+            };
+            SetupSuccessfulLogIndexMocks(projects: projects);
+
+            // Act
+            var result = await _controller.LogIndex("PP001");
+
+            // Assert
+            var model = Assert.IsType<MilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
+            Assert.Equal(2, model.ProjectOptions.Count);
+            Assert.Contains(model.ProjectOptions, o => o.Value == "PP001");
+            Assert.Contains(model.ProjectOptions, o => o.Value == "PP002");
+        }
+
+        [Fact]
+        public async Task LogIndex_CallsGetAllProjectsForMilestoneAsync_Once()
+        {
+            // Arrange
+            SetupSuccessfulLogIndexMocks();
+
+            // Act
+            await _controller.LogIndex("PP001");
+
+            // Assert
+            await _projectListService.Received(1).GetAllProjectsForMilestoneAsync();
+        }
+
+        [Fact]
+        public async Task LogIndex_CallsGetLogMilestonesAsync_Once()
+        {
+            // Arrange
+            SetupSuccessfulLogIndexMocks();
+
+            // Act
+            await _controller.LogIndex("PP001");
+
+            // Assert
+            await _milestoneService.Received(1)
+                .GetLogMilestonesAsync(
+                    Arg.Any<QueryParameters<string>>(),
+                    Arg.Any<string?>(),
+                    Arg.Any<string?>(),
+                    Arg.Any<string?>());
+        }
+
+        #endregion
+
+        // ── LoadLogMilestonesGrid ────────────────────────────────────────────
+
+        #region LoadLogMilestonesGrid
+
+        [Fact]
+        public async Task LoadLogMilestonesGrid_WithValidRequest_ReturnsPartialView()
+        {
+            // Arrange
+            SetupLogGridMocks();
+
+            // Act
+            var result = await _controller.LoadLogMilestonesGrid(DefaultFilter(), "PP001", null, null);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+        }
+
+        [Fact]
+        public async Task LoadLogMilestonesGrid_WithValidRequest_ReturnsDataGridConfig()
+        {
+            // Arrange
+            SetupLogGridMocks();
+
+            // Act
+            var result = await _controller.LoadLogMilestonesGrid(DefaultFilter(), "PP001", null, null);
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.IsType<DataGridConfig<LogMilestoneItem>>(partial.Model);
+        }
+
+        [Fact]
+        public async Task LoadLogMilestonesGrid_WhenModelStateInvalid_ReturnsJsonWithSuccessFalse()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("Page", "Page must be greater than 0.");
+
+            // Act
+            var result = await _controller.LoadLogMilestonesGrid(
+                new PaginationFilter<string> { Page = -1 }, "PP001", null, null);
+
+            // Assert
+            Assert.IsType<JsonResult>(result);
+        }
+
+        [Fact]
+        public async Task LoadLogMilestonesGrid_CallsGetLogMilestonesAsync_Once()
+        {
+            // Arrange
+            SetupLogGridMocks();
+
+            // Act
+            await _controller.LoadLogMilestonesGrid(DefaultFilter(), "PP001", null, null);
+
+            // Assert
+            await _milestoneService.Received(1)
+                .GetLogMilestonesAsync(
+                    Arg.Any<QueryParameters<string>>(),
+                    Arg.Any<string?>(),
+                    Arg.Any<string?>(),
+                    Arg.Any<string?>());
+        }
+
+        [Fact]
+        public async Task LoadLogMilestonesGrid_WithAllOptionalParams_PassesThemToService()
+        {
+            // Arrange
+            const string project     = "PP001";
+            const string numberPart1 = "M";
+            const string numberPart2 = "1";
+            SetupLogGridMocks();
+
+            // Act
+            await _controller.LoadLogMilestonesGrid(DefaultFilter(), project, numberPart1, numberPart2);
+
+            // Assert
+            await _milestoneService.Received(1).GetLogMilestonesAsync(
+                Arg.Any<QueryParameters<string>>(),
+                Arg.Is<string?>(p => p == project),
+                Arg.Is<string?>(n => n == numberPart1),
+                Arg.Is<string?>(n => n == numberPart2));
+        }
+
+        [Fact]
+        public async Task LoadLogMilestonesGrid_WhenNullOptionalParams_StillReturnsPartialView()
+        {
+            // Arrange
+            SetupLogGridMocks();
+
+            // Act
+            var result = await _controller.LoadLogMilestonesGrid(DefaultFilter(), null, null, null);
+
+            // Assert
+            Assert.IsType<PartialViewResult>(result);
+            await _milestoneService.Received(1)
+                .GetLogMilestonesAsync(
+                    Arg.Any<QueryParameters<string>>(),
+                    Arg.Is<string?>(p => p == null),
+                    Arg.Is<string?>(n => n == null),
+                    Arg.Is<string?>(n => n == null));
         }
 
         #endregion
