@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
 {
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [Route("api/agency")]
     [ApiController]
     public class AgencyController : ControllerBase

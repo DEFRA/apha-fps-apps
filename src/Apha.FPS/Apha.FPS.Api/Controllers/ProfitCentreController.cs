@@ -13,7 +13,7 @@ namespace Apha.FPS.Api.Controllers
     /// <summary>
     /// API controller for Profit Centre (Resource Centre) maintenance operations.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/profitcentres")]
@@ -132,6 +132,21 @@ namespace Apha.FPS.Api.Controllers
                 request.TimesheetLayout);
 
             return Ok(success);
+        }
+
+        /// <summary>
+        /// Returns paginated profit centres with aggregated cost from TimeCostCalcs where Class = 'charge'.
+        /// Supports pagination, sorting, and month filtering.
+        /// </summary>
+        /// <param name="query">Pagination and sorting parameters.</param>
+        /// <param name="monthNumber">Month number to filter the cost calculations.</param>
+        [HttpGet("paged/costsummary")]
+        public async Task<IActionResult> GetPagedProfitCenterCostSummary(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] double monthNumber)
+        {
+            var result = await _profitCentreService.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+            return Ok(_mapper.Map<PaginationRes<ProfitCentreCostRes>>(result));
         }
 
     }

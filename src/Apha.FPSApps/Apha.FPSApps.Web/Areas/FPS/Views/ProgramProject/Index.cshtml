@@ -265,7 +265,10 @@
 
         function planThisProject() {                           
             if (!currentProjectCode) { window.showGovukAlert('Please select a project first.'); return; }
-                window.fpsNavigateTo('/FPS/ProjectPlanning?projectCode=' + encodeURIComponent(currentProjectCode))
+            var returnUrl = isProjectGroupMode
+                ? '/FPS/ProgramProject?source=projectgroup'
+                : '/FPS/ProgramProject?programNo=' + encodeURIComponent(currentProgramNo);
+            window.fpsNavigateTo('/FPS/ProjectPlanning?projectCode=' + encodeURIComponent(currentProjectCode) + '&returnUrl=' + encodeURIComponent(returnUrl));
         }
 
         function editProgramProject(btn) {

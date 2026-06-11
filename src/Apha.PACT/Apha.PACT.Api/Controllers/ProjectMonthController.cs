@@ -12,7 +12,7 @@ namespace Apha.PACT.Api.Controllers
     /// <summary>
     /// API controller for Project Month (Cost Profile Grid) operations.
     /// </summary>
-    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin, API-PACTShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/projectmonth")]

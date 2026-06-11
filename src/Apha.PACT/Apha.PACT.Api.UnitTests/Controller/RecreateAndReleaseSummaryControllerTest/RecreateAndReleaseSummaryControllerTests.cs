@@ -462,6 +462,140 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
 
         #endregion
 
+        #region GetReleasePeriods
+
+        [Fact]
+        public async Task GetReleasePeriods_WithExistingPeriods_ReturnsOkWithMappedList()
+        {
+            // Arrange
+            var dtos = new List<ReleasePeriodDto>
+            {
+                new() { PeriodName = "Period1", PeriodType = "Month", StartPeriod = 0.5, EndPeriod = 1.0, FinalSummariesRun = 0, PeriodLocked = 0 },
+                new() { PeriodName = "Period2", PeriodType = "Month", StartPeriod = 1.5, EndPeriod = 2.0, FinalSummariesRun = 1, PeriodLocked = 0 }
+            }.AsReadOnly();
+
+            var responses = new List<ReleasePeriodRes>
+            {
+                new() { PeriodName = "Period1", PeriodType = "Month", StartPeriod = 0.5, EndPeriod = 1.0, FinalSummariesRun = 0, PeriodLocked = 0 },
+                new() { PeriodName = "Period2", PeriodType = "Month", StartPeriod = 1.5, EndPeriod = 2.0, FinalSummariesRun = 1, PeriodLocked = 0 }
+            }.AsReadOnly();
+
+            _mockService.GetReleasePeriodsAsync().Returns(dtos);
+            _mockMapper.Map<IReadOnlyList<ReleasePeriodRes>>(Arg.Any<IReadOnlyList<ReleasePeriodDto>>()).Returns(responses);
+
+            // Act
+            var result = await _controller.GetReleasePeriods();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsAssignableFrom<IReadOnlyList<ReleasePeriodRes>>(okResult.Value);
+            Assert.Equal(2, returnValue.Count);
+            Assert.Equal("Period1", returnValue[0].PeriodName);
+            Assert.Equal("Period2", returnValue[1].PeriodName);
+
+            await _mockService.Received(1).GetReleasePeriodsAsync();
+            _mockMapper.Received(1).Map<IReadOnlyList<ReleasePeriodRes>>(Arg.Any<IReadOnlyList<ReleasePeriodDto>>());
+        }
+
+        [Fact]
+        public async Task GetReleasePeriods_WithNoPeriods_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            var dtos = new List<ReleasePeriodDto>().AsReadOnly();
+            var responses = new List<ReleasePeriodRes>().AsReadOnly();
+
+            _mockService.GetReleasePeriodsAsync().Returns(dtos);
+            _mockMapper.Map<IReadOnlyList<ReleasePeriodRes>>(Arg.Any<IReadOnlyList<ReleasePeriodDto>>()).Returns(responses);
+
+            // Act
+            var result = await _controller.GetReleasePeriods();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsAssignableFrom<IReadOnlyList<ReleasePeriodRes>>(okResult.Value);
+            Assert.Empty(returnValue);
+
+            await _mockService.Received(1).GetReleasePeriodsAsync();
+        }
+
+        [Fact]
+        public async Task GetReleasePeriods_MapsAllFieldsCorrectly()
+        {
+            // Arrange
+            var dtos = new List<ReleasePeriodDto>
+            {
+                new()
+                {
+                    PeriodName = "P1",
+                    PeriodType = "Quarter",
+                    StartPeriod = 1.0,
+                    EndPeriod = 3.0,
+                    FinalSummariesRun = 2,
+                    PeriodLocked = 1
+                }
+            }.AsReadOnly();
+
+            var responses = new List<ReleasePeriodRes>
+            {
+                new()
+                {
+                    PeriodName = "P1",
+                    PeriodType = "Quarter",
+                    StartPeriod = 1.0,
+                    EndPeriod = 3.0,
+                    FinalSummariesRun = 2,
+                    PeriodLocked = 1
+                }
+            }.AsReadOnly();
+
+            _mockService.GetReleasePeriodsAsync().Returns(dtos);
+            _mockMapper.Map<IReadOnlyList<ReleasePeriodRes>>(Arg.Any<IReadOnlyList<ReleasePeriodDto>>()).Returns(responses);
+
+            // Act
+            var result = await _controller.GetReleasePeriods();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnValue = Assert.IsAssignableFrom<IReadOnlyList<ReleasePeriodRes>>(okResult.Value);
+            Assert.Single(returnValue);
+            var res = returnValue[0];
+            Assert.Equal("P1", res.PeriodName);
+            Assert.Equal("Quarter", res.PeriodType);
+            Assert.Equal(1.0, res.StartPeriod);
+            Assert.Equal(3.0, res.EndPeriod);
+            Assert.Equal((short)2, res.FinalSummariesRun);
+            Assert.Equal((short)1, res.PeriodLocked);
+        }
+
+        [Fact]
+        public async Task GetReleasePeriods_ServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            _mockService.GetReleasePeriodsAsync()
+                .Returns(Task.FromException<IReadOnlyList<ReleasePeriodDto>>(new InvalidOperationException("Service error")));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetReleasePeriods());
+
+            await _mockService.Received(1).GetReleasePeriodsAsync();
+        }
+
+        [Fact]
+        public async Task GetReleasePeriods_MapperThrowsException_PropagatesException()
+        {
+            // Arrange
+            var dtos = new List<ReleasePeriodDto> { new() { PeriodName = "Period1" } }.AsReadOnly();
+
+            _mockService.GetReleasePeriodsAsync().Returns(dtos);
+            _mockMapper.When(m => m.Map<IReadOnlyList<ReleasePeriodRes>>(Arg.Any<IReadOnlyList<ReleasePeriodDto>>()))
+                .Do(_ => throw new InvalidOperationException("Mapper error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _controller.GetReleasePeriods());
+        }
+
+        #endregion
+
         #region SetFinalSummaryRun
 
         [Fact]

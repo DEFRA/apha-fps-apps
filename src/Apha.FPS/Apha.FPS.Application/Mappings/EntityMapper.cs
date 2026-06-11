@@ -15,6 +15,9 @@ namespace Apha.FPS.Application.Mappings
 
             CreateMap<PaginationData, PaginationDto>().ReverseMap();
             CreateMap<StaffJobView, StaffJobViewDto>().ReverseMap();
+            CreateMap<StaffJobZtView, StaffJobZtViewDto>()
+                .ForMember(dest => dest.ZtDescription, opt => opt.MapFrom(src => src.Name))
+                .ReverseMap();
             CreateMap<StaffWorkgroupLookup, StaffWorkgroupLookupDto>().ReverseMap();
             CreateMap<StaffJob, StaffJobDto>().ReverseMap();
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
@@ -22,6 +25,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Project, ProjectDto>().ReverseMap();
             CreateMap<ProjectView, Project>().ReverseMap();
             CreateMap<JobCode, JobCodeDto>().ReverseMap();
+            CreateMap<JobCode, Apha.Common.Contracts.FPS.JobCodeRes>().ReverseMap();
             CreateMap<Contract, ContractDto>().ReverseMap();
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
             CreateMap<Animal, AnimalDto>().ReverseMap();
@@ -58,6 +62,7 @@ namespace Apha.FPS.Application.Mappings
                 .ForMember(d => d.ProfitCentreHead, o => o.MapFrom(s => s.ProfitCentreHead))
                 .ForMember(d => d.DivisionId, o => o.MapFrom(s => s.DivisionId))
                 .ForMember(d => d.EmailRecipient, o => o.MapFrom(s => s.EmailRecipient));
+            CreateMap<ProfitCentreCostSummary, ProfitCentreCostDto>().ReverseMap();
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupGradeView, WorkgroupGradeDto>().ReverseMap();

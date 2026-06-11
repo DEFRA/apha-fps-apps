@@ -14,7 +14,7 @@ namespace Apha.FPS.Api.Controllers
     /// Controller for managing animal-related operations.
     /// </summary>    
     [ApiController]
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/animalrequest")]
     public class AnimalRequestController : ControllerBase
