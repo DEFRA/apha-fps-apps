@@ -5,4 +5,5 @@ public sealed record BatchTriggerEventDetail(
     string JobName,
     string RunMode,
     string RequestedBy,
-    DateTime RequestedAtUtc);
+    DateTime RequestedAtUtc,
+    string? ParametersJson);

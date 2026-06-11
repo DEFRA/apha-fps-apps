@@ -2,6 +2,8 @@ using Apha.BatchJobs.Fps.Api.Models;
 using Apha.BatchJobs.Fps.Api.Policy;
 using Apha.BatchJobs.Fps.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Apha.BatchJobs.Fps.Api.Controllers;
 
@@ -55,6 +57,22 @@ public sealed class BatchJobTriggerController : ControllerBase
         var jobExecutionId = Guid.NewGuid().ToString("N");
         var acceptedAtUtc = DateTime.UtcNow;
         var requestedBy = string.IsNullOrWhiteSpace(request.RequestedBy) ? "fps.api@local" : request.RequestedBy;
+        var parametersJson = string.IsNullOrWhiteSpace(request.ParametersJson) ? null : request.ParametersJson;
+
+        if (string.Equals(normalizedJobName, "RecreateSummaries", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!TryParseParametersJson(parametersJson, out var parsedParameters, out var parametersError)
+                || !parsedParameters.TryGetValue("month", out var monthValue)
+                || !Regex.IsMatch(monthValue, "^\\d{4}-(0[1-9]|1[0-2])$"))
+            {
+                return BadRequest(new { accepted = false, reason = parametersError ?? "parametersJson.month is required and must use YYYY-MM for RecreateSummaries." });
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(parametersJson)
+                 && !TryParseParametersJson(parametersJson, out _, out var parametersError))
+        {
+            return BadRequest(new { accepted = false, reason = parametersError });
+        }
 
         var eventId = await _eventPublisher.PublishAsync(
             new BatchTriggerEventDetail(
@@ -62,7 +80,8 @@ public sealed class BatchJobTriggerController : ControllerBase
                 normalizedJobName,
                 "Manual",
                 requestedBy,
-                acceptedAtUtc),
+                acceptedAtUtc,
+                parametersJson),
             cancellationToken);
 
         _logger.LogInformation(
@@ -80,7 +99,44 @@ public sealed class BatchJobTriggerController : ControllerBase
             eventId,
             status = "TriggerAccepted",
             acceptedAtUtc,
+            parametersJson,
             message = "Event accepted for EventBridge dispatch."
         });
+    }
+
+    private static bool TryParseParametersJson(string? parametersJson, out Dictionary<string, string> values, out string? error)
+    {
+        values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(parametersJson))
+        {
+            error = "parametersJson is required.";
+            return false;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(parametersJson);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                error = "parametersJson must be a JSON object.";
+                return false;
+            }
+
+            foreach (var property in doc.RootElement.EnumerateObject())
+            {
+                values[property.Name] = property.Value.ValueKind == JsonValueKind.String
+                    ? property.Value.GetString() ?? string.Empty
+                    : property.Value.GetRawText();
+            }
+
+            return true;
+        }
+        catch (JsonException)
+        {
+            error = "parametersJson must be valid JSON.";
+            return false;
+        }
     }
 }

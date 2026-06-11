@@ -65,6 +65,19 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
         startInfo.Environment["BATCH_RUN_MODE"] = detail.RunMode;
         startInfo.Environment["BATCH_JOB_EXECUTION_ID"] = detail.JobExecutionId;
         startInfo.Environment["BATCH_REQUESTED_BY"] = detail.RequestedBy;
+        startInfo.Environment["BATCH_REQUESTED_AT_UTC"] = detail.RequestedAtUtc.ToString("O");
+        startInfo.Environment["BATCH_JOB_PARAMETERS_JSON"] = string.IsNullOrWhiteSpace(detail.ParametersJson) ? "{}" : detail.ParametersJson;
+
+        if (string.Equals(detail.JobName, "RecreateSummaries", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrWhiteSpace(detail.ParametersJson)
+                && TryExtractRecreateSummariesMonth(detail.ParametersJson, out var year, out var month))
+            {
+                startInfo.Environment["BATCH_RECREATE_SUMMARIES_MONTH"] = month.ToString();
+                startInfo.Environment["BATCH_RECREATE_SUMMARIES_YEAR"] = year.ToString();
+            }
+        }
+
         startInfo.Environment["BATCH_DEBUG_WAIT_FOR_ATTACH"] = shouldPauseForDebugger ? "true" : "false";
         startInfo.Environment["BATCH_DEBUG_ATTACH_TIMEOUT_SECONDS"] = _options.LocalWorker.DebuggerAttachTimeoutSeconds.ToString();
         startInfo.Environment["BATCH_DEBUG_BREAK_ON_START"] =
@@ -224,6 +237,49 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
             || line.StartsWith("FROM ", StringComparison.OrdinalIgnoreCase)
             || line.StartsWith("WHERE ", StringComparison.OrdinalIgnoreCase)
             || line.StartsWith("LIMIT ", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryExtractRecreateSummariesMonth(string parametersJson, out int year, out int month)
+    {
+        year = 0;
+        month = 0;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(parametersJson);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return false;
+            }
+
+            if (!doc.RootElement.TryGetProperty("month", out var monthElement)
+                || monthElement.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            var value = monthElement.GetString();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            var parts = value.Split('-', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length != 2
+                || !int.TryParse(parts[0], out year)
+                || !int.TryParse(parts[1], out month)
+                || year is < 2000 or > 9999
+                || month is < 1 or > 12)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 
     private string ResolveWorkerProjectPath()

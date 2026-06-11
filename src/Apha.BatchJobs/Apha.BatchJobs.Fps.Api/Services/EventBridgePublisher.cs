@@ -31,7 +31,8 @@ public sealed class EventBridgePublisher : IEventPublisher
             jobName = detail.JobName,
             runMode = detail.RunMode,
             requestedBy = detail.RequestedBy,
-            requestedAtUtc = detail.RequestedAtUtc
+            requestedAtUtc = detail.RequestedAtUtc,
+            parametersJson = string.IsNullOrWhiteSpace(detail.ParametersJson) ? "{}" : detail.ParametersJson
         });
 
         if (_options.DryRun)

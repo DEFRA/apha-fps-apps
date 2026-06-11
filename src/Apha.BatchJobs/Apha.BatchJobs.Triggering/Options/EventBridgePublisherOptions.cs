@@ -6,7 +6,7 @@ public sealed class EventBridgePublisherOptions
 
     public string Source { get; set; } = "batchjobs.api";
 
-    public string DetailType { get; set; } = "BatchJob.TriggerRequested";
+    public string DetailType { get; set; } = "BatchJobTriggerRequested";
 
     public bool DryRun { get; set; } = true;
 }

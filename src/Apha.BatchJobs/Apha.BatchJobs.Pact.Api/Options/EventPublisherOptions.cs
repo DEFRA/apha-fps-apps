@@ -6,7 +6,7 @@ public sealed class EventPublisherOptions
 
     public string Source { get; init; } = "pact.api";
 
-    public string DetailType { get; init; } = "BatchJob.TriggerRequested";
+    public string DetailType { get; init; } = "BatchJobTriggerRequested";
 
     public bool DryRun { get; init; } = true;
 }

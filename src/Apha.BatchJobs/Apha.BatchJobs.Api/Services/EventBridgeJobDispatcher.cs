@@ -53,7 +53,7 @@ public sealed class EventBridgeJobDispatcher : IJobDispatchService
                 "EventBridge:Source must be one of: fps.api, pact.api.");
         }
 
-        var detailType = _configuration["EventBridge:DetailType"] ?? "BatchJob.TriggerRequested";
+        var detailType = _configuration["EventBridge:DetailType"] ?? "BatchJobTriggerRequested";
         var requestedBy = _configuration["EventBridge:RequestedBy"] ?? "api-local";
         var jobExecutionId = Guid.NewGuid().ToString("N");
         var requestedAtUtc = DateTime.UtcNow;
@@ -64,8 +64,8 @@ public sealed class EventBridgeJobDispatcher : IJobDispatchService
             jobName,
             runMode = "Manual",
             requestedBy,
-            userId = requestedBy,
-            requestedAtUtc
+            requestedAtUtc,
+            parametersJson = "{}"
         };
 
         var request = new PutEventsRequest
