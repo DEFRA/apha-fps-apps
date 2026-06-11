@@ -14,11 +14,27 @@ namespace Apha.FPS.DataAccess.Repositories
     /// </summary>
     public class ProjectGroupStaffPlanRepository : BaseRepository, IProjectGroupStaffPlanRepository
     {
-        public ProjectGroupStaffPlanRepository(FpsDbContext context) : base(context) { }
+        private readonly IFpsRequestContext _requestContext;
+
+        public ProjectGroupStaffPlanRepository(FpsDbContext context, IFpsRequestContext requestContext)
+            : base(context)
+        {
+            _requestContext = requestContext;
+        }
 
         public async Task<PagedData<ProjectGroupStaffPlanView>> GetPagedAsync(PaginationParameters<string> query)
         {
-            var baseQuery = _context.ProjectGroupStaffPlanViews.AsNoTracking();
+            // Restrict to project groups belonging to the logged-in user
+            var userProjectGroups = await _context.ProjectGroupViews
+                .AsNoTracking()
+                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Select(p => p.ProjectGroupName)
+                .Distinct()
+                .ToListAsync();
+
+            var baseQuery = _context.ProjectGroupStaffPlanViews
+                .AsNoTracking()
+                .Where(x => userProjectGroups.Contains(x.ProjectGroup!));
 
             baseQuery = ApplyFilter(baseQuery, query.Filter);
             baseQuery = (IQueryable<ProjectGroupStaffPlanView>)ApplySorting(baseQuery, query.SortBy, query.Descending);
