@@ -55,25 +55,17 @@ namespace Apha.PACT.DataAccess.Repository
                 baseQuery = baseQuery.OrderByDescending(e => e.Log.DateDone);
             }
 
-            // Apply pagination at database level before materialization
-            var pagedQuery = baseQuery
-                .Skip((parameters.Page - 1) * parameters.PageSize)
-                .Take(parameters.PageSize);
-
-            // Materialize only the paginated results
-            var result = await pagedQuery.ToListAsync();
-
             // Map to the result model
-            var mappedData = result.Select(r => new RecreateSummaryLogWithComment
+            var mappedData = baseQuery.Select(r => new RecreateSummaryLogWithComment
             {
                 Id = r.Log.Id,
                 UserId = r.Log.UserId,
                 Comments = r.UserComments ?? string.Empty,
                 Period = r.Log.Period,
                 DateDone = r.Log.DateDone,
-            }).ToList();
+            });
 
-            return base.ApplyPaging(mappedData, parameters.Page, parameters.PageSize);
+            return await base.ApplyPaging(mappedData, parameters.Page, parameters.PageSize);
         }
 
 

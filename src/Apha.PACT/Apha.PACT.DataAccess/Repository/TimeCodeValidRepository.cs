@@ -47,11 +47,8 @@ namespace Apha.PACT.DataAccess.Repository
             // Apply sorting
             queryTimeCode = (IQueryable<TimeCodeValid>)ApplySorting(queryTimeCode, query.SortBy, query.Descending);
 
-            // Execute query
-            var result = await queryTimeCode.ToListAsync();
-
             // Apply paging
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(queryTimeCode, query.Page, query.PageSize);
         }
 
         public async Task<PagedData<TimeCodeValid>> GetPagedByProjectAndTestCodeAsync(
@@ -67,11 +64,8 @@ namespace Apha.PACT.DataAccess.Repository
             // Apply sorting
             queryTimeCode = (IQueryable<TimeCodeValid>)ApplySorting(queryTimeCode, query.SortBy, query.Descending);
 
-            // Execute query
-            var result = await queryTimeCode.ToListAsync();
-
             // Apply paging
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(queryTimeCode, query.Page, query.PageSize);
         }
 
         public async Task<TimeCodeValid?> GetTimeCodeValidAsync(string workGroup, string timeCode, string parentProject)

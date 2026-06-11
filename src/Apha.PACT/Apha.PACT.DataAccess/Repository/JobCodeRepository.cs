@@ -51,11 +51,8 @@ namespace Apha.PACT.DataAccess.Repository
             // Apply sorting
             queryJobcodes = (IQueryable<JobCode>)ApplySorting(queryJobcodes, query.SortBy, query.Descending);
 
-            // Execute query
-            var result = await queryJobcodes.ToListAsync();
-
             // Apply paging
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(queryJobcodes, query.Page, query.PageSize);
         }
 
         public async Task<JobCode?> GetJobCodeByIdAsync(string jobCodeId)
