@@ -31,6 +31,12 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<ReleaseSummaryDto>(releaseSummary);
         }
 
+        public async Task<IReadOnlyList<ReleasePeriodDto>> GetReleasePeriodsAsync()
+        {
+            var releasePeriods = await _repository.GetReleasePeriodsAsync();
+            return _mapper.Map<IReadOnlyList<ReleasePeriodDto>>(releasePeriods);
+        }
+
         public async Task<ReleasePeriodDto?> SetFinalSummaryRunAsync(string? periodName, short? finalSummariesRun, string? sendEmail)
         {
             var releasePeriod = await _repository.SetFinalSummaryRunAsync(periodName, finalSummariesRun, sendEmail);

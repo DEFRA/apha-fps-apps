@@ -143,5 +143,22 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var failureDto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(failureDto.Errors, failureDto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<ProfitCentreCostDto>>> GetPagedProfitCenterCostSummaryAsync(
+            QueryParameters<string> query, double monthNumber)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProfitCenterCostSummary, query);
+            url = $"{url}&monthNumber={monthNumber}";
+
+            var response = await _http.GetAsync<List<ProfitCentreCostRes>>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(response);
+            }
+
+            var failDto = _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(response);
+            return ApiResponseDto<List<ProfitCentreCostDto>>.FailureResponse(failDto.Errors, failDto.Meta);
+        }
     }
 }
