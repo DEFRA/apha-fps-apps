@@ -6,11 +6,13 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 internal sealed class LogRecreateSummariesStep : RecreateSummariesExecutionStepBase
 {
     private readonly int _month;
+    private readonly int _year;
     private readonly string _triggeredBy;
 
-    public LogRecreateSummariesStep(int month, string triggeredBy)
+    public LogRecreateSummariesStep(int month, int year, string triggeredBy)
     {
         _month = month;
+        _year = year;
         _triggeredBy = triggeredBy;
     }
 
@@ -22,7 +24,7 @@ internal sealed class LogRecreateSummariesStep : RecreateSummariesExecutionStepB
 
         var fpsYear = await db.RsTblPeriod
             .AsNoTracking()
-            .Where(p => p.EndPeriod == _month)
+            .Where(p => p.EndPeriod == _month && p.FpsYear == _year)
             .Select(p => p.FpsYear)
             .FirstOrDefaultAsync(cancellationToken);
 

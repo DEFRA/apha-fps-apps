@@ -35,7 +35,7 @@ app.MapGet("/api/batch-jobs/{jobName}/can-run", async (
 	{
 		var response = await SendWithTransientRetriesAsync(
 			() => client.GetAsync(
-				$"{baseUrl.TrimEnd('/')}/api/batch-jobs/{Uri.EscapeDataString(jobName)}/can-run",
+				$"{baseUrl.TrimEnd('/')}/api/v1/batch-jobs/{Uri.EscapeDataString(jobName)}/can-run",
 				cancellationToken),
 			cancellationToken);
 
@@ -75,7 +75,7 @@ app.MapGet("/api/batch-jobs/{jobName}/status", async (
 		var queryString = queryParts.Count > 0 ? "?" + string.Join("&", queryParts) : "";
 		var response = await SendWithTransientRetriesAsync(
 			() => client.GetAsync(
-				$"{baseUrl.TrimEnd('/')}/api/batch-jobs/{Uri.EscapeDataString(jobName)}/status{queryString}",
+				$"{baseUrl.TrimEnd('/')}/api/v1/batch-jobs/{Uri.EscapeDataString(jobName)}/status{queryString}",
 				cancellationToken),
 			cancellationToken);
 
@@ -147,6 +147,15 @@ app.MapPost("/api/trigger", async (
 	if (!BatchJobRoutingPolicy.TryResolveRoute(request.JobName, out var route, out var error) || route is null)
 		return Results.BadRequest(new { accepted = false, reason = error });
 
+	if (string.Equals(route.JobName, "RecreateSummaries", StringComparison.OrdinalIgnoreCase))
+	{
+		if (!request.Month.HasValue || request.Month is < 1 or > 12)
+			return Results.BadRequest(new { accepted = false, reason = "month is required and must be in range 1..12 for RecreateSummaries." });
+
+		if (!request.Year.HasValue || request.Year is < 2000 or > 9999)
+			return Results.BadRequest(new { accepted = false, reason = "year is required and must be in range 2000..9999 for RecreateSummaries." });
+	}
+
 	if (route.RouteKind == JobRouteKind.ScheduledOnly)
 	{
 		return Results.Conflict(new
@@ -186,7 +195,9 @@ app.MapPost("/api/trigger", async (
 			new BatchTriggerRequest
 			{
 				JobName = route.JobName,
-				RequestedBy = string.IsNullOrWhiteSpace(request.RequestedBy) ? "sample-ui@local" : request.RequestedBy
+				RequestedBy = string.IsNullOrWhiteSpace(request.RequestedBy) ? "sample-ui@local" : request.RequestedBy,
+				Month = request.Month,
+				Year = request.Year
 			},
 			cancellationToken),
 		cancellationToken);

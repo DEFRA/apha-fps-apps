@@ -7,7 +7,7 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 /// </summary>
 internal sealed class RecreateSummariesStepCatalog : IRecreateSummariesStepCatalog
 {
-    public IReadOnlyList<IRecreateSummariesExecutionStep> BuildMandatorySteps(int month, string triggeredBy) =>
+    public IReadOnlyList<IRecreateSummariesExecutionStep> BuildMandatorySteps(int month, int year, string triggeredBy) =>
     [
         new DeleteFpsTotalsStep(),
         new CreateFpsTotalsStep(),
@@ -22,7 +22,7 @@ internal sealed class RecreateSummariesStepCatalog : IRecreateSummariesStepCatal
         new DeleteProjectMonth3Step(),
         new CreateProjectMonthCumulativeStep(),
         new CreateProjectMonthFinalStep(month),
-        new LogRecreateSummariesStep(month, triggeredBy),
+        new LogRecreateSummariesStep(month, year, triggeredBy),
     ];
 
     public IReadOnlyList<IRecreateSummariesExecutionStep> BuildRefreshSteps(int month) =>

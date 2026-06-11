@@ -543,7 +543,7 @@
     </table>
 
     <h3>9.2 EventBridge to ECS Mappings (Mandatory)</h3>
-    <p>Worker runtime consumes these environment variables: BATCH_JOB_NAME, BATCH_RUN_MODE, BATCH_JOB_EXECUTION_ID.</p>
+    <p>Worker runtime consumes these environment variables: BATCH_JOB_NAME, BATCH_RUN_MODE, BATCH_JOB_EXECUTION_ID, BATCH_REQUESTED_BY, BATCH_REQUESTED_AT_UTC.</p>
     <table>
       <thead>
         <tr>
@@ -579,6 +579,24 @@
           <td>Recommended</td>
         </tr>
         <tr>
+          <td>Manual/API rule</td>
+          <td>$.detail.requestedAtUtc</td>
+          <td>BATCH_REQUESTED_AT_UTC</td>
+          <td>Recommended</td>
+        </tr>
+        <tr>
+          <td>Manual/API rule (RecreateSummaries only)</td>
+          <td>$.detail.month</td>
+          <td>BATCH_RECREATE_SUMMARIES_MONTH</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td>Manual/API rule (RecreateSummaries only)</td>
+          <td>$.detail.year</td>
+          <td>BATCH_RECREATE_SUMMARIES_YEAR</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
           <td>Scheduled rule</td>
           <td>Fixed per rule (example: MABArchive)</td>
           <td>BATCH_JOB_NAME</td>
@@ -599,7 +617,7 @@
       </tbody>
     </table>
     <p class="muted">
-      Notes: scheduled rules must provide BATCH_JOB_EXECUTION_ID. In strict execution contract mode, worker startup fails if this value is missing or not a valid GUID.
+      Notes: scheduled MABArchive does not require EventBridge $.id mapping to BATCH_JOB_EXECUTION_ID; worker generates execution id when omitted. RecreateSummaries manual triggers require month/year inputs in the trigger detail.
     </p>
 
     <h3>9.3 IAM and Security Group Norms</h3>

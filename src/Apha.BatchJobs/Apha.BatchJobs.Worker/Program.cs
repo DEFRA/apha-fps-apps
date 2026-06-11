@@ -125,6 +125,10 @@ try
     // External/API correlation key for tracing across trigger -> worker -> status.
     var jobExecutionIdEnv = Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID")
         ?? Environment.GetEnvironmentVariable("BATCH_EXECUTION_ID");
+    var requestedAtUtcEnv = Environment.GetEnvironmentVariable("BATCH_REQUESTED_AT_UTC");
+    var allowScheduledMabArchiveGeneratedExecutionId =
+        runMode == RunMode.Scheduled
+        && string.Equals(jobName, "MABArchive", StringComparison.OrdinalIgnoreCase);
     Guid jobExecutionId;
     string userId = "system";
 
@@ -134,7 +138,7 @@ try
 
     if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
     {
-        if (strictExecutionContractMode)
+        if (strictExecutionContractMode && !allowScheduledMabArchiveGeneratedExecutionId)
         {
             throw new InvalidOperationException(
                 "BATCH_JOB_EXECUTION_ID is required in strict execution contract mode.");
@@ -147,7 +151,7 @@ try
     }
     else if (!Guid.TryParse(jobExecutionIdEnv, out jobExecutionId))
     {
-        if (strictExecutionContractMode)
+        if (strictExecutionContractMode && !allowScheduledMabArchiveGeneratedExecutionId)
         {
             throw new InvalidOperationException(
                 "BATCH_JOB_EXECUTION_ID must be a valid GUID in strict execution contract mode.");
@@ -172,7 +176,13 @@ try
     requestedJobName = jobName;
     requestedRunMode = runMode.ToString();
 
-    logger.LogInformation("Requested job: {JobName} | RunMode: {RunMode} | JobExecutionId={JobExecutionId} | UserId={UserId}", jobName, runMode, jobExecutionId, userId);
+    logger.LogInformation(
+        "Requested job: {JobName} | RunMode: {RunMode} | JobExecutionId={JobExecutionId} | UserId={UserId} | RequestedAtUtc={RequestedAtUtc}",
+        jobName,
+        runMode,
+        jobExecutionId,
+        userId,
+        string.IsNullOrWhiteSpace(requestedAtUtcEnv) ? "n/a" : requestedAtUtcEnv);
 
     // Cancel job execution only when the host is stopping.
     // Do not use GracefulShutdownWindowSeconds as a hard runtime cap.
