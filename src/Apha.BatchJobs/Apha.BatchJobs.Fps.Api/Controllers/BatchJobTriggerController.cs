@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 namespace Apha.BatchJobs.Fps.Api.Controllers;
 
 [ApiController]
-[Route("api/v1/batch-jobs")]
+[Route("api/v{version}/batch-jobs")]
 public sealed class BatchJobTriggerController : ControllerBase
 {
     private readonly IEventPublisher _eventPublisher;

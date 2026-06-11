@@ -1,0 +1,1567 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BatchJobs</name>
+    </assembly>
+    <members>
+        <member name="T:Apha.BatchJobs.Application.DependencyInjection.ServiceCollectionSetup">
+            <summary>Bootstraps the DI service collection for the batch jobs worker.</summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.DependencyInjection.ServiceCollectionSetup.CreateDefaultServices(System.String)">
+            <summary>Creates and returns the configured <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/> for the worker host.</summary>
+            <returns>A populated <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/> ready for the host to build.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.DependencyInjection.ServiceCollectionSetup.ConfigureBatchJobServices(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>Registers all batch job services, repositories and job handlers into the provided service collection.</summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Factory.BatchJobFactory">
+            <summary>
+            Batch job factory implementation that resolves job handlers from the DI container.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Factory.BatchJobFactory.#ctor(System.IServiceProvider)">
+            <summary>
+            Initializes a new instance of the BatchJobFactory.
+            </summary>
+            <param name="serviceProvider">Service provider for resolving job instances.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Factory.BatchJobFactory.Create(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Factory.BatchJobFactory.GetAvailableJobs">
+            <inheritdoc />
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Interfaces.IBatchJob">
+            <summary>Contract for all batch job implementations.</summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Interfaces.IBatchJob.Name">
+            <summary>Gets the unique name of the batch job.</summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Interfaces.IBatchJob.IdempotencyStrategy">
+            <summary>
+            Gets the explicit idempotency strategy used by this job.
+            Examples: Upsert, DedupKey, Checkpointing.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Interfaces.IBatchJob.ScheduleExpression">
+            <summary>
+            Gets the optional schedule expression for EventBridge Scheduler.
+            Format: cron expression (e.g., "0 20 ? * MON-SAT" for Mon-Sat 8pm).
+            Set to null for auto/user-triggered jobs (RecreateSummaries, FECProcess).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Interfaces.IBatchJob.ScheduleDescription">
+            <summary>
+            Gets the optional human-readable schedule description.
+            Used for documentation and operational clarity.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Interfaces.IBatchJob.MaxExecutionSeconds">
+            <summary>
+            Gets the optional maximum execution timeout in seconds.
+            If not specified, defaults to BatchJobs:JobTimeout from configuration.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Interfaces.IBatchJob.ExecuteAsync(System.Threading.CancellationToken)">
+            <summary>Executes the batch job asynchronously.</summary>
+            <param name="cancellationToken">Token used to cancel the operation.</param>
+            <returns>A task representing the async operation.</returns>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Interfaces.IBatchJobFactory">
+            <summary>Factory for resolving batch job instances by name.</summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Interfaces.IBatchJobFactory.Create(System.String)">
+            <summary>Creates and returns the batch job registered under <paramref name="jobName"/>.</summary>
+            <param name="jobName">The registered name of the job to create.</param>
+            <returns>The matching <see cref="T:Apha.BatchJobs.Application.Interfaces.IBatchJob"/> instance.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Interfaces.IBatchJobFactory.GetAvailableJobs">
+            <summary>Gets all registered job names.</summary>
+            <returns>Collection of available job names.</returns>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Interfaces.IJobOrchestrator">
+            <summary>
+            Orchestrates the full lifecycle of a batch job execution:
+            acquire lock → record start → run job → record result → release lock.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Interfaces.IJobOrchestrator.RunAsync(System.String,Apha.BatchJobs.Domain.Enums.RunMode,System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Runs a named job through the full execution lifecycle.
+            </summary>
+            <param name="jobName">The registered name of the job to run.</param>
+            <param name="runMode">Whether this is a scheduled or ad-hoc run.</param>
+            <param name="jobExecutionId">External execution UUID supplied by caller/API for polling and cross-system correlation.</param>
+            <param name="userId">The user/system ID requesting the job execution.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The execution result including JobQueueId, status, and duration.</returns>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Interfaces.JobExecutionResult">
+            <summary>
+            Holds the outcome of a <see cref="M:Apha.BatchJobs.Application.Interfaces.IJobOrchestrator.RunAsync(System.String,Apha.BatchJobs.Domain.Enums.RunMode,System.Guid,System.String,System.Threading.CancellationToken)"/> call.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Interfaces.JobExecutionResult.#ctor(System.Guid,System.String,Apha.BatchJobs.Domain.Enums.JobStatus,System.TimeSpan,System.Nullable{System.Int32},System.String)">
+            <summary>
+            Holds the outcome of a <see cref="M:Apha.BatchJobs.Application.Interfaces.IJobOrchestrator.RunAsync(System.String,Apha.BatchJobs.Domain.Enums.RunMode,System.Guid,System.String,System.Threading.CancellationToken)"/> call.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.JobOrchestrator">
+            <summary>
+            Implements the full execution lifecycle for a batch job:
+            generate JobQueueId -> acquire lock -> record start -> execute -> record result -> release lock.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Application.JobOrchestrator.DefaultLockTimeoutSeconds">
+            <summary>Default lock timeout in seconds when configuration is missing/invalid.</summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Application.JobOrchestrator.DefaultMaxRetryDurationSeconds">
+            <summary>Default maximum retry duration in seconds.</summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Application.JobOrchestrator.DefaultCancellationPollIntervalSeconds">
+            <summary>Default cancellation monitor poll interval in seconds.</summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.JobOrchestrator.#ctor(Apha.BatchJobs.Application.Interfaces.IBatchJobFactory,Apha.BatchJobs.Domain.Interfaces.IBatchLockRepository,Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository,Microsoft.Extensions.DependencyInjection.IServiceScopeFactory,Microsoft.Extensions.Options.IOptions{Apha.BatchJobs.Domain.Configuration.BatchJobSettings},Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Application.JobOrchestrator})">
+            <summary>
+            Initializes a new instance of <see cref="T:Apha.BatchJobs.Application.JobOrchestrator"/>.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.JobOrchestrator.RunAsync(System.String,Apha.BatchJobs.Domain.Enums.RunMode,System.Guid,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Application.JobOrchestrator.IsRetryable(System.Exception)">
+            <summary>
+            Returns false for exceptions that must never be retried:
+            configuration errors, validation failures, and business-rule violations.
+            Only explicit transient infrastructure failures (timeouts, connectivity) are retryable.
+            Default is now false to avoid overly broad retry surface.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessHandler">
+            <summary>
+            FEC (Financial Eligibility Control) process handler.
+            Status: Under investigation; groundwork for future feature.
+            Trigger mode: manual/ad-hoc only (no scheduler binding).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessHandler.Name">
+            <summary>
+            Name of this job.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessHandler.IdempotencyStrategy">
+            <summary>
+            Explicit idempotency strategy declaration for this job.
+            Placeholder for foundation layer; to be defined during feature implementation.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessHandler.ScheduleExpression">
+            <summary>
+            No schedule expression: FECProcess is manual/ad-hoc.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessHandler.ScheduleDescription">
+            <summary>
+            Human-readable description for manual/ad-hoc execution.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessHandler.MaxExecutionSeconds">
+            <summary>
+            Maximum execution timeout placeholder: 3 hours (may be adjusted based on data volume).
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessHandler.#ctor(Microsoft.EntityFrameworkCore.IDbContextFactory{Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext},Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessHandler},Microsoft.Extensions.Options.IOptions{Apha.BatchJobs.Domain.Configuration.BatchJobSettings})">
+            <summary>
+            Initializes a new instance of the FECProcessHandler.
+            </summary>
+            <param name="logger">Logger instance.</param>
+            <param name="settings">Batch job runtime settings.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessHandler.ExecuteAsync(System.Threading.CancellationToken)">
+            <summary>
+            Executes the FEC process handler.
+            Foundation layer placeholder: no logic implemented.
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessRequest">
+            <summary>
+            Request model for the FEC process batch job.
+            Foundation layer placeholder: structure defined for future use.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessRequest.ProcessingMode">
+            <summary>
+            Processing mode (e.g., 'Validation', 'Reconciliation', 'Correction', 'Full').
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessRequest.ProcessingPeriod">
+            <summary>
+            Date or period identifier for FEC processing scope.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessRequest.DryRun">
+            <summary>
+            Whether to perform a dry-run without persisting changes.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.FECProcess.FECProcessRequest.NotificationEmail">
+            <summary>
+            Optional notification email for completion status.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobHandler">
+            <summary>
+            Health check job handler for testing the batch jobs framework.
+            This job validates logging, database connectivity, and execution tracking.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobHandler.Name">
+            <summary>
+            Name of this job.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobHandler.IdempotencyStrategy">
+            <summary>
+            Explicit idempotency strategy declaration for this job.
+            HealthCheck is read/validate-only and produces no mutable side effects.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobHandler.ScheduleExpression">
+            <summary>
+            No schedule expression: HealthCheck is ad-hoc or manually triggered.
+            Can be invoked from deployment automation or monitoring dashboards.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobHandler.ScheduleDescription">
+            <summary>
+            Human-readable description for ad-hoc validation job.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobHandler.MaxExecutionSeconds">
+            <summary>
+            Maximum execution timeout for this light-weight validation job: 5 minutes.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobHandler.#ctor(Microsoft.EntityFrameworkCore.IDbContextFactory{Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext},Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobHandler},Microsoft.Extensions.Options.IOptions{Apha.BatchJobs.Domain.Configuration.BatchJobSettings})">
+            <summary>
+            Initializes a new instance of the HealthCheckJobHandler.
+            </summary>
+            <param name="logger">Logger instance.</param>
+            <param name="settings">Batch job runtime settings.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobHandler.ExecuteAsync(System.Threading.CancellationToken)">
+            <summary>
+            Executes the health check job.
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobRequest">
+            <summary>
+            Request model for the health check batch job.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobRequest.RecordCount">
+            <summary>
+            Number of records to process (for testing throughput).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobRequest.DelayPerRecordMs">
+            <summary>
+            Simulate processing delay in milliseconds per record.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.HealthCheck.HealthCheckJobRequest.ShouldFail">
+            <summary>
+            Whether to simulate a failure.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler">
+            <summary>
+            Recreate summaries handler for rebuilding analytical summaries.
+            Typically triggered by user action (e.g., UI button click).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler.Name">
+            <summary>
+            Name of this job.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler.IdempotencyStrategy">
+            <summary>
+            Explicit idempotency strategy declaration for this job.
+            Placeholder for foundation layer; to be defined during feature implementation.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler.ScheduleExpression">
+            <summary>
+            No schedule expression: this is a user-triggered job.
+            Triggered via UI button click or API call.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler.ScheduleDescription">
+            <summary>
+            Human-readable description for user-triggered job.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler.MaxExecutionSeconds">
+            <summary>
+            Maximum execution timeout for this job: 2 hours (summary recreation can be lengthy).
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler.#ctor(Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler},Microsoft.Extensions.Options.IOptions{Apha.BatchJobs.Domain.Configuration.BatchJobSettings})">
+            <summary>
+            Initializes a new instance of the RecreateSummariesHandler.
+            </summary>
+            <param name="logger">Logger instance.</param>
+            <param name="settings">Batch job runtime settings.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesHandler.ExecuteAsync(System.Threading.CancellationToken)">
+            <summary>
+            Executes the recreate summaries handler.
+            Foundation layer placeholder: no logic implemented.
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesRequest">
+            <summary>
+            Request model for the recreate summaries batch job.
+            Foundation layer placeholder: structure defined for future use.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesRequest.UserId">
+            <summary>
+            User identifier who triggered the recreation.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesRequest.SummaryType">
+            <summary>
+            Types of summaries to recreate (e.g., 'Daily', 'Weekly', 'Monthly', 'All').
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesRequest.StartDate">
+            <summary>
+            Date range start for partitioned recreation.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesRequest.EndDate">
+            <summary>
+            Date range end for partitioned recreation.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.RecreateSummaries.RecreateSummariesRequest.DryRun">
+            <summary>
+            Whether to perform a dry-run without persisting changes.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.RecreateSummariesJobHandler">
+             <summary>
+             RecreateSummaries scheduled batch job handler.
+             Rebuilds monthly FPS summary/calculation data by executing 14 ordered SQL steps
+             and optionally refreshing period snapshot tables when the period is unlocked.
+            
+             Replaces the legacy SQL Server <c>sp_RecreateSummaries</c> orchestration procedure.
+            
+             Lock lifecycle is owned exclusively by <see cref="T:Apha.BatchJobs.Application.JobOrchestrator"/>.
+             This handler must not acquire or release the distributed lock.
+             </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.RecreateSummariesJobHandler.Name">
+            <summary>Canonical job name.</summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.RecreateSummariesJobHandler.IdempotencyStrategy">
+            <summary>
+            Idempotency strategy: full delete-and-rebuild per month with a single wrapping transaction.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.RecreateSummariesJobHandler.ScheduleExpression">
+            <summary>
+            RecreateSummaries is a manually triggered job — no schedule expression.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.RecreateSummariesJobHandler.ScheduleDescription">
+            <summary>Human-readable schedule description.</summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.RecreateSummariesJobHandler.MaxExecutionSeconds">
+            <summary>Maximum execution timeout: 60 minutes.</summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.RecreateSummariesJobHandler.#ctor(Microsoft.EntityFrameworkCore.IDbContextFactory{Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext},Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesOrchestrator,Apha.BatchJobs.Domain.Interfaces.IRecreateSummariesContext,Apha.BatchJobs.Domain.Interfaces.ICorrelationService,Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.RecreateSummariesJobHandler})">
+            <summary>
+            Initializes a new instance of <see cref="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.RecreateSummariesJobHandler"/>.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.RecreateSummariesJobHandler.ExecuteAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.StepResult">
+            <summary>
+            Captures the outcome of one RecreateSummaries execution step.
+            Collected by the handler and written to the job execution log.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.StepResult.#ctor(System.String,System.Int32,System.DateTime,System.DateTime,Apha.BatchJobs.Domain.Enums.StepStatus,System.String)">
+            <summary>
+            Captures the outcome of one RecreateSummaries execution step.
+            Collected by the handler and written to the job execution log.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveExecutionContext">
+            <summary>
+            Execution context for MABArchive load operations.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveExecutionContext.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,System.Boolean)">
+            <summary>
+            Execution context for MABArchive load operations.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveExecutionContext.RequiresPartialRefresh">
+            <summary>
+            Determines if the current month requires a partial refresh (month ≤ 4).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveExecutionContext.PartialRefreshYear">
+            <summary>
+            The year for partial refresh (current year when month ≤ 4).
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveJobHandler">
+             <summary>
+             MABArchive scheduled batch job handler.
+             Loads FPS data from the current and previous calendar years to support financial year reporting
+             into the MABArchive schema within PostgreSQL database.
+             Runs weekly on weekdays at 8:00 PM UTC.
+            
+             Lock lifecycle is owned exclusively by JobOrchestrator. This handler must not
+             acquire or release the distributed lock.
+             </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveJobHandler.ExecuteAsync(System.Threading.CancellationToken)">
+            <summary>
+            Executes the MABArchive load job.
+            Lock acquisition and release are handled by JobOrchestrator before this is called.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveLoadOrchestrator">
+            <summary>
+            Orchestrator for MABArchive load operations.
+            Manages year determination, transaction lifecycle, and step sequencing.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveLoadOrchestrator.#ctor(Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IReloadFpsTotalsService,Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMyFpsYearlyDataService,Apha.BatchJobs.Domain.Interfaces.IExecutionYearContext,Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IEmailNotificationService,Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveLoadOrchestrator})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveLoadOrchestrator"/> class.
+            </summary>
+            <param name="totalsService">Service for rebuilding FPS source totals.</param>
+            <param name="dataService">Service for archive delete/load/refresh operations.</param>
+            <param name="notificationService">Service used to send failure notifications.</param>
+            <param name="logger">Logger instance.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveLoadOrchestrator.BuildExecutionContext">
+            <summary>
+            Builds the execution context from the current execution date.
+            </summary>
+            <returns>Computed execution context for the current run window.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveLoadOrchestrator.ExecuteAsync(System.String,Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveExecutionContext,System.Func{System.Func{System.Threading.Tasks.Task},System.Threading.Tasks.Task},System.Threading.CancellationToken)">
+            <summary>
+            Executes the MABArchive load orchestration within a single transaction.
+            </summary>
+            <param name="correlationId">Correlation identifier for this execution.</param>
+            <param name="context">Computed execution context for year/month branching.</param>
+            <param name="transactionWrapper">Transaction wrapper delegate used to execute all work atomically.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IEmailNotificationService">
+            <summary>
+            Service for sending email notifications on job failure.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IEmailNotificationService.SendFailureNotificationAsync(System.String,System.String,System.String,System.DateTime,System.Threading.CancellationToken)">
+            <summary>
+            Sends a failure notification email to the configured administrator.
+            </summary>
+            <param name="correlationId">The correlation identifier for this execution.</param>
+            <param name="jobName">The name of the job that failed.</param>
+            <param name="errorMessage">The error message.</param>
+            <param name="timestamp">The timestamp when the failure occurred.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMabArchiveLoader">
+            <summary>
+            Represents one MABArchive year-load step.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMabArchiveLoader.Sequence">
+            <summary>
+            Baseline sequence position aligned with sp_AddYearsFPSData.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMabArchiveLoader.Name">
+            <summary>
+            Logical loader name used in logs.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMabArchiveLoader.LoadAsync(Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Executes this loader for the supplied year.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMyFpsYearlyDataService">
+            <summary>
+            Service for managing yearly FPS archive data operations.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMyFpsYearlyDataService.IsYearAvailableAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Checks whether the specified FPS year is registered and available for processing.
+            </summary>
+            <param name="year">The FPS year to check.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True when the year is available; otherwise false.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMyFpsYearlyDataService.DeleteYearDataAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Deletes all archive data for the specified year in dependency order.
+            </summary>
+            <param name="year">The year to delete archive data for.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Number of rows affected.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMyFpsYearlyDataService.LoadYearDataAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Loads fresh archive data from FPS source for the specified year in dependency order.
+            </summary>
+            <param name="year">The year to load archive data for.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Number of rows affected.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMyFpsYearlyDataService.RefreshProjectAllOnlyAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Refreshes only the my_tlkpproject_all cross-reference table for the specified year.
+            Used for partial refresh when month ≤ 4.
+            </summary>
+            <param name="year">The year to refresh project all for.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Number of rows affected.</returns>
+        </member>
+        <member name="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IReloadFpsTotalsService">
+            <summary>
+            Service for rebuilding FPS source totals before archive load.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IReloadFpsTotalsService.RebuildSourceTotalsAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Rebuilds FPS source totals for the specified year.
+            </summary>
+            <param name="year">The FPS year to rebuild totals for.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Number of rows affected.</returns>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Configuration.BatchJobSettings">
+            <summary>
+            Batch job runtime settings.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.BatchJobSettings.MaxConcurrentJobs">
+            <summary>
+            Maximum number of concurrent jobs that can run simultaneously.
+            Current runtime model is one ECS task per job execution, so this
+            setting is intentionally out-of-scope for now.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.BatchJobSettings.JobTimeout">
+            <summary>
+            Job execution timeout in seconds.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.BatchJobSettings.JobTimeoutOverridesSeconds">
+            <summary>
+            Optional per-job runtime timeout overrides in seconds.
+            Keys are job names (for example: RecreateSummaries, MABArchive).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.BatchJobSettings.RetryAttempts">
+            <summary>
+            Number of retry attempts for failed jobs.
+            Retry policy wiring is planned in a future story.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.BatchJobSettings.RetryDelaySeconds">
+            <summary>
+            Delay in seconds between retry attempts.
+            Retry policy wiring is planned in a future story.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.BatchJobSettings.MaxRetryDurationSeconds">
+            <summary>
+            Maximum total duration (in seconds) for all retry attempts combined.
+            Prevents long-running containers from exceeding ECS task timeout.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.BatchJobSettings.LockTimeoutSeconds">
+            <summary>
+            Lock acquisition timeout in seconds for distributed locking.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.BatchJobSettings.CancellationPollIntervalSeconds">
+            <summary>
+            Poll interval in seconds for checking durable cancellation requests while a job is running.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Configuration.MabArchiveSettings">
+            <summary>
+            Configuration settings for the MABArchive scheduled job.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.MabArchiveSettings.LockTimeoutSeconds">
+            <summary>
+            Lock timeout in seconds. Default: 3600 (1 hour).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.MabArchiveSettings.TransactionTimeoutSeconds">
+            <summary>
+            Database transaction timeout in seconds. Default: 1800 (30 minutes).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.MabArchiveSettings.StrictYearIsolation">
+            <summary>
+            Enforces year-aware joins and source view contracts for totals rebuild.
+            When true, totals source views must expose fpsyear and joins must include fpsyear.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.MabArchiveSettings.AdminNotificationEmail">
+            <summary>
+            Email recipient for failure notifications.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.MabArchiveSettings.NotificationFromEmail">
+            <summary>
+            Email sender address.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.MabArchiveSettings.SmtpHost">
+            <summary>
+            SMTP server host for email notifications.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.MabArchiveSettings.SmtpPort">
+            <summary>
+            SMTP server port for email notifications.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.MabArchiveSettings.EnableEmailNotifications">
+            <summary>
+            Whether to enable email notifications on failure.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Configuration.MabArchiveSettings.CloudWatchLogGroup">
+            <summary>
+            CloudWatch log group name for diagnostics.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Entities.BatchJobDefinition">
+            <summary>Represents the metadata definition of a registered batch job.</summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.BatchJobDefinition.Name">
+            <summary>Gets the unique name that identifies this batch job.</summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.BatchJobDefinition.Description">
+            <summary>Gets an optional human-readable description of the job's purpose.</summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Entities.BatchLock">
+            <summary>
+            Represents a distributed lock for batch job execution to prevent concurrent runs.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.BatchLock.LockId">
+            <summary>
+            Unique identifier for the lock.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.BatchLock.JobName">
+            <summary>
+            Name of the batch job.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.BatchLock.AcquiredAt">
+            <summary>
+            Timestamp when the lock was acquired.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.BatchLock.ExpiresAt">
+            <summary>
+            Timestamp when the lock should be released (timeout).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.BatchLock.JobQueueId">
+            <summary>
+            The UUID for the job queue entry holding this lock (caller-injected).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.BatchLock.IsActive">
+            <summary>
+            Whether the lock is currently active.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Entities.CancellationRequestRecord">
+            <summary>
+            Durable cancellation request details keyed by JobExecutionId.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Entities.CorrelationContext">
+            <summary>
+            Correlation metadata captured for a batch job execution flow.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.CorrelationContext.CorrelationId">
+            <summary>
+            Unique correlation identifier.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.CorrelationContext.Timestamp">
+            <summary>
+            UTC timestamp when the context was created.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.CorrelationContext.JobName">
+            <summary>
+            Logical job name associated with this context.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Entities.CorrelationContext.#ctor">
+            <summary>
+            Initializes an empty correlation context.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Entities.CorrelationContext.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a correlation context with explicit values.
+            </summary>
+            <param name="correlationId">Correlation ID.</param>
+            <param name="jobName">Job name.</param>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Entities.JobExecutionRecord">
+            <summary>
+            Represents an execution record for a batch job run.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.ExecutionId">
+            <summary>
+            Unique identifier for this execution.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.JobName">
+            <summary>
+            Name of the batch job.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.JobExecutionId">
+            <summary>
+            External UUID supplied by caller/API for status polling and correlation.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.JobQueueId">
+            <summary>
+            Internal UUID for this worker-owned job queue entry.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.UserId">
+            <summary>
+            User ID or system identifier requesting the job execution.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.JobType">
+            <summary>
+            Type of batch job.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.RunMode">
+            <summary>
+            Execution mode (Scheduled or Manual).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.Status">
+            <summary>
+            Current status of the job execution.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.StartedAt">
+            <summary>
+            Timestamp when execution started.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.CompletedAt">
+            <summary>
+            Timestamp when execution completed.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.DurationSeconds">
+            <summary>
+            Duration in seconds (calculated if completed).
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.RecordsProcessed">
+            <summary>
+            Number of records processed.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.RecordsFailed">
+            <summary>
+            Number of records failed.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.ErrorMessage">
+            <summary>
+            Error message if execution failed.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.StackTrace">
+            <summary>
+            Stack trace if execution failed.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Entities.JobExecutionRecord.RetryAttempts">
+            <summary>
+            Number of retry attempts made.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Enums.ExitCode">
+            <summary>
+            Process exit codes for host and scheduler execution.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.ExitCode.Success">
+            <summary>
+            Successful execution.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.ExitCode.GeneralError">
+            <summary>
+            Non-specific runtime failure.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.ExitCode.ConfigurationError">
+            <summary>
+            Invalid or missing configuration.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.ExitCode.DatabaseError">
+            <summary>
+            Database-related failure.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.ExitCode.ValidationError">
+            <summary>
+            Input or contract validation failure.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.ExitCode.UnhandledException">
+            <summary>
+            Unexpected unhandled exception.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Enums.JobStatus">
+            <summary>
+            Enumeration of job execution statuses.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobStatus.Pending">
+            <summary>
+            Job is waiting to be executed.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobStatus.Running">
+            <summary>
+            Job is currently executing.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobStatus.Completed">
+            <summary>
+            Job completed successfully.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobStatus.Failed">
+            <summary>
+            Job failed with an error.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobStatus.Cancelled">
+            <summary>
+            Job was cancelled before completion.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobStatus.Retry">
+            <summary>
+            Job retry is scheduled.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobStatus.Skipped">
+            <summary>
+            Job was skipped because a concurrent run already holds the distributed lock.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Enums.JobType">
+            <summary>
+            Enumeration of batch job types.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobType.Unknown">
+            <summary>
+            Default job type.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobType.DataLoad">
+            <summary>
+            Data load/ETL job.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobType.Archival">
+            <summary>
+            Data archival job.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobType.Validation">
+            <summary>
+            Data validation job.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.JobType.Cleanup">
+            <summary>
+            Cleanup job.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Enums.RunMode">
+            <summary>
+            Enumeration of batch job execution modes.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.RunMode.Scheduled">
+            <summary>
+            Job runs on a predefined schedule via EventBridge.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.RunMode.Manual">
+            <summary>
+            Job is triggered manually on-demand (via UI, API, or CLI).
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Enums.StepStatus">
+            <summary>
+            Outcome of a single RecreateSummaries execution step.
+            </summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.StepStatus.Success">
+            <summary>Step completed without error.</summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.StepStatus.Failed">
+            <summary>Step threw an exception or reported a database error.</summary>
+        </member>
+        <member name="F:Apha.BatchJobs.Domain.Enums.StepStatus.Skipped">
+            <summary>Step was intentionally not executed (e.g. period locked).</summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Interfaces.IBatchLockRepository">
+            <summary>
+            Repository for managing batch job execution locks.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IBatchLockRepository.TryAcquireLockAsync(System.String,System.Guid,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Attempts to acquire a distributed lock for a job.
+            </summary>
+            <param name="jobName">The name of the job requiring a lock.</param>
+            <param name="jobQueueId">Unique UUID for the job queue execution entry.</param>
+            <param name="timeoutSeconds">Lock timeout duration.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if lock acquired; false if already locked by another process.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IBatchLockRepository.ReleaseLockAsync(System.String,System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Releases a lock held by the given job queue ID.
+            </summary>
+            <param name="jobName">The name of the job.</param>
+            <param name="jobQueueId">The job queue UUID holding the lock.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IBatchLockRepository.GetActiveLockAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets the current lock for a job, if one exists.
+            </summary>
+            <param name="jobName">The name of the job.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Interfaces.ICorrelationService">
+            <summary>
+            Contract for correlation ID management during batch job execution.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.ICorrelationService.GetCorrelationId">
+            <summary>
+            Gets the current correlation ID, or null when none is set.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.ICorrelationService.SetCorrelationId(System.String)">
+            <summary>
+            Sets the correlation ID for the current execution flow.
+            </summary>
+            <param name="correlationId">Correlation ID value.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.ICorrelationService.GenerateCorrelationId">
+            <summary>
+            Generates and stores a new correlation ID.
+            </summary>
+            <returns>The generated correlation ID.</returns>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Interfaces.IExecutionYearContext">
+            <summary>
+            Scoped execution context for FPS year selection during a batch job run.
+            Mirrors the API-side pattern where year is resolved once and consumed downstream.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Interfaces.IExecutionYearContext.FpsYear">
+            <summary>
+            Gets or sets the active FPS year for the current execution scope.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Interfaces.IExecutionYearContext.YearSource">
+            <summary>
+            Gets or sets the source used to resolve the current year value.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository">
+            <summary>
+            Repository for managing job execution records and history.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository.CreateExecutionRecordAsync(Apha.BatchJobs.Domain.Entities.JobExecutionRecord,System.Threading.CancellationToken)">
+            <summary>
+            Records the start of a job execution.
+            </summary>
+            <param name="record">The execution record to create.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The ID of the created execution record.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository.UpdateExecutionRecordAsync(Apha.BatchJobs.Domain.Entities.JobExecutionRecord,System.Threading.CancellationToken)">
+            <summary>
+            Updates an existing execution record.
+            </summary>
+            <param name="record">The execution record to update.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository.GetLastExecutionAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets the last execution record for a given job.
+            </summary>
+            <param name="jobName">The name of the job.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository.GetExecutionByJobExecutionIdAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Gets an execution record by its external execution identifier.
+            </summary>
+            <param name="jobExecutionId">External job execution id.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository.TryRequestCancellationAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Tries to persist an idempotent cancellation request keyed by job execution id.
+            </summary>
+            <param name="jobExecutionId">External job execution id.</param>
+            <param name="requestedBy">Identity that requested cancellation.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>
+            True when cancellation is newly requested; false when an existing request is already stored.
+            </returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository.UpsertCancellationRequestAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Creates a durable cancellation request when none exists.
+            </summary>
+            <param name="jobExecutionId">External job execution id.</param>
+            <param name="requestedBy">Identity that requested cancellation.</param>
+            <param name="source">Optional source channel (UI/API/system).</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>
+            True when request is newly persisted; false when request already exists.
+            </returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository.GetCancellationRequestAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Gets durable cancellation request details for a given execution id.
+            </summary>
+            <param name="jobExecutionId">External job execution id.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository.MarkCancellationConsumedAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Marks a durable cancellation request as consumed by a worker.
+            </summary>
+            <param name="jobExecutionId">External job execution id.</param>
+            <param name="consumedBy">Worker identity consuming the request.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Domain.Interfaces.IJobExecutionRepository.IsCancellationRequestedAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Returns true when a cancellation request exists for the given execution id.
+            </summary>
+            <param name="jobExecutionId">External job execution id.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:Apha.BatchJobs.Domain.Interfaces.IRecreateSummariesContext">
+            <summary>
+            Scoped execution context carrying the parameters supplied when
+            a RecreateSummaries job run is triggered.
+            Populated by the caller before the job handler executes.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Interfaces.IRecreateSummariesContext.Month">
+            <summary>
+            The FPS period month (equivalent to legacy <c>@Month</c>).
+            Valid range: 1–12.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Interfaces.IRecreateSummariesContext.Year">
+            <summary>
+            FPS year scoped for this execution.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Domain.Interfaces.IRecreateSummariesContext.TriggeredBy">
+            <summary>
+            Identity of the user or process that triggered this run.
+            Replaces <c>SYSTEM_USER</c> / <c>sp_Get_SP_No</c> from the legacy procedure.
+            Written into <c>recreatesummaries_log.userid</c>.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Context.ExecutionYearContext">
+            <summary>
+            Scoped holder for resolved execution year metadata.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Context.ExecutionYearContext.FpsYear">
+            <inheritdoc />
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Context.ExecutionYearContext.YearSource">
+            <inheritdoc />
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Context.RecreateSummariesContext">
+            <summary>
+            Scoped holder for RecreateSummaries run parameters.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Context.RecreateSummariesContext.#ctor">
+            <summary>
+            Initializes context from optional environment overrides.
+            Defaults remain month=1 and triggeredBy=system for backward compatibility.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Context.RecreateSummariesContext.Month">
+            <inheritdoc />
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Context.RecreateSummariesContext.Year">
+            <inheritdoc />
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Context.RecreateSummariesContext.TriggeredBy">
+            <inheritdoc />
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext">
+            <summary>
+            Database context for batch jobs fps schema.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions{Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext})">
+            <summary>
+            Initializes a new instance of the BatchJobsDbContext.
+            </summary>
+            <param name="options">DbContext configuration options.</param>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.BatchLocks">
+            <summary>
+            Gets or sets the batch locks table.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.TblJobMaster">
+            <summary>
+            Gets or sets the foundation job master table.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.TblJobStatus">
+            <summary>
+            Gets or sets the foundation job status table.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.TblJobQueue">
+            <summary>
+            Gets or sets the foundation job queue table.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.TblJobQueueLog">
+            <summary>
+            Gets or sets the foundation job queue log table.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.JobCancellationRequests">
+            <summary>
+            Gets or sets durable cancellation requests keyed by job execution id.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.ScheduledLoadRun">
+            <summary>
+            Gets or sets scheduled load run lifecycle rows.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.ScheduledLoadStepRun">
+            <summary>
+            Gets or sets scheduled load step audit rows.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.ScheduledLoadValidationResult">
+            <summary>
+            Gets or sets scheduled load validation result rows.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.FpsSourceProjectYear">
+            <summary>
+            Gets or sets source fixture rows for FPS year processing.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.FpsYearTotals">
+            <summary>
+            Gets or sets yearly totals rows.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.FpsYearArchive">
+            <summary>
+            Gets or sets archived yearly totals rows.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.FpsProjectAllCurrentYear">
+            <summary>
+            Gets or sets current year project snapshot rows.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext.OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <summary>
+            Configures the model for the database context.
+            </summary>
+            <param name="modelBuilder">The model builder.</param>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.FpsSourceProjectYearTable">
+            <summary>
+            EF entity for fps.fps_source_project_year.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.FpsYearTotalsTable">
+            <summary>
+            EF entity for fps.fps_year_totals.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.FpsYearArchiveTable">
+            <summary>
+            EF entity for fps.fps_year_archive.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.FpsProjectAllCurrentYearTable">
+            <summary>
+            EF entity for fps.fps_project_all_current_year.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.TblJobMaster">
+            <summary>
+            EF entity for fps.job_master.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.TblJobStatus">
+            <summary>
+            EF entity for fps.job_status.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.TblJobQueue">
+            <summary>
+            EF entity for fps.job_queue.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.TblJobQueueLog">
+            <summary>
+            EF entity for fps.job_queue_log.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.ScheduledLoadRunTable">
+            <summary>
+            EF entity for fps.scheduled_load_run.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.ScheduledLoadStepRunTable">
+            <summary>
+            EF entity for fps.scheduled_load_step_run.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.ScheduledLoadValidationResultTable">
+            <summary>
+            EF entity for fps.scheduled_load_validation_result.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Data.TblJobCancellationRequest">
+            <summary>
+            EF entity for fps.job_cancellation_request.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.InfrastructureMarker">
+            <summary>Assembly marker type for the Infrastructure layer. Used for assembly scanning.</summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.BatchLockRepository">
+            <summary>
+            Implementation of batch lock repository using EF Core.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.BatchLockRepository.#ctor(Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext,Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Infrastructure.Repositories.BatchLockRepository})">
+            <summary>
+            Initializes a new instance of the BatchLockRepository.
+            </summary>
+            <param name="context">The database context.</param>
+            <param name="logger">Optional logger for structured lock lifecycle events.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.BatchLockRepository.TryAcquireLockAsync(System.String,System.Guid,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.BatchLockRepository.ReleaseLockAsync(System.String,System.Guid,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.BatchLockRepository.GetActiveLockAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository">
+            <summary>
+            Implementation of job execution repository using EF Core.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository.#ctor(Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext,Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository})">
+            <summary>
+            Initializes a new instance of the JobExecutionRepository.
+            </summary>
+            <param name="context">The database context.</param>
+            <param name="logger">Optional logger for structured execution record events.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository.CreateExecutionRecordAsync(Apha.BatchJobs.Domain.Entities.JobExecutionRecord,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository.UpdateExecutionRecordAsync(Apha.BatchJobs.Domain.Entities.JobExecutionRecord,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository.GetLastExecutionAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository.GetExecutionByJobExecutionIdAsync(System.Guid,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository.TryRequestCancellationAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository.UpsertCancellationRequestAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository.GetCancellationRequestAsync(System.Guid,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository.MarkCancellationConsumedAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.JobExecutionRepository.IsCancellationRequestedAsync(System.Guid,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.EmailNotificationService">
+            <summary>
+            Implementation of IEmailNotificationService.
+            Sends email notifications on job failure.
+            Currently a stub; real SMTP integration to be implemented in next phase.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.EmailNotificationService.#ctor(Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Infrastructure.Repositories.MabArchive.EmailNotificationService},Microsoft.Extensions.Options.IOptions{Apha.BatchJobs.Domain.Configuration.MabArchiveSettings})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.EmailNotificationService"/> class.
+            </summary>
+            <param name="logger">Logger instance.</param>
+            <param name="settings">MABArchive settings options.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.EmailNotificationService.SendFailureNotificationAsync(System.String,System.String,System.String,System.DateTime,System.Threading.CancellationToken)">
+            <summary>
+            Sends a failure notification for a MABArchive execution.
+            </summary>
+            <param name="correlationId">Correlation identifier.</param>
+            <param name="jobName">Job name.</param>
+            <param name="errorMessage">Error message text.</param>
+            <param name="timestamp">Failure timestamp (UTC).</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService">
+            <summary>
+            Implementation of IMyFpsYearlyDataService.
+            Manages yearly FPS archive data operations (delete, load, refresh).
+            Contract: delete/load/refresh operations are designed to run inside the orchestration transaction
+            provided by the caller so the full year cycle remains atomic.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService.#ctor(Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext,Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService},System.Collections.Generic.IEnumerable{Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services.IMabArchiveLoader})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService"/> class.
+            </summary>
+            <param name="context">Batch jobs database context.</param>
+            <param name="logger">Logger instance.</param>
+            <param name="loaders">Registered MABArchive loaders in metadata-defined sequence.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService.IsYearAvailableAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Checks whether the supplied year exists in the fiscal year master table.
+            </summary>
+            <param name="year">Target year to verify.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>True if the year is available for processing.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService.DeleteYearDataAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Deletes archive data for the specified year across archive tables in dependency order.
+            Implements baseline SQL parity: full year-based wipe of archive dataset for the chosen year.
+            Must be executed inside the caller's orchestration transaction.
+            </summary>
+            <param name="year">Target year to delete.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Total rows deleted.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService.LoadYearDataAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Loads archive data for the specified year from FPS source tables.
+            Executes metadata-driven IMabArchiveLoader steps in baseline sequence order.
+            All inserts are insert-only (no upsert); delete-then-insert is the idempotency mechanism per Assumption A3.
+            Must be executed inside the caller's orchestration transaction.
+            </summary>
+            <param name="year">Target year to load.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Total rows loaded.</returns>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.MyFpsYearlyDataService.RefreshProjectAllOnlyAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Refreshes only the my_tlkpproject_all table for the specified year.
+            Must be executed inside the caller's orchestration transaction.
+            </summary>
+            <param name="year">Target year to refresh.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Rows affected in my_tlkpproject_all.</returns>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.ReloadFpsTotalsService">
+            <summary>
+            Implementation of IReloadFpsTotalsService.
+            Rebuilds FPS source totals before archive load.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.ReloadFpsTotalsService.#ctor(Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext,Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Infrastructure.Repositories.MabArchive.ReloadFpsTotalsService},Microsoft.Extensions.Options.IOptions{Apha.BatchJobs.Domain.Configuration.MabArchiveSettings})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.ReloadFpsTotalsService"/> class.
+            </summary>
+            <param name="context">Batch jobs database context.</param>
+            <param name="logger">Logger instance.</param>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.MabArchive.ReloadFpsTotalsService.RebuildSourceTotalsAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Rebuilds FPS source totals for the specified year.
+            </summary>
+            <param name="year">Target FPS year.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The number of rows inserted into fps.fpsyeartotals.</returns>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.IRecreateSummariesExecutionStep">
+            <summary>
+            Contract for a single executable RecreateSummaries step.
+            This abstraction supports the LINQ/EF Core orchestration pipeline.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.IRecreateSummariesExecutionStep.StepName">
+            <summary>Unique display name matching the legacy procedure name.</summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.IRecreateSummariesExecutionStep.ExecuteAsync(Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesExecutionContext,System.Threading.CancellationToken)">
+            <summary>
+            Executes the step using the supplied execution context.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.IRecreateSummariesStepCatalog">
+            <summary>
+            Builds the ordered step list for RecreateSummaries execution.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.IRecreateSummariesStepCatalog.BuildMandatorySteps(System.Int32,System.Int32,System.String)">
+            <summary>
+            Builds mandatory steps 1-14.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.IRecreateSummariesStepCatalog.BuildRefreshSteps(System.Int32)">
+            <summary>
+            Builds conditional refresh steps 15-17.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesExecutionContext">
+            <summary>
+            Shared execution context for RecreateSummaries steps.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesExecutionContext.#ctor(Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext,Npgsql.NpgsqlConnection)">
+            <summary>
+            Initializes a new execution context.
+            </summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesExecutionContext.DbContext">
+            <summary>EF database context for future LINQ-based step implementations.</summary>
+        </member>
+        <member name="P:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesExecutionContext.Connection">
+            <summary>Open PostgreSQL connection enrolled in orchestrator transaction.</summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesExecutionStepBase">
+            <summary>
+            Base class for .NET RecreateSummaries steps.
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesOrchestrator">
+             <summary>
+             Orchestrates the ordered execution of all RecreateSummaries steps inside a
+             single PostgreSQL transaction, implements the period-lock branch (Phase 6),
+             and collects per-step results for audit logging (Phase 8).
+            
+             Replaces the parent <c>sp_RecreateSummaries</c> orchestration procedure.
+             </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesOrchestrator.#ctor(Apha.BatchJobs.Infrastructure.Data.BatchJobsDbContext,Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.IRecreateSummariesStepCatalog,Microsoft.Extensions.Logging.ILogger{Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesOrchestrator})">
+            <summary>
+            Initializes a new instance of <see cref="T:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesOrchestrator"/>.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesOrchestrator.ExecuteAsync(System.String,System.Int32,System.Int32,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Executes steps 1–14 in order, reads the period-lock flag, and
+            conditionally executes steps 15–17, all within one transaction.
+            </summary>
+            <param name="correlationId">Correlation identifier for this execution.</param>
+            <param name="month">FPS period month (1–12).</param>
+            <param name="triggeredBy">Identity of the triggering user.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>Ordered list of <see cref="T:Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries.StepResult"/> for every step attempted.</returns>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries.RecreateSummariesStepCatalog">
+            <summary>
+            All 14 orchestration steps implemented in LINQ/EF Core (production-ready).
+            Replaces the legacy SQL-based sp_RecreateSummaries orchestration procedure.
+            Fully aligned with SQL baseline (parity testing: 5/5 tests passing).
+            </summary>
+        </member>
+        <member name="T:Apha.BatchJobs.Infrastructure.Services.CorrelationService">
+            <summary>
+            AsyncLocal-based correlation ID service.
+            </summary>
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Services.CorrelationService.GetCorrelationId">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Services.CorrelationService.SetCorrelationId(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Apha.BatchJobs.Infrastructure.Services.CorrelationService.GenerateCorrelationId">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

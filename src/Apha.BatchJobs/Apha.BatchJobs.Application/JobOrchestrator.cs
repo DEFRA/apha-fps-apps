@@ -86,6 +86,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         RunMode runMode,
         Guid jobExecutionId,
         string userId,
+        DateTime? requestedAtUtc = null,
         CancellationToken cancellationToken = default)
     {
         var startedAt = DateTime.UtcNow;
@@ -128,7 +129,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
             JobType = JobType.Unknown,
             RunMode = runMode,
             Status = JobStatus.Running,
-            StartedAt = startedAt
+            StartedAt = startedAt,
+            RequestedAtUtc = requestedAtUtc
         };
 
         int executionId = 0;

@@ -53,6 +53,11 @@ public sealed class JobExecutionRecord
     public required DateTime StartedAt { get; set; }
 
     /// <summary>
+    /// Timestamp when trigger was accepted by API and published to worker.
+    /// </summary>
+    public DateTime? RequestedAtUtc { get; set; }
+
+    /// <summary>
     /// Timestamp when execution completed.
     /// </summary>
     public DateTime? CompletedAt { get; set; }

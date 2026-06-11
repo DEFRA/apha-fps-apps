@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.DependencyInjection;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Microsoft.Extensions.Configuration;
@@ -64,7 +64,7 @@ public sealed class ServiceCollectionSetupTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123"
+                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD"
             })
             .Build();
 
@@ -83,7 +83,7 @@ public sealed class ServiceCollectionSetupTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123"
+                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD"
             })
             .Build();
 
@@ -103,7 +103,7 @@ public sealed class ServiceCollectionSetupTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123",
+                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD",
                 ["BatchJobs:MabArchiveImplementationMode"] = "Sql"
             })
             .Build();

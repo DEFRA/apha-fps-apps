@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
     jobid INTEGER NOT NULL,
     statusid INTEGER NOT NULL,
     requestedby VARCHAR(100) NOT NULL,
+    requested_at_utc TIMESTAMPTZ,
     startdatetime TIMESTAMPTZ NOT NULL,
     enddatetime TIMESTAMPTZ,
     errormessage VARCHAR(1000),

@@ -151,9 +151,6 @@ app.MapPost("/api/trigger", async (
 	{
 		if (!request.Month.HasValue || request.Month is < 1 or > 12)
 			return Results.BadRequest(new { accepted = false, reason = "month is required and must be in range 1..12 for RecreateSummaries." });
-
-		if (!request.Year.HasValue || request.Year is < 2000 or > 9999)
-			return Results.BadRequest(new { accepted = false, reason = "year is required and must be in range 2000..9999 for RecreateSummaries." });
 	}
 
 	if (route.RouteKind == JobRouteKind.ScheduledOnly)
@@ -189,15 +186,23 @@ app.MapPost("/api/trigger", async (
 			statusCode: StatusCodes.Status503ServiceUnavailable);
 	}
 
+	var effectiveRequestedBy = "sample-ui@local";
+	var effectiveParametersJson = request.ParametersJson;
+
+	if (string.Equals(route.JobName, "RecreateSummaries", StringComparison.OrdinalIgnoreCase)
+		&& request.Month.HasValue)
+	{
+		effectiveParametersJson = $"{{\"month\":\"2026-{request.Month.Value:D2}\"}}";
+	}
+
 	var response = await SendWithTransientRetriesAsync(
 		() => client.PostAsJsonAsync(
 			$"{baseUrl.TrimEnd('/')}/api/v1/batch-jobs/trigger",
 			new BatchTriggerRequest
 			{
 				JobName = route.JobName,
-				RequestedBy = string.IsNullOrWhiteSpace(request.RequestedBy) ? "sample-ui@local" : request.RequestedBy,
-				Month = request.Month,
-				Year = request.Year
+				RequestedBy = effectiveRequestedBy,
+				ParametersJson = effectiveParametersJson
 			},
 			cancellationToken),
 		cancellationToken);

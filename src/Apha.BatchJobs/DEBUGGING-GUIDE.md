@@ -66,8 +66,8 @@ dotnet build BatchJobs.sln
 # Run Worker with specific job
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 $env:BATCH_JOB_NAME = "HealthCheck"
-$env:PGPASSWORD = "admin123"
-$env:ConnectionStrings__BatchJobsConnectionString = "Host=localhost;Port=5432;Username=postgres;Password=admin123;Database=batch_jobs_foundation_db"
+$env:PGPASSWORD = "LOCAL_DB_PASSWORD"
+$env:ConnectionStrings__BatchJobsConnectionString = "Host=localhost;Port=5432;Username=postgres;Password=LOCAL_DB_PASSWORD;Database=batch_jobs_foundation_db"
 
 dotnet run --project Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj
 ```
@@ -93,8 +93,8 @@ dotnet run --project Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj
      ```
      ASPNETCORE_ENVIRONMENT=Development
      BATCH_JOB_NAME=HealthCheck
-     ConnectionStrings__BatchJobsConnectionString=Host=localhost;Port=5432;Username=postgres;Password=admin123;Database=batch_jobs_foundation_db
-     PGPASSWORD=admin123
+     ConnectionStrings__BatchJobsConnectionString=Host=localhost;Port=5432;Username=postgres;Password=LOCAL_DB_PASSWORD;Database=batch_jobs_foundation_db
+     PGPASSWORD=LOCAL_DB_PASSWORD
      ```
 
 4. **Start Database**
@@ -323,7 +323,7 @@ docker-compose logs worker
 
 ```powershell
 # Test connection
-$env:PGPASSWORD = "admin123"
+$env:PGPASSWORD = "LOCAL_DB_PASSWORD"
 psql -h localhost -U postgres -d batch_jobs_foundation_db -c "SELECT version();"
 
 # Check if seeded data exists

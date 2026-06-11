@@ -11,16 +11,13 @@ namespace Apha.BatchJobs.Api.Controllers;
 public sealed class JobStatusController : ControllerBase
 {
     private readonly IJobStatusService _statusService;
-    private readonly IJobDispatchService _jobDispatchService;
     private readonly ILogger<JobStatusController> _logger;
 
     public JobStatusController(
         IJobStatusService statusService,
-        IJobDispatchService jobDispatchService,
         ILogger<JobStatusController> logger)
     {
         _statusService = statusService;
-        _jobDispatchService = jobDispatchService;
         _logger = logger;
     }
 
@@ -175,43 +172,15 @@ public sealed class JobStatusController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Trigger(string jobName, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(jobName))
-            return BadRequest(new { error = "Job name is required." });
+        _logger.LogWarning(
+            "Apha.BatchJobs.Api trigger endpoint is disabled. Use canonical PACT/FPS trigger APIs instead | JobName={JobName}",
+            jobName);
 
-        _logger.LogInformation("Trigger requested for job: {JobName}", jobName);
-
-        JobStatusResult status;
-        try
+        return StatusCode(StatusCodes.Status410Gone, new
         {
-            status = await _statusService.GetStatusAsync(jobName, null, null, cancellationToken);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning("Unknown job in trigger request: {JobName} | {Message}", jobName, ex.Message);
-            return NotFound(new { error = $"Job '{jobName}' is not registered.", jobName });
-        }
-
-        if (status.IsRunning)
-        {
-            return Conflict(new
-            {
-                accepted = false,
-                reason = "Job is already running",
-                jobName,
-                jobQueueId = status.ActiveLock?.JobQueueId,
-                acquiredAt = status.ActiveLock?.AcquiredAt,
-                expiresAt = status.ActiveLock?.ExpiresAt
-            });
-        }
-
-        var jobExecutionId = await _jobDispatchService.RunBatchJobAsync(jobName, cancellationToken);
-
-        return Accepted(new
-        {
-            jobName,
-            jobExecutionId,
-            transport = "EventBridge",
-            acceptedAt = DateTime.UtcNow
+            accepted = false,
+            reason = "This trigger endpoint is retired. Use Apha.BatchJobs.Pact.Api or Apha.BatchJobs.Fps.Api canonical trigger endpoints.",
+            jobName
         });
     }
 }

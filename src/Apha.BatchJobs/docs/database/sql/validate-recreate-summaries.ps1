@@ -103,7 +103,7 @@ function Invoke-SqlStep {
     }
 
     # Execute via psql
-    $env:PGPASSWORD = "admin123"
+    $env:PGPASSWORD = "LOCAL_DB_PASSWORD"
     
     try {
         $output = & $PsqlPath -h $DbHost -p $DbPort -U $DbUser -d $DbName `
@@ -127,7 +127,7 @@ function Query-ResultsJson {
         [int]$FpsYear
     )
 
-    $env:PGPASSWORD = "admin123"
+    $env:PGPASSWORD = "LOCAL_DB_PASSWORD"
 
     # Query all key result tables
     $queries = @{

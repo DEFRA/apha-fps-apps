@@ -106,6 +106,35 @@ public sealed class JobOrchestratorTests
         Assert.Equal(42, result.ExecutionId);
     }
 
+    [Fact]
+    public async Task RunAsync_WhenRequestedAtUtcProvided_PassesRequestedAtUtcToCreateRecord()
+    {
+        // Arrange
+        JobExecutionRecord? capturedCreateRecord = null;
+        var requestedAtUtc = DateTime.UtcNow.AddMinutes(-1);
+
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("TestJob");
+
+        _factory.Create("TestJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("TestJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(
+                     Arg.Do<JobExecutionRecord>(r => capturedCreateRecord = r),
+                     Arg.Any<CancellationToken>())
+                 .Returns(42);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        // Act
+        var jobExecutionId = Guid.NewGuid();
+        await _orchestrator.RunAsync("TestJob", RunMode.Manual, jobExecutionId, "test-user", requestedAtUtc);
+
+        // Assert
+        Assert.NotNull(capturedCreateRecord);
+        Assert.Equal(requestedAtUtc, capturedCreateRecord!.RequestedAtUtc);
+    }
+
     // ─────────────────────────────────────────────────────────────
     // Lock already held — job must be skipped (not executed)
     // ─────────────────────────────────────────────────────────────

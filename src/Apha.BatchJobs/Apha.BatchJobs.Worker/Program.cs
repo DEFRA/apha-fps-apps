@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using Serilog;
+using System.Globalization;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -126,6 +127,18 @@ try
     var jobExecutionIdEnv = Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID")
         ?? Environment.GetEnvironmentVariable("BATCH_EXECUTION_ID");
     var requestedAtUtcEnv = Environment.GetEnvironmentVariable("BATCH_REQUESTED_AT_UTC");
+    var requestedAtUtc = ParseRequestedAtUtc(requestedAtUtcEnv, logger);
+    
+    // For scheduled jobs, default to current UTC time if BATCH_REQUESTED_AT_UTC was not provided.
+    // This captures the worker startup time and enables startup latency measurement.
+    if (requestedAtUtc == null && runMode == RunMode.Scheduled)
+    {
+        requestedAtUtc = DateTime.UtcNow;
+        logger.LogInformation(
+            "BATCH_REQUESTED_AT_UTC not provided for scheduled job; defaulting to worker startup time | DefaultRequestedAtUtc={DefaultRequestedAtUtc}",
+            requestedAtUtc);
+    }
+    
     var allowScheduledMabArchiveGeneratedExecutionId =
         runMode == RunMode.Scheduled
         && string.Equals(jobName, "MABArchive", StringComparison.OrdinalIgnoreCase);
@@ -182,7 +195,7 @@ try
         runMode,
         jobExecutionId,
         userId,
-        string.IsNullOrWhiteSpace(requestedAtUtcEnv) ? "n/a" : requestedAtUtcEnv);
+        requestedAtUtc?.ToString("O") ?? "n/a");
 
     // Cancel job execution only when the host is stopping.
     // Do not use GracefulShutdownWindowSeconds as a hard runtime cap.
@@ -212,7 +225,7 @@ try
             linkedCts.Token);
 
         var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
-        var result = await orchestrator.RunAsync(jobName, runMode, jobExecutionId, userId, linkedCts.Token);
+        var result = await orchestrator.RunAsync(jobName, runMode, jobExecutionId, userId, requestedAtUtc, linkedCts.Token);
 
         capturedJobQueueId = result.JobQueueId.ToString();
         capturedExecutionId = result.ExecutionId;
@@ -538,6 +551,28 @@ static bool ResolveStrictExecutionContractMode(IConfiguration configuration, boo
 
     // Safe default: strict outside local/development.
     return !isLocalOrDevelopment;
+}
+
+static DateTime? ParseRequestedAtUtc(string? requestedAtUtcRaw, Microsoft.Extensions.Logging.ILogger logger)
+{
+    if (string.IsNullOrWhiteSpace(requestedAtUtcRaw))
+    {
+        return null;
+    }
+
+    if (!DateTimeOffset.TryParse(
+            requestedAtUtcRaw,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+            out var parsedRequestedAtUtc))
+    {
+        logger.LogWarning(
+            "Ignoring invalid BATCH_REQUESTED_AT_UTC value | RequestedAtUtc={RequestedAtUtc}",
+            requestedAtUtcRaw);
+        return null;
+    }
+
+    return parsedRequestedAtUtc.UtcDateTime;
 }
 
 static async Task VerifyExecutionContractAsync(

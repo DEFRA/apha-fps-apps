@@ -16,6 +16,8 @@ public sealed class TriggerAttemptRecord
 
     public int? WorkerExitCode { get; init; }
 
+    public string? FailureReason { get; init; }
+
     public required DateTime StoredAtUtc { get; init; }
 }
 

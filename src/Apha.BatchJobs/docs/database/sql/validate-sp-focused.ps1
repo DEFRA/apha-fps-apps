@@ -34,7 +34,7 @@ Write-Host "Output:   $OutputDir"
 Write-Host "=========================================="
 Write-Host ""
 
-$env:PGPASSWORD = "admin123"
+$env:PGPASSWORD = "LOCAL_DB_PASSWORD"
 
 # Step 1: Delete FPS Totals
 Write-Host "[01/04] Deleting fpsyeartotals..."

@@ -108,7 +108,17 @@
     <p>
       <span class="badge">Owner: Batch Worker Architecture</span>
       <span class="badge">Integration: PACT API</span>
-      <span class="badge">Last Updated: 2026-06-04</span>
+      <span class="badge">Last Updated: 2026-06-11</span>
+    </p>
+
+    <p class="muted">
+      Alignment note: this handoff captures both current implementation behavior and target-state contract requirements.
+      Items explicitly marked target-state require API changes before formal cross-team sign-off.
+    </p>
+
+    <p class="muted">
+      Integration maturity note: this handoff does not require caller APIs to be full-fledged authenticated identity providers yet.
+      The required contract today is non-empty caller-supplied requestedBy plus deterministic jobExecutionId correlation.
     </p>
 
     <h2>1. Scope and Principles</h2>
@@ -166,7 +176,7 @@
         </tr>
         <tr>
           <td>POST</td>
-          <td>/api/v1/batch-jobs/{jobName}/cancel</td>
+          <td>/api/v1/batch-jobs/{jobName}/cancel (current), /api/v1/batch-jobs/{jobName}/{jobExecutionId}/cancel (target-state)</td>
           <td>Creates idempotent durable cancellation request and optionally kills local process in Local/Dev.</td>
           <td>PACT API + BatchJobs DB</td>
         </tr>
@@ -182,7 +192,8 @@
     <h3>3.1 Trigger</h3>
     <pre>{
   "jobName": "RecreateSummaries",
-  "requestedBy": "pact.user@defra.gov.uk"
+  "requestedBy": "pact.user@defra.gov.uk",
+  "parametersJson": "{\"month\":\"2026-06\"}"
 }</pre>
 
     <table>
@@ -204,8 +215,8 @@
         <tr>
           <td>requestedBy</td>
           <td>Request</td>
-          <td>Yes</td>
-          <td>Mandatory caller identity for audit and traceability. Request is rejected if missing or blank.</td>
+          <td>Yes (current)</td>
+          <td>Current handoff requirement is non-empty caller-supplied value. Caller API may map from authenticated identity when available.</td>
         </tr>
         <tr>
           <td>jobExecutionId</td>
@@ -240,6 +251,11 @@
   "message": "Trigger accepted for dispatch."
 }</pre>
 
+    <p class="muted">
+      jobExecutionId format note: current API emits compact GUID string (no hyphens). Worker accepts valid GUID in compact or dashed format.
+      Target-state external representation should be standardized to dashed GUID for contract readability.
+    </p>
+
     <p class="muted">Local debug responses may include worker process details, but those fields are not part of the production API contract.</p>
 
     <p>Trigger dispatch failure response (503 Service Unavailable):</p>
@@ -267,7 +283,7 @@
     <pre>GET /api/v1/batch-jobs/{jobName}/status?jobExecutionId={guid}</pre>
     <p>
       Status by jobExecutionId is the deterministic contract for user-facing tracking.
-      Latest-by-job-name is convenience/debug fallback and should not be used by PACT UI for deterministic execution tracking.
+      Missing or invalid jobExecutionId should be rejected for strict deterministic UI tracking.
     </p>
 
     <h3>3.4 HTTP Status Contract</h3>
@@ -330,7 +346,24 @@
     <p class="muted">
       Startup watchdog does not declare transport delivery exhaustion. That confirmation belongs to integration transport reconciliation.
       startupDeadlineUtc and startupSlaSeconds are included in status projection for explicit timeout interpretation.
+      Current startup SLA values are 600s in Production and 30s outside Production.
     </p>
+
+    <h2>4.3 Sign-off Gaps (Target-State)</h2>
+    <ul>
+      <li>Maintain deterministic status contract by rejecting missing/invalid jobExecutionId with 400 ValidationFailed for UI flows.</li>
+      <li>Implement Idempotency-Key contract for trigger acceptance deduplication.</li>
+      <li>Standardize external jobExecutionId representation to dashed GUID format.</li>
+      <li>Validate EventBridge source against approved values at startup to prevent config drift.</li>
+    </ul>
+
+    <h2>4.4 Caller Contract Minimums (Required for Handoff)</h2>
+    <ul>
+      <li>Caller API must provide non-empty requestedBy for trigger and cancel operations.</li>
+      <li>Caller API must return and preserve jobExecutionId for UI polling and cancellation.</li>
+      <li>Caller API must publish only approved EventBridge source values for this integration.</li>
+      <li>BatchWorker remains authoritative for execution state, locking, retries, and terminal outcomes.</li>
+    </ul>
 
     <h2>5. Responsibility Matrix</h2>
     <table>
@@ -652,15 +685,129 @@
         <tr>
           <td>Approved event producers only</td>
           <td>EventBridge source must be one of: fps.api, pact.api.</td>
-          <td>Legacy Apha.BatchJobs.Api dispatcher enforces source allow-list.</td>
-        </tr>
-        <tr>
-          <td>Legacy route gating</td>
-          <td>Disable legacy Apha.BatchJobs.Api trigger path outside Local/Development unless explicitly approved.</td>
-          <td>Guarded by BatchJobsApi:EnableLegacyDispatch (default false).</td>
+          <td>Canonical trigger APIs are Apha.BatchJobs.Pact.Api and Apha.BatchJobs.Fps.Api.</td>
         </tr>
       </tbody>
     </table>
+
+    <h3>9.5 Seed Script for fps.job_master and fps.job_status</h3>
+    <p>
+      Use this idempotent SQL to seed four manual/API jobs (MABArchive, RecreateSummaries, FECProcess, YearEnd)
+      and four lifecycle statuses (Pending, Running, Completed, Failed) per job.
+    </p>
+    <pre>BEGIN;
+
+-- 1) Seed job catalog rows (idempotent by jobname)
+INSERT INTO fps.job_master (jobname, frequency, note, timetolive)
+SELECT s.jobname, s.frequency, s.note, s.timetolive
+FROM (
+  VALUES
+    ('MABArchive', NULL::varchar(50), 'Manual/API trigger job', 3600),
+    ('RecreateSummaries', NULL::varchar(50), 'Manual/API trigger job', 3600),
+    ('FECProcess', NULL::varchar(50), 'Manual/API trigger job', 3600),
+    ('YearEnd', NULL::varchar(50), 'Manual/API trigger job', 3600)
+) AS s(jobname, frequency, note, timetolive)
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM fps.job_master jm
+  WHERE jm.jobname = s.jobname
+);
+
+-- 2) Seed per-job statuses (idempotent by jobid + status)
+INSERT INTO fps.job_status (jobid, status)
+SELECT jm.jobid, st.status
+FROM fps.job_master jm
+CROSS JOIN (
+  VALUES
+    ('Pending'),
+    ('Running'),
+    ('Completed'),
+    ('Failed')
+) AS st(status)
+WHERE jm.jobname IN ('MABArchive', 'RecreateSummaries', 'FECProcess', 'YearEnd')
+  AND NOT EXISTS (
+    SELECT 1
+    FROM fps.job_status js
+    WHERE js.jobid = jm.jobid
+      AND js.status = st.status
+  );
+
+COMMIT;</pre>
+    <p>Verification query:</p>
+    <pre>SELECT
+  jm.jobname,
+  COUNT(js.statusid) AS status_count,
+  STRING_AGG(js.status, ', ' ORDER BY js.status) AS statuses
+FROM fps.job_master jm
+LEFT JOIN fps.job_status js ON js.jobid = jm.jobid
+WHERE jm.jobname IN ('MABArchive', 'RecreateSummaries', 'FECProcess', 'YearEnd')
+GROUP BY jm.jobname
+ORDER BY jm.jobname;</pre>
+
+    <h3>9.6 Incoming Field Mapping and Timestamp Naming</h3>
+    <p>
+      The incoming trigger field <code>requestedAtUtc</code> is now persisted end-to-end and follows the same
+      database naming style as existing timestamp columns.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Incoming field</th>
+          <th>Worker env var</th>
+          <th>Domain property</th>
+          <th>DB column</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>jobExecutionId</td>
+          <td>BATCH_JOB_EXECUTION_ID</td>
+          <td>JobExecutionId</td>
+          <td>jobexecutionid</td>
+          <td>Primary correlation id for status polling.</td>
+        </tr>
+        <tr>
+          <td>jobName</td>
+          <td>BATCH_JOB_NAME</td>
+          <td>JobName</td>
+          <td>jobid (resolved via job_master)</td>
+          <td>Resolved by repository lookup from job name.</td>
+        </tr>
+        <tr>
+          <td>requestedBy</td>
+          <td>BATCH_REQUESTED_BY</td>
+          <td>UserId</td>
+          <td>requestedby</td>
+          <td>Caller-provided audit identity.</td>
+        </tr>
+        <tr>
+          <td>requestedAtUtc</td>
+          <td>BATCH_REQUESTED_AT_UTC</td>
+          <td>RequestedAtUtc</td>
+          <td>requested_at_utc</td>
+          <td>Persisted when present and parseable; otherwise null.</td>
+        </tr>
+        <tr>
+          <td>runMode</td>
+          <td>BATCH_RUN_MODE</td>
+          <td>RunMode</td>
+          <td>(derived behavior, no dedicated column)</td>
+          <td>Used for routing/validation, not stored in job_queue.</td>
+        </tr>
+        <tr>
+          <td>parametersJson</td>
+          <td>BATCH_JOB_PARAMETERS_JSON</td>
+          <td>(job-specific parsing)</td>
+          <td>(not stored in job_queue)</td>
+          <td>Consumed by handlers such as RecreateSummaries.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted">
+      Timestamp naming convention remains snake_case in persistence (<code>requested_at_utc</code>,
+      <code>created_at</code>, <code>updated_at</code>) and descriptive aliases in status read models.
+    </p>
 
     <h2>10. Stakeholder Summary</h2>
     <p>

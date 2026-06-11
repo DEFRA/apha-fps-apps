@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using Apha.BatchJobs.Pact.Api.Models;
 using Apha.BatchJobs.Pact.Api.Options;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 
 namespace Apha.BatchJobs.Pact.Api.Services;
 
@@ -13,15 +15,18 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<LocalWorkerProcessTriggerDispatcher> _logger;
     private readonly ITriggerAttemptStore _triggerAttemptStore;
+    private readonly IConfiguration _configuration;
 
     public LocalWorkerProcessTriggerDispatcher(
         IOptions<TriggerDispatchOptions> options,
         IWebHostEnvironment environment,
+        IConfiguration configuration,
         ITriggerAttemptStore triggerAttemptStore,
         ILogger<LocalWorkerProcessTriggerDispatcher> logger)
     {
         _options = options.Value;
         _environment = environment;
+        _configuration = configuration;
         _triggerAttemptStore = triggerAttemptStore;
         _logger = logger;
     }
@@ -148,7 +153,7 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
             await process.WaitForExitAsync();
             await Task.WhenAll(outputTask, errorTask);
 
-            await UpdateTriggerAttemptOnExitAsync(jobExecutionId, process.ExitCode);
+            await UpdateTriggerAttemptOnExitAsync(jobExecutionId, process.ExitCode, logFilePath);
 
             await writer.WriteLineAsync($"[{DateTime.UtcNow:O}] [SYS] Worker process exited with code {process.ExitCode}");
 
@@ -173,13 +178,15 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
         }
     }
 
-    private async Task UpdateTriggerAttemptOnExitAsync(string jobExecutionId, int exitCode)
+    private async Task UpdateTriggerAttemptOnExitAsync(string jobExecutionId, int exitCode, string logFilePath)
     {
         var existing = await _triggerAttemptStore.GetByJobExecutionIdAsync(jobExecutionId);
         if (existing is null)
         {
             return;
         }
+
+        var failureReason = exitCode == 0 ? null : TryExtractFailureReasonFromLog(logFilePath);
 
         var mappedStatus = exitCode switch
         {
@@ -199,8 +206,41 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
                 WorkerProcessLaunched = existing.WorkerProcessLaunched,
                 Status = mappedStatus,
                 WorkerExitCode = exitCode,
+                FailureReason = failureReason,
                 StoredAtUtc = DateTime.UtcNow
             });
+    }
+
+    private static string? TryExtractFailureReasonFromLog(string logFilePath)
+    {
+        try
+        {
+            if (!File.Exists(logFilePath))
+            {
+                return null;
+            }
+
+            var lines = File.ReadAllLines(logFilePath);
+            for (var i = lines.Length - 1; i >= 0; i--)
+            {
+                var line = lines[i];
+                if (line.Contains("FATAL ERROR:", StringComparison.OrdinalIgnoreCase))
+                {
+                    return line[(line.IndexOf("FATAL ERROR:", StringComparison.OrdinalIgnoreCase) + "FATAL ERROR:".Length)..].Trim();
+                }
+
+                if (line.Contains("Unhandled business/runtime exception:", StringComparison.OrdinalIgnoreCase))
+                {
+                    return line[(line.IndexOf("Unhandled business/runtime exception:", StringComparison.OrdinalIgnoreCase) + "Unhandled business/runtime exception:".Length)..].Trim();
+                }
+            }
+
+            return lines.Length > 0 ? lines[^1] : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static async Task PumpReaderAsync(StreamReader reader, StreamWriter writer, string streamTag, bool includeSqlLogs)

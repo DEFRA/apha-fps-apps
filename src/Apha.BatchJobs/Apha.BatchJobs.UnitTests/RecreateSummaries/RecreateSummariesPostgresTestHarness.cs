@@ -8,7 +8,7 @@ namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 
 internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123;Timeout=30";
+    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
     private readonly string _connectionString;
     private readonly NpgsqlConnection _connection;
     private readonly NpgsqlTransaction _transaction;

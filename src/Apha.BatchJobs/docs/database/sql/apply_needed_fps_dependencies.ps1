@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Continue'
-$env:PGPASSWORD = 'admin123'
+$env:PGPASSWORD = 'LOCAL_DB_PASSWORD'
 $psql = 'C:\Program Files\PostgreSQL\16\bin\psql.exe'
 Set-Location 'D:\Users\atos.user8\source\repos\apha-fps-apps-B-ScheduledJobs'
 

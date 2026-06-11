@@ -46,11 +46,12 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Register BatchJobs infrastructure and services
-var batchJobsConnectionString = builder.Configuration.GetConnectionString("BatchJobsConnectionString");
+var batchJobsConnectionString = builder.Configuration.GetConnectionString("FPSConnectionString")
+    ?? builder.Configuration.GetConnectionString("BatchJobsConnectionString");
 if (string.IsNullOrWhiteSpace(batchJobsConnectionString) || batchJobsConnectionString == "__REPLACE_VIA_ENV__")
 {
     throw new InvalidOperationException(
-        "ConnectionStrings:BatchJobsConnectionString is required. NoDb mode has been removed for PACT API.");
+        "ConnectionStrings:FPSConnectionString (or BatchJobsConnectionString) is required.");
 }
 
 var dbCommandTimeoutSeconds = builder.Configuration.GetValue<int?>("BatchJobs:DbCommandTimeoutSeconds") is int v && v > 0 ? v : 30;
@@ -288,36 +289,45 @@ var statusHandler = async (
     try
     {
         var hasRequestedJobExecutionId = !string.IsNullOrWhiteSpace(jobExecutionId);
+        if (!hasRequestedJobExecutionId)
+        {
+            return Results.BadRequest(new
+            {
+                error = new
+                {
+                    code = "ValidationFailed",
+                    reason = "jobExecutionId is required for deterministic tracking.",
+                    retryable = false
+                }
+            });
+        }
+
         var requestedJobExecutionIdIsValid = Guid.TryParse(jobExecutionId, out var correlatedExecutionId);
+        if (!requestedJobExecutionIdIsValid)
+        {
+            return Results.BadRequest(new
+            {
+                error = new
+                {
+                    code = "ValidationFailed",
+                    reason = "jobExecutionId must be a valid GUID.",
+                    retryable = false
+                }
+            });
+        }
 
         TriggerAttemptRecord? triggerAttempt = null;
 
-        if (hasRequestedJobExecutionId)
-        {
-            triggerAttempt = await triggerAttemptStore.GetByJobExecutionIdAsync(jobExecutionId!, cancellationToken);
-        }
+        triggerAttempt = await triggerAttemptStore.GetByJobExecutionIdAsync(jobExecutionId!, cancellationToken);
 
-        var execution = requestedJobExecutionIdIsValid
-            ? await executionRepository.GetExecutionByJobExecutionIdAsync(correlatedExecutionId, cancellationToken)
-            : await executionRepository.GetLastExecutionAsync(jobName, cancellationToken);
-
-        if (triggerAttempt is null)
-        {
-            triggerAttempt = await triggerAttemptStore.GetLatestByJobNameAsync(jobName, cancellationToken);
-        }
+        var execution = await executionRepository.GetExecutionByJobExecutionIdAsync(correlatedExecutionId, cancellationToken);
 
         object? startupWatchdog = null;
         var isRunning = false;
         var sourceOfTruth = "BatchJobs";
         var correlatedJobExecutionId = jobExecutionId;
-        var queryMode = requestedJobExecutionIdIsValid
-            ? "CorrelatedExecutionId"
-            : "LatestByJobNameFallback";
-        var fallbackReason = requestedJobExecutionIdIsValid
-            ? (string?)null
-            : hasRequestedJobExecutionId
-                ? "InvalidJobExecutionId"
-                : "MissingJobExecutionId";
+        var queryMode = "CorrelatedExecutionId";
+        string? fallbackReason = null;
 
         if (execution is not null)
         {
@@ -394,6 +404,7 @@ var statusHandler = async (
                 eventId = triggerAttempt.EventId,
                 triggerStatus = triggerAttempt.Status,
                 workerExitCode,
+                workerFailureReason = triggerAttempt.FailureReason,
                 triggerStore = triggerAttemptStore.StoreName
             };
 
@@ -444,7 +455,7 @@ var statusHandler = async (
             queryResolution = new
             {
                 mode = queryMode,
-                isFallback = string.Equals(queryMode, "LatestByJobNameFallback", StringComparison.Ordinal),
+                isFallback = false,
                 fallbackReason,
                 requestedJobExecutionId = jobExecutionId,
                 requestedJobExecutionIdIsValid

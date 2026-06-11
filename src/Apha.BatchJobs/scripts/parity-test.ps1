@@ -3,7 +3,7 @@ param([string[]]$Months = @('0','12'))
 $ErrorActionPreference = 'Continue'
 $root = 'D:\Users\atos.user8\source\repos\apha-fps-apps-C-Adhoc'
 $psql = 'C:\Program Files\PostgreSQL\16\bin\psql.exe'
-$env:PGPASSWORD = 'admin123'
+$env:PGPASSWORD = 'LOCAL_DB_PASSWORD'
 $pgBase = @('-h','localhost','-p','5432','-U','postgres','-d','postgres')
 
 function Invoke-Psql([string]$db, [string]$sql) {
@@ -36,7 +36,7 @@ function Run-Worker([string]$impl, [string]$connDb, [string]$month, [string]$log
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
     $env:BATCH_JOB_NAME = 'RecreateSummaries'
     $env:BATCH_RUN_MODE = 'Manual'
-    $env:ConnectionStrings__BatchJobsConnectionString = "Host=localhost;Port=5432;Username=postgres;Password=admin123;Database=$connDb"
+    $env:ConnectionStrings__BatchJobsConnectionString = "Host=localhost;Port=5432;Username=postgres;Password=LOCAL_DB_PASSWORD;Database=$connDb"
     $env:BatchJobs__RecreateSummariesImplementationMode = $impl
     $env:BATCH_RECREATE_SUMMARIES_MONTH = $month
     $env:BATCH_RECREATE_SUMMARIES_TRIGGERED_BY = 'parity-user'

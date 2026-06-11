@@ -8,7 +8,7 @@ namespace Apha.BatchJobs.UnitTests;
 
 public sealed class MyFpsYearlyDataServiceTests
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123;Timeout=30";
+    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
 
     [Fact]
     public void Constructor_WhenContextIsNull_ShouldThrowArgumentNullException()

@@ -67,7 +67,7 @@ Write-Host "Loaders:  $($loaderTargets.Count)"
 Write-Host "=========================================="
 
 $rows = @()
-$env:PGPASSWORD = "admin123"
+$env:PGPASSWORD = "LOCAL_DB_PASSWORD"
 
 try {
     foreach ($target in $loaderTargets) {

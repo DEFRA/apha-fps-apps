@@ -332,11 +332,6 @@
         <section class="main">
             <div class="card">
                 <div class="row">
-                    <label for="requestedBy">Requested By</label>
-                    <input id="requestedBy" value="sample-ui@local" />
-                </div>
-
-                <div class="row">
                     <label for="monthSelect">Month</label>
                     <select id="monthSelect">
                         <option value="1">1 - January</option>
@@ -344,7 +339,7 @@
                         <option value="3">3 - March</option>
                         <option value="4">4 - April</option>
                         <option value="5">5 - May</option>
-                        <option value="6">6 - June</option>
+                        <option value="6" selected>6 - June</option>
                         <option value="7">7 - July</option>
                         <option value="8">8 - August</option>
                         <option value="9">9 - September</option>
@@ -352,11 +347,6 @@
                         <option value="11">11 - November</option>
                         <option value="12">12 - December</option>
                     </select>
-                </div>
-
-                <div class="row">
-                    <label for="yearInput">Year</label>
-                    <input id="yearInput" type="number" min="2000" max="9999" value="2026" />
                 </div>
 
                 <div class="status-wrap">
@@ -774,6 +764,13 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                 } else if (watchdog && watchdog.projectedState) {
                     currentState = watchdog.projectedState;
                     metaText = `Startup watchdog state: ${currentState}`;
+                    if ((currentState || "").toLowerCase() === "workerprocessexited") {
+                        if (watchdog.workerFailureReason) {
+                            metaText = `${metaText} | ${watchdog.workerFailureReason}`;
+                        } else if (watchdog.workerExitCode !== null && watchdog.workerExitCode !== undefined) {
+                            metaText = `${metaText} | ExitCode=${watchdog.workerExitCode}`;
+                        }
+                    }
                 }
 
                 const key = mapApiStateToUiKey(currentState);
@@ -783,6 +780,9 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                     : "";
                 setState(stateKey, `${metaText}${fallbackSuffix}`);
                 addTimeline(`Status: ${currentState}${payload.sourceOfTruth ? ` (${payload.sourceOfTruth})` : ""}`);
+                if (watchdog && watchdog.workerFailureReason) {
+                    addTimeline(`Worker failure: ${watchdog.workerFailureReason}`);
+                }
 
                 if (queryResolution && queryResolution.isFallback) {
                     addTimeline(`Status query fallback active: ${queryResolution.fallbackReason || "NoCorrelation"}`);
@@ -862,11 +862,8 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             currentJobExecutionId = null;  // reset so no stale ID leaks into first poll
             cancelRequestedForCurrentRun = false;
 
-            const requestedBy = (document.getElementById("requestedBy").value || "sample-ui@local").trim();
             const monthRaw = document.getElementById("monthSelect").value;
-            const yearRaw = document.getElementById("yearInput").value;
             const month = Number.parseInt(monthRaw, 10);
-            const year = Number.parseInt(yearRaw, 10);
 
             if (!Number.isInteger(month) || month < 1 || month > 12) {
                 setState("failed", "Month must be between 1 and 12.");
@@ -875,16 +872,9 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                 return;
             }
 
-            if (!Number.isInteger(year) || year < 2000 || year > 9999) {
-                setState("failed", "Year must be between 2000 and 9999.");
-                isRunning = false;
-                addTimeline("Trigger blocked: invalid year.");
-                return;
-            }
-
             isRunning = true;
             setState("submitting", "Submitting trigger request...");
-            addTimeline(`Trigger submitted for ${JOB_NAME} by ${requestedBy} (month=${month}, year=${year})`);
+            addTimeline(`Trigger submitted for ${JOB_NAME} (month=${month})`);
 
             let response;
             let bodyText = "";
@@ -894,7 +884,7 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                 response = await fetch("/api/trigger?preferredApi=pact", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ jobName: JOB_NAME, requestedBy, month, year })
+                    body: JSON.stringify({ jobName: JOB_NAME, month })
                 });
 
                 bodyText = await response.text();
