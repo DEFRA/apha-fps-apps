@@ -1,4 +1,3 @@
-using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -16,7 +15,7 @@ using Newtonsoft.Json;
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
+    [Authorize(Roles = "PACTAdmin,PACTUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class PortfolioMaintenanceController : Controller
     {

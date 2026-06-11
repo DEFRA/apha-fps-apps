@@ -279,5 +279,55 @@ namespace Apha.PACT.Api.UnitTests.Controller.JobCodeControllerTest
         }
 
         #endregion
+
+        #region GetZtCodesAsync
+
+        [Fact]
+        public async Task GetZtCodesAsync_HappyPath_ReturnsOk()
+        {
+            var dtos = new List<JobCodeZtDto>
+            {
+                new() { JobCode = "ZT001", Description = "ZT Project 1" },
+                new() { JobCode = "ZT002", Description = "ZT Project 2" }
+            };
+            var mapped = new List<JobCodeZtRes>
+            {
+                new() { JobCode = "ZT001", Description = "ZT Project 1" },
+                new() { JobCode = "ZT002", Description = "ZT Project 2" }
+            };
+
+            _serviceMock.GetZtCodeLookupAsync().Returns(dtos);
+            _mapperMock.Map<IEnumerable<JobCodeZtRes>>(dtos).Returns(mapped);
+
+            var result = await _controller.GetZtCodesAsync();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetZtCodesAsync_EmptyList_ReturnsOkWithEmptyCollection()
+        {
+            var dtos = new List<JobCodeZtDto>();
+            var mapped = new List<JobCodeZtRes>();
+
+            _serviceMock.GetZtCodeLookupAsync().Returns(dtos);
+            _mapperMock.Map<IEnumerable<JobCodeZtRes>>(dtos).Returns(mapped);
+
+            var result = await _controller.GetZtCodesAsync();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetZtCodesAsync_ServiceThrows_PropagatesException()
+        {
+            _serviceMock.GetZtCodeLookupAsync().ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetZtCodesAsync());
+        }
+
+        #endregion
     }
 }

@@ -17,9 +17,8 @@ using Newtonsoft.Json;
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
     [Area("FPS")]
-    [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
-    [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
+    [Authorize(Roles = "FPSAdmin,FPSUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class ActualAnimalCostController : Controller
     {
         private readonly IMapper _mapper;

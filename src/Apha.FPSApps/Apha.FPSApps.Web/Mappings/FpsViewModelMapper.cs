@@ -66,6 +66,12 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Test Capability (FPS portfolio page — reuses PACT TestCapabilityDto)
             CreateMap<Apha.FPSApps.Web.Areas.FPS.Models.TestCapabilityItem, Apha.FPSApps.Application.Dtos.PACT.TestCapabilityDto>().ReverseMap();
+
+            // Plan Staff ZT Code
+            CreateMap<PlanStaffZTCodeItemViewModel, StaffJobViewDto>().ReverseMap();
+            CreateMap<PlanStaffZTCodeItemViewModel, StaffJobDto>()
+                .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
+                .ReverseMap();
         }
     }
 }
