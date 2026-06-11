@@ -18,5 +18,6 @@ namespace Apha.FPS.Core.Entities
         public decimal? ChargeRate { get; set; }
         public decimal? Fee { get; set; }
         public int? FpsYear { get; set; }
+        public string? UserEmail { get; set; }
     }
 }

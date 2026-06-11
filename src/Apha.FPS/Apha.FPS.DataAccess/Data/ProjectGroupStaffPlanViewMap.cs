@@ -54,6 +54,10 @@ namespace Apha.FPS.DataAccess.Data
 
             entity.Property(e => e.FpsYear)
                 .HasColumnName("fpsyear");
+
+            entity.Property(e => e.UserEmail)
+                .HasMaxLength(255)
+                .HasColumnName("useremail");
         }
     }
 }

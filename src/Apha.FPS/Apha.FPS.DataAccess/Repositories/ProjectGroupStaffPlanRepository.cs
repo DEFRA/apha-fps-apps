@@ -24,17 +24,11 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<PagedData<ProjectGroupStaffPlanView>> GetPagedAsync(PaginationParameters<string> query)
         {
-            // Restrict to project groups belonging to the logged-in user
-            var userProjectGroups = await _context.ProjectGroupViews
-                .AsNoTracking()
-                .Where(p => p.UserEmail != null && p.UserEmail.ToLower() == _requestContext.UserEmailId)
-                .Select(p => p.ProjectGroupName)
-                .Distinct()
-                .ToListAsync();
+            var userEmail = _requestContext.UserEmailId;
 
             var baseQuery = _context.ProjectGroupStaffPlanViews
                 .AsNoTracking()
-                .Where(x => userProjectGroups.Contains(x.ProjectGroup!));
+                .Where(x => x.UserEmail != null && x.UserEmail.ToLower() == userEmail);
 
             baseQuery = ApplyFilter(baseQuery, query.Filter);
             baseQuery = (IQueryable<ProjectGroupStaffPlanView>)ApplySorting(baseQuery, query.SortBy, query.Descending);
