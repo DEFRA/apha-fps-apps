@@ -223,5 +223,13 @@ namespace Apha.FPS.Application.Services
                 _mapper.Map<PaginationParameters<string>>(query), programNo, workTypeFilter);
             return _mapper.Map<PaginatedResult<ProjectProfitabilityDto>>(pagedResult);
         }
+
+        public async Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectGroupProfitabilityAsync(
+            QueryParameters<string> query, string projectGroup, string workTypeFilter)
+        {
+            var pagedResult = await _projectRepository.GetProjectGroupProfitabilityAsync(
+                _mapper.Map<PaginationParameters<string>>(query), projectGroup, workTypeFilter);
+            return _mapper.Map<PaginatedResult<ProjectProfitabilityDto>>(pagedResult);
+        }
     }
 }

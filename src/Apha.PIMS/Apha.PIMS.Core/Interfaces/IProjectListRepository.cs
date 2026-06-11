@@ -8,5 +8,6 @@ namespace Apha.PIMS.Core.Interfaces
         Task<PagedData<ProjectListView>> GetAllProjectsAsync(PaginationParameters<string> queryFilter, int showWhichProjects);
         Task<List<Projects>> GetYearlyDetailsByProjectAsync(string parentproject);
         Task<List<ProjectListView>> GetAllProjectsForDropDownAsync();
+        Task<List<ProjectListMilestone>> GetAllProjectsForMilestone();
     }
 }

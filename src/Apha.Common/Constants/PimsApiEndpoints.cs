@@ -5,6 +5,7 @@ namespace Apha.Common.Constants
         // Project List
         public const string GetAllProjects = "api/v1/projectlist";
         public const string GetAllProjectsList = "api/v1/projectlist/AllProjectsList";
+        public const string GetAllProjectsMilestone = "api/v1/projectlist/AllProjectsMilestone";
         public const string GetFpsProjectById = "api/v1/projectlist/{0}/fps";
         public const string GetProposedProjectById = "api/v1/projectlist/{0}/proposed";
         public const string GetYearlyDetailsByProject = "api/v1/projectlist/{0}/yearly";
@@ -45,5 +46,23 @@ namespace Apha.Common.Constants
         public const string GetMonthlyPactData = "api/v1/projectyearcosts/{0}/{1}/monthlypactdata";
         public const string GetFpsYearTotals = "api/v1/projectyearcosts/{0}/{1}/fpsyeartotals";
         public const string ExportProjectYearCostsToExcel = "api/v1/projectyearcosts/{0}/{1}/export-excel";
+
+        // Milestones
+        public const string GetAllMilestones = "api/v1/milestone";
+        public const string GetMilestone = "api/v1/milestone/{0}/milestones/{1}";
+        public const string SaveMilestone = "api/v1/milestone/{0}/milestones";
+        public const string UpdateMilestone = "api/v1/milestone/{0}/milestones/{1}";
+        public const string DeleteMilestone = "api/v1/milestone/{0}/milestones/{1}";
+        public const string UpdateFormRequired = "api/v1/milestone/{0}/formrequired";
+        public const string GetAllProjectsForMilestone = "api/v1/projectlist/AllProjectsMilestone";
+
+        // Milestone Types
+        public const string GetMilestoneTypes = "api/v1/milestone/milestonetypes";
+
+        // Milestone Form Dates
+        public const string GetAllMilestoneFormDates = "api/v1/milestone/{0}/formdates";
+        public const string GetMilestoneFormDates = "api/v1/milestone/{0}/formdates/{1}";
+        public const string SaveMilestoneFormDates = "api/v1/milestone/{0}/formdates";
+        public const string DeleteMilestoneFormDates = "api/v1/milestone/{0}/formdates/{1}";
     }
 }

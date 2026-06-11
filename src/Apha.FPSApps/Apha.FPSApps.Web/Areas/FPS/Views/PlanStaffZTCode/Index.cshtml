@@ -1,0 +1,90 @@
+@using Apha.FPSApps.Web.Areas.FPS.Models
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model PlanStaffZTCodePageViewModel
+
+@{
+    ViewData["Title"] = "Plan Staff ZT Codes";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-bottom-3">
+    <div class="govuk-grid-column-full govuk-!-padding-left-0 govuk-!-padding-right-0">
+        <h1 class="govuk-heading-m sup_border-bottom govuk-!-padding-2">
+            Plan Staff Against ZT Codes
+        </h1>
+        <div class="govuk-grid-column-full">
+            <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0 isFloatLeft isListWidth">
+                <div class="govuk-summary-list__row isFloatLeft  govuk-!-margin-right-2">
+                    <dt class="isFloatLeft govuk-!-margin-right-1">Staff Name</dt>
+                    <dd class="isFloatLeft" id="staff-name">@Model.Name</dd>
+                </div>
+                <div class="govuk-summary-list__row isFloatLeft">
+                    <dt class="isFloatLeft govuk-!-margin-right-1">Grade</dt>
+                    <dd class="isFloatLeft" id="staff-grade">@Model.WorkGroupGrade</dd>
+                </div>
+            </dl>
+            <a href="JavaScript:history.back()" class="govuk-back-link isFloatRight">Back</a>
+        </div>
+    </div>
+</div>
+
+
+<div class="govuk-grid-row govuk-!-margin-top-3 sup_margin_left_right_0">
+    <div class="govuk-grid-column-three-quarters">
+        <div id="@($"gridContainer_{Model.GridConfig.GridId}")">
+            @await Html.PartialAsync("_DataGrid", Model.GridConfig)
+        </div>
+    </div>
+
+    <div class="govuk-grid-column-one-quarter isTimeSummary">
+        <div class="govuk-summary-card govuk-!-margin-bottom-0">
+            <div class="govuk-summary-card__title-wrapper">
+                <h2 class="govuk-summary-card__title">Time Summary</h2>
+            </div>
+            <div class="govuk-summary-card__content">
+                <dl class="govuk-summary-list govuk-!-margin-bottom-0">
+                    <div class="govuk-summary-list__row">
+                        <dt class="govuk-summary-list__key">HrsPaid</dt>
+                        <dd class="govuk-summary-list__value" id="ts-hrspaid">@Model.HrsPaid</dd>
+                    </div>
+                    <div class="govuk-summary-list__row">
+                        <dt class="govuk-summary-list__key">Leave</dt>
+                        <dd class="govuk-summary-list__value" id="ts-leave">@Model.Leave</dd>
+                    </div>
+                    <div class="govuk-summary-list__row">
+                        <dt class="govuk-summary-list__key">SickSpecial</dt>
+                        <dd class="govuk-summary-list__value" id="ts-sickspecial">@Model.SickSpecial</dd>
+                    </div>
+                    <div class="govuk-summary-list__row">
+                        <dt class="govuk-summary-list__key">HrsAvail</dt>
+                        <dd class="govuk-summary-list__value" id="ts-hrsavail">@Model.HrsAvail</dd>
+                    </div>
+                    <div class="govuk-summary-list__row">
+                        <dt class="govuk-summary-list__key">Planned Admin [ZT]</dt>
+                        <dd class="govuk-summary-list__value" id="ts-planned-zt">@Model.PlannedAdminZT</dd>
+                    </div>
+                    <div class="govuk-summary-list__row">
+                        <dt class="govuk-summary-list__key">Free for Chargeable Work</dt>
+                        <dd class="govuk-summary-list__value" id="ts-free">@Model.FreeForChargeableWork</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/fps_js/PlanStaffZTCode.js"></script>
+    <script>
+        ZtPlanConfig.staffId = '@Html.Raw(Model.StaffId)';
+        ZtPlanConfig.summaryUrl = '@Url.Action("GetStaffSummary", "PlanStaffZTCode", new { area = "FPS" })';
+        ZtPlanConfig.createUrl = '@Url.Action("Create", "PlanStaffZTCode", new { area = "FPS" })';
+        ZtPlanConfig.editUrl = '@Url.Action("Edit", "PlanStaffZTCode", new { area = "FPS" })';
+        ZtPlanConfig.deleteUrl = '@Url.Action("Delete", "PlanStaffZTCode", new { area = "FPS" })';
+        ZtPlanConfig.gridId = '@Model.GridConfig.GridId';
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

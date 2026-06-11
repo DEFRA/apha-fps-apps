@@ -37,6 +37,12 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<ProjectMonthFinal> ProjectMonthFinals { get; set; }
         public virtual DbSet<FpsYearTotal> FpsYearTotals { get; set; }
 
+        public virtual DbSet<Milestone> Milestones { get; set; }
+        public virtual DbSet<MilestoneFormDates> MilestoneFormDates { get; set; }
+        public virtual DbSet<MilestoneType> MilestoneTypes { get; set; }
+        public virtual DbSet<LogMilestone> LogMilestones { get; set; }
+
+        public virtual DbSet<StagingMilestone> StagingMilestones { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("en_GB.utf8");           
@@ -62,7 +68,11 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectStaffPlanMap());
             modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
             modelBuilder.ApplyConfiguration(new FpsYearTotalMap());
-
+            modelBuilder.ApplyConfiguration(new MilestoneMap());
+            modelBuilder.ApplyConfiguration(new MilestoneTypeMap());
+            modelBuilder.ApplyConfiguration(new MilestoneFormDatesMap());
+            modelBuilder.ApplyConfiguration(new LogMilestoneMap());
+            modelBuilder.ApplyConfiguration(new StagingMilestoneMap());
         }
     }
 }

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
 {
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [Route("api/v{version:apiVersion}/status")]
     [ApiController]
     [ApiVersion("1.0")]

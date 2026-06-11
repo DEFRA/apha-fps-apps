@@ -41,16 +41,48 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public async Task<ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>> GetStaffWorkgroupLookupAsync()
         {
             var response = await _http.GetAsync<IEnumerable<StaffWorkgroupLookupRes>>(FpsApiEndpoints.GetStaffWorkgroupLookup);
-
             if (response.Success)
-            {
                 return _mapper.Map<ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>>(response);
-            }
-            else
-            {
-                var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>>(response);
-                return ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>>(response);
+            return ApiResponseDto<IEnumerable<StaffWorkgroupLookupDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<StaffWorkgroupLookupDto>> GetStaffSummaryByIdAsync(string staffId)
+        {
+            var response = await _http.GetAsync<StaffWorkgroupLookupRes>(string.Format(FpsApiEndpoints.GetStaffSummaryById, staffId));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<StaffWorkgroupLookupDto>>(response);
+            var responseDto = _mapper.Map<ApiResponseDto<StaffWorkgroupLookupDto>>(response);
+            return ApiResponseDto<StaffWorkgroupLookupDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<double>> GetZtTotalHoursByStaffIdAsync(string staffId)
+        {
+            var response = await _http.GetAsync<double>(string.Format(FpsApiEndpoints.GetZtTotalHoursByStaffId, staffId));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<double>>(response);
+            var responseDto = _mapper.Map<ApiResponseDto<double>>(response);
+            return ApiResponseDto<double>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<StaffJobZtViewDto>>> GetZtStaffJobsByStaffIdPagedAsync(QueryParameters<string> query, string staffId)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetZtStaffJobsByStaffIdPaged, query);
+            url = QueryStringHelper.AddQueryString(url, new { staffId });
+            var response = await _http.GetAsync<List<StaffJobZtViewRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<StaffJobZtViewDto>>>(response);
+            var responseDto = _mapper.Map<ApiResponseDto<List<StaffJobZtViewDto>>>(response);
+            return ApiResponseDto<List<StaffJobZtViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<StaffJobZtViewDto>> GetZtStaffJobDetailsByIdAsync(string staffId, string jobCode)
+        {
+            var response = await _http.GetAsync<StaffJobZtViewRes>(string.Format(FpsApiEndpoints.GetZtStaffJobDetailsById, staffId, jobCode));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<StaffJobZtViewDto>>(response);
+            var responseDto = _mapper.Map<ApiResponseDto<StaffJobZtViewDto>>(response);
+            return ApiResponseDto<StaffJobZtViewDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<decimal?>> GetStaffChargeRate(string staffId, string jobcode)

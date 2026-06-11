@@ -1,4 +1,3 @@
-using Apha.Common.Contracts;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;

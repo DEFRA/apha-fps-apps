@@ -12,7 +12,7 @@ namespace Apha.PACT.Api.Controllers
     /// Exposes endpoints under <c>api/v{version}/calendermonth</c> and requires
     /// the <c>API-PACTUser</c> or <c>API-PACTAdmin</c> role.
     /// </summary>
-    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin, API-PACTShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/calendermonth")]
