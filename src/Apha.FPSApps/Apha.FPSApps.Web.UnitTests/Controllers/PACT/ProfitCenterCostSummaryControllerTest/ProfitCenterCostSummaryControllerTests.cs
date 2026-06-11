@@ -73,9 +73,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 new() { ProfitCentre = TestProfitCentre1, Cost = 1000m },
                 new() { ProfitCentre = TestProfitCentre2, Cost = 2000m }
             };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 2, 1, 10);
             _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), monthNumber ?? 0.0)
-                .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult));
+                .Returns(ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData));
 
             _mapper.Map<List<ProfitCenterCostItem>>(Arg.Any<List<ProfitCentreCostDto>>())
                 .Returns(costData.Select(c => new ProfitCenterCostItem
@@ -296,9 +295,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             {
                 new() { ProfitCentre = TestProfitCentre1, Cost = 1500m }
             };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 1, 1, 10);
             _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), 0.0)
-                .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult));
+                .Returns(ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData));
 
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
@@ -330,13 +328,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             {
                 new() { ProfitCentre = TestProfitCentre1, Cost = 1000m }
             };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 15, 2, 5);
+            var pagination = new PaginationDto { TotalRecords = 15, PageNumber = 2, PageSize = 5 };
             _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), 0.0)
-                .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult));
+                .Returns(ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData, pagination));
 
             SetupDefaultMapper();
             _mapper.Map<List<ProfitCenterCostItem>>(Arg.Any<List<ProfitCentreCostDto>>())
                 .Returns([new ProfitCenterCostItem { ProfitCentre = TestProfitCentre1, Cost = 1000m }]);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel { TotalRecords = 15, PageNumber = 2, PageSize = 5 });
 
             // Act
             var result = await _controller.LoadProfitCenterCostGrid(request, 0.0);
@@ -358,7 +358,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
             // Arrange
             var request = new PaginationFilter<string> { Filter = DefaultFilterJson };
             _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), 0.0)
-                .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(null!));
+                .Returns(ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(null!));
             SetupDefaultMapper();
 
             // Act
@@ -415,7 +415,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProfitCenterCostSummaryCon
                 Descending = false
             };
             _profitCentreService.GetPagedProfitCenterCostSummaryAsync(Arg.Any<QueryParameters<string>>(), 0.0)
-                .Returns(ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(null!));
+                .Returns(ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(null!));
             SetupDefaultMapper();
 
             // Act

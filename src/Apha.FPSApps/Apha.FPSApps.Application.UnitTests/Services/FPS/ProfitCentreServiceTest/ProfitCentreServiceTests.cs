@@ -411,8 +411,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
                 new() { ProfitCentre = "PC01", Cost = 1000m },
                 new() { ProfitCentre = "PC02", Cost = 2000m }
             };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 2, 1, 10);
-            var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
+            var pagination = new PaginationDto { TotalRecords = 2, PageNumber = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData, pagination);
 
             _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
@@ -423,8 +423,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(2, result.Data.data.Count());
-            Assert.Equal(2, result.Data.TotalCount);
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(2, result?.Pagination?.TotalRecords);
             await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(query, 0.0);
         }
 
@@ -438,8 +438,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             {
                 new() { ProfitCentre = "PC01", Cost = 1500m }
             };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 1, 1, 10);
-            var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData);
 
             _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(expectedResponse);
 
@@ -458,8 +457,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>([], 0, 1, 10);
-            var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse([]);
 
             _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
@@ -482,7 +480,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             {
                 new() { Message = "API Error", Code = "API_ERROR" }
             };
-            var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.FailureResponse(errors, new ApiMetaDto());
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.FailureResponse(errors, new ApiMetaDto());
 
             _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
@@ -502,8 +500,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>([], 0, 1, 10);
-            var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse([]);
 
             _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
@@ -513,9 +510,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             // Assert
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Empty(result.Data.data);
-            Assert.Equal(0, result.Data.TotalCount);
-        }
+            Assert.Empty(result.Data);
+       }
 
         [Fact]
         public async Task GetPagedProfitCenterCostSummaryAsync_PassesPaginationParameters()
@@ -528,8 +524,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
                 SortBy = "Cost",
                 Descending = true
             };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>([], 0, 2, 5);
-            var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse([]);
 
             _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
@@ -556,8 +551,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
                 new() { ProfitCentre = "PC03", Cost = 3000m },
                 new() { ProfitCentre = "PC04", Cost = 4000m }
             };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 10, 2, 2);
-            var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
+            var pagination = new PaginationDto { TotalRecords = 10, PageNumber = 2, PageSize = 2 };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData, pagination);
 
             _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
@@ -567,10 +562,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             // Assert
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(2, result.Data.data.Count());
-            Assert.Equal(10, result.Data.TotalCount);
-            Assert.Equal(2, result.Data.PageNumber);
-            Assert.Equal(2, result.Data.PageSize);
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(10, result?.Pagination?.TotalRecords);
+            Assert.Equal(2, result?.Pagination?.PageNumber);
+            Assert.Equal(2, result?.Pagination?.PageSize);
         }
 
         [Fact]
@@ -579,8 +574,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             // Arrange
             const double monthNumber = 0.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>([], 0, 1, 10);
-            var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse([]);
 
             _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(expectedResponse);
 
@@ -600,8 +594,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
             // Arrange
             const double monthNumber = 12.0;
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>([], 0, 1, 10);
-            var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse([]);
 
             _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(expectedResponse);
 
@@ -625,8 +618,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
                 new() { ProfitCentre = "PC01", Cost = 1234.56m },
                 new() { ProfitCentre = "PC02", Cost = 7890.12m }
             };
-            var paginatedResult = new PaginatedResult<ProfitCentreCostDto>(costData, 2, 1, 10);
-            var expectedResponse = ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(paginatedResult);
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData);
 
             _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
 
@@ -635,7 +627,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
 
             // Assert
             Assert.True(result.Success);
-            var dataList = result.Data!.data.ToList();
+            var dataList = result.Data!.ToList();
             Assert.Equal(1234.56m, dataList[0].Cost);
             Assert.Equal(7890.12m, dataList[1].Cost);
         }

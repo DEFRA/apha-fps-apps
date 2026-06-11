@@ -252,7 +252,7 @@ namespace Apha.FPS.DataAccess.Repositories
             // Fetch data with basic filtering, then perform calculation in memory
             var query = from tcc in _dbContext.TimeCostCalcs
                         join wg in _dbContext.Workgroups on tcc.WorkGroup equals wg.WorkgroupName
-                        where tcc.Class == "Charge" && tcc.Month == monthNumber
+                        where tcc.Class == "Charge" && tcc.Month <= monthNumber
                         select new
                         {
                             wg.ProfitCentre,

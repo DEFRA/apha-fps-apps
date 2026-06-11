@@ -140,7 +140,7 @@ namespace Apha.FPS.Api.Controllers
         /// </summary>
         /// <param name="query">Pagination and sorting parameters.</param>
         /// <param name="monthNumber">Month number to filter the cost calculations.</param>
-        [HttpGet("costsummary/paged")]
+        [HttpGet("paged/costsummary")]
         public async Task<IActionResult> GetPagedProfitCenterCostSummary(
             [FromQuery] QueryParameters<string> query,
             [FromQuery] double monthNumber)

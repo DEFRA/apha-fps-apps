@@ -11,8 +11,8 @@ using Microsoft.Identity.Web;
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    [Authorize(Roles = "PACTAdmin,PACTUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class ProfitCenterCostSummaryController : Controller
     {
         private readonly IMapper _mapper;
@@ -95,28 +95,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var query = _mapper.Map<QueryParameters<string>>(request);
             var response = await _profitCentreService.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
 
-            grid.Data = response.Data != null ? _mapper.Map<List<ProfitCenterCostItem>>(response.Data.data) : [];
+            grid.Data = response.Data != null ? _mapper.Map<List<ProfitCenterCostItem>>(response.Data) : [];
+            grid.Pagination = response.Pagination != null
+                       ? _mapper.Map<PaginationModel>(response.Pagination)
+                       : new PaginationModel();
 
-            // Extract pagination from PaginatedResult (response.Data)
-            if (response.Data != null)
-            {
-                grid.Pagination = new PaginationModel
-                {
-                    PageNumber = response.Data.PageNumber,
-                    PageSize = response.Data.PageSize,
-                    TotalRecords = response.Data.TotalCount,
-                    SortColumn = request.SortBy,
-                    SortDirection = request.Descending
-                };
-            }
-            else
-            {
-                grid.Pagination = new PaginationModel
-                {
-                    SortColumn = request.SortBy,
-                    SortDirection = request.Descending
-                };
-            }
+             grid.Pagination.SortColumn = request.SortBy;
+             grid.Pagination.SortDirection = request.Descending;
 
             // Update BindGridUrl with monthNumber
             grid.BindGridUrl = monthNumber == 0 

@@ -496,7 +496,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
                 new() { ProfitCentre = "PC01", Cost = 1000m },
                 new() { ProfitCentre = "PC02", Cost = 2000m }
             };
-            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(dtoList);
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(dtoList,
+                new PaginationDto { TotalRecords = 2, PageNumber = 1, PageSize = 10 });
 
             _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
@@ -508,10 +509,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(2, result.Data.data.Count());
-            Assert.Equal(2, result.Data.TotalCount);
-            Assert.Equal(1, result.Data.PageNumber);
-            Assert.Equal(10, result.Data.PageSize);
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(2, result?.Pagination?.TotalRecords);
+            Assert.Equal(1, result?.Pagination?.PageNumber);
+            Assert.Equal(10, result?.Pagination?.PageSize);
         }
 
         [Fact]
@@ -580,7 +581,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
                 Pagination = null
             };
             var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(
-                new List<ProfitCentreCostDto> { new() { ProfitCentre = "PC01", Cost = 1000m } });
+                new List<ProfitCentreCostDto> { new() { ProfitCentre = "PC01", Cost = 1000m } },
+                new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 0 });
 
             _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
@@ -590,9 +592,9 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal(2, result.Data!.PageNumber);
-            Assert.Equal(5, result.Data.PageSize);
-            Assert.Equal(0, result.Data.TotalCount);
+            Assert.Equal(2, result?.Pagination?.PageNumber);
+            Assert.Equal(5, result?.Pagination?.PageSize);
+            Assert.Equal(0, result?.Pagination?.TotalRecords);
         }
 
         [Fact]
@@ -606,7 +608,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
                 Data = new List<ProfitCentreCostRes>(),
                 Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalPages = 0 }
             };
-            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(new List<ProfitCentreCostDto>());
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(new List<ProfitCentreCostDto>(),
+                new PaginationDto { TotalRecords = 0, PageNumber = 1, PageSize = 10 });
 
             _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
@@ -616,8 +619,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
 
             // Assert
             Assert.True(result.Success);
-            Assert.Empty(result.Data!.data);
-            Assert.Equal(0, result.Data.TotalCount);
+            Assert.Empty(result.Data!);
+            Assert.Equal(0, result?.Pagination?.TotalRecords);
         }
 
         [Fact]
@@ -641,7 +644,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
                 new() { ProfitCentre = "PC03", Cost = 3000m },
                 new() { ProfitCentre = "PC04", Cost = 4000m }
             };
-            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(dtoList);
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(dtoList,
+                new PaginationDto { TotalRecords = 10, PageNumber = 2, PageSize = 2 });
 
             _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
@@ -651,10 +655,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
 
             // Assert
             Assert.True(result.Success);
-            Assert.Equal(2, result.Data!.data.Count());
-            Assert.Equal(10, result.Data.TotalCount);
-            Assert.Equal(2, result.Data.PageNumber);
-            Assert.Equal(2, result.Data.PageSize);
+            Assert.Equal(2, result.Data!.Count());
+            Assert.Equal(10, result?.Pagination?.TotalRecords);
+            Assert.Equal(2, result?.Pagination?.PageNumber);
+            Assert.Equal(2, result?.Pagination?.PageSize);
         }
 
         [Fact]
@@ -671,7 +675,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
             var mappedDto = new ApiResponseDto<List<ProfitCentreCostDto>>
             {
                 Success = true,
-                Data = null
+                Data = []
             };
 
             _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
@@ -682,7 +686,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
 
             // Assert
             Assert.True(result.Success);
-            Assert.Empty(result.Data!.data);
+            Assert.Empty(result.Data!);
         }
 
         [Fact]

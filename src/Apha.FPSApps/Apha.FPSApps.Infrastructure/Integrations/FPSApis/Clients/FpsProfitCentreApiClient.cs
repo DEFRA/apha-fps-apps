@@ -144,7 +144,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<bool>.FailureResponse(failureDto.Errors, failureDto.Meta);
         }
 
-        public async Task<ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>> GetPagedProfitCenterCostSummaryAsync(
+        public async Task<ApiResponseDto<List<ProfitCentreCostDto>>> GetPagedProfitCenterCostSummaryAsync(
             QueryParameters<string> query, double monthNumber)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProfitCenterCostSummary, query);
@@ -154,18 +154,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
             if (response.Success)
             {
-                var dto = _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(response);
-                var pagination = response.Pagination;
-                var result = new PaginatedResult<ProfitCentreCostDto>(
-                    dto.Data ?? new List<ProfitCentreCostDto>(),
-                    pagination?.TotalRecords ?? 0,
-                    pagination?.PageNumber ?? query.Page,
-                    pagination?.PageSize ?? query.PageSize);
-                return ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.SuccessResponse(result);
+                return _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(response);
             }
 
             var failDto = _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(response);
-            return ApiResponseDto<PaginatedResult<ProfitCentreCostDto>>.FailureResponse(failDto.Errors, failDto.Meta);
+            return ApiResponseDto<List<ProfitCentreCostDto>>.FailureResponse(failDto.Errors, failDto.Meta);
         }
     }
 }
