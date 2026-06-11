@@ -63,6 +63,12 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<RecreateSummaryLogDto, RecreateSummaryLogItem>()
                 .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.Comments));
+
+            CreateMap<ProfitCentreCostDto, ProfitCenterCostItem>().ReverseMap();
+
+            CreateMap<ReleasePeriodDto, PeriodMonth>().ReverseMap();
+
+            CreateMap<ReleasePeriodDto, ReleasePeriodItem>().ReverseMap();
         }
     }
 }
