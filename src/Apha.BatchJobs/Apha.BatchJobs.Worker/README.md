@@ -19,7 +19,7 @@ Key settings:
 
 - ASPNETCORE_ENVIRONMENT
 - BATCH_JOB_NAME
-- ConnectionStrings__BatchJobsConnectionString (required for database mode)
+- ConnectionStrings__FPSConnectionString (required for database mode)
 
 ## Exit Codes
 

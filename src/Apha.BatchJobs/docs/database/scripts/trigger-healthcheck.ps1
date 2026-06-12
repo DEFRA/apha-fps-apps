@@ -61,10 +61,10 @@ if (-not $env:BATCH_USER_ID) {
     $env:BATCH_USER_ID = "system"
 }
 
-if (-not $env:ConnectionStrings__BatchJobsConnectionString) {
+if (-not $env:ConnectionStrings__FPSConnectionString) {
     $localSettingsPath = Join-Path $repoRoot "appsettings.Local.json"
     if (-not (Test-Path $localSettingsPath)) {
-        throw "Connection string not set. Provide ConnectionStrings__BatchJobsConnectionString or create appsettings.Local.json at $localSettingsPath"
+        throw "Connection string not set. Provide ConnectionStrings__FPSConnectionString or create appsettings.Local.json at $localSettingsPath"
     }
 }
 

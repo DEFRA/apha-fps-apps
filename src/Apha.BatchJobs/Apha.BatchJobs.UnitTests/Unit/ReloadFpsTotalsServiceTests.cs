@@ -117,7 +117,7 @@ public sealed class ReloadFpsTotalsServiceTests
 
     private static string GetConnectionString()
     {
-        return Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
+        return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
             ?? DefaultConnectionString;
     }
 

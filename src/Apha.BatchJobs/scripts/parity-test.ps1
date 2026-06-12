@@ -36,7 +36,7 @@ function Run-Worker([string]$impl, [string]$connDb, [string]$month, [string]$log
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
     $env:BATCH_JOB_NAME = 'RecreateSummaries'
     $env:BATCH_RUN_MODE = 'Manual'
-    $env:ConnectionStrings__BatchJobsConnectionString = "Host=localhost;Port=5432;Username=postgres;Password=LOCAL_DB_PASSWORD;Database=$connDb"
+    $env:ConnectionStrings__FPSConnectionString = "Host=localhost;Port=5432;Username=postgres;Password=LOCAL_DB_PASSWORD;Database=$connDb"
     $env:BatchJobs__RecreateSummariesImplementationMode = $impl
     $env:BATCH_RECREATE_SUMMARIES_MONTH = $month
     $env:BATCH_RECREATE_SUMMARIES_TRIGGERED_BY = 'parity-user'

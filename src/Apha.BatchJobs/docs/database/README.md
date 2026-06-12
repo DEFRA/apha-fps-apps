@@ -47,7 +47,7 @@ pwsh ./database/Invoke-BatchDb.ps1 -Action validate
 - `validate` is non-destructive and fails fast if required ScheduledLoadFromFps tables or key constraints are missing.
 - Keep business-specific seed data in dedicated files under `sql/seeds` and version them by prefixing with sequence numbers.
 - Worker execution persistence writes to `fps.job_queue` and `fps.job_queue_log`.
-- Runtime configuration follows the repo pattern: `ConnectionStrings:BatchJobsConnectionString`.
+- Runtime configuration follows the repo pattern: `ConnectionStrings:FPSConnectionString`.
 
 ## Local Reset Script
 

@@ -2,7 +2,7 @@
   "ExecutedAtUtc": "2026-05-14T13:47:49.7029977Z",
   "Month": 1,
   "TriggeredBy": "parity-harness",
-  "ConnectionStringName": "ConnectionStrings__BatchJobsConnectionString",
+  "ConnectionStringName": "ConnectionStrings__FPSConnectionString",
   "Runs": [
     {
       "Mode": "SqlFiles",

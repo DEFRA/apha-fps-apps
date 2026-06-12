@@ -2076,7 +2076,7 @@ Use this as the go-live checklist. Any missing mandatory value below should bloc
     </tr>
     <tr>
       <td>Worker runtime secret</td>
-      <td><code>ConnectionStrings__BatchJobsConnectionString</code></td>
+      <td><code>ConnectionStrings__FPSConnectionString</code></td>
       <td>Yes</td>
       <td>Infra + Security</td>
       <td>Inject via Secrets Manager/SSM, not plain text in task definition.</td>
@@ -2121,7 +2121,7 @@ Use a single worker container image and worker task definition family, with sepa
   <li>Image: <code>&lt;ecr-registry&gt;/apha/batchjobs:&lt;tag&gt;</code></li>
   <li>Container name: <code>batchjobs-worker</code> (must match EventBridge container override name)</li>
   <li>Runtime env baseline: <code>ASPNETCORE_ENVIRONMENT=Production</code></li>
-  <li>Secrets: <code>ConnectionStrings__BatchJobsConnectionString</code> via Secrets Manager/SSM</li>
+  <li>Secrets: <code>ConnectionStrings__FPSConnectionString</code> via Secrets Manager/SSM</li>
   <li>Logs: awslogs group + stream prefix configured for worker diagnostics</li>
 </ul>
 
@@ -2137,7 +2137,7 @@ Use this checklist to align with sibling FPS/PIMS/PACT AWS operating patterns an
   <li><b>Security groups:</b> Outbound allowed to PostgreSQL endpoint/port and required AWS service endpoints; inbound minimized to runtime necessity.</li>
   <li><b>Egress path:</b> Ensure NAT and/or VPC endpoints exist for ECR image pull, CloudWatch logs, EventBridge, and secret retrieval at startup.</li>
   <li><b>Database endpoint:</b> Use environment-specific PostgreSQL host, port, and database name managed by infra/DBA ownership model.</li>
-  <li><b>Connection string source:</b> <code>ConnectionStrings__BatchJobsConnectionString</code> must come from Secrets Manager/SSM only; no plain-text secret in task definition, repo, or pipeline logs.</li>
+  <li><b>Connection string source:</b> <code>ConnectionStrings__FPSConnectionString</code> must come from Secrets Manager/SSM only; no plain-text secret in task definition, repo, or pipeline logs.</li>
   <li><b>Connection string format:</b> Include host, port, database, username, password, SSL/TLS mode, and timeout settings as per platform baseline.</li>
   <li><b>Rotation/readiness:</b> Secret rotation process must be validated with no worker code change; confirm next task launch picks up updated secret value.</li>
   <li><b>Go-live proof:</b> Evidence must include successful ECS start, DB connectivity, schema access to <code>fps.job_queue</code>/<code>fps.job_execution</code>, and CloudWatch logs with <code>jobQueueId</code> correlation.</li>
@@ -2201,7 +2201,7 @@ Use this matrix when wiring non-main and main environments so BatchJobs follows 
     </tr>
     <tr>
       <td>Secrets key</td>
-      <td><code>ConnectionStrings__BatchJobsConnectionString</code></td>
+      <td><code>ConnectionStrings__FPSConnectionString</code></td>
       <td><code>ConnectionStrings__&lt;Service&gt;ConnectionString</code></td>
       <td>Keep double-underscore .NET key format consistent.</td>
     </tr>

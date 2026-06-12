@@ -47,11 +47,11 @@ builder.Services.AddSwaggerGen(options =>
 
 // Register BatchJobs infrastructure and services
 var batchJobsConnectionString = builder.Configuration.GetConnectionString("FPSConnectionString")
-    ?? builder.Configuration.GetConnectionString("BatchJobsConnectionString");
+    ?? builder.Configuration.GetConnectionString("FPSConnectionString");
 if (string.IsNullOrWhiteSpace(batchJobsConnectionString) || batchJobsConnectionString == "__REPLACE_VIA_ENV__")
 {
     throw new InvalidOperationException(
-        "ConnectionStrings:FPSConnectionString (or BatchJobsConnectionString) is required.");
+        "ConnectionStrings:FPSConnectionString (or FPSConnectionString) is required.");
 }
 
 var dbCommandTimeoutSeconds = builder.Configuration.GetValue<int?>("BatchJobs:DbCommandTimeoutSeconds") is int v && v > 0 ? v : 30;

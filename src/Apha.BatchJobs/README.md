@@ -92,7 +92,7 @@ docker run --rm -e ASPNETCORE_ENVIRONMENT=Development batchjobs-worker:local Hea
 - BATCH_JOB_NAME: HealthCheck, ScheduleJobs, FECProcess, or other registered job.
 - BATCH_JOBQUEUE_ID: required UUID for strict mode (simulates API/EventBridge trigger id).
 - BATCH_REQUESTED_BY: optional trigger identity (defaults to system if omitted).
-- ConnectionStrings__BatchJobsConnectionString: required for withdb mode.
+- ConnectionStrings__FPSConnectionString: required for withdb mode.
 - BatchJobs__RecreateSummariesImplementationMode: optional and retained for backward compatibility.
 	Runtime always uses the LINQ-based RecreateSummaries implementation.
 	Retired SQL implementations are preserved under docs/legacy for reference only.

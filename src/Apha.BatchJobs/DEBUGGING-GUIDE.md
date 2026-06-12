@@ -67,7 +67,7 @@ dotnet build BatchJobs.sln
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 $env:BATCH_JOB_NAME = "HealthCheck"
 $env:PGPASSWORD = "LOCAL_DB_PASSWORD"
-$env:ConnectionStrings__BatchJobsConnectionString = "Host=localhost;Port=5432;Username=postgres;Password=LOCAL_DB_PASSWORD;Database=batch_jobs_foundation_db"
+$env:ConnectionStrings__FPSConnectionString = "Host=localhost;Port=5432;Username=postgres;Password=LOCAL_DB_PASSWORD;Database=batch_jobs_foundation_db"
 
 dotnet run --project Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj
 ```
@@ -93,7 +93,7 @@ dotnet run --project Apha.BatchJobs.Worker/Apha.BatchJobs.Worker.csproj
      ```
      ASPNETCORE_ENVIRONMENT=Development
      BATCH_JOB_NAME=HealthCheck
-     ConnectionStrings__BatchJobsConnectionString=Host=localhost;Port=5432;Username=postgres;Password=LOCAL_DB_PASSWORD;Database=batch_jobs_foundation_db
+     ConnectionStrings__FPSConnectionString=Host=localhost;Port=5432;Username=postgres;Password=LOCAL_DB_PASSWORD;Database=batch_jobs_foundation_db
      PGPASSWORD=LOCAL_DB_PASSWORD
      ```
 

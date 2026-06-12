@@ -760,7 +760,7 @@ builder.Services.AddScoped<ITriggerDispatcher>(serviceProvider =>
     "Mode": "LocalProcess"
   },
   "ConnectionStrings": {
-    "BatchJobsConnectionString": "Host=localhost;Database=batch_jobs_foundation_db_cloud;User=postgres;Password=..."
+    "FPSConnectionString": "Host=localhost;Database=batch_jobs_foundation_db_cloud;User=postgres;Password=..."
   }
 }
 ```
@@ -779,7 +779,7 @@ builder.Services.AddScoped<ITriggerDispatcher>(serviceProvider =>
     "Source": "apha.pact.api"
   },
   "ConnectionStrings": {
-    "BatchJobsConnectionString": "Host=rds-staging.aws.com;Database=batch_jobs_foundation_db_cloud;User=...;Password=..."
+    "FPSConnectionString": "Host=rds-staging.aws.com;Database=batch_jobs_foundation_db_cloud;User=...;Password=..."
   }
 }
 ```
@@ -798,7 +798,7 @@ builder.Services.AddScoped<ITriggerDispatcher>(serviceProvider =>
     "Source": "apha.pact.api"
   },
   "ConnectionStrings": {
-    "BatchJobsConnectionString": "Host=rds-prod.aws.com;Database=batch_jobs_foundation_db_cloud;User=...;Password=..."
+    "FPSConnectionString": "Host=rds-prod.aws.com;Database=batch_jobs_foundation_db_cloud;User=...;Password=..."
   }
 }
 ```

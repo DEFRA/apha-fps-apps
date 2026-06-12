@@ -213,7 +213,7 @@ Wave 3 snapshot (2026-05-27):
 - Added tests:
 	- `RebuildSourceTotalsAsync_WhenStrictIsolationAndViewMissingFpsYear_ShouldThrowInvalidOperationException`
 	- `RebuildSourceTotalsAsync_WhenSourceProjectExists_ShouldInsertRows_AndRollback`
-- Command run (with explicit localhost credential env): `ConnectionStrings__BatchJobsConnectionString=Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=***;Timeout=30 dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-restore --filter FullyQualifiedName~MabArchivePostgresIntegrationTests -v minimal`
+- Command run (with explicit localhost credential env): `ConnectionStrings__FPSConnectionString=Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=***;Timeout=30 dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-restore --filter FullyQualifiedName~MabArchivePostgresIntegrationTests -v minimal`
 - Result: 2 total, 2 passed, 0 failed, 0 skipped.
 - Notes:
 	- Tests are transaction/rollback safe and designed for local postgres when credentials and object permissions are available.
@@ -222,7 +222,7 @@ Wave 3 snapshot (2026-05-27):
 Wave 4 snapshot (2026-05-27):
 - New test added:
 	- `MyFpsYearlyDataServiceTests.LoadYearDataAsync_WhenLoaderIsSlow_ShouldCompleteAndAggregateRows`
-- Command run (MABArchive-focused suite with localhost credentials): `ConnectionStrings__BatchJobsConnectionString=Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=***;Timeout=30 dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-restore --filter "FullyQualifiedName~MabArchiveExecutionContextTests|FullyQualifiedName~MabArchiveJobHandlerTests|FullyQualifiedName~ExecutionYearContextTests|FullyQualifiedName~MyFpsYearlyDataServiceTests|FullyQualifiedName~ReloadFpsTotalsServiceTests|FullyQualifiedName~EmailNotificationServiceTests|FullyQualifiedName~MabArchivePostgresIntegrationTests|FullyQualifiedName~MabArchiveLoadOrchestratorParityTests|FullyQualifiedName~MabArchiveLoaderMetadataTests" --collect:"Code Coverage" -v minimal`
+- Command run (MABArchive-focused suite with localhost credentials): `ConnectionStrings__FPSConnectionString=Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=***;Timeout=30 dotnet test src/Apha.BatchJobs/Apha.BatchJobs.UnitTests/Apha.BatchJobs.UnitTests.csproj --no-restore --filter "FullyQualifiedName~MabArchiveExecutionContextTests|FullyQualifiedName~MabArchiveJobHandlerTests|FullyQualifiedName~ExecutionYearContextTests|FullyQualifiedName~MyFpsYearlyDataServiceTests|FullyQualifiedName~ReloadFpsTotalsServiceTests|FullyQualifiedName~EmailNotificationServiceTests|FullyQualifiedName~MabArchivePostgresIntegrationTests|FullyQualifiedName~MabArchiveLoadOrchestratorParityTests|FullyQualifiedName~MabArchiveLoaderMetadataTests" --collect:"Code Coverage" -v minimal`
 - Result: 50 total, 50 passed, 0 failed, 0 skipped.
 - Updated focused coverage snapshot (tool-reported):
 	- `Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.MabArchiveExecutionContext`: 100%

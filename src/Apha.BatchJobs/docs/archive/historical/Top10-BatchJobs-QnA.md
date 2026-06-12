@@ -71,7 +71,7 @@ These allow container orchestration and monitoring systems to classify failures 
 **Required inputs**:
 - `ASPNETCORE_ENVIRONMENT`
 - `BATCH_JOB_NAME`
-- `ConnectionStrings__BatchJobsConnectionString` (database mode)
+- `ConnectionStrings__FPSConnectionString` (database mode)
 
 **For API-triggered ECS runs**:
 - `Ecs:Cluster`
@@ -327,7 +327,7 @@ Stored on 2026-04-28 from your provided payload. Password is redacted for securi
 					"value": "http://+:8080"
 				},
 				{
-					"name": "ConnectionStrings__BatchJobsConnectionString",
+					"name": "ConnectionStrings__FPSConnectionString",
 					"value": "Host=defra-poc-batchjobs-postgres.crgf0knajwzv.us-east-1.rds.amazonaws.com;Port=5432;Database=batchjobs;Username=postgres;Password=<REDACTED>;SSL Mode=Require;Trust Server Certificate=true"
 				},
 				{
@@ -535,7 +535,7 @@ Stored on 2026-04-28 from your provided payload. Password is redacted for securi
 					"value": "Production"
 				},
 				{
-					"name": "ConnectionStrings__BatchJobsConnectionString",
+					"name": "ConnectionStrings__FPSConnectionString",
 					"value": "Host=defra-poc-batchjobs-postgres.crgf0knajwzv.us-east-1.rds.amazonaws.com;Port=5432;Database=batchjobs;Username=postgres;Password=<REDACTED>;SSL Mode=Require;Trust Server Certificate=true"
 				}
 			],
@@ -611,7 +611,7 @@ Environment variables (2)
 
 ASPNETCORE_ENVIRONMENT=Production
 
-ConnectionStrings__BatchJobsConnectionString=Host=defra-poc-batchjobs-postgres.crgf0knajwzv.us-east-1.rds.amazonaws.com;Port=5432;Database=batchjobs;Username=postgres;Password=<REDACTED>;SSL Mode=Require;Trust Server Certificate=true
+ConnectionStrings__FPSConnectionString=Host=defra-poc-batchjobs-postgres.crgf0knajwzv.us-east-1.rds.amazonaws.com;Port=5432;Database=batchjobs;Username=postgres;Password=<REDACTED>;SSL Mode=Require;Trust Server Certificate=true
 ```
 
 ## 20. Stored Environment Variables Reference (13)
@@ -623,7 +623,7 @@ Environment variables (13)
 
 ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_URLS=http://+:8080
-ConnectionStrings__BatchJobsConnectionString=Host=defra-poc-batchjobs-postgres.crgf0knajwzv.us-east-1.rds.amazonaws.com;Port=5432;Database=batchjobs;Username=postgres;Password=<REDACTED>;SSL Mode=Require;Trust Server Certificate=true
+ConnectionStrings__FPSConnectionString=Host=defra-poc-batchjobs-postgres.crgf0knajwzv.us-east-1.rds.amazonaws.com;Port=5432;Database=batchjobs;Username=postgres;Password=<REDACTED>;SSL Mode=Require;Trust Server Certificate=true
 Ecs__AssignPublicIp=true
 Ecs__Cluster=defra-poc-batchjobs-cluster
 Ecs__ContainerName=batchjobs-worker
@@ -1487,7 +1487,7 @@ These variables belong in worker task definition only.
 | Key | Required | Example | Source | Notes |
 |---|---|---|---|---|
 | `ASPNETCORE_ENVIRONMENT` | Yes | `Production` | Env var | Worker runtime mode.
-| `ConnectionStrings__BatchJobsConnectionString` | Yes | `<from-secret>` | Secrets Manager/SSM | Do not store plaintext in task definition.
+| `ConnectionStrings__FPSConnectionString` | Yes | `<from-secret>` | Secrets Manager/SSM | Do not store plaintext in task definition.
 | `Serilog__MinimumLevel__Default` | Optional | `Information` | Env var | Logging baseline.
 | `OTEL_SERVICE_NAME` | Optional | `apha-batchjobs-worker` | Env var | If OpenTelemetry is enabled.
 
@@ -1506,7 +1506,7 @@ Do not hardcode these in worker task definition; pass per run.
 
 If FPS API does not directly query batch DB status tables, remove DB connection from FPS API runtime:
 
-- `ConnectionStrings__BatchJobsConnectionString`
+- `ConnectionStrings__FPSConnectionString`
 
 Keep it only if FPS API must call status endpoints that require DB-backed reads directly.
 
