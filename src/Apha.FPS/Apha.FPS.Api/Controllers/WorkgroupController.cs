@@ -8,7 +8,7 @@ namespace Apha.FPS.Api.Controllers
     /// <summary>
     /// API controller for Workgroup lookup operations.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/workgroups")]

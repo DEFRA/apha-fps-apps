@@ -15,7 +15,7 @@ namespace Apha.FPS.Api.Controllers
     /// Supports read, create, update, and delete of profit centre grades,
     /// with trigger-derived FK validation enforced at service level.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/pcgrades")]

@@ -2,7 +2,7 @@
 @using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.ProjectProfitabilityViewModel
 @{
-    ViewData["Title"] = "Project Profitability";
+    ViewData["Title"] = Model.IsProjectGroupMode ? "Project Group Profitability" : "Project Profitability";
 }
 
 <!-- Breadcrumb + Programme selector -->
@@ -11,14 +11,24 @@
         <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
             <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
                 <div class="col-md-6">
-                    
                 </div>
                 <div style="display: flex; justify-content: flex-end;" class="col-md-6">
-                    <label class="fw-bold mt-2" for="programNo">Programme:</label>
-                    <select id="programNo" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
-                            class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
-                        <option value="">-- Select Programme --</option>
-                    </select>
+                    @if (Model.IsProjectGroupMode)
+                    {
+                        <label class="fw-bold mt-2" for="projectGroup">Project Group:</label>
+                        <select id="projectGroup" asp-items="Model.ProjectGroupList" asp-for="SelectedProjectGroup"
+                                class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
+                            <option value="">-- Select Project Group --</option>
+                        </select>
+                    }
+                    else
+                    {
+                        <label class="fw-bold mt-2" for="programNo">Programme:</label>
+                        <select id="programNo" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
+                                class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
+                            <option value="">-- Select Programme --</option>
+                        </select>
+                    }
                 </div>
             </div>
         </div>
@@ -28,7 +38,7 @@
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
         <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
-            Project Profitability
+            @(Model.IsProjectGroupMode ? "Project Group Profitability" : "Project Profitability")
         </h1>
     </div>
 </div>
@@ -93,30 +103,33 @@
                                 Plan this Project
                             </button>
                         </div>
-                        <div class="summary-row pva-inline-summary govuk-!-margin-top-0 govuk-!-margin-bottom-0 sup_flex_column ppf-summary-column">
-                            <div class="summary-item sup_gap_8">
-                                <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 pva-nowrap-label"
-                                       for="ppf-programme-target">Programme Target:</label>
-                                <div class="govuk-input__wrapper">
-                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                    <input type="text" id="ppf-programme-target"
-                                           class="govuk-input text-AlignRight pva-input-185"
-                                           asp-for="ProgrammeTarget"
-                                           readonly>
-                                    </div>
-                                </div>
+                        @if (!Model.IsProjectGroupMode)
+                        {
+                            <div class="summary-row pva-inline-summary govuk-!-margin-top-0 govuk-!-margin-bottom-0 sup_flex_column ppf-summary-column">
                                 <div class="summary-item sup_gap_8">
-                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 pva-nowrap-label sup_text_align_right"
-                                           for="ppf-programme-shortfall">Programme Level Surplus/Shortfall:</label>
+                                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 pva-nowrap-label"
+                                           for="ppf-programme-target">Programme Target:</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
-                                        <input type="text" id="ppf-programme-shortfall"
+                                        <input type="text" id="ppf-programme-target"
                                                class="govuk-input text-AlignRight pva-input-185"
-                                               asp-for="ProgrammeSurplusShortfall"
+                                               asp-for="ProgrammeTarget"
                                                readonly>
                                         </div>
                                     </div>
-                                </div>
+                                    <div class="summary-item sup_gap_8">
+                                        <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 pva-nowrap-label sup_text_align_right"
+                                               for="ppf-programme-shortfall">Programme Level Surplus/Shortfall:</label>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                            <input type="text" id="ppf-programme-shortfall"
+                                                   class="govuk-input text-AlignRight pva-input-185"
+                                                   asp-for="ProgrammeSurplusShortfall"
+                                                   readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         </div>
 
@@ -214,13 +227,17 @@
 
         @section Scripts {
             <script>
+                var isProjectGroupMode = @Model.IsProjectGroupMode.ToString().ToLower();
                 var currentProgramNo = '@Html.Raw(Model.SelectedProgramNo)';
+                var currentProjectGroup = '@Html.Raw(Model.SelectedProjectGroup)';
                 var currentWorkTypeFilter = 'all';
                 var selectedJobCode = null;
 
                 // ── Extra filters injected into every grid POST by _DataGrid ──────────────
                 function getProjectProfitabilityExtraFilters() {
-                    return { programNo: currentProgramNo, workTypeFilter: currentWorkTypeFilter };
+                    return isProjectGroupMode
+                        ? { projectGroup: currentProjectGroup, workTypeFilter: currentWorkTypeFilter }
+                        : { programNo: currentProgramNo, workTypeFilter: currentWorkTypeFilter };
                 }
 
                 // ── Programme dropdown — no page refresh ──────────────────────────────────
@@ -230,6 +247,20 @@
                     currentProgramNo = val;
                     $.ajax({
                         url: '@Url.Action("SaveProgrammeSession", "ProgrammeSelect", new { area = "FPS" })',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(val)
+                    });
+                    reloadGrid();
+                });
+
+                // ── Project group dropdown — no page refresh ──────────────────────────────
+                $('#projectGroup').on('change', function () {
+                    var val = $(this).val();
+                    if (!val) return;
+                    currentProjectGroup = val;
+                    $.ajax({
+                        url: '@Url.Action("SaveProjectGroupSession", "ProgramProject", new { area = "FPS" })',
                         type: 'POST',
                         contentType: 'application/json',
                         data: JSON.stringify(val)
@@ -249,12 +280,12 @@
                 }
 
                 function loadSummary() {
-                    $.get('/FPS/ProjectProfitability/GetProfitabilitySummary', {
-                        programNo: currentProgramNo,
-                        workTypeFilter: currentWorkTypeFilter
-                    })
+                    var params = isProjectGroupMode
+                        ? { projectGroup: currentProjectGroup, workTypeFilter: currentWorkTypeFilter }
+                        : { programNo: currentProgramNo, workTypeFilter: currentWorkTypeFilter };
+                    $.get('/FPS/ProjectProfitability/GetProfitabilitySummary', params)
                     .done(function (result) {
-                        updateSummary(result.programmeTarget, result.programmeSurplusShortfall);
+                        if (!isProjectGroupMode) updateSummary(result.programmeTarget, result.programmeSurplusShortfall);
                         updateTotals(result);
                     })
                     .fail(function () {
@@ -298,7 +329,10 @@
 
                 function planThisProject() {
                     if (!selectedJobCode) { window.showGovukAlert('Please select a project first.'); return; }
-                    window.fpsNavigateTo('/FPS/ProjectPlanning?projectCode=' + encodeURIComponent(selectedJobCode))                   
+                    var returnUrl = isProjectGroupMode
+                        ? '/FPS/ProjectProfitability?source=projectgroup'
+                        : '/FPS/ProjectProfitability?programNo=' + encodeURIComponent(currentProgramNo);
+                    window.fpsNavigateTo('/FPS/ProjectPlanning?projectCode=' + encodeURIComponent(selectedJobCode) + '&returnUrl=' + encodeURIComponent(returnUrl));
                 }
 
                 // ── Initialise on page load ───────────────────────────────────────────────
@@ -309,7 +343,7 @@
                         }
                     });
 
-                    if (currentProgramNo) {
+                    if (isProjectGroupMode ? currentProjectGroup : currentProgramNo) {
                         reloadGrid();
                     }
                 });

@@ -16,7 +16,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
     [Authorize(Roles = "PACTAdmin,PACTUser")]
-    [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class ProjectInvoiceSubContractController : Controller
     {
         private readonly IMapper _mapper;
