@@ -62,7 +62,7 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
         var refresh2 = new DelegateStep("Refresh-2", () => Success("Refresh-2", 5));
 
         var catalog = Substitute.For<IRecreateSummariesStepCatalog>();
-        catalog.BuildMandatorySteps(6, "unit-test-user")
+        catalog.BuildMandatorySteps(6, 2026, "unit-test-user")
             .Returns([mandatory1, mandatory2]);
         catalog.BuildRefreshSteps(6)
             .Returns([refresh1, refresh2]);
@@ -72,7 +72,7 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
             catalog,
             NullLogger<RecreateSummariesOrchestrator>.Instance);
 
-        var results = await orchestrator.ExecuteAsync("corr-1", 6, "unit-test-user");
+        var results = await orchestrator.ExecuteAsync("corr-1", 6, 2026, "unit-test-user");
 
         Assert.Equal(
             ["Mandatory-1", "Mandatory-2", "Refresh-1", "Refresh-2"],
@@ -98,7 +98,7 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
         var refresh2 = new DelegateStep("Refresh-B", () => Success("Refresh-B", 1));
 
         var catalog = Substitute.For<IRecreateSummariesStepCatalog>();
-        catalog.BuildMandatorySteps(7, "unit-test-user")
+        catalog.BuildMandatorySteps(7, 2026, "unit-test-user")
             .Returns([mandatory]);
         catalog.BuildRefreshSteps(7)
             .Returns([refresh1, refresh2]);
@@ -108,7 +108,7 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
             catalog,
             NullLogger<RecreateSummariesOrchestrator>.Instance);
 
-        var results = await orchestrator.ExecuteAsync("corr-2", 7, "unit-test-user");
+        var results = await orchestrator.ExecuteAsync("corr-2", 7, 2026, "unit-test-user");
 
         Assert.Equal(3, results.Count);
         Assert.Equal("Mandatory-Only", results[0].StepName);
@@ -139,7 +139,7 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
         var refreshNever = new DelegateStep("Refresh-Never", () => Success("Refresh-Never", 1));
 
         var catalog = Substitute.For<IRecreateSummariesStepCatalog>();
-        catalog.BuildMandatorySteps(8, "unit-test-user")
+        catalog.BuildMandatorySteps(8, 2026, "unit-test-user")
             .Returns([mandatory1, mandatoryFail, mandatoryNever]);
         catalog.BuildRefreshSteps(8)
             .Returns([refreshNever]);
@@ -150,7 +150,7 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
             NullLogger<RecreateSummariesOrchestrator>.Instance);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => orchestrator.ExecuteAsync("corr-3", 8, "unit-test-user"));
+            () => orchestrator.ExecuteAsync("corr-3", 8, 2026, "unit-test-user"));
 
         Assert.Contains("Mandatory-Fail", ex.Message);
         Assert.Equal(1, mandatory1.ExecuteCount);
@@ -172,7 +172,7 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
             () => throw new InvalidOperationException("unexpected-bang"));
 
         var catalog = Substitute.For<IRecreateSummariesStepCatalog>();
-        catalog.BuildMandatorySteps(9, "unit-test-user")
+        catalog.BuildMandatorySteps(9, 2026, "unit-test-user")
             .Returns([mandatory1, mandatoryThrow]);
         catalog.BuildRefreshSteps(9)
             .Returns([]);
@@ -183,7 +183,7 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
             NullLogger<RecreateSummariesOrchestrator>.Instance);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => orchestrator.ExecuteAsync("corr-4", 9, "unit-test-user"));
+            () => orchestrator.ExecuteAsync("corr-4", 9, 2026, "unit-test-user"));
 
         Assert.Equal("unexpected-bang", ex.Message);
         Assert.Equal(1, mandatory1.ExecuteCount);
@@ -253,4 +253,3 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
         }
     }
 }
-

@@ -4,7 +4,6 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Xunit;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -20,7 +19,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     public RepositoryIntegrationTests()
     {
         _connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+            Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
             ?? DefaultConnectionString;
     }
 
@@ -39,10 +38,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    [SkippableFact]
+    [Fact]
     public async Task TryAcquireLockAsync_FirstSucceeds_SecondReturnsFalse_ForSameJob()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Assert.True(CanRunIntegrationTests(), _skipReason);
 
         await using var context = CreateDbContext();
         var repository = new BatchLockRepository(context);
@@ -56,10 +55,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         Assert.False(second);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task ReleaseLockAsync_RemovesHeldLock()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Assert.True(CanRunIntegrationTests(), _skipReason);
 
         var jobQueueId = Guid.NewGuid();
 
@@ -78,10 +77,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         Assert.Null(active);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task CreateExecutionRecordAsync_WritesQueueAndLogRows()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Assert.True(CanRunIntegrationTests(), _skipReason);
 
         var jobQueueId = Guid.NewGuid();
         var record = new JobExecutionRecord
@@ -116,10 +115,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         Assert.Equal(1, logRows);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task UpdateExecutionRecordAsync_UpdatesStatusAndAppendsLog()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Assert.True(CanRunIntegrationTests(), _skipReason);
 
         var jobQueueId = Guid.NewGuid();
         var startedAt = DateTime.UtcNow.AddMinutes(-1);
@@ -170,10 +169,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         Assert.Equal(2, logCount);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task TryAcquireLockAsync_WhenExistingLockExpired_AllowsReacquire()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Assert.True(CanRunIntegrationTests(), _skipReason);
 
         var firstJobQueueId = Guid.NewGuid();
         var secondJobQueueId = Guid.NewGuid();
@@ -190,10 +189,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         Assert.True(second);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task DependencyOutageThenRecovery_BadConnectionFails_HealthyConnectionSucceeds()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Assert.True(CanRunIntegrationTests(), _skipReason);
 
         const string unreachableConnectionString =
             "Host=127.0.0.1;Port=65432;Database=batch_jobs_foundation_db;Username=postgres;Password=password;Timeout=1;Command Timeout=1";
@@ -218,10 +217,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     /// CR-004: Degradation scenario - Database timeout should trigger retry exhaustion.
     /// Validates: exception type is captured, execution record is updated with error, lock is released.
     /// </summary>
-    [SkippableFact]
+    [Fact]
     public async Task ExecutionRecord_UpdateFailure_PartialDataNotCorrupted()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Assert.True(CanRunIntegrationTests(), _skipReason);
 
         var jobQueueId = Guid.NewGuid();
 
@@ -288,10 +287,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     /// CR-004: Verify lock contention scenario is logged as informational (not error).
     /// Validates: skipped run does not corrupt state, lock properly expires.
     /// </summary>
-    [SkippableFact]
+    [Fact]
     public async Task LockContention_SkipDoesNotCorruptState_LockExpiresOnSchedule()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Assert.True(CanRunIntegrationTests(), _skipReason);
 
         var firstJobQueueId = Guid.NewGuid();
         var secondJobQueueId = Guid.NewGuid();
@@ -353,10 +352,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
     /// CR-004: Structured log field validation - ensure log entries contain expected fields.
     /// Validates: execution record logs include structured timestamp and status information.
     /// </summary>
-    [SkippableFact]
+    [Fact]
     public async Task ExecutionLog_ContainsStructuredFields_QueryableByJobQueueId()
     {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
+        Assert.True(CanRunIntegrationTests(), _skipReason);
 
         var jobQueueId = Guid.NewGuid();
 
@@ -482,6 +481,7 @@ CREATE TABLE IF NOT EXISTS fps.job_queue (
     jobid INTEGER NOT NULL,
     statusid INTEGER NOT NULL,
     requestedby VARCHAR(100) NOT NULL,
+    requested_at_utc TIMESTAMPTZ,
     startdatetime TIMESTAMPTZ NOT NULL,
     enddatetime TIMESTAMPTZ,
     errormessage VARCHAR(1000),
@@ -570,5 +570,3 @@ RESTART IDENTITY CASCADE;";
         return result?.ToString();
     }
 }
-
-

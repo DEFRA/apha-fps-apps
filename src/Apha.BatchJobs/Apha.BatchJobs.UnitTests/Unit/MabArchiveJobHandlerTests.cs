@@ -9,13 +9,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using Xunit;
 
 namespace Apha.BatchJobs.UnitTests;
 
 public sealed class MabArchiveJobHandlerTests
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123;Timeout=30";
+    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
 
     [Fact]
     public void Constructor_WhenDbContextFactoryIsNull_ShouldThrowArgumentNullException()
@@ -120,7 +119,7 @@ public sealed class MabArchiveJobHandlerTests
         Assert.Equal(1800, subject.MaxExecutionSeconds);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task ExecuteAsync_WhenRunSucceeds_ShouldGenerateCorrelationAndExecuteOrchestrator()
     {
         var originalOverride = Environment.GetEnvironmentVariable("MABARCHIVE_TEST_UTCNOW");
@@ -181,7 +180,7 @@ public sealed class MabArchiveJobHandlerTests
         }
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task ExecuteAsync_WhenOrchestratorWorkFails_ShouldRethrow()
     {
         var originalOverride = Environment.GetEnvironmentVariable("MABARCHIVE_TEST_UTCNOW");
@@ -239,7 +238,7 @@ public sealed class MabArchiveJobHandlerTests
         }
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task ExecuteAsync_WhenCancellationRequested_ShouldRethrowOperationCanceledException()
     {
         var originalOverride = Environment.GetEnvironmentVariable("MABARCHIVE_TEST_UTCNOW");
@@ -293,7 +292,7 @@ public sealed class MabArchiveJobHandlerTests
 
     private static string GetConnectionString()
     {
-        return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+        return Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
             ?? DefaultConnectionString;
     }
 
@@ -310,7 +309,7 @@ public sealed class MabArchiveJobHandlerTests
     {
         await using var context = dbContextFactory.CreateDbContext();
         var canConnect = await context.Database.CanConnectAsync();
-        Skip.IfNot(canConnect, "Integration DB unavailable for MabArchiveJobHandlerTests.");
+        Assert.True(canConnect, "Integration DB unavailable for MabArchiveJobHandlerTests.");
     }
 
     private sealed class TestDbContextFactory : IDbContextFactory<BatchJobsDbContext>
@@ -328,4 +327,3 @@ public sealed class MabArchiveJobHandlerTests
         }
     }
 }
-

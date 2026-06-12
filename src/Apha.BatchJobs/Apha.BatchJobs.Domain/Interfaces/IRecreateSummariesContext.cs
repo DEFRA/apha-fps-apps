@@ -14,6 +14,11 @@ public interface IRecreateSummariesContext
     int Month { get; set; }
 
     /// <summary>
+    /// FPS year scoped for this execution.
+    /// </summary>
+    int Year { get; set; }
+
+    /// <summary>
     /// Identity of the user or process that triggered this run.
     /// Replaces <c>SYSTEM_USER</c> / <c>sp_Get_SP_No</c> from the legacy procedure.
     /// Written into <c>recreatesummaries_log.userid</c>.

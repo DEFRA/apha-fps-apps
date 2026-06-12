@@ -35,6 +35,7 @@ internal sealed class TblJobQueue
     public int JobId { get; set; }
     public int StatusId { get; set; }
     public required string RequestedBy { get; set; }
+    public DateTime? RequestedAtUtc { get; set; }
     public DateTime StartDateTime { get; set; }
     public DateTime? EndDateTime { get; set; }
     public string? ErrorMessage { get; set; }

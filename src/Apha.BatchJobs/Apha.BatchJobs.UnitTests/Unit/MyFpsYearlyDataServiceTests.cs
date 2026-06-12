@@ -3,13 +3,12 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 
 namespace Apha.BatchJobs.UnitTests;
 
 public sealed class MyFpsYearlyDataServiceTests
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123;Timeout=30";
+    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
 
     [Fact]
     public void Constructor_WhenContextIsNull_ShouldThrowArgumentNullException()
@@ -133,7 +132,7 @@ public sealed class MyFpsYearlyDataServiceTests
         Assert.Equal(new[] { 1, 2, 3 }, executionOrder);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task IsYearAvailableAsync_WhenYearClearlyInvalid_ShouldReturnFalse()
     {
         await using var context = CreatePostgresContext(GetConnectionString());
@@ -162,7 +161,7 @@ public sealed class MyFpsYearlyDataServiceTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => subject.IsYearAvailableAsync(2026, CancellationToken.None));
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task DeleteYearDataAsync_WhenYearHasNoRows_ShouldReturnZero_AndRollback()
     {
         await using var context = CreatePostgresContext(GetConnectionString());
@@ -193,7 +192,7 @@ public sealed class MyFpsYearlyDataServiceTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => subject.DeleteYearDataAsync(2026, CancellationToken.None));
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task RefreshProjectAllOnlyAsync_WhenLoader24ReturnsRows_ShouldReturnLoaderRows_AndRollback()
     {
         await using var context = CreatePostgresContext(GetConnectionString());
@@ -300,14 +299,14 @@ public sealed class MyFpsYearlyDataServiceTests
 
     private static string GetConnectionString()
     {
-        return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+        return Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
             ?? DefaultConnectionString;
     }
 
     private static async Task AssertCanConnectAsync(BatchJobsDbContext context)
     {
         var canConnect = await context.Database.CanConnectAsync();
-        Skip.IfNot(canConnect, "Integration DB unavailable for MyFpsYearlyDataServiceTests.");
+        Assert.True(canConnect, "Integration DB unavailable for MyFpsYearlyDataServiceTests.");
     }
 
     private static List<IMabArchiveLoader> CreateSequentialLoaders(int start, int end)
@@ -344,4 +343,3 @@ public sealed class MyFpsYearlyDataServiceTests
         }
     }
 }
-

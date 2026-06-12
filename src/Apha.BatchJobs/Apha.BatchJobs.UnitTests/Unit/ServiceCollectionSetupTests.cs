@@ -11,7 +11,6 @@ public sealed class ServiceCollectionSetupTests
     [Fact]
     public void CreateDefaultServices_ShouldRegisterExpectedFoundationServices()
     {
-        using var _ = UseTestConnectionString();
         var batchJobsRoot = GetBatchJobsRoot();
         var services = ServiceCollectionSetup.CreateDefaultServices(batchJobsRoot);
         using var serviceProvider = services.BuildServiceProvider();
@@ -26,7 +25,6 @@ public sealed class ServiceCollectionSetupTests
     [Fact]
     public void CreateDefaultServices_AllRegisteredJobs_ShouldDeclareExplicitIdempotencyStrategy()
     {
-        using var _ = UseTestConnectionString();
         var batchJobsRoot = GetBatchJobsRoot();
         var services = ServiceCollectionSetup.CreateDefaultServices(batchJobsRoot);
         using var serviceProvider = services.BuildServiceProvider();
@@ -45,7 +43,6 @@ public sealed class ServiceCollectionSetupTests
     [Fact]
     public void CreateDefaultServices_ManualAdhocJobs_ShouldHaveNoScheduleExpression()
     {
-        using var _ = UseTestConnectionString();
         var batchJobsRoot = GetBatchJobsRoot();
         var services = ServiceCollectionSetup.CreateDefaultServices(batchJobsRoot);
         using var serviceProvider = services.BuildServiceProvider();
@@ -67,7 +64,7 @@ public sealed class ServiceCollectionSetupTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:FPSConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123"
+                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD"
             })
             .Build();
 
@@ -86,7 +83,7 @@ public sealed class ServiceCollectionSetupTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:FPSConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123"
+                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD"
             })
             .Build();
 
@@ -106,7 +103,7 @@ public sealed class ServiceCollectionSetupTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:FPSConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123",
+                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD",
                 ["BatchJobs:MabArchiveImplementationMode"] = "Sql"
             })
             .Build();
@@ -159,13 +156,12 @@ public sealed class ServiceCollectionSetupTests
 
         while (current != null)
         {
-            var workerPath = Path.Combine(current.FullName, "Apha.BatchJobs.Worker");
-            var hasWorkerProject = File.Exists(Path.Combine(workerPath, "Apha.BatchJobs.Worker.csproj"));
-            var hasWorkerConfig = File.Exists(Path.Combine(workerPath, "appsettings.json"));
+            var hasProject = File.Exists(Path.Combine(current.FullName, "BatchJobs.csproj"));
+            var hasAppSettings = File.Exists(Path.Combine(current.FullName, "appsettings.json"));
 
-            if (hasWorkerProject && hasWorkerConfig)
+            if (hasProject && hasAppSettings)
             {
-                return workerPath;
+                return current.FullName;
             }
 
             current = current.Parent;
@@ -173,40 +169,5 @@ public sealed class ServiceCollectionSetupTests
 
         throw new DirectoryNotFoundException("Could not locate the BatchJobs project root.");
     }
-
-    private static IDisposable UseTestConnectionString()
-    {
-        var prior = Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString");
-        Environment.SetEnvironmentVariable(
-            "ConnectionStrings__FPSConnectionString",
-            "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123;Timeout=30");
-
-        return new DelegateDisposable(() =>
-            Environment.SetEnvironmentVariable("ConnectionStrings__FPSConnectionString", prior));
-    }
-
-    private sealed class DelegateDisposable : IDisposable
-    {
-        private readonly Action _onDispose;
-        private bool _disposed;
-
-        public DelegateDisposable(Action onDispose)
-        {
-            _onDispose = onDispose;
-        }
-
-        public void Dispose()
-        {
-            if (_disposed)
-            {
-                return;
-            }
-
-            _disposed = true;
-            _onDispose();
-        }
-    }
 }
-
-
 

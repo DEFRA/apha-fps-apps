@@ -44,6 +44,7 @@ public sealed class RecreateSummariesOrchestrator
     public async Task<IReadOnlyList<StepResult>> ExecuteAsync(
         string correlationId,
         int month,
+        int year,
         string triggeredBy,
         CancellationToken cancellationToken = default)
     {
@@ -70,7 +71,7 @@ public sealed class RecreateSummariesOrchestrator
                 _logger.LogInformation("[{CorrelationId}] RecreateSummaries implementation: DotNetLinq", correlationId);
 
                 // --- Steps 1–14 (mandatory, ordered) ---
-                var mandatorySteps = _stepCatalog.BuildMandatorySteps(month, triggeredBy);
+                var mandatorySteps = _stepCatalog.BuildMandatorySteps(month, year, triggeredBy);
 
                 foreach (var step in mandatorySteps)
                 {
@@ -99,11 +100,11 @@ public sealed class RecreateSummariesOrchestrator
                 }
 
                 // --- Period-lock check (Phase 6) ---
-                var periodLocked = await GetPeriodLockedAsync(month, cancellationToken);
+                var periodLocked = await GetPeriodLockedAsync(month, year, cancellationToken);
 
                 _logger.LogInformation(
-                    "[{CorrelationId}] Period lock check | Month={Month} | PeriodLocked={PeriodLocked}",
-                    correlationId, month, periodLocked);
+                    "[{CorrelationId}] Period lock check | Month={Month} | Year={Year} | PeriodLocked={PeriodLocked}",
+                    correlationId, month, year, periodLocked);
 
                 if (periodLocked == 0)
                 {
@@ -177,11 +178,11 @@ public sealed class RecreateSummariesOrchestrator
     // Period-lock helper (Phase 6)
     // -------------------------------------------------------------------------
 
-    private async Task<int> GetPeriodLockedAsync(int month, CancellationToken cancellationToken)
+    private async Task<int> GetPeriodLockedAsync(int month, int year, CancellationToken cancellationToken)
     {
         var periodLocked = await _dbContext.RsTblPeriod
             .AsNoTracking()
-            .Where(p => p.EndPeriod == month)
+            .Where(p => p.EndPeriod == month && p.FpsYear == year)
             .Select(p => p.PeriodLocked)
             .FirstOrDefaultAsync(cancellationToken);
 

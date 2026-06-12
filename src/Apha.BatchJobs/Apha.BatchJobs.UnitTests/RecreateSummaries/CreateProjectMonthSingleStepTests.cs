@@ -12,7 +12,7 @@ namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 
 public sealed class CreateProjectMonthSingleStepTests
 {
-    [SkippableFact]
+    [Fact]
     public async Task ExecuteCoreAsync_SuccessPath()
     {
         await using var harness = await RecreateSummariesPostgresTestHarness.CreateAsync();

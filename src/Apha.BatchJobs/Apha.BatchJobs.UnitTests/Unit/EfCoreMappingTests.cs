@@ -102,6 +102,14 @@ public sealed class EfCoreMappingTests
     }
 
     [Fact]
+    public void TblJobQueue_RequestedAtUtc_ColumnName_Is_requested_at_utc()
+    {
+        using var ctx = new BatchJobsDbContext(_options);
+        var prop = GetEntityByTable(ctx, "job_queue").FindProperty("RequestedAtUtc")!;
+        Assert.Equal("requested_at_utc", prop.GetColumnName(StoreObjectIdentifier.Table("job_queue", "fps")));
+    }
+
+    [Fact]
     public void TblJobQueue_HasForeignKey_To_TblJobMaster_Restrict()
     {
         using var ctx = new BatchJobsDbContext(_options);

@@ -4,13 +4,12 @@ using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Xunit;
 
 namespace Apha.BatchJobs.UnitTests;
 
 public sealed class ReloadFpsTotalsServiceTests
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123;Timeout=30";
+    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
 
     [Fact]
     public void Constructor_WhenSettingsIsNull_ShouldUseDefaults()
@@ -51,7 +50,7 @@ public sealed class ReloadFpsTotalsServiceTests
         Assert.Equal("logger", ex.ParamName);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task RebuildSourceTotalsAsync_WhenNoSourceRowsAndStrictIsolationDisabled_ShouldReturnZero()
     {
         await using var context = CreateDbContext(GetConnectionString());
@@ -67,7 +66,7 @@ public sealed class ReloadFpsTotalsServiceTests
         Assert.Equal(0, rows);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task RebuildSourceTotalsAsync_WhenNoSourceRowsAndStrictIsolationEnabled_ShouldReturnZero()
     {
         await using var context = CreateDbContext(GetConnectionString());
@@ -83,7 +82,7 @@ public sealed class ReloadFpsTotalsServiceTests
         Assert.Equal(0, rows);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task RebuildSourceTotalsAsync_WhenExecutedWithinTransaction_ShouldComplete_AndRollback()
     {
         await using var context = CreateDbContext(GetConnectionString());
@@ -118,7 +117,7 @@ public sealed class ReloadFpsTotalsServiceTests
 
     private static string GetConnectionString()
     {
-        return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+        return Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
             ?? DefaultConnectionString;
     }
 
@@ -143,7 +142,6 @@ public sealed class ReloadFpsTotalsServiceTests
     private static async Task AssertCanConnectAsync(BatchJobsDbContext context)
     {
         var canConnect = await context.Database.CanConnectAsync();
-        Skip.IfNot(canConnect, "Integration DB unavailable for ReloadFpsTotalsServiceTests.");
+        Assert.True(canConnect, "Integration DB unavailable for ReloadFpsTotalsServiceTests.");
     }
 }
-

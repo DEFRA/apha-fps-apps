@@ -8,7 +8,7 @@ public interface IRecreateSummariesStepCatalog
     /// <summary>
     /// Builds mandatory steps 1-14.
     /// </summary>
-    IReadOnlyList<IRecreateSummariesExecutionStep> BuildMandatorySteps(int month, string triggeredBy);
+    IReadOnlyList<IRecreateSummariesExecutionStep> BuildMandatorySteps(int month, int year, string triggeredBy);
 
     /// <summary>
     /// Builds conditional refresh steps 15-17.

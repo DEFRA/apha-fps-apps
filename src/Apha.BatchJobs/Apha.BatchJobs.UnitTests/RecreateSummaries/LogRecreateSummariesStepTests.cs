@@ -21,7 +21,7 @@ public sealed class LogRecreateSummariesStepTests
         using var db = new BatchJobsDbContext(options);
 
         var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
-        var step = new LogRecreateSummariesStep(5, "DOMAIN\\user");
+        var step = new LogRecreateSummariesStep(5, 2026, "DOMAIN\\user");
         // Act
         var result = await step.ExecuteAsync(context, CancellationToken.None);
         // Assert

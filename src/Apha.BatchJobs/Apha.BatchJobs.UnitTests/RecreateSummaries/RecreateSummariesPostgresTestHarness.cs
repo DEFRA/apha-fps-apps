@@ -3,13 +3,12 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Xunit;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 
 internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
 {
-    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=admin123;Timeout=30";
+    private const string DefaultConnectionString = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD;Timeout=30";
     private readonly string _connectionString;
     private readonly NpgsqlConnection _connection;
     private readonly NpgsqlTransaction _transaction;
@@ -36,7 +35,7 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
     public static async Task<RecreateSummariesPostgresTestHarness> CreateAsync()
     {
         var rawConnectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+            Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
             ?? DefaultConnectionString;
 
         var builder = new NpgsqlConnectionStringBuilder(rawConnectionString)
@@ -47,16 +46,7 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
         var connectionString = builder.ConnectionString;
 
         var connection = new NpgsqlConnection(connectionString);
-        try
-        {
-            await connection.OpenAsync();
-        }
-        catch (Exception ex)
-        {
-            await connection.DisposeAsync();
-            Skip.If(true, $"Integration DB unavailable: {ex.Message}");
-            throw;
-        }
+        await connection.OpenAsync();
         var transaction = await connection.BeginTransactionAsync();
 
         var options = new DbContextOptionsBuilder<BatchJobsDbContext>()
@@ -144,4 +134,3 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
         await _connection.DisposeAsync();
     }
 }
-

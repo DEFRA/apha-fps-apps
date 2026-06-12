@@ -11,7 +11,7 @@ public sealed class RecreateSummariesStepCatalogTests
         var subject = CreateCatalog();
 
         // Act
-        var steps = subject.BuildMandatorySteps(month: 6, triggeredBy: "unit-test-user");
+        var steps = subject.BuildMandatorySteps(month: 6, year: 2026, triggeredBy: "unit-test-user");
 
         // Assert
         var orderedStepNames = steps.Select(s => s.StepName).ToArray();

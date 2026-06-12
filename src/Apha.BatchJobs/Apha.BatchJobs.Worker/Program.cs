@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using Serilog;
+using System.Globalization;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -125,6 +126,22 @@ try
     // External/API correlation key for tracing across trigger -> worker -> status.
     var jobExecutionIdEnv = Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID")
         ?? Environment.GetEnvironmentVariable("BATCH_EXECUTION_ID");
+    var requestedAtUtcEnv = Environment.GetEnvironmentVariable("BATCH_REQUESTED_AT_UTC");
+    var requestedAtUtc = ParseRequestedAtUtc(requestedAtUtcEnv, logger);
+    
+    // For scheduled jobs, default to current UTC time if BATCH_REQUESTED_AT_UTC was not provided.
+    // This captures the worker startup time and enables startup latency measurement.
+    if (requestedAtUtc == null && runMode == RunMode.Scheduled)
+    {
+        requestedAtUtc = DateTime.UtcNow;
+        logger.LogInformation(
+            "BATCH_REQUESTED_AT_UTC not provided for scheduled job; defaulting to worker startup time | DefaultRequestedAtUtc={DefaultRequestedAtUtc}",
+            requestedAtUtc);
+    }
+    
+    var allowScheduledMabArchiveGeneratedExecutionId =
+        runMode == RunMode.Scheduled
+        && string.Equals(jobName, "MABArchive", StringComparison.OrdinalIgnoreCase);
     Guid jobExecutionId;
     string userId = "system";
 
@@ -134,7 +151,7 @@ try
 
     if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
     {
-        if (strictExecutionContractMode)
+        if (strictExecutionContractMode && !allowScheduledMabArchiveGeneratedExecutionId)
         {
             throw new InvalidOperationException(
                 "BATCH_JOB_EXECUTION_ID is required in strict execution contract mode.");
@@ -147,7 +164,7 @@ try
     }
     else if (!Guid.TryParse(jobExecutionIdEnv, out jobExecutionId))
     {
-        if (strictExecutionContractMode)
+        if (strictExecutionContractMode && !allowScheduledMabArchiveGeneratedExecutionId)
         {
             throw new InvalidOperationException(
                 "BATCH_JOB_EXECUTION_ID must be a valid GUID in strict execution contract mode.");
@@ -172,7 +189,13 @@ try
     requestedJobName = jobName;
     requestedRunMode = runMode.ToString();
 
-    logger.LogInformation("Requested job: {JobName} | RunMode: {RunMode} | JobExecutionId={JobExecutionId} | UserId={UserId}", jobName, runMode, jobExecutionId, userId);
+    logger.LogInformation(
+        "Requested job: {JobName} | RunMode: {RunMode} | JobExecutionId={JobExecutionId} | UserId={UserId} | RequestedAtUtc={RequestedAtUtc}",
+        jobName,
+        runMode,
+        jobExecutionId,
+        userId,
+        requestedAtUtc?.ToString("O") ?? "n/a");
 
     // Cancel job execution only when the host is stopping.
     // Do not use GracefulShutdownWindowSeconds as a hard runtime cap.
@@ -202,7 +225,7 @@ try
             linkedCts.Token);
 
         var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
-        var result = await orchestrator.RunAsync(jobName, runMode, jobExecutionId, userId, linkedCts.Token);
+        var result = await orchestrator.RunAsync(jobName, runMode, jobExecutionId, userId, requestedAtUtc, linkedCts.Token);
 
         capturedJobQueueId = result.JobQueueId.ToString();
         capturedExecutionId = result.ExecutionId;
@@ -528,6 +551,28 @@ static bool ResolveStrictExecutionContractMode(IConfiguration configuration, boo
 
     // Safe default: strict outside local/development.
     return !isLocalOrDevelopment;
+}
+
+static DateTime? ParseRequestedAtUtc(string? requestedAtUtcRaw, Microsoft.Extensions.Logging.ILogger logger)
+{
+    if (string.IsNullOrWhiteSpace(requestedAtUtcRaw))
+    {
+        return null;
+    }
+
+    if (!DateTimeOffset.TryParse(
+            requestedAtUtcRaw,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+            out var parsedRequestedAtUtc))
+    {
+        logger.LogWarning(
+            "Ignoring invalid BATCH_REQUESTED_AT_UTC value | RequestedAtUtc={RequestedAtUtc}",
+            requestedAtUtcRaw);
+        return null;
+    }
+
+    return parsedRequestedAtUtc.UtcDateTime;
 }
 
 static async Task VerifyExecutionContractAsync(
