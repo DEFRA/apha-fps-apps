@@ -291,14 +291,52 @@ var statusHandler = async (
         var hasRequestedJobExecutionId = !string.IsNullOrWhiteSpace(jobExecutionId);
         if (!hasRequestedJobExecutionId)
         {
-            return Results.BadRequest(new
-            {
-                error = new
+            var latestExecution = await executionRepository.GetLastExecutionAsync(jobName, cancellationToken);
+
+            var latestBusinessState = latestExecution is null
+                ? null
+                : latestExecution.Status switch
                 {
-                    code = "ValidationFailed",
-                    reason = "jobExecutionId is required for deterministic tracking.",
-                    retryable = false
-                }
+                    JobStatus.Pending => "Running",
+                    JobStatus.Retry => "Running",
+                    _ => latestExecution.Status.ToString()
+                };
+
+            return Results.Ok(new
+            {
+                jobName,
+                isRunning = latestExecution is not null &&
+                            (latestExecution.Status == JobStatus.Running ||
+                             latestExecution.Status == JobStatus.Pending ||
+                             latestExecution.Status == JobStatus.Retry),
+                sourceOfTruth = "BatchJobs",
+                correlatedJobExecutionId = latestExecution?.JobExecutionId.ToString("D"),
+                queryResolution = new
+                {
+                    mode = "LatestRun",
+                    isFallback = true,
+                    fallbackReason = "NoJobExecutionIdProvided",
+                    requestedJobExecutionId = (string?)null,
+                    requestedJobExecutionIdIsValid = false
+                },
+                lastExecution = latestExecution is null
+                    ? null
+                    : new
+                    {
+                        latestExecution.ExecutionId,
+                        latestExecution.JobName,
+                        latestExecution.JobExecutionId,
+                        status = latestExecution.Status.ToString(),
+                        businessState = latestBusinessState,
+                        startedAt = latestExecution.StartedAt,
+                        completedAt = latestExecution.CompletedAt,
+                        durationSeconds = latestExecution.DurationSeconds,
+                        recordsProcessed = latestExecution.RecordsProcessed,
+                        recordsFailed = latestExecution.RecordsFailed,
+                        errorMessage = latestExecution.ErrorMessage
+                    },
+                startupWatchdog = (object?)null,
+                diagnostics = (object?)null
             });
         }
 
@@ -345,6 +383,7 @@ var statusHandler = async (
             var startupDeadlineUtc = triggerAttempt.AcceptedAtUtc.AddSeconds(startupSlaSeconds);
             var workerProcessExited = false;
             int? workerExitCode = triggerAttempt.WorkerExitCode;
+            var workerFailureReason = triggerAttempt.FailureReason;
 
             if (triggerAttempt.EventId.StartsWith("localproc-", StringComparison.OrdinalIgnoreCase)
                 && int.TryParse(triggerAttempt.EventId["localproc-".Length..], out var workerPid))
@@ -353,6 +392,10 @@ var statusHandler = async (
                 {
                     var process = Process.GetProcessById(workerPid);
                     workerProcessExited = process.HasExited;
+                    if (workerProcessExited && !workerExitCode.HasValue)
+                    {
+                        workerExitCode = process.ExitCode;
+                    }
                 }
                 catch
                 {
@@ -364,6 +407,32 @@ var statusHandler = async (
             {
                 // Persisted exit code indicates process has already exited.
                 workerProcessExited = true;
+            }
+
+            if (workerProcessExited)
+            {
+                var (fallbackExitCode, fallbackFailureReason) =
+                    TryReadLocalWorkerFailureFromLog(environment.ContentRootPath, triggerAttempt.JobExecutionId);
+
+                if (!workerExitCode.HasValue && fallbackExitCode.HasValue)
+                {
+                    workerExitCode = fallbackExitCode;
+                }
+
+                if (string.IsNullOrWhiteSpace(workerFailureReason) && !string.IsNullOrWhiteSpace(fallbackFailureReason))
+                {
+                    workerFailureReason = fallbackFailureReason;
+                }
+            }
+
+            if (workerProcessExited && string.IsNullOrWhiteSpace(workerFailureReason) && workerExitCode.HasValue && workerExitCode.Value != 0)
+            {
+                workerFailureReason = $"Worker process exited with code {workerExitCode.Value}. Check LocalWorkerProcess logs for details.";
+            }
+
+            if (workerProcessExited && string.IsNullOrWhiteSpace(workerFailureReason))
+            {
+                workerFailureReason = "Worker process exited before detailed failure text was captured. Check LocalWorkerProcess logs for this JobExecutionId.";
             }
 
             string projectedState;
@@ -404,7 +473,7 @@ var statusHandler = async (
                 eventId = triggerAttempt.EventId,
                 triggerStatus = triggerAttempt.Status,
                 workerExitCode,
-                workerFailureReason = triggerAttempt.FailureReason,
+                workerFailureReason,
                 triggerStore = triggerAttemptStore.StoreName
             };
 
@@ -502,5 +571,100 @@ var statusHandler = async (
 };
 
 app.MapGet("/api/v{version:apiVersion}/batch-jobs/{jobName}/status", statusHandler);
+
+static (int? ExitCode, string? FailureReason) TryReadLocalWorkerFailureFromLog(string contentRootPath, string jobExecutionId)
+{
+    try
+    {
+        if (string.IsNullOrWhiteSpace(jobExecutionId))
+        {
+            return (null, null);
+        }
+
+        var logsRoot = Path.Combine(contentRootPath, "Logs", "LocalWorkerProcess");
+        if (!Directory.Exists(logsRoot))
+        {
+            return (null, null);
+        }
+
+        var logPath = Directory
+            .GetFiles(logsRoot, $"*{jobExecutionId}*.log", SearchOption.TopDirectoryOnly)
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .FirstOrDefault();
+
+        if (string.IsNullOrWhiteSpace(logPath) || !File.Exists(logPath))
+        {
+            return (null, null);
+        }
+
+        var lines = File.ReadAllLines(logPath);
+        if (lines.Length == 0)
+        {
+            return (null, null);
+        }
+
+        int? exitCode = null;
+        string? failureReason = null;
+
+        for (var i = lines.Length - 1; i >= 0; i--)
+        {
+            var line = lines[i];
+
+            if (!exitCode.HasValue)
+            {
+                const string exitMarker = "Worker process exited with code";
+                var markerIndex = line.IndexOf(exitMarker, StringComparison.OrdinalIgnoreCase);
+                if (markerIndex >= 0)
+                {
+                    var tail = line[(markerIndex + exitMarker.Length)..].Trim();
+                    var firstToken = tail.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                    if (int.TryParse(firstToken, out var parsedExitCode))
+                    {
+                        exitCode = parsedExitCode;
+                    }
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(failureReason))
+            {
+                const string fatalMarker = "FATAL ERROR:";
+                var fatalIndex = line.IndexOf(fatalMarker, StringComparison.OrdinalIgnoreCase);
+                if (fatalIndex >= 0)
+                {
+                    failureReason = line[(fatalIndex + fatalMarker.Length)..].Trim();
+                    continue;
+                }
+
+                const string unhandledMarker = "Unhandled business/runtime exception:";
+                var unhandledIndex = line.IndexOf(unhandledMarker, StringComparison.OrdinalIgnoreCase);
+                if (unhandledIndex >= 0)
+                {
+                    failureReason = line[(unhandledIndex + unhandledMarker.Length)..].Trim();
+                    continue;
+                }
+
+                if (line.Contains("[ERR]", StringComparison.OrdinalIgnoreCase))
+                {
+                    failureReason = line[(line.IndexOf("[ERR]", StringComparison.OrdinalIgnoreCase) + 5)..].Trim();
+                    continue;
+                }
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(failureReason))
+        {
+            failureReason = lines
+                .Reverse()
+                .FirstOrDefault(l => !string.IsNullOrWhiteSpace(l) && !l.Contains("[SYS]", StringComparison.OrdinalIgnoreCase))
+                ?.Trim();
+        }
+
+        return (exitCode, failureReason);
+    }
+    catch
+    {
+        return (null, null);
+    }
+}
 
 app.Run();

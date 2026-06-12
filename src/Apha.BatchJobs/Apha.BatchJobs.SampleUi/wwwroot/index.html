@@ -369,6 +369,10 @@
                     <div class="panel-title">PACT API Raw Response</div>
                     <pre id="raw">No trigger yet.</pre>
                 </div>
+                <div class="panel">
+                    <div class="panel-title">Failure Details</div>
+                    <pre id="failure">No failures yet.</pre>
+                </div>
             </div>
 
             <details class="ref-section">
@@ -540,6 +544,7 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
 
         const timelineEl = document.getElementById("timeline");
         const rawEl = document.getElementById("raw");
+        const failureEl = document.getElementById("failure");
         const statusPill = document.getElementById("statusPill");
         const statusMeta = document.getElementById("statusMeta");
         const triggerBtn = document.getElementById("triggerBtn");
@@ -613,6 +618,10 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
 
         function setRaw(statusCode, bodyText) {
             rawEl.textContent = `HTTP ${statusCode}\n${bodyText}`;
+        }
+
+        function setFailure(text) {
+            failureEl.textContent = text || "No failures yet.";
         }
 
         function saveCorrelation() {
@@ -734,6 +743,7 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                         setState("failed", `Network error after ${pollFailureCount} retries`);
                         isRunning = false;
                         addTimeline(`Poll failed after ${MAX_SILENT_RETRIES} silent retries`);
+                        setFailure(`Polling failed after retries. Last HTTP=${response.status}`);
                     }
                     return;
                 }
@@ -758,8 +768,12 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                         metaText = `Finished at ${endTime ? new Date(endTime).toLocaleTimeString() : "n/a"}`;
                     } else if (currentState === "Failed") {
                         metaText = lastExec.errorMessage || "Job failed";
+                        setFailure(lastExec.errorMessage || "BatchJobs reported Failed with no error message.");
                     } else {
                         metaText = `State from BatchJobs: ${currentState}`;
+                        if (currentState !== "Running" && currentState !== "Pending" && currentState !== "Retry") {
+                            setFailure("No failures yet.");
+                        }
                     }
                 } else if (watchdog && watchdog.projectedState) {
                     currentState = watchdog.projectedState;
@@ -767,9 +781,15 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                     if ((currentState || "").toLowerCase() === "workerprocessexited") {
                         if (watchdog.workerFailureReason) {
                             metaText = `${metaText} | ${watchdog.workerFailureReason}`;
+                            setFailure(watchdog.workerFailureReason);
                         } else if (watchdog.workerExitCode !== null && watchdog.workerExitCode !== undefined) {
                             metaText = `${metaText} | ExitCode=${watchdog.workerExitCode}`;
+                            setFailure(`Worker exited with code ${watchdog.workerExitCode}. Check local worker log for details.`);
+                        } else {
+                            setFailure("Worker exited before detailed error was captured. Check PACT LocalWorkerProcess logs.");
                         }
+                    } else {
+                        setFailure("No failures yet.");
                     }
                 }
 
@@ -809,6 +829,7 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                     setState("failed", `Poll failed: ${err.message}`);
                     isRunning = false;
                     addTimeline(`Poll failed: ${err.message}`);
+                    setFailure(`Poll failed: ${err.message}`);
                 }
                 return;
             }
@@ -837,6 +858,7 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
 
                 if (!lastExec) {
                     setState("ready", "No correlated run. Showing latest-run view (no recent execution found).");
+                    setFailure("No failures yet.");
                     addTimeline("Latest-run view loaded (not correlated to a prior run).");
                     return;
                 }
@@ -845,9 +867,15 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                 const key = mapApiStateToUiKey(currentState);
                 const stateKey = STATES[key] ? key : "ready";
                 setState(stateKey, `Latest-run view only (not correlated). Last state: ${currentState}`);
+                if (currentState === "Failed") {
+                    setFailure(lastExec.errorMessage || "Last execution failed with no detailed error message.");
+                } else {
+                    setFailure("No failures yet.");
+                }
                 addTimeline(`Latest-run view loaded (not correlated). Last state: ${currentState}`);
             } catch (err) {
                 setState("ready", `No correlated run. Latest-run view unavailable: ${err.message}`);
+                setFailure(`Latest-run view unavailable: ${err.message}`);
             }
         }
 
@@ -861,6 +889,7 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
             pollFailureCount = 0;
             currentJobExecutionId = null;  // reset so no stale ID leaks into first poll
             cancelRequestedForCurrentRun = false;
+            setFailure("No failures yet.");
 
             const monthRaw = document.getElementById("monthSelect").value;
             const month = Number.parseInt(monthRaw, 10);
@@ -1034,7 +1063,9 @@ Watchdog Correlation: /status?jobExecutionId={uuid}
                 return;
             }
 
-            showLatestStatusView();
+            setRaw(0, "No trigger yet.");
+            setState("ready", "Ready to trigger via PACT API.");
+            addTimeline("No correlated run found. Waiting for trigger.");
             updateCancelButton();
         });
     </script>

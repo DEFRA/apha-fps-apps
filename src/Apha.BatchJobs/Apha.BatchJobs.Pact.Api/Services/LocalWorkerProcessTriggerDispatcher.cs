@@ -258,7 +258,12 @@ public sealed class LocalWorkerProcessTriggerDispatcher : ITriggerDispatcher
                 continue;
             }
 
-            await writer.WriteLineAsync($"[{DateTime.UtcNow:O}] [{streamTag}] {line}");
+            // stdout/stderr are pumped in parallel; StreamWriter is not thread-safe for concurrent writes.
+            lock (writer)
+            {
+                writer.WriteLine($"[{DateTime.UtcNow:O}] [{streamTag}] {line}");
+                writer.Flush();
+            }
         }
     }
 
