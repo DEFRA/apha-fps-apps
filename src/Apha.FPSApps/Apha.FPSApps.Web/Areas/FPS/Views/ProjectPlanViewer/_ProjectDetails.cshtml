@@ -482,6 +482,47 @@
             return hdnProjectCode ? hdnProjectCode.value : '';
         }
 
+        // Extra filter functions for dependent grids - pass parentProject to the controller
+        window.getplanSummaryTestGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.gettestPlanGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getTestActualGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getplanSummaryStaffGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getstaffPlanGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getstaffActualGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getStaffActualGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getplanSummaryAnimalGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getanimalPlanGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getactualAnimalCostGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getplanSummaryAdditionalGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getadditionalCostPlanGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getactualAdditionalCostGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+
         function setVal(id, value) {
             var el = document.getElementById(id);
             if (el) el.value = value || '';
@@ -619,9 +660,6 @@
 
             projectCode = String(projectCode);
             if (hdnProjectCode) hdnProjectCode.value = projectCode;
-
-            // Update project dropdown to match
-            if (projectSelect) projectSelect.value = projectCode;
 
             // Update header
             setVal('selectedProjectDetails', projectCode);

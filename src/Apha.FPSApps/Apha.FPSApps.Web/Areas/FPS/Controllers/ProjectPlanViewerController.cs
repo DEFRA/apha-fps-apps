@@ -594,7 +594,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         [HttpPost]
         public async Task<IActionResult> LoadProjectDetailsGrid(PaginationFilter<string> request, string? program = null,
-            string? projectGroup = null, string? projectCode = null)
+            string? projectGroup = null, string? parentProject = null)
         {
             if (!ModelState.IsValid)
             {
@@ -613,10 +613,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var query = _mapper.Map<QueryParameters<string>>(request);
             ApiResponseDto<List<ProjectDto>>? result = null;
 
-            if (!string.IsNullOrWhiteSpace(projectCode))
+            if (!string.IsNullOrWhiteSpace(parentProject))
             {
                 // Single project selected - fetch that specific project
-                var singleResult = await _projectService.GetProjectByIdAsync(projectCode);
+                var singleResult = await _projectService.GetProjectByIdAsync(parentProject);
                 if (singleResult.Success && singleResult.Data != null)
                 {
                     result = new ApiResponseDto<List<ProjectDto>>
@@ -679,13 +679,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadStaffPlanGrid(PaginationFilter<string> request, string? projectCode = null, string? gridId = null)
+        public async Task<IActionResult> LoadStaffPlanGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null)
         {
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _staffJobService.GetAllStaffJobsAsync(query, projectCode ?? string.Empty);
+            var pagedData = await _staffJobService.GetAllStaffJobsAsync(query, parentProject ?? string.Empty);
 
             var items = pagedData.Data != null
                 ? _mapper.Map<List<StaffJobItemViewModel>>(pagedData.Data.ToList())
@@ -703,13 +703,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadTestPlanGrid(PaginationFilter<string> request, string? projectCode = null, string? gridId = null)
+        public async Task<IActionResult> LoadTestPlanGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null)
         {
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(query, projectCode ?? string.Empty);
+            var response = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(query, parentProject ?? string.Empty);
 
             var items = response.Success && response.Data != null
                 ? _mapper.Map<List<TestPlanActualItem>>(response.Data)
@@ -729,13 +729,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadAnimalPlanGrid(PaginationFilter<string> request, string? projectCode = null, string? gridId = null)
+        public async Task<IActionResult> LoadAnimalPlanGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null)
         {
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _animalPlanService.GetAllAnimalCostAsync(query, projectCode ?? string.Empty);
+            var pagedData = await _animalPlanService.GetAllAnimalCostAsync(query, parentProject ?? string.Empty);
 
             var items = pagedData.Data != null
                 ? _mapper.Map<List<AnimalPlanItem>>(pagedData.Data.ToList())
@@ -753,13 +753,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadAdditionalCostGrid(PaginationFilter<string> request, string? projectCode = null, string? gridId = null)
+        public async Task<IActionResult> LoadAdditionalCostGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null)
         {
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _additionalCostService.GetAdditionalCostsAsync(query, projectCode ?? string.Empty);
+            var pagedData = await _additionalCostService.GetAdditionalCostsAsync(query, parentProject ?? string.Empty);
 
             var items = pagedData.Data != null
                 ? _mapper.Map<List<AdditionalCostItemViewModel>>(pagedData.Data)
@@ -777,13 +777,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadStaffActualGrid(PaginationFilter<string> request, string? projectCode = null)
+        public async Task<IActionResult> LoadStaffActualGrid(PaginationFilter<string> request, string? parentProject = null)
         {
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _timeCostCalcsService.GetTimeCostCalcsByProjectAsync(query, projectCode ?? string.Empty);
+            var pagedData = await _timeCostCalcsService.GetTimeCostCalcsByProjectAsync(query, parentProject ?? string.Empty);
 
             var items = pagedData.Data != null
                 ? _mapper.Map<List<CompareStaff2Item>>(pagedData.Data)
@@ -801,7 +801,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadTestActualGrid(PaginationFilter<string> request, string? projectCode = null)
+        public async Task<IActionResult> LoadTestActualGrid(PaginationFilter<string> request, string? parentProject= null)
         {
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
@@ -810,7 +810,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             // Build price lookup from test requirements
             var testQuery = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
-            var testResult = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(testQuery, projectCode ?? string.Empty);
+            var testResult = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(testQuery, parentProject ?? string.Empty);
             var priceLookup = new Dictionary<(string TestCode, string Buyer), decimal>();
             if (testResult.Success && testResult.Data != null)
             {
@@ -822,7 +822,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 }
             }
 
-            var pagedData = await _monthlyOutputService.GetMonthlyOutputByProjectAsync(query, projectCode ?? string.Empty, priceLookup);
+            var pagedData = await _monthlyOutputService.GetMonthlyOutputByProjectAsync(query, parentProject ?? string.Empty, priceLookup);
 
             var items = pagedData.Data != null
                 ? _mapper.Map<List<ActualTestOutputItem>>(pagedData.Data)
@@ -840,13 +840,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LoadActualCostGrid(PaginationFilter<string> request, string? projectCode = null, string? gridId = null, bool animalOnly = false)
+        public async Task<IActionResult> LoadActualCostGrid(PaginationFilter<string> request, string? parentProject = null, string? gridId = null, bool animalOnly = false)
         {
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _projectSubContractService.GetFpsProjectSubContractsAsync(query, projectCode, filterByAnimalAcctCodes: animalOnly);
+            var pagedData = await _projectSubContractService.GetFpsProjectSubContractsAsync(query, parentProject, filterByAnimalAcctCodes: animalOnly);
 
             var items = pagedData.Data != null
                 ? _mapper.Map<List<ActualProjectCostItem>>(pagedData.Data)

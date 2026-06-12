@@ -67,7 +67,14 @@
         </div>
     </div>
 
- 
+    <!-- Project Details Partial (loaded on row click) -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div id="projectDetailsContainer">
+                @await Html.PartialAsync("_ProjectDetails", Model.ProjectDetails)
+            </div>
+        </div>
+    </div>
 </div>
 
 
@@ -149,7 +156,7 @@
                 return {
                     program: getSelectedProgram(),
                     projectGroup: getSelectedProjectGroup(),
-                    projectCode: projectSelect ? projectSelect.value : ''
+                    parentProject: projectSelect ? projectSelect.value : ''
                 };
             };
         })();
