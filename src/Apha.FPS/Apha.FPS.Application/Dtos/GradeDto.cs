@@ -1,25 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — GradeDto.cs (new file)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New DTO created — service layer contract for Grade entity (fps.grade table)
- *   - Description property maps to Grade.DescLong (renamed for UI clarity; handled by EntityMapper ForMember)
- *   - Includes all entity fields: GradeCode, Description, AvSalary, PactCode, AvLeaveHrs, AvSickHrs, FpsYear
- *
- * PRESERVED:
- *   - All field names visible in the HTML prototype: GradeCode, Description (DescLong), AvSalary
- *   - FpsYear included for year-aware service operations
- *   - DDL-only fields (PactCode, AvLeaveHrs, AvSickHrs) retained for full entity coverage
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm whether PactCode, AvLeaveHrs, AvSickHrs need UI exposure
- *     in the GradeMaintenance form (_AddEditGrade.cshtml).
- */
-
 namespace Apha.FPS.Application.Dtos
 {
     /// <summary>
