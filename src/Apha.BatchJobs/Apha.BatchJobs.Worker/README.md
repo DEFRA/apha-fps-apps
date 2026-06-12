@@ -34,4 +34,8 @@ Key settings:
 - Connection failure: validate host, port, database, and credentials.
 - Missing config: run from src/Apha.BatchJobs.
 
+## CI
+
+- Non-functional documentation update to trigger CI/CD.
+
 
