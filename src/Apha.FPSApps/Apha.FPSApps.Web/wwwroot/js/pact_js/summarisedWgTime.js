@@ -94,6 +94,88 @@ function selectGridRow($row) {
     $('#txtProjectDescription').val((project && projectTitleLookup && projectTitleLookup[project]) ? projectTitleLookup[project] : '');
 }
 
+// ── UK decimal formatter ──────────────────────────────────────────────────────
+
+/**
+ * Formats a numeric text value using standard half-up rounding:
+ *   - decimal fraction >= 0.5 : round to whole number  e.g. 58.93 → 59
+ *   - decimal fraction <  0.5 : keep 1 decimal place   e.g. 12.38 → 12.4
+ *   - no decimal               : leave unchanged        e.g. 100   → 100
+ *   - Values prefixed with '£' have the symbol preserved.
+ * @param {string} text - The raw cell text to inspect and optionally reformat.
+ * @returns {string} The original text or a reformatted string.
+ */
+function formatIfExceedsTwoDecimals(text) {
+    if (!text || !text.trim()) return text;
+
+    var trimmed = text.trim();
+
+    if (trimmed.endsWith('%')) return text;
+
+    var hasPound = trimmed.startsWith('\u00a3');
+    var rawNum = (hasPound ? trimmed.slice(1) : trimmed).replace(/,/g, '');
+    var num = parseFloat(rawNum);
+
+    if (isNaN(num)) return text;
+
+    if (rawNum.indexOf('.') === -1) return text;
+
+    var formatted;
+
+    formatted = num.toLocaleString('en-GB', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    //var fracPart = num - Math.floor(num);
+    //var formatted;
+    // if (fracPart >= 0.5) {
+    //     formatted = Math.round(num).toLocaleString('en-GB');
+    // } else if (fracPart === 0) {
+    //     formatted = Math.floor(num).toLocaleString('en-GB');
+    // } else {
+    //     formatted = num.toLocaleString('en-GB', {
+    //         minimumFractionDigits: 2,
+    //         maximumFractionDigits: 2
+    //     });
+    // }
+
+    return hasPound ? '\u00a3' + formatted : formatted;
+}
+
+/**
+ * Scans all footer summary cells and grid data cells on the Summarised WG
+ * Time page and applies formatIfExceedsTwoDecimals to every non-empty
+ * numeric value.  Stores the original value in data-tooltip / title.
+ */
+function formatAllNumericValues() {
+    var container = document.getElementById('columnTotalsContainer');
+    if (container) {
+        container.querySelectorAll('.column-total').forEach(function (cell) {
+            var original = cell.textContent;
+            var raw = original.trim();
+            if (!raw) return;
+            var reformatted = formatIfExceedsTwoDecimals(original);
+            // To display the original value as a tooltip on mouse hover, simply uncomment the commented line of code below
+            //cell.setAttribute('data-tooltip', raw);
+            //cell.title = raw;
+            cell.textContent = reformatted;
+        });
+    }
+
+    document.querySelectorAll('#gridContainer_summarisedWorkgroupTimeGrid table tbody td[data-property] span')
+        .forEach(function (span) {
+            var original = span.textContent;
+            var raw = original.trim();
+            if (!raw) return;
+            var reformatted = formatIfExceedsTwoDecimals(original);
+            // To display the original value as a tooltip on mouse hover, simply uncomment the commented line of code below
+            //span.setAttribute('data-tooltip', raw); 
+            //span.title = raw;
+            span.textContent = reformatted;
+        });
+}
+
 // ── Initialisation ────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -139,6 +221,9 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(function () { alignColumnTotals(); }, 100);
     setTimeout(function () { alignColumnTotals(); }, 500);
 
+    // Format numeric values on initial load
+    setTimeout(function () { formatAllNumericValues(); }, 150);
+
     // Auto-select first row
     const $firstRow = $('table[id^="tbl_summarised"]:not(.totals-table) tbody tr:first');
     selectGridRow($firstRow);
@@ -149,6 +234,7 @@ document.addEventListener('gridReloaded', function (e) {
         const $firstRow = $('table[id^="tbl_summarised"]:not(.totals-table) tbody tr:first');
         selectGridRow($firstRow);
         requestAnimationFrame(alignColumnTotals);
+        requestAnimationFrame(formatAllNumericValues);
     }
 });
 
