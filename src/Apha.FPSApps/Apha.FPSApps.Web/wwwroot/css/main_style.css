@@ -1540,3 +1540,6 @@ textarea {
   background-color: #e9ecef !important;
   border-bottom: 8px solid #adb5bd !important;
 }
+.isListWidth {
+    width: 15vw;
+}

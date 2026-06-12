@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
 {
-    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin, API-PACTShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/recreatereleasesummary")]
@@ -53,6 +53,17 @@ namespace Apha.PACT.Api.Controllers
         {
             var result = await _service.GetReleaseSummariesAsync();
             return Ok(_mapper.Map<ReleaseSummaryRes>(result));
+        }
+
+        /// <summary>
+        /// Retrieves all release periods from <c>tblPeriod</c> without settings.
+        /// </summary>
+        /// <returns><c>200 OK</c> with a list of <see cref="ReleasePeriodRes"/>.</returns>
+        [HttpGet("releaseperiods")]
+        public async Task<IActionResult> GetReleasePeriods()
+        {
+            var result = await _service.GetReleasePeriodsAsync();
+            return Ok(_mapper.Map<IReadOnlyList<ReleasePeriodRes>>(result));
         }
 
         /// <summary>

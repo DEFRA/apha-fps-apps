@@ -18,6 +18,7 @@ namespace Apha.PIMS.Api.Mappings
             CreateMap<Pagination, PaginationData>().ReverseMap();
 
             CreateMap<ProjectListViewDto, ProjectListRes>().ReverseMap();
+            CreateMap<ProjectListMilestoneDto, ProjectListMilestoneRes>().ReverseMap();
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
             CreateMap<ProposedProjectDto, ProposedProjectReq>().ReverseMap();
             CreateMap<ProposedProjectDto, ProposedProjectRes>().ReverseMap();
@@ -44,6 +45,15 @@ namespace Apha.PIMS.Api.Mappings
             CreateMap<PactPayDto, PactPayRes>().ReverseMap();
             CreateMap<MonthlyPactDto, MonthlyPactRes>().ReverseMap();
             CreateMap<FpsYearTotalsDto, FpsYearTotalsRes>().ReverseMap();
+
+            CreateMap<MilestoneDto, MilestoneRes>().ReverseMap();
+            CreateMap<MilestoneDto, MilestoneReq>().ReverseMap();
+            CreateMap<MilestoneTypeDto, MilestoneTypeRes>().ReverseMap();
+
+            CreateMap<MilestoneFormDatesDto, MilestoneFormDatesReq>().ReverseMap();
+            CreateMap<MilestoneFormDatesDto, MilestoneFormDatesRes>().ReverseMap();
+
+            CreateMap<LogMilestoneDto, LogMilestoneRes>().ReverseMap();
         }
     }
 }

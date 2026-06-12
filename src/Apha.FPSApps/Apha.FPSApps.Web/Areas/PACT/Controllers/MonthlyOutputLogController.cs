@@ -3,7 +3,6 @@ using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using IWorkGroupService = Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService;
 using Apha.FPSApps.Application.Pagination;
-using Apha.FPSApps.Application.Services.PACT;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
@@ -16,7 +15,7 @@ using Newtonsoft.Json;
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
+    [Authorize(Roles = "PACTAdmin,PACTUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class MonthlyOutputLogController : Controller
     {

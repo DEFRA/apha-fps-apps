@@ -44,6 +44,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<RecreateSummaryLogWithComment, RecreateSummaryLogDto>().ReverseMap();
             CreateMap<ReleasePeriod, ReleasePeriodDto>().ReverseMap();
             CreateMap<ReleaseSummary, ReleaseSummaryDto>();
+            CreateMap<JobCodeZtLookup, JobCodeZtDto>().ReverseMap();
         }
     }
 }

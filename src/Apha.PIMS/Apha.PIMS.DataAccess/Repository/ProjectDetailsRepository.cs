@@ -101,7 +101,7 @@ namespace Apha.PIMS.DataAccess.Repository
             {
                 bool codeChanged = await ChangeProjectCodeAsync(entity.Parentproject!, transferTo);
                 if (!codeChanged)
-                    throw new Exception("Failed to change project code for proposed project update.");
+                    throw new InvalidOperationException("Failed to change project code for proposed project update.");
                 entity.Parentproject = transferTo;
             }
             else {
@@ -124,6 +124,13 @@ namespace Apha.PIMS.DataAccess.Repository
             var years = await _dbContext.Years.ToListAsync();
 
             return years;
+        }
+
+        public async Task<Project?> GetFpsProjectByIdAsync(string parentproject)
+        {
+            return await _dbContext.Projects
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Parentproject == parentproject);
         }
         private async Task<bool> ChangeProjectCodeAsync(string oldCode, string newCode)
         {

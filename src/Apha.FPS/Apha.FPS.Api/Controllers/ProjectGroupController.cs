@@ -10,7 +10,7 @@ namespace Apha.FPS.Api.Controllers
     /// <summary>
     /// API controller for retrieving project group lookup data.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [Route("api/v{version:apiVersion}/projectgroup")]
     [ApiController]
     [ApiVersion("1.0")]

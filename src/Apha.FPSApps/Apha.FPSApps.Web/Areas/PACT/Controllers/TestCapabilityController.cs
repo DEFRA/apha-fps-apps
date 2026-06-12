@@ -17,7 +17,7 @@ using Newtonsoft.Json;
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
+    [Authorize(Roles = "PACTAdmin,PACTUser")]
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class TestCapabilityController : Controller
     {

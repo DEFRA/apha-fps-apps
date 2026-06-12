@@ -374,14 +374,14 @@
 
        
 
-        // Plan Person onto ZT Codes — navigates to ZTstaffMain for the selected person (Button46_Click)
+        // Plan Person onto ZT Codes — navigates to PlanStaffZTCode for the selected person (Button46_Click)
         function planPersonOntoZTCodes() {
             var pactId = document.getElementById('fpsSrSelectedPactId').value;
             if (!pactId) {
                 showGovukAlert('Please select a person first.');
                 return;
             }
-            window.location.href = '/FPS/ZTstaffMain/Index?staffId=' + encodeURIComponent(pactId);
+            window.location.href = '/FPS/PlanStaffZTCode/Index?staffId=' + encodeURIComponent(pactId);
         }
 
         // Save (Update) WG Staff from modal

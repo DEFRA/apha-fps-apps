@@ -51,11 +51,8 @@ namespace Apha.PACT.DataAccess.Repository
             // Apply sorting
             queryJobcodes = (IQueryable<JobCode>)ApplySorting(queryJobcodes, query.SortBy, query.Descending);
 
-            // Execute query
-            var result = await queryJobcodes.ToListAsync();
-
             // Apply paging
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(queryJobcodes, query.Page, query.PageSize);
         }
 
         public async Task<JobCode?> GetJobCodeByIdAsync(string jobCodeId)
@@ -100,6 +97,21 @@ namespace Apha.PACT.DataAccess.Repository
             _context.JobCodes.Remove(jobCode);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<IEnumerable<JobCodeZtLookup>> GetZtJobCodesAsync()
+        {
+            var baseQuery = (from jc in _context.ProjectViews
+                             where jc.Program != null && jc.Program.Equals("zt_prog"
+, StringComparison.CurrentCultureIgnoreCase)
+                             && jc.UserEmail != null && EF.Functions.ILike(jc.UserEmail, _fpsRequestContext.UserEmailId)
+                             select new JobCodeZtLookup
+                             {
+                                 JobCode = jc.ParentProject,
+                                 Description = jc.ProjectTitle
+                             }).Distinct().AsQueryable();
+
+            return await baseQuery.AsNoTracking().ToListAsync();
         }
 
         private static IQueryable<JobCode> ApplyJobCodeFilter(IQueryable<JobCode> queryJobCode, string? filter)

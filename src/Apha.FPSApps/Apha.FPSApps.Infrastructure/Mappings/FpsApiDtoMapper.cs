@@ -1,5 +1,6 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
+using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -19,6 +20,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PaginationDto, Pagination>().ReverseMap();
 
             CreateMap<StaffJobViewDto, StaffJobViewRes>().ReverseMap();
+            CreateMap<StaffJobZtViewDto, StaffJobZtViewRes>().ReverseMap();
             CreateMap<StaffWorkgroupLookupDto, StaffWorkgroupLookupRes>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobReq>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();
@@ -29,7 +31,11 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<EmployeeDto, EmployeeRes>().ReverseMap();
 
             // FPS Project
-            CreateMap<ProjectDto, ProjectReq>().ReverseMap();
+            // CustIncome in the FPS API wire format lives in ProjectReq.BudgetExt (see FPS RequestMapper)
+            CreateMap<ProjectDto, ProjectReq>()
+                .ForMember(d => d.BudgetExt, o => o.MapFrom(s => s.CustIncome))
+                .ReverseMap()
+                .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt));
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
 
             // FPS Lookups
@@ -92,6 +98,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Resource Set-Up
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
             CreateMap<ProfitCentreDto, ProfitCentreReq>().ReverseMap();
+            CreateMap<ProfitCentreCostDto, ProfitCentreCostRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeReq>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
@@ -104,10 +111,17 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
 
+            // Project Group Staff Plan view
+            CreateMap<ProjectGroupStaffPlanViewDto, ProjectGroupStaffPlanViewRes>().ReverseMap();
+
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 
             // WorkgroupGrade  
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
+
+
+            // Job Code (ZT lookup) - now served from PACT API
+            CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
                       
 
             // BudgetResourceLevel

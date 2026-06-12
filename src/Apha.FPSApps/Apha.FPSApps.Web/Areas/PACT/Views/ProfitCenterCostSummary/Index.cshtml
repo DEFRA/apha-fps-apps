@@ -1,0 +1,70 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.ProfitCenterCostSummaryViewModel
+
+@{
+    ViewData["Title"] = "PACT : PC SOCT Query";
+}
+
+@* Header with Period dropdown *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_padding_bottom_10 sup_border-bottom" style="margin-top:10px; align-items: flex-end;">
+
+    <div class="govuk-grid-column-one-third">
+        <h1 class="govuk-heading-s sup_margin_bottom_0">PC SOCT Query</h1>
+    </div>
+
+    @* Period dropdown *@
+    <div class="govuk-grid-column-one-third">
+        <div style="position: relative; z-index: 50;">
+            <input type="text" id="periodSelectDropdown" placeholder="Select Period" autocomplete="off"
+                   class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width:100%; cursor:pointer;" readonly />
+            <div id="periodDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
+                box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
+                <input type="text" id="periodSearchBox" placeholder="Type to search Period"
+                       style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
+                <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
+                        <tr>
+                            <th style="padding:6px 8px; text-align:left;">Period</th>
+                            <th style="padding:6px 8px; text-align:left;">No</th>
+                        </tr>
+                    </thead>
+                    <tbody id="PeriodDropdownBody">
+                        @foreach (var period in Model.PeriodMonths)
+                        {
+                            <tr data-value="@period.EndPeriod" style="cursor:pointer;">
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@period.PeriodName</td>
+                                <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@period.EndPeriod</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Profit Center Cost Summary Data Grid *@
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-three-quarters">
+        <div id="gridContainer_profitCenterCostGrid">
+            @if (Model.CostGrid != null)
+            {
+                @await Html.PartialAsync("_DataGrid", Model.CostGrid)
+            }
+            else
+            {
+                <div class="govuk-inset-text" style="margin-top: 20px;">
+                    <p class="govuk-body">No data available</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pact_js/profit-center-cost-summary.js"></script>
+    <script>
+        profitCenterCostGridId = '@(Model.CostGrid != null ? Model.CostGrid.GridId : "")';
+        currentMonthNumber = '@(Model.SelectedMonthNumber.HasValue ? Model.SelectedMonthNumber.Value.ToString() : "")';
+    </script>
+}
