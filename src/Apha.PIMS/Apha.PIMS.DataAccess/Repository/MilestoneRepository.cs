@@ -127,8 +127,8 @@ namespace Apha.PIMS.DataAccess.Repository
 
         private static IQueryable<Milestone> ApplySorting(IQueryable<Milestone> query, string? sortBy, bool descending)
         {
-            if (string.IsNullOrEmpty(sortBy) || sortBy.ToLower() == "number")
-                return ApplyOrder(query, m => m.Number, descending);
+            if (string.IsNullOrEmpty(sortBy) || string.Equals(sortBy, "number", StringComparison.OrdinalIgnoreCase))
+                    return ApplyOrder(query, m => m.Number, descending);
 
             return query.OrderBy(m => m.Number);
         }
@@ -176,26 +176,53 @@ namespace Apha.PIMS.DataAccess.Repository
                              on l.ChangedBy equals pm.Mnumber into pmGroup
                          from pm in pmGroup.DefaultIfEmpty()
                          orderby l.DateChanged descending
-                         select new LogMilestone
+                         select new
                          {
-                             Id = l.Id,
-                             Project = l.Project,
-                             Number = l.Number,
-                             Description = l.Description,
-                             DateDue = l.DateDue,
-                             DateCompleted = l.DateCompleted,
-                             DateFormReceived = l.DateFormReceived,
-                             UnderSdReview = l.UnderSdReview,
-                             OnTarget = l.OnTarget,
-                             ProjectLeaderComment = l.ProjectLeaderComment,
-                             CapsComment = l.CapsComment,
-                             IdType = l.IdType,
-                             DateChanged = l.DateChanged,
-                             ChangedBy = pm != null ? pm.Projectmanager : (l.ChangedBy != null ? "(" + l.ChangedBy + ")" : null),
-                             UpdateType = l.UpdateType
+                             l.Id,
+                             l.Project,
+                             l.Number,
+                             l.Description,
+                             l.DateDue,
+                             l.DateCompleted,
+                             l.DateFormReceived,
+                             l.UnderSdReview,
+                             l.OnTarget,
+                             l.ProjectLeaderComment,
+                             l.CapsComment,
+                             l.IdType,
+                             l.DateChanged,
+                             ManagerName       = pm != null ? pm.Projectmanager : null,
+                             OriginalChangedBy = l.ChangedBy,
+                             l.UpdateType
                          };
 
-            List<LogMilestone> all = await joined.ToListAsync();
+            var rawList = await joined.ToListAsync();
+
+            List<LogMilestone> all = rawList.Select(x =>
+            {
+                string? changedBy = x.ManagerName;
+                if (changedBy == null && x.OriginalChangedBy != null)
+                    changedBy = "(" + x.OriginalChangedBy + ")";
+
+                return new LogMilestone
+                {
+                    Id                   = x.Id,
+                    Project              = x.Project,
+                    Number               = x.Number,
+                    Description          = x.Description,
+                    DateDue              = x.DateDue,
+                    DateCompleted        = x.DateCompleted,
+                    DateFormReceived     = x.DateFormReceived,
+                    UnderSdReview        = x.UnderSdReview,
+                    OnTarget             = x.OnTarget,
+                    ProjectLeaderComment = x.ProjectLeaderComment,
+                    CapsComment          = x.CapsComment,
+                    IdType               = x.IdType,
+                    DateChanged          = x.DateChanged,
+                    ChangedBy            = changedBy,
+                    UpdateType           = x.UpdateType
+                };
+            }).ToList();
             return ApplyPaging(all, parameters.Page, parameters.PageSize);
         }
     }

@@ -101,7 +101,7 @@ namespace Apha.PIMS.DataAccess.Repository
             {
                 bool codeChanged = await ChangeProjectCodeAsync(entity.Parentproject!, transferTo);
                 if (!codeChanged)
-                    throw new Exception("Failed to change project code for proposed project update.");
+                    throw new InvalidOperationException("Failed to change project code for proposed project update.");
                 entity.Parentproject = transferTo;
             }
             else {

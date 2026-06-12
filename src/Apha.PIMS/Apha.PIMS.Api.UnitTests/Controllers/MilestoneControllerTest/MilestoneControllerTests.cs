@@ -350,7 +350,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var value    = Assert.IsAssignableFrom<object>(okResult.Value);
+            var value    = Assert.IsType<object>(okResult.Value, exactMatch: false);
             Assert.NotNull(value);
 
             await _service.Received(1).DeleteMilestoneAsync(project, number);
