@@ -134,5 +134,20 @@ namespace Apha.FPS.Api.Controllers
             return Ok(success);
         }
 
+        /// <summary>
+        /// Returns paginated profit centres with aggregated cost from TimeCostCalcs where Class = 'charge'.
+        /// Supports pagination, sorting, and month filtering.
+        /// </summary>
+        /// <param name="query">Pagination and sorting parameters.</param>
+        /// <param name="monthNumber">Month number to filter the cost calculations.</param>
+        [HttpGet("paged/costsummary")]
+        public async Task<IActionResult> GetPagedProfitCenterCostSummary(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] double monthNumber)
+        {
+            var result = await _profitCentreService.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+            return Ok(_mapper.Map<PaginationRes<ProfitCentreCostRes>>(result));
+        }
+
     }
 }

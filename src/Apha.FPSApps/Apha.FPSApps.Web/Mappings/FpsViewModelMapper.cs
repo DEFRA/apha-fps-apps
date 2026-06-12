@@ -38,6 +38,9 @@ namespace Apha.FPSApps.Web.Mappings
             // ProgrammeNewProject
             CreateMap<ProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();
 
+            // PortfolioNew
+            CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
+
             // Resource Set-Up
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 

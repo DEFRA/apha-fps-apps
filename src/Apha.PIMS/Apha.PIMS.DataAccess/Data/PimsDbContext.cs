@@ -41,6 +41,7 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<MilestoneFormDates> MilestoneFormDates { get; set; }
         public virtual DbSet<MilestoneType> MilestoneTypes { get; set; }
         public virtual DbSet<LogMilestone> LogMilestones { get; set; }
+        public virtual DbSet<ProjectManager> ProjectManagers { get; set; }
 
         public virtual DbSet<StagingMilestone> StagingMilestones { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -72,6 +73,7 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new MilestoneTypeMap());
             modelBuilder.ApplyConfiguration(new MilestoneFormDatesMap());
             modelBuilder.ApplyConfiguration(new LogMilestoneMap());
+            modelBuilder.ApplyConfiguration(new ProjectManagerMap());
             modelBuilder.ApplyConfiguration(new StagingMilestoneMap());
         }
     }

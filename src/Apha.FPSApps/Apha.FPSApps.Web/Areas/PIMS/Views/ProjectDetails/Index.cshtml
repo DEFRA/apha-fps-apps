@@ -34,19 +34,19 @@
                     <div class="govuk-template__body js-enabled govuk-frontend-supported">
                         <div class="govuk-tabs" data-module="govuk-tabs" id="projectDetailsTabs">
                             <ul class="govuk-tabs__list">
-                                <li class="govuk-tabs__list-item govuk-tabs__list-item--selected govuk-!-padding-2"
+                                <li class="govuk-tabs__list-item govuk-!-padding-2 @(Model.IsFPS ? "govuk-tabs__list-item--selected" : "")"
                                     id="tab_nav-home">
                                     <a class="govuk-tabs__tab tab-font-bold-size"
                                            href="#nav-home" role="tab"
-                                           aria-controls="nav-home" aria-selected="true">
+                                           aria-controls="nav-home" aria-selected="@(Model.IsFPS ? "true" : "false")" @(!Model.IsFPS ? "tabindex=\"-1\"" : "")>
                                         FPS Project Details
                                     </a>
                                 </li>
-                                <li class="govuk-tabs__list-item govuk-!-padding-2"
+                                <li class="govuk-tabs__list-item govuk-!-padding-2 @(!Model.IsFPS ? "govuk-tabs__list-item--selected" : "")"
                                     id="tab_nav-profile">
                                     <a class="govuk-tabs__tab tab-font-bold-size"
                                            href="#nav-profile" role="tab"
-                                           aria-controls="nav-profile" aria-selected="false" tabindex="-1">
+                                           aria-controls="nav-profile" aria-selected="@(!Model.IsFPS ? "true" : "false")" @(Model.IsFPS ? "tabindex=\"-1\"" : "")>
                                         Proposed Project Details
                                     </a>
                                 </li>
@@ -61,7 +61,7 @@
                             </ul>
 
                             <!-- Tab 1: FPS Project Details (read-only) -->
-                            <div class="govuk-tabs__panel govuk-!-padding-2"
+                            <div class="govuk-tabs__panel govuk-!-padding-2 @(!Model.IsFPS ? "govuk-tabs__panel--hidden" : "")"
                                  id="nav-home" role="tabpanel"
                                  style="min-height: 40px"
                                  hidden=@(!Model.IsFPS)
@@ -137,7 +137,7 @@
                             </div>
 
                             <!-- Tab 2: Proposed Project Details (editable) -->
-                            <div class="govuk-tabs__panel govuk-!-padding-2 govuk-tabs__panel--hidden"
+                            <div class="govuk-tabs__panel govuk-!-padding-2 @(Model.IsFPS ? "govuk-tabs__panel--hidden" : "")"
                                  id="nav-profile" role="tabpanel"
                                  style="min-height: 460px; overflow-y: auto"
                                  hidden=@(Model.IsFPS)

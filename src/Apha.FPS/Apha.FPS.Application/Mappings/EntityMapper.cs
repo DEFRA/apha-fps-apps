@@ -62,6 +62,7 @@ namespace Apha.FPS.Application.Mappings
                 .ForMember(d => d.ProfitCentreHead, o => o.MapFrom(s => s.ProfitCentreHead))
                 .ForMember(d => d.DivisionId, o => o.MapFrom(s => s.DivisionId))
                 .ForMember(d => d.EmailRecipient, o => o.MapFrom(s => s.EmailRecipient));
+            CreateMap<ProfitCentreCostSummary, ProfitCentreCostDto>().ReverseMap();
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupGradeView, WorkgroupGradeDto>().ReverseMap();

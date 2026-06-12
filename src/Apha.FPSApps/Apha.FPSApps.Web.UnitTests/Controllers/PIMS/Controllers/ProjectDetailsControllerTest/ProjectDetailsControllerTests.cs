@@ -48,7 +48,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             PaginationDto? commentPagination = null,
             List<YearDto>? years = null)
         {
-            _projectListServiceMock.GetFpsProjectByIdAsync(Arg.Any<string>())
+            _projectDetailsServiceMock.GetFpsProjectAsync(Arg.Any<string>())
                 .Returns(new ApiResponseDto<ProjectDto> { Success = true, Data = fpsProject });
 
             _projectDetailsServiceMock.GetProposedProjectAsync(Arg.Any<string>())
@@ -153,7 +153,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
         }
 
         [Fact]
-        public async Task Index_CallsGetFpsProjectByIdAsync_Once()
+        public async Task Index_CallsGetFpsProjectAsync_Once()
         {
             // Arrange
             SetupSuccessfulIndexMocks();
@@ -162,7 +162,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectDetails
             await _controller.Index("PP001");
 
             // Assert
-            await _projectListServiceMock.Received(1).GetFpsProjectByIdAsync("PP001");
+            await _projectDetailsServiceMock.Received(1).GetFpsProjectAsync("PP001");
         }
 
         [Fact]

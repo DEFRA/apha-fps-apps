@@ -13,5 +13,6 @@ namespace Apha.PIMS.Application.Interfaces
         Task<ProposedProjectDto> UpdateProposedProjectAsync(ProposedProjectDto dto, string transferTo);
         Task<List<RiskDto>> GetAllRiskAsync();
         Task<List<YearDto>> GetAllYearAsync();
+        Task<ProjectDto?> GetFpsProjectByIdAsync(string parentproject);
     }
 }
