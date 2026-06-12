@@ -1,3 +1,30 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — WorkGroupEmployeeControllerTests.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
+ * Migrated : 2026-06-11
+ *
+ * CHANGED:
+ *   - Phase 13 UPDATE: added #region CreateWorkGroupEmployeeAsync Tests covering
+ *     the [HttpPost] CreateWorkGroupEmployeeAsync action added in Phase 5/6.
+ *   - Two new test methods:
+ *     CreateWorkGroupEmployeeAsync_WithValidRequest_ReturnsCreatedAtAction — happy path
+ *     CreateWorkGroupEmployeeAsync_WhenServiceThrows_PropagatesException    — exception path
+ *
+ * PRESERVED:
+ *   - All existing test regions unchanged: GetWorkGroupEmployeeAsync, GetWorkGroupEmployeeByIdAsync,
+ *     UpdateWorkGroupEmployeeAsync, DeleteWorkGroupEmployeeAsync, Constructor Tests.
+ *   - NSubstitute mock setup and FluentAssertions assertion style unchanged.
+ *   - Namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest unchanged.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Confirm IWorkGroupEmployeeService.CreateWorkGroupEmployeeAsync signature
+ *     is stable (returns WorkGroupEmployeeDto, not Task<IActionResult>).
+ *   - TRANSFORMENGINE TODO: Verify CreatedAtAction route value key "pactId" matches route template
+ *     parameter name in GetWorkGroupEmployeeByIdAsync ([HttpGet("{pactId}")]).
+ */
+
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
@@ -115,6 +142,54 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
                 _controller.GetWorkGroupEmployeeByIdAsync(DefaultPactId));
+        }
+
+        #endregion
+
+        #region CreateWorkGroupEmployeeAsync Tests
+
+        // TRANSFORMENGINE: tests for [HttpPost] CreateWorkGroupEmployeeAsync added — Phase 13.
+        // Action returns 201 CreatedAtAction pointing to GetWorkGroupEmployeeByIdAsync.
+
+        [Fact]
+        public async Task CreateWorkGroupEmployeeAsync_WithValidRequest_ReturnsCreatedAtAction()
+        {
+            // Arrange
+            var req         = new WorkGroupEmployeeReq { PactId = DefaultPactId, HrsPaid = 40.0 };
+            var dto         = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade };
+            var createdDto  = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade };
+            var expectedRes = new WorkGroupEmployeeRes { PactId = DefaultPactId };
+
+            _mapperMock.Map<WorkGroupEmployeeDto>(req).Returns(dto);
+            _serviceMock.CreateWorkGroupEmployeeAsync(dto).Returns(createdDto);
+            _mapperMock.Map<WorkGroupEmployeeRes>(createdDto).Returns(expectedRes);
+
+            // Act
+            var result = await _controller.CreateWorkGroupEmployeeAsync(req);
+
+            // Assert
+            var createdResult = Assert.IsType<CreatedAtActionResult>(result);
+            createdResult.ActionName.Should().Be(nameof(WorkGroupEmployeeController.GetWorkGroupEmployeeByIdAsync));
+            createdResult.RouteValues.Should().ContainKey("pactId");
+            createdResult.RouteValues!["pactId"].Should().Be(DefaultPactId);
+            createdResult.Value.Should().Be(expectedRes);
+            await _serviceMock.Received(1).CreateWorkGroupEmployeeAsync(dto);
+        }
+
+        [Fact]
+        public async Task CreateWorkGroupEmployeeAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var req = new WorkGroupEmployeeReq { PactId = DefaultPactId };
+            var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade };
+
+            _mapperMock.Map<WorkGroupEmployeeDto>(req).Returns(dto);
+            _serviceMock.CreateWorkGroupEmployeeAsync(dto)
+                .ThrowsAsync(new InvalidOperationException("Duplicate PactId."));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _controller.CreateWorkGroupEmployeeAsync(req));
         }
 
         #endregion

@@ -1,3 +1,29 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — WorkGroupEmployeeServiceTests.cs (Backend)
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
+ * Migrated : 2026-06-11
+ *
+ * CHANGED:
+ *   - Phase 13 UPDATE: added #region CreateWorkGroupEmployeeAsync Tests covering the
+ *     CreateWorkGroupEmployeeAsync method added to WorkGroupEmployeeService in Phase 3.
+ *   - Three new test methods:
+ *     CreateWorkGroupEmployeeAsync_WithValidDto_ReturnsMappedResult       — happy path
+ *     CreateWorkGroupEmployeeAsync_WithNullDto_ThrowsArgumentNullException — null guard
+ *     CreateWorkGroupEmployeeAsync_WithEmptyPactId_ThrowsArgumentException — whitespace guard
+ *
+ * PRESERVED:
+ *   - All existing test regions: GetWorkGroupEmployeeAsync, GetWorkGroupEmployeeByIdAsync,
+ *     UpdateWorkGroupEmployeeAsync, DeleteWorkGroupEmployeeAsync unchanged.
+ *   - NSubstitute + FluentAssertions pattern unchanged.
+ *   - Namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest unchanged.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: If the repository raises InvalidOperationException for duplicate PactId,
+ *     add a PropagatesInvalidOperationException test to verify service behaviour.
+ */
+
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
@@ -115,6 +141,77 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
 
             // Assert
             result.Should().BeNull();
+        }
+
+        #endregion
+
+        #region CreateWorkGroupEmployeeAsync Tests
+
+        // TRANSFORMENGINE: tests for WorkGroupEmployeeService.CreateWorkGroupEmployeeAsync added — Phase 13.
+        // Mirrors the pattern used for UpdateWorkGroupEmployeeAsync:
+        //   Dto -> entity (mapper) -> repository -> entity (mapper) -> Dto.
+
+        [Fact]
+        public async Task CreateWorkGroupEmployeeAsync_WithValidDto_ReturnsMappedResult()
+        {
+            // Arrange
+            var dto     = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade, HrsPaid = 40.0 };
+            var entity  = new WorkGroupEmployee    { PactId = DefaultPactId };
+            var created = new WorkGroupEmployee    { PactId = DefaultPactId, HrsPaid = 40.0 };
+            var expected = new WorkGroupEmployeeDto { PactId = DefaultPactId };
+
+            _mockMapper.Map<WorkGroupEmployee>(dto).Returns(entity);
+            _mockRepository.CreateWorkGroupEmployeeAsync(entity).Returns(created);
+            _mockMapper.Map<WorkGroupEmployeeDto>(created).Returns(expected);
+
+            // Act
+            var result = await _sut.CreateWorkGroupEmployeeAsync(dto);
+
+            // Assert
+            result.Should().Be(expected);
+            await _mockRepository.Received(1).CreateWorkGroupEmployeeAsync(entity);
+            _mockMapper.Received(1).Map<WorkGroupEmployee>(dto);
+            _mockMapper.Received(1).Map<WorkGroupEmployeeDto>(created);
+        }
+
+        [Fact]
+        public async Task CreateWorkGroupEmployeeAsync_WithNullDto_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _sut.CreateWorkGroupEmployeeAsync(null!));
+
+            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeAsync(Arg.Any<WorkGroupEmployee>());
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task CreateWorkGroupEmployeeAsync_WithNullOrWhitespacePactId_ThrowsArgumentException(string pactId)
+        {
+            // Arrange
+            var dto = new WorkGroupEmployeeDto { PactId = pactId, WorkGroupGrade = DefaultWgGrade };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _sut.CreateWorkGroupEmployeeAsync(dto));
+
+            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeAsync(Arg.Any<WorkGroupEmployee>());
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task CreateWorkGroupEmployeeAsync_WithNullOrWhitespaceWorkGroupGrade_ThrowsArgumentException(string wgGrade)
+        {
+            // Arrange
+            var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = wgGrade };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _sut.CreateWorkGroupEmployeeAsync(dto));
+
+            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeAsync(Arg.Any<WorkGroupEmployee>());
         }
 
         #endregion

@@ -1,3 +1,29 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — FpsApiDtoMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-11
+ *
+ * CHANGED:
+ *   - Phase 10 VERIFY pass: confirmed WorkGroupEmployeeDto <-> WorkGroupEmployeeReq and
+ *     WorkGroupEmployeeDto <-> WorkGroupEmployeeRes CreateMap entries exist and cover all
+ *     new fields (TimeRecorder, StartDate, EndDate, HoursPerWeek) by AutoMapper convention
+ *     (property names are identical across DTO and Req/Res — no ForMember overrides needed)
+ *
+ * PRESERVED:
+ *   - All existing CreateMap entries unchanged
+ *   - Namespace Apha.FPSApps.Infrastructure.Mappings unchanged
+ *   - All lookup, pagination, and domain-entity mapper registrations unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: WorkGroupEmployeeReq intentionally omits read-only fields
+ *     (SpNumber, WorkGroupGrade, Name, HrsAvail) present in WorkGroupEmployeeDto.
+ *     AutoMapper silently ignores unmapped destination properties by default — confirm
+ *     ValidateInlineMaps or AssertConfigurationIsValid is not enabled project-wide before
+ *     accepting this as safe.
+ */
+
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
@@ -97,6 +123,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeReq>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
+            // TRANSFORMENGINE: Phase 10 VERIFY — TimeRecorder (int), StartDate (DateTime?), EndDate (DateTime?),
+            // HoursPerWeek (double?) present on both DTO and Req/Res; AutoMapper convention maps them by name.
+            // WorkGroupEmployeeReq omits read-only fields (SpNumber, WorkGroupGrade, Name, HrsAvail) — see file header.
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
 

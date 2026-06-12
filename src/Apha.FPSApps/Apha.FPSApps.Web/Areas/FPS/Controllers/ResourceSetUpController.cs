@@ -1,3 +1,18 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ResourceSetUpController.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 15 — Build, Fix, and Final Validation
+ * Migrated : 2026-06-11
+ *
+ * CHANGED:
+ *   - Lines 271, 325: WorkGroupEmployeeItem initializer changed Name = d.Name / Name = response.Data.Name
+ *     to StaffName = d.Name / StaffName = response.Data.Name — property was renamed in Phase 11 to
+ *     align with JS DataGrid field key 'staffName'; these two call sites were not updated at that time.
+ * PRESERVED:
+ *   - All other controller logic, actions, DI wiring, and route attributes unchanged.
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - none — fully automated.
+ */
+
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -268,7 +283,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 PactId        = d.PactId,
                 SpNumber      = d.SpNumber,
-                Name          = d.Name,
+                StaffName     = d.Name,
                 HrsPaid       = d.HrsPaid,
                 Leave         = d.Leave,
                 SickSpecial   = d.SickSpecial,
@@ -322,7 +337,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 PactId        = response.Data.PactId,
                 SpNumber      = response.Data.SpNumber,
-                Name          = response.Data.Name,
+                StaffName     = response.Data.Name,
                 HrsPaid       = response.Data.HrsPaid,
                 Leave         = response.Data.Leave,
                 SickSpecial   = response.Data.SickSpecial,

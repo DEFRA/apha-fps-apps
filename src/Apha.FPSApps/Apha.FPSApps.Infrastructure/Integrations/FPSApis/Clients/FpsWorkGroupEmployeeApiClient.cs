@@ -1,3 +1,32 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — FpsWorkGroupEmployeeApiClient.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
+ * Migrated : 2026-06-11
+ *
+ * CHANGED:
+ *   - Added CreateWorkGroupEmployeeAsync method: HTTP POST to api/v1/wgstaff
+ *     (matches backend WorkGroupEmployeeController [HttpPost] action added in Phase 5)
+ *   - Wraps POST call in try/catch(Exception) returning FailureResponse with InternalCodeError const
+ *   - Added private const string InternalCodeError = "INTERNAL_ERROR" for catch-block FailureResponse
+ *
+ * PRESERVED:
+ *   - GetWorkGroupEmployeeAsync — GET paginated list filtered by wgGrade via FpsApiEndpoints.GetWgStaff
+ *   - GetWorkGroupEmployeeByIdAsync — GET single record via FpsApiEndpoints.GetWgEmployeeById
+ *   - UpdateWorkGroupEmployeeAsync — PUT via FpsApiEndpoints.UpdateWgEmployee
+ *   - DeleteWorkGroupEmployeeAsync — DELETE via FpsApiEndpoints.DeleteWgEmployee
+ *   - private readonly IFpsHttpExecutor _http and IMapper _mapper fields unchanged
+ *   - Namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Existing methods (Get, GetById, Update, Delete) do not wrap HTTP
+ *     calls in try/catch — these should be hardened in a follow-up pass for consistency with
+ *     the InternalCodeError pattern applied to CreateWorkGroupEmployeeAsync.
+ *   - TRANSFORMENGINE TODO: wgGrade parameter in GetWorkGroupEmployeeAsync must be sourced from
+ *     parent page context, URL route, or session state — confirm MaintWGStaff page supplies it.
+ */
+
 using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
@@ -14,6 +43,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
+        // TRANSFORMENGINE: Sonar S1192 — InternalCodeError const for catch-block FailureResponse
+        private const string InternalCodeError = "INTERNAL_ERROR";
 
         public FpsWorkGroupEmployeeApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -49,6 +80,31 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             {
                 var responseDto = _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(response);
                 return ApiResponseDto<WorkGroupEmployeeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        // TRANSFORMENGINE: CreateWorkGroupEmployeeAsync added Phase 9 — POST /api/v1/wgstaff
+        // Maps to backend WorkGroupEmployeeController [HttpPost] CreateWorkGroupEmployeeAsync action.
+        // FpsApiEndpoints.UpdateWgEmployee ("api/v1/wgstaff") is the correct base URL for POST as well as PUT.
+        public async Task<ApiResponseDto<WorkGroupEmployeeDto>> CreateWorkGroupEmployeeAsync(WorkGroupEmployeeDto dto)
+        {
+            try
+            {
+                var req = _mapper.Map<WorkGroupEmployeeReq>(dto);
+                var response = await _http.PostAsync<WorkGroupEmployeeReq, WorkGroupEmployeeRes>(FpsApiEndpoints.UpdateWgEmployee, req);
+                if (response.Success)
+                {
+                    return _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(response);
+                }
+
+                var responseDto = _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(response);
+                return ApiResponseDto<WorkGroupEmployeeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<WorkGroupEmployeeDto>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to create WorkGroupEmployee", Code = InternalCodeError } },
+                    new ApiMetaDto());
             }
         }
 

@@ -1,3 +1,29 @@
+// TRANSFORMENGINE: human_review — verify before running
+/*
+ * TRANSFORMENGINE MIGRATION — WorkGroupEmployeeRepository.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
+ * Migrated : 2026-06-11
+ *
+ * CHANGED:
+ *   - Added CreateWorkGroupEmployeeAsync(WorkGroupEmployee entity) to implement IWorkGroupEmployeeRepository.CreateWorkGroupEmployeeAsync
+ *   - HrsAvail computed server-side (HrsPaid - Leave - SickSpecial) before entity is persisted — mirrors UpdateWorkGroupEmployeeAsync pattern
+ *   - ArgumentNullException.ThrowIfNull guard added on entry, consistent with existing Update method guard
+ *
+ * PRESERVED:
+ *   - GetWorkGroupEmployeeByIdAsync — Employee join for Name composition
+ *   - UpdateWorkGroupEmployeeAsync — HrsAvail recalculation on update
+ *   - GetWorkGroupEmployeeAsync — paginated, user-email-scoped, wgGrade-filtered list with Employee join
+ *   - DeleteWorkGroupEmployeeAsync — hard delete by pactId
+ *   - HasAssociatedStaffAsync — AnyAsync guard for WG Grade deletion
+ *   - ApplyFilter / ApplySorting — private LINQ helpers for SpNumber and Name
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Verify composite PK (PactId, FpsYear) uniqueness — CreateWorkGroupEmployeeAsync does not guard against
+ *     duplicate (pactId, fpsYear) entries; add a pre-insert AnyAsync check if duplicate prevention is required by business rules
+ *   - TRANSFORMENGINE TODO: FpsYear on new entity must be supplied by caller (WorkGroupEmployeeService); confirm service sets it from
+ *     IFpsRequestContext.FpsYear before invoking CreateWorkGroupEmployeeAsync
+ */
+
 using System.Dynamic;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
@@ -18,7 +44,20 @@ namespace Apha.FPS.DataAccess.Repositories
             _dbContext = dbContext;
             _requestContext = requestContext;
         }
-       
+
+        // TRANSFORMENGINE: CreateWorkGroupEmployeeAsync added — maps to POST /api/v1/wgstaff; HrsAvail computed (HrsPaid - Leave - SickSpecial) before persist
+        public async Task<WorkGroupEmployee> CreateWorkGroupEmployeeAsync(WorkGroupEmployee entity)
+        {
+            ArgumentNullException.ThrowIfNull(entity);
+
+            // TRANSFORMENGINE: HrsAvail is a stored value (not a DB computed column) — must be calculated here before insert, consistent with UpdateWorkGroupEmployeeAsync
+            entity.HrsAvail = entity.HrsPaid - (entity.Leave + entity.SickSpecial);
+
+            await _dbContext.WorkGroupEmployees.AddAsync(entity);
+            await _dbContext.SaveChangesAsync(default);
+            return entity;
+        }
+
         public async Task<WorkGroupEmployeeView?> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             return await _dbContext.WorkGroupEmployees

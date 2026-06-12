@@ -1,3 +1,18 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ResourceSetUpControllerTests.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 15 — Build, Fix, and Final Validation
+ * Migrated : 2026-06-11
+ *
+ * CHANGED:
+ *   - Line 383: model.Name → model.StaffName — WorkGroupEmployeeItem.Name was renamed to StaffName
+ *     in Phase 11 to align with JS DataGrid field key 'staffName'; this test was not updated at
+ *     that time. Fixed during Phase 15 build repair.
+ * PRESERVED:
+ *   - All other test logic, assertions, mock setup, and test method signatures unchanged.
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - none — fully automated.
+ */
+
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -380,7 +395,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 
             Assert.Equal(DefaultPactId, model.PactId);
             Assert.Equal("SP001",       model.SpNumber);
-            Assert.Equal("John Doe",    model.Name);
+            Assert.Equal("John Doe",    model.StaffName);
             Assert.Equal(40.0,          model.HrsPaid);
             await _wgEmployeeService.Received(1).GetWorkGroupEmployeeByIdAsync(DefaultPactId);
         }
