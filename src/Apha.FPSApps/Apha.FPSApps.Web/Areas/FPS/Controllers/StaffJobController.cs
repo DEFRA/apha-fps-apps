@@ -181,7 +181,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var staffJobDto = new StaffJobDto
             {
-                StaffId = staffJobItem.StaffID ?? string.Empty,
+                StaffId = staffJobItem.StaffID ?? staffId,
                 JobCode = staffJobItem.JobCode,
                 PlannedHours = staffJobItem.PlannedHours
             };

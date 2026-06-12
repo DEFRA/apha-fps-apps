@@ -56,5 +56,9 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsProfitCentre.UpdateProfitCentreSettingsAsync(
                 profitCentre, timesheet, outputsheet, timesheetLayout);
         }
+
+        public async Task<ApiResponseDto<List<ProfitCentreCostDto>>> GetPagedProfitCenterCostSummaryAsync(
+            QueryParameters<string> query, double monthNumber)
+            => await _fpsClient.FpsProfitCentre.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
     }
 }

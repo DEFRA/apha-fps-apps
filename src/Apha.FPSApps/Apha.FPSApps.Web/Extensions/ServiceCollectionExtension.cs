@@ -86,6 +86,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IAnimalService, AnimalService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
+            services.AddScoped<IPlanStaffZTCodeService, PlanStaffZTCodeService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

@@ -6,6 +6,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
@@ -14,8 +15,8 @@ using Newtonsoft.Json;
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    //[Authorize(Roles = "PACTAdmin,PACTUser")]
-    [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
+    [Authorize(Roles = "PACTAdmin,PACTUser")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class TestPurchaseRequirementController : Controller
     {
         private readonly IMapper _mapper;
