@@ -83,5 +83,65 @@ namespace Apha.FPS.Application.UnitTests.Dtos
         }
 
         #endregion
+
+        #region Default Value Tests
+
+        [Fact]
+        public void DefaultValues_WhenConstructedWithNoArguments_AreExpected()
+        {
+            var dto = new GradeDto();
+
+            dto.GradeCode.Should().BeNull();
+            dto.Description.Should().BeNull();
+            dto.AvSalary.Should().BeNull();
+            dto.PactCode.Should().BeNull();
+            dto.AvLeaveHrs.Should().BeNull();
+            dto.AvSickHrs.Should().BeNull();
+            dto.FpsYear.Should().BeNull();
+        }
+
+        [Fact]
+        public void GradeCode_SetToEmptyString_ReturnsEmptyString()
+        {
+            var dto = new GradeDto { GradeCode = string.Empty };
+
+            dto.GradeCode.Should().BeEmpty();
+        }
+
+        [Theory]
+        [InlineData(0.00)]
+        [InlineData(-1234.56)]
+        [InlineData(9999999.99)]
+        public void AvSalary_SetToBoundaryValues_ReturnsCorrectValue(double raw)
+        {
+            var value = (decimal)raw;
+            var dto = new GradeDto { GradeCode = "X", AvSalary = value };
+
+            dto.AvSalary.Should().Be(value);
+        }
+
+        [Theory]
+        [InlineData(0.0)]
+        [InlineData(-8.5)]
+        [InlineData(2080.0)]
+        public void AvLeaveHrs_SetToBoundaryValues_ReturnsCorrectValue(double value)
+        {
+            var dto = new GradeDto { GradeCode = "X", AvLeaveHrs = value };
+
+            dto.AvLeaveHrs.Should().Be(value);
+        }
+
+        [Theory]
+        [InlineData(0.0)]
+        [InlineData(-4.25)]
+        [InlineData(1040.0)]
+        public void AvSickHrs_SetToBoundaryValues_ReturnsCorrectValue(double value)
+        {
+            var dto = new GradeDto { GradeCode = "X", AvSickHrs = value };
+
+            dto.AvSickHrs.Should().Be(value);
+        }
+
+        #endregion
     }
 }
