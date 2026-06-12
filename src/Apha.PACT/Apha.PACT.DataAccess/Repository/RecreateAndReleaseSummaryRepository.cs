@@ -65,7 +65,7 @@ namespace Apha.PACT.DataAccess.Repository
                 DateDone = r.Log.DateDone,
             });
 
-            return await base.ApplyPaging(mappedData, parameters.Page, parameters.PageSize);
+            return await ApplyPaging(mappedData, parameters.Page, parameters.PageSize);
         }
 
 

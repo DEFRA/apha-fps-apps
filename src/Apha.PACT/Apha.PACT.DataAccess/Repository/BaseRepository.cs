@@ -13,7 +13,7 @@ namespace Apha.PACT.DataAccess.Repository
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        protected async Task<PagedData<T>> ApplyPaging<T>(IQueryable<T> source, int page, int pageSize)
+        protected static async Task<PagedData<T>> ApplyPaging<T>(IQueryable<T> source, int page, int pageSize)
         {
             var totalRecords = await source.CountAsync();
             var result = await source
