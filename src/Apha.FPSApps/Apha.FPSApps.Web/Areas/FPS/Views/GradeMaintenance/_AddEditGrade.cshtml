@@ -1,7 +1,6 @@
-@model
-
+@model Apha.FPSApps.Web.Areas.FPS.Models.GradeItem
 @{
-    var isEditMode
+    var isEditMode = !string.IsNullOrWhiteSpace(Model?.GradeCode);
     var title = isEditMode ? "Edit Grade" : "Add Grade";
     var formId = isEditMode ? "editGradeForm" : "addGradeForm";
     var saveLabel = isEditMode ? "Update" : "Save";
