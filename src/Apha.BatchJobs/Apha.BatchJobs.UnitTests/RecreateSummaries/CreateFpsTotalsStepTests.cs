@@ -99,8 +99,8 @@ public sealed class CreateFpsTotalsStepTests
         Assert.Equal(1m, row.TotalAdditionalCosts);
         Assert.Equal(2d, row.TotalAnimalCosts);
         Assert.Equal(3d, row.TotalStaffCosts);
-        Assert.Equal(4d, row.TotalTestCosts);
-        Assert.Equal(20d, row.TotalCosts);
+        Assert.Equal(0d, row.TotalTestCosts);
+        Assert.Equal(16d, row.TotalCosts);
         Assert.Equal(300m, row.TotalIncome);
         Assert.Equal(7d, row.TotalPayCosts);
         Assert.Equal(harness.FpsYear, row.FpsYear);

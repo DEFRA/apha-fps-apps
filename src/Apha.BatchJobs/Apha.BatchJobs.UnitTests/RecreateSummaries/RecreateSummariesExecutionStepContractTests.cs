@@ -18,7 +18,7 @@ public sealed class RecreateSummariesExecutionStepContractTests
 
         Assert.NotNull(stepType);
 
-        var step = Activator.CreateInstance(stepType!, args: [6, "unit-test-user"]) as IRecreateSummariesExecutionStep;
+        var step = Activator.CreateInstance(stepType!, args: [6, 2026, "unit-test-user"]) as IRecreateSummariesExecutionStep;
         Assert.NotNull(step);
 
         using var dbContext = CreateDbContext();
@@ -44,7 +44,7 @@ public sealed class RecreateSummariesExecutionStepContractTests
 
         Assert.NotNull(stepType);
 
-        var step = Activator.CreateInstance(stepType!, args: [6, "DOMAIN\\unit-test-user"]) as IRecreateSummariesExecutionStep;
+        var step = Activator.CreateInstance(stepType!, args: [6, 2026, "DOMAIN\\unit-test-user"]) as IRecreateSummariesExecutionStep;
         Assert.NotNull(step);
 
         using var dbContext = CreateDbContext();
@@ -103,7 +103,7 @@ public sealed class RecreateSummariesExecutionStepContractTests
             ("DeleteProjectMonth3Step", [], "DeleteProjectMonth3"),
             ("CreateProjectMonthCumulativeStep", [], "CreateProjectMonthCumulative"),
             ("CreateProjectMonthFinalStep", [6], "CreateProjectMonthFinal"),
-            ("LogRecreateSummariesStep", [6, "unit-test-user"], "LogRecreateSummaries"),
+            ("LogRecreateSummariesStep", [6, 2026, "unit-test-user"], "LogRecreateSummaries"),
             ("RefreshPeriodMoStep", [6], "RefreshPeriodMo"),
             ("RefreshPeriodPscStep", [6], "RefreshPeriodPsc"),
             ("RefreshPeriodTccStep", [6], "RefreshPeriodTcc")

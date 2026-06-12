@@ -292,8 +292,7 @@ public sealed class MabArchiveJobHandlerTests
 
     private static string GetConnectionString()
     {
-        return Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
-            ?? DefaultConnectionString;
+        return TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
     }
 
     private static IDbContextFactory<BatchJobsDbContext> CreateDbContextFactory(string connectionString)
@@ -309,7 +308,7 @@ public sealed class MabArchiveJobHandlerTests
     {
         await using var context = dbContextFactory.CreateDbContext();
         var canConnect = await context.Database.CanConnectAsync();
-        Assert.True(canConnect, "Integration DB unavailable for MabArchiveJobHandlerTests.");
+        Skip.IfNot(canConnect, "Integration DB unavailable for MabArchiveJobHandlerTests.");
     }
 
     private sealed class TestDbContextFactory : IDbContextFactory<BatchJobsDbContext>

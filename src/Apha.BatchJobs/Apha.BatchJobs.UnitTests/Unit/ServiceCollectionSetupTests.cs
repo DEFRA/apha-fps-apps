@@ -64,7 +64,7 @@ public sealed class ServiceCollectionSetupTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD"
+                ["ConnectionStrings:FPSConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD"
             })
             .Build();
 
@@ -83,7 +83,7 @@ public sealed class ServiceCollectionSetupTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD"
+                ["ConnectionStrings:FPSConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD"
             })
             .Build();
 
@@ -103,7 +103,7 @@ public sealed class ServiceCollectionSetupTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:BatchJobsConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD",
+                ["ConnectionStrings:FPSConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD",
                 ["BatchJobs:MabArchiveImplementationMode"] = "Sql"
             })
             .Build();
@@ -156,12 +156,16 @@ public sealed class ServiceCollectionSetupTests
 
         while (current != null)
         {
-            var hasProject = File.Exists(Path.Combine(current.FullName, "BatchJobs.csproj"));
-            var hasAppSettings = File.Exists(Path.Combine(current.FullName, "appsettings.json"));
-
-            if (hasProject && hasAppSettings)
+            var hasSolution = File.Exists(Path.Combine(current.FullName, "Apha.BatchJobs.sln"));
+            if (hasSolution)
             {
-                return current.FullName;
+                var workerRoot = Path.Combine(current.FullName, "Apha.BatchJobs.Worker");
+                if (File.Exists(Path.Combine(workerRoot, "appsettings.json")))
+                {
+                    return workerRoot;
+                }
+
+                throw new DirectoryNotFoundException("Could not locate BatchJobs worker appsettings.json.");
             }
 
             current = current.Parent;

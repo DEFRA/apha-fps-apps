@@ -21,9 +21,7 @@ public sealed class MabArchivePostgresIntegrationTests : IAsyncLifetime
 
     public MabArchivePostgresIntegrationTests()
     {
-        _connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__BatchJobsConnectionString")
-            ?? DefaultConnectionString;
+        _connectionString = TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
     }
 
     public async Task InitializeAsync()

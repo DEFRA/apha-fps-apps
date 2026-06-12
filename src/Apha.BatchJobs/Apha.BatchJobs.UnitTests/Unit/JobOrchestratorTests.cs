@@ -526,7 +526,7 @@ public sealed class JobOrchestratorTests
         // Arrange
         var timeoutSettings = Options.Create(new BatchJobSettings
         {
-            JobTimeout = 1,
+            JobTimeout = 3600,
             RetryAttempts = 2,
             RetryDelaySeconds = 0
         });
@@ -544,7 +544,7 @@ public sealed class JobOrchestratorTests
 
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("RuntimeTimeoutJob");
-        job.MaxExecutionSeconds.Returns((int?)null);
+        job.MaxExecutionSeconds.Returns(1);
         job.ExecuteAsync(Arg.Any<CancellationToken>())
             .Returns(ci => Task.Delay(TimeSpan.FromSeconds(3), ci.Arg<CancellationToken>()));
 
