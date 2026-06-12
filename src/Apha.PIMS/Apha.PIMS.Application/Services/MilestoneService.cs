@@ -178,5 +178,16 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<bool> DeleteMilestoneFormDatesAsync(short year, string parentProject)
             => await _repository.DeleteMilestoneFormDatesAsync(year, parentProject);
+
+        public async Task<PaginatedResult<LogMilestoneDto>> GetLogMilestonesAsync(QueryParameters<string> parameters,string? project,string? numberPart1,string? numberPart2)
+        {
+            PaginationParameters<string> paginationParams = _mapper.Map<PaginationParameters<string>>(parameters);
+            PagedData<LogMilestone> pagedData = await _repository.GetLogMilestonesAsync(paginationParams, project, numberPart1, numberPart2);
+            return new PaginatedResult<LogMilestoneDto>
+            {
+                Data = _mapper.Map<List<LogMilestoneDto>>(pagedData.Data),
+                PaginationData = _mapper.Map<PaginationDto>(pagedData.PaginationData)
+            };
+        }
     }
 }

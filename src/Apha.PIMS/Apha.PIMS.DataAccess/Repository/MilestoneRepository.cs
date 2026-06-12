@@ -3,6 +3,9 @@ using Apha.PIMS.Core.Interfaces;
 using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Dynamic;
+using System.Linq.Expressions;
 
 
 namespace Apha.PIMS.DataAccess.Repository
@@ -19,8 +22,10 @@ namespace Apha.PIMS.DataAccess.Repository
         {
             IQueryable<Milestone> query = _dbContext.Milestones
                 .AsNoTracking()
-                .Where(m => m.Project == project)
-                .OrderBy(m => m.Number);
+                .Where(m => m.Project == project);
+
+            query = ApplyFilter(query, parameters.Filter);
+            query = ApplySorting(query, parameters.SortBy, parameters.Descending);
 
             List<Milestone> all = await query.ToListAsync();
             return ApplyPaging(all, parameters.Page, parameters.PageSize);
@@ -100,12 +105,125 @@ namespace Apha.PIMS.DataAccess.Repository
             return rows > 0;
         }
 
+        private static IQueryable<Milestone> ApplyFilter(IQueryable<Milestone> query, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter) || filter == "{}")
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("Number", out var number) && number != null)
+            {
+                string val = number.ToString()!;
+                query = query.Where(x => EF.Functions.ILike(x.Number, $"%{val}%"));
+            }
+
+            return query;
+        }
+
+        private static IQueryable<Milestone> ApplySorting(IQueryable<Milestone> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy) || string.Equals(sortBy, "number", StringComparison.OrdinalIgnoreCase))
+                    return ApplyOrder(query, m => m.Number, descending);
+
+            return query.OrderBy(m => m.Number);
+        }
+
+        private static IQueryable<Milestone> ApplyOrder<T>(
+            IQueryable<Milestone> query,
+            Expression<Func<Milestone, T>> keySelector,
+            bool descending)
+            => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+
         public async Task<bool> UpdateFormRequiredAsync(string parentproject, bool formRequired)
         {
             int rows = await _dbContext.ProjectRadTrackData
                 .Where(p => p.Parentproject == parentproject)
                 .ExecuteUpdateAsync(s => s.SetProperty(p => p.Formrequired, formRequired));
             return rows > 0;
+        }
+
+        public async Task<PagedData<LogMilestone>> GetLogMilestonesAsync(PaginationParameters<string> parameters,string? project,string? numberPart1,string? numberPart2)
+        {
+            
+            string numberPattern;
+            if (string.IsNullOrWhiteSpace(numberPart1) && string.IsNullOrWhiteSpace(numberPart2))
+            {
+                numberPattern = string.Empty; 
+            }
+            else
+            {
+                string left = string.IsNullOrWhiteSpace(numberPart1) ? "%" : numberPart1;
+                string right = string.IsNullOrWhiteSpace(numberPart2) ? "%" : numberPart2;
+                numberPattern = $"{left}/{right}";
+            }
+
+            IQueryable<LogMilestone> logQuery = _dbContext.LogMilestones.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(project))
+                logQuery = logQuery.Where(l => l.Project == project);
+
+            if (!string.IsNullOrWhiteSpace(numberPattern))
+                logQuery = logQuery.Where(l => EF.Functions.Like(l.Number!, numberPattern));
+
+           
+            var joined = from l in logQuery
+                         join pm in _dbContext.ProjectManagers.AsNoTracking()
+                             on l.ChangedBy equals pm.Mnumber into pmGroup
+                         from pm in pmGroup.DefaultIfEmpty()
+                         orderby l.DateChanged descending
+                         select new
+                         {
+                             l.Id,
+                             l.Project,
+                             l.Number,
+                             l.Description,
+                             l.DateDue,
+                             l.DateCompleted,
+                             l.DateFormReceived,
+                             l.UnderSdReview,
+                             l.OnTarget,
+                             l.ProjectLeaderComment,
+                             l.CapsComment,
+                             l.IdType,
+                             l.DateChanged,
+                             ManagerName       = pm != null ? pm.Projectmanager : null,
+                             OriginalChangedBy = l.ChangedBy,
+                             l.UpdateType
+                         };
+
+            var rawList = await joined.ToListAsync();
+
+            List<LogMilestone> all = rawList.Select(x =>
+            {
+                string? changedBy = x.ManagerName;
+                if (changedBy == null && x.OriginalChangedBy != null)
+                    changedBy = "(" + x.OriginalChangedBy + ")";
+
+                return new LogMilestone
+                {
+                    Id                   = x.Id,
+                    Project              = x.Project,
+                    Number               = x.Number,
+                    Description          = x.Description,
+                    DateDue              = x.DateDue,
+                    DateCompleted        = x.DateCompleted,
+                    DateFormReceived     = x.DateFormReceived,
+                    UnderSdReview        = x.UnderSdReview,
+                    OnTarget             = x.OnTarget,
+                    ProjectLeaderComment = x.ProjectLeaderComment,
+                    CapsComment          = x.CapsComment,
+                    IdType               = x.IdType,
+                    DateChanged          = x.DateChanged,
+                    ChangedBy            = changedBy,
+                    UpdateType           = x.UpdateType
+                };
+            }).ToList();
+            return ApplyPaging(all, parameters.Page, parameters.PageSize);
         }
     }
 }
