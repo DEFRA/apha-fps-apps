@@ -56,6 +56,17 @@ namespace Apha.PACT.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves all release periods from <c>tblPeriod</c> without settings.
+        /// </summary>
+        /// <returns><c>200 OK</c> with a list of <see cref="ReleasePeriodRes"/>.</returns>
+        [HttpGet("releaseperiods")]
+        public async Task<IActionResult> GetReleasePeriods()
+        {
+            var result = await _service.GetReleasePeriodsAsync();
+            return Ok(_mapper.Map<IReadOnlyList<ReleasePeriodRes>>(result));
+        }
+
+        /// <summary>
         /// Updates the <c>FinalSummariesRun</c> flag for the specified release period.
         /// </summary>
         /// <param name="request">The period name and new flag value.</param>

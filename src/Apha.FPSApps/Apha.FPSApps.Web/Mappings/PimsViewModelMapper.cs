@@ -51,6 +51,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<MonthlyPactDto, MonthlyPactItem>().ReverseMap();
             CreateMap<MilestoneItem, MilestoneDto>().ReverseMap();
             CreateMap<MilestoneFormDatesItem, MilestoneFormDatesDto>().ReverseMap();
+            CreateMap<LogMilestoneItem, LogMilestoneDto>().ReverseMap();
         }
     }
 }

@@ -473,5 +473,303 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreApiCl
 
         #endregion
 
+        #region GetPagedProfitCenterCostSummaryAsync Tests
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithoutMonthNumber_ReturnsSuccess()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var resList = new List<ProfitCentreCostRes>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1000m },
+                new() { ProfitCentre = "PC02", Cost = 2000m }
+            };
+            var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
+            {
+                Success = true,
+                Data = resList,
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 }
+            };
+            var dtoList = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1000m },
+                new() { ProfitCentre = "PC02", Cost = 2000m }
+            };
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(dtoList,
+                new PaginationDto { TotalRecords = 2, PageNumber = 1, PageSize = 10 });
+
+            _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(2, result?.Pagination?.TotalRecords);
+            Assert.Equal(1, result?.Pagination?.PageNumber);
+            Assert.Equal(10, result?.Pagination?.PageSize);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthNumber_AppendsQueryParameter()
+        {
+            // Arrange
+            const double monthNumber = 5.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
+            {
+                Success = true,
+                Data = new List<ProfitCentreCostRes>(),
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalPages = 0 }
+            };
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(new List<ProfitCentreCostDto>());
+
+            _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+
+            // Assert
+            Assert.True(result.Success);
+            await _http.Received(1).GetAsync<List<ProfitCentreCostRes>>(
+                Arg.Is<string>(url => url.Contains($"monthNumber={monthNumber}")));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
+            {
+                Success = false,
+                Errors = new List<ApiError> { new() { Message = "API Error", Code = "ERROR" } }
+            };
+            var mappedResponse = new ApiResponseDto<List<ProfitCentreCostDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithNullPagination_UsesQueryParameters()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5 };
+            var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
+            {
+                Success = true,
+                Data = new List<ProfitCentreCostRes> { new() { ProfitCentre = "PC01", Cost = 1000m } },
+                Pagination = null
+            };
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(
+                new List<ProfitCentreCostDto> { new() { ProfitCentre = "PC01", Cost = 1000m } },
+                new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 0 });
+
+            _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal(2, result?.Pagination?.PageNumber);
+            Assert.Equal(5, result?.Pagination?.PageSize);
+            Assert.Equal(0, result?.Pagination?.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithEmptyResult_ReturnsSuccessWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
+            {
+                Success = true,
+                Data = new List<ProfitCentreCostRes>(),
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalPages = 0 }
+            };
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(new List<ProfitCentreCostDto>(),
+                new PaginationDto { TotalRecords = 0, PageNumber = 1, PageSize = 10 });
+
+            _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            Assert.Equal(0, result?.Pagination?.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMultiplePages_ReturnsPaginatedData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 2 };
+            var resList = new List<ProfitCentreCostRes>
+            {
+                new() { ProfitCentre = "PC03", Cost = 3000m },
+                new() { ProfitCentre = "PC04", Cost = 4000m }
+            };
+            var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
+            {
+                Success = true,
+                Data = resList,
+                Pagination = new Pagination { PageNumber = 2, PageSize = 2, TotalPages = 5, TotalRecords = 10 }
+            };
+            var dtoList = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC03", Cost = 3000m },
+                new() { ProfitCentre = "PC04", Cost = 4000m }
+            };
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(dtoList,
+                new PaginationDto { TotalRecords = 10, PageNumber = 2, PageSize = 2 });
+
+            _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count());
+            Assert.Equal(10, result?.Pagination?.TotalRecords);
+            Assert.Equal(2, result?.Pagination?.PageNumber);
+            Assert.Equal(2, result?.Pagination?.PageSize);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithNullData_CreatesEmptyPaginatedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
+            {
+                Success = true,
+                Data = null,
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalPages = 0 }
+            };
+            var mappedDto = new ApiResponseDto<List<ProfitCentreCostDto>>
+            {
+                Success = true,
+                Data = []
+            };
+
+            _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_PassesSortingParameters()
+        {
+            // Arrange
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "Cost",
+                Descending = true
+            };
+            var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
+            {
+                Success = true,
+                Data = new List<ProfitCentreCostRes>(),
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalPages = 0 }
+            };
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(new List<ProfitCentreCostDto>());
+
+            _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            await _http.Received(1).GetAsync<List<ProfitCentreCostRes>>(
+                Arg.Is<string>(url => url.Contains("SortBy=Cost") && url.Contains("Descending=True")));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthZero_AppendsZeroQueryParameter()
+        {
+            // Arrange
+            const double monthNumber = 0.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
+            {
+                Success = true,
+                Data = new List<ProfitCentreCostRes>(),
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalPages = 0 }
+            };
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(new List<ProfitCentreCostDto>());
+
+            _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+
+            // Assert
+            await _http.Received(1).GetAsync<List<ProfitCentreCostRes>>(
+                Arg.Is<string>(url => url.Contains("monthNumber=0")));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMaxMonthNumber_AppendsQueryParameter()
+        {
+            // Arrange
+            const short monthNumber = 12;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<ProfitCentreCostRes>>
+            {
+                Success = true,
+                Data = new List<ProfitCentreCostRes>(),
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalPages = 0 }
+            };
+            var mappedDto = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(new List<ProfitCentreCostDto>());
+
+            _http.GetAsync<List<ProfitCentreCostRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProfitCentreCostDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+
+            // Assert
+            await _http.Received(1).GetAsync<List<ProfitCentreCostRes>>(
+                Arg.Is<string>(url => url.Contains("monthNumber=12")));
+        }
+
+        #endregion
+
     }
 }

@@ -22,5 +22,7 @@ namespace Apha.PIMS.Application.Interfaces
         Task<MilestoneFormDatesDto?> GetMilestoneFormDatesAsync(short year, string parentProject);
         Task<MilestoneFormDatesDto> SaveMilestoneFormDatesAsync(MilestoneFormDatesDto dto);
         Task<bool> DeleteMilestoneFormDatesAsync(short year, string parentProject);
+
+        Task<PaginatedResult<LogMilestoneDto>> GetLogMilestonesAsync(QueryParameters<string> parameters, string? project, string? numberPart1, string? numberPart2);
     }
 }

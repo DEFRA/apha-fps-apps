@@ -23,13 +23,6 @@ namespace Apha.PIMS.Api.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("{parentproject}/fps")]
-        public async Task<IActionResult> GetFpsProjectById(string parentproject)
-        {
-            ProjectDto? result = await _service.GetFpsProjectByIdAsync(parentproject);
-            return Ok(_mapper.Map<ProjectRes>(result));
-        }
-
         [HttpGet("{parentproject}")]
         public async Task<IActionResult> GetProposedProjectById(string parentproject)
         {
