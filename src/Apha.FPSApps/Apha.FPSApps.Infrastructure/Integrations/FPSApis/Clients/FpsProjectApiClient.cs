@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query)
         {
-            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProjects, query);
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetAllProjectsPaged, query);
             var response = await _http.GetAsync<List<ProjectRes>>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);

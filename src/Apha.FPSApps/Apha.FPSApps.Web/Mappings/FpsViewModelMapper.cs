@@ -72,6 +72,15 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<PlanStaffZTCodeItemViewModel, StaffJobDto>()
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
+
+            // Misc Project Data
+            CreateMap<ProjectDto, ProjectMiscItem>()
+                .ForMember(d => d.ParentProject, o => o.MapFrom(s => s.ParentProject))
+                .ForMember(d => d.Program, o => o.MapFrom(s => s.Program))
+                .ForMember(d => d.CostCentre, o => o.MapFrom(s => s.CostCentre))
+                .ForMember(d => d.OracleProjectCode, o => o.MapFrom(s => s.OracleProjectCode))
+                .ForMember(d => d.SubAccountCode, o => o.MapFrom(s => s.SubAccountCode))
+                .ReverseMap();
         }
     }
 }

@@ -106,28 +106,28 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query)
         {
-            var queryable = _dbContext.Projects.AsNoTracking().AsQueryable();
+            var projectQuery = _dbContext.ProjectViews
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId))
+                .Select(pv => new Project
+                {
+                    ParentProject = pv.ParentProject ?? string.Empty,
+                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
+                    Program = pv.Program ?? string.Empty,
+                    Customer = pv.Customer ?? string.Empty,
+                    Contract = pv.Contract ?? string.Empty,
+                    Disease = pv.Disease ?? string.Empty,
+                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                    CostCentre = pv.CostCentre,
+                    OracleProjectCode = pv.OracleProjectCode,
+                    SubAccountCode = pv.SubAccountCode,
+                    IsDefraProject = pv.IsDefraProject ?? 0,
+                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
+                }).AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search.ToLower();
-                queryable = queryable.Where(p =>
-                    EF.Functions.ILike(p.ParentProject!, $"%{search}%") ||
-                    EF.Functions.ILike(p.ProjectTitle!, $"%{search}%"));
-            }
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
 
-            queryable = query.SortBy?.ToLower() switch
-            {
-                "parentproject" => query.Descending
-                    ? queryable.OrderByDescending(p => p.ParentProject)
-                    : queryable.OrderBy(p => p.ParentProject),
-                "projecttitle" => query.Descending
-                    ? queryable.OrderByDescending(p => p.ProjectTitle)
-                    : queryable.OrderBy(p => p.ProjectTitle),
-                _ => queryable.OrderBy(p => p.ParentProject)
-            };
-
-            var result = await queryable.ToListAsync();
+            var result = await projectQuery.ToListAsync();
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
@@ -359,6 +359,16 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("Manager", out var manager) && manager != null)
                 query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
 
+            if (dict.TryGetValue("OracleProjectCode", out var oracleProjectCode) && oracleProjectCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.OracleProjectCode!, $"%{oracleProjectCode}%"));
+
+            if (dict.TryGetValue("SubAccountCode", out var subAccountCode) && subAccountCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.SubAccountCode!, $"%{subAccountCode}%"));
+
+            if (dict.TryGetValue("CostCentre", out var costCentre) && costCentre != null
+                && double.TryParse(costCentre.ToString(), out var costCentreValue))
+                query = query.Where(x => x.CostCentre == costCentreValue);
+
             return query;
         }
 
@@ -400,6 +410,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 "program" => ApplyOrder(query, p => p.Program, descending),
                 "manager" => ApplyOrder(query, p => p.Manager, descending),
                 "budgetcvl" => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "costcentre" => ApplyOrder(query, p => p.CostCentre, descending),
+                "oracleprojectcode" => ApplyOrder(query, p => p.OracleProjectCode, descending),
+                "subaccountcode" => ApplyOrder(query, p => p.SubAccountCode, descending),
                 _ => query.OrderBy(p => p.ParentProject)
             };
         }

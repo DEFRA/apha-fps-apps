@@ -104,6 +104,16 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves a paginated list of all projects.
+        /// </summary>
+        [HttpGet("paged/all")]
+        public async Task<IActionResult> GetAllProjectsPagedAsync([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _projectService.GetPagedProjectsAsync(query);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
+        /// <summary>
         /// Retrieves a paginated list of projects for a given project group.
         /// </summary>
         [HttpGet("paged/by-project-group")]
