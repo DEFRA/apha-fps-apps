@@ -447,7 +447,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.GradeRepositoryTest
                 "avsalary"    => list[0].AvSalary?.ToString(),
                 _             => list[0].GradeCode
             };
+            var actualSecond = sortBy switch
+            {
+                "description" => list[1].AvSalary?.ToString(),
+                "avsalary"    => list[1].AvSalary?.ToString(),
+                _             => list[1].GradeCode
+            };
             Assert.Equal(expectedFirst, actualFirst);
+            Assert.Equal(expectedSecond, actualSecond);
         }
 
         [Fact]

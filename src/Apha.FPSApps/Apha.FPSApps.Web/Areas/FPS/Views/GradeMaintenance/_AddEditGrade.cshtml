@@ -1,39 +1,7 @@
-<!-- TRANSFORMENGINE MIGRATION — _AddEditGrade.cshtml (GradeMaintenance)
-     Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 12 — Razor Views (Step 18)
-     Migrated : 2026-06-10
-     Source   : source/ui/fps/frmMaintGrade.html (inline modal) + fps_grade_maintenance.js
-     CHANGED:
-       - HTML prototype inline modal (#tblGradeModal) → shared #modaPopupBody / #modalPopup partial
-       - Separate Save / Update buttons (JS tblGradeSaveBtn / tblGradeUpdateBtn) →
-         single button with isEditMode-driven label + function dispatch (saveGrade / updateGrade)
-       - GradeCode input: editable on Add, disabled+hdnOriginalCode hidden on Edit
-         (matches JS openTblGradeEditModal sets editingGradeId pattern)
-       - AvSalary: £ prefix govuk-input__wrapper retained from HTML prototype;
-         input type="number" step="0.01" (was type="text" inputmode="decimal" in prototype)
-       - Validation summary block from HTML prototype (#gradeValidationSummary) preserved
-         as govuk-error-summary; driven by ajax-form-validation.js displayServerValidationErrors
-       - GradeCode [Required] * asterisk shown in Add mode only (matches JS requiredFields[0])
-     PRESERVED:
-       - Field order: GradeCode (col-half), Description (col-half), AvSalary (col-half)
-         matching HTML prototype cc-modal-form-grid two-row layout
-       - HTML element IDs: GradeCode, Description, AvSalary (match JS getElementById references
-         in saveTblGrade / updateTblGrade / validateGradeModal)
-       - Modal title: "Add Grade" / "Edit Grade" (from JS tblGradeModalLabel text values)
-       - Form IDs: addGradeForm (Add) / editGradeForm (Edit) — consumed by Index.cshtml
-         saveGrade() / updateGrade() via isFormValid(form) + displayClientValidationErrors
-     DEFERRED / REQUIRES HUMAN REVIEW:
-       - TRANSFORMENGINE TODO: AvSalary decimal parsing — JS prototype strips non-numeric chars
-         from the value (parseSalaryAmount). The number input type handles this natively but
-         verify parseDecimalOrNull in Index.cshtml handles the formatted £ value correctly if
-         the backend returns a pre-formatted string rather than a raw decimal.
-       - TRANSFORMENGINE TODO: Confirm GradeDto.AvSalary is decimal? (not string) so
-         parseDecimalOrNull(val) serialises to a valid JSON number for the backend. -->
-
-@model Apha.FPSApps.Web.Areas.FPS.Models.GradeItem
+@model
 
 @{
-    // TRANSFORMENGINE: isEditMode — GradeCode is the string PK; empty/null = Add mode
-    var isEditMode = !string.IsNullOrWhiteSpace(Model?.GradeCode);
+    var isEditMode
     var title = isEditMode ? "Edit Grade" : "Add Grade";
     var formId = isEditMode ? "editGradeForm" : "addGradeForm";
     var saveLabel = isEditMode ? "Update" : "Save";
@@ -47,8 +15,7 @@
 
 <div class="modal-body cc-modal-body">
 
-    <!-- Validation summary — driven by ajax-form-validation.js displayServerValidationErrors -->
-    <div class="govuk-error-summary" role="alert"
+    <div class="govuk-error-summary"
          aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
         <h2 class="govuk-error-summary__title" id="error-summary-title">
             There is a problem
@@ -63,22 +30,17 @@
         <form id="@formId">
             @Html.AntiForgeryToken()
 
-            @* TRANSFORMENGINE: Hidden fields for edit identity tracking *@
-            <input type="hidden" id="hdnIsEdit" value="@(isEditMode ? "true" : "false")" />
+            <input type="hidden" id="hdnIsEdit"
             <input type="hidden" id="hdnOriginalCode" value="@(Model?.GradeCode ?? string.Empty)" />
 
             <div class="cc-modal-form-grid">
 
-                <!-- Row 1: GradeCode + Description -->
                 <div class="govuk-grid-row sup_padding_right_left_10">
 
-                    <!-- GradeCode: editable on Add, read-only (disabled) on Edit -->
                     <div class="govuk-grid-column-one-half">
                         <div class="govuk-form-group sup_margin_bottom_10" id="fg-GradeCode">
                             @if (!isEditMode)
                             {
-                                @* TRANSFORMENGINE: Add mode — GradeCode editable + required
-                                   Matches JS: requiredFields = [gradeValidationFields[0]] (GradeCode only) *@
                                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="GradeCode">
                                     GradeCode:<span class="app-required sup_color_red" aria-hidden="true">*</span>
                                 </label>
@@ -93,10 +55,6 @@
                             }
                             else
                             {
-                                @* TRANSFORMENGINE: Edit mode — GradeCode read-only (disabled).
-                                   Value posted via hdnOriginalCode hidden input above.
-                                   Matches JS openTblGradeEditModal sets editingGradeId and
-                                   modal-grade-code is populated but the update uses editingGradeId. *@
                                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="GradeCode">
                                     GradeCode:
                                 </label>
@@ -110,7 +68,6 @@
                         </div>
                     </div>
 
-                    <!-- Description: always editable, not required -->
                     <div class="govuk-grid-column-one-half">
                         <div class="govuk-form-group sup_margin_bottom_10" id="fg-Description">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="Description">
@@ -127,14 +84,10 @@
 
                 </div>
 
-                <!-- Row 2: AvSalary (£ prefix, optional numeric) -->
                 <div class="govuk-grid-row sup_padding_right_left_10">
 
                     <div class="govuk-grid-column-one-half">
                         <div class="govuk-form-group sup_margin_bottom_10" id="fg-AvSalary">
-                            @* TRANSFORMENGINE: AvSalary — HTML prototype shows £ govuk-input__wrapper
-                               with inputmode="decimal"; using type="number" step="0.01" for numeric
-                               browser validation; not required (JS only checks format if non-empty) *@
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="AvSalary">
                                 AvSalary:
                             </label>
