@@ -32,8 +32,7 @@
                                         <label class="govuk-label govuk-!-font-weight-bold" for="logProject">
                                             Project:
                                         </label>
-                                        <select class="govuk-select govuk-!-font-size-16" id="logProject" name="logProject"
-                                                aria-label="Select project">
+                                        <select class="govuk-select govuk-!-font-size-16" id="logProject" name="logProject">
                                             <option value="">-- All --</option>
                                             @foreach (var opt in Model.ProjectOptions)
                                             {
@@ -56,15 +55,15 @@
                                         <div class="sup_flex_start_center sup_gap_16">
                                             <input class="govuk-input govuk-!-font-size-16 govuk-input--width-5"
                                                    type="text" id="logNumberPart1" name="logNumberPart1"
-                                                   autocomplete="off" aria-label="Number part 1" />
+                                                   autocomplete="off" />
                                             <span class="govuk-body sup_margin_0">/</span>
+                                            <label class="govuk-visually-hidden" for="logNumberPart2">Number part 2</label>
                                             <input class="govuk-input govuk-!-font-size-16 govuk-input--width-5"
                                                    type="text" id="logNumberPart2" name="logNumberPart2"
-                                                   autocomplete="off" aria-label="Number part 2" />
+                                                   autocomplete="off" />
                                             <button type="button"
                                                     class="govuk-button govuk-button--secondary govuk-!-font-size-16 sup_margin_0 govuk-!-margin-left-2"
-                                                    onclick="searchLogMilestones()"
-                                                    aria-label="Search milestone changes">
+                                                    onclick="searchLogMilestones()">
                                                 Search
                                             </button>
                                         </div>
