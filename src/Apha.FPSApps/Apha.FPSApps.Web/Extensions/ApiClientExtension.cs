@@ -46,6 +46,7 @@ namespace Apha.FPSApps.Web.Extensions
             });
 
             services.AddScoped<IFpsApiClient, FpsApiClient>();
+            services.AddScoped<IFpsProfitCentreApiClient, FpsProfitCentreApiClient>();
 
             // PACT
             services.AddHttpClient("PactApiHttpClient", client =>

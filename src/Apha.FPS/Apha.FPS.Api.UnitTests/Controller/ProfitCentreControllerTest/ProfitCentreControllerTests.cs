@@ -477,5 +477,227 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProfitCentreControllerTest
 
         #endregion
 
+        #region GetPagedProfitCenterCostSummary Tests
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummary_WithMonthNumber_ReturnsOkWithPagedData()
+        {
+            // Arrange
+            const double monthNumber = 1.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1000.00m },
+                new() { ProfitCentre = "PC02", Cost = 2000.00m }
+            };
+            var pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 };
+            var serviceResult = new PaginatedResult<ProfitCentreCostDto>(dtos, pagination);
+            var expectedResponse = new PaginationRes<ProfitCentreCostRes>
+            {
+                Data = new List<ProfitCentreCostRes>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 1000.00m },
+                    new() { ProfitCentre = "PC02", Cost = 2000.00m }
+                },
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
+            };
+
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProfitCentreCostRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProfitCenterCostSummary(query, monthNumber);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<PaginationRes<ProfitCentreCostRes>>(okResult.Value);
+            response.Data.Should().HaveCount(2);
+            response.PaginationData.TotalRecords.Should().Be(2);
+            await _serviceMock.Received(1).GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummary_WithMonthNumber_ReturnsOkWithFilteredPagedData()
+        {
+            // Arrange
+            const double monthNumber = 3.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 5 };
+            var dtos = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1500.00m }
+            };
+            var pagination = new PaginationDto { PageNumber = 1, PageSize = 5, TotalRecords = 1 };
+            var serviceResult = new PaginatedResult<ProfitCentreCostDto>(dtos, pagination);
+            var expectedResponse = new PaginationRes<ProfitCentreCostRes>
+            {
+                Data = new List<ProfitCentreCostRes>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 1500.00m }
+                },
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 5, TotalRecords = 1 }
+            };
+
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProfitCentreCostRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProfitCenterCostSummary(query, monthNumber);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<PaginationRes<ProfitCentreCostRes>>(okResult.Value);
+            response.Data.Should().HaveCount(1);
+            response.PaginationData.TotalRecords.Should().Be(1);
+            await _serviceMock.Received(1).GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummary_WithSortingAndPaging_ReturnsOkWithSortedData()
+        {
+            // Arrange
+            const double monthNumber = 6.0;
+            var query = new QueryParameters<string>
+            {
+                Page = 2,
+                PageSize = 5,
+                SortBy = "ProfitCentre",
+                Descending = true
+            };
+            var dtos = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC05", Cost = 500.00m },
+                new() { ProfitCentre = "PC04", Cost = 400.00m }
+            };
+            var pagination = new PaginationDto { PageNumber = 2, PageSize = 5, TotalRecords = 10 };
+            var serviceResult = new PaginatedResult<ProfitCentreCostDto>(dtos, pagination);
+            var expectedResponse = new PaginationRes<ProfitCentreCostRes>
+            {
+                Data = new List<ProfitCentreCostRes>
+                {
+                    new() { ProfitCentre = "PC05", Cost = 500.00m },
+                    new() { ProfitCentre = "PC04", Cost = 400.00m }
+                },
+                PaginationData = new Pagination { PageNumber = 2, PageSize = 5, TotalRecords = 10 }
+            };
+
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProfitCentreCostRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProfitCenterCostSummary(query, monthNumber);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<PaginationRes<ProfitCentreCostRes>>(okResult.Value);
+            response.PaginationData.PageNumber.Should().Be(2);
+            response.PaginationData.PageSize.Should().Be(5);
+            response.PaginationData.TotalRecords.Should().Be(10);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummary_WithEmptyResult_ReturnsOkWithEmptyPagedData()
+        {
+            // Arrange
+            const double monthNumber = 1.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<ProfitCentreCostDto>();
+            var pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 };
+            var serviceResult = new PaginatedResult<ProfitCentreCostDto>(dtos, pagination);
+            var expectedResponse = new PaginationRes<ProfitCentreCostRes>
+            {
+                Data = new List<ProfitCentreCostRes>(),
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 0 }
+            };
+
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProfitCentreCostRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProfitCenterCostSummary(query, monthNumber);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<PaginationRes<ProfitCentreCostRes>>(okResult.Value);
+            response.Data.Should().BeEmpty();
+            response.PaginationData.TotalRecords.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummary_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, Arg.Any<double>())
+                .ThrowsAsync(new InvalidOperationException("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _controller.GetPagedProfitCenterCostSummary(query, 1.0));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummary_WithLargePageNumber_ReturnsOkWithEmptyPage()
+        {
+            // Arrange
+            const double monthNumber = 1.0;
+            var query = new QueryParameters<string> { Page = 999, PageSize = 10 };
+            var dtos = new List<ProfitCentreCostDto>();
+            var pagination = new PaginationDto { PageNumber = 999, PageSize = 10, TotalRecords = 50 };
+            var serviceResult = new PaginatedResult<ProfitCentreCostDto>(dtos, pagination);
+            var expectedResponse = new PaginationRes<ProfitCentreCostRes>
+            {
+                Data = new List<ProfitCentreCostRes>(),
+                PaginationData = new Pagination { PageNumber = 999, PageSize = 10, TotalRecords = 50 }
+            };
+
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProfitCentreCostRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProfitCenterCostSummary(query, monthNumber);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<PaginationRes<ProfitCentreCostRes>>(okResult.Value);
+            response.Data.Should().BeEmpty();
+            response.PaginationData.PageNumber.Should().Be(999);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummary_WithMinimumPageSize_ReturnsOkWithSingleItem()
+        {
+            // Arrange
+            const double monthNumber = 1.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 1 };
+            var dtos = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1000.00m }
+            };
+            var pagination = new PaginationDto { PageNumber = 1, PageSize = 1, TotalRecords = 10 };
+            var serviceResult = new PaginatedResult<ProfitCentreCostDto>(dtos, pagination);
+            var expectedResponse = new PaginationRes<ProfitCentreCostRes>
+            {
+                Data = new List<ProfitCentreCostRes>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 1000.00m }
+                },
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 1, TotalRecords = 10 }
+            };
+
+            _serviceMock.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProfitCentreCostRes>>(serviceResult).Returns(expectedResponse);
+
+            // Act
+            var result = await _controller.GetPagedProfitCenterCostSummary(query, monthNumber);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<PaginationRes<ProfitCentreCostRes>>(okResult.Value);
+            response.Data.Should().HaveCount(1);
+            response.PaginationData.PageSize.Should().Be(1);
+        }
+
+        #endregion
+
     }
 }

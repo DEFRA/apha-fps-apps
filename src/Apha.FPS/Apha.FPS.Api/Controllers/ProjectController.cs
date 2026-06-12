@@ -161,6 +161,16 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<ProjectRes>(updated));
         }
 
+        [HttpPatch("external/fps-portfolio")]
+        public async Task<ActionResult<ProjectRes>> UpdateFpsPortfolioDetailsAsync([FromBody] ProjectReq request)
+        {
+            var projectDto = _mapper.Map<ProjectDto>(request);
+            var updated = await _projectService.UpdateFpsPortfolioDetailsAsync(projectDto);
+            if (updated == null)
+                throw new ArgumentException($"Project record with ID: {request.ParentProject} not found");
+            return Ok(_mapper.Map<ProjectRes>(updated));
+        }
+
         [HttpPut]
         public async Task<ActionResult<ProjectRes>> UpdateProjectRootAsync([FromBody] ProjectReq request)
         {

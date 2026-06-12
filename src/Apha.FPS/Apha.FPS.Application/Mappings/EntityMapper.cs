@@ -51,6 +51,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Agency, AgencyDto>().ReverseMap();
             CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
             CreateMap<ProjectStaffPlanView, ProjectStaffPlanViewDto>().ReverseMap();
+            CreateMap<ProjectGroupStaffPlanView, ProjectGroupStaffPlanViewDto>().ReverseMap();
             CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
             CreateMap<AccountCategory, AccountCategoryDto>().ReverseMap();
             CreateMap<WorkGroupStaff, WorkGroupStaffDto>().ReverseMap();
@@ -67,6 +68,7 @@ namespace Apha.FPS.Application.Mappings
                 .ForMember(d => d.ProfitCentreHead, o => o.MapFrom(s => s.ProfitCentreHead))
                 .ForMember(d => d.DivisionId, o => o.MapFrom(s => s.DivisionId))
                 .ForMember(d => d.EmailRecipient, o => o.MapFrom(s => s.EmailRecipient));
+            CreateMap<ProfitCentreCostSummary, ProfitCentreCostDto>().ReverseMap();
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupGradeView, WorkgroupGradeDto>().ReverseMap();

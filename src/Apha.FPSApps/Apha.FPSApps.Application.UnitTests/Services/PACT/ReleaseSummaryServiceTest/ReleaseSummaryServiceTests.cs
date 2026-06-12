@@ -175,6 +175,154 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ReleaseSummaryService
 
         #endregion
 
+        #region GetReleasePeriodsAsync
+
+        [Fact]
+        public async Task GetReleasePeriodsAsync_WithExistingPeriods_ReturnsSuccessResponseWithData()
+        {
+            // Arrange
+            var periods = new List<ReleasePeriodDto>
+            {
+                new() { PeriodName = "Period1", PeriodType = "Month", StartPeriod = 0.5, EndPeriod = 1.0, FinalSummariesRun = 0, PeriodLocked = 0 },
+                new() { PeriodName = "Period2", PeriodType = "Month", StartPeriod = 1.5, EndPeriod = 2.0, FinalSummariesRun = 1, PeriodLocked = 0 }
+            };
+
+            var expectedResponse = ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(periods.AsReadOnly());
+
+            _mockReleaseSummaryApiClient.GetReleasePeriodsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetReleasePeriodsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal("Period1", result.Data[0].PeriodName);
+            Assert.Equal("Period2", result.Data[1].PeriodName);
+
+            await _mockReleaseSummaryApiClient.Received(1).GetReleasePeriodsAsync();
+        }
+
+        [Fact]
+        public async Task GetReleasePeriodsAsync_WithNoPeriods_ReturnsSuccessResponseWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(
+                new List<ReleasePeriodDto>().AsReadOnly());
+
+            _mockReleaseSummaryApiClient.GetReleasePeriodsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetReleasePeriodsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Empty(result.Data);
+
+            await _mockReleaseSummaryApiClient.Received(1).GetReleasePeriodsAsync();
+        }
+
+        [Fact]
+        public async Task GetReleasePeriodsAsync_WithFailedApiResponse_ReturnsFailureResponseWithErrors()
+        {
+            // Arrange
+            var expectedResponse = new ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto>
+                {
+                    new() { Code = "ERR003", Message = "Failed to retrieve periods" }
+                }
+            };
+
+            _mockReleaseSummaryApiClient.GetReleasePeriodsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetReleasePeriodsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("ERR003", result.Errors[0].Code);
+            Assert.Equal("Failed to retrieve periods", result.Errors[0].Message);
+
+            await _mockReleaseSummaryApiClient.Received(1).GetReleasePeriodsAsync();
+        }
+
+        [Fact]
+        public async Task GetReleasePeriodsAsync_MapsAllPeriodFieldsCorrectly()
+        {
+            // Arrange
+            var period = new ReleasePeriodDto
+            {
+                PeriodName  = "P1",
+                PeriodType  = "Quarter",
+                StartPeriod = 1.0,
+                EndPeriod   = 3.0,
+                FinalSummariesRun = 2,
+                PeriodLocked = 1
+            };
+
+            var expectedResponse = ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(
+                new List<ReleasePeriodDto> { period }.AsReadOnly());
+
+            _mockReleaseSummaryApiClient.GetReleasePeriodsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetReleasePeriodsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            var dto = result.Data![0];
+            Assert.Equal("P1",      dto.PeriodName);
+            Assert.Equal("Quarter", dto.PeriodType);
+            Assert.Equal(1.0,       dto.StartPeriod);
+            Assert.Equal(3.0,       dto.EndPeriod);
+            Assert.Equal((short)2,  dto.FinalSummariesRun);
+            Assert.Equal((short)1,  dto.PeriodLocked);
+        }
+
+        [Fact]
+        public async Task GetReleasePeriodsAsync_DelegatesDirectlyToPactReleaseSummaryApiClient()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>.SuccessResponse(
+                new List<ReleasePeriodDto>().AsReadOnly());
+
+            _mockReleaseSummaryApiClient.GetReleasePeriodsAsync().Returns(expectedResponse);
+
+            // Act
+            await _service.GetReleasePeriodsAsync();
+
+            // Assert — the root pact client must never be called directly; only the sub-client
+            await _mockReleaseSummaryApiClient.Received(1).GetReleasePeriodsAsync();
+            _ = _mockPactClient.Received(1).PactReleaseSummary;
+        }
+
+        [Fact]
+        public async Task GetReleasePeriodsAsync_ApiClientThrowsException_PropagatesException()
+        {
+            // Arrange
+            _mockReleaseSummaryApiClient.GetReleasePeriodsAsync()
+                .Returns(Task.FromException<ApiResponseDto<IReadOnlyList<ReleasePeriodDto>>>(
+                    new InvalidOperationException("API Client error")));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetReleasePeriodsAsync());
+
+            await _mockReleaseSummaryApiClient.Received(1).GetReleasePeriodsAsync();
+        }
+
+        #endregion
+
         #region SetFinalSummaryRunAsync
 
         [Fact]
