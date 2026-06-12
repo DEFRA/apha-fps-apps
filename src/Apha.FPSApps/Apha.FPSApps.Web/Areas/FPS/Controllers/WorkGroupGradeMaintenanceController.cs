@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -17,15 +18,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     /// </summary>
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class WorkGroupGradeMaintenanceController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IWorkGroupGradeService _wgGradeService;
         private readonly IProfitCentreGradeService _pcGradeService;
-        private readonly IWorkGroupService _workgroupService;
+        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workgroupService;
 
-        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkGroupGradeService wgGradeService, IProfitCentreGradeService pcGradeService, IWorkGroupService workgroupService)
+        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkGroupGradeService wgGradeService, IProfitCentreGradeService pcGradeService, Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService workgroupService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _wgGradeService = wgGradeService ?? throw new ArgumentNullException(nameof(wgGradeService));

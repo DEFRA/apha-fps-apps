@@ -30,7 +30,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsProjectGroupApiClient FpsProjectGroup { get; }
 
         public IFpsWorkGroupGradeApiClient FpsWorkgroupGrade { get; }
-        public IFpsWorkGroupApiClient FpsWorkGroup { get; }
         public IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         public IFpsPurchasesApiClient FpsPurchases { get; }
 
@@ -58,7 +57,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsAnimalMaster = new FpsAnimalApiClient(http, mapper);
             FpsProjectGroup = new FpsProjectGroupApiClient(http, mapper);
             FpsWorkgroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
-            FpsWorkGroup = new FpsWorkGroupApiClient(http, mapper);
             FpsBudgetBids = new FpsBudgetBidsApiClient(http, mapper);
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
         }

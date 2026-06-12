@@ -1,8 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
-
-namespace Apha.FPSApps.Application.Dtos.FPS
+namespace Apha.PACT.Application.Dtos
 {
-    [ExcludeFromCodeCoverage]
     public class WorkGroupViewDto
     {
         public string WorkGroupName { get; set; } = null!;

@@ -1,6 +1,8 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -15,16 +17,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
     [Area("FPS")]
     [Authorize(Roles = "FPSAdmin,FPSUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope")]
+    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
+
     public class BudgetResourceLevelController : Controller
     {
-        private readonly IWorkGroupService _workGroupService;
+        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workGroupService;
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IPurchasesService _purchasesService;
         private readonly IProfitCentreService _profitCentreService;
 
         public BudgetResourceLevelController(
-            IWorkGroupService workGroupService,
+            Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService workGroupService,
             IBudgetBidsService budgetBidsService,
             IPurchasesService purchasesService,
             IProfitCentreService profitCentreService)
@@ -47,7 +50,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var defaultRequest = new PaginationFilter<string> { Filter = "{}", SortBy = string.Empty, Descending = false, Page = 1, PageSize = 10 };
 
-            viewModel.WorkGroupGrid = await GetWorkGroupGridConfigAsync(defaultRequest, profitCentre);
+            viewModel.WorkGroupGrid = await GetWorkGroupGridConfigAsync(profitCentre);
             viewModel.BudgetBidsGrid = await GetBudgetBidsGridConfigAsync(defaultRequest, null);
             viewModel.PurchasesGrid = await GetPurchasesGridConfigAsync(defaultRequest, null, null);
 
@@ -64,7 +67,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data", errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
 
-            var gridConfig = await GetWorkGroupGridConfigAsync(request, profitCentre);
+            var gridConfig = await GetWorkGroupGridConfigAsync(profitCentre);
             return PartialView("_DataGrid", gridConfig);
         }
 
@@ -92,23 +95,25 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
-        private async Task<DataGridConfig<WorkGroupItem>> GetWorkGroupGridConfigAsync(
-            PaginationFilter<string> request, string? profitCentre)
+        private async Task<DataGridConfig<WorkGroupItem>> GetWorkGroupGridConfigAsync(string? profitCentre)
         {
-            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new Dictionary<string, string>();
             var allItems = new List<WorkGroupItem>();
 
             if (!string.IsNullOrWhiteSpace(profitCentre))
             {
-                var response = await _workGroupService.GetWorkGroupsAsync(profitCentre);
+                var response = await _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(profitCentre);
                 if (response.Success && response.Data != null)
-                    allItems = response.Data.Select(d => new WorkGroupItem { WorkGroupName = d.WorkGroupName, WorkGroup = d.WorkGroupName }).ToList();
+                    allItems = response.Data.Select(d => new WorkGroupItem
+                    {
+                        WorkGroupName = d.WorkGroupName,
+                        WorkGroup     = d.WorkGroupName,
+                        ProfitCentre  = d.ProfitCentre,
+                        Description   = d.Description,
+                        FpsYear       = d.FpsYear,
+                        Dt2Username   = d.Dt2Username,
+                        UserEmail     = d.UserEmail
+                    }).ToList();
             }
-
-            var totalRecords = allItems.Count;
-            var pageSize     = request.PageSize > 0 ? request.PageSize : 10;
-            var pageNumber   = request.Page > 0 ? request.Page : 1;
-            var pagedItems   = allItems.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 
             return new DataGridConfig<WorkGroupItem>
             {
@@ -122,17 +127,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 AllowDelete       = false,
                 ExtraFilterMethod = "getWorkGroupExtraFilters",
                 BindGridUrl       = Url.Action(nameof(LoadWorkGroupGrid), "BudgetResourceLevel", new { area = "FPS" })!,
-                Data              = pagedItems,
+                Data              = allItems,
                 Columns           = GridDataProvider.GetColumnsDefination<WorkGroupItem>(null),
                 Pagination        = new PaginationModel
                 {
-                    TotalRecords  = totalRecords,
-                    PageNumber    = pageNumber,
-                    PageSize      = pageSize,
-                    SortColumn    = request.SortBy,
-                    SortDirection = request.Descending
+                    TotalRecords  = allItems.Count,
+                    PageNumber    = 1,
+                    PageSize      = allItems.Count > 0 ? allItems.Count : 10,
+                    SortColumn    = string.Empty,
+                    SortDirection = false
                 },
-                CurrentFilters    = filterDict
+                CurrentFilters    = new Dictionary<string, string>()
             };
         }
 
@@ -431,7 +436,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportToExcel(string profitCentre, int year)
         {
-            var wgResponse = await _workGroupService.GetWorkGroupsAsync(profitCentre);
+            var wgResponse = await _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(profitCentre);
             var workgroups = wgResponse.Success && wgResponse.Data != null
                 ? wgResponse.Data.Select(w => w.WorkGroupName).OrderBy(w => w).ToList()
                 : new List<string>();

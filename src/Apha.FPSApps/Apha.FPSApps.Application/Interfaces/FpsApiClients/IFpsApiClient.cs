@@ -24,7 +24,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsProjectStaffPlanApiClient FpsProjectStaffPlan { get; }
         IFpsAnimalApiClient FpsAnimalMaster { get; }
         IFpsProjectGroupApiClient FpsProjectGroup { get; }
-        IFpsWorkGroupApiClient FpsWorkGroup { get; }
         IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         IFpsPurchasesApiClient FpsPurchases { get; }
     }

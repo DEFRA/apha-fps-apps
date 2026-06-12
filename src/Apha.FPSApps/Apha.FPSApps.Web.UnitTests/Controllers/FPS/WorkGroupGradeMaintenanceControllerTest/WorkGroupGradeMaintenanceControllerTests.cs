@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
@@ -17,7 +18,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
         private readonly IMapper _mapper;
         private readonly IWorkGroupGradeService _wgGradeService;
         private readonly IProfitCentreGradeService _pcGradeService;
-        private readonly IWorkGroupService _workgroupService;
+        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workgroupService;
         private readonly WorkGroupGradeMaintenanceController _controller;
 
         public WorkGroupGradeMaintenanceControllerTests()
@@ -25,7 +26,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupGradeMaintenanceCo
             _mapper = Substitute.For<IMapper>();
             _wgGradeService = Substitute.For<IWorkGroupGradeService>();
             _pcGradeService = Substitute.For<IProfitCentreGradeService>();
-            _workgroupService = Substitute.For<IWorkGroupService>();
+            _workgroupService = Substitute.For<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService>();
             _controller = new WorkGroupGradeMaintenanceController(_mapper, _wgGradeService, _pcGradeService, _workgroupService);
         }
 

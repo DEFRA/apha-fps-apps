@@ -30,7 +30,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
             mockContext.Setup(x => x.WorkGroups).Returns(workGroupsMockSet.Object);
 
-            var repo = new WorkGroupRepository(mockContext.Object);
+            var repo = new WorkGroupRepository(mockContext.Object, fpsYearContext);
             return (repo, workGroupsMockSet, mockContext);
         }
 
@@ -78,7 +78,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             mockContext.Setup(x => x.MonthlyTimes).Returns(monthlyTimeSet.Object);
             mockContext.Setup(x => x.WorkGroups).Returns(workGroupSet.Object);
 
-            return new WorkGroupRepository(mockContext.Object);
+            return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
         }
 
         /// <summary>Minimal single-row joined dataset.</summary>
@@ -141,6 +141,84 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
 
             Assert.Single(result);
             Assert.Equal("WG1", result[0].WorkGroupName);
+        }
+
+        #endregion
+
+        #region GetAllWorkGroupNamesAsync
+
+        [Fact]
+        public async Task GetAllWorkGroupNamesAsync_WithData_ReturnsAlphabeticallySortedNames()
+        {
+            // Arrange
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "ZGroup", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "AGroup", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "MGroup", ProfitCentre = "PC1" }
+            };
+            var repo = CreateRepository(workGroups);
+
+            // Act
+            var result = await repo.GetAllWorkGroupNamesAsync();
+
+            // Assert
+            Assert.Equal(3, result.Count);
+            Assert.Equal("AGroup", result[0]);
+            Assert.Equal("MGroup", result[1]);
+            Assert.Equal("ZGroup", result[2]);
+        }
+
+        [Fact]
+        public async Task GetAllWorkGroupNamesAsync_EmptyData_ReturnsEmptyList()
+        {
+            // Arrange
+            var repo = CreateRepository([]);
+
+            // Act
+            var result = await repo.GetAllWorkGroupNamesAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllWorkGroupNamesAsync_SingleEntry_ReturnsSingleName()
+        {
+            // Arrange
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" }
+            };
+            var repo = CreateRepository(workGroups);
+
+            // Act
+            var result = await repo.GetAllWorkGroupNamesAsync();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("WG1", result[0]);
+        }
+
+        [Fact]
+        public async Task GetAllWorkGroupNamesAsync_ReturnsOnlyNamesNotOtherFields()
+        {
+            // Arrange
+            var workGroups = new List<WorkGroup>
+            {
+                new() { WorkGroupName = "WG_A", ProfitCentre = "PC_ALPHA", Description = "desc" },
+                new() { WorkGroupName = "WG_B", ProfitCentre = "PC_BETA",  Description = "desc2" }
+            };
+            var repo = CreateRepository(workGroups);
+
+            // Act
+            var result = await repo.GetAllWorkGroupNamesAsync();
+
+            // Assert — result is List<string>, not WorkGroup objects
+            Assert.Equal(2, result.Count);
+            Assert.All(result, name => Assert.IsType<string>(name));
+            Assert.Contains("WG_A", result);
+            Assert.Contains("WG_B", result);
         }
 
         #endregion
@@ -1106,7 +1184,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             mockContext.Setup(x => x.Projects).Returns(projectSet.Object);
             mockContext.Setup(x => x.WorkGroups).Returns(workGroupSet.Object);
 
-            return new WorkGroupRepository(mockContext.Object);
+            return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
         }
 
         private static WorkGroupRepository CreateDefaultValidTimeCodeRepository(
@@ -1789,11 +1867,11 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             mockContext.Setup(x => x.WgSummarisedStaffTimeUsageViews).Returns(timeUsageSet.Object);
             mockContext.Setup(x => x.WorkGroups).Returns(workGroupSet.Object);
 
-            return new WorkGroupRepository(mockContext.Object);
+            return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
         }
 
         // ────────────────────────────────────────────────────────────────────
-        #region GetWgSummarisedStaffTimeUsageAsync — basic retrieval
+        #region GetWgSummarisedStaffTimeUsageAsync
         // ────────────────────────────────────────────────────────────────────
 
         [Fact]
@@ -2096,7 +2174,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             var mockSet = RepositoryTestHelper.CreateMockDbSet(workGroups);
             mockContext.Setup(x => x.WorkGroups).Returns(mockSet.Object);
 
-            return new WorkGroupRepository(mockContext.Object);
+            return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
         }
 
         #region GetWorkGroupsByProfitCentreAsync
@@ -2271,7 +2349,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             mockContext.Setup(x => x.WorkGroups).Returns(wgSet.Object);
             mockContext.Setup(x => x.ProfitCentres).Returns(pcSet.Object);
 
-            return new WorkGroupRepository(mockContext.Object);
+            return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
         }
 
         #region SetSendEmailForProfitCentreWorkGroupsAsync
@@ -2343,7 +2421,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             mockContext.Setup(x => x.TestRequirements)
                 .Returns(RepositoryTestHelper.CreateMockDbSet(testRequirements ?? []).Object);
 
-            return new WorkGroupRepository(mockContext.Object);
+            return new WorkGroupRepository(mockContext.Object, fpsYearContext);
         }
 
         #region GetProfitCentreAsync
@@ -2919,10 +2997,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
             mockContext.Setup(x => x.SummarisedWgTimeViews).Returns(rowSet.Object);
             mockContext.Setup(x => x.WorkGroups).Returns(workGroupSet.Object);
 
-            return new WorkGroupRepository(mockContext.Object);
+            return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
         }
 
-        #region GetSummarisedWorkgroupTimeAsync — basic retrieval
+        #region GetSummarisedWorkgroupTimeAsync
 
         [Fact]
         public async Task GetSummarisedWorkgroupTimeAsync_MatchingWorkGroup_ReturnsRows()

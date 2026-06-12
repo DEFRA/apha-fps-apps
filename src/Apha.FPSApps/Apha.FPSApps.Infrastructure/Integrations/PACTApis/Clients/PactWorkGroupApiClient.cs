@@ -22,6 +22,29 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
+        public async Task<ApiResponseDto<List<string>>> GetAllWorkGroupNamesAsync()
+        {
+            var response = await _http.GetAsync<List<string>>(PactApiEndpoints.GetAllWorkGroupNames);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<string>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+            return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<WorkGroupViewDto>>> GetWorkGroupsByProfitCentreForBudgetAsync(string profitCentre)
+        {
+            var url = QueryHelpers.AddQueryString(
+                PactApiEndpoints.GetWorkGroupsByProfitCentreForBudget,
+                "profitCentre", profitCentre);
+            var response = await _http.GetAsync<List<WorkGroupViewRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<WorkGroupViewDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<WorkGroupViewDto>>>(response);
+            return ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync()
         {
             var response = await _http.GetAsync<List<WorkGroupRes>>(PactApiEndpoints.GetAllWorkGroups);

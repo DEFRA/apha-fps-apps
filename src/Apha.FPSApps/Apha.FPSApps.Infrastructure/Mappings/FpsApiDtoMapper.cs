@@ -117,8 +117,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
-            // WorkGroup
-            CreateMap<WorkGroupViewDto, WorkGroupRes>().ReverseMap();
+
         }
     }
 }

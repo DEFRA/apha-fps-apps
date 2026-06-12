@@ -1,6 +1,8 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
@@ -15,7 +17,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
 {
     public class BudgetResourceLevelControllerTests
     {
-        private readonly IWorkGroupService _workGroupService;
+        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workGroupService;
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IPurchasesService _purchasesService;
         private readonly IProfitCentreService _profitCentreService;
@@ -23,7 +25,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
 
         public BudgetResourceLevelControllerTests()
         {
-            _workGroupService    = Substitute.For<IWorkGroupService>();
+            _workGroupService    = Substitute.For<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService>();
             _budgetBidsService   = Substitute.For<IBudgetBidsService>();
             _purchasesService    = Substitute.For<IPurchasesService>();
             _profitCentreService = Substitute.For<IProfitCentreService>();
@@ -61,7 +63,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
 
         private void SetupDefaultWorkGroups(string profitCentre = "PC01")
         {
-            _workGroupService.GetWorkGroupsAsync(profitCentre)
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(profitCentre)
                 .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>
                 {
                     new() { WorkGroupName = "WG01", ProfitCentre = profitCentre }
@@ -98,7 +100,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         {
             // Arrange
             SetupDefaultProfitCentres();
-            _workGroupService.GetWorkGroupsAsync(Arg.Any<string>())
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(Arg.Any<string>())
                 .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>()));
             _budgetBidsService.GetBidViewAsync(Arg.Any<string>())
                 .Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(new List<BidViewDto>()));
@@ -147,7 +149,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         {
             // Arrange
             SetupDefaultProfitCentres();
-            _workGroupService.GetWorkGroupsAsync(Arg.Any<string>())
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(Arg.Any<string>())
                 .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>()));
             _budgetBidsService.GetBidViewAsync(Arg.Any<string>())
                 .Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(new List<BidViewDto>()));
@@ -225,7 +227,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
-            _workGroupService.GetWorkGroupsAsync("PC01")
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync("PC01")
                 .Returns(ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error" } }, new ApiMetaDto()));
 
@@ -844,7 +846,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task ExportToExcel_WhenWorkgroupServiceFails_ReturnsEmptyExcel()
         {
             // Arrange
-            _workGroupService.GetWorkGroupsAsync("PC01")
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync("PC01")
                 .Returns(ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error" } }, new ApiMetaDto()));
             _budgetBidsService.GetAccountCategoriesAsync()

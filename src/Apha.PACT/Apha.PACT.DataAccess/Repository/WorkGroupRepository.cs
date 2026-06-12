@@ -9,10 +9,11 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class WorkGroupRepository : BaseRepository, IWorkGroupRepository
     {
+        private readonly IFpsRequestContext _requestContext;
 
-        public WorkGroupRepository(FpsDbContext context) : base(context)
+        public WorkGroupRepository(FpsDbContext context, IFpsRequestContext requestContext) : base(context)
         {
-
+            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
         private const string WorkGroupColumn     = "WorkGroup";
@@ -29,6 +30,15 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.WorkGroups
                 .AsNoTracking()
                 .OrderBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetAllWorkGroupNamesAsync()
+        {
+            return await _context.WorkGroups
+                .AsNoTracking()
+                .Select(w => w.WorkGroupName)
+                .OrderBy(x => x)
                 .ToListAsync();
         }
 
@@ -162,6 +172,17 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.WorkGroups
                 .AsNoTracking()
                 .Where(w => w.ProfitCentre == profitCentre && w.SendEmail == 1)
+                .OrderBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<List<WorkGroupView>> GetWorkGroupsByProfitCentreAsync(string profitCentre)
+        {
+            return await _context.WorkGroupViews
+                .AsNoTracking()
+                .Where(w => w.ProfitCentre == profitCentre
+                         && w.UserEmail != null && w.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Distinct()
                 .OrderBy(w => w.WorkGroupName)
                 .ToListAsync();
         }

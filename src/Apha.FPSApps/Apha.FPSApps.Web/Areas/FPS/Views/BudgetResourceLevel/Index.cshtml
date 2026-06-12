@@ -1,4 +1,4 @@
-@using Apha.FPSApps.Web.Models.Components.DataGrid
+﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.BudgetResourceLevelViewModel
 @inject Apha.FPSApps.Web.Handler.IFpsYearContext FpsYearContext
 
@@ -11,23 +11,26 @@
     <div class="govuk-grid-row sup_margin_left_right_0">
         <div class="govuk-grid-column-full">
             <h1 class="govuk-grid-row sup_border-bottom govuk-!-font-size-19 sup_pad_top_bottom_5_10">
-                <div class="d-flex align-items-center justify-content-between w-100">
-                    <span>
-                        Budget Bids for Resource Centre
+                <div class="sup_flex_between_center">
+                    <div class="sup_flex_left_center">
+                        Budget Bids for Resource Centre....
                         @if (!string.IsNullOrWhiteSpace(Model.SelectedProfitCentre))
                         {
-                            <span class="govuk-link" style="margin-left: 5px;">@Model.SelectedProfitCentre</span>
+                            <div class="display-flex sup_margin_left_5">
+                                <div class="m-0 p-0 sup_flex_row_center_center sup_margin_left_5">
+                                    <span class="govuk-!-font-size-19 govuk-!-font-weight-bold sup_gov_blue_color sup_blue_border_bottom_2">@Model.SelectedProfitCentre</span>
+                                </div>
+                            </div>
                         }
-                    </span>
-                    <div class="d-flex align-items-center" style="margin-left: auto;">
-                        <form asp-action="Index" asp-controller="BudgetResourceLevel" asp-area="FPS" method="get" style="display: flex; align-items: center;">
+                    </div>
+                    <div>
+                        <form asp-action="Index" asp-controller="BudgetResourceLevel" asp-area="FPS" method="get" class="sup_flex_align_center">
                             <input type="hidden" name="year" value="@FpsYearContext.Year" />
                             <label class="govuk-label sup_visually_hidden" for="profitCentreSelect">Resource Centre</label>
                             <select id="profitCentreSelect"
                                     name="profitCentre"
                                     asp-items="Model.ProfitCentreList"
-                                    class="govuk-select govuk-!-font-size-16"
-                                    style="width: auto; min-width: 260px;"
+                                    class="govuk-select govuk-!-font-size-16 brl-profit-centre-select"
                                     onchange="this.form.submit()">
                                 <option value="">-- Select Resource Centre --</option>
                             </select>
@@ -43,30 +46,34 @@
 
         <!-- Left: WorkGroup selector -->
         <div class="govuk-grid-column-one-third sup_p_0">
-            <div class="sup_border sup_margin_bottom_10" style="margin-right: 10px;">
+            <div class="sup_border sup_margin_bottom_10 sup_margin_right_10 brl-workgroup-grid">
                 <div class="sup_justify_content sup_padding_right_left_10 sup_margin_tb_13">
                     <h2 class="govuk-!-font-size-16 sup_margin_5">(1) First Select a WorkGroup</h2>
                 </div>
-                <div class="table_scroll_wrapper sup_height_250">
-                    <div id="gridContainer_workGroupGrid">
-                        @await Html.PartialAsync("_DataGrid", Model.WorkGroupGrid)
-                    </div>
+                <div id="gridContainer_workGroupGrid">
+                    @await Html.PartialAsync("_DataGrid", Model.WorkGroupGrid)
                 </div>
             </div>
-            <div class="sup_padding_16 d-flex flex-column align-items-center gap-2">
-                <button type="button" class="govuk-button govuk-!-margin-bottom-0 w-50" onclick="selectByAccount()">
-                    Select by Account<br />(Rather than WorkGroup)
-                </button>
-                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0 w-50" onclick="viewReport()">
-                    View Report
-                </button>
-                <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0 w-50" onclick="sendToExcel()">
-                    <img  width="16" />&nbsp;Send To Excel
-                </button>
+            <div class="sup_padding_16 sup_margin_right_10 brl-action-buttons">
+                <div class="brl-action-btn-row">
+                    <button type="button" class="govuk-button govuk-!-margin-bottom-0 brl-action-btn" onclick="selectByAccount()">
+                        Select by Account<br />[Rather than WorkGroup]
+                    </button>
+                </div>
+                <div class="brl-action-btn-row">
+                    <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0 brl-action-btn" onclick="viewReport()">
+                        View Report
+                    </button>
+                </div>
+                <div class="brl-action-btn-row">
+                    <button type="button" class="govuk-button govuk-button--secondary sup_gov_blue_bg govuk-!-margin-bottom-0 brl-action-btn" onclick="sendToExcel()">
+                        Send To Excel
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Centre: Budget Bids grid    "~/images/file-export-solid-full.svg"-->
+        <!-- Centre: Budget Bids grid -->
         <div class="govuk-grid-column-one-third sup_p_0">
             <div class="sup_border sup_margin_right_10">
                 <div class="sup_flex_end_space sup_p_5 sup_border-bottom">
@@ -81,10 +88,8 @@
                         + Add
                     </button>
                 </div>
-                <div class="table_scroll_wrapper">
-                    <div id="gridContainer_budgetBidsGrid">
-                        @await Html.PartialAsync("_DataGrid", Model.BudgetBidsGrid)
-                    </div>
+                <div id="gridContainer_budgetBidsGrid">
+                    @await Html.PartialAsync("_DataGrid", Model.BudgetBidsGrid)
                 </div>
             </div>
             <div class="sup_padding_16 sup_flex_start_center sup_margin_top_10">
@@ -119,10 +124,8 @@
                         </button>
                     </div>
                 </div>
-                <div class="table_scroll_wrapper">
-                    <div id="gridContainer_purchasesGrid">
-                        @await Html.PartialAsync("_DataGrid", Model.PurchasesGrid)
-                    </div>
+                <div id="gridContainer_purchasesGrid">
+                    @await Html.PartialAsync("_DataGrid", Model.PurchasesGrid)
                 </div>
             </div>
             <div class="sup_padding_16 sup_flex_start_center sup_margin_top_10">
@@ -138,10 +141,8 @@
 </main>
 
 <!-- Modal container -->
-<div id="modalContainer" class="modal-backdrop"
-     style="display:none; position:fixed; inset:0; z-index:1050; background:rgba(0,0,0,0.5);  align-items:center; justify-content:center;">
-    <div class="modal-dialog modal-lg" role="dialog" aria-modal="true"
-         style="overflow:visible; margin:auto; position:relative; top:50%; transform:translateY(-50%);">
+<div id="modalContainer" class="brl-modal-container">
+    <div class="modal-dialog modal-lg brl-modal-dialog-center" role="dialog" aria-modal="true">
         <div id="modalContent" class="modal-content sup_overflow_visible"></div>
     </div>
 </div>
@@ -382,7 +383,7 @@
     function openModal(url) {
         $.get(url, function (html) {
             $('#modalContent').html(html);
-            $('#modalContainer').show();
+            $('#modalContainer').css('display', 'flex');
         }).fail(function () {
             showGovukAlert('An error occurred while loading the form.');
         });
@@ -438,6 +439,27 @@
         var purchaseObserver = new MutationObserver(function () { recalcTotalPurchases(); });
         var purchasesNode = document.getElementById('gridContainer_purchasesGrid');
         if (purchasesNode) purchaseObserver.observe(purchasesNode, { childList: true, subtree: true });
+
+        // ─── Constrain workgroup grid height (inline override beats editable-grid.css) ─
+        function applyWorkgroupGridHeight() {
+            var wgScroll = document.querySelector('#gridContainer_workGroupGrid .grid-scroll-container');
+            if (wgScroll) {
+                wgScroll.style.height = '300px';
+                wgScroll.style.maxHeight = '300px';
+            }
+            var wgContainer = document.querySelector('#gridContainer_workGroupGrid .editable-grid-container');
+            if (wgContainer) {
+                wgContainer.style.minHeight = 'unset';
+            }
+        }
+        applyWorkgroupGridHeight();
+
+        // Re-apply after each AJAX reload of the workgroup grid
+        var wgNode = document.getElementById('gridContainer_workGroupGrid');
+        if (wgNode) {
+            var wgObserver = new MutationObserver(applyWorkgroupGridHeight);
+            wgObserver.observe(wgNode, { childList: true, subtree: false });
+        }
     });
 
     // ─── If profitCentre already selected, load workgroups ──────────────────────

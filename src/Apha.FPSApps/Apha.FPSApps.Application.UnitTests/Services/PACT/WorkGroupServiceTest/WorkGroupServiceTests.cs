@@ -966,6 +966,62 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
 
         #endregion
 
+        #region GetAllWorkGroupNamesAsync
+
+        [Fact]
+        public async Task GetAllWorkGroupNamesAsync_WithData_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var names = new List<string> { "WG01", "WG02" };
+            var expectedResponse = ApiResponseDto<List<string>>.SuccessResponse(names);
+            _pactWorkGroupApiClient.GetAllWorkGroupNamesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetAllWorkGroupNamesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _pactWorkGroupApiClient.Received(1).GetAllWorkGroupNamesAsync();
+        }
+
+        [Fact]
+        public async Task GetAllWorkGroupNamesAsync_EmptyList_ReturnsSuccessWithEmptyData()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<string>>.SuccessResponse([]);
+            _pactWorkGroupApiClient.GetAllWorkGroupNamesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetAllWorkGroupNamesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            await _pactWorkGroupApiClient.Received(1).GetAllWorkGroupNamesAsync();
+        }
+
+        [Fact]
+        public async Task GetAllWorkGroupNamesAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<string>>.FailureResponse(errors, new ApiMetaDto());
+            _pactWorkGroupApiClient.GetAllWorkGroupNamesAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetAllWorkGroupNamesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            await _pactWorkGroupApiClient.Received(1).GetAllWorkGroupNamesAsync();
+        }
+
+        #endregion
+
         #region GetWorkGroupsByProfitCentreAsync Tests
 
         [Fact]
