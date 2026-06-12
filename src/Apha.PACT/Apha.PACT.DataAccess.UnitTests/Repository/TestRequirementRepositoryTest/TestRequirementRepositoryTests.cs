@@ -1272,7 +1272,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             };
             var projects = new List<Project>
             {
-                new() { ParentProject = "PRJ1", Manager = "MGR1", ProjectStatus = null }
+                new() { ParentProject = "PRJ1", Manager = "MGR1", ProjectStatus = null! }
             };
             var repo = CreateRepositoryWithSupplierMocks(testReqmts, projects);
             var query = new PaginationParameters<string>

@@ -93,7 +93,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.BaseRepositoryTest
         {
             public TestRepository(FpsDbContext context) : base(context) { }
 
-            public async Task<PagedData<T>> TestApplyPaging<T>(IQueryable<T> source, int page, int pageSize)
+            public static async Task<PagedData<T>> TestApplyPaging<T>(IQueryable<T> source, int page, int pageSize)
                 => await ApplyPaging(source, page, pageSize);
         }
 
@@ -122,7 +122,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.BaseRepositoryTest
             var repo = CreateRepository();
             var source = new AsyncQueryable<int>(Enumerable.Range(1, 25));
 
-            var result = await repo.TestApplyPaging(source, page: 1, pageSize: 10);
+            var result = await TestRepository.TestApplyPaging(source, page: 1, pageSize: 10);
 
             Assert.Equal(10, result.Data.Count);
             Assert.Equal(1, result.Data.First());
@@ -139,7 +139,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.BaseRepositoryTest
             var repo = CreateRepository();
             var source = new AsyncQueryable<int>(Enumerable.Range(1, 25));
 
-            var result =await repo.TestApplyPaging(source, page: 3, pageSize: 10);
+            var result =await TestRepository.TestApplyPaging(source, page: 3, pageSize: 10);
 
             Assert.Equal(5, result.Data.Count);
             Assert.Equal(21, result.Data.First());
@@ -152,7 +152,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.BaseRepositoryTest
         {
             var repo = CreateRepository();
 
-            var result = await repo.TestApplyPaging(new AsyncQueryable<int>(Enumerable.Empty<int>()), page: 1, pageSize: 10);
+            var result = await TestRepository.TestApplyPaging(new AsyncQueryable<int>(Enumerable.Empty<int>()), page: 1, pageSize: 10);
 
             Assert.Empty(result.Data);
             Assert.Equal(0, result.PaginationData.TotalRecords);
@@ -165,7 +165,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.BaseRepositoryTest
             var repo = CreateRepository();
             var source = new AsyncQueryable<int>(Enumerable.Range(1, 5));
 
-            var result = await repo.TestApplyPaging(source, page: 1, pageSize: 100);
+            var result = await TestRepository.TestApplyPaging(source, page: 1, pageSize: 100);
 
             Assert.Equal(5, result.Data.Count);
             Assert.Equal(5, result.PaginationData.TotalRecords);
