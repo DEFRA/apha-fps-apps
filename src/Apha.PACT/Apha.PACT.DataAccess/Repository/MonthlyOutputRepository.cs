@@ -41,7 +41,7 @@ namespace Apha.PACT.DataAccess.Repository
             }
 
             if (month.HasValue)
-                baseQuery = baseQuery.Where(x => x.Month == month.Value);
+                baseQuery = baseQuery.Where(x => x.Month.HasValue && (int)x.Month.Value == (int)month.Value);
 
             if (!string.IsNullOrWhiteSpace(userId))
                 baseQuery = baseQuery.Where(x => x.UserId != null && x.UserId.Contains(userId));
