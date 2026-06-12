@@ -20,16 +20,18 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             IEnumerable<Projects>? yearlyProjects = null,
             IEnumerable<ProjectLatestDetail>? projectLatestDetails = null,
             IEnumerable<RadtrackProg>? radtrackProgs = null,
-            IEnumerable<ProjectStatus>? projectStatuses = null)
+            IEnumerable<ProjectStatus>? projectStatuses = null,
+            IEnumerable<ProjectRadTrackData>? projectRadtrackdata = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
 
-            var projectsMockSet            = RepositoryTestHelper.CreateMockDbSet(fpsProjects          ?? Enumerable.Empty<Project>());
-            var proposedProjectsMockSet    = RepositoryTestHelper.CreateMockDbSet(proposedProjects      ?? Enumerable.Empty<ProposedProject>());
-            var yearlyProjectsMockSet      = RepositoryTestHelper.CreateMockDbSet(yearlyProjects        ?? Enumerable.Empty<Projects>());
-            var projectLatestDetailsMockSet = RepositoryTestHelper.CreateMockDbSet(projectLatestDetails ?? Enumerable.Empty<ProjectLatestDetail>());
-            var radtrackProgsMockSet       = RepositoryTestHelper.CreateMockDbSet(radtrackProgs         ?? Enumerable.Empty<RadtrackProg>());
-            var projectStatusesMockSet     = RepositoryTestHelper.CreateMockDbSet(projectStatuses       ?? Enumerable.Empty<ProjectStatus>());
+            var projectsMockSet             = RepositoryTestHelper.CreateMockDbSet(fpsProjects           ?? Enumerable.Empty<Project>());
+            var proposedProjectsMockSet     = RepositoryTestHelper.CreateMockDbSet(proposedProjects       ?? Enumerable.Empty<ProposedProject>());
+            var yearlyProjectsMockSet       = RepositoryTestHelper.CreateMockDbSet(yearlyProjects         ?? Enumerable.Empty<Projects>());
+            var projectLatestDetailsMockSet = RepositoryTestHelper.CreateMockDbSet(projectLatestDetails   ?? Enumerable.Empty<ProjectLatestDetail>());
+            var radtrackProgsMockSet        = RepositoryTestHelper.CreateMockDbSet(radtrackProgs           ?? Enumerable.Empty<RadtrackProg>());
+            var projectStatusesMockSet      = RepositoryTestHelper.CreateMockDbSet(projectStatuses         ?? Enumerable.Empty<ProjectStatus>());
+            var projectRadtrackdataMockSet  = RepositoryTestHelper.CreateMockDbSet(projectRadtrackdata     ?? Enumerable.Empty<ProjectRadTrackData>());
 
             RepositoryTestHelper.SetupDbSetOperations(proposedProjectsMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
@@ -40,6 +42,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             mockContext.Setup(x => x.ProjectLatestDetails).Returns(projectLatestDetailsMockSet.Object);
             mockContext.Setup(x => x.RadtrackProgs).Returns(radtrackProgsMockSet.Object);
             mockContext.Setup(x => x.ProjectStatuses).Returns(projectStatusesMockSet.Object);
+            mockContext.Setup(x => x.ProjectRadTrackData).Returns(projectRadtrackdataMockSet.Object);
 
             return new ProjectListRepository(mockContext.Object);
         }
@@ -58,16 +61,18 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
                 IEnumerable<Projects>? yearlyProjects = null,
                 IEnumerable<ProjectLatestDetail>? projectLatestDetails = null,
                 IEnumerable<RadtrackProg>? radtrackProgs = null,
-                IEnumerable<ProjectStatus>? projectStatuses = null)
+                IEnumerable<ProjectStatus>? projectStatuses = null,
+                IEnumerable<ProjectRadTrackData>? projectRadtrackdata = null)
         {
             var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
 
-            var projectsMockSet             = RepositoryTestHelper.CreateMockDbSet(fpsProjects          ?? Enumerable.Empty<Project>());
-            var proposedProjectsMockSet     = RepositoryTestHelper.CreateMockDbSet(proposedProjects      ?? Enumerable.Empty<ProposedProject>());
-            var yearlyProjectsMockSet       = RepositoryTestHelper.CreateMockDbSet(yearlyProjects        ?? Enumerable.Empty<Projects>());
-            var projectLatestDetailsMockSet = RepositoryTestHelper.CreateMockDbSet(projectLatestDetails  ?? Enumerable.Empty<ProjectLatestDetail>());
-            var radtrackProgsMockSet        = RepositoryTestHelper.CreateMockDbSet(radtrackProgs          ?? Enumerable.Empty<RadtrackProg>());
-            var projectStatusesMockSet      = RepositoryTestHelper.CreateMockDbSet(projectStatuses        ?? Enumerable.Empty<ProjectStatus>());
+            var projectsMockSet             = RepositoryTestHelper.CreateMockDbSet(fpsProjects           ?? Enumerable.Empty<Project>());
+            var proposedProjectsMockSet     = RepositoryTestHelper.CreateMockDbSet(proposedProjects       ?? Enumerable.Empty<ProposedProject>());
+            var yearlyProjectsMockSet       = RepositoryTestHelper.CreateMockDbSet(yearlyProjects         ?? Enumerable.Empty<Projects>());
+            var projectLatestDetailsMockSet = RepositoryTestHelper.CreateMockDbSet(projectLatestDetails   ?? Enumerable.Empty<ProjectLatestDetail>());
+            var radtrackProgsMockSet        = RepositoryTestHelper.CreateMockDbSet(radtrackProgs           ?? Enumerable.Empty<RadtrackProg>());
+            var projectStatusesMockSet      = RepositoryTestHelper.CreateMockDbSet(projectStatuses         ?? Enumerable.Empty<ProjectStatus>());
+            var projectRadtrackdataMockSet  = RepositoryTestHelper.CreateMockDbSet(projectRadtrackdata     ?? Enumerable.Empty<ProjectRadTrackData>());
 
             RepositoryTestHelper.SetupDbSetOperations(proposedProjectsMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
@@ -78,6 +83,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             mockContext.Setup(x => x.ProjectLatestDetails).Returns(projectLatestDetailsMockSet.Object);
             mockContext.Setup(x => x.RadtrackProgs).Returns(radtrackProgsMockSet.Object);
             mockContext.Setup(x => x.ProjectStatuses).Returns(projectStatusesMockSet.Object);
+            mockContext.Setup(x => x.ProjectRadTrackData).Returns(projectRadtrackdataMockSet.Object);
 
             var repo = new ProjectListRepository(mockContext.Object);
             return (repo, proposedProjectsMockSet, mockContext);
@@ -796,6 +802,183 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.ProjectListRepositoryTest
             Assert.Equal("PROG1",    item.Program);
             Assert.Equal("CUST_ABC", item.Customer);
             Assert.Equal("Yes",      item.OnFps);
+        }
+
+        #endregion
+
+        #region GetAllProjectsForMilestone
+
+        [Fact]
+        public async Task GetAllProjectsForMilestone_ReturnsJoinedResults()
+        {
+            // Arrange — PP001 exists in both ProjectRadtrackdata and ProjectLatestDetails
+            var projectRadtrackdata = new List<ProjectRadTrackData>
+            {
+                new() { Parentproject = "PP001" },
+                new() { Parentproject = "PP002" }
+            };
+            var projectLatestDetails = new List<ProjectLatestDetail>
+            {
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1", ProjectGroup = "GRP1" },
+                new() { ParentProject = "PP002", Program = "PROG2", Customer = "CUST2", ProjectGroup = "GRP2" }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                projectRadtrackdata: projectRadtrackdata);
+
+            // Act
+            var result = await repo.GetAllProjectsForMilestone();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForMilestone_MapsFieldsCorrectly()
+        {
+            // Arrange
+            var projectRadtrackdata = new List<ProjectRadTrackData>
+            {
+                new() { Parentproject = "PP001" }
+            };
+            var projectLatestDetails = new List<ProjectLatestDetail>
+            {
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST_ABC", ProjectGroup = "GRP_X" }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                projectRadtrackdata: projectRadtrackdata);
+
+            // Act
+            var result = await repo.GetAllProjectsForMilestone();
+
+            // Assert
+            Assert.Single(result);
+            var item = result[0];
+            Assert.Equal("PP001",    item.Parentproject);
+            Assert.Equal("PROG1",    item.Program);
+            Assert.Equal("CUST_ABC", item.Customer);
+            Assert.Equal("GRP_X",    item.ProjectGroup);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForMilestone_ReturnsOrderedByParentproject()
+        {
+            // Arrange
+            var projectRadtrackdata = new List<ProjectRadTrackData>
+            {
+                new() { Parentproject = "PP003" },
+                new() { Parentproject = "PP001" },
+                new() { Parentproject = "PP002" }
+            };
+            var projectLatestDetails = new List<ProjectLatestDetail>
+            {
+                new() { ParentProject = "PP003", Program = "PROG3", Customer = "CUST3" },
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1" },
+                new() { ParentProject = "PP002", Program = "PROG2", Customer = "CUST2" }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                projectRadtrackdata: projectRadtrackdata);
+
+            // Act
+            var result = await repo.GetAllProjectsForMilestone();
+
+            // Assert
+            Assert.Equal(3, result.Count);
+            Assert.Equal("PP001", result[0].Parentproject);
+            Assert.Equal("PP002", result[1].Parentproject);
+            Assert.Equal("PP003", result[2].Parentproject);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForMilestone_ExcludesProjectsNotInProjectLatestDetails()
+        {
+            // Arrange — PP002 is in ProjectRadtrackdata but not in ProjectLatestDetails ? excluded by inner join
+            var projectRadtrackdata = new List<ProjectRadTrackData>
+            {
+                new() { Parentproject = "PP001" },
+                new() { Parentproject = "PP002" }
+            };
+            var projectLatestDetails = new List<ProjectLatestDetail>
+            {
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1" }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                projectRadtrackdata: projectRadtrackdata);
+
+            // Act
+            var result = await repo.GetAllProjectsForMilestone();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("PP001", result[0].Parentproject);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForMilestone_ReturnsEmpty_WhenNoProjectRadtrackdataExists()
+        {
+            // Arrange
+            var projectLatestDetails = new List<ProjectLatestDetail>
+            {
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1" }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                projectRadtrackdata: new List<ProjectRadTrackData>());
+
+            // Act
+            var result = await repo.GetAllProjectsForMilestone();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForMilestone_ReturnsEmpty_WhenNoProjectLatestDetailsExist()
+        {
+            // Arrange
+            var projectRadtrackdata = new List<ProjectRadTrackData>
+            {
+                new() { Parentproject = "PP001" }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: new List<ProjectLatestDetail>(),
+                projectRadtrackdata: projectRadtrackdata);
+
+            // Act
+            var result = await repo.GetAllProjectsForMilestone();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForMilestone_ProjectGroupIsNull_WhenNotSetInLatestDetails()
+        {
+            // Arrange
+            var projectRadtrackdata = new List<ProjectRadTrackData>
+            {
+                new() { Parentproject = "PP001" }
+            };
+            var projectLatestDetails = new List<ProjectLatestDetail>
+            {
+                new() { ParentProject = "PP001", Program = "PROG1", Customer = "CUST1", ProjectGroup = null }
+            };
+            var repo = CreateRepository(
+                projectLatestDetails: projectLatestDetails,
+                projectRadtrackdata: projectRadtrackdata);
+
+            // Act
+            var result = await repo.GetAllProjectsForMilestone();
+
+            // Assert
+            Assert.Single(result);
+            Assert.Null(result[0].ProjectGroup);
         }
 
         #endregion

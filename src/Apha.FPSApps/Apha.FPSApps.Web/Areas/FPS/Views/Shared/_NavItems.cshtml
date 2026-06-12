@@ -139,6 +139,16 @@
                             <a class="dropdown-item" href="#">Log of Test Requirement Changes</a>
                         </div>
                      </div>
+                     <div class="sub-dropdown">
+                         <button class="sub-dropdown-toggle" data-subdropdown="setup-supply-of-tests">
+                            Set Up Supply of Tests 
+                            <img src="~/images/right-arrow.png" class="sub-right-arrow" alt="expand" width="14" />
+                        </button>
+                        <div class="sub-dropdown-menu" id="setup-supply-of-tests">
+                            <a class="dropdown-item" href="#">Create New Portfolios</a>
+                            <a class="dropdown-item" asp-area="FPS" asp-controller="TestCapability" asp-action="Index">Set Up Portfolio Components</a>
+                        </div>
+                     </div>
                 </div>
             </div>
 
@@ -181,7 +191,7 @@
                 <img src="~/images/right-arrow.png" class="sub-right-arrow" alt="expand" width="14" />
             </button>
             <div class="sub-dropdown-menu" id="pm-review-plans-group">
-                <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectProfitability" asp-action="Index">Project Profitability</a>
+                <a class="dropdown-item" asp-area="FPS" asp-controller="ProjectProfitability" asp-action="Index" asp-route-source="projectgroup">Project Group Profitability</a>
                 <a class="dropdown-item" href="#">Staff Plan Pivot</a>
             </div>
         </div>        

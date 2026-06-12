@@ -38,6 +38,9 @@ namespace Apha.FPSApps.Web.Mappings
             // ProgrammeNewProject
             CreateMap<ProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();
 
+            // PortfolioNew
+            CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
+
             // Resource Set-Up
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 
@@ -63,6 +66,15 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.RecUnitPrice, o => o.MapFrom(s => s.RecUnitPrice))
                 .ReverseMap();
             CreateMap<MaintWGGradeItem, WorkgroupGradeDto>().ReverseMap();
+
+            // Test Capability (FPS portfolio page — reuses PACT TestCapabilityDto)
+            CreateMap<Apha.FPSApps.Web.Areas.FPS.Models.TestCapabilityItem, Apha.FPSApps.Application.Dtos.PACT.TestCapabilityDto>().ReverseMap();
+
+            // Plan Staff ZT Code
+            CreateMap<PlanStaffZTCodeItemViewModel, StaffJobViewDto>().ReverseMap();
+            CreateMap<PlanStaffZTCodeItemViewModel, StaffJobDto>()
+                .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
+                .ReverseMap();
         }
     }
 }

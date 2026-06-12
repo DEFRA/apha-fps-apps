@@ -1,4 +1,5 @@
 using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
 
@@ -14,5 +15,6 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
         Task<ApiResponseDto<JobCodeDto>> CreateJobCodeAsync(JobCodeDto jobCode);
         Task<ApiResponseDto<JobCodeDto>> UpdateJobCodeAsync(JobCodeDto jobCode);
         Task<ApiResponseDto<bool>> DeleteJobCodeAsync(string jobCodeId);
+        Task<ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>> GetZtJobCodesAsync();
     }
 }

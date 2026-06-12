@@ -399,5 +399,240 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProfitCentreServiceTes
 
         #endregion
 
+        #region GetPagedProfitCenterCostSummaryAsync Tests
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithSuccessResponse_ReturnsPaginatedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var costData = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1000m },
+                new() { ProfitCentre = "PC02", Cost = 2000m }
+            };
+            var pagination = new PaginationDto { TotalRecords = 2, PageNumber = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData, pagination);
+
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(2, result?.Pagination?.TotalRecords);
+            await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthNumber_PassesMonthNumberToApiClient()
+        {
+            // Arrange
+            const double monthNumber = 3.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var costData = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1500m }
+            };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData);
+
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(
+                Arg.Any<QueryParameters<string>>(),
+                Arg.Is<double>(m => m == monthNumber));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithZeroMonthNumber_PassesZeroToApiClient()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse([]);
+
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(
+                Arg.Any<QueryParameters<string>>(),
+                Arg.Is<double>(m => m == 0.0));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto>
+            {
+                new() { Message = "API Error", Code = "API_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("API_ERROR", result.Errors.First().Code);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithEmptyResult_ReturnsSuccessWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse([]);
+
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Empty(result.Data);
+       }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_PassesPaginationParameters()
+        {
+            // Arrange
+            var query = new QueryParameters<string>
+            {
+                Page = 2,
+                PageSize = 5,
+                SortBy = "Cost",
+                Descending = true
+            };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse([]);
+
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
+
+            // Act
+            await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(
+                Arg.Is<QueryParameters<string>>(q =>
+                    q.Page == 2 &&
+                    q.PageSize == 5 &&
+                    q.SortBy == "Cost" &&
+                    q.Descending == true),
+                Arg.Any<double>());
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMultiplePages_ReturnsPaginatedData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 2 };
+            var costData = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC03", Cost = 3000m },
+                new() { ProfitCentre = "PC04", Cost = 4000m }
+            };
+            var pagination = new PaginationDto { TotalRecords = 10, PageNumber = 2, PageSize = 2 };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData, pagination);
+
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(10, result?.Pagination?.TotalRecords);
+            Assert.Equal(2, result?.Pagination?.PageNumber);
+            Assert.Equal(2, result?.Pagination?.PageSize);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthZero_PassesZeroToApiClient()
+        {
+            // Arrange
+            const double monthNumber = 0.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse([]);
+
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(
+                Arg.Any<QueryParameters<string>>(),
+                Arg.Is<double>(m => m == 0.0));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMaxMonthNumber_PassesToApiClient()
+        {
+            // Arrange
+            const double monthNumber = 12.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse([]);
+
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, monthNumber).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+
+            // Assert
+            Assert.True(result.Success);
+            await _fpsProfitCentreApiClient.Received(1).GetPagedProfitCenterCostSummaryAsync(
+                Arg.Any<QueryParameters<string>>(),
+                Arg.Is<double>(m => m == 12.0));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_ReturnsDataWithCorrectCostValues()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var costData = new List<ProfitCentreCostDto>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1234.56m },
+                new() { ProfitCentre = "PC02", Cost = 7890.12m }
+            };
+            var expectedResponse = ApiResponseDto<List<ProfitCentreCostDto>>.SuccessResponse(costData);
+
+            _fpsProfitCentreApiClient.GetPagedProfitCenterCostSummaryAsync(query, 0.0).Returns(expectedResponse);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            Assert.True(result.Success);
+            var dataList = result.Data!.ToList();
+            Assert.Equal(1234.56m, dataList[0].Cost);
+            Assert.Equal(7890.12m, dataList[1].Cost);
+        }
+
+        #endregion
+
     }
 }

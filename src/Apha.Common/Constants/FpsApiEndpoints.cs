@@ -74,6 +74,7 @@ namespace Apha.Common.Constants
         public const string UpdateProject = "api/v1/project";
         public const string UpdatePactProject = "api/v1/project/external/pact";
         public const string UpdatePactPortfolio = "api/v1/project/external/portfolio";
+        public const string UpdateFpsPortfolio = "api/v1/project/external/fps-portfolio";
         public const string DeleteProject = "api/v1/project/{0}";
         public const string GetProjectsByProgram = "api/v1/project/paged?programNo={0}";
         public const string GetProjectsByProjectGroup = "api/v1/project/paged/by-project-group?projectGroup={0}";
@@ -111,6 +112,10 @@ namespace Apha.Common.Constants
         public const string UpdateStaffJob = "api/v1/staffjob";
         public const string DeleteStaffJob = "api/v1/staffjob?staffId={0}&jobcode={1}";
         public const string GetStaffJobViewById = "api/v1/staffjob/view?staffId={0}&jobcode={1}";
+        public const string GetStaffSummaryById = "api/v1/staffjob/staffsummary?staffId={0}";
+        public const string GetZtTotalHoursByStaffId = "api/v1/staffjob/zttotalhours?staffId={0}";
+        public const string GetZtStaffJobsByStaffIdPaged = "api/v1/staffjob/ztstaffjobs/paged";
+        public const string GetZtStaffJobDetailsById = "api/v1/staffjob/ztstaffjob/{0}/{1}";
 
         // View Project Plan vs Actual Staff
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
@@ -140,6 +145,7 @@ namespace Apha.Common.Constants
         public const string DeleteProfitCentre = "api/v1/profitcentres/{0}";                    
         public const string GetAllProfitCentres = "api/v1/profitcentres/all";        
         public const string PatchProfitCentreSettings = "api/v1/profitcentres/settings";
+        public const string GetPagedProfitCenterCostSummary = "api/v1/profitcentres/paged/costsummary";
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";
@@ -168,6 +174,7 @@ namespace Apha.Common.Constants
 
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
+        public const string GetProjectGroupProfitability = "api/v1/project/profitability/by-project-group/{0}";
 
         // WorkgroupGrade Maintainence
         public const string GetPagedWorkgroupGrades = "api/v1/wggrades/paged";

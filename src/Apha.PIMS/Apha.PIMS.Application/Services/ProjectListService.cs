@@ -37,5 +37,10 @@ namespace Apha.PIMS.Application.Services
             List<Projects> entities = await _repository.GetYearlyDetailsByProjectAsync(parentproject);
             return _mapper.Map<List<ProjectsDto>>(entities);
         }
+        public async Task<List<ProjectListMilestoneDto>> GetAllProjectsForMilestoneAsync()
+        {
+            List<ProjectListMilestone> entities = await _repository.GetAllProjectsForMilestone();
+            return _mapper.Map<List<ProjectListMilestoneDto>>(entities);
+        }
     }
 }

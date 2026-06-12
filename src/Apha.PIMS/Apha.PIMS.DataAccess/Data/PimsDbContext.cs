@@ -23,11 +23,27 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<ProjectDetail> ProjectDetails { get; set; }
         public virtual DbSet<ProjectLatestDetail> ProjectLatestDetails { get; set; } // New DbSet for ProjectLatestDetail
                                                                                      // Add these 4 new DbSets alongside the existing ones
-        public virtual DbSet<ProjectRadTrackData> ProjectRadtrackdata { get; set; }
+        public virtual DbSet<ProjectRadTrackData> ProjectRadTrackData { get; set; }
         public virtual DbSet<Risk> Risks { get; set; }
         public virtual DbSet<ProjectStatus> ProjectStatuses { get; set; }
         public virtual DbSet<Year> Years { get; set; }
+        public virtual DbSet<ProjSubContract> ProjSubContracts { get; set; }
+        public virtual DbSet<AdditionalCosts> AdditionalCosts { get; set; }
+        public virtual DbSet<ProjectAnimalPlan> ProjectAnimalPlans { get; set; }
+        public virtual DbSet<MonthlyOutput> MonthlyOutputs { get; set; }
+        public virtual DbSet<TestReqmt> TestReqmts { get; set; }
+        public virtual DbSet<TimeCostCalcs> TimeCostCalcs { get; set; }
+        public virtual DbSet<ProjectStaffPlan> ProjectStaffPlans { get; set; }
+        public virtual DbSet<ProjectMonthFinal> ProjectMonthFinals { get; set; }
+        public virtual DbSet<FpsYearTotal> FpsYearTotals { get; set; }
 
+        public virtual DbSet<Milestone> Milestones { get; set; }
+        public virtual DbSet<MilestoneFormDates> MilestoneFormDates { get; set; }
+        public virtual DbSet<MilestoneType> MilestoneTypes { get; set; }
+        public virtual DbSet<LogMilestone> LogMilestones { get; set; }
+        public virtual DbSet<ProjectManager> ProjectManagers { get; set; }
+
+        public virtual DbSet<StagingMilestone> StagingMilestones { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("en_GB.utf8");           
@@ -43,8 +59,22 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectRadTrackDataMap());
             modelBuilder.ApplyConfiguration(new RiskMap());
             modelBuilder.ApplyConfiguration(new ProjectStatusMap());
-            modelBuilder.ApplyConfiguration(new YearMap());           
-
-        }        
+            modelBuilder.ApplyConfiguration(new YearMap());
+            modelBuilder.ApplyConfiguration(new ProjSubContractMap());
+            modelBuilder.ApplyConfiguration(new AdditionalCostsMap());
+            modelBuilder.ApplyConfiguration(new ProjectAnimalPlanMap());
+            modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
+            modelBuilder.ApplyConfiguration(new TestReqmtMap());
+            modelBuilder.ApplyConfiguration(new TimeCostCalcsMap());
+            modelBuilder.ApplyConfiguration(new ProjectStaffPlanMap());
+            modelBuilder.ApplyConfiguration(new ProjectMonthFinalMap());
+            modelBuilder.ApplyConfiguration(new FpsYearTotalMap());
+            modelBuilder.ApplyConfiguration(new MilestoneMap());
+            modelBuilder.ApplyConfiguration(new MilestoneTypeMap());
+            modelBuilder.ApplyConfiguration(new MilestoneFormDatesMap());
+            modelBuilder.ApplyConfiguration(new LogMilestoneMap());
+            modelBuilder.ApplyConfiguration(new ProjectManagerMap());
+            modelBuilder.ApplyConfiguration(new StagingMilestoneMap());
+        }
     }
 }

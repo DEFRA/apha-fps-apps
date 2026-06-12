@@ -17,6 +17,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<Pagination, PaginationDto>().ReverseMap();
 
             CreateMap<StaffJobViewDto, StaffJobViewRes>().ReverseMap();
+            CreateMap<StaffJobZtViewDto, StaffJobZtViewRes>().ReverseMap();
             CreateMap<StaffWorkgroupLookupDto, StaffWorkgroupLookupRes>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobReq>().ReverseMap();
             CreateMap<StaffJobDto, StaffJobRes>().ReverseMap();
@@ -70,6 +71,7 @@ namespace Apha.FPS.Api.Mappings
             // ResourceSetUp
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
             CreateMap<ProfitCentreReq, ProfitCentreDto>().ReverseMap();
+            CreateMap<ProfitCentreCostDto, ProfitCentreCostRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<ProfitCentreGradeReq, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
@@ -81,7 +83,6 @@ namespace Apha.FPS.Api.Mappings
 
             CreateMap<PactStaffDto, PactStaffRes>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
-             
         }
     }
 }

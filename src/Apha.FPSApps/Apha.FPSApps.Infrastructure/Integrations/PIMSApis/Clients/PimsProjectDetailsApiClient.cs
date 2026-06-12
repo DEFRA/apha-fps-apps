@@ -137,5 +137,24 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<ProjectDto>> GetFpsProjectAsync(string parentproject)
+        {
+            try
+            {
+                var response = await _http.GetAsync<ProjectRes>(string.Format(PimsApiEndpoints.GetFpsProjectByProjectDetails, parentproject));
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+
+                var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+                return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<ProjectDto>.FailureResponse(
+                    [new ApiErrorDto { Message = "Failed to retrieve FPS project", Code = InternalCodeError }],
+                    new ApiMetaDto());
+            }
+        }
     }
 }
