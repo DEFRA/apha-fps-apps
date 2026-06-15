@@ -102,6 +102,9 @@ namespace Apha.Common.Constants
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
 
+        // Project Group Staff Plan (fps.vpvtprojectgroupmgrplan)
+        public const string GetPagedProjectGroupStaffPlan = "api/v1/projectgroupstaffplan";
+
         // Staff Job
         public const string GetAllStaffJobs = "api/v1/staffjob?jobCode={0}";
         public const string GetStaffWorkgroupLookup = "api/v1/staffjob/workgrouplookup";
