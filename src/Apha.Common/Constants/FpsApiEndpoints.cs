@@ -67,6 +67,7 @@ namespace Apha.Common.Constants
         // Project
         public const string GetAllProjects = "api/v1/project";
         public const string GetPagedProjects = "api/v1/project/paged";
+        public const string GetPagedProjectsByUser = "api/v1/project/paged/by-user";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";
         public const string GetProjectById = "api/v1/project/{0}";

@@ -1148,6 +1148,157 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
+        #region GetPagedProjectsByUserAsync Tests
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_ReturnsOnlyCurrentUserProjects()
+        {
+            var views = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta",  UserEmail = "other@example.com" },
+                new() { ParentProject = "PP003", ProjectTitle = "Gamma", UserEmail = "test@example.com" },
+            };
+            var repo = CreateRepository(projectViews: views, userEmailId: "test@example.com");
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectsByUserAsync(query);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, v => Assert.Equal("test@example.com", v.UserEmail));
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_ReturnsEmpty_WhenNoMatchingUser()
+        {
+            var views = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", UserEmail = "other@example.com" },
+            };
+            var repo = CreateRepository(projectViews: views, userEmailId: "test@example.com");
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectsByUserAsync(query);
+
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_AppliesPaging()
+        {
+            var views = Enumerable.Range(1, 15).Select(i => new ProjectView
+            {
+                ParentProject = $"PP{i:D3}",
+                ProjectTitle  = $"Project {i}",
+                UserEmail     = "test@example.com"
+            }).ToList();
+            var repo = CreateRepository(projectViews: views, userEmailId: "test@example.com");
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectsByUserAsync(query);
+
+            Assert.Equal(15, result.PaginationData.TotalRecords);
+            Assert.Equal(10, result.Data.Count());
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_SearchFilters_ByParentProject()
+        {
+            var views = new List<ProjectView>
+            {
+                new() { ParentProject = "MATCH001", ProjectTitle = "Unrelated",  UserEmail = "test@example.com" },
+                new() { ParentProject = "OTHER002", ProjectTitle = "Other Title", UserEmail = "test@example.com" },
+            };
+            var repo = CreateRepository(projectViews: views, userEmailId: "test@example.com");
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10) { Search = "MATCH" };
+
+            var result = await repo.GetPagedProjectsByUserAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("MATCH001", result.Data.First().ParentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_SearchFilters_ByProjectTitle()
+        {
+            var views = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "FMD Survey",     UserEmail = "test@example.com" },
+                new() { ParentProject = "PP002", ProjectTitle = "TB Eradication", UserEmail = "test@example.com" },
+            };
+            var repo = CreateRepository(projectViews: views, userEmailId: "test@example.com");
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10) { Search = "FMD" };
+
+            var result = await repo.GetPagedProjectsByUserAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("FMD Survey", result.Data.First().ProjectTitle);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_DefaultSort_OrdersByParentProjectAscending()
+        {
+            var views = new List<ProjectView>
+            {
+                new() { ParentProject = "CC003", UserEmail = "test@example.com" },
+                new() { ParentProject = "AA001", UserEmail = "test@example.com" },
+                new() { ParentProject = "BB002", UserEmail = "test@example.com" },
+            };
+            var repo = CreateRepository(projectViews: views, userEmailId: "test@example.com");
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectsByUserAsync(query);
+
+            var items = result.Data.ToList();
+            Assert.Equal("AA001", items[0].ParentProject);
+            Assert.Equal("BB002", items[1].ParentProject);
+            Assert.Equal("CC003", items[2].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_SortsByProjectTitleDescending()
+        {
+            var views = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP002", ProjectTitle = "Gamma", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP003", ProjectTitle = "Beta",  UserEmail = "test@example.com" },
+            };
+            var repo = CreateRepository(projectViews: views, userEmailId: "test@example.com");
+            var query = new PaginationParameters<string>(sortBy: "projecttitle", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectsByUserAsync(query);
+
+            var items = result.Data.ToList();
+            Assert.Equal("Gamma", items[0].ProjectTitle);
+            Assert.Equal("Beta",  items[1].ProjectTitle);
+            Assert.Equal("Alpha", items[2].ProjectTitle);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_SortsByParentProjectDescending()
+        {
+            var views = new List<ProjectView>
+            {
+                new() { ParentProject = "AA001", UserEmail = "test@example.com" },
+                new() { ParentProject = "CC003", UserEmail = "test@example.com" },
+                new() { ParentProject = "BB002", UserEmail = "test@example.com" },
+            };
+            var repo = CreateRepository(projectViews: views, userEmailId: "test@example.com");
+            var query = new PaginationParameters<string>(sortBy: "parentproject", descending: true, page: 1, pageSize: 10);
+
+            var result = await repo.GetPagedProjectsByUserAsync(query);
+
+            var items = result.Data.ToList();
+            Assert.Equal("CC003", items[0].ParentProject);
+            Assert.Equal("BB002", items[1].ParentProject);
+            Assert.Equal("AA001", items[2].ParentProject);
+        }
+
+        #endregion
+
         #region GetPagedPactProjectsAsync Tests
 
         [Fact]

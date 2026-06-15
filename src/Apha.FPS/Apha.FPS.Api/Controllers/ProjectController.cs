@@ -226,6 +226,13 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityRes>>(result));
         }
 
+        [HttpGet("paged/by-user")]
+        public async Task<IActionResult> GetPagedProjectsByUserAsync([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _projectService.GetPagedProjectsByUserAsync(query);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
         // TRANSFORMENGINE: new endpoint — frmJobcodeTotalsVLA migration
         //   Route: GET /api/v1/project/profitability-vla
         //   Filter dimensions from HTML prototype: projectStatus, programNo, manager, customer

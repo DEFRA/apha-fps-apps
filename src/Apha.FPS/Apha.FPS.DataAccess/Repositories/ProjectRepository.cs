@@ -132,6 +132,36 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        public async Task<PagedData<ProjectView>> GetPagedProjectsByUserAsync(PaginationParameters<string> query)
+        {
+            var queryable = _dbContext.ProjectViews
+                .AsNoTracking()
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId))
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                var search = query.Search;
+                queryable = queryable.Where(p =>
+                    EF.Functions.ILike(p.ParentProject!, $"%{search}%") ||
+                    EF.Functions.ILike(p.ProjectTitle!, $"%{search}%"));
+            }
+
+            queryable = query.SortBy switch
+            {
+                string s when s.Equals("parentproject", StringComparison.OrdinalIgnoreCase) => query.Descending
+                    ? queryable.OrderByDescending(p => p.ParentProject)
+                    : queryable.OrderBy(p => p.ParentProject),
+                string s when s.Equals("projecttitle", StringComparison.OrdinalIgnoreCase) => query.Descending
+                    ? queryable.OrderByDescending(p => p.ProjectTitle)
+                    : queryable.OrderBy(p => p.ProjectTitle),
+                _ => queryable.OrderBy(p => p.ParentProject)
+            };
+
+            var result = await queryable.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
         public async Task<PagedData<PactProjectView>> GetPagedPactProjectsAsync(PaginationParameters<string> query)
         {
             var querProjects = _dbContext.PactProjectViews.AsNoTracking().AsQueryable();
