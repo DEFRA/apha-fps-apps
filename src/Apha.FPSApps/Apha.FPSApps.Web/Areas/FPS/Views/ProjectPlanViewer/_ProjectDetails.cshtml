@@ -638,6 +638,73 @@
                 console.error('Failed to load project details:', e);
             }
 
+            // Fetch Plan Summary totals
+            try {
+                const summaryResponse = await fetch('/FPS/ProjectPlanViewer/GetPlanSummaryTotals?projectCode=' + encodeURIComponent(projectCode));
+                const summaryData = await summaryResponse.json();
+                if (summaryData.success) {
+                    setVal('planSummaryStaffTotal', formatCurrency(summaryData.totalStaffCost));
+                    setVal('planSummaryTestTotal', formatCurrency(summaryData.totalTestCost));
+                    setVal('planSummaryAnimalTotal', formatCurrency(summaryData.totalAnimalCost));
+                    setVal('planSummaryAdditionalTotal', formatCurrency(summaryData.totalAdditionalCost));
+                }
+            } catch (e) {
+                console.error('Failed to load plan summary totals:', e);
+            }
+
+            // Fetch Staff Plan vs Actuals totals
+            try {
+                const staffResponse = await fetch('/FPS/ProjectPlanViewer/GetStaffPlanVsActualTotals?projectCode=' + encodeURIComponent(projectCode));
+                const staffData = await staffResponse.json();
+                if (staffData.success) {
+                    setVal('staff-planned-total-cost', formatCurrency(staffData.totalPlannedCost));
+                    setVal('staff-total-hrs', Number(staffData.totalActualHrs || 0).toFixed(2));
+                    setVal('staff-total-cost', formatCurrency(staffData.totalActualCost));
+                    setVal('staff-percent-plan', Number(staffData.percentOfPlan || 0).toFixed(2) + '%');
+                }
+            } catch (e) {
+                console.error('Failed to load staff plan vs actual totals:', e);
+            }
+
+            // Fetch Test Plan vs Actuals totals
+            try {
+                const testResponse = await fetch('/FPS/ProjectPlanViewer/GetTestPlanVsActualTotals?projectCode=' + encodeURIComponent(projectCode));
+                const testData = await testResponse.json();
+                if (testData.success) {
+                    setVal('test-planned-total-cost', formatCurrency(testData.totalPlannedCost));
+                    setVal('test-total-cost', formatCurrency(testData.totalActualCost));
+                    setVal('test-percent-plan', Number(testData.percentOfPlan || 0).toFixed(2) + '%');
+                }
+            } catch (e) {
+                console.error('Failed to load test plan vs actual totals:', e);
+            }
+
+            // Fetch Animal Plan vs Actuals totals
+            try {
+                const animalResponse = await fetch('/FPS/ProjectPlanViewer/GetAnimalPlanVsActualTotals?projectCode=' + encodeURIComponent(projectCode));
+                const animalData = await animalResponse.json();
+                if (animalData.success) {
+                    setVal('animal-planned-total-cost', formatCurrency(animalData.totalPlannedCost));
+                    setVal('animal-total-cost', formatCurrency(animalData.totalActualCost));
+                    setVal('animal-percent-plan', Number(animalData.percentOfPlan || 0).toFixed(2) + '%');
+                }
+            } catch (e) {
+                console.error('Failed to load animal plan vs actual totals:', e);
+            }
+
+            // Fetch Additional Plan vs Actuals totals
+            try {
+                const additionalResponse = await fetch('/FPS/ProjectPlanViewer/GetAdditionalPlanVsActualTotals?projectCode=' + encodeURIComponent(projectCode));
+                const additionalData = await additionalResponse.json();
+                if (additionalData.success) {
+                    setVal('additional-planned-total-cost', formatCurrency(additionalData.totalPlannedCost));
+                    setVal('additional-total-cost', formatCurrency(additionalData.totalActualCost));
+                    setVal('additional-percent-plan', Number(additionalData.percentOfPlan || 0).toFixed(2) + '%');
+                }
+            } catch (e) {
+                console.error('Failed to load additional plan vs actual totals:', e);
+            }
+
             // Refresh all dependent grids
             refreshDependentGrids();
         }

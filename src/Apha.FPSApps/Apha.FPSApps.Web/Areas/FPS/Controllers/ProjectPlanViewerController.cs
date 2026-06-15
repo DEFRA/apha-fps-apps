@@ -384,14 +384,42 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     : 0;
             }
 
+            // Test plan vs actuals
+            details.TestTotalPlannedCost = details.TotalTestPlanCost;
+            var priceLookup = new Dictionary<(string TestCode, string Buyer), decimal>();
+            if (testResult.Success && testResult.Data != null)
+            {
+                foreach (var t in testResult.Data)
+                {
+                    var key = (t.TestCode ?? string.Empty, t.Buyer ?? string.Empty);
+                    if (!priceLookup.ContainsKey(key))
+                        priceLookup[key] = t.UnitPrice ?? 0;
+                }
+            }
+            var testActualResult = await _monthlyOutputService.GetTotalActualByProjectAsync(projectCode, priceLookup);
+            if (testActualResult.Success)
+            {
+                details.TestTotalActualCost = testActualResult.Data;
+                details.TestPercentOfPlan = details.TestTotalPlannedCost > 0
+                    ? (testActualResult.Data / (double)details.TestTotalPlannedCost) * 100
+                    : 0;
+            }
+
             // Animal plan vs actuals
             details.AnimalTotalPlannedCost = animalCostResult.Data;
+            var animalActualResult = await _projectSubContractService.GetFpsProjectSubContractTotalAmountAsync(projectCode, filterByAnimalAcctCodes: true);
+            details.AnimalTotalActualCost = animalActualResult.Data;
+            details.AnimalPercentOfPlan = animalCostResult.Data > 0
+                ? ((double)animalActualResult.Data / (double)animalCostResult.Data) * 100
+                : 0;
 
             // Additional plan vs actuals
             details.AdditionalTotalPlannedCost = additionalCostResult.Data;
-
-            // Test plan vs actuals
-            details.TestTotalPlannedCost = details.TotalTestPlanCost;
+            var additionalActualResult = await _projectSubContractService.GetFpsProjectSubContractTotalAmountAsync(projectCode, filterByAnimalAcctCodes: false);
+            details.AdditionalTotalActualCost = additionalActualResult.Data;
+            details.AdditionalPercentOfPlan = additionalCostResult.Data > 0
+                ? ((double)additionalActualResult.Data / (double)additionalCostResult.Data) * 100
+                : 0;
         }
 
         private async Task<List<SelectListItem>> GetProgramListAsync()
