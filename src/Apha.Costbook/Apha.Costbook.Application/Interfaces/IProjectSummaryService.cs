@@ -10,4 +10,5 @@ public interface IProjectSummaryService
     Task<StaffEffortPivotDto> GetStaffEffortAsync(string projectId, QueryParameters<string>? query = null);
     Task<ProjectCostsPivotDto> GetProjectCostsPivotAsync(string projectId, QueryParameters<string>? query = null);
     Task<byte[]> ExportProjectSummaryToExcelAsync(string projectId);
+    Task<ProjectYearCostSummaryDto> GetProjectYearCostSummaryAsync(string projectId, int year);
 }

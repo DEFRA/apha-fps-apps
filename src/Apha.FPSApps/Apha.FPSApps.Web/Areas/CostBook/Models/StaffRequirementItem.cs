@@ -13,8 +13,7 @@ public class StaffRequirementItem
     [GridColumn(Order = 1, Width = 120, Type = GridColumnType.Text, IsFilterable = false)]
     public string WgGrade { get; set; } = null!;
 
-    [Display(Name = "Name")]
-    [Required(ErrorMessage = "Name is required.")]
+    [Display(Name = "Name")]    
     [GridColumn(Order = 2, Width = 150, Type = GridColumnType.Text)]
     public string? Name { get; set; }
 
@@ -23,14 +22,12 @@ public class StaffRequirementItem
     [GridColumn(Order = 3, Width = 100, Type = GridColumnType.GbpValue)]
     public double? Chargerate { get; set; }
 
-    [Display(Name = "Hrs")]
-    [Required(ErrorMessage = "Hrs is required.")]
-    [GridColumn(Order = 4, Width = 70, Type = GridColumnType.DecimalNumber)]
+    [Display(Name = "Hrs")]    
+    [GridColumn(Order = 4, Width = 70, Type = GridColumnType.DoubleNumber)]
     public double? Nohours { get; set; }
 
-    [Display(Name = "Days")]
-    [Required(ErrorMessage = "Days is required.")]
-    [GridColumn(Order = 5, Width = 70, Type = GridColumnType.DecimalNumber)]
+    [Display(Name = "Days")]   
+    [GridColumn(Order = 5, Width = 70, Type = GridColumnType.DoubleNumber)]
     public double? Nodays { get; set; }
 
     [Display(Name = "Cost")]

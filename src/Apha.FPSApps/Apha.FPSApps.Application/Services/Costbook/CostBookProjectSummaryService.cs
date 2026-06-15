@@ -37,4 +37,7 @@ public class CostBookProjectSummaryService : ICostBookProjectSummaryService
     {
         return _client.ProjectSummary.ExportProjectSummaryToExcelAsync(projectId);
     }
+
+    public Task<ApiResponseDto<ProjectYearCostSummaryDto>> GetProjectYearCostSummaryAsync(string projectId, int year)
+        => _client.ProjectSummary.GetProjectYearCostSummaryAsync(projectId, year);
 }

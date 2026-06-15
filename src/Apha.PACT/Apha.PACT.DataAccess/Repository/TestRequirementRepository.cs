@@ -35,8 +35,7 @@ namespace Apha.PACT.DataAccess.Repository
             else
                 baseQuery = baseQuery.OrderBy(t => t.Buyer);
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<PagedData<TestSupplierView>> GetPagedBySupplierTestCodeAsync(
@@ -84,7 +83,7 @@ namespace Apha.PACT.DataAccess.Repository
                 : rows.OrderBy(t => t.TestCost);
             IEnumerable<TestSupplierView> result = sortByTestCost ? sortedByTestCost : rows;
 
-            return ApplyPaging(result.ToList(), query.Page, query.PageSize);
+            return await ApplyPaging(result.AsQueryable(), query.Page, query.PageSize);
         }
 
         public async Task<PagedData<TestRequirementDetail>> GetPagedWithDetailsAsync(
@@ -139,8 +138,7 @@ namespace Apha.PACT.DataAccess.Repository
                 _ => baseQuery.OrderBy(t => t.TestCode)
             };
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<PagedData<TestRequirementDetail>> GetPagedByProjectAsync(
@@ -195,8 +193,7 @@ namespace Apha.PACT.DataAccess.Repository
                 _ => baseQuery.OrderBy(t => t.TestCode)
             };
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<IEnumerable<TestRequirementDetail>> GetAllForExportAsync(string testCode, string? filterJson)

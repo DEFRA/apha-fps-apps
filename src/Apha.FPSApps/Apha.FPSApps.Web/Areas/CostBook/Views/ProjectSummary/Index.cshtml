@@ -60,7 +60,7 @@
                                     <div class="summary-item d-flex">
                                         <label class="govuk-label text-AlignRight" for="summary-start-date">Start Date:</label>
                                         <input id="summary-start-date" type="text" readonly class="govuk-input"
-                                               value="@Model.ProjectHeaderDto.StartDate">
+                                               value="@Model.ProjectHeaderDto.StartDate?.ToString("dd/MM/yyyy")">
                                     </div>
                                     <div class="summary-item d-flex ms-3">
                                         <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">

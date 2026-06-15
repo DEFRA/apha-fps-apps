@@ -41,7 +41,7 @@
             {
                 case GridColumnType.DecimalNumber:
                     if (value is decimal decValue)
-                        return decValue.ToString("F2");                    
+                        return decValue.ToString("F2");
                     break;
                 case GridColumnType.Date:
                     if (value is DateTime dateValue)
@@ -58,13 +58,21 @@
                 case GridColumnType.GbpValue:
                     if (value is decimal gbpValue)
                         return gbpValue.ToString("£#,##0.00;-£#,##0.00");
+                    if (value is double gbpDouble)
+                        return gbpDouble.ToString("£#,##0.00;-£#,##0.00");
                     break;
                 case GridColumnType.GbpValueRounded:
                     if (value is decimal gbpRounded)
                         return Math.Round(gbpRounded, MidpointRounding.AwayFromZero).ToString("£#,##0;-£#,##0");
+                    if (value is double gbpRoundedDouble)
+                        return Math.Round(gbpRoundedDouble, MidpointRounding.AwayFromZero).ToString("£#,##0;-£#,##0");
+                    break;
+                case GridColumnType.DoubleNumber:
+                    if (value is double doubleValue)
+                        return doubleValue.ToString("F2");
                     break;
             }
-            
+
             return value.ToString() ?? string.Empty;
         }
     }

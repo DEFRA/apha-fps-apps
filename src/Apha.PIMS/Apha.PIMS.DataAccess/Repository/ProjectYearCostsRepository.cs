@@ -221,6 +221,15 @@ namespace Apha.PIMS.DataAccess.Repository
 
         private static PagedData<T> ApplyPaging<T>(List<T> data, int page, int pageSize)
         {
+            if (page == -1)
+                return new PagedData<T>(data, new PaginationData
+                {
+                    PageNumber   = page,
+                    PageSize     = data.Count,
+                    TotalRecords = data.Count,
+                    TotalPages   = 1
+                });
+
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
             int total = data.Count;

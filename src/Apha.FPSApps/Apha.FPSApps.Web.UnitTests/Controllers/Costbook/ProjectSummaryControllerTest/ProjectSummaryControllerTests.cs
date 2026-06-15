@@ -1,7 +1,6 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
 using Apha.FPSApps.Application.Interfaces.Costbook;
-using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.CostBook.Controllers;
 using Apha.FPSApps.Web.Areas.CostBook.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -42,25 +41,21 @@ public class ProjectSummaryControllerTests
     private static ApiResponseDto<List<ProjectYearDto>> YearsEmpty() =>
         ApiResponseDto<List<ProjectYearDto>>.SuccessResponse([]);
 
-    private static ApiResponseDto<PaginatedResult<StaffRequirementDto>> StaffSuccess(double cost) =>
-        ApiResponseDto<PaginatedResult<StaffRequirementDto>>.SuccessResponse(
-            new PaginatedResult<StaffRequirementDto>(
-                [new StaffRequirementDto { StaffCost = cost }], 1));
-
-    private static ApiResponseDto<PaginatedResult<TestRequirementDto>> TestSuccess(double cost) =>
-        ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(
-            new PaginatedResult<TestRequirementDto>(
-                [new TestRequirementDto { Project = "P001", TestCode = "T1", TestCost = cost }], 1));
-
-    private static ApiResponseDto<PaginatedResult<AnimalRequirementDto>> AnimalSuccess(double cost) =>
-        ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(
-            new PaginatedResult<AnimalRequirementDto>(
-                [new AnimalRequirementDto { AnimalType = "Sheep", AnimalCost = cost }], 1));
-
-    private static ApiResponseDto<PaginatedResult<AdditionalCostDto>> AdditionalSuccess(double cost) =>
-        ApiResponseDto<PaginatedResult<AdditionalCostDto>>.SuccessResponse(
-            new PaginatedResult<AdditionalCostDto>(
-                [new AdditionalCostDto { AccountCat = "AC1", Description = "Misc", CostEntered = cost }], 1));
+    private static ApiResponseDto<ProjectYearCostSummaryDto> CostSummarySuccess(
+        string projectId, int year,
+        double staffCost = 0, double testCost = 0,
+        double animalCost = 0, double additionalCost = 0) =>
+        ApiResponseDto<ProjectYearCostSummaryDto>.SuccessResponse(
+            new ProjectYearCostSummaryDto
+            {
+                Project             = projectId,
+                Year                = year,
+                StaffCostTotal      = staffCost,
+                TestCostTotal       = testCost,
+                AnimalCostTotal     = animalCost,
+                AdditionalCostTotal = additionalCost,
+                GrandTotal          = staffCost + testCost + animalCost + additionalCost
+            });
 
     private static ApiResponseDto<double> ProfitSuccess(double profit) =>
         ApiResponseDto<double>.SuccessResponse(profit);
@@ -69,18 +64,9 @@ public class ProjectSummaryControllerTests
         double staffCost = 0, double testCost = 0, double animalCost = 0,
         double additionalCost = 0, double profit = 0)
     {
-        _yearlyDetailsService
-            .GetStaffRequirementsAsync(projectId, year, Arg.Any<QueryParameters<string>>())
-            .Returns(StaffSuccess(staffCost));
-        _yearlyDetailsService
-            .GetTestRequirementsAsync(projectId, year, Arg.Any<QueryParameters<string>>())
-            .Returns(TestSuccess(testCost));
-        _yearlyDetailsService
-            .GetAnimalRequirementsAsync(projectId, year, Arg.Any<QueryParameters<string>>())
-            .Returns(AnimalSuccess(animalCost));
-        _yearlyDetailsService
-            .GetAdditionalCostsAsync(projectId, year, Arg.Any<QueryParameters<string>>())
-            .Returns(AdditionalSuccess(additionalCost));
+        _projectSummaryService
+            .GetProjectYearCostSummaryAsync(projectId, year)
+            .Returns(CostSummarySuccess(projectId, year, staffCost, testCost, animalCost, additionalCost));
         _projectSummaryService
             .GetProfitIncludedTotalAsync(projectId, year)
             .Returns(ProfitSuccess(profit));
@@ -312,12 +298,8 @@ public class ProjectSummaryControllerTests
         _yearlyDetailsService.GetProjectHeaderAsync(projectId)
             .Returns(HeaderSuccess(projectId, programme: "Comm"));
         _yearlyDetailsService.GetProjectYearsAsync(projectId).Returns(YearsSuccess(2024));
-        _yearlyDetailsService
-            .GetStaffRequirementsAsync(projectId, 2024, Arg.Any<QueryParameters<string>>())
-            .Returns(StaffSuccess(0));
-        _yearlyDetailsService.GetTestRequirementsAsync(projectId, 2024, Arg.Any<QueryParameters<string>>()).Returns(TestSuccess(0));
-        _yearlyDetailsService.GetAnimalRequirementsAsync(projectId, 2024, Arg.Any<QueryParameters<string>>()).Returns(AnimalSuccess(0));
-        _yearlyDetailsService.GetAdditionalCostsAsync(projectId, 2024, Arg.Any<QueryParameters<string>>()).Returns(AdditionalSuccess(0));
+        _projectSummaryService.GetProjectYearCostSummaryAsync(projectId, 2024)
+            .Returns(CostSummarySuccess(projectId, 2024));
         _projectSummaryService.GetProfitIncludedTotalAsync(projectId, 2024).Returns(profitFailure);
 
         // Act
@@ -327,6 +309,34 @@ public class ProjectSummaryControllerTests
         var viewResult = Assert.IsType<ViewResult>(result);
         var model = Assert.IsType<ProjectSummaryViewModel>(viewResult.Model);
         Assert.Equal(0, model.Rows[0].ProfitIncludedTotal);
+    }
+
+    [Fact]
+    public async Task Index_WhenCostSummaryServiceFails_CostsDefaultToZero()
+    {
+        // Arrange
+        const string projectId = "P001";
+        var costFailure = ApiResponseDto<ProjectYearCostSummaryDto>.FailureResponse(
+            [new ApiErrorDto { Code = "ERR", Message = "Failed" }], new ApiMetaDto());
+
+        _yearlyDetailsService.GetProjectHeaderAsync(projectId)
+            .Returns(HeaderSuccess(projectId));
+        _yearlyDetailsService.GetProjectYearsAsync(projectId).Returns(YearsSuccess(2024));
+        _projectSummaryService.GetProjectYearCostSummaryAsync(projectId, 2024).Returns(costFailure);
+        _projectSummaryService.GetProfitIncludedTotalAsync(projectId, 2024).Returns(ProfitSuccess(0));
+
+        // Act
+        var result = await _controller.Index(projectId);
+
+        // Assert
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<ProjectSummaryViewModel>(viewResult.Model);
+        Assert.Single(model.Rows);
+        Assert.Equal(0, model.Rows[0].StaffCost);
+        Assert.Equal(0, model.Rows[0].TestCost);
+        Assert.Equal(0, model.Rows[0].AnimalCost);
+        Assert.Equal(0, model.Rows[0].AdditionalCost);
+        Assert.Equal(0, model.GrandTotal);
     }
 
     #endregion
