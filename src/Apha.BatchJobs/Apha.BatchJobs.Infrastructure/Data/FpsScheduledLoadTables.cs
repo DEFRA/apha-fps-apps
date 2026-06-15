@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Infrastructure.Data;
+﻿namespace Apha.BatchJobs.Infrastructure.Data;
 
 /// <summary>
 /// EF entity for fps.fps_source_project_year.

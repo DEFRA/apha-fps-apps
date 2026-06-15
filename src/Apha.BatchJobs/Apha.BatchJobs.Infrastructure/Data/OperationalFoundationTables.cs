@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Infrastructure.Data;
+﻿namespace Apha.BatchJobs.Infrastructure.Data;
 
 /// <summary>
 /// EF entity for fps.job_master.
@@ -36,7 +36,7 @@ internal sealed class TblJobQueue
     public int StatusId { get; set; }
     public required string RequestedBy { get; set; }
     public DateTime? RequestedAtUtc { get; set; }
-    public DateTime StartDateTime { get; set; }
+    public DateTime? StartDateTime { get; set; }   // Null when Initiated (not yet started)
     public DateTime? EndDateTime { get; set; }
     public string? ErrorMessage { get; set; }
     public DateTime CreatedAt { get; set; }

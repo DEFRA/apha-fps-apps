@@ -1,4 +1,4 @@
--- 16_refresh_period_psc.sql
+﻿-- 16_refresh_period_psc.sql
 -- Replaces: usp_Refresh_Period_PSC @period
 -- Parameter: :period (int)
 -- Syntax changes:

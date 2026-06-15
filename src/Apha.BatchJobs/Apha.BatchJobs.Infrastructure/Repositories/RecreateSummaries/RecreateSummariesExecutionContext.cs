@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Infrastructure.Data;
+﻿using Apha.BatchJobs.Infrastructure.Data;
 using Npgsql;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;

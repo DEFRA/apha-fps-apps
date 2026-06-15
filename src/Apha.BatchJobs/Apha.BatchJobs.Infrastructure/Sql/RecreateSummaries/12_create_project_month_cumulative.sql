@@ -1,4 +1,4 @@
--- 12_create_project_month_cumulative.sql
+﻿-- 12_create_project_month_cumulative.sql
 -- Replaces: sp_qryJobMonthCum
 -- Syntax changes:
 --   dbo.* / [Table] -> fps.* (lower-case)

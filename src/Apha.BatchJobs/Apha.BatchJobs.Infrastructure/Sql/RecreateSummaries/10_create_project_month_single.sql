@@ -1,4 +1,4 @@
--- 10_create_project_month_single.sql
+﻿-- 10_create_project_month_single.sql
 -- Replaces: sp_qryJobMonth_Single
 -- Syntax changes:
 --   dbo.* / [Table] -> fps.* (lower-case)

@@ -1,6 +1,6 @@
--- 13_create_project_month_final.sql
+﻿-- 13_create_project_month_final.sql
 -- Replaces: sp_qryJobMonth_Final @Month
--- Parameter: @month (int) — supplied by CreateProjectMonthFinalStep
+-- Parameter: @month (int) ΓÇö supplied by CreateProjectMonthFinalStep
 -- Syntax changes:
 --   dbo.* / [Table] -> fps.* (lower-case)
 --   @month          -> :month  (Npgsql named parameter syntax)

@@ -1,4 +1,4 @@
--- 03_insert_missing_projects.sql
+﻿-- 03_insert_missing_projects.sql
 -- Replaces: sp_InsertMissingProjects (single loop body iteration)
 -- Called once per month (1-12) by C# loop in InsertMissingProjectsStep.
 -- @month is supplied as a parameter by the C# step for each iteration.

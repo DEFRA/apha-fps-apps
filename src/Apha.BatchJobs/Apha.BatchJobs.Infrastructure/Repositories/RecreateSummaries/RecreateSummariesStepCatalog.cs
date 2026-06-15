@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
+﻿namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
 /// <summary>
 /// All 14 orchestration steps implemented in LINQ/EF Core (production-ready).

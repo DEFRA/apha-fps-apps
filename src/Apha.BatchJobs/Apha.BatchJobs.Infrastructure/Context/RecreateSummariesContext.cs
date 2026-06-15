@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Domain.Interfaces;
+﻿using Apha.BatchJobs.Domain.Interfaces;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
