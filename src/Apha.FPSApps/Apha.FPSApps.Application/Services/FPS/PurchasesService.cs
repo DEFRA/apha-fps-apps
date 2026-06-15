@@ -10,6 +10,8 @@ namespace Apha.FPSApps.Application.Services.FPS
 {
     public class PurchasesService : IPurchasesService
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+
         private readonly IFpsApiClient _fpsClient;
 
         public PurchasesService(IFpsApiClient fpsClient)
@@ -79,8 +81,7 @@ namespace Apha.FPSApps.Application.Services.FPS
             if (string.IsNullOrWhiteSpace(filter))
                 return source;
 
-            var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filter,
-                          new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filter, _jsonOptions)
                           ?? new Dictionary<string, string>();
 
             foreach (var kv in filters)

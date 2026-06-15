@@ -11,6 +11,8 @@ namespace Apha.FPSApps.Application.Services.PACT
 {
     public class WorkGroupService : IWorkGroupService
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+
         private readonly IPactApiClient _pactApiClient;
 
         public WorkGroupService(IPactApiClient pactApiClient)
@@ -108,8 +110,7 @@ namespace Apha.FPSApps.Application.Services.PACT
             if (string.IsNullOrWhiteSpace(filter))
                 return source;
 
-            var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filter,
-                          new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filter, _jsonOptions)
                           ?? new Dictionary<string, string>();
 
             foreach (var kv in filters)
