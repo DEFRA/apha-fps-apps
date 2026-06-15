@@ -678,7 +678,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 items = result.Data.Select(p => new ProjectDetailsGridItem
                 {
                     ParentProject = p.ParentProject,
-                    //Project = p.ParentProject,
                     ProjectTitle = p.ProjectTitle,
                     Program = p.Program,
                     Manager = p.Manager,
@@ -712,14 +711,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
-            var query = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _staffJobService.GetAllStaffJobsAsync(query, parentProject ?? string.Empty);
+            var items = new List<StaffJobItemViewModel>();
+            var paginationModel = new PaginationModel();
 
-            var items = pagedData.Data != null
-                ? _mapper.Map<List<StaffJobItemViewModel>>(pagedData.Data.ToList())
-                : new List<StaffJobItemViewModel>();
+            if (!string.IsNullOrWhiteSpace(parentProject))
+            {
+                var query = _mapper.Map<QueryParameters<string>>(request);
+                var pagedData = await _staffJobService.GetAllStaffJobsAsync(query, parentProject);
 
-            var paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+                items = pagedData.Data != null
+                    ? _mapper.Map<List<StaffJobItemViewModel>>(pagedData.Data.ToList())
+                    : new List<StaffJobItemViewModel>();
+
+                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
@@ -736,16 +742,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
-            var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(query, parentProject ?? string.Empty);
+            var items = new List<TestPlanActualItem>();
+            var paginationModel = new PaginationModel();
 
-            var items = response.Success && response.Data != null
-                ? _mapper.Map<List<TestPlanActualItem>>(response.Data)
-                : new List<TestPlanActualItem>();
+            if (!string.IsNullOrWhiteSpace(parentProject))
+            {
+                var query = _mapper.Map<QueryParameters<string>>(request);
+                var response = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(query, parentProject);
 
-            var paginationModel = response.Pagination is null
-                ? new PaginationModel()
-                : _mapper.Map<PaginationModel>(response.Pagination);
+                items = response.Success && response.Data != null
+                    ? _mapper.Map<List<TestPlanActualItem>>(response.Data)
+                    : new List<TestPlanActualItem>();
+
+                paginationModel = response.Pagination is null
+                    ? new PaginationModel()
+                    : _mapper.Map<PaginationModel>(response.Pagination);
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
@@ -762,14 +775,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
-            var query = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _animalPlanService.GetAllAnimalCostAsync(query, parentProject ?? string.Empty);
+            var items = new List<AnimalPlanItem>();
+            var paginationModel = new PaginationModel();
 
-            var items = pagedData.Data != null
-                ? _mapper.Map<List<AnimalPlanItem>>(pagedData.Data.ToList())
-                : new List<AnimalPlanItem>();
+            if (!string.IsNullOrWhiteSpace(parentProject))
+            {
+                var query = _mapper.Map<QueryParameters<string>>(request);
+                var pagedData = await _animalPlanService.GetAllAnimalCostAsync(query, parentProject);
 
-            var paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+                items = pagedData.Data != null
+                    ? _mapper.Map<List<AnimalPlanItem>>(pagedData.Data.ToList())
+                    : new List<AnimalPlanItem>();
+
+                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
@@ -786,14 +806,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
-            var query = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _additionalCostService.GetAdditionalCostsAsync(query, parentProject ?? string.Empty);
+            var items = new List<AdditionalCostItemViewModel>();
+            var paginationModel = new PaginationModel();
 
-            var items = pagedData.Data != null
-                ? _mapper.Map<List<AdditionalCostItemViewModel>>(pagedData.Data)
-                : new List<AdditionalCostItemViewModel>();
+            if (!string.IsNullOrWhiteSpace(parentProject))
+            {
+                var query = _mapper.Map<QueryParameters<string>>(request);
+                var pagedData = await _additionalCostService.GetAdditionalCostsAsync(query, parentProject);
 
-            var paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+                items = pagedData.Data != null
+                    ? _mapper.Map<List<AdditionalCostItemViewModel>>(pagedData.Data)
+                    : new List<AdditionalCostItemViewModel>();
+
+                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
@@ -810,14 +837,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
-            var query = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _timeCostCalcsService.GetTimeCostCalcsByProjectAsync(query, parentProject ?? string.Empty);
+            var items = new List<CompareStaff2Item>();
+            var paginationModel = new PaginationModel();
 
-            var items = pagedData.Data != null
-                ? _mapper.Map<List<CompareStaff2Item>>(pagedData.Data)
-                : new List<CompareStaff2Item>();
+            if (!string.IsNullOrWhiteSpace(parentProject))
+            {
+                var query = _mapper.Map<QueryParameters<string>>(request);
+                var pagedData = await _timeCostCalcsService.GetTimeCostCalcsByProjectAsync(query, parentProject);
 
-            var paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+                items = pagedData.Data != null
+                    ? _mapper.Map<List<CompareStaff2Item>>(pagedData.Data)
+                    : new List<CompareStaff2Item>();
+
+                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
@@ -834,29 +868,36 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
-            var query = _mapper.Map<QueryParameters<string>>(request);
+            var items = new List<ActualTestOutputItem>();
+            var paginationModel = new PaginationModel();
 
-            // Build price lookup from test requirements
-            var testQuery = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
-            var testResult = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(testQuery, parentProject ?? string.Empty);
-            var priceLookup = new Dictionary<(string TestCode, string Buyer), decimal>();
-            if (testResult.Success && testResult.Data != null)
+            if (!string.IsNullOrWhiteSpace(parentProject))
             {
-                foreach (var t in testResult.Data)
+                var query = _mapper.Map<QueryParameters<string>>(request);
+
+                // Build price lookup from test requirements
+                var testQuery = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
+                var testResult = await _testRequirementService.GetPagedTestReqmtbyProjectAsync(testQuery, parentProject);
+                var priceLookup = new Dictionary<(string TestCode, string Buyer), decimal>();
+                if (testResult.Success && testResult.Data != null)
                 {
-                    var key = (t.TestCode ?? string.Empty, t.Buyer ?? string.Empty);
-                    if (!priceLookup.ContainsKey(key))
-                        priceLookup[key] = t.UnitPrice ?? 0;
+                    foreach (var t in testResult.Data)
+                    {
+                        var key = (t.TestCode ?? string.Empty, t.Buyer ?? string.Empty);
+                        if (!priceLookup.ContainsKey(key))
+                            priceLookup[key] = t.UnitPrice ?? 0;
+                    }
                 }
+
+                var pagedData = await _monthlyOutputService.GetMonthlyOutputByProjectAsync(query, parentProject, priceLookup);
+
+                items = pagedData.Data != null
+                    ? _mapper.Map<List<ActualTestOutputItem>>(pagedData.Data)
+                    : new List<ActualTestOutputItem>();
+
+                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
             }
 
-            var pagedData = await _monthlyOutputService.GetMonthlyOutputByProjectAsync(query, parentProject ?? string.Empty, priceLookup);
-
-            var items = pagedData.Data != null
-                ? _mapper.Map<List<ActualTestOutputItem>>(pagedData.Data)
-                : new List<ActualTestOutputItem>();
-
-            var paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
@@ -873,14 +914,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data" });
 
-            var query = _mapper.Map<QueryParameters<string>>(request);
-            var pagedData = await _projectSubContractService.GetFpsProjectSubContractsAsync(query, parentProject, filterByAnimalAcctCodes: animalOnly);
+            var items = new List<ActualProjectCostItem>();
+            var paginationModel = new PaginationModel();
 
-            var items = pagedData.Data != null
-                ? _mapper.Map<List<ActualProjectCostItem>>(pagedData.Data)
-                : new List<ActualProjectCostItem>();
+            if (!string.IsNullOrWhiteSpace(parentProject))
+            {
+                var query = _mapper.Map<QueryParameters<string>>(request);
+                var pagedData = await _projectSubContractService.GetFpsProjectSubContractsAsync(query, parentProject, filterByAnimalAcctCodes: animalOnly);
 
-            var paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+                items = pagedData.Data != null
+                    ? _mapper.Map<List<ActualProjectCostItem>>(pagedData.Data)
+                    : new List<ActualProjectCostItem>();
+
+                paginationModel = _mapper.Map<PaginationModel>(pagedData.Pagination) ?? new PaginationModel();
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 

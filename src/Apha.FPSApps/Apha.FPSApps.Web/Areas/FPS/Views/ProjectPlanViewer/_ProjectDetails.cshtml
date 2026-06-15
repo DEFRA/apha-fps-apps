@@ -534,6 +534,7 @@
         }
 
         function reloadGrid(gridId) {
+            if (!getProjectCode()) return;
             var mgr = window['gridManager_' + gridId];
             if (mgr && typeof mgr.reloadGrid === 'function') {
                 mgr.reloadGrid({ page: 1 });

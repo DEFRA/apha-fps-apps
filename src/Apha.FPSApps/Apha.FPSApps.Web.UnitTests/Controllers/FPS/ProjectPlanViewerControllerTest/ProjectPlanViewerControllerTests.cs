@@ -1310,22 +1310,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         }
 
         [Fact]
-        public async Task LoadStaffPlanGrid_WithNullParentProject_PassesEmptyString()
+        public async Task LoadStaffPlanGrid_WithNullParentProject_ReturnsEmptyGrid()
         {
-            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
-                .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
-            _staffJobService.GetAllStaffJobsAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
-                .Returns(ApiResponseDto<List<StaffJobViewDto>>.SuccessResponse(
-                    new List<StaffJobViewDto>(),
-                    new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }));
-            _mapper.Map<List<StaffJobItemViewModel>>(Arg.Any<List<StaffJobViewDto>>())
-                .Returns(new List<StaffJobItemViewModel>());
-            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
-
             var request = new PaginationFilter<string>();
-            await _controller.LoadStaffPlanGrid(request);
+            var result = await _controller.LoadStaffPlanGrid(request);
 
-            await _staffJobService.Received(1).GetAllStaffJobsAsync(Arg.Any<QueryParameters<string>>(), string.Empty);
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialResult.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<StaffJobItemViewModel>>(partialResult.Model);
+            Assert.Empty(gridConfig.Data);
+            await _staffJobService.DidNotReceive().GetAllStaffJobsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
         #endregion
@@ -1544,23 +1538,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         }
 
         [Fact]
-        public async Task LoadStaffActualGrid_WithNullParentProject_PassesEmptyString()
+        public async Task LoadStaffActualGrid_WithNullParentProject_ReturnsEmptyGrid()
         {
-            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
-                .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
-            _timeCostCalcsService.GetTimeCostCalcsByProjectAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
-                .Returns(ApiResponseDto<List<TimeCostCalcsViewDto>>.SuccessResponse(
-                    new List<TimeCostCalcsViewDto>(),
-                    new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }));
-            _mapper.Map<List<CompareStaff2Item>>(Arg.Any<List<TimeCostCalcsViewDto>>())
-                .Returns(new List<CompareStaff2Item>());
-            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
-
             var request = new PaginationFilter<string>();
-            await _controller.LoadStaffActualGrid(request);
+            var result = await _controller.LoadStaffActualGrid(request);
 
-            await _timeCostCalcsService.Received(1)
-                .GetTimeCostCalcsByProjectAsync(Arg.Any<QueryParameters<string>>(), string.Empty);
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialResult.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<CompareStaff2Item>>(partialResult.Model);
+            Assert.Empty(gridConfig.Data);
+            await _timeCostCalcsService.DidNotReceive().GetTimeCostCalcsByProjectAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
         }
 
         #endregion
@@ -1893,6 +1880,200 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
 
             var request = new PaginationFilter<string>();
             await Assert.ThrowsAsync<Exception>(() => _controller.LoadActualCostGrid(request, parentProject: "AH0001"));
+        }
+
+        #endregion
+
+        #region Empty ParentProject Returns Empty Grid Tests
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadStaffPlanGrid_WithEmptyParentProject_ReturnsEmptyGridAndDoesNotCallService(string? parentProject)
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadStaffPlanGrid(request, parentProject: parentProject);
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialResult.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<StaffJobItemViewModel>>(partialResult.Model);
+            Assert.Empty(gridConfig.Data);
+            await _staffJobService.DidNotReceive().GetAllStaffJobsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadTestPlanGrid_WithEmptyParentProject_ReturnsEmptyGridAndDoesNotCallService(string? parentProject)
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadTestPlanGrid(request, parentProject: parentProject);
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialResult.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<TestPlanActualItem>>(partialResult.Model);
+            Assert.Empty(gridConfig.Data);
+            await _testRequirementService.DidNotReceive().GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadAnimalPlanGrid_WithEmptyParentProject_ReturnsEmptyGridAndDoesNotCallService(string? parentProject)
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadAnimalPlanGrid(request, parentProject: parentProject);
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialResult.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<AnimalPlanItem>>(partialResult.Model);
+            Assert.Empty(gridConfig.Data);
+            await _animalPlanService.DidNotReceive().GetAllAnimalCostAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadAdditionalCostGrid_WithEmptyParentProject_ReturnsEmptyGridAndDoesNotCallService(string? parentProject)
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadAdditionalCostGrid(request, parentProject: parentProject);
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialResult.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<AdditionalCostItemViewModel>>(partialResult.Model);
+            Assert.Empty(gridConfig.Data);
+            await _additionalCostService.DidNotReceive().GetAdditionalCostsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadStaffActualGrid_WithEmptyParentProject_ReturnsEmptyGridAndDoesNotCallService(string? parentProject)
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadStaffActualGrid(request, parentProject: parentProject);
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialResult.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<CompareStaff2Item>>(partialResult.Model);
+            Assert.Empty(gridConfig.Data);
+            await _timeCostCalcsService.DidNotReceive().GetTimeCostCalcsByProjectAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadTestActualGrid_WithEmptyParentProject_ReturnsEmptyGridAndDoesNotCallService(string? parentProject)
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadTestActualGrid(request, parentProject: parentProject);
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialResult.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualTestOutputItem>>(partialResult.Model);
+            Assert.Empty(gridConfig.Data);
+            await _testRequirementService.DidNotReceive().GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+            await _monthlyOutputService.DidNotReceive().GetMonthlyOutputByProjectAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<Dictionary<(string, string), decimal>>());
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadActualCostGrid_WithEmptyParentProject_ReturnsEmptyGridAndDoesNotCallService(string? parentProject)
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadActualCostGrid(request, parentProject: parentProject);
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialResult.ViewName);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialResult.Model);
+            Assert.Empty(gridConfig.Data);
+            await _projectSubContractService.DidNotReceive().GetFpsProjectSubContractsAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>(), Arg.Any<bool>());
+        }
+
+        [Fact]
+        public async Task LoadStaffPlanGrid_WithEmptyParentProject_UsesProvidedGridId()
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadStaffPlanGrid(request, parentProject: null, gridId: "staffPlanGrid");
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<StaffJobItemViewModel>>(partialResult.Model);
+            Assert.Equal("staffPlanGrid", gridConfig.GridId);
+        }
+
+        [Fact]
+        public async Task LoadTestPlanGrid_WithEmptyParentProject_UsesProvidedGridId()
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadTestPlanGrid(request, parentProject: null, gridId: "testPlanGrid");
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<TestPlanActualItem>>(partialResult.Model);
+            Assert.Equal("testPlanGrid", gridConfig.GridId);
+        }
+
+        [Fact]
+        public async Task LoadAnimalPlanGrid_WithEmptyParentProject_UsesProvidedGridId()
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadAnimalPlanGrid(request, parentProject: null, gridId: "animalPlanGrid");
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<AnimalPlanItem>>(partialResult.Model);
+            Assert.Equal("animalPlanGrid", gridConfig.GridId);
+        }
+
+        [Fact]
+        public async Task LoadAdditionalCostGrid_WithEmptyParentProject_UsesProvidedGridId()
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadAdditionalCostGrid(request, parentProject: null, gridId: "additionalCostPlanGrid");
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<AdditionalCostItemViewModel>>(partialResult.Model);
+            Assert.Equal("additionalCostPlanGrid", gridConfig.GridId);
+        }
+
+        [Fact]
+        public async Task LoadActualCostGrid_WithEmptyParentProject_UsesProvidedGridId()
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadActualCostGrid(request, parentProject: null, gridId: "actualAdditionalCostGrid");
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialResult.Model);
+            Assert.Equal("actualAdditionalCostGrid", gridConfig.GridId);
+        }
+
+        [Fact]
+        public async Task LoadActualCostGrid_WithEmptyParentProject_AnimalOnlyTrue_SetsAnimalTitle()
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadActualCostGrid(request, parentProject: null, animalOnly: true);
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialResult.Model);
+            Assert.Equal("Actual Animal Costs (PACT)", gridConfig.Title);
+        }
+
+        [Fact]
+        public async Task LoadActualCostGrid_WithEmptyParentProject_AnimalOnlyFalse_SetsAdditionalTitle()
+        {
+            var request = new PaginationFilter<string>();
+            var result = await _controller.LoadActualCostGrid(request, parentProject: null, animalOnly: false);
+
+            var partialResult = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ActualProjectCostItem>>(partialResult.Model);
+            Assert.Equal("Actual Additional Costs (PACT)", gridConfig.Title);
         }
 
         #endregion
