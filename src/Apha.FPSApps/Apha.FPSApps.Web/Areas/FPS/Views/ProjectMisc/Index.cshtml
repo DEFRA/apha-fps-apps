@@ -1,0 +1,146 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProjectMiscViewModel
+
+@{
+    ViewData["Title"] = "Misc Project Data";
+}
+
+<main id="main-content">
+    <div class="container-fluid">
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="row fps-sr-breadcrumb-row">
+                    <div class="fps-sr-breadcrumb-flex sup_context_row">
+                        <div class="col-md-8 sup_context_placeholder"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-column-full">
+                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Misc Project Data</h1>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                    <div class="govuk-grid-column-full sup_p_0">
+                        <div id="gridContainer_@Model.ProjectMiscGrid.GridId">
+                            @await Html.PartialAsync("_DataGrid", Model.ProjectMiscGrid)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+
+        function editProjectMisc(btn) {
+            var parentProject = $(btn).data('id');
+            $.ajax({
+                url: '@Url.Action("Edit", "ProjectMisc", new { area = "FPS" })',
+                type: 'GET',
+                data: { parentProject: parentProject },
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                },
+                error: function () {
+                    showGovukAlert('An error occurred while loading the form.');
+                }
+            });
+        }
+
+        function updateProjectMisc() {
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#editProjectMiscForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            var payload = {
+                ParentProject: form.find('[name="ParentProject"]').val(),
+                Program: form.find('[name="Program"]').val() || null,
+                CostCentre: form.find('[name="CostCentre"]').val() !== '' ? parseFloat(form.find('[name="CostCentre"]').val()) : null,
+                OracleProjectCode: form.find('[name="OracleProjectCode"]').val() || null,
+                SubAccountCode: form.find('[name="SubAccountCode"]').val() || null
+            };
+
+            $.ajax({
+                url: '@Url.Action("Edit", "ProjectMisc", new { area = "FPS" })',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function (result) {
+                    if (result.success) {
+                        showGovukAlert(result.message);
+                        closeModal();
+                        window['gridManager_projectMiscGrid'].reloadGrid({ page: 1 });
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        showGovukAlert('An error occurred while saving.');
+                    }
+                }
+            });
+        }
+
+        function deleteProjectMisc(btn) {
+            var parentProject = $(btn).data('id');
+            showGovukConfirm('Are you sure you want to delete project "' + parentProject + '" and all its children? This action cannot be undone.').then(function (result) {
+                if (!result) return;
+                $.ajax({
+                    url: '@Url.Action("Delete", "ProjectMisc", new { area = "FPS" })',
+                    type: 'DELETE',
+                    data: { parentProject: parentProject },
+                    success: function (response) {
+                        if (response.success) {
+                            showGovukAlert('Deleted successfully').then(function () {
+                                window['gridManager_projectMiscGrid'].reloadGrid({ page: 1 });
+                            });
+                        } else {
+                            showGovukAlert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting.');
+                    }
+                });
+            });
+        }
+
+        function closeModal() {
+            clearValidationErrors('#modaPopupBody');
+            $('#modaPopupBody').html('');
+            $('#modalPopup').removeClass('show');
+        }
+
+        function isFormValid(form) {
+            var isValid = true;
+            form.find('[required]').each(function () {
+                if (!$(this).val() || $(this).val().trim() === '') {
+                    isValid = false;
+                    return false;
+                }
+            });
+            return isValid;
+        }
+
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
