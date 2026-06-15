@@ -1969,5 +1969,200 @@ namespace Apha.Costbook.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         #endregion
+
+        #region GetProjectYearCostSummaryAsync
+
+        private static ProjectRepository CreateRepositoryForCostSummary(
+            IEnumerable<StaffRequirement>? staffRequirements = null,
+            IEnumerable<TestRequirement>? testRequirements = null,
+            IEnumerable<AnimalRequirement>? animalRequirements = null,
+            IEnumerable<AdditionalCost>? additionalCosts = null)
+        {
+            var mockFPSYearContext = new Mock<IFPSYearContext>();
+            var mockSettingsRepository = new Mock<ISettingsRepository>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<CostbookDbContext>(mockFPSYearContext.Object);
+
+            var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staffRequirements ?? new List<StaffRequirement>());
+            mockContext.Setup(x => x.StaffRequirements).Returns(staffMockSet.Object);
+            mockContext.Setup(x => x.Set<StaffRequirement>()).Returns(staffMockSet.Object);
+
+            var testReqMockSet = RepositoryTestHelper.CreateMockDbSet(testRequirements ?? new List<TestRequirement>());
+            mockContext.Setup(x => x.TestRequirements).Returns(testReqMockSet.Object);
+            mockContext.Setup(x => x.Set<TestRequirement>()).Returns(testReqMockSet.Object);
+
+            var animalMockSet = RepositoryTestHelper.CreateMockDbSet(animalRequirements ?? new List<AnimalRequirement>());
+            mockContext.Setup(x => x.AnimalRequirements).Returns(animalMockSet.Object);
+            mockContext.Setup(x => x.Set<AnimalRequirement>()).Returns(animalMockSet.Object);
+
+            var additionalCostMockSet = RepositoryTestHelper.CreateMockDbSet(additionalCosts ?? new List<AdditionalCost>());
+            mockContext.Setup(x => x.AdditionalCosts).Returns(additionalCostMockSet.Object);
+            mockContext.Setup(x => x.Set<AdditionalCost>()).Returns(additionalCostMockSet.Object);
+
+            var emptyProjects = RepositoryTestHelper.CreateMockDbSet(new List<Project>());
+            mockContext.Setup(x => x.Projects).Returns(emptyProjects.Object);
+            mockContext.Setup(x => x.Set<Project>()).Returns(emptyProjects.Object);
+
+            var emptyProjectYears = RepositoryTestHelper.CreateMockDbSet(new List<ProjectYear>());
+            mockContext.Setup(x => x.Set<ProjectYear>()).Returns(emptyProjectYears.Object);
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            return new ProjectRepository(mockContext.Object, mockSettingsRepository.Object);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_WithAllCosts_ReturnsSummedTotals()
+        {
+            // Arrange — Chargerate*Nohours=500, UnitPrice*NumberOfTests=100,
+            //            DailyRate*NumberOfDays*NumberOfAnimals=60, ItemCost=200
+            var repo = CreateRepositoryForCostSummary(
+                staffRequirements: new List<StaffRequirement>
+                {
+                    new() { Project = "2024/001", Year = 2024, Chargerate = 50.0, Nohours = 10.0 }
+                },
+                testRequirements: new List<TestRequirement>
+                {
+                    new() { Project = "2024/001", Year = 2024, UnitPrice = 20.0, NumberOfTests = 5.0 }
+                },
+                animalRequirements: new List<AnimalRequirement>
+                {
+                    new() { Project = "2024/001", Year = 2024, DailyRate = 4.0, NumberOfDays = 5.0, NumberOfAnimals = 3.0 }
+                },
+                additionalCosts: new List<AdditionalCost>
+                {
+                    new() { Project = "2024/001", Year = 2024, ItemCost = 200.0 }
+                });
+
+            // Act
+            var result = await repo.GetProjectYearCostSummaryAsync("2024/001", 2024);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("2024/001", result.Project);
+            Assert.Equal(2024,  result.Year);
+            Assert.Equal(500.0, result.StaffCostTotal,      precision: 5);
+            Assert.Equal(100.0, result.TestCostTotal,       precision: 5);
+            Assert.Equal(60.0,  result.AnimalCostTotal,     precision: 5);
+            Assert.Equal(200.0, result.AdditionalCostTotal, precision: 5);
+            Assert.Equal(860.0, result.GrandTotal,          precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_WithNoData_ReturnsZeroTotals()
+        {
+            // Arrange — all child tables empty
+            var repo = CreateRepositoryForCostSummary();
+
+            // Act
+            var result = await repo.GetProjectYearCostSummaryAsync("2024/001", 2024);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(0.0, result.StaffCostTotal);
+            Assert.Equal(0.0, result.TestCostTotal);
+            Assert.Equal(0.0, result.AnimalCostTotal);
+            Assert.Equal(0.0, result.AdditionalCostTotal);
+            Assert.Equal(0.0, result.GrandTotal);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_OnlyIncludesRecordsForRequestedYear()
+        {
+            // Arrange — two years; only year 2024 should contribute to the totals
+            var repo = CreateRepositoryForCostSummary(
+                staffRequirements: new List<StaffRequirement>
+                {
+                    new() { Project = "2024/001", Year = 2024, Chargerate = 100.0, Nohours = 10.0 },
+                    new() { Project = "2024/001", Year = 2025, Chargerate = 999.0, Nohours = 99.0 }
+                });
+
+            // Act
+            var result = await repo.GetProjectYearCostSummaryAsync("2024/001", 2024);
+
+            // Assert
+            Assert.Equal(1000.0, result.StaffCostTotal, precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_OnlyIncludesRecordsForRequestedProject()
+        {
+            // Arrange — two projects; only "2024/001" data should be summed
+            var repo = CreateRepositoryForCostSummary(
+                staffRequirements: new List<StaffRequirement>
+                {
+                    new() { Project = "2024/001", Year = 2024, Chargerate = 50.0, Nohours = 4.0 },
+                    new() { Project = "2024/002", Year = 2024, Chargerate = 999.0, Nohours = 99.0 }
+                });
+
+            // Act
+            var result = await repo.GetProjectYearCostSummaryAsync("2024/001", 2024);
+
+            // Assert
+            Assert.Equal(200.0, result.StaffCostTotal, precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_HandlesUrlEncodedProjectId()
+        {
+            // Arrange
+            var repo = CreateRepositoryForCostSummary(
+                staffRequirements: new List<StaffRequirement>
+                {
+                    new() { Project = "2024/001", Year = 2024, Chargerate = 10.0, Nohours = 10.0 }
+                });
+            var encodedId = HttpUtility.UrlEncode("2024/001");
+
+            // Act
+            var result = await repo.GetProjectYearCostSummaryAsync(encodedId, 2024);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("2024/001", result.Project);
+            Assert.Equal(100.0, result.StaffCostTotal, precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_StaffWithNullChargerateOrNohours_ContributesZero()
+        {
+            // Arrange — null fields should be treated as 0 per the SumAsync expression
+            var repo = CreateRepositoryForCostSummary(
+                staffRequirements: new List<StaffRequirement>
+                {
+                    new() { Project = "2024/001", Year = 2024, Chargerate = null, Nohours = 10.0 },
+                    new() { Project = "2024/001", Year = 2024, Chargerate = 50.0, Nohours = null }
+                });
+
+            // Act
+            var result = await repo.GetProjectYearCostSummaryAsync("2024/001", 2024);
+
+            // Assert
+            Assert.Equal(0.0, result.StaffCostTotal, precision: 5);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_MultipleRowsPerCategory_SumsCorrectly()
+        {
+            // Arrange — two staff rows for the same project/year should be summed
+            var repo = CreateRepositoryForCostSummary(
+                staffRequirements: new List<StaffRequirement>
+                {
+                    new() { Project = "2024/001", Year = 2024, Chargerate = 50.0, Nohours = 8.0 },
+                    new() { Project = "2024/001", Year = 2024, Chargerate = 25.0, Nohours = 4.0 }
+                },
+                additionalCosts: new List<AdditionalCost>
+                {
+                    new() { Project = "2024/001", Year = 2024, ItemCost = 100.0 },
+                    new() { Project = "2024/001", Year = 2024, ItemCost = 150.0 }
+                });
+
+            // Act
+            var result = await repo.GetProjectYearCostSummaryAsync("2024/001", 2024);
+
+            // Assert — 50*8 + 25*4 = 500
+            Assert.Equal(500.0, result.StaffCostTotal,      precision: 5);
+            Assert.Equal(250.0, result.AdditionalCostTotal, precision: 5);
+        }
+
+        #endregion
     }
 }

@@ -1,5 +1,4 @@
 using Apha.FPSApps.Application.Interfaces.Costbook;
-using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.CostBook.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -38,26 +37,24 @@ public class ProjectSummaryController : Controller
             ? yearsResponse.Data.OrderBy(y => y.YearValue).ToList()
             : new List<Application.Dtos.CostBook.ProjectYearDto>();
 
-        var allQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
         var rows = new List<ProjectSummaryRow>();
 
         foreach (var yearDto in yearDtos)
         {
             var year = yearDto.YearValue;
 
-            var staffResponse      = await _yearlyDetailsService.GetStaffRequirementsAsync(decodedProjectId, year, allQuery);
-            var testResponse       = await _yearlyDetailsService.GetTestRequirementsAsync(decodedProjectId, year,allQuery);
-            var animalResponse     = await _yearlyDetailsService.GetAnimalRequirementsAsync(decodedProjectId, year, allQuery);
-            var additionalResponse = await _yearlyDetailsService.GetAdditionalCostsAsync(decodedProjectId, year,allQuery);
-            var profitResponse     = await _projectSummaryService.GetProfitIncludedTotalAsync(decodedProjectId, year);
+            var costResponse   = await _projectSummaryService.GetProjectYearCostSummaryAsync(decodedProjectId, year);
+            var profitResponse = await _projectSummaryService.GetProfitIncludedTotalAsync(decodedProjectId, year);
+
+            var cost = costResponse.Success && costResponse.Data is not null ? costResponse.Data : null;
 
             rows.Add(new ProjectSummaryRow
             {
                 Year                = year,
-                StaffCost           = staffResponse.Data?.data?.Sum(s => s.StaffCost ?? 0) ?? 0,
-                TestCost            = testResponse.Data?.data?.Sum(t => t.TestCost ?? 0) ?? 0,
-                AnimalCost          = animalResponse.Data?.data?.Sum(a => a.AnimalCost ?? 0) ?? 0,
-                AdditionalCost      = additionalResponse.Data?.data?.Sum(ac => ac.CostEntered) ?? 0,
+                StaffCost           = cost?.StaffCostTotal      ?? 0,
+                TestCost            = cost?.TestCostTotal        ?? 0,
+                AnimalCost          = cost?.AnimalCostTotal      ?? 0,
+                AdditionalCost      = cost?.AdditionalCostTotal  ?? 0,
                 ProfitIncludedTotal = profitResponse.Success ? profitResponse.Data : 0.0
             });
         }
