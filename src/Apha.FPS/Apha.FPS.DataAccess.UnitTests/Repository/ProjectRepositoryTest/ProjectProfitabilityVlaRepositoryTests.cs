@@ -1,33 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — ProjectProfitabilityVlaRepositoryTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - New file: xUnit tests for ProjectRepository.GetProjectProfitabilityVlaAsync()
- *     (DataAccess layer, Apha.FPS.DataAccess).
- *   - Tests query the mocked FpsDbContext.ProjectProfitabilityVlaViews DbSet.
- *   - Covers: empty dataset, data returned, all 4 filter dimensions individually,
- *     paging applied, and default sort by JobCode.
- *   - Uses RepositoryTestHelper.CreateMockDbContext<FpsDbContext> + Moq (matching
- *     the established repository test pattern in this project).
- *
- * PRESERVED:
- *   - CreateRepository() factory method pattern from ProjectGroupProfitabilityRepositoryTests.
- *   - Test naming convention [MethodName]_[StateUnderTest]_[ExpectedResult].
- *   - Arrange-Act-Assert layout.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm EF.Functions.ILike is replaced by Contains() by Moq
- *     in-memory query execution — if ILike is PostgreSQL-only and throws with in-memory
- *     EF, either mock the filter differently or adjust expectations.
- *   - TRANSFORMENGINE TODO: confirm ProjectProfitabilityVlaView.Status matches the filter
- *     field name (ProjectStatus in the Req maps to v.Status in the view entity).
- *   - Build/test status: NOT RUN — requires dotnet restore && dotnet build.
- */
-
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;

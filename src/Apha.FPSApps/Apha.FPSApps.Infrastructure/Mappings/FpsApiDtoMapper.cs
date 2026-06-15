@@ -1,33 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — FpsApiDtoMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - Added CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>() with
- *     explicit ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode)) and
- *     ReverseMap().ForMember(d => d.JobCode, o => o.MapFrom(s => s.Project)) to bridge
- *     the field-name mismatch between the frontend DTO (JobCode) and the shared
- *     response contract (Project). Supports GET /api/v1/project/profitability-vla
- *     response deserialization in the Apha.FPSApps.Infrastructure ApiDtoMapper pipeline.
- *
- * PRESERVED:
- *   - All existing CreateMap entries unchanged.
- *   - Namespace, class name, and Profile inheritance unchanged.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: verify Id int->int? coercion is acceptable once the
- *     vprojectprofitability view DDL is finalised (nullable vs non-nullable row
- *     identifier). AutoMapper maps int->int? implicitly; the reverse (int?->int)
- *     uses GetValueOrDefault(0) — confirm 0 is a safe sentinel for missing rows.
- *   - TRANSFORMENGINE TODO: TotalCount exists on ProjectProfitabilityVlaRes but not
- *     on ProjectProfitabilityVlaDto — AutoMapper will silently ignore it in Res->Dto
- *     direction; add a Dto.TotalCount property in Phase 11 if pagination metadata is
- *     needed in the ViewModel layer.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;

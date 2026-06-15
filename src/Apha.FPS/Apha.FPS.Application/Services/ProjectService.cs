@@ -1,37 +1,3 @@
-﻿// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — ProjectService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - Added GetProjectProfitabilityVlaAsync implementation for the
- *     frmJobcodeTotalsVLA form migration.
- *   - Added using for Apha.Common.Contracts.FPS to resolve ProjectProfitabilityVlaReq.
- *   - New method delegates to IProjectRepository.GetProjectProfitabilityVlaAsync,
- *     passing QueryParameters<ProjectProfitabilityVlaReq> mapped to
- *     PaginationParameters<ProjectProfitabilityVlaReq>, then maps
- *     PagedData<ProjectProfitabilityVlaView> → PaginatedResult<ProjectProfitabilityVlaDto>
- *     via AutoMapper (mapping registered in EntityMapper Phase 3).
- *
- * PRESERVED:
- *   - All 19 existing public methods and their implementations unchanged.
- *   - Existing private business-logic guards (program FK checks, delete guards,
- *     project code change validation) fully preserved.
- *   - Existing profitability methods: GetProjectProfitabilityAsync (line 237),
- *     GetProjectGroupProfitabilityAsync (line 245).
- *   - Dependency injection pattern: IProjectRepository + IMapper constructor injection.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: no additional business-logic guards identified for the
- *     VLA profitability read-only query beyond null-input validation.
- *     If the source VBA or SP adds guards (e.g. year/status validation), add them here.
- *   - TRANSFORMENGINE TODO: confirm IProjectRepository.GetProjectProfitabilityVlaAsync
- *     signature accepts PaginationParameters<ProjectProfitabilityVlaReq> — this aligns
- *     with the Phase 2 interface definition; verify in Phase 4 implementation.
- */
-
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;

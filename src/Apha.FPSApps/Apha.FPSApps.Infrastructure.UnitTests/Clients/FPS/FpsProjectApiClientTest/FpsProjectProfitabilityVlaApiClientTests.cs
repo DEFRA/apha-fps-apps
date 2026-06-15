@@ -1,34 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — FpsProjectProfitabilityVlaApiClientTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - New file: xUnit tests for FpsProjectApiClient.GetProjectProfitabilityVlaAsync()
- *     (Infrastructure layer, Apha.FPSApps.Infrastructure).
- *   - Covers: HTTP success path with mapper called, HTTP failure path,
- *     exception catch → FailureResponse with INTERNAL_ERROR, URL construction with
- *     and without optional filter params, mapper NOT called on failure, and
- *     mapper called exactly once on success.
- *   - Uses NSubstitute for IFpsHttpExecutor and IMapper.
- *   - Pattern matches FpsYearMasterApiClientTests.cs conventions.
- *
- * PRESERVED:
- *   - Test naming convention [MethodName]_[StateUnderTest]_[ExpectedResult].
- *   - Constructor-based mock initialisation.
- *   - Arrange-Act-Assert layout.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: verify FpsApiEndpoints.GetProjectProfitabilityVla == "api/v1/project/profitability-vla"
- *     — confirmed from Apha.Common/Constants/FpsApiEndpoints.cs line 182.
- *   - TRANSFORMENGINE TODO: QueryStringHelper.AddQueryString serialisation of
- *     QueryParameters<string> might add ?page=N&pageSize=N — confirm exact output
- *     when testing URL assertions.
- *   - Build/test status: NOT RUN — requires dotnet restore && dotnet build.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;

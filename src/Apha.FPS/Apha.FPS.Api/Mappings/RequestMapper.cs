@@ -1,34 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — RequestMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - Added ProjectProfitabilityVlaDto <-> ProjectProfitabilityVlaRes mapping for the
- *     frmJobcodeTotalsVLA VLA profitability endpoint.
- *   - Added ForMember for Id: ProjectProfitabilityVlaDto.Id (int?) -> ProjectProfitabilityVlaRes.Id (int);
- *     null Id maps to 0 via GetValueOrDefault() to satisfy the non-nullable contract property.
- *   - Added ForMember for Project: ProjectProfitabilityVlaDto.JobCode ->
- *     ProjectProfitabilityVlaRes.Project (the response uses 'Project' as the display
- *     column name per the HTML prototype grid, while the DTO uses 'JobCode').
- *   - Added PaginatedResult<ProjectProfitabilityVlaDto> -> PaginationRes<ProjectProfitabilityVlaRes>
- *     explicit mapping to support the paginated list response in ProjectController.
- *
- * PRESERVED:
- *   - All 30+ existing mappings unchanged.
- *   - Generic PaginationReq<> / PaginationRes<> / PaginatedResult<> / QueryParameters<>
- *     type mappings preserved.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm ForMember Id GetValueOrDefault(0) is acceptable
- *     when Id is null in the DTO; if the view always returns a non-null Id, remove
- *     the null-coalescing guard and make ProjectProfitabilityVlaDto.Id non-nullable.
- *   - TRANSFORMENGINE TODO: confirm 'Project' display name in the response maps to
- *     the correct column (JobCode / ParentProject) from the vprojectprofitability view.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;

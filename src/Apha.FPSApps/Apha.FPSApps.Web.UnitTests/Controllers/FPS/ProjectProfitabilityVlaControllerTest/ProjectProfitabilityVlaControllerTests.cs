@@ -1,35 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — ProjectProfitabilityVlaControllerTests.cs (Frontend Web)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - New file: xUnit tests for the frontend ProjectProfitabilityVlaController
- *     (Apha.FPSApps.Web, Area=FPS).
- *   - Tests cover:
- *       Index() — ViewResult returned, 4 dropdowns populated, StatusList static,
- *                 ProgramList/ManagerList/CustomerList dynamic; service failure paths.
- *       LoadProjectProfitabilityVlaGrid() — invalid ModelState → Json failure,
- *                 valid request → PartialView("_DataGrid"), service failure → empty grid.
- *       GetProjectProfitabilityVlaSummary() — success aggregation returned as OkObjectResult,
- *                 service failure → StatusCode 500, empty data → all totals zero.
- *   - Uses NSubstitute for IMapper, IProjectService, IProgramService.
- *   - No FluentAssertions referenced by Apha.FPSApps.Web.UnitTests — uses xUnit Assert.*
- *
- * PRESERVED:
- *   - Test naming convention [MethodName]_[StateUnderTest]_[ExpectedResult].
- *   - Constructor-based mock initialisation matching ProjectProfitabilityControllerTests.cs.
- *   - Arrange-Act-Assert layout.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: GetProjectProfitabilityVlaSummary returns anonymous object;
- *     JSON serialisation round-trip used to assert summary totals — verify field names
- *     match the controller's anonymous object property names.
- *   - Build/test status: NOT RUN — requires dotnet restore && dotnet build.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;

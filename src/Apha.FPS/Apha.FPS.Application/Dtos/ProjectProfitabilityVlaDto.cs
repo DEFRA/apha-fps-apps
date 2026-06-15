@@ -1,37 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — ProjectProfitabilityVlaDto.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - New file: no legacy C# equivalent existed for the VLA variant.
- *   - Source artefacts: frmJobcodeTotalsVLA HTML prototype, qryJobCodeTotals /
- *     qryJobCodeTotals2 MS Access queries, projectprofitability_vla.js.
- *   - DTO property names aligned with ProjectProfitabilityVlaView entity (Phase 2)
- *     which in turn aligns with the ProjectProfitabilityVlaRes API contract (Phase 1).
- *   - VLA-specific cost column names (StaffCosts, TestCost, AnimalCosts, AdditionalCosts,
- *     Budget, Profit) differ from base ProjectProfitabilityDto (JcTotalStaffCosts,
- *     JcTotalTestCosts, JcTotalAnimalCosts, JcTotalAdditionalCosts, BudgetCvl, JcProfit).
- *   - Adds VLA-specific filter dimension fields: Program, Customer, Manager, Status.
- *   - Adds optional Id (int?) — optional row identifier from view ROW_NUMBER() column.
- *
- * PRESERVED:
- *   - All nine financial columns matching qryJobCodeTotals aggregation:
- *     StaffCosts, TestCost, AnimalCosts, AdditionalCosts, TotalCosts,
- *     Budget, Profit, TargetProfit, OffTarget.
- *   - Nullable Budget (Budget_CVL in tlkpProject may be NULL).
- *   - JobCode as the primary project row identifier (maps to tlkpProject.ParentProject).
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm Id nullability — remove '?' if the PostgreSQL view
- *     guarantees a non-null ROW_NUMBER() column; or remove Id entirely if the view
- *     uses JobCode as the row identifier.
- *   - TRANSFORMENGINE TODO: confirm Budget nullability matches the final view column
- *     definition; remove '?' if the column is NOT NULL.
- */
-
 namespace Apha.FPS.Application.Dtos
 {
     /// <summary>

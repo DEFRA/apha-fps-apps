@@ -1,34 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — FpsViewModelMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - Added CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaItem>().ReverseMap()
- *     to bind the frontend DTO (ApiDtoMapper output) to the Razor grid row item produced
- *     by the MVC controller's LoadGrid action (Phase 11).
- *   - All property names on ProjectProfitabilityVlaDto and ProjectProfitabilityVlaItem
- *     are expected to be identical (JobCode, Program, Customer, Manager, Status, all
- *     financial columns) — convention mapping; no ForMember required.
- *     If Phase 11 introduces a name divergence on ProjectProfitabilityVlaItem, add
- *     explicit ForMember entries at that point.
- *
- * PRESERVED:
- *   - All existing CreateMap entries unchanged.
- *   - Namespace, class name, and Profile inheritance unchanged.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: once ProjectProfitabilityVlaItem is created in Phase 11,
- *     verify that all property names on the Item class exactly match ProjectProfitabilityVlaDto.
- *     If any grid-display property (e.g. a formatted string version of a decimal) differs,
- *     add a ForMember override here.
- *   - TRANSFORMENGINE TODO: if a ProjectProfitabilityVlaViewModel is introduced in Phase 11
- *     for the filter-binding ViewModel, add CreateMap<ProjectProfitabilityVlaViewModel, ...>()
- *     here as a separate entry (filter ViewModel is distinct from the grid Item shape).
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;

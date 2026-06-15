@@ -1,33 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — ProjectProfitabilityVlaReq.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 1 — Apha.Common - Shared Contracts (Step 1)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - New file: no legacy C# equivalent existed.
- *   - Source artefact: HTML prototype frmJobcodeTotalsVLA.html + projectprofitability_vla.js
- *   - Four filter controls from HTML prototype (filterProjectStatus, filterProgram,
- *     filterManager, filterCustomer) mapped to typed request properties.
- *   - Pagination parameters (Page, PageSize) added per plan note; align with
- *     existing FPS paged-list contracts convention.
- *   - This is a query/filter request — all fields are optional; no Required
- *     annotations applied because the list endpoint returns all rows when no
- *     filter is selected (HTML prototype shows "All statuses / All programs /
- *     All managers / All customers" default options).
- *
- * PRESERVED:
- *   - Field semantics and naming aligned with projectprofitability_vla.js
- *     normalizeRow() property names and HTML filter element ids.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm MaxLength values match database column widths
- *     once the vprojectprofitability view schema is finalised in Phase 2.
- *   - TRANSFORMENGINE TODO: confirm default PageSize (15) matches DataGridComponent
- *     pageSize configured in projectprofitability_vla.js (currently 15).
- */
-
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.Common.Contracts.FPS

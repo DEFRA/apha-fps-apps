@@ -1,29 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — ProjectProfitabilityVlaControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - New file: xUnit tests for ProjectController.GetProjectProfitabilityVlaAsync()
- *     (GET /api/v1/project/profitability-vla).
- *   - Covers: success path with paged results, empty result, null query build,
- *     service delegation, and exception propagation.
- *   - Uses NSubstitute for IProjectService and IMapper mocks.
- *   - Uses FluentAssertions for result assertions (already referenced by project).
- *
- * PRESERVED:
- *   - Test naming convention [MethodName]_[StateUnderTest]_[ExpectedResult].
- *   - Constructor-based mock initialisation pattern used throughout Api.UnitTests.
- *   - Arrange-Act-Assert layout matching existing controller test files.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: verify QueryParameters<ProjectProfitabilityVlaReq> shape built
- *     inside the controller matches what IProjectService.GetProjectProfitabilityVlaAsync expects.
- *   - Build/test status: NOT RUN — requires dotnet restore && dotnet build.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;

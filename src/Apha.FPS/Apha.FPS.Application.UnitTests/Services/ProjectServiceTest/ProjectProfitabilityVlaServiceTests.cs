@@ -1,29 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — ProjectProfitabilityVlaServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - New file: xUnit tests for ProjectService.GetProjectProfitabilityVlaAsync()
- *     (backend Application layer, Apha.FPS.Application).
- *   - Covers: success path with paged data, empty result, null-guard (ArgumentNullException),
- *     repository delegation with correct PaginationParameters, and mapper invocation.
- *   - Uses NSubstitute for IProjectRepository and IMapper mocks.
- *   - Uses FluentAssertions (already referenced by project).
- *
- * PRESERVED:
- *   - Test naming convention [MethodName]_[StateUnderTest]_[ExpectedResult].
- *   - Constructor-based mock initialisation pattern matching ProjectProfitabilityServiceTests.cs.
- *   - Arrange-Act-Assert layout.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm PagedData<ProjectProfitabilityVlaView> constructor signature
- *     matches what RepositoryTestHelper / mock returns (Data + PaginationData).
- *   - Build/test status: NOT RUN — requires dotnet restore && dotnet build.
- */
-
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;

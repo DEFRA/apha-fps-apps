@@ -1,25 +1,3 @@
-﻿// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — IProjectService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - Added GetProjectProfitabilityVlaAsync(QueryParameters<ProjectProfitabilityVlaReq>)
- *     method signature for the frmJobcodeTotalsVLA form migration.
- *   - Added using for Apha.Common.Contracts.FPS to resolve ProjectProfitabilityVlaReq.
- *
- * PRESERVED:
- *   - All 19 existing method signatures unchanged.
- *   - Existing profitability methods: GetProjectProfitabilityAsync,
- *     GetProjectGroupProfitabilityAsync.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm return type PaginatedResult<ProjectProfitabilityVlaDto>
- *     is consistent with the API controller's expected response shape (Phase 5).
- */
-
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;

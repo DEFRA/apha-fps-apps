@@ -1,35 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — ProjectProfitabilityVlaDto.cs (Frontend)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 7 — Frontend DTOs + API Client Interfaces (Steps 10-11)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - New frontend DTO mirroring Apha.FPS.Application.Dtos.ProjectProfitabilityVlaDto
- *     (backend Phase 3 artefact) in the Apha.FPSApps.Application.Dtos.FPS namespace.
- *   - VLA-specific filter dimension fields (Program, Customer, Manager, Status) added —
- *     absent from base ProjectProfitabilityDto in both backend and frontend namespaces.
- *   - Financial column names differ from base DTO: StaffCosts (not JcTotalStaffCosts),
- *     TestCost (not JcTotalTestCosts), AnimalCosts, AdditionalCosts,
- *     Budget (not BudgetCvl), Profit (not JcProfit).
- *   - Id added as int? — optional row identifier mirroring backend DTO nullability.
- *
- * PRESERVED:
- *   - All property names exactly match Apha.FPS.Application.Dtos.ProjectProfitabilityVlaDto
- *     for zero-friction ApiDtoMapper binding (Res -> Dto -> frontend Dto chain).
- *   - JobCode as the natural project row key.
- *   - Budget nullable (decimal?) matching backend DTO nullability.
- *   - Nine financial columns: StaffCosts, TestCost, AnimalCosts, AdditionalCosts,
- *     TotalCosts, Budget, Profit, TargetProfit, OffTarget.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm Id nullability — remove '?' if the PostgreSQL view
- *     guarantees a non-null ROW_NUMBER() column (mirrors backend DTO open review item).
- *   - TRANSFORMENGINE TODO: confirm Budget nullability matches the final view column
- *     definition; remove '?' if the column is NOT NULL (mirrors backend DTO review item).
- */
-
 namespace Apha.FPSApps.Application.Dtos.FPS
 {
     /// <summary>

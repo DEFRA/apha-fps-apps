@@ -1,34 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — EntityMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - Added CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap()
- *     for the frmJobcodeTotalsVLA form migration.
- *   - All property names on ProjectProfitabilityVlaView and ProjectProfitabilityVlaDto
- *     are deliberately aligned (StaffCosts, TestCost, AnimalCosts, AdditionalCosts,
- *     TotalCosts, Budget, Profit, TargetProfit, OffTarget, JobCode, Program, Customer,
- *     Manager, Status, Id) so AutoMapper convention mapping resolves without explicit
- *     ForMember calls.
- *
- * PRESERVED:
- *   - All 48 existing CreateMap registrations unchanged.
- *   - Existing pagination generic maps: PaginationParameters<>/QueryParameters<>,
- *     PagedData<>/PaginatedResult<>.
- *   - All ProfitCentre, WorkGroup, Employee, Division, Agency, and base
- *     ProjectProfitability mappings preserved.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: if the PostgreSQL view omits the Id column (no ROW_NUMBER()),
- *     remove Id from both ProjectProfitabilityVlaView and ProjectProfitabilityVlaDto
- *     and update this mapping accordingly. The ReverseMap() is safe to keep regardless.
- *   - TRANSFORMENGINE TODO: confirm no custom ForMember overrides are needed once the
- *     Phase 4 view DDL is finalised and column names are confirmed.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;

@@ -1,29 +1,3 @@
-﻿// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — IProjectRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 2 — Core Layer - Entities + Repository Interfaces + Pagination (Steps 2-3)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - Added GetProjectProfitabilityVlaAsync — new repository method for the
- *     Project Profitability VLA list (frmJobcodeTotalsVLA form migration).
- *   - Method signature: accepts ProjectProfitabilityVlaReq filter request and
- *     returns PagedData<ProjectProfitabilityVlaView>.
- *   - New entity type ProjectProfitabilityVlaView added to using imports.
- *
- * PRESERVED:
- *   - All existing method signatures unchanged (GetProjectProfitabilityAsync,
- *     GetProjectGroupProfitabilityAsync, GetAllProjectsAsync, CRUD operations,
- *     delete guard checks, program FK validation).
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm PaginationParameters<ProjectProfitabilityVlaReq>
- *     vs. a flat parameter approach once the Application-layer service is implemented.
- *     The filter struct is passed via PaginationParameters<T>.Filter to align with
- *     the existing pattern used by GetProjectProfitabilityAsync.
- */
-
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;

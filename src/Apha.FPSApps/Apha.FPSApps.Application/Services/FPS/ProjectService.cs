@@ -1,28 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — ProjectService.cs (Frontend)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 8 — Frontend Service Interface + Implementation (Steps 12-13)
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - Added GetProjectProfitabilityVlaAsync() — thin delegate implementation forwarding
- *     to _fpsClient.FpsProject.GetProjectProfitabilityVlaAsync() with all five params
- *     (query, projectStatus, programNo, manager, customer) passed through unchanged.
- *   - Implements the newly added IProjectService.GetProjectProfitabilityVlaAsync() from Phase 8.
- *
- * PRESERVED:
- *   - All 18 existing delegate method implementations unchanged.
- *   - _fpsClient field type (IFpsApiClient), constructor injection, and access modifier unchanged.
- *   - All using directives unchanged.
- *   - Namespace unchanged.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: confirm FpsProjectApiClient (infrastructure) implements
- *     GetProjectProfitabilityVlaAsync and maps QueryParameters<string> page/pageSize to
- *     the flat ?page=&pageSize= query-string params of GET /api/v1/project/profitability-vla.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;

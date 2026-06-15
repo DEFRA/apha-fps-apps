@@ -1,28 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — ProjectProfitabilityVlaServiceTests.cs (Frontend Application)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-15
- *
- * CHANGED:
- *   - New file: xUnit tests for the frontend ProjectService.GetProjectProfitabilityVlaAsync()
- *     thin-delegate method (Apha.FPSApps.Application layer).
- *   - Tests cover: success path, empty result, failure response, delegation to
- *     _fpsClient.FpsProject, all four optional filter params forwarded correctly,
- *     and exception propagation.
- *   - Uses NSubstitute for IFpsApiClient and IFpsProjectApiClient.
- *   - Pattern mirrors ProjectProfitabilityServiceTests.cs in the same test project.
- *
- * PRESERVED:
- *   - Test naming convention [MethodName]_[StateUnderTest]_[ExpectedResult].
- *   - Constructor-based IFpsApiClient → IFpsProjectApiClient mock delegation pattern.
- *   - Arrange-Act-Assert layout.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - Build/test status: NOT RUN — requires dotnet restore && dotnet build.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
