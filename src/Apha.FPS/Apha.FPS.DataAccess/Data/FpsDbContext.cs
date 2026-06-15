@@ -95,11 +95,10 @@ namespace Apha.FPS.DataAccess.Data
 
         public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
         public virtual DbSet<ProjectGroupStaffPlanView> ProjectGroupStaffPlanViews { get; set; }
-
+        
         public virtual DbSet<Bid> Bids { get; set; }
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
-        public virtual DbSet<WorkGroupView> WorkGroupViews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());

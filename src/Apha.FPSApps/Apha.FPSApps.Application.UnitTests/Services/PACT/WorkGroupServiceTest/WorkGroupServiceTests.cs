@@ -1231,5 +1231,177 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         }
 
         #endregion
+
+        #region GetWorkGroupsByProfitCentreForBudgetPagedAsync
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetPagedAsync_WithData_ReturnsPagedSuccessResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var workGroups = new List<WorkGroupViewDto>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
+            };
+            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups);
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+
+            // Act
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            Assert.NotNull(result.Pagination);
+            Assert.Equal(2, result.Pagination!.TotalRecords);
+            Assert.Equal(1, result.Pagination.PageNumber);
+            Assert.Equal(10, result.Pagination.PageSize);
+            await _pactWorkGroupApiClient.Received(1).GetWorkGroupsByProfitCentreForBudgetAsync("PC1");
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetPagedAsync_EmptyList_ReturnsPagedSuccessWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse([]);
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+
+            // Act
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            Assert.NotNull(result.Pagination);
+            Assert.Equal(0, result.Pagination!.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetPagedAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var failResponse = ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(failResponse);
+
+            // Act
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            await _pactWorkGroupApiClient.Received(1).GetWorkGroupsByProfitCentreForBudgetAsync("PC1");
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetPagedAsync_AppliesPaging_ReturnsCorrectPage()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 1 };
+            var workGroups = new List<WorkGroupViewDto>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
+            };
+            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups);
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+
+            // Act
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            Assert.Equal("WG2", result.Data![0].WorkGroupName);
+            Assert.NotNull(result.Pagination);
+            Assert.Equal(2, result.Pagination!.TotalRecords);
+            Assert.Equal(2, result.Pagination.PageNumber);
+            Assert.Equal(1, result.Pagination.PageSize);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetPagedAsync_AppliesFilter_ReturnsFilteredResults()
+        {
+            // Arrange
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = """{"WorkGroupName":"WG1"}"""
+            };
+            var workGroups = new List<WorkGroupViewDto>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
+            };
+            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups);
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+
+            // Act
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            Assert.Equal("WG1", result.Data![0].WorkGroupName);
+            Assert.Equal(1, result.Pagination!.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetPagedAsync_AppliesSortAscending_ReturnsSortedResults()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "WorkGroupName", Descending = false };
+            var workGroups = new List<WorkGroupViewDto>
+            {
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" }
+            };
+            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups);
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+
+            // Act
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            Assert.Equal("WG1", result.Data![0].WorkGroupName);
+            Assert.Equal("WG2", result.Data![1].WorkGroupName);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsByProfitCentreForBudgetPagedAsync_AppliesSortDescending_ReturnsSortedResults()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "WorkGroupName", Descending = true };
+            var workGroups = new List<WorkGroupViewDto>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
+            };
+            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups);
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+
+            // Act
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            Assert.Equal("WG2", result.Data![0].WorkGroupName);
+            Assert.Equal("WG1", result.Data![1].WorkGroupName);
+        }
+
+        #endregion
     }
 }

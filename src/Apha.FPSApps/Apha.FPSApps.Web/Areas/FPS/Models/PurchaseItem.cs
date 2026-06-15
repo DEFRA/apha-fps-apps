@@ -17,6 +17,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 200, Type = GridColumnType.Text, IsFilterable = true)]
         public string ItemDescription { get; set; } = string.Empty;
 
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
+        public string OldItemDescription { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "Amount is required")]
         [Display(Name = "Amount")]
         [Range(0, double.MaxValue, ErrorMessage = "Amount must be a positive value")]

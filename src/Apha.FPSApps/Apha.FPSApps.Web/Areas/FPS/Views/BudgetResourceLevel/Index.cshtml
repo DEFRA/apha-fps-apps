@@ -77,17 +77,19 @@
         <div class="govuk-grid-column-one-third sup_p_0">
             <div class="sup_border sup_margin_right_10">
                 <div class="sup_flex_end_space sup_p_5 sup_border-bottom">
-                    <div class="sup_flex_between_center sup_width_auto sup_padding_right_left_5 govuk-grid-column-full">
-                        <label class="govuk-!-font-size-16 sup_margin_0 govuk-!-font-weight-bold" for="fpsBrlSelectedWg">(2) Now Update the Budgets for WG</label>
-                        <input id="fpsBrlSelectedWg"
-                               type="text"
-                               class="govuk-input govuk-!-font-size-16 sup_max_width_8em sup_margin_left_5"
-                               aria-label="Selected work group" readonly value="@Model.SelectedWorkgroup" />
+                    <div class="sup_flex_between_center sup_padding_right_left_5 govuk-grid-column-full">
+                        <div>
+                            <label class="govuk-!-font-size-16 sup_margin_0 govuk-!-font-weight-bold" for="fpsBrlSelectedWg">(2) Now Update the Budgets for WG</label>
+                            <input id="fpsBrlSelectedWg"
+                                   type="text"
+                                   class="govuk-input govuk-!-font-size-16 sup_max_width_8em sup_margin_left_5"
+                                   aria-label="Selected work group" readonly value="@Model.SelectedWorkgroup" />
+                        </div>
+                        <button type="button" class="govuk-button sup_margin_0 govuk-!-margin-bottom-2" onclick="addBudgetBid()">
+                            + Add
+                        </button>
                     </div>
-                    <button type="button" class="govuk-button sup_margin_0 govuk-!-margin-bottom-2" onclick="addBudgetBid()">
-                        + Add
-                    </button>
-                </div>
+                    </div>
                 <div id="gridContainer_budgetBidsGrid">
                     @await Html.PartialAsync("_DataGrid", Model.BudgetBidsGrid)
                 </div>

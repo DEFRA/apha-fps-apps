@@ -6,6 +6,7 @@ using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using AutoMapper;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,17 +22,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
     public class BudgetResourceLevelController : Controller
     {
-        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workGroupService;
+        private readonly IMapper _mapper;
+        private readonly IWorkGroupService _workGroupService;
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IPurchasesService _purchasesService;
         private readonly IProfitCentreService _profitCentreService;
 
         public BudgetResourceLevelController(
-            Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService workGroupService,
+            IMapper mapper,
+            IWorkGroupService workGroupService,
             IBudgetBidsService budgetBidsService,
             IPurchasesService purchasesService,
             IProfitCentreService profitCentreService)
         {
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _workGroupService = workGroupService;
             _budgetBidsService = budgetBidsService;
             _purchasesService = purchasesService;
@@ -48,11 +52,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             await PopulateProfitCentresAsync(viewModel);
 
-            var defaultRequest = new PaginationFilter<string> { Filter = "{}", SortBy = string.Empty, Descending = false, Page = 1, PageSize = 10 };
+            var defaultRequest     = new PaginationFilter<string> { Filter = "{}", SortBy = string.Empty, Descending = false, Page = 1, PageSize = 10 };
+            var workGroupRequest   = new PaginationFilter<string> { Filter = "{}", SortBy = string.Empty, Descending = false, Page = 1, PageSize = 5 };
 
-            viewModel.WorkGroupGrid = await GetWorkGroupGridConfigAsync(profitCentre);
-            viewModel.BudgetBidsGrid = await GetBudgetBidsGridConfigAsync(defaultRequest, null);
-            viewModel.PurchasesGrid = await GetPurchasesGridConfigAsync(defaultRequest, null, null);
+            viewModel.WorkGroupGrid   = await GetWorkGroupGridConfigAsync(workGroupRequest, profitCentre);
+            viewModel.BudgetBidsGrid  = await GetBudgetBidsGridConfigAsync(defaultRequest, null);
+            viewModel.PurchasesGrid   = await GetPurchasesGridConfigAsync(defaultRequest, null, null);
 
             return View(viewModel);
         }
@@ -67,7 +72,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Invalid request data", errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
 
-            var gridConfig = await GetWorkGroupGridConfigAsync(profitCentre);
+            var gridConfig = await GetWorkGroupGridConfigAsync(request, profitCentre);
             return PartialView("_DataGrid", gridConfig);
         }
 
@@ -95,15 +100,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
 
-        private async Task<DataGridConfig<WorkGroupItem>> GetWorkGroupGridConfigAsync(string? profitCentre)
+        private async Task<DataGridConfig<WorkGroupItem>> GetWorkGroupGridConfigAsync(PaginationFilter<string> request, string? profitCentre)
         {
-            var allItems = new List<WorkGroupItem>();
+            var filterDict     = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new Dictionary<string, string>();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            queryParameters.PageSize = request.PageSize > 0 ? request.PageSize : 5;
+
+            var pagedItems = new List<WorkGroupItem>();
+            var paginationModel = new PaginationModel();
 
             if (!string.IsNullOrWhiteSpace(profitCentre))
             {
-                var response = await _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(profitCentre);
-                if (response.Success && response.Data != null)
-                    allItems = response.Data.Select(d => new WorkGroupItem
+                var pagedData = await _workGroupService.GetWorkGroupsByProfitCentreForBudgetPagedAsync(queryParameters, profitCentre);
+                if (pagedData.Success && pagedData.Data != null)
+                {
+                    pagedItems = pagedData.Data.Select((WorkGroupViewDto d) => new WorkGroupItem
                     {
                         WorkGroupName = d.WorkGroupName,
                         WorkGroup     = d.WorkGroupName,
@@ -113,44 +124,48 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                         Dt2Username   = d.Dt2Username,
                         UserEmail     = d.UserEmail
                     }).ToList();
+
+                    paginationModel = pagedData.Pagination == null
+                        ? new PaginationModel()
+                        : _mapper.Map<PaginationModel>(pagedData.Pagination);
+                }
             }
+
+            paginationModel.SortColumn    = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
 
             return new DataGridConfig<WorkGroupItem>
             {
-                GridId            = "workGroupGrid",
-                Title             = "Work Groups",
+                GridId             = "workGroupGrid",
+                Title              = "Work Groups",
                 ShowCheckboxColumn = false,
-                ShowPagination    = true,
-                KeyProperty       = "WorkGroupName",
-                AllowAdd          = false,
-                AllowEdit         = false,
-                AllowDelete       = false,
-                ExtraFilterMethod = "getWorkGroupExtraFilters",
-                BindGridUrl       = Url.Action(nameof(LoadWorkGroupGrid), "BudgetResourceLevel", new { area = "FPS" })!,
-                Data              = allItems,
-                Columns           = GridDataProvider.GetColumnsDefination<WorkGroupItem>(null),
-                Pagination        = new PaginationModel
-                {
-                    TotalRecords  = allItems.Count,
-                    PageNumber    = 1,
-                    PageSize      = allItems.Count > 0 ? allItems.Count : 10,
-                    SortColumn    = string.Empty,
-                    SortDirection = false
-                },
-                CurrentFilters    = new Dictionary<string, string>()
+                ShowPagination     = true,
+                KeyProperty        = "WorkGroupName",
+                AllowAdd           = false,
+                AllowEdit          = false,
+                AllowDelete        = false,
+                ExtraFilterMethod  = "getWorkGroupExtraFilters",
+                BindGridUrl        = Url.Action(nameof(LoadWorkGroupGrid), "BudgetResourceLevel", new { area = "FPS" })!,
+                Data               = pagedItems,
+                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupItem>(null),
+                Pagination         = paginationModel,
+                CurrentFilters     = filterDict
             };
         }
 
         private async Task<DataGridConfig<BudgetResourceCentreLevelItem>> GetBudgetBidsGridConfigAsync(
             PaginationFilter<string> request, string? workgroup)
         {
-            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new Dictionary<string, string>();
-            var allItems = new List<BudgetResourceCentreLevelItem>();
+            var filterDict      = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new Dictionary<string, string>();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            var pagedItems      = new List<BudgetResourceCentreLevelItem>();
+            var paginationModel = new PaginationModel();
 
             if (!string.IsNullOrWhiteSpace(workgroup))
             {
-                var response = await _budgetBidsService.GetBidViewAsync(workgroup);
-                if (response.Success && response.Data != null)
+                var pagedData = await _budgetBidsService.GetBidViewPagedAsync(queryParameters, workgroup);
+                if (pagedData.Success && pagedData.Data != null)
                 {
                     var accountResult = await _budgetBidsService.GetAccountCategoriesAsync();
                     var accountList = accountResult.Data?.Select(a => new SelectListItem
@@ -159,102 +174,93 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                         Text  = string.IsNullOrWhiteSpace(a.AccountDescription) ? a.AccShortName : $"{a.AccShortName} - {a.AccountDescription}"
                     }).ToList() ?? new List<SelectListItem>();
 
-                    allItems = response.Data.Select(d => new BudgetResourceCentreLevelItem
+                    pagedItems = pagedData.Data.Select(d => new BudgetResourceCentreLevelItem
                     {
                         WorkGroupName = d.WorkGroupName,
                         Account       = d.Account,
                         GenBid        = d.GenBid,
                         AccountList   = accountList
                     }).ToList();
+
+                    paginationModel = pagedData.Pagination == null
+                        ? new PaginationModel()
+                        : _mapper.Map<PaginationModel>(pagedData.Pagination);
                 }
             }
 
-            var totalRecords = allItems.Count;
-            var pageSize     = request.PageSize > 0 ? request.PageSize : 10;
-            var pageNumber   = request.Page > 0 ? request.Page : 1;
-            var pagedItems   = allItems.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+            paginationModel.SortColumn    = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
 
             return new DataGridConfig<BudgetResourceCentreLevelItem>
             {
-                GridId            = "budgetBidsGrid",
-                Title             = "Budget Bids",
+                GridId             = "budgetBidsGrid",
+                Title              = "Budget Bids",
                 ShowCheckboxColumn = false,
-                ShowPagination    = true,
-                KeyProperty       = "Account",
-                AllowAdd          = false,
-                AddFunction       = "addBudgetBid",
-                AllowEdit         = true,
-                EditFunction      = "editBudgetBid",
-                AllowDelete       = true,
-                DeleteFunction    = "deleteBudgetBid",
-                ExtraFilterMethod = "getBudgetBidExtraFilters",
-                BindGridUrl       = Url.Action(nameof(LoadBudgetBidsGrid), "BudgetResourceLevel", new { area = "FPS" })!,
-                Data              = pagedItems,
-                Columns           = GridDataProvider.GetColumnsDefination<BudgetResourceCentreLevelItem>(null),
-                Pagination        = new PaginationModel
-                {
-                    TotalRecords  = totalRecords,
-                    PageNumber    = pageNumber,
-                    PageSize      = pageSize,
-                    SortColumn    = request.SortBy,
-                    SortDirection = request.Descending
-                },
-                CurrentFilters    = filterDict
+                ShowPagination     = true,
+                KeyProperty        = "Account",
+                AllowAdd           = false,
+                AllowEdit          = true,
+                EditFunction       = "editBudgetBid",
+                AllowDelete        = true,
+                DeleteFunction     = "deleteBudgetBid",
+                ExtraFilterMethod  = "getBudgetBidExtraFilters",
+                BindGridUrl        = Url.Action(nameof(LoadBudgetBidsGrid), "BudgetResourceLevel", new { area = "FPS" })!,
+                Data               = pagedItems,
+                Columns            = GridDataProvider.GetColumnsDefination<BudgetResourceCentreLevelItem>(null),
+                Pagination         = paginationModel,
+                CurrentFilters     = filterDict
             };
         }
 
         private async Task<DataGridConfig<PurchaseItem>> GetPurchasesGridConfigAsync(
             PaginationFilter<string> request, string? workgroup, string? account)
         {
-            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new Dictionary<string, string>();
-            var allItems = new List<PurchaseItem>();
+            var filterDict      = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? new Dictionary<string, string>();
+            var queryParameters = _mapper.Map<QueryParameters<string>>(request);
+
+            var pagedItems      = new List<PurchaseItem>();
+            var paginationModel = new PaginationModel();
 
             if (!string.IsNullOrWhiteSpace(workgroup) && !string.IsNullOrWhiteSpace(account))
             {
-                var response = await _purchasesService.GetPurchasesAsync(workgroup, account);
-                if (response.Success && response.Data != null)
+                var pagedData = await _purchasesService.GetPurchasesPagedAsync(queryParameters, workgroup, account);
+                if (pagedData.Success && pagedData.Data != null)
                 {
-                    allItems = response.Data.Select(d => new PurchaseItem
+                    pagedItems = pagedData.Data.Select(d => new PurchaseItem
                     {
                         WorkGroupName   = d.WorkGroupName,
                         Account         = d.Account,
                         ItemDescription = d.ItemDescription,
                         Amount          = d.Amount
                     }).ToList();
+
+                    paginationModel = pagedData.Pagination == null
+                        ? new PaginationModel()
+                        : _mapper.Map<PaginationModel>(pagedData.Pagination);
                 }
             }
 
-            var totalRecords = allItems.Count;
-            var pageSize     = request.PageSize > 0 ? request.PageSize : 10;
-            var pageNumber   = request.Page > 0 ? request.Page : 1;
-            var pagedItems   = allItems.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+            paginationModel.SortColumn    = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
 
             return new DataGridConfig<PurchaseItem>
             {
-                GridId            = "purchasesGrid",
-                Title             = "Purchases",
+                GridId             = "purchasesGrid",
+                Title              = "Purchases",
                 ShowCheckboxColumn = false,
-                ShowPagination    = true,
-                KeyProperty       = "ItemDescription",
-                AllowAdd          = false,
-                AddFunction       = "addPurchase",
-                AllowEdit         = true,
-                EditFunction      = "editPurchase",
-                AllowDelete       = true,
-                DeleteFunction    = "deletePurchase",
-                ExtraFilterMethod = "getPurchaseExtraFilters",
-                BindGridUrl       = Url.Action(nameof(LoadPurchasesGrid), "BudgetResourceLevel", new { area = "FPS" })!,
-                Data              = pagedItems,
-                Columns           = GridDataProvider.GetColumnsDefination<PurchaseItem>(null),
-                Pagination        = new PaginationModel
-                {
-                    TotalRecords  = totalRecords,
-                    PageNumber    = pageNumber,
-                    PageSize      = pageSize,
-                    SortColumn    = request.SortBy,
-                    SortDirection = request.Descending
-                },
-                CurrentFilters    = filterDict
+                ShowPagination     = true,
+                KeyProperty        = "ItemDescription",
+                AllowAdd           = false,
+                AllowEdit          = true,
+                EditFunction       = "editPurchase",
+                AllowDelete        = true,
+                DeleteFunction     = "deletePurchase",
+                ExtraFilterMethod  = "getPurchaseExtraFilters",
+                BindGridUrl        = Url.Action(nameof(LoadPurchasesGrid), "BudgetResourceLevel", new { area = "FPS" })!,
+                Data               = pagedItems,
+                Columns            = GridDataProvider.GetColumnsDefination<PurchaseItem>(null),
+                Pagination         = paginationModel,
+                CurrentFilters     = filterDict
             };
         }
 
@@ -408,7 +414,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Account            = model.Account,
                 ItemDescription    = model.ItemDescription,
                 Amount             = model.Amount,
-                OldItemDescription = model.ItemDescription
+                OldItemDescription = model.OldItemDescription
             };
             var result = await _purchasesService.UpdatePurchaseAsync(dto);
 

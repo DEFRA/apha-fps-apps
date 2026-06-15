@@ -14,12 +14,16 @@ namespace Apha.FPS.DataAccess.Repositories
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
-        public async Task<bool> IsAuthorizedAsync(string WorkGroupName)
+        private async Task ThrowIfNotOwnerAsync(string WorkGroupName)
         {
-            return await _context.WorkGroupViews
-                .AnyAsync(w => w.WorkGroupName == WorkGroupName
-                            && w.UserEmail != null
-                            && w.UserEmail.ToLower() == _requestContext.UserEmailId);
+            var isOwner = await _context.BidViews
+                .AnyAsync(b => b.WorkGroupName == WorkGroupName
+                            && b.UserEmail != null
+                            && b.UserEmail.ToLower() == _requestContext.UserEmailId);
+
+            if (!isOwner)
+                throw new UnauthorizedAccessException(
+                    $"User does not have access to workgroup '{WorkGroupName}'.");
         }
 
         public async Task<List<BidView>> GetBidViewAsync(string workgroup)
@@ -50,6 +54,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Bid> AddBidAsync(Bid bid)
         {
+            await ThrowIfNotOwnerAsync(bid.WorkGroupName);
             bid.FpsYear = _requestContext.FpsYear;
 
             var strategy = _context.Database.CreateExecutionStrategy();
@@ -73,6 +78,8 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<Bid> UpdateBidAsync(Bid bid)
         {
+            await ThrowIfNotOwnerAsync(bid.WorkGroupName);
+
             var strategy = _context.Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
             {
@@ -98,6 +105,8 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<bool> DeleteBidAsync(string WorkGroupName, string account)
         {
+            await ThrowIfNotOwnerAsync(WorkGroupName);
+
             var entity = await _context.Bids
                 .FirstOrDefaultAsync(b => b.WorkGroupName == WorkGroupName && b.Account == account);
 

@@ -135,7 +135,7 @@ namespace Apha.PACT.Api.Controllers
         [HttpGet("budget/by-profitcentre")]
         public async Task<IActionResult> GetWorkGroupsByProfitCentreForBudgetAsync([FromQuery] string profitCentre)
         {
-            var result = await _service.GetWorkGroupsByProfitCentreAsync(profitCentre);
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetAsync(profitCentre);
             return Ok(_mapper.Map<List<WorkGroupViewRes>>(result));
         }
 

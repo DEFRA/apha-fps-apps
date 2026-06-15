@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
 using Xunit;
@@ -272,6 +273,178 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetBidViewPagedAsync Tests
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WithData_ReturnsPagedSuccessResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var bidList = new List<BidViewDto>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m }
+            };
+            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
+            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            Assert.NotNull(result.Pagination);
+            Assert.Equal(2, result.Pagination!.TotalRecords);
+            Assert.Equal(1, result.Pagination.PageNumber);
+            Assert.Equal(10, result.Pagination.PageSize);
+            await _fpsBudgetBidsApiClient.Received(1).GetBidViewAsync("WG01");
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_EmptyList_ReturnsPagedSuccessWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse([]);
+            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            Assert.NotNull(result.Pagination);
+            Assert.Equal(0, result.Pagination!.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var failResponse = ApiResponseDto<List<BidViewDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(failResponse);
+
+            // Act
+            var result = await _sut.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            await _fpsBudgetBidsApiClient.Received(1).GetBidViewAsync("WG01");
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_AppliesPaging_ReturnsCorrectPage()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 1 };
+            var bidList = new List<BidViewDto>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m }
+            };
+            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
+            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            Assert.Equal("ACC2", result.Data![0].Account);
+            Assert.NotNull(result.Pagination);
+            Assert.Equal(2, result.Pagination!.TotalRecords);
+            Assert.Equal(2, result.Pagination.PageNumber);
+            Assert.Equal(1, result.Pagination.PageSize);
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_AppliesFilter_ReturnsFilteredResults()
+        {
+            // Arrange
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = """{"Account":"ACC1"}"""
+            };
+            var bidList = new List<BidViewDto>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m }
+            };
+            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
+            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            Assert.Equal("ACC1", result.Data![0].Account);
+            Assert.Equal(1, result.Pagination!.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_AppliesSortAscending_ReturnsSortedResults()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "Account", Descending = false };
+            var bidList = new List<BidViewDto>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m },
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m }
+            };
+            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
+            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            Assert.Equal("ACC1", result.Data![0].Account);
+            Assert.Equal("ACC2", result.Data![1].Account);
+        }
+
+        [Fact]
+        public async Task GetBidViewPagedAsync_AppliesSortDescending_ReturnsSortedResults()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "Account", Descending = true };
+            var bidList = new List<BidViewDto>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m }
+            };
+            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
+            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetBidViewPagedAsync(query, "WG01");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            Assert.Equal("ACC2", result.Data![0].Account);
+            Assert.Equal("ACC1", result.Data![1].Account);
         }
 
         #endregion

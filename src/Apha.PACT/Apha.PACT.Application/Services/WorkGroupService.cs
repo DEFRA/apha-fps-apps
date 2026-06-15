@@ -29,10 +29,10 @@ namespace Apha.PACT.Application.Services
             => await _repository.GetAllWorkGroupNamesAsync();
 
 
-        public async Task<List<WorkGroupViewDto>> GetWorkGroupsByProfitCentreAsync(string profitCentre)
+        public async Task<List<WorkGroupViewDto>> GetWorkGroupsByProfitCentreForBudgetAsync(string profitCentre)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentre);
-            var views = await _repository.GetWorkGroupsByProfitCentreAsync(profitCentre);
+            var views = await _repository.GetWorkGroupsByProfitCentreForBudgetAsync(profitCentre);
             return _mapper.Map<List<WorkGroupViewDto>>(views);
         }
 

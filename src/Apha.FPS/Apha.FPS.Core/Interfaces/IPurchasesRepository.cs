@@ -4,7 +4,6 @@ namespace Apha.FPS.Core.Interfaces
 {
     public interface IPurchasesRepository
     {
-        Task<bool> IsAuthorizedAsync(string WorkGroupName, string userEmail);
         Task<List<Purchase>> GetPurchasesAsync(string WorkGroupName, string account);
         Task<Purchase?> GetPurchaseByIdAsync(string WorkGroupName, string account, string itemDescription);
         Task<Purchase> AddPurchaseAsync(Purchase purchase);

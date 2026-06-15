@@ -174,7 +174,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToListAsync();
         }
 
-        public async Task<List<WorkGroupView>> GetWorkGroupsByProfitCentreAsync(string profitCentre)
+        public async Task<List<WorkGroupView>> GetWorkGroupsByProfitCentreForBudgetAsync(string profitCentre)
         {
             return await _context.WorkGroupViews
                 .AsNoTracking()

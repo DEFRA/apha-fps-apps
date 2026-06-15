@@ -14,20 +14,23 @@ namespace Apha.FPS.DataAccess.Repositories
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
-        public async Task<bool> IsAuthorizedAsync(string WorkGroupName, string userEmail)
-        {
-            return await _context.BidViews
-                .AnyAsync(b => b.WorkGroupName == WorkGroupName
-                            && b.UserEmail != null
-                            && b.UserEmail.ToLower() == userEmail);
-        }
-
         public async Task<List<Purchase>> GetPurchasesAsync(string WorkGroupName, string account)
         {
+            var userEmail = _requestContext.UserEmailId.ToLower();
+
+            var authorisedAccounts = await _context.BidViews
+                .AsNoTracking()
+                .Where(b => b.WorkGroupName == WorkGroupName
+                         && b.UserEmail != null
+                         && b.UserEmail.ToLower() == userEmail)
+                .Select(b => b.Account)
+                .ToListAsync();
+
             return await _context.Purchases
                 .AsNoTracking()
                 .Where(p => p.WorkGroupName == WorkGroupName
-                         && p.Account == account)
+                         && p.Account == account
+                         && authorisedAccounts.Contains(p.Account))
                 .OrderBy(p => p.ItemDescription)
                 .ToListAsync();
         }

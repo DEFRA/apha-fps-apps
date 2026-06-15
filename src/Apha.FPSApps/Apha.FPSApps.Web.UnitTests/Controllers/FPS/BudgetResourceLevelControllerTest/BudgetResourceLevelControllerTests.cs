@@ -7,6 +7,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -17,6 +18,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
 {
     public class BudgetResourceLevelControllerTests
     {
+        private readonly IMapper _mapper;
         private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workGroupService;
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IPurchasesService _purchasesService;
@@ -25,12 +27,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
 
         public BudgetResourceLevelControllerTests()
         {
+            _mapper              = Substitute.For<IMapper>();
             _workGroupService    = Substitute.For<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService>();
             _budgetBidsService   = Substitute.For<IBudgetBidsService>();
             _purchasesService    = Substitute.For<IPurchasesService>();
             _profitCentreService = Substitute.For<IProfitCentreService>();
 
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel());
+
             _controller = new BudgetResourceLevelController(
+                _mapper,
                 _workGroupService,
                 _budgetBidsService,
                 _purchasesService,
@@ -63,20 +72,29 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
 
         private void SetupDefaultWorkGroups(string profitCentre = "PC01")
         {
+            var workGroups = new List<WorkGroupViewDto>
+            {
+                new() { WorkGroupName = "WG01", ProfitCentre = profitCentre }
+            };
             _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(profitCentre)
-                .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>
-                {
-                    new() { WorkGroupName = "WG01", ProfitCentre = profitCentre }
-                }));
+                .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups));
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetPagedAsync(
+                Arg.Any<QueryParameters<string>>(), profitCentre)
+                .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(
+                    workGroups, new PaginationDto { PageNumber = 1, PageSize = 5, TotalRecords = 1, TotalPages = 1 }));
         }
 
         private void SetupDefaultBidView(string workgroup = "WG01")
         {
+            var bids = new List<BidViewDto>
+            {
+                new() { WorkGroupName = workgroup, Account = "ACC1", GenBid = 100m }
+            };
             _budgetBidsService.GetBidViewAsync(workgroup)
-                .Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(new List<BidViewDto>
-                {
-                    new() { WorkGroupName = workgroup, Account = "ACC1", GenBid = 100m }
-                }));
+                .Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(bids));
+            _budgetBidsService.GetBidViewPagedAsync(Arg.Any<QueryParameters<string>>(), workgroup)
+                .Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(
+                    bids, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }));
             _budgetBidsService.GetAccountCategoriesAsync()
                 .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>
                 {
@@ -86,11 +104,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
 
         private void SetupDefaultPurchases(string workgroup = "WG01", string account = "ACC1")
         {
+            var purchases = new List<PurchaseDto>
+            {
+                new() { WorkGroupName = workgroup, Account = account, ItemDescription = "Item A", Amount = 50m }
+            };
             _purchasesService.GetPurchasesAsync(workgroup, account)
-                .Returns(ApiResponseDto<List<PurchaseDto>>.SuccessResponse(new List<PurchaseDto>
-                {
-                    new() { WorkGroupName = workgroup, Account = account, ItemDescription = "Item A", Amount = 50m }
-                }));
+                .Returns(ApiResponseDto<List<PurchaseDto>>.SuccessResponse(purchases));
+            _purchasesService.GetPurchasesPagedAsync(Arg.Any<QueryParameters<string>>(), workgroup, account)
+                .Returns(ApiResponseDto<List<PurchaseDto>>.SuccessResponse(
+                    purchases, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 }));
         }
 
         #region Index Tests
@@ -227,7 +249,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
-            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync("PC01")
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetPagedAsync(
+                Arg.Any<QueryParameters<string>>(), "PC01")
                 .Returns(ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error" } }, new ApiMetaDto()));
 
@@ -238,6 +261,25 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             var partialView = Assert.IsType<PartialViewResult>(result);
             var config = Assert.IsType<DataGridConfig<WorkGroupItem>>(partialView.Model);
             Assert.Empty(config.Data!);
+        }
+
+        [Fact]
+        public async Task LoadWorkGroupGrid_GridConfig_HasNoActionColumn()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
+            SetupDefaultWorkGroups("PC01");
+
+            // Act
+            var result = await _controller.LoadWorkGroupGrid(request, "PC01");
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var config = Assert.IsType<DataGridConfig<WorkGroupItem>>(partialView.Model);
+            Assert.Equal("workGroupGrid", config.GridId);
+            Assert.False(config.AllowAdd);
+            Assert.False(config.AllowEdit);
+            Assert.False(config.AllowDelete);
         }
 
         #endregion
@@ -363,6 +405,27 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             var result2 = await _controller.LoadPurchasesGrid(request, "WG01", null);
             var config2 = Assert.IsType<DataGridConfig<PurchaseItem>>(Assert.IsType<PartialViewResult>(result2).Model);
             Assert.Empty(config2.Data!);
+        }
+
+        [Fact]
+        public async Task LoadPurchasesGrid_GridConfig_HasCorrectSettings()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Filter = "{}", Page = 1, PageSize = 10 };
+            SetupDefaultPurchases("WG01", "ACC1");
+
+            // Act
+            var result = await _controller.LoadPurchasesGrid(request, "WG01", "ACC1");
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var config = Assert.IsType<DataGridConfig<PurchaseItem>>(partialView.Model);
+            Assert.Equal("purchasesGrid", config.GridId);
+            Assert.False(config.AllowAdd);
+            Assert.True(config.AllowEdit);
+            Assert.Equal("editPurchase", config.EditFunction);
+            Assert.True(config.AllowDelete);
+            Assert.Equal("deletePurchase", config.DeleteFunction);
         }
 
         #endregion
@@ -727,9 +790,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task EditPurchase_Post_WithValidModel_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new PurchaseItem { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
-            var dto   = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
-            _purchasesService.UpdatePurchaseAsync(Arg.Any<PurchaseDto>())
+            var model = new PurchaseItem { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", OldItemDescription = "Item A", Amount = 200m };
+            var dto   = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", OldItemDescription = "Item A", Amount = 200m };
+            PurchaseDto? capturedDto = null;
+            _purchasesService.UpdatePurchaseAsync(Arg.Do<PurchaseDto>(d => capturedDto = d))
                 .Returns(ApiResponseDto<PurchaseDto>.SuccessResponse(dto));
 
             // Act
@@ -741,6 +805,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             Assert.NotNull(value);
             Assert.True(value.success);
             Assert.Equal("Purchase updated successfully.", value.message);
+            Assert.NotNull(capturedDto);
+            Assert.Equal("Item A", capturedDto!.OldItemDescription);
+            Assert.Equal("Item B", capturedDto.ItemDescription);
+        }
+
+        [Fact]
+        public async Task EditPurchase_Post_PassesOldItemDescription_ToService()
+        {
+            // Arrange — simulates a rename: original description is "Item A", new value is "Item A Renamed".
+            // The service must receive OldItemDescription = "Item A" as the lookup key, NOT the new value.
+            var model = new PurchaseItem { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A Renamed", OldItemDescription = "Item A", Amount = 100m };
+            PurchaseDto? capturedDto = null;
+            _purchasesService.UpdatePurchaseAsync(Arg.Do<PurchaseDto>(d => capturedDto = d))
+                .Returns(ApiResponseDto<PurchaseDto>.SuccessResponse(new PurchaseDto()));
+
+            // Act
+            await _controller.EditPurchase(model);
+
+            // Assert
+            Assert.NotNull(capturedDto);
+            Assert.Equal("Item A",         capturedDto!.OldItemDescription);
+            Assert.Equal("Item A Renamed", capturedDto.ItemDescription);
         }
 
         [Fact]

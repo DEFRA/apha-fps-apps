@@ -22,7 +22,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
         }
 
         private static BudgetBidsRepository CreateRepository(
-            IEnumerable<WorkGroupView>?   wgViews           = null,
             IEnumerable<BidView>?         bidViews          = null,
             IEnumerable<Bid>?             bids              = null,
             IEnumerable<AccountCategory>? accountCategories = null,
@@ -32,9 +31,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
         {
             var mockCtx = CreateMockRequestContext(fpsYear, userEmail);
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockCtx.Object);
-
-            var wgViewSet = RepositoryTestHelper.CreateMockDbSet(wgViews ?? Enumerable.Empty<WorkGroupView>());
-            mockContext.Setup(x => x.WorkGroupViews).Returns(wgViewSet.Object);
 
             var bidViewSet = RepositoryTestHelper.CreateMockDbSet(bidViews ?? Enumerable.Empty<BidView>());
             mockContext.Setup(x => x.BidViews).Returns(bidViewSet.Object);
@@ -59,74 +55,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
             var dummyCtx = new Mock<IFpsRequestContext>().Object;
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(dummyCtx);
             Assert.Throws<ArgumentNullException>(() => new BudgetBidsRepository(mockContext.Object, null!));
-        }
-
-        #endregion
-
-        #region IsAuthorizedAsync Tests
-
-        [Fact]
-        public async Task IsAuthorizedAsync_WithMatchingWorkgroupAndUser_ReturnsTrue()
-        {
-            // Arrange
-            var views = new List<WorkGroupView>
-            {
-                new() { WorkGroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
-            };
-            var repo = CreateRepository(wgViews: views);
-
-            // Act
-            var result = await repo.IsAuthorizedAsync("WG01");
-
-            // Assert
-            Assert.True(result);
-        }
-
-        [Fact]
-        public async Task IsAuthorizedAsync_WithDifferentWorkgroup_ReturnsFalse()
-        {
-            // Arrange
-            var views = new List<WorkGroupView>
-            {
-                new() { WorkGroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = DefaultUserEmail }
-            };
-            var repo = CreateRepository(wgViews: views);
-
-            // Act
-            var result = await repo.IsAuthorizedAsync("WG99");
-
-            // Assert
-            Assert.False(result);
-        }
-
-        [Fact]
-        public async Task IsAuthorizedAsync_WithNullUserEmail_ReturnsFalse()
-        {
-            // Arrange
-            var views = new List<WorkGroupView>
-            {
-                new() { WorkGroupName = "WG01", FpsYear = DefaultFpsYear, UserEmail = null }
-            };
-            var repo = CreateRepository(wgViews: views);
-
-            // Act
-            var result = await repo.IsAuthorizedAsync("WG01");
-
-            // Assert
-            Assert.False(result);
-        }
-
-        [Fact]
-        public async Task IsAuthorizedAsync_WithNoMatchingData_ReturnsFalse()
-        {
-            // Arrange
-            var repo = CreateRepository(wgViews: new List<WorkGroupView>());
-
-            // Act
-            var result = await repo.IsAuthorizedAsync("WG01");
-
-            // Assert
-            Assert.False(result);
         }
 
         #endregion
@@ -344,6 +272,42 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.BudgetBidsRepositoryTest
 
             // Assert
             Assert.True(result);
+        }
+
+        #endregion
+
+        #region AddBidAsync / UpdateBidAsync / DeleteBidAsync — ownership guard
+
+        [Fact]
+        public async Task AddBidAsync_WhenUserNotInBidViews_ThrowsUnauthorizedAccessException()
+        {
+            // Arrange — no BidViews entry for this user, so ThrowIfNotOwnerAsync fires
+            var repo = CreateRepository(bidViews: new List<BidView>());
+            var bid  = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => repo.AddBidAsync(bid));
+        }
+
+        [Fact]
+        public async Task UpdateBidAsync_WhenUserNotInBidViews_ThrowsUnauthorizedAccessException()
+        {
+            // Arrange
+            var repo = CreateRepository(bidViews: new List<BidView>());
+            var bid  = new Bid { WorkGroupName = "WG01", Account = "ACC1", GenBid = 200m };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => repo.UpdateBidAsync(bid));
+        }
+
+        [Fact]
+        public async Task DeleteBidAsync_WhenUserNotInBidViews_ThrowsUnauthorizedAccessException()
+        {
+            // Arrange
+            var repo = CreateRepository(bidViews: new List<BidView>());
+
+            // Act & Assert
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => repo.DeleteBidAsync("WG01", "ACC1"));
         }
 
         #endregion

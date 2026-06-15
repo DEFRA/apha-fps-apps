@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Application.Services.FPS;
 using NSubstitute;
 using Xunit;
@@ -234,6 +235,178 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.PurchasesServiceTest
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetPurchasesPagedAsync Tests
+
+        [Fact]
+        public async Task GetPurchasesPagedAsync_WithData_ReturnsPagedSuccessResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var list = new List<PurchaseDto>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m },
+                new() { WorkGroupName = "WG01", Account = "ACC2", ItemDescription = "Item B", Amount = 200m }
+            };
+            var allResponse = ApiResponseDto<List<PurchaseDto>>.SuccessResponse(list);
+            _fpsPurchasesApiClient.GetPurchasesAsync("WG01", "ACC1").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetPurchasesPagedAsync(query, "WG01", "ACC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            Assert.NotNull(result.Pagination);
+            Assert.Equal(2, result.Pagination!.TotalRecords);
+            Assert.Equal(1, result.Pagination.PageNumber);
+            Assert.Equal(10, result.Pagination.PageSize);
+            await _fpsPurchasesApiClient.Received(1).GetPurchasesAsync("WG01", "ACC1");
+        }
+
+        [Fact]
+        public async Task GetPurchasesPagedAsync_EmptyList_ReturnsPagedSuccessWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var allResponse = ApiResponseDto<List<PurchaseDto>>.SuccessResponse([]);
+            _fpsPurchasesApiClient.GetPurchasesAsync("WG01", "ACC1").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetPurchasesPagedAsync(query, "WG01", "ACC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+            Assert.NotNull(result.Pagination);
+            Assert.Equal(0, result.Pagination!.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPurchasesPagedAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var failResponse = ApiResponseDto<List<PurchaseDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsPurchasesApiClient.GetPurchasesAsync("WG01", "ACC1").Returns(failResponse);
+
+            // Act
+            var result = await _sut.GetPurchasesPagedAsync(query, "WG01", "ACC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            await _fpsPurchasesApiClient.Received(1).GetPurchasesAsync("WG01", "ACC1");
+        }
+
+        [Fact]
+        public async Task GetPurchasesPagedAsync_AppliesPaging_ReturnsCorrectPage()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 1 };
+            var list = new List<PurchaseDto>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m },
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m }
+            };
+            var allResponse = ApiResponseDto<List<PurchaseDto>>.SuccessResponse(list);
+            _fpsPurchasesApiClient.GetPurchasesAsync("WG01", "ACC1").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetPurchasesPagedAsync(query, "WG01", "ACC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            Assert.Equal("Item B", result.Data![0].ItemDescription);
+            Assert.NotNull(result.Pagination);
+            Assert.Equal(2, result.Pagination!.TotalRecords);
+            Assert.Equal(2, result.Pagination.PageNumber);
+            Assert.Equal(1, result.Pagination.PageSize);
+        }
+
+        [Fact]
+        public async Task GetPurchasesPagedAsync_AppliesFilter_ReturnsFilteredResults()
+        {
+            // Arrange
+            var query = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = """{"ItemDescription":"Item A"}"""
+            };
+            var list = new List<PurchaseDto>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m },
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m }
+            };
+            var allResponse = ApiResponseDto<List<PurchaseDto>>.SuccessResponse(list);
+            _fpsPurchasesApiClient.GetPurchasesAsync("WG01", "ACC1").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetPurchasesPagedAsync(query, "WG01", "ACC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            Assert.Equal("Item A", result.Data![0].ItemDescription);
+            Assert.Equal(1, result.Pagination!.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPurchasesPagedAsync_AppliesSortAscending_ReturnsSortedResults()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "ItemDescription", Descending = false };
+            var list = new List<PurchaseDto>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m },
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m }
+            };
+            var allResponse = ApiResponseDto<List<PurchaseDto>>.SuccessResponse(list);
+            _fpsPurchasesApiClient.GetPurchasesAsync("WG01", "ACC1").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetPurchasesPagedAsync(query, "WG01", "ACC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            Assert.Equal("Item A", result.Data![0].ItemDescription);
+            Assert.Equal("Item B", result.Data![1].ItemDescription);
+        }
+
+        [Fact]
+        public async Task GetPurchasesPagedAsync_AppliesSortDescending_ReturnsSortedResults()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "ItemDescription", Descending = true };
+            var list = new List<PurchaseDto>
+            {
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m },
+                new() { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m }
+            };
+            var allResponse = ApiResponseDto<List<PurchaseDto>>.SuccessResponse(list);
+            _fpsPurchasesApiClient.GetPurchasesAsync("WG01", "ACC1").Returns(allResponse);
+
+            // Act
+            var result = await _sut.GetPurchasesPagedAsync(query, "WG01", "ACC1");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            Assert.Equal("Item B", result.Data![0].ItemDescription);
+            Assert.Equal("Item A", result.Data![1].ItemDescription);
         }
 
         #endregion

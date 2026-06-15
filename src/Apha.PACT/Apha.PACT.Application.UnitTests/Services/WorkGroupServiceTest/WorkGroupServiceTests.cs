@@ -2318,6 +2318,76 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
 
                     #endregion
 
+                    #region GetWorkGroupsByProfitCentreForBudgetAsync
+
+                    [Fact]
+                    public async Task GetWorkGroupsByProfitCentreForBudgetAsync_WithData_ReturnsMappedDtos()
+                    {
+                        // Arrange
+                        var entities = new List<WorkGroupView>
+                        {
+                            new() { WorkGroupName = "WG1", ProfitCentre = "PC001" },
+                            new() { WorkGroupName = "WG2", ProfitCentre = "PC001" }
+                        };
+                        var dtos = new List<WorkGroupViewDto>
+                        {
+                            new() { WorkGroupName = "WG1" },
+                            new() { WorkGroupName = "WG2" }
+                        };
+
+                        _mockRepository.GetWorkGroupsByProfitCentreForBudgetAsync("PC001").Returns(entities);
+                        _mockMapper.Map<List<WorkGroupViewDto>>(entities).Returns(dtos);
+
+                        // Act
+                        var result = await _sut.GetWorkGroupsByProfitCentreForBudgetAsync("PC001");
+
+                        // Assert
+                        result.Should().BeEquivalentTo(dtos);
+                        await _mockRepository.Received(1).GetWorkGroupsByProfitCentreForBudgetAsync("PC001");
+                    }
+
+                    [Fact]
+                    public async Task GetWorkGroupsByProfitCentreForBudgetAsync_EmptyList_ReturnsEmptyCollection()
+                    {
+                        // Arrange
+                        var entities = new List<WorkGroupView>();
+                        var dtos = new List<WorkGroupViewDto>();
+
+                        _mockRepository.GetWorkGroupsByProfitCentreForBudgetAsync("PC001").Returns(entities);
+                        _mockMapper.Map<List<WorkGroupViewDto>>(entities).Returns(dtos);
+
+                        // Act
+                        var result = await _sut.GetWorkGroupsByProfitCentreForBudgetAsync("PC001");
+
+                        // Assert
+                        result.Should().BeEmpty();
+                        await _mockRepository.Received(1).GetWorkGroupsByProfitCentreForBudgetAsync("PC001");
+                    }
+
+                    [Fact]
+                    public async Task GetWorkGroupsByProfitCentreForBudgetAsync_NullOrWhiteSpaceProfitCentre_ThrowsArgumentException()
+                    {
+                        // Act & Assert
+                        await Assert.ThrowsAsync<ArgumentException>(() =>
+                            _sut.GetWorkGroupsByProfitCentreForBudgetAsync("   "));
+                        await Assert.ThrowsAsync<ArgumentException>(() =>
+                            _sut.GetWorkGroupsByProfitCentreForBudgetAsync(string.Empty));
+                    }
+
+                    [Fact]
+                    public async Task GetWorkGroupsByProfitCentreForBudgetAsync_RepositoryThrows_PropagatesException()
+                    {
+                        // Arrange
+                        _mockRepository.GetWorkGroupsByProfitCentreForBudgetAsync(Arg.Any<string>())
+                            .ThrowsAsync(new Exception("DB error"));
+
+                        // Act & Assert
+                        await Assert.ThrowsAsync<Exception>(() =>
+                            _sut.GetWorkGroupsByProfitCentreForBudgetAsync("PC001"));
+                    }
+
+                    #endregion
+
                     #region GetWorkGroupsByProfitCentreAsync
 
                     [Fact]

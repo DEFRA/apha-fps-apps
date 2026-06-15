@@ -10,23 +10,16 @@ namespace Apha.FPS.Application.Services
     {
         private readonly IBudgetBidsRepository _repository;
         private readonly IMapper _mapper;
-        private readonly IFpsRequestContext _requestContext;
 
-        public BudgetBidsService(IBudgetBidsRepository repository, IMapper mapper, IFpsRequestContext requestContext)
+        public BudgetBidsService(IBudgetBidsRepository repository, IMapper mapper)
         {
-            _repository     = repository    ?? throw new ArgumentNullException(nameof(repository));
-            _mapper         = mapper        ?? throw new ArgumentNullException(nameof(mapper));
-            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _mapper     = mapper     ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public Task<List<BidViewDto>> GetBidViewAsync(string workgroup)
+        public async Task<List<BidViewDto>> GetBidViewAsync(string workgroup)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(workgroup);
-            return GetBidViewAsyncCore(workgroup);
-        }
-
-        private async Task<List<BidViewDto>> GetBidViewAsyncCore(string workgroup)
-        {
             var entities = await _repository.GetBidViewAsync(workgroup);
             return _mapper.Map<List<BidViewDto>>(entities);
         }
@@ -46,11 +39,6 @@ namespace Apha.FPS.Application.Services
 
         private async Task<BidDto> AddBidAsyncCore(BidDto bid)
         {
-            var isAuthorized = await _repository.IsAuthorizedAsync(bid.WorkGroupName);
-            if (!isAuthorized)
-                throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{bid.WorkGroupName}'.");
-
             var existing = await _repository.GetBidByIdAsync(bid.WorkGroupName, bid.Account);
             if (existing != null)
                 throw new InvalidOperationException("Account already exists.");
@@ -69,11 +57,6 @@ namespace Apha.FPS.Application.Services
 
         private async Task<BidDto> UpdateBidAsyncCore(BidDto bid)
         {
-            var isAuthorized = await _repository.IsAuthorizedAsync(bid.WorkGroupName);
-            if (!isAuthorized)
-                throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{bid.WorkGroupName}'.");
-
             var existing = await _repository.GetBidByIdAsync(bid.WorkGroupName, bid.Account);
             if (existing == null)
                 throw new InvalidOperationException(
@@ -92,11 +75,6 @@ namespace Apha.FPS.Application.Services
 
         private async Task<bool> DeleteBidAsyncCore(string WorkGroupName, string account)
         {
-            var isAuthorized = await _repository.IsAuthorizedAsync(WorkGroupName);
-            if (!isAuthorized)
-                throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{WorkGroupName}'.");
-
             var hasRelatedPurchases = await _repository.HasRelatedPurchasesAsync(WorkGroupName, account);
             if (hasRelatedPurchases)
                 throw new InvalidOperationException(

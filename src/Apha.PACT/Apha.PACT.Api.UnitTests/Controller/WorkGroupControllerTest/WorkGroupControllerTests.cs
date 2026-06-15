@@ -694,7 +694,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
                 new() { WorkGroupName = "WG1", ProfitCentre = "PC1", UserEmail = "a@b.com" }
             };
 
-            _serviceMock.GetWorkGroupsByProfitCentreAsync("PC1").Returns(serviceResult);
+            _serviceMock.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(serviceResult);
             _mapperMock.Map<List<WorkGroupViewRes>>(serviceResult).Returns(mapped);
 
             // Act
@@ -703,7 +703,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mapped, okResult.Value);
-            await _serviceMock.Received(1).GetWorkGroupsByProfitCentreAsync("PC1");
+            await _serviceMock.Received(1).GetWorkGroupsByProfitCentreForBudgetAsync("PC1");
             _mapperMock.Received(1).Map<List<WorkGroupViewRes>>(serviceResult);
         }
 
@@ -714,7 +714,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
             var serviceResult = new List<WorkGroupViewDto>();
             var mapped = new List<WorkGroupViewRes>();
 
-            _serviceMock.GetWorkGroupsByProfitCentreAsync("PC1").Returns(serviceResult);
+            _serviceMock.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(serviceResult);
             _mapperMock.Map<List<WorkGroupViewRes>>(serviceResult).Returns(mapped);
 
             // Act
@@ -730,7 +730,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
         public async Task GetWorkGroupsByProfitCentreForBudgetAsync_ServiceThrows_PropagatesException()
         {
             // Arrange
-            _serviceMock.GetWorkGroupsByProfitCentreAsync(Arg.Any<string>())
+            _serviceMock.GetWorkGroupsByProfitCentreForBudgetAsync(Arg.Any<string>())
                         .ThrowsAsync(new Exception("Service error"));
 
             // Act & Assert

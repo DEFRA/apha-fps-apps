@@ -12,26 +12,16 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
     {
         private readonly IPurchasesRepository _repository;
         private readonly IMapper _mapper;
-        private readonly IFpsRequestContext _requestContext;
         private readonly PurchasesService _sut;
 
         public PurchasesServiceTests()
         {
-            _repository     = Substitute.For<IPurchasesRepository>();
-            _mapper         = Substitute.For<IMapper>();
-            _requestContext = Substitute.For<IFpsRequestContext>();
-            _requestContext.FpsYear.Returns(2024);
-            _requestContext.UserEmailId.Returns("test@example.com");
-            _sut = new PurchasesService(_repository, _mapper, _requestContext);
+            _repository = Substitute.For<IPurchasesRepository>();
+            _mapper     = Substitute.For<IMapper>();
+            _sut = new PurchasesService(_repository, _mapper);
         }
 
         #region Constructor Tests
-
-        [Fact]
-        public void Constructor_WithNullRequestContext_ThrowsArgumentNullException()
-        {
-            Assert.Throws<ArgumentNullException>(() => new PurchasesService(_repository, _mapper, null!));
-        }
 
         #endregion
 
@@ -135,7 +125,6 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
             var added   = new Purchase   { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m, FpsYear = 2024 };
             var resultDto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
 
-            _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns((Purchase?)null);
             _mapper.Map<Purchase>(dto).Returns(entity);
             _repository.AddPurchaseAsync(entity).Returns(added);
@@ -163,23 +152,11 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         }
 
         [Fact]
-        public async Task AddPurchaseAsync_WhenNotAuthorized_ThrowsUnauthorizedAccessException()
-        {
-            // Arrange
-            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(false);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.AddPurchaseAsync(dto));
-        }
-
-        [Fact]
         public async Task AddPurchaseAsync_WhenItemAlreadyExists_ThrowsInvalidOperationException()
         {
             // Arrange
             var dto      = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
             var existing = new Purchase { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A" };
-            _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns(existing);
 
             // Act & Assert
@@ -206,7 +183,6 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
             var updated   = new Purchase { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m, FpsYear = 2024 };
             var resultDto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item B", Amount = 200m };
 
-            _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns(existing);
             _repository.UpdatePurchaseAsync("WG01", "ACC1", "Item A", "Item B", 200m).Returns(updated);
             _mapper.Map<PurchaseDto>(updated).Returns(resultDto);
@@ -235,7 +211,6 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
             var updated   = new Purchase { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 200m, FpsYear = 2024 };
             var resultDto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 200m };
 
-            _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns(existing);
             _repository.UpdatePurchaseAsync("WG01", "ACC1", "Item A", "Item A", 200m).Returns(updated);
             _mapper.Map<PurchaseDto>(updated).Returns(resultDto);
@@ -261,22 +236,10 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         }
 
         [Fact]
-        public async Task UpdatePurchaseAsync_WhenNotAuthorized_ThrowsUnauthorizedAccessException()
-        {
-            // Arrange
-            var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(false);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.UpdatePurchaseAsync(dto));
-        }
-
-        [Fact]
         public async Task UpdatePurchaseAsync_WhenItemNotFound_ThrowsInvalidOperationException()
         {
             // Arrange
             var dto = new PurchaseDto { WorkGroupName = "WG01", Account = "ACC1", ItemDescription = "Item A", Amount = 100m };
-            _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.GetPurchaseByIdAsync("WG01", "ACC1", "Item A").Returns((Purchase?)null);
 
             // Act & Assert
@@ -291,7 +254,6 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         public async Task DeletePurchaseAsync_WithAuthorizedUserAndExistingItem_ReturnsTrue()
         {
             // Arrange
-            _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.DeletePurchaseAsync("WG01", "ACC1", "Item A").Returns(true);
 
             // Act
@@ -315,20 +277,9 @@ namespace Apha.FPS.Application.UnitTests.Services.PurchasesServiceTest
         }
 
         [Fact]
-        public async Task DeletePurchaseAsync_WhenNotAuthorized_ThrowsUnauthorizedAccessException()
-        {
-            // Arrange
-            _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(false);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.DeletePurchaseAsync("WG01", "ACC1", "Item A"));
-        }
-
-        [Fact]
         public async Task DeletePurchaseAsync_WhenItemNotFound_ReturnsFalse()
         {
             // Arrange
-            _repository.IsAuthorizedAsync("WG01", "test@example.com").Returns(true);
             _repository.DeletePurchaseAsync("WG01", "ACC1", "Item A").Returns(false);
 
             // Act

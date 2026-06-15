@@ -10,23 +10,16 @@ namespace Apha.FPS.Application.Services
     {
         private readonly IPurchasesRepository _repository;
         private readonly IMapper _mapper;
-        private readonly IFpsRequestContext _requestContext;
 
-        public PurchasesService(IPurchasesRepository repository, IMapper mapper, IFpsRequestContext requestContext)
+        public PurchasesService(IPurchasesRepository repository, IMapper mapper)
         {
-            _repository     = repository    ?? throw new ArgumentNullException(nameof(repository));
-            _mapper         = mapper        ?? throw new ArgumentNullException(nameof(mapper));
-            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _mapper     = mapper     ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public Task<List<PurchaseDto>> GetPurchasesAsync(string WorkGroupName, string account)
+        public async Task<List<PurchaseDto>> GetPurchasesAsync(string WorkGroupName, string account)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(WorkGroupName);
-            return GetPurchasesAsyncCore(WorkGroupName, account);
-        }
-
-        private async Task<List<PurchaseDto>> GetPurchasesAsyncCore(string WorkGroupName, string account)
-        {
             var entities = await _repository.GetPurchasesAsync(WorkGroupName, account);
             return _mapper.Map<List<PurchaseDto>>(entities);
         }
@@ -46,12 +39,6 @@ namespace Apha.FPS.Application.Services
 
         private async Task<PurchaseDto> AddPurchaseAsyncCore(PurchaseDto purchase)
         {
-            var isAuthorized = await _repository.IsAuthorizedAsync(
-                purchase.WorkGroupName, _requestContext.UserEmailId.ToLower());
-            if (!isAuthorized)
-                throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{purchase.WorkGroupName}'.");
-
             var existing = await _repository.GetPurchaseByIdAsync(purchase.WorkGroupName, purchase.Account, purchase.ItemDescription);
             if (existing != null)
                 throw new InvalidOperationException(
@@ -71,12 +58,6 @@ namespace Apha.FPS.Application.Services
 
         private async Task<PurchaseDto> UpdatePurchaseAsyncCore(PurchaseDto purchase)
         {
-            var isAuthorized = await _repository.IsAuthorizedAsync(
-                purchase.WorkGroupName, _requestContext.UserEmailId.ToLower());
-            if (!isAuthorized)
-                throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{purchase.WorkGroupName}'.");
-
             var existing = await _repository.GetPurchaseByIdAsync(
                 purchase.WorkGroupName, purchase.Account, purchase.OldItemDescription ?? purchase.ItemDescription);
 
@@ -99,12 +80,6 @@ namespace Apha.FPS.Application.Services
 
         private async Task<bool> DeletePurchaseAsyncCore(string WorkGroupName, string account, string itemDescription)
         {
-            var isAuthorized = await _repository.IsAuthorizedAsync(
-                WorkGroupName, _requestContext.UserEmailId.ToLower());
-            if (!isAuthorized)
-                throw new UnauthorizedAccessException(
-                    $"User does not have access to workgroup '{WorkGroupName}'.");
-
             return await _repository.DeletePurchaseAsync(WorkGroupName, account, itemDescription);
         }
     }

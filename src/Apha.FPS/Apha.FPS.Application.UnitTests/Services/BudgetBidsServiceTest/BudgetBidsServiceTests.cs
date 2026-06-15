@@ -14,18 +14,15 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
 
         private readonly Mock<IBudgetBidsRepository> _repositoryMock;
         private readonly Mock<IMapper>               _mapperMock;
-        private readonly Mock<IFpsRequestContext>    _requestContextMock;
         private readonly BudgetBidsService           _sut;
 
         public BudgetBidsServiceTests()
         {
-            _repositoryMock     = new Mock<IBudgetBidsRepository>();
-            _mapperMock         = new Mock<IMapper>();
-            _requestContextMock = new Mock<IFpsRequestContext>();
+            _repositoryMock = new Mock<IBudgetBidsRepository>();
+            _mapperMock     = new Mock<IMapper>();
             _sut = new BudgetBidsService(
                 _repositoryMock.Object,
-                _mapperMock.Object,
-                _requestContextMock.Object);
+                _mapperMock.Object);
         }
 
         #region Constructor Tests
@@ -34,21 +31,14 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
         public void Constructor_WithNullRepository_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new BudgetBidsService(null!, _mapperMock.Object, _requestContextMock.Object));
+                new BudgetBidsService(null!, _mapperMock.Object));
         }
 
         [Fact]
         public void Constructor_WithNullMapper_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new BudgetBidsService(_repositoryMock.Object, null!, _requestContextMock.Object));
-        }
-
-        [Fact]
-        public void Constructor_WithNullRequestContext_ThrowsArgumentNullException()
-        {
-            Assert.Throws<ArgumentNullException>(() =>
-                new BudgetBidsService(_repositoryMock.Object, _mapperMock.Object, null!));
+                new BudgetBidsService(_repositoryMock.Object, null!));
         }
 
         #endregion
@@ -59,9 +49,6 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
         public async Task DeleteBidAsync_WhenRelatedPurchasesExist_ThrowsInvalidOperationException()
         {
             // Arrange
-            _repositoryMock
-                .Setup(r => r.IsAuthorizedAsync(DefaultWorkGroup))
-                .ReturnsAsync(true);
             _repositoryMock
                 .Setup(r => r.HasRelatedPurchasesAsync(DefaultWorkGroup, DefaultAccount))
                 .ReturnsAsync(true);
@@ -79,9 +66,6 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
         public async Task DeleteBidAsync_WhenNoRelatedPurchases_CallsRepositoryDelete()
         {
             // Arrange
-            _repositoryMock
-                .Setup(r => r.IsAuthorizedAsync(DefaultWorkGroup))
-                .ReturnsAsync(true);
             _repositoryMock
                 .Setup(r => r.HasRelatedPurchasesAsync(DefaultWorkGroup, DefaultAccount))
                 .ReturnsAsync(false);
@@ -102,9 +86,6 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
         {
             // Arrange
             _repositoryMock
-                .Setup(r => r.IsAuthorizedAsync(DefaultWorkGroup))
-                .ReturnsAsync(true);
-            _repositoryMock
                 .Setup(r => r.HasRelatedPurchasesAsync(DefaultWorkGroup, DefaultAccount))
                 .ReturnsAsync(true);
 
@@ -116,18 +97,17 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
         }
 
         [Fact]
-        public async Task DeleteBidAsync_WhenNotAuthorized_ThrowsUnauthorizedAccessException()
+        public async Task DeleteBidAsync_WhenRepositoryThrowsUnauthorized_PropagatesException()
         {
-            // Arrange
+            // Arrange — repository now owns the ownership check; service propagates the exception
             _repositoryMock
-                .Setup(r => r.IsAuthorizedAsync(DefaultWorkGroup))
-                .ReturnsAsync(false);
+                .Setup(r => r.HasRelatedPurchasesAsync(DefaultWorkGroup, DefaultAccount))
+                .ThrowsAsync(new UnauthorizedAccessException("User does not have access to workgroup 'WG01'."));
 
             // Act & Assert
             await Assert.ThrowsAsync<UnauthorizedAccessException>(
                 () => _sut.DeleteBidAsync(DefaultWorkGroup, DefaultAccount));
 
-            _repositoryMock.Verify(r => r.HasRelatedPurchasesAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             _repositoryMock.Verify(r => r.DeleteBidAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
@@ -142,9 +122,6 @@ namespace Apha.FPS.Application.UnitTests.Services.BudgetBidsServiceTest
         public async Task DeleteBidAsync_WhenRelatedPurchasesExist_HasRelatedPurchasesCalledOnce()
         {
             // Arrange
-            _repositoryMock
-                .Setup(r => r.IsAuthorizedAsync(DefaultWorkGroup))
-                .ReturnsAsync(true);
             _repositoryMock
                 .Setup(r => r.HasRelatedPurchasesAsync(DefaultWorkGroup, DefaultAccount))
                 .ReturnsAsync(true);
