@@ -519,7 +519,19 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeRepositoryTest
                 "ohr" => list[0].Ohr?.ToString(),
                 _ => list[0].DivisionGradeCode
             };
+            var actualSecond = sortBy switch
+            {
+                "gradecode" => list[1].GradeCode,
+                "division" => list[1].Division,
+                "chargerate" => list[1].ChargeRate?.ToString(),
+                "directrate" => list[1].DirectRate?.ToString(),
+                "payrate" => list[1].PayRate?.ToString(),
+                "npr" => list[1].Npr?.ToString(),
+                "ohr" => list[1].Ohr?.ToString(),
+                _ => list[1].DivisionGradeCode
+            };
             Assert.Equal(expectedFirst, actualFirst);
+            Assert.Equal(expectedSecond, actualSecond);
         }
 
         [Fact]
