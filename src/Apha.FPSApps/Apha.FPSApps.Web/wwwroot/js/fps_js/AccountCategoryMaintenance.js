@@ -89,11 +89,22 @@ function saveAccountCategory(isEdit = false) {
         return;
     }
 
+    // Validate AccountType - must be 'Pay' or 'NPRC'
+    const accountType = $('#AccountType').val().trim();
+    if (accountType !== 'Pay' && accountType !== 'NPRC') {
+        const validationErrors = [{
+            field: 'AccountType',
+            message: 'AccountType must be either "Pay" or "NPRC".'
+        }];
+        displayServerValidationErrors(validationErrors, 'Please correct the following error:', '#accountCategoryModalContent');
+        return;
+    }
+
     const formData = {
         AccShortName: isEdit ? $('#originalAccShortName').val() : $('#AccShortName').val(),
         AccountDescription: $('#AccountDescription').val(),
         ConstituentAccountCodes: $('#ConstituentAccountCodes').val(),
-        AccountType: $('#AccountType').val(),
+        AccountType: accountType,
         ProjectSpecific: $('#ProjectSpecific').is(':checked') ? -1 : 0,
         RcSpecific: $('#RcSpecific').is(':checked') ? -1 : 0
     };
