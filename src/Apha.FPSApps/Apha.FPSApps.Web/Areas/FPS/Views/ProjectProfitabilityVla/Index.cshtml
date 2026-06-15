@@ -60,7 +60,6 @@
                     <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                             id="filterProjectStatus"
                             asp-for="SelectedStatus"
-                            aria-label="Filter by project status"
                             onchange="reloadProjectProfitabilityVlaGrid()">
                         @* TRANSFORMENGINE: safe Razor option rendering — no @(...) in attribute area *@
                         @if (Model.SelectedStatus == "Approved")
@@ -105,7 +104,6 @@
                             id="filterProgram"
                             asp-for="SelectedProgram"
                             asp-items="Model.ProgramList"
-                            aria-label="Filter by program"
                             onchange="reloadProjectProfitabilityVlaGrid()">
                         <option value="">All programs</option>
                     </select>
@@ -122,7 +120,6 @@
                             id="filterManager"
                             asp-for="SelectedManager"
                             asp-items="Model.ManagerList"
-                            aria-label="Filter by manager"
                             onchange="reloadProjectProfitabilityVlaGrid()">
                         <option value="">All managers</option>
                     </select>
@@ -139,7 +136,6 @@
                             id="filterCustomer"
                             asp-for="SelectedCustomer"
                             asp-items="Model.CustomerList"
-                            aria-label="Filter by project customer"
                             onchange="reloadProjectProfitabilityVlaGrid()">
                         <option value="">All customers</option>
                     </select>

@@ -591,23 +591,26 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectProfitabilityVlaCont
         }
 
         [Fact]
-        public async Task GetProjectProfitabilityVlaSummary_FetchesAllRowsWithMaxIntPageSize()
+        public async Task GetProjectProfitabilityVlaSummary_FetchesAllRowsWithSummaryMaxPageSize()
         {
-            // Arrange — summary requires all rows (no pagination) for aggregation
+            // Arrange — summary requires all rows (bounded by SummaryMaxPageSize = 5000)
+            //   for aggregate calculation. int.MaxValue was replaced by 5000 in Phase 14
+            //   security fix to prevent unbounded memory allocation.
             var apiResponse = ApiResponseDto<List<ProjectProfitabilityVlaDto>>.SuccessResponse(
                 new List<ProjectProfitabilityVlaDto>(), new PaginationDto());
 
             _projectService.GetProjectProfitabilityVlaAsync(
-                    Arg.Is<QueryParameters<string>>(q => q.PageSize == int.MaxValue),
+                    Arg.Is<QueryParameters<string>>(q => q.PageSize == 5000),
                     null, null, null, null)
                 .Returns(apiResponse);
 
             // Act
             await _controller.GetProjectProfitabilityVlaSummary();
 
-            // Assert — PageSize == int.MaxValue ensures all rows fetched for aggregation
+            // Assert — PageSize == 5000 (SummaryMaxPageSize) ensures all rows fetched
+            //   for aggregation within a safe bound (Phase 14 security fix).
             await _projectService.Received(1).GetProjectProfitabilityVlaAsync(
-                Arg.Is<QueryParameters<string>>(q => q.PageSize == int.MaxValue),
+                Arg.Is<QueryParameters<string>>(q => q.PageSize == 5000),
                 null, null, null, null);
         }
 
