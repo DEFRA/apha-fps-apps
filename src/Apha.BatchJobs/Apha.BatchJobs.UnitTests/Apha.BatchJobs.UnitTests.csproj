@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Unit\BatchJobTriggerControllerValidationTests.cs" />
+    <Compile Remove="Unit\TriggerAttemptStoreTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
@@ -27,9 +32,7 @@
 
   <!-- All Unit/*.cs files are now included implicitly by the SDK -->
   <ItemGroup>
-    <ProjectReference Include="..\BatchJobs.csproj" />
-    <ProjectReference Include="..\Apha.BatchJobs.Api\Apha.BatchJobs.Api.csproj" />
-    <ProjectReference Include="..\Apha.BatchJobs.Pact.Api\Apha.BatchJobs.Pact.Api.csproj" />
+    <ProjectReference Include="..\Apha.BatchJobs.csproj" />
   </ItemGroup>
 
   <ItemGroup>

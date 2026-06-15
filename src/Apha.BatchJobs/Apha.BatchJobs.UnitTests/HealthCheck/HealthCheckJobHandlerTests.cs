@@ -27,8 +27,8 @@ namespace Apha.BatchJobs.UnitTests.HealthCheck
             Assert.Equal("On-demand health check (no schedule)", handler.ScheduleDescription);
             Assert.Equal(300, handler.MaxExecutionSeconds);
 
-            Assert.Throws<ArgumentNullException>(() => new HealthCheckJobHandler(null, logger, options));
-            Assert.Throws<ArgumentNullException>(() => new HealthCheckJobHandler(dbContextFactory, null, options));
+            Assert.Throws<ArgumentNullException>(() => new HealthCheckJobHandler(null!, logger, options));
+            Assert.Throws<ArgumentNullException>(() => new HealthCheckJobHandler(dbContextFactory, null!, options));
         }
 
         [Fact]

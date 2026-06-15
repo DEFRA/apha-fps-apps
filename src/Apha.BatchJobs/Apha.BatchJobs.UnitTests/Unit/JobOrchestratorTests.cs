@@ -140,7 +140,7 @@ public sealed class JobOrchestratorTests
     // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
     [Fact]
-    public async Task RunAsync_WhenLockNotAcquired_SkipsExecutionAndReturnsSkipped()
+    public async Task RunAsync_WhenLockNotAcquired_ThrowsInvalidOperationException()
     {
         // Arrange
         _lockRepo.TryAcquireLockAsync("TestJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -148,17 +148,14 @@ public sealed class JobOrchestratorTests
 
         // Act
         var jobExecutionId = Guid.NewGuid();
-        var result = await _orchestrator.RunAsync("TestJob", RunMode.Scheduled, jobExecutionId, "test-user");
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _orchestrator.RunAsync("TestJob", RunMode.Scheduled, jobExecutionId, "test-user"));
 
         // Assert ΓÇö job factory was never called
         _factory.DidNotReceive().Create(Arg.Any<string>());
 
         // Assert ΓÇö no execution records written
         await _execRepo.DidNotReceive().CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
-
-        // Assert ΓÇö result indicates skip
-        Assert.Equal(JobStatus.Skipped, result.Status);
-        Assert.Equal(TimeSpan.Zero, result.Duration);
     }
 
     // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
@@ -349,7 +346,7 @@ public sealed class JobOrchestratorTests
     // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
     [Fact]
-    public async Task RunAsync_WhenTwoConcurrentCallsForSameJob_OnlyOneExecutesAndOtherIsSkipped()
+    public async Task RunAsync_WhenTwoConcurrentCallsForSameJob_OnlyOneExecutesAndOtherThrowsLockConflict()
     {
         // Arrange ΓÇö first call acquires lock, second call gets false (DB unique constraint)
         var lockCallCount = 0;
@@ -368,11 +365,28 @@ public sealed class JobOrchestratorTests
         // Act ΓÇö simulate two concurrent runs
         var task1 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled, Guid.NewGuid(), "test-user");
         var task2 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled, Guid.NewGuid(), "test-user");
-        var results = await Task.WhenAll(task1, task2);
+        var completedCount = 0;
+        var lockConflictCount = 0;
 
-        // Assert ΓÇö exactly one completed, one skipped
-        Assert.Equal(1, results.Count(r => r.Status == JobStatus.Completed));
-        Assert.Equal(1, results.Count(r => r.Status == JobStatus.Skipped));
+        foreach (var task in new[] { task1, task2 })
+        {
+            try
+            {
+                var result = await task;
+                if (result.Status == JobStatus.Completed)
+                {
+                    completedCount++;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                lockConflictCount++;
+            }
+        }
+
+        // Assert ΓÇö exactly one completed, one lock-conflict failure
+        Assert.Equal(1, completedCount);
+        Assert.Equal(1, lockConflictCount);
 
         // Assert ΓÇö job executed exactly once
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
