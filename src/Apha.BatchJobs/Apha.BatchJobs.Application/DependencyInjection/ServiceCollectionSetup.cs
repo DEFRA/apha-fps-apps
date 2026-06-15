@@ -51,41 +51,12 @@ public static class ServiceCollectionSetup
         services.Configure<BatchJobSettings>(config.GetSection("BatchJobs"));
         services.AddLogging();
 
-        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
-        var useInMemory = environment.Equals("Demo", StringComparison.OrdinalIgnoreCase);
+        var connectionString = config.GetConnectionString("FPSConnectionString")
+            ?? throw new InvalidOperationException("Connection string 'FPSConnectionString' not found.");
+        var dbCommandTimeoutSeconds = config.GetValue<int?>("BatchJobs:DbCommandTimeoutSeconds") is int v && v > 0 ? v : 30;
 
-        if (useInMemory)
-        {
-            // Demo mode: Use in-memory implementations (no database required)
-            services.AddScoped<IBatchLockRepository, NoDbBatchLockRepository>();
-            services.AddScoped<IJobExecutionRepository, NoDbJobExecutionRepository>();
-        }
-        else
-        {
-            // Production mode: Use PostgreSQL database
-            var connectionString = config.GetConnectionString("FPSConnectionString")
-                ?? throw new InvalidOperationException("Connection string 'FPSConnectionString' not found.");
-            var dbCommandTimeoutSeconds = config.GetValue<int?>("BatchJobs:DbCommandTimeoutSeconds") is int v && v > 0 ? v : 30;
-
-            services.AddDbContext<BatchJobsDbContext>(
-                options =>
-                {
-                    options.UseNpgsql(
-                        connectionString,
-                        npgsqlOptions =>
-                        {
-                            npgsqlOptions.EnableRetryOnFailure(
-                                maxRetryCount: 5,
-                                maxRetryDelay: TimeSpan.FromSeconds(10),
-                                errorCodesToAdd: null);
-                            npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
-                        });
-                },
-                contextLifetime: ServiceLifetime.Scoped,
-                optionsLifetime: ServiceLifetime.Singleton);
-
-            // Some jobs resolve DbContext instances through IDbContextFactory for per-operation scopes.
-            services.AddDbContextFactory<BatchJobsDbContext>(options =>
+        services.AddDbContext<BatchJobsDbContext>(
+            options =>
             {
                 options.UseNpgsql(
                     connectionString,
@@ -97,11 +68,27 @@ public static class ServiceCollectionSetup
                             errorCodesToAdd: null);
                         npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
                     });
-            });
+            },
+            contextLifetime: ServiceLifetime.Scoped,
+            optionsLifetime: ServiceLifetime.Singleton);
 
-            services.AddScoped<IBatchLockRepository, BatchLockRepository>();
-            services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
-        }
+        // Some jobs resolve DbContext instances through IDbContextFactory for per-operation scopes.
+        services.AddDbContextFactory<BatchJobsDbContext>(options =>
+        {
+            options.UseNpgsql(
+                connectionString,
+                npgsqlOptions =>
+                {
+                    npgsqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorCodesToAdd: null);
+                    npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
+                });
+        });
+
+        services.AddScoped<IBatchLockRepository, BatchLockRepository>();
+        services.AddScoped<IJobExecutionRepository, JobExecutionRepository>();
 
         RegisterBatchJobs(services);
         services.AddScoped<IBatchJobFactory>(sp => new BatchJobFactory(sp));
@@ -163,64 +150,6 @@ public static class ServiceCollectionSetup
         {
             services.AddScoped(typeof(IMabArchiveLoader), loader);
         }
-    }
-
-    private sealed class NoDbBatchLockRepository : IBatchLockRepository
-    {
-        public Task<bool> TryAcquireLockAsync(string jobName, Guid jobQueueId, int timeoutSeconds, CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
-
-        public Task ReleaseLockAsync(string jobName, Guid jobQueueId, CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
-
-        public Task<BatchLock?> GetActiveLockAsync(string jobName, CancellationToken cancellationToken = default)
-            => Task.FromResult<BatchLock?>(null);
-    }
-
-    private sealed class NoDbJobExecutionRepository : IJobExecutionRepository
-    {
-        public Task<int> CreateExecutionRecordAsync(JobExecutionRecord record, CancellationToken cancellationToken = default)
-            => Task.FromResult(0);
-
-        public Task UpdateExecutionRecordAsync(JobExecutionRecord record, CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
-
-        public Task<JobExecutionRecord?> GetLastExecutionAsync(string jobName, CancellationToken cancellationToken = default)
-            => Task.FromResult<JobExecutionRecord?>(null);
-
-        public Task<JobExecutionRecord?> GetExecutionByJobExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
-            => Task.FromResult<JobExecutionRecord?>(null);
-
-        public Task<Guid> CreateInitiatedRecordAsync(
-            string jobName,
-            Guid jobExecutionId,
-            string requestedBy,
-            DateTime requestedAtUtc,
-            RunMode runMode,
-            CancellationToken cancellationToken = default)
-            => Task.FromResult(Guid.NewGuid());
-
-        public Task EnsureJobStatusCatalogAsync(CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
-
-        public Task<bool> TryRequestCancellationAsync(Guid jobExecutionId, string requestedBy, CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
-
-        public Task<bool> UpsertCancellationRequestAsync(
-            Guid jobExecutionId,
-            string requestedBy,
-            string? source = null,
-            CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
-
-        public Task<CancellationRequestRecord?> GetCancellationRequestAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
-            => Task.FromResult<CancellationRequestRecord?>(null);
-
-        public Task MarkCancellationConsumedAsync(Guid jobExecutionId, string consumedBy, CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
-
-        public Task<bool> IsCancellationRequestedAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
-            => Task.FromResult(false);
     }
 
     private static void RegisterBatchJobs(IServiceCollection services)

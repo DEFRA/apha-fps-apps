@@ -53,6 +53,11 @@ on:
          required: false
          type: boolean
          default: false
+       custom_test_filter:
+         description: "Optional dotnet test filter expression for custom tests (for example to skip integration tests in CI)"
+         required: false
+         type: string
+         default: ''
 
      secrets:
        SONAR_TOKEN:
@@ -220,9 +225,16 @@ jobs:
         shell: bash
         env:
           APP_SOLUTION_NAME: ${{ inputs.dotnet_application_solution_name }}
+          CUSTOM_TEST_FILTER: ${{ inputs.custom_test_filter }}
         run: |
+          FILTER_ARGS=()
+          if [ -n "$CUSTOM_TEST_FILTER" ]; then
+            FILTER_ARGS+=(--filter "$CUSTOM_TEST_FILTER")
+          fi
+
           dotnet test src/$APP_SOLUTION_NAME/$APP_SOLUTION_NAME.UnitTests/$APP_SOLUTION_NAME.UnitTests.csproj \
             --no-build --configuration Release \
+            "${FILTER_ARGS[@]}" \
             -p:CollectCoverage=true \
             -p:CoverletOutput=$(pwd)/src/TestResults/$APP_SOLUTION_NAME.coverage.opencover.xml \
             -p:CoverletOutputFormat=opencover \

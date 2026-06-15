@@ -26,6 +26,7 @@ jobs:
       run_dataaccess_tests: false
       run_infrastructure_tests: false
       run_custom_tests: true
+      custom_test_filter: "FullyQualifiedName!~Apha.BatchJobs.UnitTests.RecreateSummaries&FullyQualifiedName!~RepositoryIntegrationTests&FullyQualifiedName!~MabArchivePostgresIntegrationTests&FullyQualifiedName!~MabArchiveJobHandlerTests&FullyQualifiedName!~MyFpsYearlyDataServiceTests&FullyQualifiedName!~ReloadFpsTotalsServiceTests"
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     permissions:

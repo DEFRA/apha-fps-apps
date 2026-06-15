@@ -34,9 +34,7 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
 
     public static async Task<RecreateSummariesPostgresTestHarness> CreateAsync()
     {
-        var rawConnectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+        var rawConnectionString = TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
 
         var builder = new NpgsqlConnectionStringBuilder(rawConnectionString)
         {

@@ -20,9 +20,7 @@ public sealed class RecreateSummariesPostgresStepIntegrationTests : IAsyncLifeti
 
     public RecreateSummariesPostgresStepIntegrationTests()
     {
-        _connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+        _connectionString = TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
     }
 
     public async Task InitializeAsync()

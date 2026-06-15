@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Apha.BatchJobs.Application.Jobs.HealthCheck;
 using Apha.BatchJobs.Domain.Configuration;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -16,19 +15,20 @@ namespace Apha.BatchJobs.UnitTests.HealthCheck
         [Fact]
         public void Constructor_SetsPropertiesAndThrowsOnNulls()
         {
-            var dbContextFactory = new Mock<IDbContextFactory<Infrastructure.Data.BatchJobsDbContext>>().Object;
             var logger = new Mock<ILogger<HealthCheckJobHandler>>().Object;
             var options = Options.Create(new BatchJobSettings());
 
-            var handler = new HealthCheckJobHandler(dbContextFactory, logger, options);
+            var handler = new HealthCheckJobHandler(logger, options);
             Assert.Equal("HealthCheck", handler.Name);
             Assert.Equal("NoWriteValidation", handler.IdempotencyStrategy);
             Assert.Null(handler.ScheduleExpression);
             Assert.Equal("On-demand health check (no schedule)", handler.ScheduleDescription);
             Assert.Equal(300, handler.MaxExecutionSeconds);
 
-            Assert.Throws<ArgumentNullException>(() => new HealthCheckJobHandler(null!, logger, options));
-            Assert.Throws<ArgumentNullException>(() => new HealthCheckJobHandler(dbContextFactory, null!, options));
+            Assert.Throws<ArgumentNullException>(() => new HealthCheckJobHandler(null!, options));
+
+            var handlerWithNullOptions = new HealthCheckJobHandler(logger, null!);
+            Assert.Equal("HealthCheck", handlerWithNullOptions.Name);
         }
 
         [Fact]

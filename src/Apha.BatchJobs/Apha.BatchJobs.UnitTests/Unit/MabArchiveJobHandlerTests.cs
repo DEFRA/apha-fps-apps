@@ -292,8 +292,7 @@ public sealed class MabArchiveJobHandlerTests
 
     private static string GetConnectionString()
     {
-        return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+        return TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
     }
 
     private static IDbContextFactory<BatchJobsDbContext> CreateDbContextFactory(string connectionString)

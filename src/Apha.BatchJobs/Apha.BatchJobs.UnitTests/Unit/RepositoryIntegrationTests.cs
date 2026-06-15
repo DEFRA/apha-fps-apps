@@ -18,9 +18,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
 
     public RepositoryIntegrationTests()
     {
-        _connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+        _connectionString = TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
     }
 
     public async Task InitializeAsync()

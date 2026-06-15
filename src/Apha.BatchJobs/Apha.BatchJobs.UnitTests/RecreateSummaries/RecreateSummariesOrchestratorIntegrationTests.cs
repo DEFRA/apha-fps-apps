@@ -21,9 +21,7 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
 
     public RecreateSummariesOrchestratorIntegrationTests()
     {
-        _connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+        _connectionString = TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
     }
 
     public async Task InitializeAsync()
