@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
+﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
@@ -292,7 +292,8 @@ public sealed class MabArchiveJobHandlerTests
 
     private static string GetConnectionString()
     {
-        return TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
+        return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+            ?? DefaultConnectionString;
     }
 
     private static IDbContextFactory<BatchJobsDbContext> CreateDbContextFactory(string connectionString)
@@ -306,16 +307,9 @@ public sealed class MabArchiveJobHandlerTests
 
     private static async Task AssertCanConnectAsync(IDbContextFactory<BatchJobsDbContext> dbContextFactory)
     {
-        try
-        {
-            await using var context = dbContextFactory.CreateDbContext();
-            var canConnect = await context.Database.CanConnectAsync();
-            Skip.IfNot(canConnect, "Integration DB unavailable for MabArchiveJobHandlerTests.");
-        }
-        catch (Exception ex)
-        {
-            Skip.If(true, $"Integration DB unavailable for MabArchiveJobHandlerTests: {ex.Message}");
-        }
+        await using var context = dbContextFactory.CreateDbContext();
+        var canConnect = await context.Database.CanConnectAsync();
+        Assert.True(canConnect, "Integration DB unavailable for MabArchiveJobHandlerTests.");
     }
 
     private sealed class TestDbContextFactory : IDbContextFactory<BatchJobsDbContext>

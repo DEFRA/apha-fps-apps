@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Domain.Configuration;
+﻿using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,9 @@ public sealed class MabArchivePostgresIntegrationTests : IAsyncLifetime
 
     public MabArchivePostgresIntegrationTests()
     {
-        _connectionString = TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
+        _connectionString =
+            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+            ?? DefaultConnectionString;
     }
 
     public async Task InitializeAsync()

@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.Factory;
+﻿using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
