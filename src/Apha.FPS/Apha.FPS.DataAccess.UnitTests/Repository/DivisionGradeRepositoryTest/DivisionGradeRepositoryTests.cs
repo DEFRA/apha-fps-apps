@@ -567,5 +567,96 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.DivisionGradeRepositoryTest
         }
 
         #endregion
+
+        #region GetAllDivisionGradeCodesAsync Tests
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_ReturnsDistinctOrderedCodes()
+        {
+            var grades = new List<DivisionGrade>
+            {
+                BuildDivisionGrade("C-VSD"),
+                BuildDivisionGrade("A-VSD"),
+                BuildDivisionGrade("B-VSD"),
+                BuildDivisionGrade("A-VSD") // duplicate
+            };
+            var repo = CreateRepository(divisionGrades: grades);
+
+            var result = await repo.GetAllDivisionGradeCodesAsync();
+
+            Assert.Equal(["A-VSD", "B-VSD", "C-VSD"], result);
+        }
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_ReturnsEmpty_WhenNoGrades()
+        {
+            var repo = CreateRepository(divisionGrades: []);
+
+            var result = await repo.GetAllDivisionGradeCodesAsync();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllDivisionGradeCodesAsync_ReturnsSingleItem_WhenOneGrade()
+        {
+            var grades = new List<DivisionGrade> { BuildDivisionGrade("A-VSD") };
+            var repo = CreateRepository(divisionGrades: grades);
+
+            var result = await repo.GetAllDivisionGradeCodesAsync();
+
+            Assert.Single(result);
+            Assert.Equal("A-VSD", result[0]);
+        }
+
+        #endregion
+
+        #region ExistsForGradeCodeAsync Tests
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task ExistsForGradeCodeAsync_ReturnsFalse_WhenGradeCodeIsEmptyOrWhiteSpace(string gradeCode)
+        {
+            var repo = CreateRepository(divisionGrades: []);
+
+            var result = await repo.ExistsForGradeCodeAsync(gradeCode);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsForGradeCodeAsync_ReturnsTrue_WhenGradeCodeExists()
+        {
+            var grades = new List<DivisionGrade> { BuildDivisionGrade("A-VSD", gradeCode: "GCA") };
+            var repo = CreateRepository(divisionGrades: grades);
+
+            var result = await repo.ExistsForGradeCodeAsync("GCA");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsForGradeCodeAsync_ReturnsFalse_WhenGradeCodeDoesNotExist()
+        {
+            var grades = new List<DivisionGrade> { BuildDivisionGrade("A-VSD", gradeCode: "GCA") };
+            var repo = CreateRepository(divisionGrades: grades);
+
+            var result = await repo.ExistsForGradeCodeAsync("NONEXISTENT");
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsForGradeCodeAsync_ReturnsFalse_WhenNoGrades()
+        {
+            var repo = CreateRepository(divisionGrades: []);
+
+            var result = await repo.ExistsForGradeCodeAsync("GCA");
+
+            Assert.False(result);
+        }
+
+        #endregion
     }
 }
