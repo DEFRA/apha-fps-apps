@@ -33,6 +33,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public IFpsWorkGroupGradeApiClient FpsWorkgroupGrade { get; }
 
+        // TRANSFORMENGINE: FpsGrade added — Phase 9 (FpsGradeApiClient for frmMaintGrade ? api/v1/Grade)
+        public IFpsGradeApiClient FpsGrade { get; }
+
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             FpsStaffJob = new FpsStaffJobApiClient(http, mapper);
@@ -59,6 +62,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsAnimalMaster = new FpsAnimalApiClient(http, mapper);
             FpsProjectGroup = new FpsProjectGroupApiClient(http, mapper);
             FpsWorkgroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
+            // TRANSFORMENGINE: FpsGrade wired — FpsGradeApiClient registered on aggregate client
+            FpsGrade = new FpsGradeApiClient(http, mapper);
         }
     }
 }
