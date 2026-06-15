@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Domain.Configuration;
+namespace Apha.BatchJobs.Domain.Configuration;
 
 /// <summary>
 /// Configuration settings for the MABArchive scheduled job.

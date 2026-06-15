@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Domain.Enums;
+using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Microsoft.EntityFrameworkCore;

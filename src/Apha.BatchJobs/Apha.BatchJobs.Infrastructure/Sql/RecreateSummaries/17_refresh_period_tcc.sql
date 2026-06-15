@@ -1,4 +1,4 @@
-﻿-- 17_refresh_period_tcc.sql
+-- 17_refresh_period_tcc.sql
 -- Replaces: usp_Refresh_Period_TCC @period
 -- Parameter: :period (int)
 -- Syntax changes:
@@ -9,7 +9,7 @@
 --   dbo.WorkGroup            -> fps.workgroup
 --   dbo.tblWGEmployee        -> fps.tblwgemployee
 --   [ColumnName]             -> columnname
--- Note: legacy source had a typo '.[dbo].[Period_TimeCostCalcs]' ΓÇö corrected to fps.period_timecostcalcs
+-- Note: legacy source had a typo '.[dbo].[Period_TimeCostCalcs]' — corrected to fps.period_timecostcalcs
 
 DELETE FROM fps.period_timecostcalcs
 WHERE period = :period;

@@ -1,10 +1,10 @@
-﻿using Apha.BatchJobs.Domain.Enums;
+using Apha.BatchJobs.Domain.Enums;
 
 namespace Apha.BatchJobs.Application.Interfaces;
 
 /// <summary>
 /// Orchestrates the full lifecycle of a batch job execution:
-/// acquire lock ΓåÆ record start ΓåÆ run job ΓåÆ record result ΓåÆ release lock.
+/// acquire lock → record start → run job → record result → release lock.
 /// </summary>
 public interface IJobOrchestrator
 {

@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Apha.BatchJobs.Infrastructure.Data;
@@ -35,7 +35,7 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
     public string IdempotencyStrategy => "DeleteAndRebuildWithSingleTransaction";
 
     /// <summary>
-    /// RecreateSummaries is a manually triggered job ΓÇö no schedule expression.
+    /// RecreateSummaries is a manually triggered job — no schedule expression.
     /// </summary>
     public string? ScheduleExpression => null;
 

@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
+namespace Apha.BatchJobs.Application.Jobs.HealthCheck;
 
 /// <summary>
 /// Request model for the health check batch job.

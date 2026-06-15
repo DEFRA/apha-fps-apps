@@ -1,4 +1,4 @@
-﻿# BatchJobs Worker
+# BatchJobs Worker
 
 Concise runtime notes for the worker host.
 

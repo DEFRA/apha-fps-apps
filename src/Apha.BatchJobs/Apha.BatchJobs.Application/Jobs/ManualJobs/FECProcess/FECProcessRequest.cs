@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Application.Jobs.FECProcess;
+namespace Apha.BatchJobs.Application.Jobs.FECProcess;
 
 /// <summary>
 /// Request model for the FEC process batch job.

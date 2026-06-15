@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Domain.Entities;
+using Apha.BatchJobs.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Data;
@@ -180,7 +180,7 @@ public class BatchJobsDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure BatchLock table ΓÇö mirrors fps.job_lock
+        // Configure BatchLock table — mirrors fps.job_lock
         modelBuilder.Entity<BatchLock>(entity =>
         {
             entity.ToTable("job_lock", schema: "fps");
@@ -196,7 +196,7 @@ public class BatchJobsDbContext : DbContext
             entity.HasIndex(e => e.ExpiresAt).HasDatabaseName("idx_job_lock_expires_at");
         });
 
-        // Configure foundation job master table ΓÇö mirrors fps.job_master
+        // Configure foundation job master table — mirrors fps.job_master
         modelBuilder.Entity<TblJobMaster>(entity =>
         {
             entity.ToTable("job_master", schema: "fps");
@@ -211,7 +211,7 @@ public class BatchJobsDbContext : DbContext
             entity.HasIndex(e => e.JobName).IsUnique().HasDatabaseName("job_master_jobname_key");
         });
 
-        // Configure foundation job status table ΓÇö mirrors fps.job_status
+        // Configure foundation job status table — mirrors fps.job_status
         modelBuilder.Entity<TblJobStatus>(entity =>
         {
             entity.ToTable("job_status", schema: "fps");
@@ -228,7 +228,7 @@ public class BatchJobsDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Configure foundation job queue table ΓÇö mirrors fps.job_queue
+        // Configure foundation job queue table — mirrors fps.job_queue
         modelBuilder.Entity<TblJobQueue>(entity =>
         {
             entity.ToTable("job_queue", schema: "fps");
@@ -258,7 +258,7 @@ public class BatchJobsDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Configure foundation job queue log table ΓÇö mirrors fps.job_queue_log
+        // Configure foundation job queue log table — mirrors fps.job_queue_log
         modelBuilder.Entity<TblJobQueueLog>(entity =>
         {
             entity.ToTable("job_queue_log", schema: "fps");
@@ -281,7 +281,7 @@ public class BatchJobsDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Configure durable cancellation request table ΓÇö mirrors fps.job_cancellation_request
+        // Configure durable cancellation request table — mirrors fps.job_cancellation_request
         modelBuilder.Entity<TblJobCancellationRequest>(entity =>
         {
             entity.ToTable("job_cancellation_request", schema: "fps");
@@ -298,7 +298,7 @@ public class BatchJobsDbContext : DbContext
             entity.HasIndex(e => e.Status).HasDatabaseName("idx_job_cancel_status");
         });
 
-        // Configure scheduled load run table ΓÇö mirrors fps.scheduled_load_run
+        // Configure scheduled load run table — mirrors fps.scheduled_load_run
         modelBuilder.Entity<ScheduledLoadRunTable>(entity =>
         {
             entity.ToTable("scheduled_load_run", schema: "fps");
@@ -323,7 +323,7 @@ public class BatchJobsDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Configure scheduled load step run table ΓÇö mirrors fps.scheduled_load_step_run
+        // Configure scheduled load step run table — mirrors fps.scheduled_load_step_run
         modelBuilder.Entity<ScheduledLoadStepRunTable>(entity =>
         {
             entity.ToTable("scheduled_load_step_run", schema: "fps");
@@ -349,7 +349,7 @@ public class BatchJobsDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Configure scheduled load validation result table ΓÇö mirrors fps.scheduled_load_validation_result
+        // Configure scheduled load validation result table — mirrors fps.scheduled_load_validation_result
         modelBuilder.Entity<ScheduledLoadValidationResultTable>(entity =>
         {
             entity.ToTable("scheduled_load_validation_result", schema: "fps");
@@ -378,7 +378,7 @@ public class BatchJobsDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Configure fps source fixture table ΓÇö fps.fps_source_project_year
+        // Configure fps source fixture table — fps.fps_source_project_year
         modelBuilder.Entity<FpsSourceProjectYearTable>(entity =>
         {
             entity.ToTable("fps_source_project_year", schema: "fps");
@@ -406,7 +406,7 @@ public class BatchJobsDbContext : DbContext
             entity.HasIndex(e => e.Year).HasDatabaseName("idx_fps_source_project_year_fps_year");
         });
 
-        // Configure fps year totals table ΓÇö fps.fps_year_totals
+        // Configure fps year totals table — fps.fps_year_totals
         modelBuilder.Entity<FpsYearTotalsTable>(entity =>
         {
             entity.ToTable("fps_year_totals", schema: "fps");
@@ -434,7 +434,7 @@ public class BatchJobsDbContext : DbContext
             entity.HasIndex(e => e.Year).HasDatabaseName("idx_fps_year_totals_fps_year");
         });
 
-        // Configure fps year archive table ΓÇö fps.fps_year_archive
+        // Configure fps year archive table — fps.fps_year_archive
         modelBuilder.Entity<FpsYearArchiveTable>(entity =>
         {
             entity.ToTable("fps_year_archive", schema: "fps");
@@ -465,7 +465,7 @@ public class BatchJobsDbContext : DbContext
             entity.HasIndex(e => e.ArchivedAt).HasDatabaseName("idx_fps_year_archive_archived_at");
         });
 
-        // Configure fps current year project-all table ΓÇö fps.fps_project_all_current_year
+        // Configure fps current year project-all table — fps.fps_project_all_current_year
         modelBuilder.Entity<FpsProjectAllCurrentYearTable>(entity =>
         {
             entity.ToTable("fps_project_all_current_year", schema: "fps");

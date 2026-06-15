@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Domain.Entities;
+using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
@@ -73,13 +73,13 @@ public class JobExecutionRepository : IJobExecutionRepository
                 StatusId = statusId,
                 PerformedBy = record.UserId,
                 LogTime = now,
-                Note = "Worker started execution - Initiated ΓåÆ Running"
+                Note = "Worker started execution - Initiated → Running"
             });
 
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
-                "[Worker ΓåÆ DB] Γ£ô Initiated ΓåÆ Running transition complete | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | StartDateTime={StartDateTime}",
+                "[Worker → DB] ✓ Initiated → Running transition complete | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | StartDateTime={StartDateTime}",
                 record.JobName,
                 record.JobExecutionId,
                 record.JobQueueId,
@@ -316,7 +316,7 @@ public class JobExecutionRepository : IJobExecutionRepository
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "[API ΓåÆ DB] Γ£ô Initiated record created | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode} | RequestedBy={RequestedBy} | RequestedAtUtc={RequestedAtUtc}",
+            "[API → DB] ✓ Initiated record created | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode} | RequestedBy={RequestedBy} | RequestedAtUtc={RequestedAtUtc}",
             jobName, jobExecutionId, jobQueueId, runMode, requestedBy, requestedAtUtc);
 
         return jobQueueId;

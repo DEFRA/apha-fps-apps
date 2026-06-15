@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 
 /// <summary>
 /// Service for rebuilding FPS source totals before archive load.

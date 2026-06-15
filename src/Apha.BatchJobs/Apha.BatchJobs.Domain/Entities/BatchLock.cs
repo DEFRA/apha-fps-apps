@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Domain.Entities;
+namespace Apha.BatchJobs.Domain.Entities;
 
 /// <summary>
 /// Represents a distributed lock for batch job execution to prevent concurrent runs.

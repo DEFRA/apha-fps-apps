@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Domain.Configuration;
+using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

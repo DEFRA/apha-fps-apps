@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Domain.Enums;
+namespace Apha.BatchJobs.Domain.Enums;
 
 /// <summary>
 /// Process exit codes for host and scheduler execution.

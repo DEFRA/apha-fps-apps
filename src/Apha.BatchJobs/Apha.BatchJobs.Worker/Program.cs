@@ -1,8 +1,6 @@
 ﻿using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
-using Apha.BatchJobs.Domain.Configuration;
-using Apha.BatchJobs.Application.Jobs.HealthCheck;
 using Apha.BatchJobs.Application.DependencyInjection;
 using Apha.BatchJobs.Worker.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -16,16 +14,17 @@ using System.Globalization;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+var isLocalOrDevelopment = builder.Environment.IsDevelopment()
+    || builder.Environment.IsEnvironment("Local")
+    || builder.Environment.IsEnvironment("local");
+var strictExecutionContractMode = ResolveStrictExecutionContractMode(builder.Configuration, isLocalOrDevelopment);
+
 builder.Configuration
     .SetBasePath(builder.Environment.ContentRootPath)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
-var strictExecutionContractMode = ResolveStrictExecutionContractMode(builder.Configuration);
-var autoCreateInitiatedWhenMissing = ResolveAutoCreateInitiatedWhenMissing(builder.Configuration);
-var startupRequestedJobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? "HealthCheck");
-var runHealthCheckDirect = string.Equals(startupRequestedJobName, "HealthCheck", StringComparison.OrdinalIgnoreCase);
 var startedAt = DateTime.UtcNow;
 const int ExitCodeSuccess = 0;
 const int ExitCodeBusinessFailure = 1;
@@ -61,16 +60,7 @@ else
 
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(Log.Logger);
-if (runHealthCheckDirect)
-{
-    builder.Services.AddOptions();
-    builder.Services.Configure<BatchJobSettings>(builder.Configuration.GetSection("BatchJobs"));
-    builder.Services.AddScoped<HealthCheckJobHandler>();
-}
-else
-{
-    builder.ConfigureServices();
-}
+builder.ConfigureServices();
 
 using var host = builder.Build();
 var serviceProvider = host.Services;
@@ -158,14 +148,7 @@ try
     userId = Environment.GetEnvironmentVariable("BATCH_REQUESTED_BY")
         ?? "system";
 
-    if (runHealthCheckDirect)
-    {
-        if (!Guid.TryParse(jobExecutionIdEnv, out jobExecutionId))
-        {
-            jobExecutionId = Guid.NewGuid();
-        }
-    }
-    else if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
+    if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
     {
         if (strictExecutionContractMode && !allowScheduledMabArchiveGeneratedExecutionId)
         {
@@ -193,18 +176,14 @@ try
             jobExecutionId);
     }
 
+    var correlationService = serviceProvider.GetRequiredService<ICorrelationService>();
+    correlationService.SetCorrelationId(jobExecutionId.ToString("D"));
     capturedJobExecutionId = jobExecutionId.ToString("D");
 
-    if (!runHealthCheckDirect)
-    {
-        var correlationService = serviceProvider.GetRequiredService<ICorrelationService>();
-        correlationService.SetCorrelationId(jobExecutionId.ToString("D"));
-
-        logger.LogInformation(
-            "Correlation context initialized | CorrelationId={CorrelationId} | Source={CorrelationSource}",
-            jobExecutionId,
-            !string.IsNullOrWhiteSpace(jobExecutionIdEnv) && Guid.TryParse(jobExecutionIdEnv, out _) ? "IncomingJobExecutionId" : "WorkerGeneratedFallback");
-    }
+    logger.LogInformation(
+        "Correlation context initialized | CorrelationId={CorrelationId} | Source={CorrelationSource}",
+        jobExecutionId,
+        !string.IsNullOrWhiteSpace(jobExecutionIdEnv) && Guid.TryParse(jobExecutionIdEnv, out _) ? "IncomingJobExecutionId" : "WorkerGeneratedFallback");
 
     requestedJobName = jobName;
     requestedRunMode = runMode.ToString();
@@ -233,45 +212,9 @@ try
     }
     else
     {
-        if (runHealthCheckDirect)
-        {
-            await using var directScope = serviceProvider.CreateAsyncScope();
-            var healthCheckJob = directScope.ServiceProvider.GetRequiredService<HealthCheckJobHandler>();
-
-            await healthCheckJob.ExecuteAsync(linkedCts.Token);
-
-            logger.LogInformation("HealthCheck executed in direct mode.");
-            exitCode = ExitCodeSuccess;
-            failureCategory = "None";
-            runOutcome = "Succeeded";
-            capturedJobQueueId = "N/A";
-            capturedExecutionId = null;
-            return ExitCodeSuccess;
-        }
-
         // Run through orchestrator (handles lock, execution records, and job execution)
         await using var executionScope = serviceProvider.CreateAsyncScope();
         var executionRepository = executionScope.ServiceProvider.GetRequiredService<IJobExecutionRepository>();
-
-        if (autoCreateInitiatedWhenMissing)
-        {
-            var existingExecution = await executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, linkedCts.Token);
-            if (existingExecution is null)
-            {
-                await executionRepository.CreateInitiatedRecordAsync(
-                    jobName,
-                    jobExecutionId,
-                    userId,
-                    requestedAtUtc ?? DateTime.UtcNow,
-                    runMode,
-                    linkedCts.Token);
-
-                logger.LogWarning(
-                    "Auto-created Initiated row from configuration | JobName={JobName} | JobExecutionId={JobExecutionId}",
-                    jobName,
-                    jobExecutionId);
-            }
-        }
 
         await VerifyExecutionContractAsync(
             jobName,
@@ -579,7 +522,7 @@ static int ResolveIntSetting(IConfiguration configuration, string configKey, str
     return defaultValue;
 }
 
-static bool ResolveStrictExecutionContractMode(IConfiguration configuration)
+static bool ResolveStrictExecutionContractMode(IConfiguration configuration, bool isLocalOrDevelopment)
 {
     var envValue = Environment.GetEnvironmentVariable("BATCH_STRICT_EXECUTION_CONTRACT");
     if (!string.IsNullOrWhiteSpace(envValue) && bool.TryParse(envValue, out var parsedEnv))
@@ -593,25 +536,8 @@ static bool ResolveStrictExecutionContractMode(IConfiguration configuration)
         return configValue.Value;
     }
 
-    // Safe default: strict.
-    return true;
-}
-
-static bool ResolveAutoCreateInitiatedWhenMissing(IConfiguration configuration)
-{
-    var envValue = Environment.GetEnvironmentVariable("BATCH_AUTO_CREATE_INITIATED_RECORD");
-    if (!string.IsNullOrWhiteSpace(envValue) && bool.TryParse(envValue, out var parsedEnv))
-    {
-        return parsedEnv;
-    }
-
-    var configValue = configuration.GetValue<bool?>("BatchJobs:AutoCreateInitiatedRecordWhenMissing");
-    if (configValue.HasValue)
-    {
-        return configValue.Value;
-    }
-
-    return false;
+    // Safe default: strict outside local/development.
+    return !isLocalOrDevelopment;
 }
 
 static DateTime? ParseRequestedAtUtc(string? requestedAtUtcRaw, Microsoft.Extensions.Logging.ILogger logger)

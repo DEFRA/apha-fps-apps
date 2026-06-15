@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
@@ -112,7 +112,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         if (existingExecution == null)
         {
             _logger.LogError(
-                "Γ£ù No Initiated record found for JobExecutionId={JobExecutionId}. Worker cannot proceed without pre-created record from API.",
+                "✗ No Initiated record found for JobExecutionId={JobExecutionId}. Worker cannot proceed without pre-created record from API.",
                 jobExecutionId);
             throw new InvalidOperationException(
                 $"No Initiated job record found for execution {jobExecutionId}. This indicates the API did not properly create the job record.");
@@ -120,7 +120,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         var jobQueueId = existingExecution.JobQueueId;
         _logger.LogInformation(
-            "[Worker ΓåÆ DB] Γ£ô Fetched Initiated record | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | CurrentStatus={CurrentStatus}",
+            "[Worker → DB] ✓ Fetched Initiated record | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | CurrentStatus={CurrentStatus}",
             jobName, jobExecutionId, jobQueueId, existingExecution.Status);
         
         using var runScope = _logger.BeginScope(new Dictionary<string, object>
@@ -132,9 +132,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
             ["UserId"] = userId
         });
 
-        _logger.LogInformation("[Worker ΓåÆ DB] Transitioning from Initiated ΓåÆ Running | JobQueueId={JobQueueId}", jobQueueId);
+        _logger.LogInformation("[Worker → DB] Transitioning from Initiated → Running | JobQueueId={JobQueueId}", jobQueueId);
 
-        // Step 2 ΓÇö Create execution record (Started)
+        // Step 2 — Create execution record (Started)
         var record = new JobExecutionRecord
         {
             ExecutionId = 0,   // DB assigns real ID on insert
@@ -170,10 +170,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Could not write execution start record ΓÇö continuing without tracking");
+            _logger.LogWarning(ex, "Could not write execution start record — continuing without tracking");
         }
 
-        // Step 3 ΓÇö Execute the job
+        // Step 3 — Execute the job
         IBatchJob? job = null;
         Exception? jobException = null;
         var retryStartedAt = DateTime.UtcNow;
@@ -360,7 +360,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         {
             executionScope?.Dispose();
 
-            // Step 4 ΓÇö Update execution record (Completed or Failed)
+            // Step 4 — Update execution record (Completed or Failed)
             var completedAt = DateTime.UtcNow;
             var duration = completedAt - startedAt;
             var finalStatus = jobException switch
@@ -385,10 +385,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not write execution completion record ΓÇö job result may not be persisted");
+                _logger.LogWarning(ex, "Could not write execution completion record — job result may not be persisted");
             }
 
-            // Step 5 ΓÇö Release lock (always)
+            // Step 5 — Release lock (always)
             try
             {
                 await _lockRepository.ReleaseLockAsync(jobName, jobQueueId, CancellationToken.None);
@@ -396,7 +396,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not release lock for '{JobName}' | JobQueueId={JobQueueId} ΓÇö lock will expire after {Timeout}s",
+                _logger.LogWarning(ex, "Could not release lock for '{JobName}' | JobQueueId={JobQueueId} — lock will expire after {Timeout}s",
                     jobName, jobQueueId, _lockTimeoutSeconds);
             }
         }

@@ -1,4 +1,4 @@
-﻿-- 05_create_time_cost_calcs.sql
+-- 05_create_time_cost_calcs.sql
 -- Replaces: sp_CreateTimeCostCalcs
 -- Syntax changes:
 --   dbo.* / [Table]  -> fps.* (lower-case)

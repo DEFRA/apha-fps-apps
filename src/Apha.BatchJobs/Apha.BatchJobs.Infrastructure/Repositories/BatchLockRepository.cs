@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Domain.Entities;
+using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

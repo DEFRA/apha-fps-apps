@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Domain.Interfaces;
+namespace Apha.BatchJobs.Domain.Interfaces;
 
 /// <summary>
 /// Contract for correlation ID management during batch job execution.

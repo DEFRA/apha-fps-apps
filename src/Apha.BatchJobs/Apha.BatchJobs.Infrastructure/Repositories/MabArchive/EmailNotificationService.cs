@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Apha.BatchJobs.Domain.Configuration;

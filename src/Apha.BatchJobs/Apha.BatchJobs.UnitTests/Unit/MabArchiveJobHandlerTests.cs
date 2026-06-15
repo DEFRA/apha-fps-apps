@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
@@ -292,7 +292,8 @@ public sealed class MabArchiveJobHandlerTests
 
     private static string GetConnectionString()
     {
-        return TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
+        return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+            ?? DefaultConnectionString;
     }
 
     private static IDbContextFactory<BatchJobsDbContext> CreateDbContextFactory(string connectionString)

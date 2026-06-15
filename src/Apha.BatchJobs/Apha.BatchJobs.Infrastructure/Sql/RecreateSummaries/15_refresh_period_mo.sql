@@ -1,4 +1,4 @@
-﻿-- 15_refresh_period_mo.sql
+-- 15_refresh_period_mo.sql
 -- Replaces: usp_Refresh_Period_MO @period
 -- Parameter: :period (int)
 -- Syntax changes:

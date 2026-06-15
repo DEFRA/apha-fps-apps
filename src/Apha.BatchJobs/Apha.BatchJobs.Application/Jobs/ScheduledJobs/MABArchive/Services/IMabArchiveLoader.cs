@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Infrastructure.Data;
+using Apha.BatchJobs.Infrastructure.Data;
 
 namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 

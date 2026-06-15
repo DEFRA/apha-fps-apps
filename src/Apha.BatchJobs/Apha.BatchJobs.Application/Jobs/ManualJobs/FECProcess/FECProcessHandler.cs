@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

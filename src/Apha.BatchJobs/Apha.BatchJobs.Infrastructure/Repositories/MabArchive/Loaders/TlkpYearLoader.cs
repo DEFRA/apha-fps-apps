@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 

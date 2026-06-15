@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 
 namespace Apha.BatchJobs.UnitTests;
 

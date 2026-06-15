@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Infrastructure.Context;
+using Apha.BatchJobs.Infrastructure.Context;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 

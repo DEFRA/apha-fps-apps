@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Application.Interfaces;
+namespace Apha.BatchJobs.Application.Interfaces;
 
 /// <summary>Factory for resolving batch job instances by name.</summary>
 public interface IBatchJobFactory

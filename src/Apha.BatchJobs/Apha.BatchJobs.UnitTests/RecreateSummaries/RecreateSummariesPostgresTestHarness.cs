@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +34,9 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
 
     public static async Task<RecreateSummariesPostgresTestHarness> CreateAsync()
     {
-        var rawConnectionString = TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
+        var rawConnectionString =
+            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+            ?? DefaultConnectionString;
 
         var builder = new NpgsqlConnectionStringBuilder(rawConnectionString)
         {

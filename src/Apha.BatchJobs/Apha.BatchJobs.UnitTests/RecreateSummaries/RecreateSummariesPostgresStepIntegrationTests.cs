@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
@@ -20,7 +20,9 @@ public sealed class RecreateSummariesPostgresStepIntegrationTests : IAsyncLifeti
 
     public RecreateSummariesPostgresStepIntegrationTests()
     {
-        _connectionString = TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
+        _connectionString =
+            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+            ?? DefaultConnectionString;
     }
 
     public async Task InitializeAsync()

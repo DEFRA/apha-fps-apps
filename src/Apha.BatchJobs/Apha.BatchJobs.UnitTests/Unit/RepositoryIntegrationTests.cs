@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Domain.Entities;
+using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories;
@@ -18,7 +18,9 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
 
     public RepositoryIntegrationTests()
     {
-        _connectionString = TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
+        _connectionString =
+            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+            ?? DefaultConnectionString;
     }
 
     public async Task InitializeAsync()

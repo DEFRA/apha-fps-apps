@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Infrastructure.Data;
+namespace Apha.BatchJobs.Infrastructure.Data;
 
 // RecreateSummaries source/target table and view models used by LINQ implementation.
 

@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Domain.Configuration;
+namespace Apha.BatchJobs.Domain.Configuration;
 
 /// <summary>
 /// Batch job runtime settings.

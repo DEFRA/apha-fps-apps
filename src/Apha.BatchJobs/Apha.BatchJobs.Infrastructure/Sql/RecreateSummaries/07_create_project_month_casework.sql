@@ -1,4 +1,4 @@
-﻿-- 07_create_project_month_casework.sql
+-- 07_create_project_month_casework.sql
 -- Replaces: sp_CreateProjectMonthCasework
 -- Syntax changes:
 --   dbo.ProjectMonthCasework  -> fps.projectmonthcasework

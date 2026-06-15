@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Domain.Configuration;
+using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Microsoft.EntityFrameworkCore;
@@ -117,7 +117,8 @@ public sealed class ReloadFpsTotalsServiceTests
 
     private static string GetConnectionString()
     {
-        return TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
+        return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+            ?? DefaultConnectionString;
     }
 
     private static BatchJobsDbContext CreateDbContext(string connectionString)

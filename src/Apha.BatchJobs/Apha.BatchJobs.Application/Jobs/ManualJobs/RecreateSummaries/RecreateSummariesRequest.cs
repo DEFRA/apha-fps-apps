@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Application.Jobs.RecreateSummaries;
+namespace Apha.BatchJobs.Application.Jobs.RecreateSummaries;
 
 /// <summary>
 /// Request model for the recreate summaries batch job.

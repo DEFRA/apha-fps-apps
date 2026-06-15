@@ -1,4 +1,4 @@
-﻿-- 02_create_fps_totals.sql
+-- 02_create_fps_totals.sql
 -- Replaces: sp_createFPSTotals
 -- Syntax changes:
 --   dbo.FPSYearTotals        -> fps.fpsyeartotals

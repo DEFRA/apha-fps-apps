@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Domain.Interfaces;
+namespace Apha.BatchJobs.Domain.Interfaces;
 
 /// <summary>
 /// Scoped execution context for FPS year selection during a batch job run.

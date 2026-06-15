@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -7,11 +7,6 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Unit\BatchJobTriggerControllerValidationTests.cs" />
-    <Compile Remove="Unit\TriggerAttemptStoreTests.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0" />
@@ -31,9 +26,6 @@
   </ItemGroup>
 
   <!-- All Unit/*.cs files are now included implicitly by the SDK -->
-  <ItemGroup>
-    <ProjectReference Include="..\Apha.BatchJobs.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />

@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Domain.Entities;
+using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 
 namespace Apha.BatchJobs.Domain.Interfaces;

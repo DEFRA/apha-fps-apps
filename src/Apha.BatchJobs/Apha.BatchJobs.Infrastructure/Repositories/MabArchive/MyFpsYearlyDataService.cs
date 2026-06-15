@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -218,7 +218,7 @@ SELECT EXISTS(
                 totalRowsAffected += rowCount;
                 _context.ChangeTracker.Clear();
 
-                   _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] Γ£ô {LoaderName}: {RowCount} rows in {DurationMs}ms for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, rowCount, sw.ElapsedMilliseconds, targetYear);
+                   _logger.LogInformation("[{LoaderNumber}/{TotalLoaders}] ✓ {LoaderName}: {RowCount} rows in {DurationMs}ms for year {Year}", loader.Sequence, _orderedLoaders.Count, loader.Name, rowCount, sw.ElapsedMilliseconds, targetYear);
             }
 
             _logger.LogInformation("LoadYearDataAsync complete: {TotalRowCount} total rows loaded for year {Year}", totalRowsAffected, targetYear);

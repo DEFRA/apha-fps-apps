@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.DependencyInjection;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Microsoft.Extensions.Configuration;

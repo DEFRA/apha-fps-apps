@@ -1,4 +1,4 @@
-﻿namespace Apha.BatchJobs.Infrastructure.Data;
+namespace Apha.BatchJobs.Infrastructure.Data;
 
 // MABArchive source/target models for LINQ migration (phase 2 incremental mapping).
 

@@ -1,4 +1,4 @@
-﻿{
+{
   "ConnectionStrings": {
     "FPSConnectionString": "Host=localhost;Port=5432;Database=batchjobs;Username=postgres;Password=YOUR_PASSWORD_HERE"
   }

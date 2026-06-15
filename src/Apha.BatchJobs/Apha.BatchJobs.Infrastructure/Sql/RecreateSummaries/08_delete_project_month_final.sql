@@ -1,4 +1,4 @@
-﻿-- 08_delete_project_month_final.sql
+-- 08_delete_project_month_final.sql
 -- Replaces: sp_DeleteProjectMonthFinal
 -- Syntax changes: dbo.ProjectMonthFinal -> fps.projectmonthfinal
 

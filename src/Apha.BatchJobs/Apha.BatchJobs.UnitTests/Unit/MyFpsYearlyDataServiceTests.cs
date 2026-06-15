@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Microsoft.EntityFrameworkCore;
@@ -299,7 +299,8 @@ public sealed class MyFpsYearlyDataServiceTests
 
     private static string GetConnectionString()
     {
-        return TestConnectionStringResolver.ResolveForTests(DefaultConnectionString);
+        return Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
+            ?? DefaultConnectionString;
     }
 
     private static async Task AssertCanConnectAsync(BatchJobsDbContext context)

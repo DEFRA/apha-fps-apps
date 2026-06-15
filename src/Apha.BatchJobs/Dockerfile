@@ -30,6 +30,9 @@ LABEL uk.gov.defra.parent-image=defra-dotnetcore:${PARENT_VERSION}
 USER 0
 RUN apk update && apk add --no-cache icu-libs krb5-libs
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_EnableDiagnostics=0
+ENV DOTNET_GCConserveMemory=1
 
 WORKDIR /app
 
