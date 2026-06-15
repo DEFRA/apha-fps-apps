@@ -1,4 +1,4 @@
-using Apha.Common.Contracts.FPS;
+﻿using Apha.Common.Contracts.FPS;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -107,31 +107,31 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query)
         {
-            var queryable = _dbContext.Projects.AsNoTracking().AsQueryable();
+            var projectQuery = _dbContext.ProjectViews
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId))
+                .Select(pv => new Project
+                {
+                    ParentProject = pv.ParentProject ?? string.Empty,
+                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
+                    Program = pv.Program ?? string.Empty,
+                    Customer = pv.Customer ?? string.Empty,
+                    Contract = pv.Contract ?? string.Empty,
+                    Disease = pv.Disease ?? string.Empty,
+                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                    CostCentre = pv.CostCentre,
+                    OracleProjectCode = pv.OracleProjectCode,
+                    SubAccountCode = pv.SubAccountCode,
+                    IsDefraProject = pv.IsDefraProject ?? 0,
+                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
+                }).AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search;
-                queryable = queryable.Where(p =>
-                    EF.Functions.ILike(p.ParentProject!, $"%{search}%") ||
-                    EF.Functions.ILike(p.ProjectTitle!, $"%{search}%"));
-            }
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
 
-            queryable = query.SortBy switch
-            {
-                string s when s.Equals("parentproject", StringComparison.OrdinalIgnoreCase) => query.Descending
-                    ? queryable.OrderByDescending(p => p.ParentProject)
-                    : queryable.OrderBy(p => p.ParentProject),
-                string s when s.Equals("projecttitle", StringComparison.OrdinalIgnoreCase) => query.Descending
-                    ? queryable.OrderByDescending(p => p.ProjectTitle)
-                    : queryable.OrderBy(p => p.ProjectTitle),
-                _ => queryable.OrderBy(p => p.ParentProject)
-            };
-
-            var result = await queryable.ToListAsync();
+            var result = await projectQuery.ToListAsync();
             return ApplyPaging(result, query.Page, query.PageSize);
         }
-
+        
         public async Task<PagedData<ProjectView>> GetPagedProjectsByUserAsync(PaginationParameters<string> query)
         {
             var queryable = _dbContext.ProjectViews
@@ -432,6 +432,16 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("Manager", out var manager) && manager != null)
                 query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
 
+            if (dict.TryGetValue("OracleProjectCode", out var oracleProjectCode) && oracleProjectCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.OracleProjectCode!, $"%{oracleProjectCode}%"));
+
+            if (dict.TryGetValue("SubAccountCode", out var subAccountCode) && subAccountCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.SubAccountCode!, $"%{subAccountCode}%"));
+
+            if (dict.TryGetValue("CostCentre", out var costCentre) && costCentre != null
+                && double.TryParse(costCentre.ToString(), out var costCentreValue))
+                query = query.Where(x => x.CostCentre == costCentreValue);
+
             return query;
         }
 
@@ -460,7 +470,7 @@ namespace Apha.FPS.DataAccess.Repositories
             if (string.IsNullOrEmpty(sortBy))
                 return query.OrderBy(p => p.ParentProject);
 
-            return ApplySortingByProperty(query, sortBy, descending);
+            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
         }
 
 
@@ -468,11 +478,14 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return property switch
             {
-                string s when s.Equals("parentproject", StringComparison.OrdinalIgnoreCase) => ApplyOrder(query, p => p.ParentProject, descending),
-                string s when s.Equals("projecttitle", StringComparison.OrdinalIgnoreCase) => ApplyOrder(query, p => p.ProjectTitle, descending),
-                string s when s.Equals("program", StringComparison.OrdinalIgnoreCase) => ApplyOrder(query, p => p.Program, descending),
-                string s when s.Equals("manager", StringComparison.OrdinalIgnoreCase) => ApplyOrder(query, p => p.Manager, descending),
-                string s when s.Equals("budgetcvl", StringComparison.OrdinalIgnoreCase) => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "parentproject" => ApplyOrder(query, p => p.ParentProject, descending),
+                "projecttitle" => ApplyOrder(query, p => p.ProjectTitle, descending),
+                "program" => ApplyOrder(query, p => p.Program, descending),
+                "manager" => ApplyOrder(query, p => p.Manager, descending),
+                "budgetcvl" => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "costcentre" => ApplyOrder(query, p => p.CostCentre, descending),
+                "oracleprojectcode" => ApplyOrder(query, p => p.OracleProjectCode, descending),
+                "subaccountcode" => ApplyOrder(query, p => p.SubAccountCode, descending),
                 _ => query.OrderBy(p => p.ParentProject)
             };
         }
@@ -513,15 +526,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 return query.OrderBy(e => e.ParentProject);
             }
 
-            return ApplyPactSortingByProperty(query, sortBy, descending);
+            return ApplyPactSortingByProperty(query, sortBy.ToLower(), descending);
         }
 
         private static IQueryable ApplyPactSortingByProperty(IQueryable<PactProjectView> query, string property, bool descending)
         {
             return property switch
             {
-                string s when s.Equals("parentproject", StringComparison.OrdinalIgnoreCase) => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
-                string s when s.Equals("projecttitle", StringComparison.OrdinalIgnoreCase) => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
+                "parentproject" => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
+                "projecttitle" => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
                 _ => query.OrderBy(e => e.ParentProject)
             };
         }
@@ -1292,7 +1305,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     && EF.Functions.ILike(pg.SectorName!, "%charge%")
                 select new
                 {                    
-                    sectorCharge = EF.Functions.ILike((pg.SectorName ?? "").Trim(), "charge") ? 1m : 0m,
+                    sectorCharge = (pg.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m,
                     JobCode = sj.JobCode,                    
                     PlannedHours = sj.PlannedHours,
                     ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate
@@ -1385,19 +1398,19 @@ namespace Apha.FPS.DataAccess.Repositories
             }).ToList();
 
             // Apply sorting
-            results = query.SortBy switch
+            results = query.SortBy?.ToLower() switch
             {
-                string s when s.Equals("jobcode", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.JobCode).ToList() : results.OrderBy(r => r.JobCode).ToList(),
-                string s when s.Equals("totalcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.TotalCosts).ToList() : results.OrderBy(r => r.TotalCosts).ToList(),
-                string s when s.Equals("budgetcvl", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.BudgetCvl).ToList() : results.OrderBy(r => r.BudgetCvl).ToList(),
-                string s when s.Equals("jcprofit", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.JcProfit).ToList() : results.OrderBy(r => r.JcProfit).ToList(),
-                string s when s.Equals("offtarget", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.OffTarget).ToList() : results.OrderBy(r => r.OffTarget).ToList(),
-                string s when s.Equals("projectstatus", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.ProjectStatus).ToList() : results.OrderBy(r => r.ProjectStatus).ToList(),
-                string s when s.Equals("jctotalstaffcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.JcTotalStaffCosts).ToList() : results.OrderBy(r => r.JcTotalStaffCosts).ToList(),
-                string s when s.Equals("jctotaltestcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.JcTotalTestCosts).ToList() : results.OrderBy(r => r.JcTotalTestCosts).ToList(),
-                string s when s.Equals("jctotalanimalcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.JcTotalAnimalCosts).ToList() : results.OrderBy(r => r.JcTotalAnimalCosts).ToList(),
-                string s when s.Equals("jctotaladditionalcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.JcTotalAdditionalCosts).ToList() : results.OrderBy(r => r.JcTotalAdditionalCosts).ToList(),
-                string s when s.Equals("targetprofit", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(r => r.TargetProfit).ToList() : results.OrderBy(r => r.TargetProfit).ToList(),
+                "jobcode" => query.Descending ? results.OrderByDescending(r => r.JobCode).ToList() : results.OrderBy(r => r.JobCode).ToList(),
+                "totalcosts" => query.Descending ? results.OrderByDescending(r => r.TotalCosts).ToList() : results.OrderBy(r => r.TotalCosts).ToList(),
+                "budgetcvl" => query.Descending ? results.OrderByDescending(r => r.BudgetCvl).ToList() : results.OrderBy(r => r.BudgetCvl).ToList(),
+                "jcprofit" => query.Descending ? results.OrderByDescending(r => r.JcProfit).ToList() : results.OrderBy(r => r.JcProfit).ToList(),
+                "offtarget" => query.Descending ? results.OrderByDescending(r => r.OffTarget).ToList() : results.OrderBy(r => r.OffTarget).ToList(),
+                "projectstatus" => query.Descending ? results.OrderByDescending(r => r.ProjectStatus).ToList() : results.OrderBy(r => r.ProjectStatus).ToList(),
+                "jctotalstaffcosts" => query.Descending ? results.OrderByDescending(r => r.JcTotalStaffCosts).ToList() : results.OrderBy(r => r.JcTotalStaffCosts).ToList(),
+                "jctotaltestcosts" => query.Descending ? results.OrderByDescending(r => r.JcTotalTestCosts).ToList() : results.OrderBy(r => r.JcTotalTestCosts).ToList(),
+                "jctotalanimalcosts" => query.Descending ? results.OrderByDescending(r => r.JcTotalAnimalCosts).ToList() : results.OrderBy(r => r.JcTotalAnimalCosts).ToList(),
+                "jctotaladditionalcosts" => query.Descending ? results.OrderByDescending(r => r.JcTotalAdditionalCosts).ToList() : results.OrderBy(r => r.JcTotalAdditionalCosts).ToList(),
+                "targetprofit" => query.Descending ? results.OrderByDescending(r => r.TargetProfit).ToList() : results.OrderBy(r => r.TargetProfit).ToList(),
                 _ => results.OrderBy(r => r.JobCode).ToList()
             };
 
@@ -1458,21 +1471,21 @@ namespace Apha.FPS.DataAccess.Repositories
             // TRANSFORMENGINE: sorting — covers all 14 DataGrid columns from projectprofitability_vla.js
             q = query.SortBy switch
             {
-                string s when s.Equals("jobcode",           StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.JobCode)           : q.OrderBy(v => v.JobCode),
-                string s when s.Equals("program",           StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Program)           : q.OrderBy(v => v.Program),
-                string s when s.Equals("customer",          StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Customer)          : q.OrderBy(v => v.Customer),
-                string s when s.Equals("manager",           StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Manager)           : q.OrderBy(v => v.Manager),
-                string s when s.Equals("status",            StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Status)            : q.OrderBy(v => v.Status),
-                string s when s.Equals("staffcosts",        StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.StaffCosts)        : q.OrderBy(v => v.StaffCosts),
-                string s when s.Equals("testcost",          StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.TestCost)          : q.OrderBy(v => v.TestCost),
-                string s when s.Equals("animalcosts",       StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.AnimalCosts)       : q.OrderBy(v => v.AnimalCosts),
-                string s when s.Equals("additionalcosts",   StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.AdditionalCosts)   : q.OrderBy(v => v.AdditionalCosts),
-                string s when s.Equals("totalcosts",        StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.TotalCosts)        : q.OrderBy(v => v.TotalCosts),
-                string s when s.Equals("budget",            StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Budget)            : q.OrderBy(v => v.Budget),
-                string s when s.Equals("profit",            StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Profit)            : q.OrderBy(v => v.Profit),
-                string s when s.Equals("targetprofit",      StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.TargetProfit)      : q.OrderBy(v => v.TargetProfit),
-                string s when s.Equals("offtarget",         StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.OffTarget)         : q.OrderBy(v => v.OffTarget),
-                _                                                                                => q.OrderBy(v => v.JobCode)    // default: ascending by job code
+                string s when s.Equals("jobcode", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.JobCode) : q.OrderBy(v => v.JobCode),
+                string s when s.Equals("program", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Program) : q.OrderBy(v => v.Program),
+                string s when s.Equals("customer", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Customer) : q.OrderBy(v => v.Customer),
+                string s when s.Equals("manager", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Manager) : q.OrderBy(v => v.Manager),
+                string s when s.Equals("status", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Status) : q.OrderBy(v => v.Status),
+                string s when s.Equals("staffcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.StaffCosts) : q.OrderBy(v => v.StaffCosts),
+                string s when s.Equals("testcost", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.TestCost) : q.OrderBy(v => v.TestCost),
+                string s when s.Equals("animalcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.AnimalCosts) : q.OrderBy(v => v.AnimalCosts),
+                string s when s.Equals("additionalcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.AdditionalCosts) : q.OrderBy(v => v.AdditionalCosts),
+                string s when s.Equals("totalcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.TotalCosts) : q.OrderBy(v => v.TotalCosts),
+                string s when s.Equals("budget", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Budget) : q.OrderBy(v => v.Budget),
+                string s when s.Equals("profit", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.Profit) : q.OrderBy(v => v.Profit),
+                string s when s.Equals("targetprofit", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.TargetProfit) : q.OrderBy(v => v.TargetProfit),
+                string s when s.Equals("offtarget", StringComparison.OrdinalIgnoreCase) => query.Descending ? q.OrderByDescending(v => v.OffTarget) : q.OrderBy(v => v.OffTarget),
+                _ => q.OrderBy(v => v.JobCode)    // default: ascending by job code
             };
 
             var results = await q.ToListAsync();
