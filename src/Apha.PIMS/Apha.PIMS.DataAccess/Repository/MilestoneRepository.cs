@@ -27,8 +27,8 @@ namespace Apha.PIMS.DataAccess.Repository
             query = ApplyFilter(query, parameters.Filter);
             query = ApplySorting(query, parameters.SortBy, parameters.Descending);
 
-            List<Milestone> all = await query.ToListAsync();
-            return ApplyPaging(all, parameters.Page, parameters.PageSize);
+           
+            return await ApplyPaging(query, parameters.Page, parameters.PageSize);
         }
 
         public async Task<Milestone?> GetMilestoneAsync(string project, string number)
@@ -74,8 +74,7 @@ namespace Apha.PIMS.DataAccess.Repository
                 .Where(f => f.ParentProject == parentProject)
                 .OrderByDescending(f => f.Year);
 
-            List<MilestoneFormDates> all = await query.ToListAsync();
-            return ApplyPaging(all, parameters.Page, parameters.PageSize);
+            return await ApplyPaging(query, parameters.Page, parameters.PageSize);
         }
 
         public async Task<MilestoneFormDates?> GetMilestoneFormDatesAsync(short year, string parentProject)
@@ -149,15 +148,14 @@ namespace Apha.PIMS.DataAccess.Repository
 
         public async Task<PagedData<LogMilestone>> GetLogMilestonesAsync(PaginationParameters<string> parameters,string? project,string? numberPart1,string? numberPart2)
         {
-            
             string numberPattern;
             if (string.IsNullOrWhiteSpace(numberPart1) && string.IsNullOrWhiteSpace(numberPart2))
             {
-                numberPattern = string.Empty; 
+                numberPattern = string.Empty;
             }
             else
             {
-                string left = string.IsNullOrWhiteSpace(numberPart1) ? "%" : numberPart1;
+                string left  = string.IsNullOrWhiteSpace(numberPart1) ? "%" : numberPart1;
                 string right = string.IsNullOrWhiteSpace(numberPart2) ? "%" : numberPart2;
                 numberPattern = $"{left}/{right}";
             }
@@ -170,60 +168,34 @@ namespace Apha.PIMS.DataAccess.Repository
             if (!string.IsNullOrWhiteSpace(numberPattern))
                 logQuery = logQuery.Where(l => EF.Functions.Like(l.Number!, numberPattern));
 
-           
-            var joined = from l in logQuery
-                         join pm in _dbContext.ProjectManagers.AsNoTracking()
-                             on l.ChangedBy equals pm.Mnumber into pmGroup
-                         from pm in pmGroup.DefaultIfEmpty()
-                         orderby l.DateChanged descending
-                         select new
-                         {
-                             l.Id,
-                             l.Project,
-                             l.Number,
-                             l.Description,
-                             l.DateDue,
-                             l.DateCompleted,
-                             l.DateFormReceived,
-                             l.UnderSdReview,
-                             l.OnTarget,
-                             l.ProjectLeaderComment,
-                             l.CapsComment,
-                             l.IdType,
-                             l.DateChanged,
-                             ManagerName       = pm != null ? pm.Projectmanager : null,
-                             OriginalChangedBy = l.ChangedBy,
-                             l.UpdateType
-                         };
-
-            var rawList = await joined.ToListAsync();
-
-            List<LogMilestone> all = rawList.Select(x =>
-            {
-                string? changedBy = x.ManagerName;
-                if (changedBy == null && x.OriginalChangedBy != null)
-                    changedBy = "(" + x.OriginalChangedBy + ")";
-
-                return new LogMilestone
+            IQueryable<LogMilestone> query =
+                from l in logQuery
+                join pm in _dbContext.ProjectManagers.AsNoTracking()
+                    on l.ChangedBy equals pm.Mnumber into pmGroup
+                from pm in pmGroup.DefaultIfEmpty()
+                orderby l.DateChanged descending
+                select new LogMilestone
                 {
-                    Id                   = x.Id,
-                    Project              = x.Project,
-                    Number               = x.Number,
-                    Description          = x.Description,
-                    DateDue              = x.DateDue,
-                    DateCompleted        = x.DateCompleted,
-                    DateFormReceived     = x.DateFormReceived,
-                    UnderSdReview        = x.UnderSdReview,
-                    OnTarget             = x.OnTarget,
-                    ProjectLeaderComment = x.ProjectLeaderComment,
-                    CapsComment          = x.CapsComment,
-                    IdType               = x.IdType,
-                    DateChanged          = x.DateChanged,
-                    ChangedBy            = changedBy,
-                    UpdateType           = x.UpdateType
+                    Id                   = l.Id,
+                    Project              = l.Project,
+                    Number               = l.Number,
+                    Description          = l.Description,
+                    DateDue              = l.DateDue,
+                    DateCompleted        = l.DateCompleted,
+                    DateFormReceived     = l.DateFormReceived,
+                    UnderSdReview        = l.UnderSdReview,
+                    OnTarget             = l.OnTarget,
+                    ProjectLeaderComment = l.ProjectLeaderComment,
+                    CapsComment          = l.CapsComment,
+                    IdType               = l.IdType,
+                    DateChanged          = l.DateChanged,
+                    ChangedBy            = pm != null
+                                               ? pm.Projectmanager
+                                               : l.ChangedBy != null ? "(" + l.ChangedBy + ")" : null,
+                    UpdateType           = l.UpdateType
                 };
-            }).ToList();
-            return ApplyPaging(all, parameters.Page, parameters.PageSize);
+
+            return await ApplyPaging(query, parameters.Page, parameters.PageSize);
         }
     }
 }

@@ -43,16 +43,18 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         [Display(Name = "Completed/Delivered")]
         [GridColumn(Order = 7, Width = 130, Type = GridColumnType.Date)]
         public DateTime? DateCompleted { get; set; }
+       
+        [GridColumn(Order = 8,Type = GridColumnType.ReadOnly)]
+        public bool IsLate { get; set; }
 
         [Display(Name = "Under Review?")]
-        [GridColumn(Order = 8, Width = 100, Type = GridColumnType.Checkbox)]
+        [GridColumn(Order = 9, Width = 100, Type = GridColumnType.Checkbox)]
         public short UnderSdReview { get; set; }
 
         [Display(Name = "On Target")]
-        [GridColumn(Order = 9, Width = 90, Type = GridColumnType.Checkbox)]
+        [GridColumn(Order = 10, Width = 90, Type = GridColumnType.Checkbox)]
         public short OnTarget { get; set; }
 
-        [GridColumn(Type = GridColumnType.ReadOnly)]
-        public bool IsLate { get; set; }
+       
     }
 }

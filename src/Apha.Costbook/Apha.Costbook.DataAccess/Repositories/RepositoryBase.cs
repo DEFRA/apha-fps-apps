@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Apha.Costbook.DataAccess.Repositories
 {
-    public class RepositoryBase<TEntity> where TEntity : class
+    public class RepositoryBase
     {
         protected readonly CostbookDbContext _context;
 
@@ -18,30 +18,15 @@ namespace Apha.Costbook.DataAccess.Repositories
             _context = context;
         }
 
-        protected virtual IQueryable<TEntity> GetQueryableResult(string sql, params object[] parameters)
-            => _context.Set<TEntity>().FromSqlRaw(sql, parameters);
-
-        // allows querying for any arbitrary type (like Project, Staff, etc.)
-        protected virtual IQueryable<T> GetQueryableResultFor<T>(string sql, params object[] parameters) where T : class
-            => _context.Set<T>().FromSqlRaw(sql, parameters);
-
-        protected virtual IQueryable<T> GetDbSetFor<T>() where T : class
-            => _context.Set<T>();
-        protected virtual DbSet<T> GetDbSet<T>() where T : class
-            => _context.Set<T>();
-
-        protected virtual Task<int> ExecuteSqlAsync(string sql, params object[] parameters)
-            => _context.Database.ExecuteSqlRawAsync(sql, parameters);
-
-        protected PagedData<T> ApplyPaging<T>(IEnumerable<T> source, int page, int pageSize)
+        protected async Task<PagedData<T>> ApplyPaging<T>(IQueryable<T> source, int page, int pageSize)
         {
-            var list = source.ToList();
-            var totalRecords = list.Count;
+          
+            var totalRecords = await source.CountAsync();
 
-            var result = page == -1
-            ? list : list.Skip((page - 1) * pageSize)
+            var result =  page == -1
+            ? await source.ToListAsync() : await source.Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToList();
+            .ToListAsync();
 
             var pagination = new PaginationData
             {
