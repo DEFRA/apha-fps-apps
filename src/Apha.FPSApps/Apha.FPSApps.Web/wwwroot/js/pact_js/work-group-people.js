@@ -351,7 +351,7 @@ function initWorkGroupPeoplePage() {
 }
 
 $(document).ready(function () {
-   // initWorkGroupPeoplePage();
+    initWorkGroupPeoplePage();
 
     // Wire up the "Show me valid Test Outputs" button
     $('#btnShowTestOutputs').on('click', navigateToTestCapabilities);
