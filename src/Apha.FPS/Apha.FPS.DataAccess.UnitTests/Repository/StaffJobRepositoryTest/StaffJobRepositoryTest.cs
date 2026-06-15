@@ -741,32 +741,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
         }
 
         #endregion
-
-        #region GetZtTotalHoursByStaffIdAsync Tests
-        // Note: GetZtTotalHoursByStaffIdAsync projects to IQueryable<double?> via SumAsync,
-        // which is incompatible with TestAsyncEnumerable<T> (where T : class constraint).
-        // This method is covered at the service layer via mocked repository calls.
-
-        [Fact(Skip = "TestAsyncEnumerable<T> does not support nullable value type projections (double?)")]
-        public async Task GetZtTotalHoursByStaffIdAsync_ReturnsSumOfZtHours_ForMatchingStaff()
-        {
-            await Task.CompletedTask;
-        }
-
-        [Fact(Skip = "TestAsyncEnumerable<T> does not support nullable value type projections (double?)")]
-        public async Task GetZtTotalHoursByStaffIdAsync_ReturnsZero_WhenNoZtJobs()
-        {
-            await Task.CompletedTask;
-        }
-
-        [Fact(Skip = "TestAsyncEnumerable<T> does not support nullable value type projections (double?)")]
-        public async Task GetZtTotalHoursByStaffIdAsync_ReturnsZero_WhenStaffNotFound()
-        {
-            await Task.CompletedTask;
-        }
-
-        #endregion
-
+        
         #region GetZtStaffJobsByStaffIdPagedAsync Tests
 
         [Fact]
