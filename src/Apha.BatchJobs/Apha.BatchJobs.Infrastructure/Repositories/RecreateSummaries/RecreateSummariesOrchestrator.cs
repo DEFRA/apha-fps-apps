@@ -1,4 +1,4 @@
-﻿using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
+using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -33,11 +33,11 @@ public sealed class RecreateSummariesOrchestrator
     }
 
     /// <summary>
-    /// Executes steps 1ΓÇô14 in order, reads the period-lock flag, and
-    /// conditionally executes steps 15ΓÇô17, all within one transaction.
+    /// Executes steps 1–14 in order, reads the period-lock flag, and
+    /// conditionally executes steps 15–17, all within one transaction.
     /// </summary>
     /// <param name="correlationId">Correlation identifier for this execution.</param>
-    /// <param name="month">FPS period month (1ΓÇô12).</param>
+    /// <param name="month">FPS period month (1–12).</param>
     /// <param name="triggeredBy">Identity of the triggering user.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Ordered list of <see cref="StepResult"/> for every step attempted.</returns>
@@ -70,7 +70,7 @@ public sealed class RecreateSummariesOrchestrator
             {
                 _logger.LogInformation("[{CorrelationId}] RecreateSummaries implementation: DotNetLinq", correlationId);
 
-                // --- Steps 1ΓÇô14 (mandatory, ordered) ---
+                // --- Steps 1–14 (mandatory, ordered) ---
                 var mandatorySteps = _stepCatalog.BuildMandatorySteps(month, year, triggeredBy);
 
                 foreach (var step in mandatorySteps)
@@ -108,7 +108,7 @@ public sealed class RecreateSummariesOrchestrator
 
                 if (periodLocked == 0)
                 {
-                    // Steps 15ΓÇô17: conditional refresh when period is not locked
+                    // Steps 15–17: conditional refresh when period is not locked
                     var refreshSteps = _stepCatalog.BuildRefreshSteps(month);
 
                     foreach (var step in refreshSteps)
@@ -139,7 +139,7 @@ public sealed class RecreateSummariesOrchestrator
                 }
                 else
                 {
-                    // Period is locked ΓÇö skip refresh steps, record as Skipped
+                    // Period is locked — skip refresh steps, record as Skipped
                     foreach (var stepName in _stepCatalog.BuildRefreshSteps(month).Select(step => step.StepName))
                     {
                         var skipped = new StepResult(stepName, 0, DateTime.UtcNow, DateTime.UtcNow,
@@ -158,7 +158,7 @@ public sealed class RecreateSummariesOrchestrator
             catch (Exception) when (results.Count > 0 &&
                                     results[^1].Status != Domain.Enums.StepStatus.Failed)
             {
-                // Unexpected exception outside a step failure ΓÇö attempt rollback
+                // Unexpected exception outside a step failure — attempt rollback
                 try { await transaction.RollbackAsync(CancellationToken.None); }
                 catch (Exception rollbackEx)
                 {
