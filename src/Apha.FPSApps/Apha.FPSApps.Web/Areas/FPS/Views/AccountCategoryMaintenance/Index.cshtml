@@ -77,9 +77,12 @@
                                                     </div>
                                                 </div>
                                                 <!-- Grid -->
-                                                <div id="@($"gridContainer_{Model.AccountCategoryGrid.GridId}")">
-                                                    @await Html.PartialAsync("_DataGrid", Model.AccountCategoryGrid)
-                                                </div>
+                                                @if (Model.AccountCategoryGrid != null)
+                                                {
+                                                    <div id="@($"gridContainer_{Model.AccountCategoryGrid.GridId}")">
+                                                        @await Html.PartialAsync("_DataGrid", Model.AccountCategoryGrid)
+                                                    </div>
+                                                }
                                             </div>
                                         </div>
                                     </div>
