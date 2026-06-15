@@ -334,11 +334,11 @@
     font-weight: bold;
 }
 
-.container {
+/*.container {
     width: 100%;
     height: 100vh;
     padding: 5px;
-}
+}*/
 
 .right-panel input {
     /* padding: 4px; */
@@ -1878,11 +1878,11 @@ th.col-resizable {
     display: none !important;
 }
 
-.govuk-form-group--error {
+/*.govuk-form-group--error {
     border-left: none;
     padding-left: 0;
 }
-
+*/
 .govuk-button-group .govuk-button {
     margin-bottom: 5px !important;
 }
@@ -2693,9 +2693,7 @@ th.col-resizable {
 
 .fps-sr-fixedheader-wrap {
     border: 1px solid #6f777b;
-
     height: 223px;
-    overflow-y: auto;
 }
 
 /* ---- Staff column totals bar ---- */
@@ -2837,3 +2835,36 @@ th.col-resizable {
 main {
     padding-bottom: 50px;
 }
+tab-grid-scroll, .grid-scroll-container, .fps-sr-fixedheader-wrap {
+    overflow-y: auto !important;
+    max-height: 400px !important;
+}
+
+
+    /* Make grid data cells wrap text content - exclude first 2 columns and last column (Action) */ .fps-sr-fixedheader-wrap .editable-grid-table td:not(:first-child):not(:nth-child(2)):not(:last-child),
+    .fps-sr-fixedheader-wrap .govuk-table td:not(:first-child):not(:nth-child(2)):not(:last-child),
+    .fps-sr-fixedheader-wrap .custom-table td:not(:first-child):not(:nth-child(2)):not(:last-child) {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+    }
+
+
+    /* Keep first 2 columns and last column with nowrap */ .fps-sr-fixedheader-wrap .editable-grid-table td:first-child,
+    .fps-sr-fixedheader-wrap .editable-grid-table td:nth-child(2),
+    .fps-sr-fixedheader-wrap .editable-grid-table td:last-child,
+    .fps-sr-fixedheader-wrap .govuk-table td:first-child,
+    .fps-sr-fixedheader-wrap .govuk-table td:nth-child(2),
+    .fps-sr-fixedheader-wrap .govuk-table td:last-child,
+    .fps-sr-fixedheader-wrap .custom-table td:first-child,
+    .fps-sr-fixedheader-wrap .custom-table td:nth-child(2),
+    .fps-sr-fixedheader-wrap .custom-table td:last-child {
+        white-space: nowrap !important;
+    }
+
+
+    /* Keep all headers with nowrap */ .fps-sr-fixedheader-wrap .editable-grid-table th,
+    .fps-sr-fixedheader-wrap .govuk-table th,
+    .fps-sr-fixedheader-wrap .custom-table th {
+        white-space: nowrap !important;
+    }

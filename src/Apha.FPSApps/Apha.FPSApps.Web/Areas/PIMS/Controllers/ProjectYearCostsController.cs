@@ -927,6 +927,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             string project, short year, PaginationFilter<string> request)
         {
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            queryParameters.Page = -1;
             ApiResponseDto<List<MonthlyPactDto>> response =
                 await _yearCostsService.GetMonthlyPactDataAsync(project, year, queryParameters);
 
@@ -946,12 +947,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 GridId = "monthlyPactGrid",
                 Title = "Monthly Pact Data",
                 ShowCheckboxColumn = false,
-                ShowPagination = true,
+                ShowPagination = false,
                 KeyProperty = "MonthNo",
                 AllowAdd = false,
                 AllowEdit = false,
                 AllowDelete = false,
-                AllowView = false,
+                AllowView = false,                
                 ExtraFilterMethod = "getYearCostsExtraFilters",
                 BindGridUrl = "/PIMS/ProjectYearCosts/LoadMonthlyPactGrid",
                 Data = items,

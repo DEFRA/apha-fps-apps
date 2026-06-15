@@ -548,6 +548,116 @@ public class ProjectSummaryServiceTests
 
     #endregion
 
+    #region GetProjectYearCostSummaryAsync Tests
+
+    [Fact]
+    public async Task GetProjectYearCostSummaryAsync_ValidParameters_ReturnsMappedDto()
+    {
+        // Arrange
+        var projectId = "P001";
+        var year = 2024;
+        var entity = new ProjectYearCostSummary
+        {
+            Project             = projectId,
+            Year                = year,
+            StaffCostTotal      = 1000.0,
+            TestCostTotal       = 200.0,
+            AnimalCostTotal     = 300.0,
+            AdditionalCostTotal = 50.0
+        };
+
+        _mockRepository.GetProjectYearCostSummaryAsync(projectId, year).Returns(entity);
+
+        // Act
+        var result = await _service.GetProjectYearCostSummaryAsync(projectId, year);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(projectId, result.Project);
+        Assert.Equal(year,      result.Year);
+        Assert.Equal(1000.0,    result.StaffCostTotal);
+        Assert.Equal(200.0,     result.TestCostTotal);
+        Assert.Equal(300.0,     result.AnimalCostTotal);
+        Assert.Equal(50.0,      result.AdditionalCostTotal);
+        Assert.Equal(1550.0,    result.GrandTotal);
+        await _mockRepository.Received(1).GetProjectYearCostSummaryAsync(projectId, year);
+    }
+
+    [Fact]
+    public async Task GetProjectYearCostSummaryAsync_AllCostsZero_ReturnsZeroGrandTotal()
+    {
+        // Arrange
+        var projectId = "P001";
+        var year = 2024;
+        var entity = new ProjectYearCostSummary
+        {
+            Project             = projectId,
+            Year                = year,
+            StaffCostTotal      = 0,
+            TestCostTotal       = 0,
+            AnimalCostTotal     = 0,
+            AdditionalCostTotal = 0
+        };
+
+        _mockRepository.GetProjectYearCostSummaryAsync(projectId, year).Returns(entity);
+
+        // Act
+        var result = await _service.GetProjectYearCostSummaryAsync(projectId, year);
+
+        // Assert
+        Assert.Equal(0.0, result.StaffCostTotal);
+        Assert.Equal(0.0, result.TestCostTotal);
+        Assert.Equal(0.0, result.AnimalCostTotal);
+        Assert.Equal(0.0, result.AdditionalCostTotal);
+        Assert.Equal(0.0, result.GrandTotal);
+        await _mockRepository.Received(1).GetProjectYearCostSummaryAsync(projectId, year);
+    }
+
+    [Fact]
+    public async Task GetProjectYearCostSummaryAsync_GrandTotal_IsComputedFromAllCostFields()
+    {
+        // Arrange
+        var projectId = "P001";
+        var year = 2024;
+        var entity = new ProjectYearCostSummary
+        {
+            Project             = projectId,
+            Year                = year,
+            StaffCostTotal      = 100.0,
+            TestCostTotal       = 200.0,
+            AnimalCostTotal     = 300.0,
+            AdditionalCostTotal = 400.0
+        };
+
+        _mockRepository.GetProjectYearCostSummaryAsync(projectId, year).Returns(entity);
+
+        // Act
+        var result = await _service.GetProjectYearCostSummaryAsync(projectId, year);
+
+        // Assert — GrandTotal is a computed property: sum of all four cost fields
+        Assert.Equal(1000.0, result.GrandTotal);
+    }
+
+    [Theory]
+    [InlineData("P001", 2023)]
+    [InlineData("P002", 2024)]
+    [InlineData("P003", 2025)]
+    public async Task GetProjectYearCostSummaryAsync_DifferentParameters_PassesCorrectValuesToRepository(
+        string projectId, int year)
+    {
+        // Arrange
+        var entity = new ProjectYearCostSummary { Project = projectId, Year = year };
+        _mockRepository.GetProjectYearCostSummaryAsync(projectId, year).Returns(entity);
+
+        // Act
+        await _service.GetProjectYearCostSummaryAsync(projectId, year);
+
+        // Assert
+        await _mockRepository.Received(1).GetProjectYearCostSummaryAsync(projectId, year);
+    }
+
+    #endregion
+
     #region ExportProjectSummaryToExcelAsync Tests
 
     private static ProjectSummaryExportData BuildExportData(string projectId) => new()

@@ -48,6 +48,9 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
+            // TRANSFORMENGINE: IGradeService/GradeService registered � Phase 5 frmMaintGrade migration
+            services.AddScoped<IGradeService, GradeService>();
+            services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -81,6 +84,9 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
             services.AddScoped<IDivisionGradeRepository, DivisionGradeRepository>();
             services.AddScoped<IProjectStaffPlanRepository, ProjectStaffPlanRepository>();
+            // TRANSFORMENGINE: IGradeRepository/GradeRepository registered � Phase 5 frmMaintGrade migration
+            services.AddScoped<IGradeRepository, GradeRepository>();
+            services.AddScoped<IProjectGroupStaffPlanRepository, ProjectGroupStaffPlanRepository>();
             return services;
 
         }

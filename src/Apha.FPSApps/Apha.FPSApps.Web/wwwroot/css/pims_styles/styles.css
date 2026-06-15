@@ -2929,3 +2929,32 @@ th.sorted-desc {
     max-width: 240px;
     flex-shrink: 0;
 }
+/* =====================================================
+
+   Milestone/Deliverable Form Required checkbox
+
+   Keep checkbox and label on the same line
+
+   ===================================================== */ 
+.milestone-checkbox-inline {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    white-space: nowrap;
+}
+/* Override button positioning to move Add button to rightmost */
+
+#gridContainer_milestonesGrid .editable-grid-container > div > h2 > .sup_flex_space_between, #gridContainer_milestoneFormDatesGrid .editable-grid-container > div > h2 > .sup_flex_space_between {
+    display: flex !important;
+    justify-content: end !important;
+}
+
+#gridContainer_milestonesGrid > .editable-grid-container > div > .grid-scroll-container {
+    height: 300px !important;
+    max-height: 300px !important;
+}
+
+#gridContainer_milestoneFormDatesGrid > .editable-grid-container > div > .grid-scroll-container {
+    height: 250px !important;
+    max-height: 250px !important;
+}

@@ -47,6 +47,14 @@ namespace Apha.Common.Constants
         public const string UpdateDivision = "api/v1/division/{0}";
         public const string DeleteDivision = "api/v1/division/{0}";
 
+        // Grade Maintenance (frmMaintGrade → api/v1/Grade) — added Phase 14
+        // TRANSFORMENGINE: Grade endpoint constants added — FpsGradeApiClient should switch to these from inline literals
+        public const string GetPagedGrades = "api/v1/Grade/paged";
+        public const string GetGradeById = "api/v1/Grade/{0}";
+        public const string CreateGrade = "api/v1/Grade";
+        public const string UpdateGrade = "api/v1/Grade/{0}";
+        public const string DeleteGrade = "api/v1/Grade/{0}";
+
         // Division Grade
         public const string GetPagedDivisionGrades = "api/v1/DivisionGrade/paged";
         public const string GetDivisionGradeById = "api/v1/DivisionGrade/{0}";
@@ -101,6 +109,9 @@ namespace Apha.Common.Constants
 
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
+
+        // Project Group Staff Plan (fps.vpvtprojectgroupmgrplan)
+        public const string GetPagedProjectGroupStaffPlan = "api/v1/projectgroupstaffplan";
 
         // Staff Job
         public const string GetAllStaffJobs = "api/v1/staffjob?jobCode={0}";

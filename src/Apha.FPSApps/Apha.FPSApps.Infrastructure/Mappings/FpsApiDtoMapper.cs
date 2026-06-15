@@ -75,7 +75,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
-           
+            // TRANSFORMENGINE: Grade mappings added — Phase 10 (Step 15a)
+            // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
+            CreateMap<GradeDto, GradeReq>().ReverseMap();
+            CreateMap<GradeDto, GradeRes>().ReverseMap();
+
+
             // Agency
             CreateMap<AgencyDto, AgencyRes>().ReverseMap();
 
@@ -110,6 +115,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
+
+            // Project Group Staff Plan view
+            CreateMap<ProjectGroupStaffPlanViewDto, ProjectGroupStaffPlanViewRes>().ReverseMap();
 
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 

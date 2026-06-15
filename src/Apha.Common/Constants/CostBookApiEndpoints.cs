@@ -61,6 +61,7 @@ namespace Apha.Common.Constants
         public const string GetStaffEffortPivot = "api/v1/projectsummary/{0}/staff-effort";
         public const string GetProjectCostsPivot = "api/v1/projectsummary/{0}/project-costs";
         public const string ExportProjectSummaryToExcel = "api/v1/projectsummary/{0}/export-excel";
+        public const string GetAllCostTotal = "api/v1/projectsummary/{0}/years/{1}/costsummary";
 
         // Settings
         public const string GetSettingValueById = "api/v1/settings/getvaluebyid";
