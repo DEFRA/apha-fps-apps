@@ -52,6 +52,7 @@ namespace Apha.FPS.Application.Interfaces
         /// Deletes the grade with the given GradeCode.
         /// Throws <see cref="ArgumentException"/> if gradeCode is null/empty.
         /// Throws <see cref="KeyNotFoundException"/> if the grade does not exist.
+        /// Throws <see cref="InvalidOperationException"/> if the grade is referenced by Division Grade, RC Grade (ProfitCentreGrade), or WG Grade (WorkgroupGrade) records.
         /// </summary>
         /// <param name="gradeCode">GradeCode of the grade to delete.</param>
         /// <returns>True if deleted; false if not found.</returns>

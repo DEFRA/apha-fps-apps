@@ -14,14 +14,23 @@ namespace Apha.FPS.Application.Services
     public class GradeService : IGradeService
     {
         private readonly IGradeRepository _gradeRepository;
+        private readonly IDivisionGradeRepository _divisionGradeRepository;
+        private readonly IProfitCentreGradeRepository _profitCentreGradeRepository;
+        private readonly IWorkGroupGradeRepository _workGroupGradeRepository;
         private readonly IMapper _mapper;
 
         public GradeService(
             IGradeRepository gradeRepository,
+            IDivisionGradeRepository divisionGradeRepository,
+            IProfitCentreGradeRepository profitCentreGradeRepository,
+            IWorkGroupGradeRepository workGroupGradeRepository,
             IMapper mapper)
         {
-            _gradeRepository = gradeRepository ?? throw new ArgumentNullException(nameof(gradeRepository));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _gradeRepository             = gradeRepository             ?? throw new ArgumentNullException(nameof(gradeRepository));
+            _divisionGradeRepository     = divisionGradeRepository     ?? throw new ArgumentNullException(nameof(divisionGradeRepository));
+            _profitCentreGradeRepository = profitCentreGradeRepository ?? throw new ArgumentNullException(nameof(profitCentreGradeRepository));
+            _workGroupGradeRepository    = workGroupGradeRepository    ?? throw new ArgumentNullException(nameof(workGroupGradeRepository));
+            _mapper                      = mapper                      ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         // TRANSFORMENGINE: GetAllPagedAsync — maps QueryParameters to Core PaginationParameters, delegates to repository, maps result back to DTO
@@ -123,6 +132,27 @@ namespace Apha.FPS.Application.Services
             if (existing == null)
             {
                 throw new KeyNotFoundException($"Grade '{gradeCode}' not found in the current FPS year.");
+            }
+
+            // Guard: block delete if the grade is referenced by Division Grade records
+            if (await _divisionGradeRepository.ExistsForGradeCodeAsync(gradeCode))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot delete grade '{gradeCode}' because it is referenced by one or more Division Grade records.");
+            }
+
+            // Guard: block delete if the grade is referenced by RC Grade (ProfitCentreGrade) records
+            if (await _profitCentreGradeRepository.ExistsForGradeCodeAsync(gradeCode))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot delete grade '{gradeCode}' because it is referenced by one or more RC Grade records.");
+            }
+
+            // Guard: block delete if the grade is referenced by WG Grade (WorkgroupGrade) records
+            if (await _workGroupGradeRepository.ExistsForGradeCodeAsync(gradeCode))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot delete grade '{gradeCode}' because it is referenced by one or more WG Grade records.");
             }
 
             return await _gradeRepository.DeleteAsync(gradeCode);

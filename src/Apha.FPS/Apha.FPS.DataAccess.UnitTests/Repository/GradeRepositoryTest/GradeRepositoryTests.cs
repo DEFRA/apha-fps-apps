@@ -56,7 +56,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.GradeRepositoryTest
             GradeRepository Repo,
             Mock<DbSet<Grade>> DbSet,
             Mock<FpsDbContext> Context)
-            CreateRepositoryWithMocks(IEnumerable<Grade>? grades = null, IEnumerable<DivisionGrade>? divisionGrades = null)
+            CreateRepositoryWithMocks(IEnumerable<Grade>? grades = null)
         {
             var mockFpsYearContext = new Mock<IFpsRequestContext>();
             mockFpsYearContext.Setup(x => x.FpsYear).Returns(2025);
@@ -65,10 +65,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.GradeRepositoryTest
             var dbSet = RepositoryTestHelper.CreateMockDbSet(grades ?? []);
             RepositoryTestHelper.SetupDbSetOperations(dbSet);
             mockContext.Setup(x => x.Grades).Returns(dbSet.Object);
-
-            var divisionGradesDbSet = RepositoryTestHelper.CreateMockDbSet(divisionGrades ?? []);
-            RepositoryTestHelper.SetupDbSetOperations(divisionGradesDbSet);
-            mockContext.Setup(x => x.DivisionGrades).Returns(divisionGradesDbSet.Object);
 
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 

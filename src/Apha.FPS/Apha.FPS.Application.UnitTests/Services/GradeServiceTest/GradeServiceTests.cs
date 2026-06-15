@@ -14,14 +14,25 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
     public class GradeServiceTests
     {
         private readonly IGradeRepository _mockRepository;
+        private readonly IDivisionGradeRepository _mockDivisionGradeRepository;
+        private readonly IProfitCentreGradeRepository _mockProfitCentreGradeRepository;
+        private readonly IWorkGroupGradeRepository _mockWorkGroupGradeRepository;
         private readonly IMapper _mockMapper;
         private readonly GradeService _sut;
 
         public GradeServiceTests()
         {
-            _mockRepository = Substitute.For<IGradeRepository>();
-            _mockMapper     = Substitute.For<IMapper>();
-            _sut            = new GradeService(_mockRepository, _mockMapper);
+            _mockRepository                  = Substitute.For<IGradeRepository>();
+            _mockDivisionGradeRepository     = Substitute.For<IDivisionGradeRepository>();
+            _mockProfitCentreGradeRepository = Substitute.For<IProfitCentreGradeRepository>();
+            _mockWorkGroupGradeRepository    = Substitute.For<IWorkGroupGradeRepository>();
+            _mockMapper                      = Substitute.For<IMapper>();
+            _sut = new GradeService(
+                _mockRepository,
+                _mockDivisionGradeRepository,
+                _mockProfitCentreGradeRepository,
+                _mockWorkGroupGradeRepository,
+                _mockMapper);
         }
 
         // TRANSFORMENGINE: static helpers — minimal valid objects for test setup
@@ -37,14 +48,14 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
         public void Constructor_ThrowsArgumentNullException_WhenRepositoryIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new GradeService(null!, _mockMapper));
+                new GradeService(null!, _mockDivisionGradeRepository, _mockProfitCentreGradeRepository, _mockWorkGroupGradeRepository, _mockMapper));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new GradeService(_mockRepository, null!));
+                new GradeService(_mockRepository, _mockDivisionGradeRepository, _mockProfitCentreGradeRepository, _mockWorkGroupGradeRepository, null!));
         }
 
         #endregion
@@ -356,6 +367,9 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
             // Arrange
             var existing = BuildEntity("A");
             _mockRepository.GetByIdAsync("A").Returns(existing);
+            _mockDivisionGradeRepository.ExistsForGradeCodeAsync("A").Returns(false);
+            _mockProfitCentreGradeRepository.ExistsForGradeCodeAsync("A").Returns(false);
+            _mockWorkGroupGradeRepository.ExistsForGradeCodeAsync("A").Returns(false);
             _mockRepository.DeleteAsync("A").Returns(true);
 
             // Act
@@ -372,6 +386,9 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
             // Arrange
             var existing = BuildEntity("A");
             _mockRepository.GetByIdAsync("A").Returns(existing);
+            _mockDivisionGradeRepository.ExistsForGradeCodeAsync("A").Returns(false);
+            _mockProfitCentreGradeRepository.ExistsForGradeCodeAsync("A").Returns(false);
+            _mockWorkGroupGradeRepository.ExistsForGradeCodeAsync("A").Returns(false);
             _mockRepository.DeleteAsync("A").Returns(false);
 
             // Act
@@ -379,6 +396,45 @@ namespace Apha.FPS.Application.UnitTests.Services.GradeServiceTest
 
             // Assert
             result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ThrowsInvalidOperationException_WhenHasDivisionGradeDependents()
+        {
+            // Arrange
+            _mockRepository.GetByIdAsync("A").Returns(BuildEntity("A"));
+            _mockDivisionGradeRepository.ExistsForGradeCodeAsync("A").Returns(true);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteAsync("A"));
+            await _mockRepository.DidNotReceive().DeleteAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ThrowsInvalidOperationException_WhenHasProfitCentreGradeDependents()
+        {
+            // Arrange
+            _mockRepository.GetByIdAsync("A").Returns(BuildEntity("A"));
+            _mockDivisionGradeRepository.ExistsForGradeCodeAsync("A").Returns(false);
+            _mockProfitCentreGradeRepository.ExistsForGradeCodeAsync("A").Returns(true);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteAsync("A"));
+            await _mockRepository.DidNotReceive().DeleteAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ThrowsInvalidOperationException_WhenHasWorkGroupGradeDependents()
+        {
+            // Arrange
+            _mockRepository.GetByIdAsync("A").Returns(BuildEntity("A"));
+            _mockDivisionGradeRepository.ExistsForGradeCodeAsync("A").Returns(false);
+            _mockProfitCentreGradeRepository.ExistsForGradeCodeAsync("A").Returns(false);
+            _mockWorkGroupGradeRepository.ExistsForGradeCodeAsync("A").Returns(true);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.DeleteAsync("A"));
+            await _mockRepository.DidNotReceive().DeleteAsync(Arg.Any<string>());
         }
 
         #endregion
