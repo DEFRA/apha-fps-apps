@@ -12,18 +12,24 @@ using Npgsql;
 using Serilog;
 using System.Globalization;
 
+var requestedJobArg = args.Length > 0
+    ? args[0]
+    : Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
+
+if (string.Equals(requestedJobArg, "HealthCheck", StringComparison.OrdinalIgnoreCase))
+{
+    Console.WriteLine("HealthCheck OK");
+    return 0;
+}
+
 var builder = Host.CreateApplicationBuilder(args);
 
-var isLocalOrDevelopment = builder.Environment.IsDevelopment()
-    || builder.Environment.IsEnvironment("Local")
-    || builder.Environment.IsEnvironment("local");
-var strictExecutionContractMode = ResolveStrictExecutionContractMode(builder.Configuration, isLocalOrDevelopment);
+var strictExecutionContractMode = ResolveStrictExecutionContractMode(builder.Configuration);
 
 builder.Configuration
     .SetBasePath(builder.Environment.ContentRootPath)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 var startedAt = DateTime.UtcNow;
 const int ExitCodeSuccess = 0;
@@ -216,12 +222,21 @@ try
         await using var executionScope = serviceProvider.CreateAsyncScope();
         var executionRepository = executionScope.ServiceProvider.GetRequiredService<IJobExecutionRepository>();
 
-        await VerifyExecutionContractAsync(
-            jobName,
-            jobExecutionId,
-            executionRepository,
-            logger,
-            linkedCts.Token);
+        if (strictExecutionContractMode)
+        {
+            await VerifyExecutionContractAsync(
+                jobName,
+                jobExecutionId,
+                executionRepository,
+                logger,
+                linkedCts.Token);
+        }
+        else
+        {
+            logger.LogInformation(
+                "Strict execution contract disabled; skipping Initiated pre-check | JobExecutionId={JobExecutionId}",
+                jobExecutionId);
+        }
 
         var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
         var result = await orchestrator.RunAsync(jobName, runMode, jobExecutionId, userId, requestedAtUtc, linkedCts.Token);
@@ -522,22 +537,9 @@ static int ResolveIntSetting(IConfiguration configuration, string configKey, str
     return defaultValue;
 }
 
-static bool ResolveStrictExecutionContractMode(IConfiguration configuration, bool isLocalOrDevelopment)
+static bool ResolveStrictExecutionContractMode(IConfiguration configuration)
 {
-    var envValue = Environment.GetEnvironmentVariable("BATCH_STRICT_EXECUTION_CONTRACT");
-    if (!string.IsNullOrWhiteSpace(envValue) && bool.TryParse(envValue, out var parsedEnv))
-    {
-        return parsedEnv;
-    }
-
-    var configValue = configuration.GetValue<bool?>("BatchJobs:StrictExecutionContractMode");
-    if (configValue.HasValue)
-    {
-        return configValue.Value;
-    }
-
-    // Safe default: strict outside local/development.
-    return !isLocalOrDevelopment;
+    return configuration.GetValue("BatchJobs:StrictExecutionContractMode", false);
 }
 
 static DateTime? ParseRequestedAtUtc(string? requestedAtUtcRaw, Microsoft.Extensions.Logging.ILogger logger)

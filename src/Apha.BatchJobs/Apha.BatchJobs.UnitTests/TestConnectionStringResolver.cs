@@ -15,10 +15,8 @@ internal static class TestConnectionStringResolver
                 .SetBasePath(batchJobsRoot)
                 .AddJsonFile("appsettings.json", optional: true)
                 .AddJsonFile("appsettings.Development.json", optional: true)
-                .AddJsonFile("appsettings.Local.json", optional: true)
                 .AddJsonFile(Path.Combine("Apha.BatchJobs.Worker", "appsettings.json"), optional: true)
-                .AddJsonFile(Path.Combine("Apha.BatchJobs.Worker", "appsettings.Development.json"), optional: true)
-                .AddJsonFile(Path.Combine("Apha.BatchJobs.Worker", "appsettings.Local.json"), optional: true);
+                .AddJsonFile(Path.Combine("Apha.BatchJobs.Worker", "appsettings.Development.json"), optional: true);
         }
 
         configBuilder.AddEnvironmentVariables();

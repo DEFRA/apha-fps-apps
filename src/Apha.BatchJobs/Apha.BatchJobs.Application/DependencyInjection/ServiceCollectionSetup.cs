@@ -34,7 +34,6 @@ public static class ServiceCollectionSetup
             .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
-            .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables()
             .Build();
 

@@ -29,6 +29,8 @@ Thumbs.db
 # Local app settings (may contain secrets)
 appsettings.local.json
 **/appsettings.local.json
+appsettings.Local.json
+**/appsettings.Local.json
 
 # Rider
 .idea/
