@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Domain.Entities;
+﻿namespace Apha.BatchJobs.Domain.Entities;
 
 /// <summary>
 /// Durable cancellation request details keyed by JobExecutionId.

@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Domain.Enums;
+﻿namespace Apha.BatchJobs.Domain.Enums;
 
 /// <summary>
 /// Enumeration of batch job execution modes.

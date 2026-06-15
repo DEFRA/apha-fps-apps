@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Domain.Entities;
+﻿namespace Apha.BatchJobs.Domain.Entities;
 
 /// <summary>
 /// Correlation metadata captured for a batch job execution flow.

@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Domain.Interfaces;
+﻿namespace Apha.BatchJobs.Domain.Interfaces;
 
 /// <summary>
 /// Scoped execution context carrying the parameters supplied when
@@ -9,7 +9,7 @@ public interface IRecreateSummariesContext
 {
     /// <summary>
     /// The FPS period month (equivalent to legacy <c>@Month</c>).
-    /// Valid range: 1–12.
+    /// Valid range: 1ΓÇô12.
     /// </summary>
     int Month { get; set; }
 

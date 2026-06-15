@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Domain.Entities;
+﻿namespace Apha.BatchJobs.Domain.Entities;
 
 /// <summary>Represents the metadata definition of a registered batch job.</summary>
 public sealed class BatchJobDefinition
