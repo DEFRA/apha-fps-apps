@@ -260,11 +260,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = true, message = "Grade deleted successfully" });
             }
 
-            return Json(new
-            {
-                success = false,
-                message = result.Errors?.FirstOrDefault()?.Message ?? "Unable to delete the grade as it may be in use."
-            });
+            var firstError = result.Errors?.FirstOrDefault();
+            var errorMessage = firstError?.Code == "DB_POSTGRES_ERROR"
+                ? "This grade cannot be deleted because it is referenced by other records."
+                : firstError?.Message ?? "Unable to delete the grade as it may be in use.";
+
+            return Json(new { success = false, message = errorMessage });
         }
     }
 }

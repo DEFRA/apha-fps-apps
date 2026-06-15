@@ -137,6 +137,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 return false;
             }
 
+            var hasDependents = await _context.DivisionGrades
+                .AnyAsync(dg => dg.GradeCode == gradeCode);
+
+            if (hasDependents)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot delete grade '{gradeCode}' because it is referenced by one or more Division Grade records.");
+            }
+
             _context.Grades.Remove(entity);
             await _context.SaveChangesAsync();
             return true;
