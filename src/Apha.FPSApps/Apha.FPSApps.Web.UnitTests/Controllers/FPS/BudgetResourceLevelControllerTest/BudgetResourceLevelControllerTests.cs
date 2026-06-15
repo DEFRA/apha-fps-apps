@@ -7,6 +7,7 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.Common.Utilities.ExcelExport;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IPurchasesService _purchasesService;
         private readonly IProfitCentreService _profitCentreService;
+        private readonly IExcelExportService _excelExportService;
         private readonly BudgetResourceLevelController _controller;
 
         public BudgetResourceLevelControllerTests()
@@ -32,6 +34,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             _budgetBidsService   = Substitute.For<IBudgetBidsService>();
             _purchasesService    = Substitute.For<IPurchasesService>();
             _profitCentreService = Substitute.For<IProfitCentreService>();
+            _excelExportService  = Substitute.For<IExcelExportService>();
 
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
@@ -43,7 +46,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
                 _workGroupService,
                 _budgetBidsService,
                 _purchasesService,
-                _profitCentreService);
+                _profitCentreService,
+                _excelExportService);
 
             // Stub IUrlHelper so Url.Action() calls made by the S1075 fix do not throw in tests
             var urlHelper = Substitute.For<IUrlHelper>();
@@ -916,7 +920,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         {
             // Arrange
             SetupDefaultWorkGroups("PC01");
-            SetupDefaultBidView("WG01");
+            SetupDefaultBidView("WG01");   // also stubs GetAccountCategoriesAsync
 
             // Act
             var result = await _controller.ExportToExcel("PC01", 2024);
@@ -936,8 +940,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
                 .Returns(ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error" } }, new ApiMetaDto()));
             _budgetBidsService.GetAccountCategoriesAsync()
-                .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(
-                    new List<AccountCategoryDto> { new() { AccShortName = "ACC1" } }));
+                .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>()));
 
             // Act
             var result = await _controller.ExportToExcel("PC01", 2024);
@@ -952,13 +955,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         {
             // Arrange
             SetupDefaultWorkGroups("PC01");
-            _budgetBidsService.GetAccountCategoriesAsync()
-                .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>
-                {
-                    new() { AccShortName = "ACC1" }
-                }));
             _budgetBidsService.GetBidViewAsync("WG01")
                 .Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(new List<BidViewDto>()));
+            _budgetBidsService.GetAccountCategoriesAsync()
+                .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>()));
 
             // Act
             var result = await _controller.ExportToExcel("PC01", 2024);

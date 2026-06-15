@@ -24,9 +24,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IWorkGroupGradeService _wgGradeService;
         private readonly IProfitCentreGradeService _pcGradeService;
-        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workgroupService;
+        private readonly IWorkGroupService _workgroupService;
 
-        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkGroupGradeService wgGradeService, IProfitCentreGradeService pcGradeService, Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService workgroupService)
+        public WorkGroupGradeMaintenanceController(IMapper mapper, IWorkGroupGradeService wgGradeService, IProfitCentreGradeService pcGradeService, IWorkGroupService workgroupService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _wgGradeService = wgGradeService ?? throw new ArgumentNullException(nameof(wgGradeService));

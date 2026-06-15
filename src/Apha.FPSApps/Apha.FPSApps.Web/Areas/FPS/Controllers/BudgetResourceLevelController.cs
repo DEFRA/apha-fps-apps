@@ -6,6 +6,7 @@ using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
+using Apha.Common.Utilities.ExcelExport;
 using AutoMapper;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
@@ -27,19 +28,22 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IPurchasesService _purchasesService;
         private readonly IProfitCentreService _profitCentreService;
+        private readonly IExcelExportService _excelExportService;
 
         public BudgetResourceLevelController(
             IMapper mapper,
             IWorkGroupService workGroupService,
             IBudgetBidsService budgetBidsService,
             IPurchasesService purchasesService,
-            IProfitCentreService profitCentreService)
+            IProfitCentreService profitCentreService,
+            IExcelExportService excelExportService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _workGroupService = workGroupService;
             _budgetBidsService = budgetBidsService;
             _purchasesService = purchasesService;
             _profitCentreService = profitCentreService;
+            _excelExportService = excelExportService ?? throw new ArgumentNullException(nameof(excelExportService));
         }
 
         [HttpGet]
@@ -437,7 +441,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         // ─────────────── EXCEL EXPORT ───────────────
 
         /// <summary>
-        /// Exports a crosstab (pivot) of all Budget Bids for the given profit centre to Excel.
+        /// Exports all Budget Bids for the given profit centre to Excel using the common ExcelExportService.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> ExportToExcel(string profitCentre, int year)
@@ -447,96 +451,72 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? wgResponse.Data.Select(w => w.WorkGroupName).OrderBy(w => w).ToList()
                 : new List<string>();
 
-            var accountResponse = await _budgetBidsService.GetAccountCategoriesAsync();
-            var accounts = accountResponse.Success && accountResponse.Data != null
-                ? accountResponse.Data.OrderBy(a => a.AccShortName).ToList()
-                : new List<AccountCategoryDto>();
+            var allBids = new List<BidViewDto>();
+            foreach (var wg in workgroups)
+            {
+                var bidResponse = await _budgetBidsService.GetBidViewAsync(wg);
+                if (!bidResponse.Success || bidResponse.Data == null) continue;
+                allBids.AddRange(bidResponse.Data);
+            }
 
-            var pivot = await BuildPivotAsync(workgroups);
+            // Build lookup: [account][workgroup] = GenBid
+            var bidLookup = allBids
+                .GroupBy(b => b.Account)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.ToDictionary(b => b.WorkGroupName, b => b.GenBid));
 
-            using var workbook = new XLWorkbook();
-            var ws = workbook.Worksheets.Add("BudgetBidsCrosstab");
+            // Use the full account category master list as row keys (matches the 41-row previous output).
+            // Fall back to bid-derived accounts if the categories call fails.
+            var categoriesResponse = await _budgetBidsService.GetAccountCategoriesAsync();
+            var accounts = categoriesResponse.Success && categoriesResponse.Data?.Count > 0
+                ? categoriesResponse.Data.Select(a => a.AccShortName).OrderBy(a => a).ToList()
+                : allBids.Select(b => b.Account).Distinct().OrderBy(a => a).ToList();
 
-            WriteHeaderRow(ws, workgroups);
-            WriteDataRows(ws, accounts, pivot, workgroups);
+            // Build cross-tab workbook
+            const string currencyFormat = "\u00A3#,##0.00";
+            using var workbook  = new XLWorkbook();
+            var ws              = workbook.Worksheets.Add("BudgetBidsCrosstab");
+
+            // Header row
+            ws.Cell(1, 1).Value = "AccShortName";
+            ws.Cell(1, 2).Value = "Row Summary";
+            ws.Cell(1, 3).Value = "<>";                                    // separator column
+            for (int col = 0; col < workgroups.Count; col++)
+                ws.Cell(1, col + 4).Value = workgroups[col];              // workgroups start at D
+
+            // Data rows
+            int row = 2;
+            foreach (var account in accounts)
+            {
+                ws.Cell(row, 1).Value = account;
+
+                decimal rowTotal = 0;
+                for (int col = 0; col < workgroups.Count; col++)
+                {
+                    if (bidLookup.TryGetValue(account, out var wgBids) &&
+                        wgBids.TryGetValue(workgroups[col], out var amount))
+                    {
+                        var cell = ws.Cell(row, col + 4);                 // offset matches header
+                        cell.Value = (double)amount;
+                        cell.Style.NumberFormat.Format = currencyFormat;
+                        rowTotal += amount;
+                    }
+                }
+
+                ws.Cell(row, 2).Value                      = (double)rowTotal;
+                ws.Cell(row, 2).Style.NumberFormat.Format  = currencyFormat;
+                row++;
+            }
 
             ws.Columns().AdjustToContents();
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
-            stream.Position = 0;
+
             return File(stream.ToArray(),
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            $"qryBidxCrosstab_{year}.xlsx");
-           
-        }
-
-        private async Task<Dictionary<string, Dictionary<string, decimal>>> BuildPivotAsync(List<string> workgroups)
-        {
-            var pivot = new Dictionary<string, Dictionary<string, decimal>>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var wg in workgroups)
-            {
-                var bidResponse = await _budgetBidsService.GetBidViewAsync(wg);
-                if (!bidResponse.Success || bidResponse.Data == null) continue;
-
-                foreach (var bid in bidResponse.Data)
-                {
-                    if (!pivot.TryGetValue(bid.Account, out var wgDict))
-                    {
-                        wgDict = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-                        pivot[bid.Account] = wgDict;
-                    }
-                    wgDict[bid.WorkGroupName] = bid.GenBid;
-                }
-            }
-
-            return pivot;
-        }
-
-        private static void WriteHeaderRow(IXLWorksheet ws, List<string> workgroups)
-        {
-            ws.Cell(1, 1).Value = "AccShortName";
-            ws.Cell(1, 2).Value = "Row Summary";
-            ws.Cell(1, 3).Value = "<>";
-
-            for (int i = 0; i < workgroups.Count; i++)
-                ws.Cell(1, 4 + i).Value = workgroups[i];
-
-            ws.Range(1, 1, 1, 3 + workgroups.Count).Style.Font.Bold = true;
-        }
-
-        private static void WriteDataRows(
-            IXLWorksheet ws,
-            List<AccountCategoryDto> accounts,
-            Dictionary<string, Dictionary<string, decimal>> pivot,
-            List<string> workgroups)
-        {
-            int dataRow = 2;
-            foreach (var account in accounts)
-            {
-                pivot.TryGetValue(account.AccShortName, out var wgValues);
-                decimal rowSummary = wgValues?.Values.Sum() ?? 0m;
-
-                ws.Cell(dataRow, 1).Value = account.AccShortName;
-
-                if (rowSummary != 0)
-                {
-                    ws.Cell(dataRow, 2).Value = rowSummary;
-                    ws.Cell(dataRow, 2).Style.NumberFormat.Format = "£#,##0.00;-£#,##0.00";
-                }
-
-                for (int i = 0; i < workgroups.Count; i++)
-                {
-                    if (wgValues != null && wgValues.TryGetValue(workgroups[i], out var bidAmount) && bidAmount != 0)
-                    {
-                        ws.Cell(dataRow, 4 + i).Value = bidAmount;
-                        ws.Cell(dataRow, 4 + i).Style.NumberFormat.Format = "£#,##0.00;-£#,##0.00";
-                    }
-                }
-
-                dataRow++;
-            }
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"qryBidxCrosstab_{year}.xlsx");
         }
 
         // ─────────────── HELPERS ───────────────

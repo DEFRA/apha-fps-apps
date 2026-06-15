@@ -59,36 +59,14 @@ namespace Apha.FPSApps.Application.Services.FPS
 
         private static List<T> ApplyFilterSortPage<T>(List<T> source, QueryParameters<string> query, out PaginationDto pagination)
         {
-            var filtered = source.AsEnumerable();
+            var filtered = ApplyFilter<T>(source, query.Filter);
+            filtered = ApplySort<T>(filtered, query.SortBy, query.Descending);
 
-            if (!string.IsNullOrWhiteSpace(query.Filter))
-            {
-                var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(query.Filter,
-                              new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                              ?? new Dictionary<string, string>();
-                foreach (var kv in filters)
-                {
-                    if (string.IsNullOrWhiteSpace(kv.Value)) continue;
-                    var prop = typeof(T).GetProperty(kv.Key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-                    if (prop != null)
-                        filtered = filtered.Where(item => prop.GetValue(item)?.ToString()?.Contains(kv.Value, StringComparison.OrdinalIgnoreCase) ?? false);
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(query.SortBy))
-            {
-                var prop = typeof(T).GetProperty(query.SortBy, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-                if (prop != null)
-                    filtered = query.Descending
-                        ? filtered.OrderByDescending(i => prop.GetValue(i))
-                        : filtered.OrderBy(i => prop.GetValue(i));
-            }
-
-            var allItems = filtered.ToList();
+            var allItems     = filtered.ToList();
             var totalRecords = allItems.Count;
-            var pageSize   = query.PageSize > 0 ? query.PageSize : 10;
-            var pageNumber = query.Page    > 0 ? query.Page    : 1;
-            var totalPages = pageSize > 0 ? (int)Math.Ceiling(totalRecords / (double)pageSize) : 0;
+            var pageSize     = query.PageSize > 0 ? query.PageSize : 10;
+            var pageNumber   = query.Page     > 0 ? query.Page     : 1;
+            var totalPages   = pageSize > 0 ? (int)Math.Ceiling(totalRecords / (double)pageSize) : 0;
 
             pagination = new PaginationDto
             {
@@ -99,6 +77,40 @@ namespace Apha.FPSApps.Application.Services.FPS
             };
 
             return allItems.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+        }
+
+        private static IEnumerable<T> ApplyFilter<T>(IEnumerable<T> source, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return source;
+
+            var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filter,
+                          new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                          ?? new Dictionary<string, string>();
+
+            foreach (var kv in filters)
+            {
+                if (string.IsNullOrWhiteSpace(kv.Value)) continue;
+                var prop = typeof(T).GetProperty(kv.Key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (prop != null)
+                    source = source.Where(item => prop.GetValue(item)?.ToString()?.Contains(kv.Value, StringComparison.OrdinalIgnoreCase) ?? false);
+            }
+
+            return source;
+        }
+
+        private static IEnumerable<T> ApplySort<T>(IEnumerable<T> source, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return source;
+
+            var prop = typeof(T).GetProperty(sortBy, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            if (prop != null)
+                return descending
+                    ? source.OrderByDescending(i => prop.GetValue(i))
+                    : source.OrderBy(i => prop.GetValue(i));
+
+            return source;
         }
     }
 }
