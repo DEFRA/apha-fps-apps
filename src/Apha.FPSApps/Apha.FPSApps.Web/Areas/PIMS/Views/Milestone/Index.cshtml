@@ -39,6 +39,13 @@
                             }
                         </select>
                     </div>
+                    <div>
+                        <a id="logOfUpdatesBtn"
+                           href="@Url.Action("LogIndex", "Milestone", new { area = "PIMS", project = parentproject })"
+                           class="govuk-button font-size-16 govuk-!-margin-bottom-1">
+                            Log of Updates
+                        </a>
+                    </div>
                 </div>
 
                 <!-- ── Milestones DataGrid ───────────────────────────────── -->
@@ -54,13 +61,13 @@
                 <!-- ── Financial Form Dates section ─────────────────────── -->
                 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_20">
                     <div class="govuk-grid-column-full govuk-!-padding-4">
-                        <div class="govuk-grid-column-full sup_margin_left_right_10 checkbox-section sup_flex_align_center sup_gap_16">
+                        <div class="govuk-grid-column-full sup_margin_left_right_10 checkbox-section sup_flex_align_center sup_gap_16 govuk-!-margin-bottom-2">
                             <span class="govuk-label tab-font-bold-size sup_margin_0">
                                 Show Milestone/Deliverable Update Received
                             </span>
                             <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0 sup_flex_align_center"
                                  data-module="govuk-checkboxes">
-                                <div class="govuk-checkboxes__item sup_margin_0 sup_flex_align_center">
+                                <div class="govuk-checkboxes__item sup_margin_0 sup_flex_align_center milestone-checkbox-inline">
                                     <input class="govuk-checkboxes__input govuk-checkboxes__input--small govuk-!-font-size-16 sup_margin_0"
                                            id="chkMilestoneDeliverable"
                                            name="chkMilestoneDeliverable"
@@ -74,7 +81,7 @@
                                 </div>
                             </div>
                             <button type="button"
-                                    class="govuk-button govuk-button--secondary font-size-16 sup_margin_0"
+                                    class="govuk-button font-size-16 sup_margin_0"
                                     onclick="submitFormRequired()">
                                 Submit
                             </button>
@@ -118,6 +125,10 @@
             if (gmMilestone) { gmMilestone.reloadGrid({ page: 1 }); }
             var gmFormDates = window['gridManager_milestoneFormDatesGrid'];
             if (gmFormDates) { gmFormDates.reloadGrid({ page: 1 }); }
+            var logBtn = document.getElementById('logOfUpdatesBtn');
+            if (logBtn) {
+                logBtn.href = '@Url.Action("LogIndex", "Milestone", new { area = "PIMS" })' + '?project=' + encodeURIComponent(project);
+            }
         }
 
         function getMilestoneExtraFilters() {

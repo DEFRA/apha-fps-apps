@@ -126,5 +126,13 @@ namespace Apha.PIMS.Api.Controllers
             bool deleted = await _service.DeleteMilestoneFormDatesAsync(year, parentProject);
             return Ok(new { success = deleted });
         }
+
+        /// <summary>Get paged log milestone changes with optional project and number filters.</summary>
+        [HttpGet("log")]
+        public async Task<IActionResult> GetLogMilestones([FromQuery] QueryParameters<string> parameters,[FromQuery] string? project = null,[FromQuery] string? numberPart1 = null,[FromQuery] string? numberPart2 = null)
+        {
+            PaginatedResult<LogMilestoneDto> result = await _service.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
+            return Ok(_mapper.Map<PaginationRes<LogMilestoneRes>>(result));
+        }
     }
 }

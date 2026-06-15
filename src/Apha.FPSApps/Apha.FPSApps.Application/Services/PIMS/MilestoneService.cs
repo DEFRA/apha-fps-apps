@@ -51,5 +51,7 @@ namespace Apha.FPSApps.Application.Services.PIMS
         public async Task<ApiResponseDto<object>> DeleteMilestoneFormDatesAsync(string parentProject, short year)
             => await _client.PimsMilestone.DeleteMilestoneFormDatesAsync(parentProject, year);
 
+        public async Task<ApiResponseDto<List<LogMilestoneDto>>> GetLogMilestonesAsync(QueryParameters<string> parameters,string? project,string? numberPart1,string? numberPart2)
+            => await _client.PimsMilestone.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
     }
 }

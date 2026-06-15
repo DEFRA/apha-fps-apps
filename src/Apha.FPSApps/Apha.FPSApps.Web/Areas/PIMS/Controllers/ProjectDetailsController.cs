@@ -43,7 +43,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         private async Task<ProjectDetailsViewModel> BuildViewModelAsync(string parentproject)
         {
-            Task<ApiResponseDto<ProjectDto>> fpsTask = _projectListService.GetFpsProjectByIdAsync(parentproject);
+            Task<ApiResponseDto<ProjectDto>> fpsTask = _projectDetailsService.GetFpsProjectAsync(parentproject);
             Task<ApiResponseDto<ProposedProjectDto>> proposedTask = _projectDetailsService.GetProposedProjectAsync(parentproject);
             Task<ApiResponseDto<List<ProjectsDto>>> yearlyTask = _projectListService.GetYearlyDetailsByProjectAsync(parentproject);
             Task<ApiResponseDto<ProjectDetailDto>> pimsTask = _projectDetailsService.GetPimsDetailAsync(parentproject);

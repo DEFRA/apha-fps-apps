@@ -1316,5 +1316,186 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         #endregion
+
+        #region UpdateFpsPortfolioDetailsAsync Tests
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_MatchingProjectAndYear_UpdatesAllFieldsAndReturnsEntity()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2024,
+                    ProjectTitle = "Old Title", Program = "P001", Manager = "Old Manager",
+                    Disease = "OldDisease", ProjectStatus = "Old Status",
+                    TransferIncome = 100m, CustIncome = 200m, Profit = 50m,
+                    Contract = "OldContract", Customer = "OldCustomer",
+                    IncomeAccountCode = "IA"
+                }
+            };
+            var projectLogs = new List<ProjectLog>();
+            var repo = CreateRepository(projects: projects, projectLogs: projectLogs, fpsYear: 2024);
+            var incoming = new Project
+            {
+                ParentProject = "PP001",
+                ProjectTitle = "New Title", Program = "P002", Manager = "New Manager",
+                Disease = "NewDisease", ProjectStatus = "Active",
+                TransferIncome = 500m, CustIncome = 600m, Profit = 150m,
+                Contract = "NewContract", Customer = "NewCustomer",
+                IncomeAccountCode = "IA"
+            };
+
+            // Act
+            var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("New Title",    result.ProjectTitle);
+            Assert.Equal("P002",         result.Program);
+            Assert.Equal("New Manager",  result.Manager);
+            Assert.Equal("NewDisease",   result.Disease);
+            Assert.Equal("Active",       result.ProjectStatus);
+            Assert.Equal(500m,           result.TransferIncome);
+            Assert.Equal(600m,           result.CustIncome);
+            Assert.Equal(150m,           result.Profit);
+            Assert.Equal("NewContract",  result.Contract);
+            Assert.Equal("NewCustomer",  result.Customer);
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_ProjectNotFound_ReturnsNull()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2024,
+                    ProjectTitle = "Title", Program = "P001", Customer = "DEFRA",
+                    ProjectStatus = "A", Disease = "D", Contract = "C", IncomeAccountCode = "IA"
+                }
+            };
+            var repo = CreateRepository(projects: projects, fpsYear: 2024);
+            var incoming = new Project { ParentProject = "PP_NONEXISTENT" };
+
+            // Act
+            var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_WrongFpsYear_ReturnsNull()
+        {
+            // Arrange — project row has year 2023 but context year is 2024
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2023,
+                    ProjectTitle = "Title", Program = "P001", Customer = "DEFRA",
+                    ProjectStatus = "A", Disease = "D", Contract = "C", IncomeAccountCode = "IA"
+                }
+            };
+            var repo = CreateRepository(projects: projects, fpsYear: 2024);
+            var incoming = new Project { ParentProject = "PP001" };
+
+            // Act
+            var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_EmptyRepository_ReturnsNull()
+        {
+            // Arrange
+            var repo = CreateRepository(projects: new List<Project>(), fpsYear: 2024);
+            var incoming = new Project { ParentProject = "PP001" };
+
+            // Act
+            var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_MultipleProjects_UpdatesOnlyMatchingOne()
+        {
+            // Arrange
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2024,
+                    ProjectTitle = "Title A", Program = "P001", Customer = "DEFRA",
+                    ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "IA"
+                },
+                new()
+                {
+                    ParentProject = "PP002", FpsYear = 2024,
+                    ProjectTitle = "Title B", Program = "P001", Customer = "DEFRA",
+                    ProjectStatus = "A", Disease = "D2", Contract = "C2", IncomeAccountCode = "IA"
+                }
+            };
+            var projectLogs = new List<ProjectLog>();
+            var repo = CreateRepository(projects: projects, projectLogs: projectLogs, fpsYear: 2024);
+            var incoming = new Project
+            {
+                ParentProject = "PP001", ProjectTitle = "Updated Title A", Program = "P002",
+                Customer = "NewCustomer", ProjectStatus = "Active",
+                Disease = "NewDisease", Contract = "NewContract", IncomeAccountCode = "IA"
+            };
+
+            // Act
+            var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
+
+            // Assert — PP001 updated, PP002 untouched
+            Assert.NotNull(result);
+            Assert.Equal("PP001",          result.ParentProject);
+            Assert.Equal("Updated Title A", result.ProjectTitle);
+
+            var pp002 = projects.First(p => p.ParentProject == "PP002");
+            Assert.Equal("Title B", pp002.ProjectTitle);
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_DoesNotModifyUnrelatedFields()
+        {
+            // Arrange — ensure IncomeAccountCode is not changed by the method
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2024,
+                    ProjectTitle = "Title", Program = "P001", Customer = "DEFRA",
+                    ProjectStatus = "A", Disease = "D", Contract = "C",
+                    IncomeAccountCode = "PRESERVED", BudgetCvl = 999m
+                }
+            };
+            var projectLogs = new List<ProjectLog>();
+            var repo = CreateRepository(projects: projects, projectLogs: projectLogs, fpsYear: 2024);
+            var incoming = new Project
+            {
+                ParentProject = "PP001", ProjectTitle = "New Title", Program = "P002",
+                Customer = "NewCust", ProjectStatus = "Active", Disease = "NewD",
+                Contract = "NewC", TransferIncome = 100m, CustIncome = 200m
+            };
+
+            // Act
+            var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
+
+            // Assert — IncomeAccountCode and BudgetCvl are not modified
+            Assert.NotNull(result);
+            Assert.Equal("PRESERVED", result.IncomeAccountCode);
+            Assert.Equal(999m, result.BudgetCvl);
+        }
+
+        #endregion
     }
 }

@@ -1089,5 +1089,148 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
         }
 
         #endregion
+
+        #region GetLogMilestonesAsync
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WithAllParams_ReturnsMappedPaginatedResult()
+        {
+            // Arrange
+            var query            = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+            const string project = "PP001";
+            const string part1   = "M";
+            const string part2   = "1";
+
+            var entities = new List<LogMilestone>
+            {
+                new() { Project = project, Number = "M1", Description = "Log Entry 1" },
+                new() { Project = project, Number = "M2", Description = "Log Entry 2" }
+            };
+            var paginationData = new PaginationData { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 };
+            var pagedData      = new PagedData<LogMilestone>(entities, paginationData);
+
+            var dtos          = new List<LogMilestoneDto>
+            {
+                new() { Project = project, Number = "M1", Description = "Log Entry 1" },
+                new() { Project = project, Number = "M2", Description = "Log Entry 2" }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetLogMilestonesAsync(paginationParams, project, part1, part2).Returns(pagedData);
+            _mockMapper.Map<List<LogMilestoneDto>>(pagedData.Data).Returns(dtos);
+            _mockMapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+            // Act
+            var result = await _sut.GetLogMilestonesAsync(query, project, part1, part2);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().HaveCount(2);
+            result.Data.First().Number.Should().Be("M1");
+            result.PaginationData.TotalRecords.Should().Be(2);
+
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
+            await _mockRepository.Received(1).GetLogMilestonesAsync(paginationParams, project, part1, part2);
+            _mockMapper.Received(1).Map<List<LogMilestoneDto>>(pagedData.Data);
+            _mockMapper.Received(1).Map<PaginationDto>(pagedData.PaginationData);
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WithNullOptionalParams_PassesNullsToRepository()
+        {
+            // Arrange
+            var query            = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var pagedData     = new PagedData<LogMilestone>(new List<LogMilestone>(), new PaginationData());
+            var emptyDtos     = new List<LogMilestoneDto>();
+            var paginationDto = new PaginationDto();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetLogMilestonesAsync(paginationParams, null, null, null).Returns(pagedData);
+            _mockMapper.Map<List<LogMilestoneDto>>(pagedData.Data).Returns(emptyDtos);
+            _mockMapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+            // Act
+            await _sut.GetLogMilestonesAsync(query, null, null, null);
+
+            // Assert
+            await _mockRepository.Received(1).GetLogMilestonesAsync(
+                paginationParams,
+                Arg.Is<string?>(p  => p  == null),
+                Arg.Is<string?>(n1 => n1 == null),
+                Arg.Is<string?>(n2 => n2 == null));
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WithEmptyData_ReturnsMappedEmptyResult()
+        {
+            // Arrange
+            var query            = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var pagedData     = new PagedData<LogMilestone>(new List<LogMilestone>(), new PaginationData { TotalRecords = 0 });
+            var emptyDtos     = new List<LogMilestoneDto>();
+            var paginationDto = new PaginationDto { TotalRecords = 0 };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetLogMilestonesAsync(paginationParams, null, null, null).Returns(pagedData);
+            _mockMapper.Map<List<LogMilestoneDto>>(pagedData.Data).Returns(emptyDtos);
+            _mockMapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+            // Act
+            var result = await _sut.GetLogMilestonesAsync(query, null, null, null);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().BeEmpty();
+            result.PaginationData.TotalRecords.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_MapsQueryParametersToPaginationParameters()
+        {
+            // Arrange
+            var query            = new QueryParameters<string> { Page = 3, PageSize = 25 };
+            var paginationParams = new PaginationParameters<string>(page: 3, pageSize: 25);
+
+            var pagedData     = new PagedData<LogMilestone>(new List<LogMilestone>(), new PaginationData());
+            var emptyDtos     = new List<LogMilestoneDto>();
+            var paginationDto = new PaginationDto();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetLogMilestonesAsync(paginationParams, null, null, null).Returns(pagedData);
+            _mockMapper.Map<List<LogMilestoneDto>>(pagedData.Data).Returns(emptyDtos);
+            _mockMapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+            // Act
+            await _sut.GetLogMilestonesAsync(query, null, null, null);
+
+            // Assert
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(
+                Arg.Is<QueryParameters<string>>(q => q.Page == 3 && q.PageSize == 25));
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var query            = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetLogMilestonesAsync(paginationParams, null, null, null)
+                .Returns(Task.FromException<PagedData<LogMilestone>>(new Exception("DB error")));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetLogMilestonesAsync(query, null, null, null));
+
+            exception.Message.Should().Be("DB error");
+        }
+
+        #endregion
     }
 }

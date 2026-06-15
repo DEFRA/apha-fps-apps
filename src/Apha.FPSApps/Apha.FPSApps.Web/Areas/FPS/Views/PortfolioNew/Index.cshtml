@@ -1,0 +1,352 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.PortfolioNewViewModel
+
+@{
+    ViewData["Title"] = $"Edit Portfolio Details - {Model.ParentProject}";
+}
+
+<main id="main-content">
+    <div class="govuk-main-wrapper govuk-!-padding-top-0">
+
+        @* Page title *@
+        <div class="govuk-grid-row sup_margin_left_right_10">
+            <div class="govuk-grid-column-full">
+                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+                    Edit Portfolio Details
+                </h1>
+            </div>
+        </div>
+
+        @* Error summary *@
+        <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row sup_margin_left_right_10">
+            <div class="govuk-grid-column-full sup_p_0">
+
+                @* Action buttons row *@
+                <div class="govuk-grid-row">
+                    <div class="govuk-grid-column-one-half">
+                        <h2 class="sup_text_color govuk-heading-s sup_align_flexheading sup_p_0">
+                            Please insert data for mandatory fields marked with *
+                        </h2>
+                    </div>
+                    <div class="govuk-grid-column-one-half">
+                        <div class="action-buttons">
+                            <button class="govuk-button sup_margin_0" type="button"
+                                    onclick="addAnotherPortfolio()">
+                                Add Another Portfolio
+                            </button>
+                            <button class="govuk-button sup_margin_0" type="button"
+                                    onclick="planPortfolio()">
+                                Plan This Portfolio
+                            </button>
+                            <button class="govuk-button sup_margin_0" type="button"
+                                    onclick="setupComponents()">
+                                Set Up Components
+                            </button>
+                            <button class="govuk-button sup_margin_0" type="button"
+                                    onclick="saveAndReturn()">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                @* Form *@
+                <form id="portfolioNewForm" data-parent-project="@Html.Encode(Model.ParentProject)">
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-container govuk-!-margin-top-3">
+
+                        @* form-left column *@
+                        <div class="form-left">
+
+                            @* Portfolio Code (readonly) *@
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" asp-for="ParentProject">Portfolio Code:</label>
+                                <input type="text" asp-for="ParentProject" class="govuk-input" readonly />
+                            </div>
+
+                            @* Description *@
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" asp-for="ProjectTitle">Description:</label>
+                                <input type="text" asp-for="ProjectTitle" class="govuk-input" required />
+                            </div>
+
+                            @* Programme *@
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" asp-for="Program">Programme:</label>
+                                <select asp-for="Program" asp-items="Model.ProgramList"
+                                        class="govuk-select sup_select_option_width_100" required></select>
+                            </div>
+
+                            @* Manager — searchable multi-column dropdown *@
+                            <div class="govuk-form-group sup_margin_0" id="manager-dropdown" style="position: relative;">
+                                <label class="govuk-label required" asp-for="Manager">Manager:</label>
+                                <input type="text" id="manager-input"
+                                       class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                                       value="@Model.Manager" readonly>
+                                <input type="hidden" asp-for="Manager" id="manager-value" />
+
+                                <div class="multicolumn-dropdown-panel" id="manager-panel" style="display:none;">
+                                    <div class="search-box-wrapper">
+                                        <input type="text" class="search-box" id="manager-search"
+                                               placeholder="Type to search manager">
+                                    </div>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th style="padding:6px 8px; text-align:left;">Name</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="manager-body">
+                                            @foreach (var item in Model.ManagerList)
+                                            {
+                                                if (!string.IsNullOrEmpty(item.Value))
+                                                {
+                                                    <tr data-value="@item.Value" class="manager-row">
+                                                        <td>@item.Text</td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            @* Disease *@
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" asp-for="Disease">Disease:</label>
+                                <select asp-for="Disease" asp-items="Model.DiseaseList"
+                                        class="govuk-select sup_select_option_width_100" required></select>
+                            </div>
+
+                            @* Status *@
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" asp-for="ProjectStatus">Status:</label>
+                                <select asp-for="ProjectStatus" asp-items="Model.ProjectStatusList"
+                                        class="govuk-select sup_select_option_width_100" required></select>
+                            </div>
+
+                        </div>
+
+                        @* form-center column *@
+                        <div class="form-center">
+
+                            @* Predicted Transfer Income *@
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" asp-for="TransferIncome">Predicted Transfer Income:</label>
+                                <input type="text" asp-for="TransferIncome"
+                                       class="govuk-input currency-input" required />
+                            </div>
+
+                            @* Customer Income *@
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" asp-for="CustIncome">Customer Income:</label>
+                                <input type="text" asp-for="CustIncome" class="govuk-input currency-input" required />
+                            </div>
+
+                            @* Target Profit *@
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" asp-for="Profit">Target Profit:</label>
+                                <input type="text" asp-for="Profit"
+                                       class="govuk-input currency-input" required />
+                            </div>
+
+                            @* Contract — searchable multi-column dropdown *@
+                            <div class="govuk-form-group sup_margin_0" id="contract-dropdown" style="position: relative;">
+                                <label class="govuk-label required" asp-for="Contract">Contract No:</label>
+                                <input type="text" id="contract-input"
+                                       class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                                       value="@Model.Contract" readonly>
+                                <input type="hidden" asp-for="Contract" id="contract-value" />
+
+                                <div class="multicolumn-dropdown-panel" id="contract-panel" style="display:none;">
+                                    <div class="search-box-wrapper">
+                                        <input type="text" class="search-box" id="contract-search"
+                                               placeholder="Type to search contract">
+                                    </div>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th style="padding:6px 8px; text-align:left;">Name</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="contract-body">
+                                            @foreach (var item in Model.ContractList)
+                                            {
+                                                if (!string.IsNullOrEmpty(item.Value))
+                                                {
+                                                    <tr data-value="@item.Value" class="contract-row">
+                                                        <td>@item.Text</td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            @* Customer *@
+                            <div class="govuk-form-group sup_margin_0">
+                                <label class="govuk-label required" asp-for="Customer">Customer:</label>
+                                <select asp-for="Customer" asp-items="Model.CustomerList"
+                                        class="govuk-select sup_select_option_width_100" required></select>
+                            </div>
+
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        // ── Manager dropdown ─────────────────────────────────────────────────
+
+        document.getElementById('manager-input').addEventListener('click', function () {
+            var panel = document.getElementById('manager-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        });
+
+        document.getElementById('manager-search').addEventListener('input', function () {
+            var query = this.value.toLowerCase();
+            document.querySelectorAll('.manager-row').forEach(function (row) {
+                row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('manager-body').addEventListener('click', function (e) {
+            var row = e.target.closest('.manager-row');
+            if (!row) return;
+            var value = row.dataset.value;
+            document.getElementById('manager-input').value = value;
+            document.getElementById('manager-value').value = value;
+            document.getElementById('manager-panel').style.display = 'none';
+        });
+
+        // ── Contract dropdown ─────────────────────────────────────────────────
+
+        document.getElementById('contract-input').addEventListener('click', function () {
+            var panel = document.getElementById('contract-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        });
+
+        document.getElementById('contract-search').addEventListener('input', function () {
+            var query = this.value.toLowerCase();
+            document.querySelectorAll('.contract-row').forEach(function (row) {
+                row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('contract-body').addEventListener('click', function (e) {
+            var row = e.target.closest('.contract-row');
+            if (!row) return;
+            var value = row.dataset.value;
+            document.getElementById('contract-input').value = value;
+            document.getElementById('contract-value').value = value;
+            document.getElementById('contract-panel').style.display = 'none';
+        });
+
+        // ── Numeric enforcement for currency fields ───────────────────────────
+
+        document.querySelectorAll('.currency-input').forEach(function (input) {
+            input.addEventListener('input', function () {
+                var val = this.value.replace(/[^0-9.]/g, '');
+                var parts = val.split('.');
+                if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+                this.value = val;
+            });
+        });
+
+        // ── Action button handlers ────────────────────────────────────────────
+
+        function addAnotherPortfolio() {
+            savePortfolio(function () {
+                window.location.href = '@Url.Action("Add", "Project", new { area = "FPS" })';
+            });
+        }
+
+        function planPortfolio() {
+            var parentProject = document.getElementById('portfolioNewForm').dataset.parentProject;
+            window.location.href = '@Url.Action("Index", "ProjectPlanning", new { area = "FPS" })?parentProject=' + encodeURIComponent(parentProject);
+        }
+
+        function setupComponents() {
+            var parentProject = document.getElementById('portfolioNewForm').dataset.parentProject;
+            window.location.href = '/FPS/TestCapability/Index?portfolio=' + encodeURIComponent(parentProject);
+        }
+
+        function saveAndReturn() {
+            var parentProject = document.getElementById('portfolioNewForm').dataset.parentProject;
+            savePortfolio(function () {
+                window.location.href = '/FPS/TestCapability/Index?portfolio=' + encodeURIComponent(parentProject);
+            });
+        }
+
+        function savePortfolio(onSuccess) {
+            clearValidationErrors('#portfolioNewForm');
+            var form = document.getElementById('portfolioNewForm');
+
+            if (!isFormValid($(form))) {
+                displayClientValidationErrors($(form), 'body');
+                return;
+            }
+
+            var numericErrors = [];
+            $(form).find('.currency-input').each(function () {
+                var val = $(this).val().trim();
+                if (val !== '' && (isNaN(parseFloat(val)) || !/^\d*\.?\d+$/.test(val))) {
+                    var fieldName = $(this).attr('name');
+                    var label = $('label[for="' + $(this).attr('id') + '"]').clone().children().remove().end().text().trim().replace(/[:\s*]+$/, '');
+                    numericErrors.push({ field: fieldName, message: (label || fieldName) + ' must be a valid number.' });
+                }
+            });
+            if (numericErrors.length) {
+                displayServerValidationErrors(numericErrors, 'Please correct the errors below.', 'body');
+                return;
+            }
+
+            var formData = {};
+            $(form).serializeArray().forEach(function (item) {
+                formData[item.name] = item.value;
+            });
+
+            // Ensure hidden dropdown values are included
+            formData['Manager'] = document.getElementById('manager-value').value;
+            formData['Contract'] = document.getElementById('contract-value').value;
+
+            $.ajax({
+                url: '@Url.Action("Index", "PortfolioNew", new { area = "FPS" })',
+                type: 'POST',
+                contentType: 'application/json',
+                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                data: JSON.stringify(formData),
+                success: function (result) {
+                    if (result.success) {
+                        showGovukAlert(result.message || 'Portfolio details saved successfully.');
+                        if (typeof onSuccess === 'function') onSuccess();
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, 'body');
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, 'body');
+                    } else {
+                        showGovukAlert('An error occurred while saving portfolio details.');
+                    }
+                }
+            });
+        }
+    </script>
+}

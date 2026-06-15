@@ -33,8 +33,7 @@ namespace Apha.PACT.DataAccess.Repository
             else
                 baseQuery = baseQuery.OrderBy(t => t.TestCode);
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<PagedData<TestCapability>> GetPagedByTestCodeAsync(
@@ -53,8 +52,7 @@ namespace Apha.PACT.DataAccess.Repository
                     : baseQuery.OrderBy(e => EF.Property<object>(e, query.SortBy));
             else
                 baseQuery = baseQuery.OrderBy(t => t.TestCode);
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<PagedData<TestCapability>> GetPagedTestCapabilityByPortfolioAsync(
@@ -67,15 +65,14 @@ namespace Apha.PACT.DataAccess.Repository
 
             baseQuery = ApplyTestCapabilityFilter(baseQuery, query.Filter);
 
-            if (!string.IsNullOrWhiteSpace(query.SortBy))
+            if (!string.IsNullOrWhiteSpace(query.SortBy) && query.SortBy != "ItemDescription")
                 baseQuery = query.Descending
                     ? baseQuery.OrderByDescending(e => EF.Property<object>(e, query.SortBy))
                     : baseQuery.OrderBy(e => EF.Property<object>(e, query.SortBy));
             else
                 baseQuery = baseQuery.OrderBy(t => t.TestCode);
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<TestCapability?> GetByIdAsync(string testCode, string workGroup)

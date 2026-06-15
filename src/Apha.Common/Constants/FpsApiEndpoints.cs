@@ -74,6 +74,7 @@ namespace Apha.Common.Constants
         public const string UpdateProject = "api/v1/project";
         public const string UpdatePactProject = "api/v1/project/external/pact";
         public const string UpdatePactPortfolio = "api/v1/project/external/portfolio";
+        public const string UpdateFpsPortfolio = "api/v1/project/external/fps-portfolio";
         public const string DeleteProject = "api/v1/project/{0}";
         public const string GetProjectsByProgram = "api/v1/project/paged?programNo={0}";
         public const string GetProjectsByProjectGroup = "api/v1/project/paged/by-project-group?projectGroup={0}";
@@ -100,6 +101,9 @@ namespace Apha.Common.Constants
 
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
+
+        // Project Group Staff Plan (fps.vpvtprojectgroupmgrplan)
+        public const string GetPagedProjectGroupStaffPlan = "api/v1/projectgroupstaffplan";
 
         // Staff Job
         public const string GetAllStaffJobs = "api/v1/staffjob?jobCode={0}";

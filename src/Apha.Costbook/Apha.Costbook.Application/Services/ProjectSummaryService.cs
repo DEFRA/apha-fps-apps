@@ -201,4 +201,18 @@ public class ProjectSummaryService : IProjectSummaryService
         workbook.SaveAs(stream);
         return stream.ToArray();
     }
+
+    public async Task<ProjectYearCostSummaryDto> GetProjectYearCostSummaryAsync(string projectId, int year)
+    {
+        var entity = await _projectRepo.GetProjectYearCostSummaryAsync(projectId, year);
+        return new ProjectYearCostSummaryDto
+        {
+            Project             = entity.Project,
+            Year                = entity.Year,
+            StaffCostTotal      = entity.StaffCostTotal,
+            TestCostTotal       = entity.TestCostTotal,
+            AnimalCostTotal     = entity.AnimalCostTotal,
+            AdditionalCostTotal = entity.AdditionalCostTotal
+        };
+    }
 }

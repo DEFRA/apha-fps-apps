@@ -348,5 +348,59 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.ProjectDetailsControllerTest
         }
 
         #endregion
+
+        #region GetFpsProjectById
+
+        [Fact]
+        public async Task GetFpsProjectById_WithValidProject_ReturnsOkResult_WithMappedProject()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            var projectDto = new ProjectDto
+            {
+                Parentproject = parentproject,
+                Projecttitle = "FMD Survey",
+                Disease = "FMD",
+                Contract = "CON001",
+                Projectstatus = "Active"
+            };
+            var projectRes = new ProjectRes
+            {
+                Parentproject = parentproject,
+                Projecttitle = "FMD Survey",
+                Disease = "FMD",
+                Contract = "CON001",
+                Projectstatus = "Active"
+            };
+
+            _service.GetFpsProjectByIdAsync(parentproject).Returns(projectDto);
+            _mapper.Map<ProjectRes>(projectDto).Returns(projectRes);
+
+            // Act
+            var result = await _controller.GetFpsProjectById(parentproject);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(projectRes, okResult.Value);
+
+            await _service.Received(1).GetFpsProjectByIdAsync(parentproject);
+            _mapper.Received(1).Map<ProjectRes>(projectDto);
+        }
+
+        [Fact]
+        public async Task GetFpsProjectById_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            _service.GetFpsProjectByIdAsync(parentproject).Throws(new Exception("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetFpsProjectById(parentproject));
+
+            await _service.Received(1).GetFpsProjectByIdAsync(parentproject);
+            _mapper.DidNotReceive().Map<ProjectRes>(Arg.Any<ProjectDto>());
+        }
+
+        #endregion
     }
 }

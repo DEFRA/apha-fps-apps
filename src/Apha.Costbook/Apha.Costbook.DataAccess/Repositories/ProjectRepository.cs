@@ -1004,6 +1004,55 @@ namespace Apha.Costbook.DataAccess.Repositories
             }
         }
 
+        public async Task<ProjectYearCostSummary> GetProjectYearCostSummaryAsync(string projectId, int year)
+        {
+            var decodedId = HttpUtility.UrlDecode(projectId);
+
+            // SELECT DISTINCTROW tblStaffRequ.Project, tblStaffRequ.Year,
+            //        Sum([ChargeRate]*[NoHours]) AS StaffCost
+            double staffCostTotal = await _context.StaffRequirements
+                .AsNoTracking()
+                .Where(s => s.Project == decodedId && s.Year == year)
+                .SumAsync(s => s.Chargerate.HasValue && s.Nohours.HasValue
+                    ? s.Chargerate.Value * s.Nohours.Value
+                    : 0.0);
+
+            // SELECT DISTINCTROW tblTestRequ.Project, tblTestRequ.Year,
+            //        Sum([UnitPrice]*[NoTests]) AS TestCost
+            double testCostTotal = await _context.TestRequirements
+                .AsNoTracking()
+                .Where(t => t.Project == decodedId && t.Year == year)
+                .SumAsync(t => t.UnitPrice.HasValue && t.NumberOfTests.HasValue
+                    ? t.UnitPrice.Value * t.NumberOfTests.Value
+                    : 0.0);
+
+            // SELECT DISTINCTROW tblAnimalReq.Project, tblAnimalReq.Year,
+            //        Sum([Number of Days]*[Number of Animals]*[DailyRate]) AS AnimalCost
+            double animalCostTotal = await _context.AnimalRequirements
+                .AsNoTracking()
+                .Where(a => a.Project == decodedId && a.Year == year)
+                .SumAsync(a => a.NumberOfDays.HasValue && a.NumberOfAnimals.HasValue && a.DailyRate.HasValue
+                    ? a.NumberOfDays.Value * a.NumberOfAnimals.Value * a.DailyRate.Value
+                    : 0.0);
+
+            // SELECT DISTINCTROW tblAdditionalCosts.Project, tblAdditionalCosts.Year,
+            //        Sum(ItemCost) AS LineCost
+            double additionalCostTotal = (double)await _context.AdditionalCosts
+                .AsNoTracking()
+                .Where(ac => ac.Project == decodedId && ac.Year == year)
+                .SumAsync(ac => ac.ItemCost ?? 0.0);
+
+            return new ProjectYearCostSummary
+            {
+                Project             = decodedId,
+                Year                = year,
+                StaffCostTotal      = staffCostTotal,
+                TestCostTotal       = testCostTotal,
+                AnimalCostTotal     = animalCostTotal,
+                AdditionalCostTotal = additionalCostTotal
+            };
+        }
+
         public async Task<double> GetInflationFactorAsync(string infType, string projectId, int year, int currentYear)
         {
             var decodedId = HttpUtility.UrlDecode(projectId);
