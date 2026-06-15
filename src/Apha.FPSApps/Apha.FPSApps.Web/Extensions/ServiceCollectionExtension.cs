@@ -1,3 +1,25 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-12
+ *
+ * CHANGED:
+ *   - Added DI registration for IRadTrackInvoiceService → RadTrackInvoiceService (Step 15c).
+ *     Placed alphabetically within the PIMS service block, after IMilestoneService.
+ *
+ * PRESERVED:
+ *   - All existing 90+ service registrations unchanged.
+ *   - AddRepositories() unchanged.
+ *   - AddApplicationServices() unchanged.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: RadTrackInvoiceService is in Apha.FPSApps.Application.Services.PIMS
+ *     and IRadTrackInvoiceService is in Apha.FPSApps.Application.Interfaces.PIMS — both namespaces
+ *     are already imported; no additional using directives required.
+ */
+
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -63,6 +85,9 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProposedProjectService, ProposedProjectService>();
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
             services.AddScoped<IMilestoneService, MilestoneService>();
+            // TRANSFORMENGINE: RadTrack Invoice service registration — Step 15c (Phase 10)
+            // AddScoped: frontend services hold request-scoped IPimsApiClient references.
+            services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
 
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();

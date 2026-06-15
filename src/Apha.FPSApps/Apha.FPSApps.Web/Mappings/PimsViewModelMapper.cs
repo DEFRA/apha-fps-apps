@@ -1,4 +1,33 @@
-﻿using Apha.FPSApps.Application.Dtos;
+﻿// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — PimsViewModelMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-12
+ *
+ * CHANGED:
+ *   - Added RadTrack Invoice view-model mappings (Step 15b):
+ *       CreateMap<InvoiceItem, RadTrackInvoiceDto>().ReverseMap()
+ *       CreateMap<InvoiceViewModel, RadTrackInvoiceDto>().ReverseMap()
+ *   - InvoiceItem and InvoiceViewModel are created in Phase 11
+ *     (src/Apha.FPSApps/Apha.FPSApps.Web/Areas/PIMS/Models/InvoiceItem.cs and InvoiceViewModel.cs).
+ *     The using directive Apha.FPSApps.Web.Areas.PIMS.Models already covers these types.
+ *
+ * PRESERVED:
+ *   - All 19 existing CreateMap entries (PaginationFilter, ProjectList, ProposedProject,
+ *     ProjectDetails, ProjectComment, costs plan/actuals, PactPay, MonthlyPact,
+ *     Milestone, MilestoneFormDates, LogMilestone) unchanged.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: InvoiceItem and InvoiceViewModel must be created in Phase 11
+ *     before this mapper compiles. Property names must match RadTrackInvoiceDto exactly
+ *     for convention-based mapping; add .ForMember() overrides if they diverge.
+ *   - TRANSFORMENGINE TODO: InvoiceTotalsItem (totals footer) maps to RadTrackInvoiceTotalsDto —
+ *     add CreateMap<InvoiceTotalsItem, RadTrackInvoiceTotalsDto>().ReverseMap() in Phase 11
+ *     once InvoiceTotalsItem is defined.
+ */
+
+using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PIMS.Models;
@@ -52,6 +81,14 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<MilestoneItem, MilestoneDto>().ReverseMap();
             CreateMap<MilestoneFormDatesItem, MilestoneFormDatesDto>().ReverseMap();
             CreateMap<LogMilestoneItem, LogMilestoneDto>().ReverseMap();
+
+            // TRANSFORMENGINE: RadTrack Invoice — Step 15b (Phase 10)
+            // InvoiceItem: grid row ↔ RadTrackInvoiceDto (list display and inline edit).
+            // InvoiceViewModel: page-level form ↔ RadTrackInvoiceDto (add/edit modal binding).
+            // NOTE: InvoiceItem and InvoiceViewModel are created in Phase 11; this mapper
+            //       will not compile until those types exist in Apha.FPSApps.Web.Areas.PIMS.Models.
+            CreateMap<InvoiceItem, RadTrackInvoiceDto>().ReverseMap();
+            CreateMap<InvoiceViewModel, RadTrackInvoiceDto>().ReverseMap();
         }
     }
 }

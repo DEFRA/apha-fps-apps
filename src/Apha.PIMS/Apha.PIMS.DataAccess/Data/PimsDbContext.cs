@@ -1,4 +1,26 @@
-﻿using Apha.PIMS.Core.Entities;
+﻿// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — PimsDbContext.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository (Steps 7-7a)
+ * Migrated : 2026-06-12
+ *
+ * CHANGED:
+ *   - Added DbSet<RadTrackInvoice> RadTrackInvoices property.
+ *   - Added modelBuilder.ApplyConfiguration(new RadTrackInvoiceMap()) in OnModelCreating.
+ *
+ * PRESERVED:
+ *   - All existing DbSet properties and ApplyConfiguration calls unchanged.
+ *   - UseCollation("en_GB.utf8") preserved.
+ *   - Constructor and partial class declaration unchanged.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Confirm EF migrations are applied after RadTrackInvoiceMap is added
+ *     (tblradtrackinvoice already exists in PostgreSQL per DDL, so migration should be no-op;
+ *     verify with dotnet ef migrations add and inspect generated migration before applying).
+ */
+
+using Apha.PIMS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -44,6 +66,10 @@ namespace Apha.PIMS.DataAccess.Data
         public virtual DbSet<ProjectManager> ProjectManagers { get; set; }
 
         public virtual DbSet<StagingMilestone> StagingMilestones { get; set; }
+
+        // TRANSFORMENGINE: Added Phase 4 — DbSet for RadTrackInvoice entity mapped to mabarchive.tblradtrackinvoice.
+        public virtual DbSet<RadTrackInvoice> RadTrackInvoices { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("en_GB.utf8");           
@@ -75,6 +101,9 @@ namespace Apha.PIMS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new LogMilestoneMap());
             modelBuilder.ApplyConfiguration(new ProjectManagerMap());
             modelBuilder.ApplyConfiguration(new StagingMilestoneMap());
+
+            // TRANSFORMENGINE: Added Phase 4 — register RadTrackInvoiceMap for mabarchive.tblradtrackinvoice.
+            modelBuilder.ApplyConfiguration(new RadTrackInvoiceMap());
         }
     }
 }

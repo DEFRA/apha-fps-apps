@@ -1,0 +1,266 @@
+@* TRANSFORMENGINE: human_review — verify before running *@
+@* TRANSFORMENGINE MIGRATION — Invoice/_AddEditInvoice.cshtml
+   Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+   Migrated : 2026-06-12
+   CHANGED:
+     - New file: Add/Edit modal partial for the Invoice CRUD form.
+     - Modal fields derived from frmpimsinvoices.html #invModal body and the saveInv() /
+       openInvEditModal() data object in pimsinvoices.js.
+     - All 10 editable fields from the prototype modal preserved:
+         invModalProject        → Project     (select, asp-items="ViewBag.ProjectList")
+         invModalContract       → Contract    (text input)
+         invModalPlannedAmt     → PlannedAmount (currency, £ prefix wrapper)
+         invModalAmountDue      → DueAmount   (currency, £ prefix wrapper)
+         invModalDateDue        → DueDate     (date input, hint DD/MM/YYYY)
+         invModalAmtInvoiced    → ActualAmount (currency, £ prefix wrapper)
+         invModalDateJSRaised   → DateJobsheetRaised (date input, hint DD/MM/YYYY)
+         invModalInvoiceRef     → InvoiceRef  (text input)
+         invModalPaid           → InvoicePaid (govuk-checkboxes checkbox)
+         invModalDateInvoiced   → DateInvoiced (date input, hint DD/MM/YYYY)
+     - InvoiceCounter: <input type="hidden"> — PK; used by SaveInvoice to distinguish
+       Create (==0) vs Update (>0). Disabled fields do not post; hidden covers it.
+     - IsAddingNew: passed via ViewBag from controller.GetAddEditInvoicePartial().
+     - Modal header/footer matches govuk-edit-modal pattern used in Milestone partial.
+     - Save/Update button toggle follows prototype invSaveBtn / invUpdateBtn pattern.
+     - @Html.AntiForgeryToken() included in form; token read by saveInvoice() via
+       $('input[name="__RequestVerificationToken"]').val().
+     - Error summary div included for displayServerValidationErrors() JS helper.
+   PRESERVED:
+     - All 10 prototype modal field labels verbatim.
+     - govuk-input__wrapper with £ prefix for Planned Amount, Amount Due, Amount Invoiced.
+     - govuk-hint DD/MM/YYYY for three date fields matching prototype hint divs.
+     - govuk-checkboxes--small pattern for Paid? checkbox.
+     - Cancel / Save (Add) / Update (Edit) footer buttons.
+     - Modal ID = "editInvoiceModal" — referenced by addInvoice() / editInvoice() /
+       closeInvoiceModal() in Index.cshtml @section Scripts.
+     - Form ID = "editInvoiceForm" — referenced by saveInvoice() in Index.cshtml.
+   DEFERRED / REQUIRES HUMAN REVIEW:
+     - TRANSFORMENGINE TODO: Project is rendered as <select asp-items="ViewBag.ProjectList">.
+       ViewBag.ProjectList is populated in InvoiceController.GetAddEditInvoicePartial() from
+       IProjectListService. Verify ViewBag key name matches exactly ("ProjectList").
+     - TRANSFORMENGINE TODO: InvoicePaid is short (0/1 smallint). Checkbox posts "true"/"false"
+       string; controller must parse and convert to short. Verify model binding in SaveInvoice.
+     - TRANSFORMENGINE TODO: Date inputs use type="date" (ISO yyyy-MM-dd). The prototype used
+       DD/MM/YYYY text inputs. Verify the controller POST parses DateTime? correctly from
+       ISO format before saving to the backend DTO.
+     - TRANSFORMENGINE TODO: PlannedAmount, DueAmount, ActualAmount are double? — verify that
+       the govuk currency-input CSS class does not block numeric model binding in SaveInvoice.
+*@
+@model Apha.FPSApps.Web.Areas.PIMS.Models.InvoiceItem
+
+@{
+    bool isAddingNew = ViewBag.IsAddingNew == true;
+    string modalTitle  = isAddingNew ? "Add Invoice"    : "Edit Invoice";
+    string saveLabel   = isAddingNew ? "Save"           : "Update";
+}
+
+<div id="editInvoiceModal" class="govuk-edit-modal" role="dialog" aria-modal="true" aria-labelledby="editInvoiceModalTitle">
+    <div class="govuk-edit-modal-dialog" style="max-width: 640px;">
+
+        <div class="govuk-edit-modal__header">
+            <h3 class="govuk-edit-modal__title" id="editInvoiceModalTitle">@modalTitle</h3>
+            <button type="button" onclick="closeInvoiceModal()"
+                    class="govuk-edit-modal__close-btn"
+                    aria-label="Close">&#x2715;</button>
+        </div>
+
+        <div class="govuk-edit-modal__body">
+            <form id="editInvoiceForm" novalidate>
+                @Html.AntiForgeryToken()
+
+                @* TRANSFORMENGINE: PK hidden — InvoiceCounter==0 → Create; >0 → Update.
+                   Not a visible column in the modal. Posted via hidden so disabled fields
+                   do not silently drop the key. *@
+                <input type="hidden" asp-for="InvoiceCounter" />
+                <input type="hidden" name="IsAddingNew" value="@(isAddingNew ? "true" : "false")" />
+
+                @* Error summary — populated by displayServerValidationErrors() JS helper *@
+                <div class="govuk-error-summary" role="alert"
+                     aria-labelledby="editInvoiceErrorTitle" tabindex="-1" style="display: none;">
+                    <h2 class="govuk-error-summary__title" id="editInvoiceErrorTitle">
+                        There is a problem
+                    </h2>
+                    <div class="govuk-error-summary__body">
+                        <ul class="govuk-list govuk-error-summary__list"></ul>
+                    </div>
+                </div>
+
+                @* ── Field 1: Project (select) ─────────────────────────────── *@
+                @* TRANSFORMENGINE: Project is a <select> in the prototype (invModalProject).
+                   ViewBag.ProjectList populated by InvoiceController.GetAddEditInvoicePartial()
+                   from IProjectListService. asp-items renders options. *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="Project">
+                        Project:
+                    </label>
+                    <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                            asp-for="Project"
+                            asp-items="ViewBag.ProjectList"
+                            aria-label="Select project"
+                            aria-required="true">
+                        <option value="">-- Select --</option>
+                    </select>
+                    <span asp-validation-for="Project" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+                @* ── Field 2: Contract (text) ──────────────────────────────── *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="Contract">
+                        Contract:
+                    </label>
+                    <input class="govuk-input govuk-!-font-size-16"
+                           asp-for="Contract"
+                           type="text" />
+                    <span asp-validation-for="Contract" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+                @* ── Field 3: Planned Amount (currency) ────────────────────── *@
+                @* TRANSFORMENGINE: govuk-input__wrapper with £ prefix matches frmpimsinvoices.html
+                   invModalPlannedAmt field. currency-input class applied for formatting. *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="PlannedAmount">
+                        Planned Amount:
+                    </label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input currency-input govuk-!-font-size-16"
+                               asp-for="PlannedAmount"
+                               type="text" />
+                    </div>
+                    <span asp-validation-for="PlannedAmount" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+                @* ── Field 4: Amount Due (currency) ────────────────────────── *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="DueAmount">
+                        Amount Due:
+                    </label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input currency-input govuk-!-font-size-16"
+                               asp-for="DueAmount"
+                               type="text" />
+                    </div>
+                    <span asp-validation-for="DueAmount" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+                @* ── Field 5: Date Due (date) ──────────────────────────────── *@
+                @* TRANSFORMENGINE: Prototype used type="text" with DD/MM/YYYY hint.
+                   Using type="date" (ISO yyyy-MM-dd) for browser native date picker.
+                   HUMAN_REVIEW: Verify controller date parsing matches ISO format. *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="DueDate">
+                        Date Due:
+                    </label>
+                    <input class="govuk-input govuk-input--width-10 govuk-!-font-size-16"
+                           asp-for="DueDate"
+                           type="date"
+                           aria-describedby="invDateDue-hint" />
+                    <div id="invDateDue-hint" class="govuk-hint govuk-!-font-size-14">DD/MM/YYYY</div>
+                    <span asp-validation-for="DueDate" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+                @* ── Field 6: Amount Invoiced (currency) ───────────────────── *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="ActualAmount">
+                        Amount Invoiced:
+                    </label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input currency-input govuk-!-font-size-16"
+                               asp-for="ActualAmount"
+                               type="text" />
+                    </div>
+                    <span asp-validation-for="ActualAmount" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+                @* ── Field 7: Date JS Raised (date) ────────────────────────── *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="DateJobsheetRaised">
+                        Date JS Raised:
+                    </label>
+                    <input class="govuk-input govuk-input--width-10 govuk-!-font-size-16"
+                           asp-for="DateJobsheetRaised"
+                           type="date"
+                           aria-describedby="invDateJS-hint" />
+                    <div id="invDateJS-hint" class="govuk-hint govuk-!-font-size-14">DD/MM/YYYY</div>
+                    <span asp-validation-for="DateJobsheetRaised" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+                @* ── Field 8: Invoice Ref (text) ───────────────────────────── *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="InvoiceRef">
+                        Invoice Ref:
+                    </label>
+                    <input class="govuk-input govuk-!-font-size-16"
+                           asp-for="InvoiceRef"
+                           type="text" />
+                    <span asp-validation-for="InvoiceRef" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+                @* ── Field 9: Paid? (checkbox) ─────────────────────────────── *@
+                @* TRANSFORMENGINE: govuk-checkboxes--small pattern matches frmpimsinvoices.html
+                   invModalPaid checkbox. InvoicePaid is short (0/1); checkbox posts "true"/"false".
+                   HUMAN_REVIEW: Controller must convert checkbox string to short for DTO. *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                        <div class="govuk-checkboxes__item">
+                            <input class="govuk-checkboxes__input govuk-!-font-size-16"
+                                   id="invModalPaid"
+                                   name="InvoicePaid"
+                                   type="checkbox"
+                                   value="1"
+                                   @(Model.InvoicePaid != 0 ? "checked" : "") />
+                            <label class="govuk-label govuk-checkboxes__label sup_label_auto_width govuk-!-font-weight-bold"
+                                   for="invModalPaid">
+                                Paid?
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                @* ── Field 10: Date Invoiced (date) ────────────────────────── *@
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           asp-for="DateInvoiced">
+                        Date Invoiced:
+                    </label>
+                    <input class="govuk-input govuk-input--width-10 govuk-!-font-size-16"
+                           asp-for="DateInvoiced"
+                           type="date"
+                           aria-describedby="invDateInv-hint" />
+                    <div id="invDateInv-hint" class="govuk-hint govuk-!-font-size-14">DD/MM/YYYY</div>
+                    <span asp-validation-for="DateInvoiced" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+            </form>
+        </div>
+
+        @* ── Footer: Cancel / Save / Update ─────────────────────────────── *@
+        @* TRANSFORMENGINE: invSaveBtn/invUpdateBtn toggle from pimsinvoices.js replaced
+           by a single button whose label is driven by isAddingNew (server-rendered). *@
+        <div class="govuk-edit-modal__footer"
+             style="display: flex; justify-content: space-between; align-items: center;">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary sup_margin_0 govuk-!-font-size-16"
+                    onclick="closeInvoiceModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button sup_margin_0 govuk-!-font-size-16"
+                    id="invSaveBtn"
+                    onclick="saveInvoice()">
+                @saveLabel
+            </button>
+        </div>
+
+    </div>
+</div>

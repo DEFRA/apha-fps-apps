@@ -1,4 +1,29 @@
-﻿using Apha.Common.Contracts;
+﻿// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — PimsApiDtoMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-12
+ *
+ * CHANGED:
+ *   - Added RadTrackInvoice mappings (Step 15a):
+ *       CreateMap<RadTrackInvoiceRes, RadTrackInvoiceDto>().ReverseMap()
+ *       CreateMap<RadTrackInvoiceDto, RadTrackInvoiceReq>().ReverseMap()
+ *   - Note: RadTrackInvoiceTotalsDto has no Res contract (backend returns DTO directly);
+ *     no totals Res→Dto mapping is required here.
+ *
+ * PRESERVED:
+ *   - All 44 existing CreateMap entries (GenericResponse, ProjectList, FpsProjectDetails,
+ *     ProposedProject, Comments, ProjectDetail, Risk, Year, costs, PactPay, MonthlyPact,
+ *     FpsYearTotals, Milestone, MilestoneFormDates, LogMilestone) unchanged.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: If RadTrackInvoiceTotalsRes is added to Apha.Common.Contracts.PIMS,
+ *     add CreateMap<RadTrackInvoiceTotalsRes, RadTrackInvoiceTotalsDto>().ReverseMap() here.
+ *   - TRANSFORMENGINE TODO: If InvoicePaid is changed from short to bool on Res/Dto, update mappings.
+ */
+
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PIMS;
@@ -81,6 +106,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<MilestoneFormDatesDto, MilestoneFormDatesReq>().ReverseMap();
 
             CreateMap<LogMilestoneRes, LogMilestoneDto>().ReverseMap();
+
+            // TRANSFORMENGINE: RadTrack Invoice — Step 15a (Phase 10)
+            // RadTrackInvoiceRes → RadTrackInvoiceDto: list/get-by-id response → frontend DTO.
+            // RadTrackInvoiceDto → RadTrackInvoiceReq: frontend DTO → create/update request body.
+            // No Res contract exists for RadTrackInvoiceTotalsDto (backend returns DTO directly).
+            CreateMap<RadTrackInvoiceRes, RadTrackInvoiceDto>().ReverseMap();
+            CreateMap<RadTrackInvoiceDto, RadTrackInvoiceReq>().ReverseMap();
         }
     }
 }

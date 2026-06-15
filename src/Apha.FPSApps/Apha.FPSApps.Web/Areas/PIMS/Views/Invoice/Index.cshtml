@@ -1,0 +1,405 @@
+@* TRANSFORMENGINE: human_review — verify before running *@
+@* TRANSFORMENGINE MIGRATION — Invoice/Index.cshtml
+   Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+   Phase 14 security fix applied: 2026-06-12
+   Migrated : 2026-06-12
+   CHANGED:
+     - New file: Razor Index view for frmpimsinvoices.html → ASP.NET Core MVC Area PIMS/Invoice.
+     - Filter toolbar with four explicit <select> elements mirroring the four invFilter*
+       controls in frmpimsinvoices.html (Project, SurvContract, Year, Program) — all are
+       outside the grid container and confirmed as page-level filters by applyInvoiceFilters()
+       in pimsinvoices.js.
+     - DataGrid container binds to Model.InvoicesGrid (DataGridConfig<InvoiceItem>).
+     - Totals footer bound to Model.InvoiceTotals (three GBP values matching HTML prototype
+       invTotalPlanned, invTotalAmountDue, invTotalAmountInvoiced spans).
+     - Add Invoice button calls addInvoice() — loads _AddEditInvoice partial via $.get()
+       into #invModalContainer; modal pattern matches Milestone convention.
+     - Edit/Delete JS functions follow $(btn).data('id') convention and use
+       gm.reloadGrid({ page: 1 }) — NOT gm.reload().
+     - saveInvoice() posts form data via $.ajax to /PIMS/Invoice/SaveInvoice with
+       RequestVerificationToken header.
+     - deleteInvoice() uses showGovukConfirm() matching established PIMS confirm pattern.
+     - getInvoiceExtraFilters() returns all four filter params — matched to
+       ExtraFilterMethod = "getInvoiceExtraFilters" in InvoiceController.BuildInvoiceGridAsync().
+     - Totals footer reloads via $.get to /PIMS/Invoice/GetInvoiceTotals after filter apply.
+     - PHASE 14 FIX: deleteInvoice() now sends RequestVerificationToken header on DELETE AJAX
+       call — resolves CSRF gap flagged in Phase 14 security gate review of InvoiceController.cs.
+   PRESERVED:
+     - DOM structure (toolbar, grid section, totals row, pagination footer) mirrors
+       frmpimsinvoices.html exactly.
+     - All four filter dropdown IDs: invFilterProject, invFilterSurvContract, invFilterYear,
+       invFilterProgram.
+     - "Add Invoice" button, action icon buttons (edit/delete) per prototype.
+     - Totals labels and span IDs: invTotalPlanned, invTotalAmountDue, invTotalAmountInvoiced.
+     - Records-per-page dropdown (5,10,15,20,25,30) matches prototype.
+   DEFERRED / REQUIRES HUMAN REVIEW:
+     - TRANSFORMENGINE TODO: ContractList and ProgramList are stubbed as empty lists in the
+       controller. When lookup endpoints are confirmed, these dropdowns will populate properly.
+     - TRANSFORMENGINE TODO: Verify _InvoiceTotals partial path — controller returns
+       PartialView("_InvoiceTotals", totalsItem). If that partial does not yet exist, the
+       GetInvoiceTotals AJAX call will fail silently. Consider rendering totals inline in
+       Index.cshtml via Model.InvoiceTotals until the partial is ready.
+     - TRANSFORMENGINE TODO: Confirm that the govuk-edit-modal CSS class and #invModalContainer
+       pattern matches the PIMS layout correctly (Milestone uses #milestoneModalContainer).
+     - TRANSFORMENGINE TODO: Date fields (DueDate, DateJobsheetRaised, DateInvoiced) stored as
+       DateTime? — verify browser date input format round-trip with the SaveInvoice POST handler.
+     - TRANSFORMENGINE TODO: InvoiceController.DeleteInvoice does not carry [ValidateAntiForgeryToken];
+       the token is validated here via the RequestVerificationToken header — confirm the controller
+       reads the header (AntiforgeryTokenSet.RequestTokenHeaderName = "RequestVerificationToken")
+       or add [ValidateAntiForgeryToken] to DeleteInvoice [HttpDelete] action.
+*@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PIMS.Models.InvoiceViewModel
+
+@{
+    ViewData["Title"] = "PIMS : Invoices";
+}
+
+<div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-1 govuk-!-padding-0">
+    <h5 class="govuk-heading-s sup_margin_0 govuk-!-padding-top-2 govuk-!-padding-right-0 govuk-!-padding-bottom-1 govuk-!-padding-left-5">
+        Invoices
+    </h5>
+</div>
+
+<div class="sup_flex">
+
+    <main class="main-content govuk-!-padding-top-0 sup_overflow_hidden">
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+
+                <!-- ── Filter toolbar ──────────────────────────────────────── -->
+                @* TRANSFORMENGINE: Four explicit <select> filter controls — confirmed by
+                   frmpimsinvoices.html inv-toolbar section and applyInvoiceFilters() in
+                   pimsinvoices.js. All controls are OUTSIDE the grid container. *@
+                <div class="inv-toolbar">
+                    <div class="inv-toolbar__row">
+                        <div class="inv-toolbar__item">
+                            <span class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold">Filter</span>
+                        </div>
+
+                        @* Filter 1: Project *@
+                        <div class="inv-toolbar__item">
+                            <label class="govuk-label govuk-!-font-size-16" for="invFilterProject">Project</label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="invFilterProject"
+                                    aria-label="Filter by project">
+                                <option value="">-- All --</option>
+                                @foreach (var item in Model.ProjectList)
+                                {
+                                    if (item.Value == Model.FilterProject)
+                                    {
+                                        <option value="@item.Value" selected>@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        @* Filter 2: Surv Contract *@
+                        @* TRANSFORMENGINE TODO: ContractList is stubbed empty — populate when
+                           lookup endpoint for surveillance contracts is confirmed. *@
+                        <div class="inv-toolbar__item">
+                            <label class="govuk-label govuk-!-font-size-16" for="invFilterSurvContract">Surv Contract</label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="invFilterSurvContract"
+                                    aria-label="Filter by surveillance contract">
+                                <option value="">-- All --</option>
+                                @foreach (var item in Model.ContractList)
+                                {
+                                    if (item.Value == Model.FilterContract)
+                                    {
+                                        <option value="@item.Value" selected>@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        @* Filter 3: Year *@
+                        <div class="inv-toolbar__item">
+                            <label class="govuk-label govuk-!-font-size-16" for="invFilterYear">Year</label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="invFilterYear"
+                                    aria-label="Filter by year">
+                                <option value="">-- All --</option>
+                                @foreach (var item in Model.YearList)
+                                {
+                                    if (item.Selected || item.Value == Model.FilterYear?.ToString())
+                                    {
+                                        <option value="@item.Value" selected>@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        @* Filter 4: Program *@
+                        @* TRANSFORMENGINE TODO: ProgramList is stubbed empty — populate when
+                           lookup endpoint for programs is confirmed. *@
+                        <div class="inv-toolbar__item">
+                            <label class="govuk-label govuk-!-font-size-16" for="invFilterProgram">Program</label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="invFilterProgram"
+                                    aria-label="Filter by program">
+                                <option value="">-- All --</option>
+                                @foreach (var item in Model.ProgramList)
+                                {
+                                    if (item.Value == Model.FilterProgram)
+                                    {
+                                        <option value="@item.Value" selected>@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="inv-toolbar__item" style="justify-content: flex-end;">
+                            <button type="button"
+                                    class="govuk-button govuk-button--secondary govuk-!-font-size-16 sup_margin_0"
+                                    id="btnInvFilter"
+                                    onclick="applyInvoiceFilters()"
+                                    aria-label="Apply invoice filters">
+                                Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Invoices grid ────────────────────────────────────────── -->
+                <div class="govuk-grid-row sup_margin_left_right_0" style="margin-top: 8px;">
+                    <div class="govuk-grid-column-full">
+
+                        @* TRANSFORMENGINE: Add Invoice button confirmed by openInvAddModal() in
+                           pimsinvoices.js and AllowAdd=true in InvoiceController.BuildInvoiceGridAsync(). *@
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 8px;">
+                            <span class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16">Invoices</span>
+                            <div class="govuk-button-group sup_margin_0">
+                                <button type="button"
+                                        class="govuk-button sup_margin_0 sup_flex_row_center_center govuk-!-font-size-16"
+                                        data-module="govuk-button"
+                                        id="btnInvAdd"
+                                        onclick="addInvoice()"
+                                        aria-label="Add new invoice record">
+                                    <img src="~/images/circle-plus-solid-full-white.svg" alt="" width="16px" />
+                                    &nbsp; Add Invoice
+                                </button>
+                            </div>
+                        </div>
+
+                        @* TRANSFORMENGINE: DataGrid container — GridId = "invoicesGrid" as set in
+                           InvoiceController.BuildInvoiceGridAsync(). Column order and visible columns
+                           are driven by InvoiceItem [GridColumn] attributes matching pimsinvoices.js
+                           renderInvTable() column order: Project, Contract, PlannedAmount, DueAmount,
+                           DueDate, ActualAmount, DateJobsheetRaised, InvoiceRef, InvoicePaid, DateInvoiced. *@
+                        <div id="gridContainer_invoicesGrid">
+                            @await Html.PartialAsync("_DataGrid", Model.InvoicesGrid)
+                        </div>
+
+                        <!-- ── Totals footer ─────────────────────────────────── -->
+                        @* TRANSFORMENGINE: Totals footer matches frmpimsinvoices.html sup_total_footer
+                           structure. Three values: TotalPlannedAmount, TotalDueAmount, TotalActualAmount
+                           from InvoiceTotalsItem. invFmt() currency formatting replicated in Razor.
+                           Container id="invTotalsContainer" used for AJAX reload after filter apply. *@
+                        <div id="invTotalsContainer">
+                            <div class="sup_total_footer" aria-label="Invoice totals">
+                                <span class="sup_total_footer__label">Totals:</span>
+                                @if (Model.InvoiceTotals != null)
+                                {
+                                    @* TRANSFORMENGINE: invFmt() negative amounts → "-£X" prefix;
+                                       positive → "£X" prefix. Replicated via C# ternary format. *@
+                                    <span class="sup_total_footer__value" id="invTotalPlanned">
+                                        @(Model.InvoiceTotals.TotalPlannedAmount < 0
+                                            ? $"-£{Math.Abs(Model.InvoiceTotals.TotalPlannedAmount):N2}"
+                                            : Model.InvoiceTotals.TotalPlannedAmount == 0 ? "" : $"£{Model.InvoiceTotals.TotalPlannedAmount:N2}")
+                                    </span>
+                                    <span class="sup_total_footer__value" id="invTotalAmountDue">
+                                        @(Model.InvoiceTotals.TotalDueAmount < 0
+                                            ? $"-£{Math.Abs(Model.InvoiceTotals.TotalDueAmount):N2}"
+                                            : Model.InvoiceTotals.TotalDueAmount == 0 ? "" : $"£{Model.InvoiceTotals.TotalDueAmount:N2}")
+                                    </span>
+                                    <span class="sup_total_footer__value" id="invTotalAmountInvoiced">
+                                        @(Model.InvoiceTotals.TotalActualAmount < 0
+                                            ? $"-£{Math.Abs(Model.InvoiceTotals.TotalActualAmount):N2}"
+                                            : Model.InvoiceTotals.TotalActualAmount == 0 ? "" : $"£{Model.InvoiceTotals.TotalActualAmount:N2}")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="sup_total_footer__value" id="invTotalPlanned">-</span>
+                                    <span class="sup_total_footer__value" id="invTotalAmountDue">-</span>
+                                    <span class="sup_total_footer__value" id="invTotalAmountInvoiced">-</span>
+                                }
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ── Modal container (loaded via $.get AJAX) ──────────────────────── -->
+@* TRANSFORMENGINE: Modal container mirrors Milestone pattern (#milestoneModalContainer).
+   _AddEditInvoice partial is injected here by addInvoice() / editInvoice(). *@
+<div id="invModalContainer"></div>
+@Html.AntiForgeryToken()
+
+<script src="~/js/ajax-form-validation.js"></script>
+
+@section Scripts {
+    <script>
+        // ── Extra filter method — called automatically by _DataGrid on every reload ──
+        // TRANSFORMENGINE: Returns all four filter params matching ExtraFilterMethod =
+        // "getInvoiceExtraFilters" in InvoiceController.BuildInvoiceGridAsync().
+        function getInvoiceExtraFilters() {
+            return {
+                project:  document.getElementById('invFilterProject')?.value  || '',
+                contract: document.getElementById('invFilterSurvContract')?.value || '',
+                year:     document.getElementById('invFilterYear')?.value     || '',
+                program:  document.getElementById('invFilterProgram')?.value  || ''
+            };
+        }
+
+        // ── Apply filters — reload grid + totals ─────────────────────────────────
+        // TRANSFORMENGINE: Mirrors applyInvoiceFilters() in pimsinvoices.js.
+        // Reloads DataGrid and then refreshes the totals footer partial.
+        function applyInvoiceFilters() {
+            // Reload the DataGrid — ALWAYS gm.reloadGrid({ page: 1 }), not gm.reload()
+            var gm = window['gridManager_invoicesGrid'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+
+            // Reload totals footer to match current filter
+            var filters = getInvoiceExtraFilters();
+            $.get('@Url.Action("GetInvoiceTotals", "Invoice", new { area = "PIMS" })', filters,
+                function (html) {
+                    if (typeof html === 'string') {
+                        $('#invTotalsContainer').html(html);
+                    }
+                });
+        }
+
+        // ── Add Invoice ──────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: Opens _AddEditInvoice partial in #invModalContainer.
+        // Matches openInvAddModal() in pimsinvoices.js and AllowAdd=true in controller.
+        function addInvoice() {
+            $.get('@Url.Action("GetAddEditInvoicePartial", "Invoice", new { area = "PIMS" })',
+                function (html) {
+                    $('#invModalContainer').html(html);
+                    var modal = document.getElementById('editInvoiceModal');
+                    if (modal) { modal.classList.add('open'); }
+                });
+        }
+
+        // ── Edit Invoice ─────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: $(btn).data('id') retrieves InvoiceCounter (KeyProperty).
+        // Matches openInvEditModal(item) in pimsinvoices.js and AllowEdit=true in controller.
+        function editInvoice(btn) {
+            var id = $(btn).data('id');
+            $.get('@Url.Action("GetAddEditInvoicePartial", "Invoice", new { area = "PIMS" })',
+                { id: id },
+                function (html) {
+                    $('#invModalContainer').html(html);
+                    var modal = document.getElementById('editInvoiceModal');
+                    if (modal) { modal.classList.add('open'); }
+                });
+        }
+
+        // ── Delete Invoice ────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: showGovukConfirm() matches established PIMS pattern (Milestone).
+        // No _DeleteInvoice.cshtml partial — JS confirm() only, per skill rule.
+        // AllowDelete=true in controller; DeleteInvoice action is [HttpDelete].
+        // TRANSFORMENGINE (Phase 14 security fix): RequestVerificationToken header added —
+        // resolves CSRF gap flagged in Phase 14 security gate. Token sourced from the
+        // page-level @Html.AntiForgeryToken() hidden input rendered outside the modal.
+        function deleteInvoice(btn) {
+            var id = $(btn).data('id');
+            showGovukConfirm('Are you sure you want to delete this invoice? This action cannot be undone.').then(function (result) {
+                if (!result) return;
+                var token = $('input[name="__RequestVerificationToken"]').val();
+                $.ajax({
+                    url: '@Url.Action("DeleteInvoice", "Invoice", new { area = "PIMS" })',
+                    type: 'DELETE',
+                    headers: { 'RequestVerificationToken': token },
+                    data: { id: id },
+                    success: function (data) {
+                        if (data.success) {
+                            showGovukAlert(data.message).then(function () {
+                                var gm = window['gridManager_invoicesGrid'];
+                                if (gm) { gm.reloadGrid({ page: 1 }); }
+                                applyInvoiceFilters();
+                            });
+                        } else {
+                            showGovukAlert(data.errors?.map(function(e) { return e.message; }).join(', ') || 'Delete failed. Please try again.');
+                        }
+                    },
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting the invoice.');
+                    }
+                });
+            });
+        }
+
+        // ── Save Invoice (called from _AddEditInvoice partial) ────────────────────
+        // TRANSFORMENGINE: Posts #editInvoiceForm via $.ajax with anti-forgery token header.
+        // Matches saveInv() in pimsinvoices.js. Controller SaveInvoice distinguishes
+        // Create (InvoiceCounter==0) vs Update (>0) via hidden InvoiceCounter field.
+        function saveInvoice() {
+            var form = document.getElementById('editInvoiceForm');
+            if (!form) return;
+            var $form  = $(form);
+            var $modal = $('#editInvoiceModal');
+
+            clearValidationErrors($modal);
+
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $modal);
+                return;
+            }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '@Url.Action("SaveInvoice", "Invoice", new { area = "PIMS" })',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': token },
+                data: $form.serialize(),
+                success: function (result) {
+                    if (result.success) {
+                        closeInvoiceModal();
+                        showGovukAlert(result.message).then(function () {
+                            var gm = window['gridManager_invoicesGrid'];
+                            if (gm) { gm.reloadGrid({ page: 1 }); }
+                            applyInvoiceFilters();
+                        });
+                    } else {
+                        displayServerValidationErrors(result.errors, 'Failed to save invoice.', '#editInvoiceModal');
+                    }
+                },
+                error: function () {
+                    showGovukAlert('An error occurred while saving the invoice.');
+                }
+            });
+        }
+
+        // ── Modal close helper ────────────────────────────────────────────────────
+        function closeInvoiceModal() {
+            var modal = document.getElementById('editInvoiceModal');
+            if (modal) { modal.classList.remove('open'); }
+        }
+    </script>
+}
