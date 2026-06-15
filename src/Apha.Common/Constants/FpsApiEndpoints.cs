@@ -178,6 +178,8 @@ namespace Apha.Common.Constants
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
         public const string GetProjectGroupProfitability = "api/v1/project/profitability/by-project-group/{0}";
+        // TRANSFORMENGINE: new endpoint — Phase 9 API client binds to backend GET api/v1/project/profitability-vla
+        public const string GetProjectProfitabilityVla = "api/v1/project/profitability-vla";
 
         // WorkgroupGrade Maintainence
         public const string GetPagedWorkgroupGrades = "api/v1/wggrades/paged";

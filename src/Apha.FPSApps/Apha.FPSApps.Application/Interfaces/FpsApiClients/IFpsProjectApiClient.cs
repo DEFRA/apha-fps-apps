@@ -1,3 +1,32 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — IFpsProjectApiClient.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 7 — Frontend DTOs + API Client Interfaces (Steps 10-11)
+ * Migrated : 2026-06-15
+ *
+ * CHANGED:
+ *   - Added GetProjectProfitabilityVlaAsync() — new method targeting the backend
+ *     endpoint GET /api/v1/project/profitability-vla (Phase 5 artefact).
+ *   - Return type uses ProjectProfitabilityVlaDto (new Phase 7 frontend DTO) rather
+ *     than the base ProjectProfitabilityDto — VLA has distinct field names
+ *     (StaffCosts vs JcTotalStaffCosts, Budget vs BudgetCvl, etc.).
+ *   - Four filter parameters (projectStatus, programNo, manager, customer) are all
+ *     optional (nullable with defaults) matching the backend flat query-string contract;
+ *     all four can be sourced from the VLA page filter dropdowns.
+ *   - Pagination is handled by QueryParameters<string> query (page, pageSize fields).
+ *
+ * PRESERVED:
+ *   - All 16 existing method signatures unchanged.
+ *   - All existing using directives unchanged.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: verify that the infrastructure implementation of this
+ *     interface (FpsProjectApiClient.cs) maps QueryParameters<string>.Page and
+ *     .PageSize to the flat ?page=&pageSize= query-string params expected by
+ *     the backend GET /api/v1/project/profitability-vla endpoint.
+ */
+
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Pagination;
@@ -29,5 +58,16 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync();
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
+
+        // TRANSFORMENGINE: new method — maps to GET /api/v1/project/profitability-vla (Phase 5 backend endpoint)
+        // All four filter params are optional; each maps to a filter dropdown on the VLA page
+        // (filterProjectStatus, filterProgram, filterManager, filterCustomer in projectprofitability_vla.js).
+        // QueryParameters<string> carries page + pageSize for server-side DataGrid pagination.
+        Task<ApiResponseDto<List<ProjectProfitabilityVlaDto>>> GetProjectProfitabilityVlaAsync(
+            QueryParameters<string> query,
+            string? projectStatus = null,
+            string? programNo = null,
+            string? manager = null,
+            string? customer = null);
     }
 }

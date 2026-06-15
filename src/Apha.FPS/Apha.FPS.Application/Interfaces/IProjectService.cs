@@ -1,4 +1,27 @@
-﻿using Apha.FPS.Application.Dtos;
+﻿// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — IProjectService.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
+ * Migrated : 2026-06-15
+ *
+ * CHANGED:
+ *   - Added GetProjectProfitabilityVlaAsync(QueryParameters<ProjectProfitabilityVlaReq>)
+ *     method signature for the frmJobcodeTotalsVLA form migration.
+ *   - Added using for Apha.Common.Contracts.FPS to resolve ProjectProfitabilityVlaReq.
+ *
+ * PRESERVED:
+ *   - All 19 existing method signatures unchanged.
+ *   - Existing profitability methods: GetProjectProfitabilityAsync,
+ *     GetProjectGroupProfitabilityAsync.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: confirm return type PaginatedResult<ProjectProfitabilityVlaDto>
+ *     is consistent with the API controller's expected response shape (Phase 5).
+ */
+
+using Apha.Common.Contracts.FPS;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 
 namespace Apha.FPS.Application.Interfaces
@@ -27,5 +50,11 @@ namespace Apha.FPS.Application.Interfaces
 
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
+
+        // TRANSFORMENGINE: new method — VLA-filtered project profitability list
+        //   Added for frmJobcodeTotalsVLA migration. Filter dimensions: ProjectStatus,
+        //   ProgramNo, Manager, Customer (from ProjectProfitabilityVlaReq carried
+        //   inside QueryParameters<T>.Filter).
+        Task<PaginatedResult<ProjectProfitabilityVlaDto>> GetProjectProfitabilityVlaAsync(QueryParameters<ProjectProfitabilityVlaReq> query);
     }
 }

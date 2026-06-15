@@ -1,3 +1,43 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — ProjectController.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
+ * Migrated : 2026-06-15
+ *
+ * CHANGED:
+ *   - Added GetProjectProfitabilityVlaAsync endpoint (GET profitability-vla) for
+ *     frmJobcodeTotalsVLA migration; accepts ProjectProfitabilityVlaReq filter fields
+ *     directly from query string, builds QueryParameters<ProjectProfitabilityVlaReq>,
+ *     and delegates to IProjectService.GetProjectProfitabilityVlaAsync().
+ *   - Response mapped via AutoMapper:
+ *     PaginatedResult<ProjectProfitabilityVlaDto> -> PaginationRes<ProjectProfitabilityVlaRes>.
+ *   - Added 'using Apha.Common.Contracts.FPS' (already present) to resolve new VLA types.
+ *
+ * PRESERVED:
+ *   - All 16 existing endpoints (GetProjectByIdAsync through GetProjectGroupProfitabilityAsync)
+ *     unchanged.
+ *   - Existing [Authorize] roles, [ApiController], [ApiVersion("1.0")], and route convention.
+ *   - ChangeProjectCodeReq record at bottom of file.
+ *
+ * Phase 14 — Pre-Build Security Review Gate (2026-06-15):
+ *   SECURITY FIX: added explicit pagination bounds guard in GetProjectProfitabilityVlaAsync.
+ *   Flat int params 'page' and 'pageSize' had no [Range] annotation and no in-method guard;
+ *   a caller could pass pageSize=2147483647 and hit the repository without restriction.
+ *   Guard clamps page >= 1 and pageSize to [1, 100] — consistent with the [Range(1,100)]
+ *   declared on ProjectProfitabilityVlaReq.PageSize in the Phase 1 contract.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: confirm QueryParameters<ProjectProfitabilityVlaReq> correctly
+ *     propagates Page/PageSize through the service and repository layers (Phase 4).
+ *   - TRANSFORMENGINE TODO: confirm route 'profitability-vla' does not conflict with any
+ *     existing attribute-routed action once dotnet build runs (Phase 15).
+ *   - TRANSFORMENGINE TODO [Phase 14]: confirm global exception-handling middleware converts
+ *     ArgumentException to 400/404 responses; existing controller-wide pattern throws
+ *     ArgumentException with user-controlled data in the message — acceptable only when
+ *     middleware prevents 500 responses reaching the client.
+ */
+
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
@@ -224,6 +264,62 @@ namespace Apha.FPS.Api.Controllers
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _projectService.GetProjectGroupProfitabilityAsync(filter, projectGroup, workTypeFilter);
             return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityRes>>(result));
+        }
+
+        // TRANSFORMENGINE: new endpoint — frmJobcodeTotalsVLA migration
+        //   Route: GET /api/v1/project/profitability-vla
+        //   Filter dimensions from HTML prototype: projectStatus, programNo, manager, customer
+        //   All filter fields are optional; omitting returns all rows (matches HTML "All ..." defaults).
+        /// <summary>
+        /// Returns a paginated list of VLA project profitability rows filtered by
+        /// project status, program, manager, and/or customer.
+        /// All filter parameters are optional; omitting a parameter returns all rows
+        /// for that dimension (equivalent to selecting "All" in the HTML prototype dropdowns).
+        /// </summary>
+        /// <param name="projectStatus">Optional filter: "Approved", "Completed", or "Not Approved".</param>
+        /// <param name="programNo">Optional filter by program number/name.</param>
+        /// <param name="manager">Optional filter by manager name.</param>
+        /// <param name="customer">Optional filter by customer name.</param>
+        /// <param name="page">1-based page number (default: 1).</param>
+        /// <param name="pageSize">Rows per page (default: 15, max: 100).</param>
+        [HttpGet("profitability-vla")]
+        public async Task<IActionResult> GetProjectProfitabilityVlaAsync(
+            [FromQuery] string? projectStatus = null,
+            [FromQuery] string? programNo = null,
+            [FromQuery] string? manager = null,
+            [FromQuery] string? customer = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 15)
+        {
+            // TRANSFORMENGINE: build QueryParameters<ProjectProfitabilityVlaReq> from individual
+            //   query-string params rather than binding the whole Req object via [FromQuery] to
+            //   keep the public route contract flat and consistent with how the HTML prototype JS
+            //   constructs the GET request (individual named params on the URL).
+
+            // TRANSFORMENGINE [Phase 14 security fix]: clamp pagination params to safe bounds.
+            //   Flat int bindings carry no [Range] annotation so client could pass arbitrary values.
+            //   Consistent with [Range(1,100)] on ProjectProfitabilityVlaReq.PageSize (Phase 1 contract).
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 1;
+            if (pageSize > 100) pageSize = 100;
+
+            var query = new QueryParameters<ProjectProfitabilityVlaReq>
+            {
+                Page = page,
+                PageSize = pageSize,
+                Filter = new ProjectProfitabilityVlaReq
+                {
+                    ProjectStatus = projectStatus,
+                    ProgramNo = programNo,
+                    Manager = manager,
+                    Customer = customer,
+                    Page = page,
+                    PageSize = pageSize
+                }
+            };
+
+            var result = await _projectService.GetProjectProfitabilityVlaAsync(query);
+            return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityVlaRes>>(result));
         }
     }
 

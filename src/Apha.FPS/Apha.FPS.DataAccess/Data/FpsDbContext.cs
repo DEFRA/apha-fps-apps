@@ -1,3 +1,36 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — FpsDbContext.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository (Steps 7-7a)
+ * Migrated : 2026-06-15
+ *
+ * CHANGED:
+ *   - Added DbSet<ProjectProfitabilityVlaView> ProjectProfitabilityVlaViews — new
+ *     keyless view set for the Project Profitability VLA list (frmJobcodeTotalsVLA).
+ *   - Added modelBuilder.ApplyConfiguration(new ProjectProfitabilityVlaViewMap()) in
+ *     OnModelCreating to register the new view mapping.
+ *   - No HasQueryFilter applied to ProjectProfitabilityVlaView — the entity has no
+ *     FpsYear column; year scoping is expected to be embedded in the view definition.
+ *     See DEFERRED note if year scoping must be added.
+ *
+ * PRESERVED:
+ *   - All existing DbSets (97 sets) unchanged.
+ *   - All existing ApplyConfiguration calls and HasQueryFilter registrations in
+ *     OnModelCreating preserved verbatim.
+ *   - Constructor, IFpsRequestContext injection, FilterFpsYear property unchanged.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: if the vprojectprofitabilityvla PostgreSQL view does NOT
+ *     embed FpsYear filtering internally, add an FpsYear property to
+ *     ProjectProfitabilityVlaView and apply:
+ *       modelBuilder.Entity<ProjectProfitabilityVlaView>()
+ *                   .HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+ *     after the ApplyConfiguration call added in this phase.
+ *   - TRANSFORMENGINE TODO: confirm vprojectprofitabilityvla view exists in the fps
+ *     schema before running migrations; view DDL must be created separately if absent.
+ */
+
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -95,6 +128,10 @@ namespace Apha.FPS.DataAccess.Data
 
         public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
         public virtual DbSet<ProjectGroupStaffPlanView> ProjectGroupStaffPlanViews { get; set; }
+
+        // TRANSFORMENGINE: new DbSet — keyless view for Project Profitability VLA list (frmJobcodeTotalsVLA migration)
+        public virtual DbSet<ProjectProfitabilityVlaView> ProjectProfitabilityVlaViews { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -295,6 +332,11 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new GradeMap());
             modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            // TRANSFORMENGINE: register ProjectProfitabilityVlaView map — keyless view for frmJobcodeTotalsVLA;
+            //   no HasQueryFilter — entity has no FpsYear column; see DEFERRED note in file header if year
+            //   scoping must be added once the vprojectprofitabilityvla view DDL is confirmed.
+            modelBuilder.ApplyConfiguration(new ProjectProfitabilityVlaViewMap());
         }
     }
 }

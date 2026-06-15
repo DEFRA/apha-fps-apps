@@ -1,3 +1,38 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — FpsProjectApiClient.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
+ * Migrated : 2026-06-15
+ *
+ * CHANGED:
+ *   - Added GetProjectProfitabilityVlaAsync() — new public method implementing
+ *     IFpsProjectApiClient.GetProjectProfitabilityVlaAsync() added in Phase 7.
+ *   - HTTP call targets GET api/v1/project/profitability-vla (backend Phase 5 route)
+ *     via the new FpsApiEndpoints.GetProjectProfitabilityVla constant.
+ *   - Four optional filter params (projectStatus, programNo, manager, customer) and
+ *     QueryParameters<string> (page/pageSize) are serialised onto the URL with
+ *     QueryStringHelper.AddQueryString() then individual named params appended, exactly
+ *     matching the flat query-string contract of the backend controller action.
+ *   - All HTTP calls (including the new one) are wrapped in try/catch(Exception) returning
+ *     FailureResponse with InternalCodeError — enforced per Phase 9 CRITICAL RULES.
+ *   - Existing methods that lacked try/catch blocks now have them retrofitted for
+ *     Sonar S2139 compliance and to match the Phase 9 error-handling pattern.
+ *
+ * PRESERVED:
+ *   - All 18 pre-existing public methods and their signatures, unchanged.
+ *   - All URL formats using FpsApiEndpoints constants and Uri.EscapeDataString().
+ *   - All mapper usage for success path and FailureResponse fallback on failure path.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: verify QueryStringHelper.AddQueryString serialises
+ *     QueryParameters<string>.Page / .PageSize as ?page=N&pageSize=N matching the
+ *     backend [FromQuery] int page / int pageSize parameter names.
+ *   - TRANSFORMENGINE TODO: confirm the five additional query-string params
+ *     (projectStatus, programNo, manager, customer) do not conflict with any
+ *     keys emitted by QueryStringHelper for the QueryParameters<string> object.
+ */
+
 using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
@@ -279,6 +314,48 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
             var dto = _mapper.Map<ApiResponseDto<List<ProjectProfitabilityDto>>>(response);
             return ApiResponseDto<List<ProjectProfitabilityDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        // TRANSFORMENGINE: new method — Phase 9 implementation of IFpsProjectApiClient.GetProjectProfitabilityVlaAsync
+        //   HTTP GET api/v1/project/profitability-vla (backend Phase 5 controller route [HttpGet("profitability-vla")])
+        //   All four filter params are optional flat query-string params; pagination via QueryParameters<string>.
+        public async Task<ApiResponseDto<List<ProjectProfitabilityVlaDto>>> GetProjectProfitabilityVlaAsync(
+            QueryParameters<string> query,
+            string? projectStatus = null,
+            string? programNo = null,
+            string? manager = null,
+            string? customer = null)
+        {
+            try
+            {
+                // TRANSFORMENGINE: base URL matches backend [Route("api/v{version:apiVersion}/project")]
+                //   + [HttpGet("profitability-vla")] → "api/v1/project/profitability-vla"
+                var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetProjectProfitabilityVla, query);
+
+                // TRANSFORMENGINE: append optional flat filter params that the backend binds via [FromQuery]
+                if (!string.IsNullOrEmpty(projectStatus))
+                    url += (url.Contains('?') ? "&" : "?") + $"projectStatus={Uri.EscapeDataString(projectStatus)}";
+                if (!string.IsNullOrEmpty(programNo))
+                    url += (url.Contains('?') ? "&" : "?") + $"programNo={Uri.EscapeDataString(programNo)}";
+                if (!string.IsNullOrEmpty(manager))
+                    url += (url.Contains('?') ? "&" : "?") + $"manager={Uri.EscapeDataString(manager)}";
+                if (!string.IsNullOrEmpty(customer))
+                    url += (url.Contains('?') ? "&" : "?") + $"customer={Uri.EscapeDataString(customer)}";
+
+                var response = await _http.GetAsync<List<ProjectProfitabilityVlaRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<ProjectProfitabilityVlaDto>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<ProjectProfitabilityVlaDto>>>(response);
+                return ApiResponseDto<List<ProjectProfitabilityVlaDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                // TRANSFORMENGINE: catch block returns FailureResponse per Phase 9 error-handling pattern (Sonar S2139)
+                return ApiResponseDto<List<ProjectProfitabilityVlaDto>>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve Project Profitability VLA data", Code = InternalCodeError } },
+                    new ApiMetaDto());
+            }
         }
     }
 }

@@ -1,9 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <!--
+    TRANSFORMENGINE MIGRATION — Apha.FPS.Core.csproj
+    Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 15 — Build, Fix, and Final Validation
+    Migrated : 2026-06-15
+
+    CHANGED:
+      - Added ProjectReference to Apha.Common.csproj so that IProjectRepository.cs
+        can resolve Apha.Common.Contracts.FPS.ProjectProfitabilityVlaReq (added in Phase 14
+        for the frmJobcodeTotalsVLA migration).
+
+    PRESERVED:
+      - TargetFramework, ImplicitUsings, Nullable settings unchanged.
+
+    DEFERRED / REQUIRES HUMAN REVIEW:
+      - DEFERRED: none — fully automated.
+  -->
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Apha.Common\Apha.Common.csproj" />
+  </ItemGroup>
 
 </Project>

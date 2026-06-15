@@ -1,3 +1,29 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — IProjectService.cs (Frontend)
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 8 — Frontend Service Interface + Implementation (Steps 12-13)
+ * Migrated : 2026-06-15
+ *
+ * CHANGED:
+ *   - Added GetProjectProfitabilityVlaAsync() — new frontend service interface method
+ *     mirroring IFpsProjectApiClient.GetProjectProfitabilityVlaAsync() exactly.
+ *   - Return type is List<ProjectProfitabilityVlaDto> (VLA-specific frontend DTO from Phase 7).
+ *   - Four optional nullable filter params (projectStatus, programNo, manager, customer)
+ *     match the backend GET /api/v1/project/profitability-vla query-string contract.
+ *   - Pagination carried via QueryParameters<string> query.
+ *
+ * PRESERVED:
+ *   - All 18 existing method signatures unchanged.
+ *   - All using directives unchanged.
+ *   - Namespace unchanged.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: confirm MVC controller consumes GetProjectProfitabilityVlaAsync
+ *     with all four filter params sourced from the VLA page filter dropdowns
+ *     (filterProjectStatus, filterProgram, filterManager, filterCustomer).
+ */
+
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Pagination;
@@ -40,5 +66,15 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync();
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
+
+        // TRANSFORMENGINE: new method — Phase 8 addition; mirrors IFpsProjectApiClient.GetProjectProfitabilityVlaAsync()
+        // Delegates to backend GET /api/v1/project/profitability-vla via IFpsProjectApiClient.
+        // All four filter params are optional; sourced from VLA page filter dropdowns.
+        Task<ApiResponseDto<List<ProjectProfitabilityVlaDto>>> GetProjectProfitabilityVlaAsync(
+            QueryParameters<string> query,
+            string? projectStatus = null,
+            string? programNo = null,
+            string? manager = null,
+            string? customer = null);
     }
 }

@@ -1,4 +1,50 @@
-﻿using Apha.FPS.Core.Entities;
+﻿// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — ProjectRepository.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository (Steps 7-7a)
+ * Migrated : 2026-06-15
+ *
+ * CHANGED:
+ *   - Added GetProjectProfitabilityVlaAsync — new public method for the
+ *     Project Profitability VLA list (frmJobcodeTotalsVLA form migration).
+ *   - Queries the pre-computed vprojectprofitabilityvla PostgreSQL view via
+ *     the FpsDbContext.ProjectProfitabilityVlaViews DbSet (keyless, AsNoTracking).
+ *   - Applies four VLA-specific LINQ filter dimensions:
+ *       ProjectStatus (filterProjectStatus in HTML prototype)
+ *       ProgramNo     (filterProgram)
+ *       Manager       (filterManager  — VLA-specific, absent from base profitability)
+ *       Customer      (filterCustomer — VLA-specific, absent from base profitability)
+ *   - All filter dimensions use EF.Functions.ILike (case-insensitive) consistent
+ *     with the existing profitability filter helpers in this repository.
+ *   - Sorting covers all 14 sortable DataGrid columns from projectprofitability_vla.js.
+ *   - Paging delegated to inherited ApplyPaging helper (same pattern as all other
+ *     paged list methods in this repository).
+ *   - Added using Apha.Common.Contracts.FPS for ProjectProfitabilityVlaReq.
+ *
+ * PRESERVED:
+ *   - All existing public and private methods unchanged (GetProjectProfitabilityAsync,
+ *     GetProjectGroupProfitabilityAsync, ComputeProfitabilityAsync, CRUD operations,
+ *     trigger-absorbed write methods, all helper methods).
+ *   - All field names, method signatures, and business logic preserved exactly.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: confirm the vprojectprofitabilityvla PostgreSQL view exists
+ *     in the fps schema with column names matching ProjectProfitabilityVlaViewMap
+ *     (jobcode, program, customer, manager, projectstatus, staffcosts, testcost,
+ *     animalcosts, additionalcosts, totalcosts, budget, profit, targetprofit, offtarget).
+ *     The view aggregates qryJobCodeTotals + qryJobCodeTotals2 logic and must be
+ *     created if it does not yet exist in the database.
+ *   - TRANSFORMENGINE TODO: confirm FpsYear scoping — if the view does NOT embed
+ *     year filtering via its join to the year-scoped tlkpProject table, add a
+ *     year-filter predicate to GetProjectProfitabilityVlaAsync manually.
+ *   - TRANSFORMENGINE TODO: confirm EF.Functions.ILike filter on Status uses the
+ *     correct column alias ("projectstatus" in the view DDL); if the view aliases
+ *     it as "status", update ProjectProfitabilityVlaViewMap.cs accordingly.
+ */
+
+using Apha.Common.Contracts.FPS;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
@@ -1370,6 +1416,81 @@ namespace Apha.FPS.DataAccess.Repositories
                 _ => results.OrderBy(r => r.JobCode).ToList()
             };
 
+            return ApplyPaging(results, query.Page, query.PageSize);
+        }
+
+        // ── VLA Project Profitability ─────────────────────────────────────────
+
+        /// <summary>
+        /// Returns paginated project profitability data for the VLA view.
+        /// Translates frmJobcodeTotalsVLA / qryJobCodeTotals + qryJobCodeTotals2:
+        /// queries the pre-computed <c>vprojectprofitabilityvla</c> PostgreSQL view
+        /// which aggregates staff, test, animal, and additional costs per job code and
+        /// joins tlkpProgram for Manager and Target (TargetProfit).
+        ///
+        /// Filter dimensions (all optional, case-insensitive):
+        ///   ProjectStatus — filterProjectStatus in the HTML prototype
+        ///   ProgramNo     — filterProgram
+        ///   Manager       — filterManager (VLA-specific, not present in base profitability)
+        ///   Customer      — filterCustomer (VLA-specific, not present in base profitability)
+        /// </summary>
+        public async Task<PagedData<ProjectProfitabilityVlaView>> GetProjectProfitabilityVlaAsync(
+            PaginationParameters<ProjectProfitabilityVlaReq> query)
+        {
+            // TRANSFORMENGINE: query pre-computed vprojectprofitabilityvla view;
+            //   cost aggregation (staff / test / animal / additional) is embedded in
+            //   the view definition derived from qryJobCodeTotals + qryJobCodeTotals2 —
+            //   no in-memory computation needed here.
+            var q = _dbContext.ProjectProfitabilityVlaViews
+                .AsNoTracking()
+                .AsQueryable();
+
+            // TRANSFORMENGINE: apply VLA filter dimensions from ProjectProfitabilityVlaReq
+            var filter = query.Filter;
+            if (filter != null)
+            {
+                // filterProjectStatus — static values: Approved, Completed, Not Approved
+                if (!string.IsNullOrWhiteSpace(filter.ProjectStatus))
+                    q = q.Where(v => EF.Functions.ILike(v.Status!, $"%{filter.ProjectStatus}%"));
+
+                // filterProgram — matches ProgramNo / Programme column in the view
+                if (!string.IsNullOrWhiteSpace(filter.ProgramNo))
+                    q = q.Where(v => EF.Functions.ILike(v.Program!, $"%{filter.ProgramNo}%"));
+
+                // filterManager — VLA-specific dimension from tlkpProgram.Manager via qryJobCodeTotals2
+                if (!string.IsNullOrWhiteSpace(filter.Manager))
+                    q = q.Where(v => EF.Functions.ILike(v.Manager!, $"%{filter.Manager}%"));
+
+                // filterCustomer — VLA-specific dimension from tlkpProject.Customer
+                if (!string.IsNullOrWhiteSpace(filter.Customer))
+                    q = q.Where(v => EF.Functions.ILike(v.Customer!, $"%{filter.Customer}%"));
+            }
+
+            // TRANSFORMENGINE: search — applied to JobCode (project code column)
+            if (!string.IsNullOrWhiteSpace(query.Search))
+                q = q.Where(v => EF.Functions.ILike(v.JobCode!, $"%{query.Search}%"));
+
+            // TRANSFORMENGINE: sorting — covers all 14 DataGrid columns from projectprofitability_vla.js
+            q = query.SortBy?.ToLower() switch
+            {
+                "jobcode"           => query.Descending ? q.OrderByDescending(v => v.JobCode)           : q.OrderBy(v => v.JobCode),
+                "program"           => query.Descending ? q.OrderByDescending(v => v.Program)           : q.OrderBy(v => v.Program),
+                "customer"          => query.Descending ? q.OrderByDescending(v => v.Customer)          : q.OrderBy(v => v.Customer),
+                "manager"           => query.Descending ? q.OrderByDescending(v => v.Manager)           : q.OrderBy(v => v.Manager),
+                "status"            => query.Descending ? q.OrderByDescending(v => v.Status)            : q.OrderBy(v => v.Status),
+                "staffcosts"        => query.Descending ? q.OrderByDescending(v => v.StaffCosts)        : q.OrderBy(v => v.StaffCosts),
+                "testcost"          => query.Descending ? q.OrderByDescending(v => v.TestCost)          : q.OrderBy(v => v.TestCost),
+                "animalcosts"       => query.Descending ? q.OrderByDescending(v => v.AnimalCosts)       : q.OrderBy(v => v.AnimalCosts),
+                "additionalcosts"   => query.Descending ? q.OrderByDescending(v => v.AdditionalCosts)   : q.OrderBy(v => v.AdditionalCosts),
+                "totalcosts"        => query.Descending ? q.OrderByDescending(v => v.TotalCosts)        : q.OrderBy(v => v.TotalCosts),
+                "budget"            => query.Descending ? q.OrderByDescending(v => v.Budget)            : q.OrderBy(v => v.Budget),
+                "profit"            => query.Descending ? q.OrderByDescending(v => v.Profit)            : q.OrderBy(v => v.Profit),
+                "targetprofit"      => query.Descending ? q.OrderByDescending(v => v.TargetProfit)      : q.OrderBy(v => v.TargetProfit),
+                "offtarget"         => query.Descending ? q.OrderByDescending(v => v.OffTarget)         : q.OrderBy(v => v.OffTarget),
+                _                   => q.OrderBy(v => v.JobCode)    // default: ascending by job code
+            };
+
+            var results = await q.ToListAsync();
             return ApplyPaging(results, query.Page, query.PageSize);
         }
     }
