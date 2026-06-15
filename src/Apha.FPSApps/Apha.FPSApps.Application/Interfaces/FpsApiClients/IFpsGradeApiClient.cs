@@ -1,38 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — IFpsGradeApiClient.cs (new file)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 7 — Frontend DTOs + API Client Interfaces (Steps 10-11)
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New frontend API client interface created for the Grade maintenance form (frmMaintGrade)
- *   - Five async methods mirroring the five REST endpoints on backend GradeController
- *     (route: api/v{version:apiVersion}/Grade)
- *   - All return types wrapped in ApiResponseDto<T> per FPSApps response envelope convention
- *   - QueryParameters<string> used for the paginated list endpoint (matches GradeController.GetAllPagedAsync signature)
- *   - UpdateAsync carries originalCode string to support GradeCode rename (matches PUT /{gradeCode} signature)
- *
- * PRESERVED:
- *   - Endpoint semantics match backend GradeController exactly:
- *       GET  api/v1/Grade/paged       → GetAllPagedAsync
- *       GET  api/v1/Grade/{gradeCode} → GetByIdAsync
- *       POST api/v1/Grade             → CreateAsync
- *       PUT  api/v1/Grade/{gradeCode} → UpdateAsync
- *       DELETE api/v1/Grade/{gradeCode} → DeleteAsync
- *   - No lookup-only endpoint added: GradeController has no dedicated /grades or /lookup endpoint yet
- *     (backend TODO deferred — see GradeController TRANSFORMENGINE annotation)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: If a GET /Grade/grades lookup endpoint is added to GradeController to serve
- *     grade-code dropdowns in DivisionGrade, WorkgroupGrade, and ProfitCentreGrade forms, add a
- *     corresponding Task<ApiResponseDto<List<string>>> GetAllGradeCodesAsync() method here.
- *   - TRANSFORMENGINE TODO: Register IFpsGradeApiClient → FpsGradeApiClient in
- *     Apha.FPSApps.Infrastructure ServiceCollectionExtension.AddHttpClients() before running.
- *   - TRANSFORMENGINE TODO: Add FpsGrade property to IFpsApiClient.cs and FpsApiClient.cs
- *     (Interface changes log entries for those files are PENDING).
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Pagination;

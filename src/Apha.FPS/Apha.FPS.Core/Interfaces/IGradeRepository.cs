@@ -1,30 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — IGradeRepository.cs (new file)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 2 — Core Layer - Entities + Repository Interfaces + Pagination
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New interface created — no prior equivalent existed in the codebase
- *   - Async CRUD signatures inferred from frmMaintGrade form analysis (CRUD on fps.grade)
- *   - Composite key (GradeCode + FpsYear) reflected in GetByIdAsync, UpdateAsync, DeleteAsync
- *   - PaginationParameters<string> used for paged list (filter string covers GradeCode / DescLong search)
- *   - Pattern follows IDivisionGradeRepository as the canonical reference
- *
- * PRESERVED:
- *   - No prior implementation to preserve — this is a net-new interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm whether GetByIdAsync should accept (string gradeCode) alone
- *     (relying on the DbContext HasQueryFilter for fpsyear) or (string gradeCode, int fpsYear)
- *     as an explicit composite key. Current signature uses single gradeCode and trusts the year
- *     filter, consistent with the DivisionGrade pattern.
- *   - TRANSFORMENGINE TODO: Confirm whether a GetAllGradeCodesAsync() lookup helper is needed
- *     for populating dropdowns in related maintenance forms (e.g. DivisionGrade, WorkgroupGrade).
- *     If so, add the method here before Phase 4 GradeRepository implementation.
- */
-
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 

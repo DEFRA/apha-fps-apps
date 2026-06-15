@@ -1,27 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — GradeServiceTests.cs (new file)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New xUnit test class created for Apha.FPSApps.Application.Services.FPS.GradeService
- *   - Thin delegate pattern: each method test verifies the service forwards the call unchanged to
- *     _fpsClient.FpsGrade (the IFpsGradeApiClient sub-client)
- *   - NSubstitute used for IFpsApiClient aggregate and IFpsGradeApiClient sub-client mocks
- *   - IFpsApiClient.FpsGrade stubbed to return the mock IFpsGradeApiClient (aggregate pattern)
- *
- * PRESERVED:
- *   - Test naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - #region grouping per method (matches DivisionGradeServiceTests FPSApps pattern)
- *   - ApiResponseDto success / failure helpers for concise arrange blocks
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm IFpsApiClient.FpsGrade property is registered in
- *     FpsApiClient.cs once that implementation is finalised.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;

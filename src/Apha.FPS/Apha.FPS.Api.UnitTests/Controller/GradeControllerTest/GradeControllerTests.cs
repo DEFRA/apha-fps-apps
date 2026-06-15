@@ -1,26 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — GradeControllerTests.cs (new file)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New xUnit test class created for GradeController (Apha.FPS.Api)
- *   - Covers all five REST actions: GetAllPagedAsync, GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - NSubstitute used for IGradeService and IMapper mocks (consistent with DivisionGradeControllerTests pattern)
- *   - Exception propagation tests confirm controller does not swallow service exceptions
- *
- * PRESERVED:
- *   - Test naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - #region grouping per action (matches DivisionGradeControllerTests layout)
- *   - Static BuildDto / BuildReq / BuildRes helpers for concise test setup
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify GradeReq / GradeRes types resolve correctly once
- *     Apha.Common.Contracts.FPS is fully built (NuGet restore required).
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;

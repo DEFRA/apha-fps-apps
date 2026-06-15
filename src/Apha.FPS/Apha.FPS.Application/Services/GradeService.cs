@@ -1,31 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — GradeService.cs (new file)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New service implementation created — no prior equivalent existed in the codebase
- *   - Business guard checks extracted from frmMaintGrade VBA and SP analysis:
- *       CreateAsync: null check, duplicate GradeCode guard
- *       UpdateAsync: null checks, existence guard, rename conflict guard
- *       DeleteAsync: null check, existence guard
- *   - All methods delegate to IGradeRepository; no direct DbContext usage
- *   - AutoMapper used for Grade <-> GradeDto mapping (Description <-> DescLong handled in EntityMapper)
- *   - Pattern follows DivisionService as the canonical reference
- *
- * PRESERVED:
- *   - All business validation branches (duplicate check, existence check, rename conflict check)
- *   - Composite key pattern: GradeCode used for lookup; FpsYear resolved by DbContext HasQueryFilter
- *   - ArgumentNullException.ThrowIfNull used consistently with existing codebase pattern
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm whether foreign key reference checks are needed for DeleteAsync
- *     (e.g. fps.divisiongrade, fps.workgroupgrade reference fps.grade). If so, add a
- *     GetGradeForeignKeyReferencesAsync() method to IGradeRepository and call it here before delete.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
@@ -152,10 +124,6 @@ namespace Apha.FPS.Application.Services
             {
                 throw new KeyNotFoundException($"Grade '{gradeCode}' not found in the current FPS year.");
             }
-
-            // TRANSFORMENGINE TODO: Add foreign key reference check here if fps.divisiongrade or
-            // fps.workgroupgrade reference fps.grade. Add GetGradeForeignKeyReferencesAsync() to
-            // IGradeRepository and guard with InvalidOperationException if references exist.
 
             return await _gradeRepository.DeleteAsync(gradeCode);
         }

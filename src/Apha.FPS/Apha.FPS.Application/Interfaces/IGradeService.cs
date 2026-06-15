@@ -1,26 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — IGradeService.cs (new file)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New interface created — no prior equivalent existed in the codebase
- *   - Async CRUD signatures inferred from frmMaintGrade form analysis (CRUD on fps.grade)
- *   - Composite key (GradeCode + FpsYear) reflected via GradeCode param; FpsYear resolved by DbContext HasQueryFilter
- *   - QueryParameters<string> used for paged list (filter string covers GradeCode / Description search)
- *   - Pattern follows IDivisionService as the canonical reference
- *
- * PRESERVED:
- *   - No prior implementation to preserve — this is a net-new interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm whether a GetAllGradeCodesAsync() lookup helper is needed
- *     for populating dropdowns in related forms (e.g. DivisionGrade, WorkgroupGrade).
- *     If so, add the method here and implement in GradeService.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 

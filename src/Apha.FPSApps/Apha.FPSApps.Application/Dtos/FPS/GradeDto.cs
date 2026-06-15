@@ -1,30 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — GradeDto.cs (frontend)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 7 — Frontend DTOs + API Client Interfaces (Steps 10-11)
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New frontend DTO created in Apha.FPSApps.Application.Dtos.FPS namespace
- *   - Mirrors Apha.FPS.Application.Dtos.GradeDto (backend Application layer DTO)
- *   - Same property names and types; different namespace for frontend isolation
- *   - All seven backend DTO fields included: GradeCode, Description, AvSalary, PactCode,
- *     AvLeaveHrs, AvSickHrs, FpsYear
- *
- * PRESERVED:
- *   - Property names exactly match backend GradeDto (case-sensitive, required by ApiDtoMapper)
- *   - Nullability mirrors backend: GradeCode non-nullable (PK), FpsYear nullable int?, all others nullable
- *   - Description property retains DescLong → Description rename established in backend EntityMapper
- *   - DDL-only fields (PactCode, AvLeaveHrs, AvSickHrs) retained for full entity surface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm whether PactCode, AvLeaveHrs, AvSickHrs need exposure in
- *     the _AddEditGrade.cshtml Razor partial view (currently carried but not bound to any form input).
- *   - TRANSFORMENGINE TODO: FpsApiDtoMapper must register GradeDto <-> GradeRes and GradeDto <-> GradeReq
- *     mappings; verify these entries exist in Apha.FPSApps.Infrastructure before running.
- */
-
 namespace Apha.FPSApps.Application.Dtos.FPS
 {
     /// <summary>

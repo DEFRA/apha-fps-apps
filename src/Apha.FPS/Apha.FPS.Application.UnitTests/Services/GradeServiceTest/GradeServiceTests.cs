@@ -1,26 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — GradeServiceTests.cs (new file)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New xUnit test class created for Apha.FPS.Application.Services.GradeService
- *   - Covers constructor validation, GetAllPagedAsync, GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - NSubstitute used for IGradeRepository and IMapper mocks
- *   - FluentAssertions used (project already references FluentAssertions — DivisionGradeServiceTests pattern)
- *   - Business guard tests: null DTO, empty/whitespace code, duplicate code, not-found, rename conflict
- *
- * PRESERVED:
- *   - Test naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - #region grouping per method (matches DivisionGradeServiceTests layout)
- *   - Static BuildDto / BuildEntity helpers for concise test setup
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm Grade entity namespace resolves after dotnet restore.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;

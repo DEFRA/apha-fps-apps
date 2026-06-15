@@ -1,27 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — FpsGradeApiClientTests.cs (new file)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New xUnit test class created for FpsGradeApiClient (Apha.FPSApps.Infrastructure)
- *   - Covers: Constructor validation, GetAllPagedAsync, GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - NSubstitute used for IFpsHttpExecutor and IMapper mocks (consistent with FpsDivisionGradeApiClientTests)
- *   - Exception/catch-block path tested per method (network error → FailureResponse with INTERNAL_ERROR code)
- *   - URL construction verified via Arg.Is<string>(u => u.Contains("...")) assertions
- *
- * PRESERVED:
- *   - Test naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - #region grouping per method (matches FpsDivisionGradeApiClientTests layout)
- *   - SuccessApiResponse<T> / FailureApiResponse<T> helpers for concise arrange blocks
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify GradeReq / GradeRes types compile correctly once
- *     Apha.Common.Contracts.FPS NuGet package is available (dotnet restore required).
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;

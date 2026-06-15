@@ -1,28 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — GradeRepositoryTests.cs (new file)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet8-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-10
- *
- * CHANGED:
- *   - New xUnit test class created for Apha.FPS.DataAccess.Repositories.GradeRepository
- *   - Moq + RepositoryTestHelper used for FpsDbContext / DbSet mocking (consistent with DivisionGradeRepositoryTests)
- *   - Covers: GetAllPagedAsync, GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - Sorting tests use [Theory]/[InlineData] across GradeCode, Description, AvSalary columns
- *   - Filtering tests cover GradeCode and Description (DescLong) JSON filter keys
- *
- * PRESERVED:
- *   - Test naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - #region grouping per method (matches DivisionGradeRepositoryTests layout)
- *   - CreateRepository / CreateRepositoryWithMocks static helpers
- *   - RepositoryTestHelper.VerifySaveChanges for write path assertions
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify RepositoryTestHelper.CreateMockDbContext<FpsDbContext> supports
- *     the IFpsRequestContext overload used here once NuGet restore completes.
- */
-
 using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
