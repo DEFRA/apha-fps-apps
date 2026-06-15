@@ -1077,14 +1077,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetPagedProjectsAsync_ReturnsPagedResults()
         {
-            var projects = Enumerable.Range(1, 15)
-                .Select(i => new Project
+            var views = Enumerable.Range(1, 15)
+                .Select(i => new ProjectView
                 {
                     ParentProject = $"PP{i:D3}", ProjectTitle = $"Project {i}",
                     Program = "P001", Customer = "C1", ProjectStatus = "Active",
-                    Disease = "D1", Contract = "C1", IncomeAccountCode = "I1"
+                    Disease = "D1", Contract = "C1", IncomeAccountCode = "I1",
+                    UserEmail = "test@example.com"
                 }).ToList();
-            var repo = CreateRepository(projects: projects);
+            var repo = CreateRepository(projectViews: views);
             var query = new PaginationParameters<string>(page: 1, pageSize: 10);
 
             var result = await repo.GetPagedProjectsAsync(query);
@@ -1097,7 +1098,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetPagedProjectsAsync_ReturnsEmpty_WhenNoProjects()
         {
-            var repo = CreateRepository(projects: new List<Project>());
+            var repo = CreateRepository(projectViews: new List<ProjectView>());
             var query = new PaginationParameters<string>(page: 1, pageSize: 10);
 
             var result = await repo.GetPagedProjectsAsync(query);
@@ -1109,13 +1110,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetPagedProjectsAsync_SortsByParentProjectAscending_ByDefault()
         {
-            var projects = new List<Project>
+            var views = new List<ProjectView>
             {
-                new() { ParentProject = "CC003", ProjectTitle = "Gamma", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
-                new() { ParentProject = "AA001", ProjectTitle = "Alpha", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
-                new() { ParentProject = "BB002", ProjectTitle = "Beta",  Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
+                new() { ParentProject = "CC003", ProjectTitle = "Gamma", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "AA001", ProjectTitle = "Alpha", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "BB002", ProjectTitle = "Beta",  Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
             };
-            var repo = CreateRepository(projects: projects);
+            var repo = CreateRepository(projectViews: views);
             var query = new PaginationParameters<string>(page: 1, pageSize: 10);
 
             var result = await repo.GetPagedProjectsAsync(query);
@@ -1129,13 +1130,13 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetPagedProjectsAsync_SortsByProjectTitleDescending()
         {
-            var projects = new List<Project>
+            var views = new List<ProjectView>
             {
-                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
-                new() { ParentProject = "PP002", ProjectTitle = "Gamma", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
-                new() { ParentProject = "PP003", ProjectTitle = "Beta",  Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1" },
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP002", ProjectTitle = "Gamma", Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP003", ProjectTitle = "Beta",  Program = "P1", Customer = "C1", ProjectStatus = "A", Disease = "D1", Contract = "C1", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
             };
-            var repo = CreateRepository(projects: projects);
+            var repo = CreateRepository(projectViews: views);
             var query = new PaginationParameters<string>(sortBy: "projecttitle", descending: true, page: 1, pageSize: 10);
 
             var result = await repo.GetPagedProjectsAsync(query);

@@ -533,8 +533,8 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return property switch
             {
-                "parentproject" => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
-                "projecttitle" => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
+                string s when s.Equals("parentproject", StringComparison.OrdinalIgnoreCase) => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
+                string s when s.Equals("projecttitle", StringComparison.OrdinalIgnoreCase) => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
                 _ => query.OrderBy(e => e.ParentProject)
             };
         }
