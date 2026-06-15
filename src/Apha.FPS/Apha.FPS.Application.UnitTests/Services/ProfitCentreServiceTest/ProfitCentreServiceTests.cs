@@ -466,5 +466,397 @@ namespace Apha.FPS.Application.UnitTests.Services.ProfitCentreServiceTest
 
         #endregion
 
+        #region GetProfitCenterCostSummaryAsync Tests
+
+        #endregion
+
+        #region GetPagedProfitCenterCostSummaryAsync Tests
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_ThrowsArgumentNullException_WhenQueryIsNull()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _sut.GetPagedProfitCenterCostSummaryAsync(null!, 1.0));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithoutMonthNumber_ReturnsPagedData()
+        {
+            // Arrange
+            const double monthNumber = 1.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var repositoryData = new List<ProfitCentreCostSummary>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1000.00m },
+                new() { ProfitCentre = "PC02", Cost = 2000.00m }
+            };
+            var pagedData = new PagedData<ProfitCentreCostSummary>
+            {
+                Data = repositoryData,
+                PaginationData = new PaginationData
+                {
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalRecords = 2,
+                    TotalPages = 1
+                }
+            };
+
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = new List<ProfitCentreCostDto>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 1000.00m },
+                    new() { ProfitCentre = "PC02", Cost = 2000.00m }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalRecords = 2,
+                    TotalPages = 1
+                }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+
+            // Assert
+            result.Data.Should().HaveCount(2);
+            result.Data.ElementAt(0).ProfitCentre.Should().Be("PC01");
+            result.Data.ElementAt(0).Cost.Should().Be(1000.00m);
+            result.PaginationData.PageNumber.Should().Be(1);
+            result.PaginationData.PageSize.Should().Be(10);
+            result.PaginationData.TotalRecords.Should().Be(2);
+            result.PaginationData.TotalPages.Should().Be(1);
+            await _mockRepository.Received(1).GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthNumber_ReturnsFilteredPagedData()
+        {
+            // Arrange
+            const double monthNumber = 3.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 5 };
+            var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 5 };
+            var repositoryData = new List<ProfitCentreCostSummary>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1500.00m }
+            };
+            var pagedData = new PagedData<ProfitCentreCostSummary>
+            {
+                Data = repositoryData,
+                PaginationData = new PaginationData
+                {
+                    PageNumber = 1,
+                    PageSize = 5,
+                    TotalRecords = 1,
+                    TotalPages = 1
+                }
+            };
+
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = new List<ProfitCentreCostDto>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 1500.00m }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 1,
+                    PageSize = 5,
+                    TotalRecords = 1,
+                    TotalPages = 1
+                }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+
+            // Assert
+            result.Data.Should().HaveCount(1);
+            result.Data.First().ProfitCentre.Should().Be("PC01");
+            result.Data.First().Cost.Should().Be(1500.00m);
+            result.PaginationData.TotalRecords.Should().Be(1);
+            await _mockRepository.Received(1).GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithEmptyResult_ReturnsEmptyPagedData()
+        {
+            // Arrange
+            const double monthNumber = 1.0;
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var pagedData = new PagedData<ProfitCentreCostSummary>
+            {
+                Data = [],
+                PaginationData = new PaginationData
+                {
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalRecords = 0,
+                    TotalPages = 0
+                }
+            };
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = [],
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalRecords = 0,
+                    TotalPages = 0
+                }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+
+            // Assert
+            result.Data.Should().BeEmpty();
+            result.PaginationData.TotalRecords.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WhenRepositoryThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string>();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, Arg.Any<double>())
+                .ThrowsAsync(new InvalidOperationException("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithSortingAndPaging_ReturnsSortedPagedData()
+        {
+            // Arrange
+            const double monthNumber = 6.0;
+            var query = new QueryParameters<string>
+            {
+                Page = 2,
+                PageSize = 5,
+                SortBy = "ProfitCentre",
+                Descending = true
+            };
+            var mappedParams = new PaginationParameters<string>
+            {
+                Page = 2,
+                PageSize = 5,
+                SortBy = "ProfitCentre",
+                Descending = true
+            };
+            var repositoryData = new List<ProfitCentreCostSummary>
+            {
+                new() { ProfitCentre = "PC05", Cost = 500.00m },
+                new() { ProfitCentre = "PC04", Cost = 400.00m }
+            };
+            var pagedData = new PagedData<ProfitCentreCostSummary>
+            {
+                Data = repositoryData,
+                PaginationData = new PaginationData
+                {
+                    PageNumber = 2,
+                    PageSize = 5,
+                    TotalRecords = 10,
+                    TotalPages = 2
+                }
+            };
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = new List<ProfitCentreCostDto>
+                {
+                    new() { ProfitCentre = "PC05", Cost = 500.00m },
+                    new() { ProfitCentre = "PC04", Cost = 400.00m }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 2,
+                    PageSize = 5,
+                    TotalRecords = 10,
+                    TotalPages = 2
+                }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, monthNumber).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, monthNumber);
+
+            // Assert
+            result.Data.Should().HaveCount(2);
+            result.PaginationData.PageNumber.Should().Be(2);
+            result.PaginationData.PageSize.Should().Be(5);
+            result.PaginationData.TotalRecords.Should().Be(10);
+            result.PaginationData.TotalPages.Should().Be(2);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithLargePageNumber_ReturnsEmptyPage()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 999, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string> { Page = 999, PageSize = 10 };
+            var pagedData = new PagedData<ProfitCentreCostSummary>
+            {
+                Data = [],
+                PaginationData = new PaginationData
+                {
+                    PageNumber = 999,
+                    PageSize = 10,
+                    TotalRecords = 50,
+                    TotalPages = 5
+                }
+            };
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = [],
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 999,
+                    PageSize = 10,
+                    TotalRecords = 50,
+                    TotalPages = 5
+                }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, 0.0).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            result.Data.Should().BeEmpty();
+            result.PaginationData.PageNumber.Should().Be(999);
+            result.PaginationData.TotalRecords.Should().Be(50);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMinimumPageSize_ReturnsSingleItem()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 1 };
+            var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 1 };
+            var repositoryData = new List<ProfitCentreCostSummary>
+            {
+                new() { ProfitCentre = "PC01", Cost = 1000.00m }
+            };
+            var pagedData = new PagedData<ProfitCentreCostSummary>
+            {
+                Data = repositoryData,
+                PaginationData = new PaginationData
+                {
+                    PageNumber = 1,
+                    PageSize = 1,
+                    TotalRecords = 10,
+                    TotalPages = 10
+                }
+            };
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = new List<ProfitCentreCostDto>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 1000.00m }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 1,
+                    PageSize = 1,
+                    TotalRecords = 10,
+                    TotalPages = 10
+                }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, 0.0).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            result.Data.Should().HaveCount(1);
+            result.PaginationData.PageSize.Should().Be(1);
+            result.PaginationData.TotalPages.Should().Be(10);
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_MapsPaginationDataCorrectly()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 3, PageSize = 20 };
+            var mappedParams = new PaginationParameters<string> { Page = 3, PageSize = 20 };
+            var repositoryData = new List<ProfitCentreCostSummary>
+            {
+                new() { ProfitCentre = "PC01", Cost = 100.00m }
+            };
+            var pagedData = new PagedData<ProfitCentreCostSummary>
+            {
+                Data = repositoryData,
+                PaginationData = new PaginationData
+                {
+                    PageNumber = 3,
+                    PageSize = 20,
+                    TotalRecords = 55,
+                    TotalPages = 3
+                }
+            };
+            var expectedResult = new PaginatedResult<ProfitCentreCostDto>
+            {
+                Data = new List<ProfitCentreCostDto>
+                {
+                    new() { ProfitCentre = "PC01", Cost = 100.00m }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 3,
+                    PageSize = 20,
+                    TotalRecords = 55,
+                    TotalPages = 3
+                }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetPagedProfitCenterCostSummaryAsync(mappedParams, 0.0).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProfitCentreCostDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            var result = await _sut.GetPagedProfitCenterCostSummaryAsync(query, 0.0);
+
+            // Assert
+            result.PaginationData.PageNumber.Should().Be(3);
+            result.PaginationData.PageSize.Should().Be(20);
+            result.PaginationData.TotalRecords.Should().Be(55);
+            result.PaginationData.TotalPages.Should().Be(3);
+        }
+
+        #endregion
+
     }
 }

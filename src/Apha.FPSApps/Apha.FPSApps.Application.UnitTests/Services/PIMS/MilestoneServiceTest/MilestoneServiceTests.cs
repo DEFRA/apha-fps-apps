@@ -726,5 +726,103 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.MilestoneServiceTest
         }
 
         #endregion
+
+        #region GetLogMilestonesAsync
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WithSuccessResponse_ReturnsLogMilestoneList()
+        {
+            // Arrange
+            const string project     = "PP001";
+            const string numberPart1 = "M";
+            const string numberPart2 = "1";
+            var parameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var data = new List<LogMilestoneDto>
+            {
+                new() { Project = project, Number = "M1", Description = "Log Entry 1" },
+                new() { Project = project, Number = "M2", Description = "Log Entry 2" }
+            };
+            var expected = ApiResponseDto<List<LogMilestoneDto>>.SuccessResponse(data);
+
+            _pimsMilestoneApiClient.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2).Returns(expected);
+
+            // Act
+            var result = await _sut.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal("M1", result.Data[0].Number);
+            await _pimsMilestoneApiClient.Received(1).GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var parameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected   = ApiResponseDto<List<LogMilestoneDto>>.FailureResponse(OneError("Not found", "NOT_FOUND"), new ApiMetaDto());
+
+            _pimsMilestoneApiClient.GetLogMilestonesAsync(parameters, project, null, null).Returns(expected);
+
+            // Act
+            var result = await _sut.GetLogMilestonesAsync(parameters, project, null, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("NOT_FOUND", result.Errors[0].Code);
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_PassesCorrectParametersToClient()
+        {
+            // Arrange
+            const string project     = "PP123";
+            const string numberPart1 = "M";
+            const string numberPart2 = "5";
+            var parameters = new QueryParameters<string> { Page = 2, PageSize = 5 };
+            var expected   = ApiResponseDto<List<LogMilestoneDto>>.SuccessResponse([]);
+
+            _pimsMilestoneApiClient.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2).Returns(expected);
+
+            // Act
+            await _sut.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
+
+            // Assert
+            await _pimsMilestoneApiClient.Received(1).GetLogMilestonesAsync(
+                Arg.Is<QueryParameters<string>>(p => p.Page == 2 && p.PageSize == 5),
+                Arg.Is<string?>(p => p == project),
+                Arg.Is<string?>(n => n == numberPart1),
+                Arg.Is<string?>(n => n == numberPart2));
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WithNullOptionalParameters_PassesNullsToClient()
+        {
+            // Arrange
+            var parameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected   = ApiResponseDto<List<LogMilestoneDto>>.SuccessResponse([]);
+
+            _pimsMilestoneApiClient.GetLogMilestonesAsync(parameters, null, null, null).Returns(expected);
+
+            // Act
+            var result = await _sut.GetLogMilestonesAsync(parameters, null, null, null);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pimsMilestoneApiClient.Received(1).GetLogMilestonesAsync(
+                parameters,
+                Arg.Is<string?>(p => p == null),
+                Arg.Is<string?>(n => n == null),
+                Arg.Is<string?>(n => n == null));
+        }
+
+        #endregion
     }
 }

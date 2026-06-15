@@ -160,5 +160,23 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        public async Task<ApiResponseDto<List<LogMilestoneDto>>> GetLogMilestonesAsync(QueryParameters<string> parameters,string? project,string? numberPart1,string? numberPart2)
+        {
+            string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetLogMilestones, parameters);
+            if (!string.IsNullOrWhiteSpace(project))
+                url += $"&project={Uri.EscapeDataString(project)}";
+            if (!string.IsNullOrWhiteSpace(numberPart1))
+                url += $"&numberPart1={Uri.EscapeDataString(numberPart1)}";
+            if (!string.IsNullOrWhiteSpace(numberPart2))
+                url += $"&numberPart2={Uri.EscapeDataString(numberPart2)}";
+
+            var response = await _http.GetAsync<List<LogMilestoneRes>>(url);
+            if (response.Success && response.Data != null)
+                return _mapper.Map<ApiResponseDto<List<LogMilestoneDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<LogMilestoneDto>>>(response);
+            return ApiResponseDto<List<LogMilestoneDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
 }

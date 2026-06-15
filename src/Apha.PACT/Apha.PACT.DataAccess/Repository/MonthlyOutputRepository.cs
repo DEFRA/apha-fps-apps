@@ -41,7 +41,7 @@ namespace Apha.PACT.DataAccess.Repository
             }
 
             if (month.HasValue)
-                baseQuery = baseQuery.Where(x => x.Month == month.Value);
+                baseQuery = baseQuery.Where(x => x.Month.HasValue && (int)x.Month.Value == (int)month.Value);
 
             if (!string.IsNullOrWhiteSpace(userId))
                 baseQuery = baseQuery.Where(x => x.UserId != null && x.UserId.Contains(userId));
@@ -52,8 +52,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             baseQuery = baseQuery.OrderByDescending(x => x.DateTime).ThenBy(x => x.SequenceNo);
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
     }
 }

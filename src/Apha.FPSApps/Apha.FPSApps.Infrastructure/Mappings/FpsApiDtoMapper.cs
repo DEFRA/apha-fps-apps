@@ -31,7 +31,11 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<EmployeeDto, EmployeeRes>().ReverseMap();
 
             // FPS Project
-            CreateMap<ProjectDto, ProjectReq>().ReverseMap();
+            // CustIncome in the FPS API wire format lives in ProjectReq.BudgetExt (see FPS RequestMapper)
+            CreateMap<ProjectDto, ProjectReq>()
+                .ForMember(d => d.BudgetExt, o => o.MapFrom(s => s.CustIncome))
+                .ReverseMap()
+                .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt));
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
 
             // FPS Lookups
@@ -94,6 +98,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Resource Set-Up
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
             CreateMap<ProfitCentreDto, ProfitCentreReq>().ReverseMap();
+            CreateMap<ProfitCentreCostDto, ProfitCentreCostRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeReq>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
@@ -105,6 +110,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
+
+            // Project Group Staff Plan view
+            CreateMap<ProjectGroupStaffPlanViewDto, ProjectGroupStaffPlanViewRes>().ReverseMap();
 
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 

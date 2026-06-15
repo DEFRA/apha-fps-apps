@@ -14,7 +14,6 @@ public class ProjectYearRepositoryTests
 
     /// <summary>
     /// Creates a ProjectYearRepository with in-memory DbSets.
-    /// GetPayRatesAsync uses a Join across WorkGroupGrades and ProfitCentreGrades.
     /// AddProjectYearAsync uses Projects and ProjectYears DbSets plus ISettingsRepository.
     /// </summary>
     private static (
@@ -25,8 +24,6 @@ public class ProjectYearRepositoryTests
         CreateRepository(
             IEnumerable<ProjectYear>? projectYears = null,
             IEnumerable<Project>? projects = null,
-            IEnumerable<WorkGroupGrade>? workGroupGrades = null,
-            IEnumerable<ProfitCentreGrade>? profitCentreGrades = null,
             Dictionary<string, string?>? settings = null,
             IEnumerable<StaffRequirement>? staffRequirements = null,
             IEnumerable<TestRequirement>? testRequirements = null,
@@ -44,12 +41,6 @@ public class ProjectYearRepositoryTests
 
         var projectsMockSet = RepositoryTestHelper.CreateMockDbSet(projects ?? []);
         mockContext.Setup(x => x.Projects).Returns(projectsMockSet.Object);
-
-        var wggMockSet = RepositoryTestHelper.CreateMockDbSet(workGroupGrades ?? []);
-        mockContext.Setup(x => x.WorkGroupGrades).Returns(wggMockSet.Object);
-
-        var pcgMockSet = RepositoryTestHelper.CreateMockDbSet(profitCentreGrades ?? []);
-        mockContext.Setup(x => x.ProfitCentreGrades).Returns(pcgMockSet.Object);
 
         var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staffRequirements ?? []);
         mockContext.Setup(x => x.StaffRequirements).Returns(staffMockSet.Object);
@@ -452,120 +443,6 @@ public class ProjectYearRepositoryTests
 
     #endregion
 
-    #region GetPayRatesAsync
-
-    [Fact]
-    public async Task GetPayRatesAsync_ReturnsEmptyList_WhenNoData()
-    {
-        // Arrange
-        var (repo, _, _, _) = CreateRepository();
-
-        // Act
-        var result = await repo.GetPayRatesAsync("2024/001", 2024, isDefra: false);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Empty(result);
-    }
-
-    [Fact]
-    public async Task GetPayRatesAsync_NonDefra_ReturnsChargeRate()
-    {
-        // Arrange
-        var wggs = new List<WorkGroupGrade>
-        {
-            new() { WgGrade = "HEO", ProfitCentreGrade = "PCG1", GradeCode = "GC01", WorkGroup = "Science", FpsYear = DefaultFpsYear }
-        };
-        var pcgs = new List<ProfitCentreGrade>
-        {
-            new() { PcGrade = "PCG1", ChargeRate = 45.50m, DefraChargeRate = 55.00m, PayRate = 30.0m, Npr = 5.0m, Ohr = 10.0m, FpsYear = DefaultFpsYear, DivisionGrade = "DG1", GradeCode = "GC01", ProfitCentre = "PC1" }
-        };
-        var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
-
-        // Act
-        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: false)).ToList();
-
-        // Assert
-        Assert.Single(result);
-        Assert.Equal("HEO", result[0].WgGrade);
-        Assert.Equal(45.50m, result[0].ChargeRate);
-        Assert.Equal(30.0m, result[0].PayRate);
-        Assert.Equal(5.0m, result[0].Npr);
-        Assert.Equal(10.0m, result[0].Ohr);
-    }
-
-    [Fact]
-    public async Task GetPayRatesAsync_Defra_ReturnsDefraChargeRate()
-    {
-        // Arrange
-        var wggs = new List<WorkGroupGrade>
-        {
-            new() { WgGrade = "HEO", ProfitCentreGrade = "PCG1", GradeCode = "GC01", WorkGroup = "Science", FpsYear = DefaultFpsYear }
-        };
-        var pcgs = new List<ProfitCentreGrade>
-        {
-            new() { PcGrade = "PCG1", ChargeRate = 45.50m, DefraChargeRate = 55.00m, PayRate = 30.0m, Npr = 5.0m, Ohr = 10.0m, FpsYear = DefaultFpsYear, DivisionGrade = "DG1", GradeCode = "GC01", ProfitCentre = "PC1" }
-        };
-        var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
-
-        // Act
-        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: true)).ToList();
-
-        // Assert
-        Assert.Single(result);
-        Assert.Equal(55.00m, result[0].ChargeRate);
-    }
-
-    [Fact]
-    public async Task GetPayRatesAsync_NonDefra_FiltersOutZeroChargeRate()
-    {
-        // Arrange
-        var wggs = new List<WorkGroupGrade>
-        {
-            new() { WgGrade = "HEO", ProfitCentreGrade = "PCG1", GradeCode = "GC01", WorkGroup = "Science", FpsYear = DefaultFpsYear },
-            new() { WgGrade = "EO", ProfitCentreGrade = "PCG2", GradeCode = "GC02", WorkGroup = "Admin", FpsYear = DefaultFpsYear }
-        };
-        var pcgs = new List<ProfitCentreGrade>
-        {
-            new() { PcGrade = "PCG1", ChargeRate = 45.50m, DefraChargeRate = 55.00m, PayRate = 30.0m, Npr = 5.0m, Ohr = 10.0m, FpsYear = DefaultFpsYear, DivisionGrade = "DG1", GradeCode = "GC01", ProfitCentre = "PC1" },
-            new() { PcGrade = "PCG2", ChargeRate = 0m, DefraChargeRate = 10.00m, PayRate = 20.0m, Npr = 3.0m, Ohr = 7.0m, FpsYear = DefaultFpsYear, DivisionGrade = "DG2", GradeCode = "GC02", ProfitCentre = "PC2" }
-        };
-        var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
-
-        // Act
-        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: false)).ToList();
-
-        // Assert
-        Assert.Single(result);
-        Assert.Equal("HEO", result[0].WgGrade);
-    }
-
-    [Fact]
-    public async Task GetPayRatesAsync_Defra_FiltersOutZeroDefraChargeRate()
-    {
-        // Arrange
-        var wggs = new List<WorkGroupGrade>
-        {
-            new() { WgGrade = "HEO", ProfitCentreGrade = "PCG1", GradeCode = "GC01", WorkGroup = "Science", FpsYear = DefaultFpsYear },
-            new() { WgGrade = "EO", ProfitCentreGrade = "PCG2", GradeCode = "GC02", WorkGroup = "Admin", FpsYear = DefaultFpsYear }
-        };
-        var pcgs = new List<ProfitCentreGrade>
-        {
-            new() { PcGrade = "PCG1", ChargeRate = 45.50m, DefraChargeRate = 55.00m, PayRate = 30.0m, Npr = 5.0m, Ohr = 10.0m, FpsYear = DefaultFpsYear, DivisionGrade = "DG1", GradeCode = "GC01", ProfitCentre = "PC1" },
-            new() { PcGrade = "PCG2", ChargeRate = 20.00m, DefraChargeRate = 0m, PayRate = 20.0m, Npr = 3.0m, Ohr = 7.0m, FpsYear = DefaultFpsYear, DivisionGrade = "DG2", GradeCode = "GC02", ProfitCentre = "PC2" }
-        };
-        var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
-
-        // Act
-        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: true)).ToList();
-
-        // Assert
-        Assert.Single(result);
-        Assert.Equal("HEO", result[0].WgGrade);
-    }
-
-    #endregion
-
     #region DeleteProjectYearAsync
 
     [Fact]
@@ -798,48 +675,6 @@ public class ProjectYearRepositoryTests
 
         Assert.Equal(99.0, result.MarkupTime);
         Assert.Null(result.ProfitTime);
-    }
-
-    #endregion
-
-    #region GetPayRatesAsync - additional cases
-
-    [Fact]
-    public async Task GetPayRatesAsync_ReturnsMultipleRecords()
-    {
-        var wggs = new List<WorkGroupGrade>
-        {
-            new() { WgGrade = "HEO", ProfitCentreGrade = "PCG1", GradeCode = "GC01", WorkGroup = "Sci", FpsYear = DefaultFpsYear },
-            new() { WgGrade = "EO",  ProfitCentreGrade = "PCG2", GradeCode = "GC02", WorkGroup = "Adm", FpsYear = DefaultFpsYear }
-        };
-        var pcgs = new List<ProfitCentreGrade>
-        {
-            new() { PcGrade = "PCG1", ChargeRate = 45m, DefraChargeRate = 55m, PayRate = 30m, Npr = 5m, Ohr = 10m, FpsYear = DefaultFpsYear, DivisionGrade = "D1", GradeCode = "GC01", ProfitCentre = "PC1" },
-            new() { PcGrade = "PCG2", ChargeRate = 30m, DefraChargeRate = 35m, PayRate = 20m, Npr = 3m, Ohr = 7m,  FpsYear = DefaultFpsYear, DivisionGrade = "D2", GradeCode = "GC02", ProfitCentre = "PC2" }
-        };
-        var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
-
-        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: false)).ToList();
-
-        Assert.Equal(2, result.Count);
-    }
-
-    [Fact]
-    public async Task GetPayRatesAsync_ReturnsEmpty_WhenNoMatchingJoin()
-    {
-        var wggs = new List<WorkGroupGrade>
-        {
-            new() { WgGrade = "HEO", ProfitCentreGrade = "PCG_NONE", GradeCode = "GC01", WorkGroup = "Sci", FpsYear = DefaultFpsYear }
-        };
-        var pcgs = new List<ProfitCentreGrade>
-        {
-            new() { PcGrade = "PCG_OTHER", ChargeRate = 45m, DefraChargeRate = 55m, PayRate = 30m, Npr = 5m, Ohr = 10m, FpsYear = DefaultFpsYear, DivisionGrade = "D1", GradeCode = "GC01", ProfitCentre = "PC1" }
-        };
-        var (repo, _, _, _) = CreateRepository(workGroupGrades: wggs, profitCentreGrades: pcgs);
-
-        var result = (await repo.GetPayRatesAsync("2024/001", 2024, isDefra: false)).ToList();
-
-        Assert.Empty(result);
     }
 
     #endregion

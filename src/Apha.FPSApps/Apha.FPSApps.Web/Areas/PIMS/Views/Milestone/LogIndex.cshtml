@@ -1,0 +1,122 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PIMS.Models.MilestoneViewModel
+
+@{
+    ViewData["Title"] = "PIMS : LOG Milestone Changes";
+    string selectedProject = Model.Parentproject;
+}
+
+<div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-1 govuk-!-padding-0">
+    <div class="govuk-grid-column-full sup_flex_between_center">
+        <h5 class="govuk-heading-s sup_margin_0 govuk-!-padding-top-2 govuk-!-padding-bottom-1 govuk-!-padding-left-5">
+            LOG Milestone Changes
+        </h5>
+        <a asp-area="PIMS" asp-controller="Milestone" asp-action="Index"
+           class="govuk-back-link govuk-!-margin-top-0 govuk-!-margin-bottom-0 govuk-!-margin-right-3">Back</a>
+    </div>
+</div>
+
+<div class="sup_flex">
+    <main class="main-content govuk-!-padding-top-0 sup_overflow_hidden">
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+
+                <!-- ── Search panel ──────────────────────────────────────── -->
+                <div class="govuk-grid-row sup_margin_left_right_0">
+                    <div class="govuk-!-padding-1 sup_width_100">
+                        <div class="sup_flex_space_between sup_margin_left_right_0">
+                            <div>
+                                <div class="sup_border sup_padding_10 sup_margin_left_5">
+
+                                    <div class="govuk-form-group sup_margin_bottom_10">
+                                        <label class="govuk-label govuk-!-font-weight-bold" for="logProject">
+                                            Project:
+                                        </label>
+                                        <select class="govuk-select govuk-!-font-size-16" id="logProject" name="logProject">
+                                            <option value="">-- All --</option>
+                                            @foreach (var opt in Model.ProjectOptions)
+                                            {
+                                                if (opt.Value == selectedProject)
+                                                {
+                                                    <option value="@opt.Value" selected>@opt.Text</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@opt.Value">@opt.Text</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="govuk-form-group sup_margin_bottom_10">
+                                        <label class="govuk-label govuk-!-font-weight-bold" for="logNumberPart1">
+                                            Number:
+                                        </label>
+                                        <div class="sup_flex_start_center sup_gap_16">
+                                            <input class="govuk-input govuk-!-font-size-16 govuk-input--width-5"
+                                                   type="text" id="logNumberPart1" name="logNumberPart1"
+                                                   autocomplete="off" />
+                                            <span class="govuk-body sup_margin_0">/</span>
+                                            <label class="govuk-visually-hidden" for="logNumberPart2">Number part 2</label>
+                                            <input class="govuk-input govuk-!-font-size-16 govuk-input--width-5"
+                                                   type="text" id="logNumberPart2" name="logNumberPart2"
+                                                   autocomplete="off" />
+                                            <button type="button"
+                                                    class="govuk-button govuk-button--secondary govuk-!-font-size-16 sup_margin_0 govuk-!-margin-left-2"
+                                                    onclick="searchLogMilestones()">
+                                                Search
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="sup_width_auto">
+                                <div class="sup_margin_right_10">
+                                    <p class="govuk-body govuk-!-font-size-16 govuk-!-font-weight-bold sup_margin_bottom_10">
+                                        Update Type:
+                                    </p>
+                                    <p class="govuk-body govuk-!-font-size-16 sup_margin_0">
+                                        I - Record as first Inserted<br />
+                                        U - Record as Updated to.<br />
+                                        D - Record as Deleted.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Log Milestones DataGrid ───────────────────────────── -->
+                <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                    <div class="govuk-grid-column-full sup_p_0">
+                        <div id="@($"gridContainer_{Model.LogMilestonesGrid.GridId}")">
+                            @await Html.PartialAsync("_DataGrid", Model.LogMilestonesGrid)
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        function getLogExtraFilters() {
+            return {
+                project: document.getElementById('logProject').value || null,
+                numberPart1: document.getElementById('logNumberPart1').value || null,
+                numberPart2: document.getElementById('logNumberPart2').value || null
+            };
+        }
+
+        function searchLogMilestones() {
+            var gm = window['gridManager_logMilestonesGrid'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }
+    </script>
+}
