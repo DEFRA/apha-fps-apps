@@ -1,4 +1,4 @@
-# BatchJobs Worker
+﻿# BatchJobs Worker
 
 Concise runtime notes for the worker host.
 
@@ -33,9 +33,3 @@ Key settings:
 - Unknown job: verify BATCH_JOB_NAME matches a registered job.
 - Connection failure: validate host, port, database, and credentials.
 - Missing config: run from src/Apha.BatchJobs.
-
-## CI
-
-- Non-functional documentation update to trigger CI/CD.
-
-

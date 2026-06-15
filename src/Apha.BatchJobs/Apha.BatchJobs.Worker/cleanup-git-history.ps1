@@ -1,17 +1,17 @@
-# Git History Cleanup Script - Remove Passwords
+﻿# Git History Cleanup Script - Remove Passwords
 # Run this script to remove passwords from git history
 
 Write-Host "========================================" -ForegroundColor Red
 Write-Host "  GIT HISTORY CLEANUP - REMOVE SECRETS" -ForegroundColor Red
 Write-Host "========================================" -ForegroundColor Red
 Write-Host ""
-Write-Host "⚠️  WARNING: This will rewrite git history!" -ForegroundColor Yellow
+Write-Host "ΓÜá∩╕Å  WARNING: This will rewrite git history!" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Before proceeding:" -ForegroundColor Yellow
-Write-Host "1. ✅ Create a backup of your repository" -ForegroundColor Gray
-Write-Host "2. ✅ Notify your team about the history rewrite" -ForegroundColor Gray
-Write-Host "3. ✅ Ensure everyone has pushed their changes" -ForegroundColor Gray
-Write-Host "4. ✅ You will need to FORCE PUSH after this" -ForegroundColor Gray
+Write-Host "1. Γ£à Create a backup of your repository" -ForegroundColor Gray
+Write-Host "2. Γ£à Notify your team about the history rewrite" -ForegroundColor Gray
+Write-Host "3. Γ£à Ensure everyone has pushed their changes" -ForegroundColor Gray
+Write-Host "4. Γ£à You will need to FORCE PUSH after this" -ForegroundColor Gray
 Write-Host ""
 
 $confirm = Read-Host "Do you want to proceed? (Type 'YES' to continue)"
@@ -31,7 +31,7 @@ if (Test-Path $backupPath) {
     Write-Host "Backup already exists at: $backupPath" -ForegroundColor Yellow
 } else {
     Copy-Item -Path $repoPath -Destination $backupPath -Recurse
-    Write-Host "✓ Backup created at: $backupPath" -ForegroundColor Green
+    Write-Host "Γ£ô Backup created at: $backupPath" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -67,7 +67,7 @@ foreach ($file in $files) {
         --prune-empty --tag-name-filter cat -- --all 2>&1 | Out-Null
 }
 
-Write-Host "✓ History rewritten" -ForegroundColor Green
+Write-Host "Γ£ô History rewritten" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "Step 3: Cleaning up..." -ForegroundColor Cyan
@@ -75,7 +75,7 @@ Write-Host "Step 3: Cleaning up..." -ForegroundColor Cyan
 git reflog expire --expire=now --all
 git gc --prune=now --aggressive
 
-Write-Host "✓ Cleanup complete" -ForegroundColor Green
+Write-Host "Γ£ô Cleanup complete" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green

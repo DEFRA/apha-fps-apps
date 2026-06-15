@@ -20,7 +20,7 @@ var isLocalOrDevelopment = builder.Environment.IsDevelopment()
 var strictExecutionContractMode = ResolveStrictExecutionContractMode(builder.Configuration, isLocalOrDevelopment);
 
 builder.Configuration
-    .SetBasePath(AppContext.BaseDirectory)
+    .SetBasePath(builder.Environment.ContentRootPath)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
@@ -30,7 +30,6 @@ const int ExitCodeSuccess = 0;
 const int ExitCodeBusinessFailure = 1;
 const int ExitCodeConfigurationError = 2;
 const int ExitCodeCancelled = 3;
-const int ExitCodeSkipped = 4;
 const int ExitCodeDependencyOutage = 5;
 
 // ECS SIGTERM â†’ forced-stop window is typically 30 s.
@@ -234,21 +233,11 @@ try
         logger.LogInformation(
             "Job '{JobName}' finished | Status={Status} | JobQueueId={JobQueueId} | ExecutionId={ExecutionId}",
             result.JobName, result.Status, result.JobQueueId, result.ExecutionId);
-        var computedExitCode = result.Status == JobStatus.Skipped ? ExitCodeSkipped : ExitCodeSuccess;
         logger.LogInformation("===========================================");
 
-        // Exit 4 = skipped (lock already held) — not a failure
-        exitCode = computedExitCode;
-        if (result.Status == JobStatus.Skipped)
-        {
-            failureCategory = "LockContentionSkip";
-            runOutcome = "Skipped";
-        }
-        else
-        {
-            failureCategory = "None";
-            runOutcome = "Succeeded";
-        }
+        exitCode = ExitCodeSuccess;
+        failureCategory = "None";
+        runOutcome = "Succeeded";
     }
 }
 catch (InvalidOperationException ex)
@@ -306,7 +295,6 @@ finally
         var logLevel = failureCategory switch
         {
             "None" => LogLevel.Information,
-            "LockContentionSkip" => LogLevel.Information,
             "Cancellation" => LogLevel.Warning,
             _ => LogLevel.Error
         };
@@ -466,7 +454,6 @@ static string GenerateHumanReadableMessage(string outcome, string failureCategor
     return (outcome, failureCategory) switch
     {
         ("Succeeded", _) => "Job completed successfully within the graceful shutdown window.",
-        ("Skipped", "LockContentionSkip") => "Job execution skipped: another worker holds the lock. Retryable.",
         ("Cancelled", "Cancellation") => "Job execution was cancelled due to host shutdown or timeout.",
         ("Failed", "ConfigurationError") => "Job failed due to configuration error (job not registered, invalid settings, etc.).",
         ("Failed", "BusinessFailure") => "Job failed with a business or runtime exception.",
@@ -585,11 +572,8 @@ static async Task VerifyExecutionContractAsync(
     var existingExecution = await executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
     if (existingExecution is null)
     {
-        logger.LogInformation(
-            "Execution contract pre-check passed | JobExecutionId={JobExecutionId} | JobName={JobName} | ExistingExecution=False",
-            jobExecutionId,
-            requestedJobName);
-        return;
+        throw new InvalidOperationException(
+            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has no pre-created Initiated row. API must insert Initiated before worker start.");
     }
 
     if (!string.Equals(existingExecution.JobName, requestedJobName, StringComparison.OrdinalIgnoreCase))
@@ -600,13 +584,22 @@ static async Task VerifyExecutionContractAsync(
 
     var isTerminal = existingExecution.Status is JobStatus.Completed
         or JobStatus.Failed
-        or JobStatus.Cancelled
-        or JobStatus.Skipped;
+        or JobStatus.Cancelled;
 
     if (isTerminal)
     {
         throw new InvalidOperationException(
             $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' was already used by terminal execution '{existingExecution.Status}' (ExecutionId={existingExecution.ExecutionId}). Replays are not permitted.");
+    }
+
+    if (existingExecution.Status == JobStatus.Initiated)
+    {
+        logger.LogInformation(
+            "Execution contract pre-check passed | JobExecutionId={JobExecutionId} | JobName={JobName} | ExistingStatus={ExistingStatus}",
+            jobExecutionId,
+            requestedJobName,
+            existingExecution.Status);
+        return;
     }
 
     throw new InvalidOperationException(
