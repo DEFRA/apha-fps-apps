@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Application.Interfaces;
+﻿namespace Apha.BatchJobs.Application.Interfaces;
 
 /// <summary>Contract for all batch job implementations.</summary>
 public interface IBatchJob

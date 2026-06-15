@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+﻿namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 
 /// <summary>
 /// Service for managing yearly FPS archive data operations.
@@ -31,7 +31,7 @@ public interface IMyFpsYearlyDataService
 
     /// <summary>
     /// Refreshes only the my_tlkpproject_all cross-reference table for the specified year.
-    /// Used for partial refresh when month ≤ 4.
+    /// Used for partial refresh when month Γëñ 4.
     /// </summary>
     /// <param name="year">The year to refresh project all for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

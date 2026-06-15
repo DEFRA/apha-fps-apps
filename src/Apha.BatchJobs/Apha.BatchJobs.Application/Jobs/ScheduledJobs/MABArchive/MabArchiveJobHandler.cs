@@ -1,4 +1,4 @@
-using Apha.BatchJobs.Application.Interfaces;
+﻿using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;

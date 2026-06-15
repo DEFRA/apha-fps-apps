@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+﻿namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 
 /// <summary>
 /// Service for sending email notifications on job failure.

@@ -1,4 +1,4 @@
-namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
+﻿namespace Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 
 /// <summary>
 /// Execution context for MABArchive load operations.
@@ -11,12 +11,12 @@ public sealed record MabArchiveExecutionContext(
     bool IncludePartialRefreshYear)
 {
     /// <summary>
-    /// Determines if the current month requires a partial refresh (month ≤ 4).
+    /// Determines if the current month requires a partial refresh (month Γëñ 4).
     /// </summary>
     public bool RequiresPartialRefresh => CurrentMonth <= 4;
 
     /// <summary>
-    /// The year for partial refresh (current year when month ≤ 4).
+    /// The year for partial refresh (current year when month Γëñ 4).
     /// </summary>
     public int? PartialRefreshYear => RequiresPartialRefresh ? CurrentYear : null;
 }

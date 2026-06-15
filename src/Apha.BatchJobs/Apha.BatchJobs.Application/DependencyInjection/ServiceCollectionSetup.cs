@@ -1,9 +1,10 @@
-using Apha.BatchJobs.Application.Factory;
+﻿using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
+using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Context;
@@ -190,6 +191,18 @@ public static class ServiceCollectionSetup
         public Task<JobExecutionRecord?> GetExecutionByJobExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
             => Task.FromResult<JobExecutionRecord?>(null);
 
+        public Task<Guid> CreateInitiatedRecordAsync(
+            string jobName,
+            Guid jobExecutionId,
+            string requestedBy,
+            DateTime requestedAtUtc,
+            RunMode runMode,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(Guid.NewGuid());
+
+        public Task EnsureJobStatusCatalogAsync(CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
         public Task<bool> TryRequestCancellationAsync(Guid jobExecutionId, string requestedBy, CancellationToken cancellationToken = default)
             => Task.FromResult(true);
 
@@ -234,6 +247,4 @@ public static class ServiceCollectionSetup
         }
     }
 }
-
-
 
