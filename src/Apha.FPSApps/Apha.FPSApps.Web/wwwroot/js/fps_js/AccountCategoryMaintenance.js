@@ -19,7 +19,7 @@ function getAccountCategoryExtraFilters() {
     };
 }
 
-function addAccountCategory(btn) {
+function addAccountCategory() {
     $.ajax({
         url: '/FPS/AccountCategoryMaintenance/Create',
         type: 'GET',
@@ -31,7 +31,7 @@ function addAccountCategory(btn) {
             $.validator.unobtrusive.parse(form);
         },
         error: function () {
-            showToast('Error', 'Failed to load form', 'error');
+            showGovukAlert('Failed to load form');
         }
     });
 }
@@ -50,7 +50,7 @@ function editAccountCategory(btn) {
             $.validator.unobtrusive.parse(form);
         },
         error: function () {
-            showToast('Error', 'Failed to load form', 'error');
+            showGovukAlert('Failed to load form');
         }
     });
 }
