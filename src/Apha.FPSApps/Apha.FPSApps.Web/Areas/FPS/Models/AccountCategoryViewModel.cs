@@ -35,6 +35,5 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 150, Type = GridColumnType.Checkbox)]
         public int? RcSpecific { get; set; }
 
-      //  public int? FpsYear { get; set; }
     }
 }
