@@ -49,7 +49,12 @@ public class StaffRequirementRepositoryTests
 
         RepositoryTestHelper.SetupSaveChanges(mockContext);
 
-        var repo = new StaffRequirementRepository(mockContext.Object, mockFpsYearContext.Object);
+        var mockSettingsRepo = new Mock<ISettingsRepository>();
+        var mockProjectRepo = new Mock<IProjectRepository>();
+        mockProjectRepo.Setup(x => x.GetInflationFactorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(1.0);
+
+        var repo = new StaffRequirementRepository(mockContext.Object, mockFpsYearContext.Object, mockSettingsRepo.Object, mockProjectRepo.Object);
         return (repo, staffReqMockSet, mockContext);
     }
 

@@ -23,6 +23,7 @@ namespace Apha.Common.Constants
         public const string SavePimsDetail = "api/v1/projectdetails/{0}/pims";
         public const string GetProposedProject = "api/v1/projectdetails/{0}/proposed";
         public const string UpdateProposedProject = "api/v1/projectdetails/{0}/proposed";
+        public const string GetFpsProjectByProjectDetails = "api/v1/projectdetails/{0}/fps";
 
         // Project Comment
         public const string GetCommentsByProject = "api/v1/projectcomment";
@@ -64,5 +65,8 @@ namespace Apha.Common.Constants
         public const string GetMilestoneFormDates = "api/v1/milestone/{0}/formdates/{1}";
         public const string SaveMilestoneFormDates = "api/v1/milestone/{0}/formdates";
         public const string DeleteMilestoneFormDates = "api/v1/milestone/{0}/formdates/{1}";
+
+        // Log Milestone
+        public const string GetLogMilestones = "api/v1/milestone/log";
     }
 }

@@ -54,6 +54,25 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
             viewModel.MilestonesGrid = await BuildMilestonesGridAsync(project, defaultRequest);
             viewModel.MilestoneFormDatesGrid = await BuildMilestoneFormDatesGridAsync(project, defaultRequest);
+            viewModel.LogMilestonesGrid = await BuildLogMilestonesGridAsync(defaultRequest, null, null, null);
+            return View(viewModel);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> LogIndex(string? project = null)
+        {
+            MilestoneViewModel viewModel = new();
+            ApiResponseDto<List<ProjectListMilestoneDto>> allProjects =
+                await _projectListService.GetAllProjectsForMilestoneAsync();
+
+            viewModel.ProjectOptions = allProjects.Data?
+                .Select(p => new SelectListItem(p.Parentproject, p.Parentproject))
+                .ToList() ?? [];
+
+            viewModel.Parentproject = project ?? string.Empty;
+
+            PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
+            viewModel.LogMilestonesGrid = await BuildLogMilestonesGridAsync(defaultRequest, project, null, null);
             return View(viewModel);
         }
 
@@ -319,6 +338,64 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 .FirstOrDefault(p => p.Parentproject == parentproject)?.Formrequired ?? false;
             return Json(new { formRequired });
         }
+
+        // ── Log Milestones DataGrid ──────────────────────────────────────────
+
+        [HttpPost]
+        public async Task<IActionResult> LoadLogMilestonesGrid(
+            PaginationFilter<string> request,
+            string? project = null,
+            string? numberPart1 = null,
+            string? numberPart2 = null)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Invalid request data",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+
+            DataGridConfig<LogMilestoneItem> gridConfig =
+                await BuildLogMilestonesGridAsync(request, project, numberPart1, numberPart2);
+            return PartialView("_DataGrid", gridConfig);
+        }
+
+        private async Task<DataGridConfig<LogMilestoneItem>> BuildLogMilestonesGridAsync(PaginationFilter<string> request,string? project,string? numberPart1,string? numberPart2)
+        {
+            QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            ApiResponseDto<List<LogMilestoneDto>> pagedData =
+                await _milestoneService.GetLogMilestonesAsync(queryParameters, project, numberPart1, numberPart2);
+
+            List<LogMilestoneItem> items = new();
+            if (pagedData.Success && pagedData.Data != null)
+                items = _mapper.Map<List<LogMilestoneItem>>(pagedData.Data);
+
+            PaginationModel paginationModel = pagedData.Pagination is null
+                ? new PaginationModel()
+                : _mapper.Map<PaginationModel>(pagedData.Pagination);
+            paginationModel.SortColumn = request.SortBy;
+            paginationModel.SortDirection = request.Descending;
+
+            return new DataGridConfig<LogMilestoneItem>
+            {
+                GridId = "logMilestonesGrid",
+                ShowCheckboxColumn = false,
+                ShowPagination = true,
+                KeyProperty = "Number",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                ExtraFilterMethod = "getLogExtraFilters",
+                BindGridUrl = "/PIMS/Milestone/LoadLogMilestonesGrid",
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<LogMilestoneItem>(),
+                Pagination = paginationModel
+            };
+        }
+
         // ── Helpers ──────────────────────────────────────────────────────────
 
         private async Task PopulateDropdownsAsync(MilestoneViewModel viewModel)

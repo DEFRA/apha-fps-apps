@@ -87,5 +87,11 @@ namespace Apha.PIMS.Application.Services
 
             return _mapper.Map<List<YearDto>>(entities);
         }
+
+        public async Task<ProjectDto?> GetFpsProjectByIdAsync(string parentproject)
+        {
+            Project? entity = await _repository.GetFpsProjectByIdAsync(parentproject);
+            return entity is null ? null : _mapper.Map<ProjectDto>(entity);
+        }
     }
 }
