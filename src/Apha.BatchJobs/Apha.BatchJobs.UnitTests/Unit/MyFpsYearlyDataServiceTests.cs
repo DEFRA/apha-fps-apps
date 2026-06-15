@@ -314,8 +314,15 @@ public sealed class MyFpsYearlyDataServiceTests
 
     private static async Task AssertCanConnectAsync(BatchJobsDbContext context)
     {
-        var canConnect = await context.Database.CanConnectAsync();
-        Skip.IfNot(canConnect, "Integration DB unavailable for MyFpsYearlyDataServiceTests.");
+        try
+        {
+            var canConnect = await context.Database.CanConnectAsync();
+            Skip.IfNot(canConnect, "Integration DB unavailable for MyFpsYearlyDataServiceTests.");
+        }
+        catch (Exception ex)
+        {
+            Skip.If(true, $"Integration DB unavailable for MyFpsYearlyDataServiceTests: {ex.Message}");
+        }
     }
 
     private static List<IMabArchiveLoader> CreateSequentialLoaders(int start, int end)

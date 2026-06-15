@@ -306,9 +306,16 @@ public sealed class MabArchiveJobHandlerTests
 
     private static async Task AssertCanConnectAsync(IDbContextFactory<BatchJobsDbContext> dbContextFactory)
     {
-        await using var context = dbContextFactory.CreateDbContext();
-        var canConnect = await context.Database.CanConnectAsync();
-        Skip.IfNot(canConnect, "Integration DB unavailable for MabArchiveJobHandlerTests.");
+        try
+        {
+            await using var context = dbContextFactory.CreateDbContext();
+            var canConnect = await context.Database.CanConnectAsync();
+            Skip.IfNot(canConnect, "Integration DB unavailable for MabArchiveJobHandlerTests.");
+        }
+        catch (Exception ex)
+        {
+            Skip.If(true, $"Integration DB unavailable for MabArchiveJobHandlerTests: {ex.Message}");
+        }
     }
 
     private sealed class TestDbContextFactory : IDbContextFactory<BatchJobsDbContext>
