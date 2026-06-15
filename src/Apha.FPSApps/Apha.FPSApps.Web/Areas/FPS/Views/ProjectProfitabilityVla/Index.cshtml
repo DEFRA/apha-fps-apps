@@ -44,10 +44,6 @@
         </div>
 
         @* ── Filter dropdowns ────────────────────────────────────────────────── *@
-        @* TRANSFORMENGINE: 4 explicit <select> elements outside #gridContainer_projectProfitabilityList
-               — confirmed present in HTML prototype. Bound via asp-items to ViewModel lists.
-               Status uses static options; Program, Manager, Customer use dynamic asp-items lists.
-               onchange triggers reloadProjectProfitabilityVlaGrid() via JS. *@
         <div class="govuk-grid-row sup_margin_left_right_10">
 
             @* Filter 1: Project Status — static options matching HTML prototype *@
