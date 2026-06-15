@@ -251,7 +251,7 @@ public class YearlyDetailsService : IYearlyDetailsService
 
     public async Task<IEnumerable<PayRateDto>> GetPayRatesAsync(string projectId, int year, bool isDefra)
     {
-        var rates = await _projectYearRepo.GetPayRatesAsync(projectId, year, isDefra);
+        var rates = await _staffRepo.GetPayRatesAsync(projectId, year, isDefra);
         return rates.Select(r => new PayRateDto
         {
             WgGrade = r.WgGrade,

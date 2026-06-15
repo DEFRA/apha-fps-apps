@@ -45,6 +45,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookSettingsService, CostBookSettingsService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IDivisionService, DivisionService>();
+            services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IProjectInvoiceService, ProjectInvoiceService>();
             services.AddScoped<IProjectSubContractService, ProjectSubContractService>();
             services.AddScoped<IMonthService, MonthService>();
@@ -60,23 +61,33 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
             services.AddScoped<IProjectCommentService, ProjectCommentService>();
             services.AddScoped<IProposedProjectService, ProposedProjectService>();
+            services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
+            services.AddScoped<IMilestoneService, MilestoneService>();
+
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
+            services.AddScoped<IWorkgroupService, WorkgroupService>();
 
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
+            services.AddScoped<IPactMonthlyTimeService, PactMonthlyTimeService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
-            services.AddScoped<IProjectMonthService, ProjectMonthService>();            
+            services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
             services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
+            services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
+            services.AddScoped<IAnimalService, AnimalService>();
+            services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
+            services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
+            services.AddScoped<IPlanStaffZTCodeService, PlanStaffZTCodeService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

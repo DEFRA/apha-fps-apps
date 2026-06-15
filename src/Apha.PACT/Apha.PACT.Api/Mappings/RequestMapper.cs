@@ -18,6 +18,7 @@ namespace Apha.PACT.Api.Mappings
 
             CreateMap<JobCodeReq, JobCodeDto>().ReverseMap();
             CreateMap<JobCodeRes, JobCodeDto>().ReverseMap();
+            CreateMap<JobCodeZtRes, JobCodeZtDto>().ReverseMap();
             CreateMap<TimeCodeValidReq, TimeCodeValidDto>().ReverseMap();
             CreateMap<TimeCodeValidRes, TimeCodeValidDto>().ReverseMap();
             CreateMap<WorkGroupRes, WorkGroupDto>().ReverseMap();
@@ -30,7 +31,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<TestCapabilityReq, TestCapabilityDto>().ReverseMap();
             CreateMap<TestCapabilityRes, TestCapabilityDto>().ReverseMap();
             CreateMap<TestRequirementReq, TestRequirementtDto>().ReverseMap();
-            CreateMap<TestRequirementtRes, TestRequirementtDto>().ReverseMap();            
+            CreateMap<TestRequirementtRes, TestRequirementtDto>().ReverseMap();
             CreateMap<TestorProductReq, TestorProductDto>().ReverseMap();
             CreateMap<TestorProductRes, TestorProductDto>().ReverseMap();
             CreateMap<MonthlyInvoicesSummaryDto, MonthlyInvoicesSummaryItemRes>().ReverseMap();
@@ -41,7 +42,8 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<ProjectMonthRes, ProjectMonthDto>().ReverseMap();
             CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
             CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
-            CreateMap<MonthlyOutputLogDto, MonthlyOutputLogRes>().ReverseMap();            
+            CreateMap<MonthlyOutputLogDto, MonthlyOutputLogRes>().ReverseMap();
+            CreateMap<MonthlyTimeLogDto, MonthlyTimeLogRes>().ReverseMap();
             CreateMap<WorkGroupTimeCodeRes, WorkGroupTimeCodeDto>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeRes, WorkGroupValidTimeCodeDto>().ReverseMap();
             CreateMap<WgSummarisedStaffTimeUsageRowRes, WgSummarisedStaffTimeUsageRowDto>().ReverseMap();
@@ -55,7 +57,11 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<SummarisedWgTimeRowDto, SummarisedWgTimeRes>(MemberList.Source)
                 .ForMember(dest => dest.SumOfTime, opt => opt.MapFrom(src => src.TotalTime))
                 .ForMember(dest => dest.SumOfCost, opt => opt.MapFrom(src => src.TotalCost));
-            CreateMap<WorkGroupReportEmailResultDto, WorkGroupReportEmailResultRes>().ReverseMap();            
+            CreateMap<WorkGroupReportEmailResultDto, WorkGroupReportEmailResultRes>().ReverseMap();
+            CreateMap<TestSupplierViewRes, TestSupplierViewDto>().ReverseMap();
+            CreateMap<RecreateSummaryLogRes, RecreateSummaryLogDto>().ReverseMap();
+            CreateMap<ReleasePeriodRes, ReleasePeriodDto>().ReverseMap();
+            CreateMap<ReleaseSummaryDto, ReleaseSummaryRes>();
         }
     }
 }

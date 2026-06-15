@@ -65,6 +65,14 @@ public class ProjectSummaryController : ControllerBase
         return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
+    /// <summary>Returns the raw cost totals (staff, test, animal, additional) for a project/year combination.</summary>
+    [HttpGet("{projectId}/years/{year}/costsummary")]
+    public async Task<IActionResult> GetProjectYearCostSummary(string projectId, int year)
+    {
+        var dto = await _service.GetProjectYearCostSummaryAsync(projectId, year);
+        return Ok(BuildOk(_mapper.Map<ProjectYearCostSummaryRes>(dto)));
+    }
+
     private static ApiResponse<T> BuildOk<T>(T data) => new()
     {
         Success = true,

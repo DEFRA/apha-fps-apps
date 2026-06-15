@@ -51,6 +51,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPerson>().ReverseMap();
             CreateMap<MonthlyOutputLogDto, MonthlyOutputLogItem>().ReverseMap();
+            CreateMap<MonthlyTimeLogDto, MonthlyTimeLogItem>().ReverseMap();
             CreateMap<CalenderMonthDto, CalenderMonth>().ReverseMap();
             CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeItem>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeItem>().ReverseMap();
@@ -59,6 +60,15 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<SummarisedWgTimeDto, SummarisedWgTimePivotRow>();
             CreateMap<SummarisedWgTimeSummaryDto, SummarisedWgTimeSummary>();
+
+            CreateMap<RecreateSummaryLogDto, RecreateSummaryLogItem>()
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.Comments));
+
+            CreateMap<ProfitCentreCostDto, ProfitCenterCostItem>().ReverseMap();
+
+            CreateMap<ReleasePeriodDto, PeriodMonth>().ReverseMap();
+
+            CreateMap<ReleasePeriodDto, ReleasePeriodItem>().ReverseMap();
         }
     }
 }

@@ -1,4 +1,3 @@
-using Apha.Common.Utilities.ExcelExport;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -8,15 +7,14 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
     [Area("PACT")]
-    [Authorize(Roles = "FPSAdmin,FPSUser,PACTAdmin,PACTUser")]
-    [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
+    [Authorize(Roles = "PACTAdmin,PACTUser")]
+    [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
     public class WorkGroupTestCapabilityController : Controller
     {
         private readonly IMapper _mapper;
@@ -38,18 +36,17 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <summary>
         /// Displays the WorkGroup-focused Test Capability view.
         /// </summary>
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string workGroup = "")
         {
             var workGroupsResponse = await _workGroupService.GetAllWorkGroupsAsync();
 
             var viewModel = new WorkGroupTestCapabilityViewModel
             {
+                SelectedWorkGroup = workGroup,
                 TestCapabilityGrid = BuildEmptyTestCapabilityGrid(),
                 WorkGroupOptions = workGroupsResponse.Success && workGroupsResponse.Data != null
-                    ? workGroupsResponse.Data
-                        .Select(w => new SelectListItem(w.WorkGroupName, w.WorkGroupName))
-                        .ToList()
-                    : new List<SelectListItem>()
+                    ? _mapper.Map<List<WorkGroup>>(workGroupsResponse.Data)
+                    : new List<WorkGroup>()
             };
 
             return View(viewModel);

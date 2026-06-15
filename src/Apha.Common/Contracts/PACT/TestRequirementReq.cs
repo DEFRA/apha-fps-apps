@@ -1,6 +1,9 @@
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
 namespace Apha.Common.Contracts.PACT
 {
-    public class TestRequirementReq
+    public class TestRequirementReq 
     {
         public string TestCode { get; set; } = null!;
         public string Buyer { get; set; } = null!;

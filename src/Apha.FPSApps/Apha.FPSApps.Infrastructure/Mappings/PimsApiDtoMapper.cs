@@ -19,6 +19,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Project List
             CreateMap<ProjectListRes, ProjectListViewDto>().ReverseMap();
+            CreateMap<ProjectListMilestoneRes, ProjectListMilestoneDto>().ReverseMap();
 
             // FPS Project Details (read-only)
             CreateMap<ProjectRes, ProjectDto>().ReverseMap();
@@ -46,6 +47,40 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Year
             CreateMap<YearRes, YearDto>().ReverseMap();
+
+            // Additional Cost
+            CreateMap<AdditionalCostRes, AdditionalCostDto>().ReverseMap();
+
+            // Animal Cost
+            CreateMap<AnimalCostRes, AnimalCostDto>().ReverseMap();
+
+            // Test Cost
+            CreateMap<TestCostRes, TestCostDto>().ReverseMap();
+
+            // Staff Cost
+            CreateMap<StaffCostRes, StaffCostDto>().ReverseMap();
+
+            // Project Year Details
+            CreateMap<ProjectYearDetailsRes, ProjectYearDetailsDto>().ReverseMap();
+
+            // Pact Pay
+            CreateMap<PactPayRes, PactPayDto>().ReverseMap();
+
+            // Monthly Pact Data
+            CreateMap<MonthlyPactRes, MonthlyPactDto>().ReverseMap();
+
+            // FPS Year Totals
+            CreateMap<FpsYearTotalsRes, FpsYearTotalsDto>().ReverseMap();
+
+            // Milestones
+            CreateMap<MilestoneRes, MilestoneDto>().ReverseMap();
+            CreateMap<MilestoneDto, MilestoneReq>().ReverseMap();
+            CreateMap<MilestoneTypeRes, MilestoneTypeDto>().ReverseMap();
+
+            CreateMap<MilestoneFormDatesRes, MilestoneFormDatesDto>().ReverseMap();
+            CreateMap<MilestoneFormDatesDto, MilestoneFormDatesReq>().ReverseMap();
+
+            CreateMap<LogMilestoneRes, LogMilestoneDto>().ReverseMap();
         }
     }
 }

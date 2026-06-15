@@ -1,7 +1,9 @@
+using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
+using Apha.FPSApps.Web.Constants;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -20,35 +22,63 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IProgramService _programService;
         private readonly IProjectService _projectService;
+        private readonly IAppStateService _appStateService;
 
         public ProjectProfitabilityController(
             IMapper mapper,
             IProgramService programService,
-            IProjectService projectService)
+            IProjectService projectService,
+            IAppStateService appStateService)
         {
             _mapper = mapper;
             _programService = programService;
             _projectService = projectService;
+            _appStateService = appStateService;
         }
 
-        public async Task<IActionResult> Index(string? programNo = null)
+        public async Task<IActionResult> Index(string? programNo = null, string? source = null)
         {
-            var programmeList = await GetProgrammeListAsync();
-            var isValid = !string.IsNullOrWhiteSpace(programNo)
-                && programmeList.Any(p => p.Value == programNo);
-            var selectedProgramNo = isValid
-                ? programNo!
-                : programmeList.FirstOrDefault()?.Value ?? string.Empty;
+            var isProjectGroupMode = string.Equals(source, "projectgroup", StringComparison.OrdinalIgnoreCase);
 
-            var grid = GetProfitabilityGridConfig();
+            var grid = GetProfitabilityGridConfig(isProjectGroupMode);
 
             var model = new ProjectProfitabilityViewModel
             {
-                SelectedProgramNo = selectedProgramNo,
-                ProgrammeList = programmeList,
                 WorkTypeFilter = "all",
-                ProfitabilityGrid = grid
+                ProfitabilityGrid = grid,
+                IsProjectGroupMode = isProjectGroupMode
             };
+
+            if (isProjectGroupMode)
+            {
+                var projectGroupList = await GetProjectGroupListAsync();
+                var selectedProjectGroup = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProjectGroup);
+
+                selectedProjectGroup = !string.IsNullOrWhiteSpace(selectedProjectGroup) && projectGroupList.Any(p => p.Value == selectedProjectGroup)
+                    ? selectedProjectGroup
+                    : projectGroupList.FirstOrDefault()?.Value ?? string.Empty;
+
+                await _appStateService.SetSessionAsync(SessionKeys.SelectedProjectGroup, selectedProjectGroup);
+
+                model.ProjectGroupList = projectGroupList;
+                model.SelectedProjectGroup = selectedProjectGroup;
+            }
+            else
+            {
+                var programmeList = await GetProgrammeListAsync();
+
+                if (string.IsNullOrWhiteSpace(programNo))
+                    programNo = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProgramNo);
+
+                var selectedProgramNo = !string.IsNullOrWhiteSpace(programNo) && programmeList.Any(p => p.Value == programNo)
+                    ? programNo!
+                    : programmeList.FirstOrDefault()?.Value ?? string.Empty;
+
+                await _appStateService.SetSessionAsync(SessionKeys.SelectedProgramNo, selectedProgramNo);
+
+                model.ProgrammeList = programmeList;
+                model.SelectedProgramNo = selectedProgramNo;
+            }
 
             return View(model);
         }
@@ -62,19 +92,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> LoadProjectProfitabilityGrid(
             PaginationFilter<string> request,
             string? programNo = null,
+            string? projectGroup = null,
             string? workTypeFilter = "all")
         {
-            if (string.IsNullOrWhiteSpace(programNo))
+            var isProjectGroupMode = !string.IsNullOrWhiteSpace(projectGroup);
+
+            if (!isProjectGroupMode && string.IsNullOrWhiteSpace(programNo))
                 return BadRequest("programNo is required.");
 
             var filterDict = !string.IsNullOrEmpty(request.Filter)
                 ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
-                : null;
-           
+                : null;            
+
             var query = _mapper.Map<QueryParameters<string>>(request);
 
-            var response = await _projectService.GetProjectProfitabilityAsync(
-                query, programNo, workTypeFilter ?? "all");
+            var response = isProjectGroupMode
+                ? await _projectService.GetProjectGroupProfitabilityAsync(query, projectGroup!, workTypeFilter ?? "all")
+                : await _projectService.GetProjectProfitabilityAsync(query, programNo!, workTypeFilter ?? "all");
 
             if (!response.Success)
                 return StatusCode(500, response.Errors);
@@ -89,7 +123,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var gridConfig = new DataGridConfig<ProjectProfitabilityItem>
             {
                 GridId = "isProjectProfitGrid",
-                Title = "Project Profitability",
+                Title = isProjectGroupMode ? "Project Group Profitability" : "Project Profitability",
                 KeyProperty = "JobCode",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
@@ -115,14 +149,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetProfitabilitySummary(
-            [FromQuery] string programNo,
+            [FromQuery] string? programNo,
+            [FromQuery] string? projectGroup,
             [FromQuery] string workTypeFilter = "all")
         {
-            if (string.IsNullOrWhiteSpace(programNo))
+            var isProjectGroupMode = !string.IsNullOrWhiteSpace(projectGroup);
+
+            if (!isProjectGroupMode && string.IsNullOrWhiteSpace(programNo))
                 return Ok(new { programmeTarget = (decimal?)null, programmeSurplusShortfall = 0m });
 
             var query = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
-            var response = await _projectService.GetProjectProfitabilityAsync(query, programNo, workTypeFilter);
+
+            var response = isProjectGroupMode
+                ? await _projectService.GetProjectGroupProfitabilityAsync(query, projectGroup!, workTypeFilter)
+                : await _projectService.GetProjectProfitabilityAsync(query, programNo!, workTypeFilter);
+
             if (!response.Success)
                 return StatusCode(500, response.Errors);
 
@@ -145,12 +186,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
-        private DataGridConfig<ProjectProfitabilityItem> GetProfitabilityGridConfig()
+        private DataGridConfig<ProjectProfitabilityItem> GetProfitabilityGridConfig(bool isProjectGroupMode = false)
         {
             return new DataGridConfig<ProjectProfitabilityItem>
             {
                 GridId = "isProjectProfitGrid",
-                Title = "Project Profitability",
+                Title = isProjectGroupMode ? "Project Group Profitability" : "Project Profitability",
                 KeyProperty = "JobCode",
                 ShowCheckboxColumn = false,
                 ShowPagination = false,
@@ -184,5 +225,22 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 })
                 .ToList();
         }
-    }   
+
+        private async Task<List<SelectListItem>> GetProjectGroupListAsync()
+        {
+            var response = await _projectService.GetProjectGroupsByUserAsync();
+            if (!response.Success || response.Data == null)
+                return new List<SelectListItem>();
+
+            return response.Data
+                .OrderBy(g => g.ProjectGroupName)
+                .Where(g => !string.IsNullOrWhiteSpace(g.ProjectGroupName))
+                .Select(g => new SelectListItem
+                {
+                    Value = g.ProjectGroupName,
+                    Text = g.ProjectGroupName
+                })
+                .ToList();
+        }
+    }
 }

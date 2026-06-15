@@ -21,6 +21,12 @@ namespace Apha.PACT.Application.Services
             _mapper = mapper;
         }
 
+        public async Task<IEnumerable<JobCodeDto>> GetJobCodesAsync()
+        {
+            var items = await _repository.GetJobCodesAsync();
+            return _mapper.Map<IEnumerable<JobCodeDto>>(items);
+        }
+
         public async Task<IEnumerable<JobCodeDto>> GetJobCodesByProjectAsync(string parentProject)
         {
             var items = await _repository.GetJobCodesByProjectAsync(parentProject);
@@ -76,6 +82,12 @@ namespace Apha.PACT.Application.Services
                 throw new InvalidOperationException($"This JobCode has related records in TimeCodeValid and cannot be deleted.");
 
             return await _repository.DeleteJobCodeAsync(jobCodeId);
+        }
+
+        public async Task<IEnumerable<JobCodeZtDto>> GetZtCodeLookupAsync()
+        {
+            var jobCodes = await _repository.GetZtJobCodesAsync();
+            return _mapper.Map<IEnumerable<JobCodeZtDto>>(jobCodes);
         }
     }
 }

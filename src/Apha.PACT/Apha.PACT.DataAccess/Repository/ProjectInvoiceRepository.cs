@@ -30,8 +30,7 @@ namespace Apha.PACT.DataAccess.Repository
             queryInvoices = ApplyInvoiceFilter(queryInvoices, query.Filter);
             queryInvoices = (IQueryable<ProjectInvoice>)ApplySorting(queryInvoices, query.SortBy, query.Descending);
 
-            List<ProjectInvoice> result = await queryInvoices.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(queryInvoices, query.Page, query.PageSize);
         }
 
         public async Task<decimal> GetTotalAmountAsync(string? parentProject)

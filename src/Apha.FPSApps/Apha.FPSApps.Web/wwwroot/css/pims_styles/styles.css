@@ -73,69 +73,6 @@
     text-align: right;
 }
 
-/* error styling — GOV.UK default border-left is intentionally preserved */
-
-/* header-nav, app-log, menu-icon — moved to css/common/headernav/navstyle.css */
-/* .sidenav {
-  height: 100%;
-  width: 0;
-  position: fixed;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  background-color: #111;
-  overflow-x: hidden;
-  transition: 0.5s;
-  padding-top: 60px;
-}
-
-.sidenav a {
-  padding: 8px 8px 8px 32px;
-  text-decoration: none;
-  font-size: 25px;
-  color: #818181;
-  display: block;
-  transition: 0.3s;
-}
-
-.sidenav a:hover {
-  color: #f1f1f1;
-}
-
-.sidenav .closebtn {
-  position: absolute;
-  top: 0;
-  right: 25px;
-  font-size: 36px;
-  margin-left: 50px;
-}
-
-@media screen and (max-height: 450px) {
-  .sidenav {padding-top: 15px;}
-  .sidenav a {font-size: 18px;}
-}
-
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-  width: 100%;
-  border: 1px solid #ddd;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px;
-}
-
-tr:nth-child(even) {
-  background-color: #f2f2f2;
-}
-
-.row.align-items-start table > tbody > tr > th {
-    border-bottom: 1px solid #878787;
-    background: #ccc;
-} */
-
 /*menu*/
 
 :root {
@@ -209,7 +146,9 @@ body {
 .sidenav>ul>li {
     font-size: 16px;
     border-radius: 0 8px 8px 0;
-    background-color: #2196F3;
+    background-color: #1d70b8;
+    cursor: pointer;
+
 
 }
 
@@ -219,6 +158,7 @@ body {
     display: inline-flex;
     width: 100%;
     visibility: hidden;
+    color: #fff";
 
 }
 
@@ -258,8 +198,8 @@ body {
 }
 
 .collapsed .sidebar-link-two>a {
-    width: 290px;
     visibility: visible;
+    color: #ffffff;
 }
 
 .logo-text {
@@ -1190,24 +1130,6 @@ th.col-resizable {
     background-color: rgba(29, 112, 184, 0.25);
 }
 
-/* ── Sort icons (used by table_utils.js tuInitSort) ── */
-.sort-icon {
-    display: inline-block;
-    margin-left: 4px;
-    font-size: 11px;
-    opacity: 0.4;
-    font-weight: normal;
-    vertical-align: middle;
-    color: #0b0c0c;
-}
-
-th.sorted-asc .sort-icon,
-th.sorted-desc .sort-icon {
-    opacity: 1;
-    color: #0b0c0c;
-    font-weight: bold;
-}
-
 .milestones-toolbar {
     display: flex;
     justify-content: flex-start;
@@ -1375,24 +1297,6 @@ th.sorted-asc,
 th.sorted-desc {
     background-color: #e8f0fe;
     color: #0b0c0c;
-}
-
-/* Sort arrow icon – default (unsorted) */
-.sort-icon {
-    display: inline-block;
-    margin-left: 4px;
-    font-size: 11px;
-    opacity: 0.35;
-    font-weight: normal;
-    vertical-align: middle;
-}
-
-/* Sort arrow icon – active state */
-th.sorted-asc .sort-icon,
-th.sorted-desc .sort-icon {
-    opacity: 1;
-    color: #0b0c0c;
-    font-weight: bold;
 }
 
 
@@ -3000,6 +2904,14 @@ th.sorted-desc .sort-icon {
     padding-top: 16px;
     margin-top: 12px;
     max-width: 470px;
+
+}
+
+/* ── pimsNewProject.html — form column at 60% max-width ──── */
+#pimsformNewProject,
+.pnp-app-note {
+    width: 100%;
+    max-width: 60%;
 }
 
 /* =====================================================
@@ -3016,4 +2928,33 @@ th.sorted-desc .sort-icon {
     min-width: 220px;
     max-width: 240px;
     flex-shrink: 0;
+}
+/* =====================================================
+
+   Milestone/Deliverable Form Required checkbox
+
+   Keep checkbox and label on the same line
+
+   ===================================================== */ 
+.milestone-checkbox-inline {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    white-space: nowrap;
+}
+/* Override button positioning to move Add button to rightmost */
+
+#gridContainer_milestonesGrid .editable-grid-container > div > h2 > .sup_flex_space_between, #gridContainer_milestoneFormDatesGrid .editable-grid-container > div > h2 > .sup_flex_space_between {
+    display: flex !important;
+    justify-content: end !important;
+}
+
+#gridContainer_milestonesGrid > .editable-grid-container > div > .grid-scroll-container {
+    height: 300px !important;
+    max-height: 300px !important;
+}
+
+#gridContainer_milestoneFormDatesGrid > .editable-grid-container > div > .grid-scroll-container {
+    height: 250px !important;
+    max-height: 250px !important;
 }

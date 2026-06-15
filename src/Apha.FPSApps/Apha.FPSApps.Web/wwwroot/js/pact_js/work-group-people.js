@@ -295,16 +295,11 @@ function initWorkGroupPeoplePage() {
 
     // ── Show Time by JobCode and Month button ──────────────────────────────
     $('#btnShowTimeByJob').on('click', function () {
-        var $error = $('#workgroupValidationError');
-        var $input = $('#selectedWorkgroup');
         if (!currentWorkGroup) {
-            $input.addClass('govuk-input--error');
-            $error.show();
-            alert('Please select a Work Group first.');
+            showGovukAlert('Please select a person first.');
             return;
         }
-        $input.removeClass('govuk-input--error');
-        $error.hide();
+
         var url = '/PACT/WorkGroupSummarisedStaffTimeUsage?workGroup=' + encodeURIComponent(currentWorkGroup) + '&staffName=' + encodeURIComponent(currentPersonName || '');
         window.fpsNavigateTo(url);
     });
@@ -316,7 +311,7 @@ function initWorkGroupPeoplePage() {
         if (!currentWorkGroup) {
             $input.addClass('govuk-input--error');
             $error.show();
-            alert('Please select a Work Group first.');
+            showGovukAlert('Please select a Work Group first.');
             return;
         }
         $input.removeClass('govuk-input--error');
@@ -331,7 +326,7 @@ function initWorkGroupPeoplePage() {
         if (!currentWorkGroup) {
             $input.addClass('govuk-input--error');
             $error.show();
-            alert('Please select a Work Group first.');
+            showGovukAlert('Please select a Work Group first.');
             return;
         }
         $input.removeClass('govuk-input--error');
@@ -346,7 +341,7 @@ function initWorkGroupPeoplePage() {
         if (!currentWorkGroup) {
             $input.addClass('govuk-input--error');
             $error.show();
-            alert('Please select a Work Group first.');
+            showGovukAlert('Please select a Work Group first.');
             return;
         }
         $input.removeClass('govuk-input--error');

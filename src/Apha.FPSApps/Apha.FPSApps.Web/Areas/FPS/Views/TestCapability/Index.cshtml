@@ -1,0 +1,194 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.TestCapabilityViewModel
+
+@{
+    ViewData["Title"] = "FPS : Set Up Portfolio Components";
+}
+
+@* Breadcrumb *@
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
+            <div class="sup_flex_left_center" style="display: flex; font-size: 14px; align-items: center;"></div>
+            <div style="visibility: hidden"><a id="backlink" href="#" class="govuk-back-link">Back</a></div>
+        </h1>
+    </div>
+</div>
+
+@* Page Title *@
+<div class="govuk-grid-row sup_margin_left_right_0">
+    <div class="govuk-grid-column-full">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
+            <div class="sup_flex_left_center">Set Up Portfolio Components</div>
+        </h1>
+    </div>
+</div>
+
+@* Filter Header: Select Portfolio *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_flex_left_center sup_padding_bottom_10 sup_border-bottom" style="margin-top:10px;">
+
+    <div class="govuk-grid-column-one-third">
+        <label for="portfolioPick" class="govuk-label govuk-!-font-weight-bold">Select a Portfolio:</label>
+        <select id="portfolioPick" class="govuk-select govuk-!-font-size-16" style="width:100%;"
+                onchange="onPortfolioChange(this.value, this.options[this.selectedIndex].text)">
+            <option value="">-- Select --</option>
+            @foreach (var item in Model.PortfolioOptions)
+            {
+                <option value="@item.Value">@item.Text</option>
+            }
+        </select>
+    </div>
+    <div class="govuk-grid-column-one-third">
+        <div class="govuk-label" aria-hidden="true">&nbsp;</div>
+        <button class="govuk-button govuk-!-margin-bottom-0" type="button"
+                onclick="editPortfolioDetails()">
+            Edit Portfolio Details
+        </button>
+    </div>
+</div>
+
+@* Grid *@
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+    <div class="govuk-grid-column-full">
+        <div id="gridContainer_testCapabilityGrid">
+            @await Html.PartialAsync("_DataGrid", Model.TestCapabilityGrid)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        var currentPortfolio = '';
+
+        // ── Filter ────────────────────────────────────────────────────────────
+
+        function onPortfolioChange(portfolio, labelText) {
+            currentPortfolio = portfolio;
+
+            // Extract description part after ' – ' if present
+            var desc = '';
+            if (labelText) {
+                var sepIdx = labelText.indexOf(' \u2013 ');
+                desc = sepIdx >= 0 ? labelText.substring(sepIdx + 3) : labelText;
+            }
+            $('#portfolioDescription').val(portfolio ? desc : '');
+
+            window['gridManager_testCapabilityGrid'].reloadGrid({ page: 1 });
+        }
+
+        function getTestCapabilityExtraFilters() {
+            return { portfolio: currentPortfolio };
+        }
+
+        // ── Navigation ────────────────────────────────────────────────────────
+
+        function editPortfolioDetails() {
+            if (!currentPortfolio) {
+                showGovukAlert('Please select a Portfolio first.');
+                return;
+            }
+            window.location.href = '/FPS/PortfolioNew/Index?parentProject=' + encodeURIComponent(currentPortfolio);
+        }
+
+        // ── CRUD ──────────────────────────────────────────────────────────────
+
+        function addTestCapability() {
+            if (!currentPortfolio) {
+                showGovukAlert('Please select a Portfolio first.');
+                return;
+            }
+            $.get('/FPS/TestCapability/CreateTestCapability', { portfolio: currentPortfolio }, function (html) {
+                $('#modaPopupBody').html(html);
+                $('#modalPopup').addClass('show');
+            }).fail(function () {
+                showGovukAlert('An error occurred while loading the form.');
+            });
+        }
+
+        function editTestCapability(btn) {
+            var testCode = $(btn).data('id');
+            var workGroup = $(btn).closest('tr').find('td[data-property="WorkGroup"] span').text().trim();
+            $.get('/FPS/TestCapability/EditTestCapability', { testCode: testCode, workGroup: workGroup }, function (html) {
+                $('#modaPopupBody').html(html);
+                $('#modalPopup').addClass('show');
+            }).fail(function () {
+                showGovukAlert('An error occurred while loading the edit form.');
+            });
+        }
+
+        function deleteTestCapability(btn) {
+            var testCode = $(btn).data('id');
+            var workGroup = $(btn).closest('tr').find('td[data-property="WorkGroup"] span').text().trim();
+            showGovukConfirm('Are you sure you want to delete this Portfolio Component?').then(function (result) {
+                if (!result) return;
+                $.ajax({
+                    url: '/FPS/TestCapability/DeleteTestCapability',
+                    type: 'DELETE',
+                    data: { testCode: testCode, workGroup: workGroup },
+                    success: function (response) {
+                            if (response.success) {
+                                showGovukAlert('Record deleted successfully.').then(function () {
+                                    window['gridManager_testCapabilityGrid'].reloadGrid({ page: 1 });
+                                });
+                        } else {
+                            showGovukAlert(response.message || 'Failed to delete entry.');
+                        }
+                    },
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting.');
+                    }
+                });
+            });
+        }
+
+        function saveTestCapability() {
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#testCapabilityForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            var isEdit = form.data('mode') === 'edit';
+            var url = isEdit
+                ? '/FPS/TestCapability/EditTestCapability'
+                : '/FPS/TestCapability/CreateTestCapability';
+
+            var formData = {};
+            form.serializeArray().forEach(function (item) {
+                formData[item.name] = item.value;
+            });
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (result) {
+                    if (result.success) {
+                        closeModal();
+                        showGovukAlert(result.message || 'Record saved successfully.');
+                        window['gridManager_testCapabilityGrid'].reloadGrid({ page: 1 });
+                    } else {
+                        displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        showGovukAlert('An error occurred while saving.');
+                    }
+                }
+            });
+        }
+
+        function closeModal() {
+            clearValidationErrors('#modaPopupBody');
+            $('#modaPopupBody').html('');
+            $('#modalPopup').removeClass('show');
+        }
+    </script>
+}

@@ -36,11 +36,17 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(ProjectDto project)
             => await _fpsClient.FpsProject.UpdateProjectAsync(project);
 
+        public Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project)
+            => _fpsClient.FpsProject.UpdateProjectAsync(parentProject, project);
+
         public async Task<ApiResponseDto<ProjectDto>> UpdatePactProjectAsync(ProjectDto project)
             => await _fpsClient.FpsProject.UpdatePactProjectAsync(project);
 
         public async Task<ApiResponseDto<ProjectDto>> UpdatePactPortfolioAsync(ProjectDto project)
             => await _fpsClient.FpsProject.UpdatePactPortfolioAsync(project);
+
+        public async Task<ApiResponseDto<ProjectDto>> UpdateFpsPortfolioAsync(ProjectDto project)
+            => await _fpsClient.FpsProject.UpdateFpsPortfolioAsync(project);
 
         public async Task<ApiResponseDto<bool>> DeleteProjectAsync(string parentProject)
             => await _fpsClient.FpsProject.DeleteProjectAsync(parentProject);
@@ -63,15 +69,15 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo)
             => await _fpsClient.FpsProject.GetProjectsByProgramAsync(query, programNo);
 
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup)
+            => await _fpsClient.FpsProjectGroup.GetProjectsByProjectGroupAsync(query, projectGroup);
+
         public async Task<ApiResponseDto<List<ProjectGroupDto>>> GetAllProjectGroupsAsync()
             => await _fpsClient.FpsLookup.GetAllProjectGroupsAsync();
 
         // Merged from ProgrammeNewProjectService
         public Task<ApiResponseDto<ProjectDto>> GetProgrammeNewProjectByIdAsync(string parentProject)
             => _fpsClient.FpsProject.GetProjectByIdAsync(parentProject);
-
-        public Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project)
-            => _fpsClient.FpsProject.UpdateProjectAsync(parentProject, project);
 
         public Task<ApiResponseDto<bool>> DeleteProjectAndChildrenAsync(string parentProject)
             => _fpsClient.FpsProject.DeleteProjectAndChildrenAsync(parentProject);
@@ -89,10 +95,10 @@ namespace Apha.FPSApps.Application.Services.FPS
             => _fpsClient.FpsProject.GetCostCentresAsync();
 
         public Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsAsync()
-            => _fpsClient.FpsProject.GetProjectGroupsAsync();
+            => _fpsClient.FpsProjectGroup.GetAllProjectGroupsAsync();
 
         public Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsByUserAsync()
-            => _fpsClient.FpsProject.GetProjectGroupsByUserAsync();
+            => _fpsClient.FpsProjectGroup.GetProjectGroupsByUserAsync();
 
         public Task<ApiResponseDto<List<AccountCodeDto>>> GetAccountCodesAsync()
             => _fpsClient.FpsProject.GetAccountCodesAsync();
@@ -103,5 +109,9 @@ namespace Apha.FPSApps.Application.Services.FPS
         public Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(
             QueryParameters<string> query, string programNo, string workTypeFilter)
             => _fpsClient.FpsProject.GetProjectProfitabilityAsync(query, programNo, workTypeFilter);
+
+        public Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(
+            QueryParameters<string> query, string projectGroup, string workTypeFilter)
+            => _fpsClient.FpsProject.GetProjectGroupProfitabilityAsync(query, projectGroup, workTypeFilter);
     }
 }

@@ -2,6 +2,14 @@ namespace Apha.Common.Constants
 {
     public static class FpsApiEndpoints
     {
+        // Animal Master (tblAnimals_MAP maintenance)
+        public const string GetAllAnimalMasters = "api/v1/animal";
+        public const string GetPagedAnimalMasters = "api/v1/animal/paged";
+        public const string GetAnimalMasterById = "api/v1/animal/{0}";
+        public const string CreateAnimalMaster = "api/v1/animal";
+        public const string UpdateAnimalMaster = "api/v1/animal";
+        public const string DeleteAnimalMaster = "api/v1/animal/{0}";
+
         // Animal
         public const string GetAnimalCosts = "api/v1/animalrequest?jobCode={0}";
         public const string GetAnimalLookup = "api/v1/animalrequest/lookup";
@@ -22,6 +30,7 @@ namespace Apha.Common.Constants
         public const string GetAllPactManagers = "api/v1/employee/pactmanagers";
         public const string GetAllPerson = "api/v1/employee/persons";
         public const string GetWorkGroupStaffPaginated = "api/v1/employee/WorkGroupStaff/paginated";
+        public const string GetpactStaffs = "api/v1/employee/pactstaff";
 
         // Lookup
         public const string GetAllStatuses = "api/v1/status";
@@ -45,6 +54,7 @@ namespace Apha.Common.Constants
         public const string UpdateDivisionGrade = "api/v1/DivisionGrade/{0}";
         public const string DeleteDivisionGrade = "api/v1/DivisionGrade/{0}";
         public const string GetAllDivisionGrades = "api/v1/DivisionGrade/grades";
+        public const string GetAllDivisionGradeCodes = "api/v1/DivisionGrade/divisiongrades";
 
         // Program
         public const string GetAllPrograms = "api/v1/program";
@@ -64,8 +74,10 @@ namespace Apha.Common.Constants
         public const string UpdateProject = "api/v1/project";
         public const string UpdatePactProject = "api/v1/project/external/pact";
         public const string UpdatePactPortfolio = "api/v1/project/external/portfolio";
+        public const string UpdateFpsPortfolio = "api/v1/project/external/fps-portfolio";
         public const string DeleteProject = "api/v1/project/{0}";
         public const string GetProjectsByProgram = "api/v1/project/paged?programNo={0}";
+        public const string GetProjectsByProjectGroup = "api/v1/project/paged/by-project-group?projectGroup={0}";
 
         // Project Group
         public const string GetAllProjectGroups = "api/v1/projectgroup";
@@ -90,6 +102,9 @@ namespace Apha.Common.Constants
         // Project Staff Plan
         public const string GetPagedProjectStaffPlan = "api/v1/projectstaffplan";
 
+        // Project Group Staff Plan (fps.vpvtprojectgroupmgrplan)
+        public const string GetPagedProjectGroupStaffPlan = "api/v1/projectgroupstaffplan";
+
         // Staff Job
         public const string GetAllStaffJobs = "api/v1/staffjob?jobCode={0}";
         public const string GetStaffWorkgroupLookup = "api/v1/staffjob/workgrouplookup";
@@ -100,6 +115,10 @@ namespace Apha.Common.Constants
         public const string UpdateStaffJob = "api/v1/staffjob";
         public const string DeleteStaffJob = "api/v1/staffjob?staffId={0}&jobcode={1}";
         public const string GetStaffJobViewById = "api/v1/staffjob/view?staffId={0}&jobcode={1}";
+        public const string GetStaffSummaryById = "api/v1/staffjob/staffsummary?staffId={0}";
+        public const string GetZtTotalHoursByStaffId = "api/v1/staffjob/zttotalhours?staffId={0}";
+        public const string GetZtStaffJobsByStaffIdPaged = "api/v1/staffjob/ztstaffjobs/paged";
+        public const string GetZtStaffJobDetailsById = "api/v1/staffjob/ztstaffjob/{0}/{1}";
 
         // View Project Plan vs Actual Staff
         public const string GetTimeCostCalcsByProject = "api/v1/timecostcalcs?projectCode={0}";
@@ -129,9 +148,22 @@ namespace Apha.Common.Constants
         public const string DeleteProfitCentre = "api/v1/profitcentres/{0}";                    
         public const string GetAllProfitCentres = "api/v1/profitcentres/all";        
         public const string PatchProfitCentreSettings = "api/v1/profitcentres/settings";
+        public const string GetPagedProfitCenterCostSummary = "api/v1/profitcentres/paged/costsummary";
 
         // Resource Set-Up — PC Grades
         public const string GetPcGrades = "api/v1/pcgrades?profitCentre={0}";
+        public const string GetPagedPcGrades = "api/v1/pcgrades/paged";
+        public const string GetPcGradeById = "api/v1/pcgrades/{0}";
+        public const string CreatePcGrade = "api/v1/pcgrades";
+        public const string UpdatePcGrade = "api/v1/pcgrades/{0}";
+        public const string DeletePcGrade = "api/v1/pcgrades/{0}";
+        public const string GetPcGradeDivisionGrades = "api/v1/pcgrades/divisiongrades";
+        public const string GetPcGradeGradeCodes = "api/v1/pcgrades/gradecodes";
+        public const string GetPcGradeProfitCentres = "api/v1/pcgrades/profitcentres";
+        public const string GetAllPcGrades = "api/v1/pcgrades/allpcgrades";
+
+        // Resource Set-Up — Workgroups
+        public const string GetAllWorkgroupNames = "api/v1/workgroups/names";
 
         // Resource Set-Up — WG Grades
         public const string GetWgGrades = "api/v1/wggrades?pcGrade={0}";
@@ -145,5 +177,14 @@ namespace Apha.Common.Constants
 
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
+        public const string GetProjectGroupProfitability = "api/v1/project/profitability/by-project-group/{0}";
+
+        // WorkgroupGrade Maintainence
+        public const string GetPagedWorkgroupGrades = "api/v1/wggrades/paged";
+        public const string GetWorkgroupGradeByCode = "api/v1/wggrades/{0}";
+        public const string CreateWorkgroupGrade = "api/v1/wggrades";
+        public const string UpdateWorkgroupGrade = "api/v1/wggrades/{0}";
+        public const string DeleteWorkgroupGrade = "api/v1/wggrades/maintain/{0}";
+        public const string GetAllGradeCodes = "api/v1/wggrades/gradecodes";
     }
 }

@@ -66,5 +66,10 @@ namespace Apha.FPSApps.Application.Services.FPS
         {
             return await _fpsClient.FpsEmployee.GetWorkGroupStaffAsync(query, workGroup);
         }
+
+        public async Task<ApiResponseDto<List<PactStaffDto>>> GetPactStaffAsync()
+        {
+            return await _fpsClient.FpsEmployee.GetPactStaffAsync();
+        }
     }
 }

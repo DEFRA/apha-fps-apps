@@ -16,6 +16,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdatePactProjectAsync(ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdatePactPortfolioAsync(ProjectDto project);
+        Task<ApiResponseDto<ProjectDto>> UpdateFpsPortfolioAsync(ProjectDto project);
         Task<ApiResponseDto<bool>> DeleteProjectAsync(string parentProject);
         Task<ApiResponseDto<bool>> DeleteProjectAndChildrenAsync(string parentProject);
         Task<ApiResponseDto<bool>> ChangeProjectCodeAsync(string oldCode, string newCode);
@@ -23,11 +24,10 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);
         Task<ApiResponseDto<List<ManagerDto>>> GetManagersAsync();
         Task<ApiResponseDto<List<CostCentreWorkgroupDto>>> GetCostCentresAsync();
-        Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsAsync();
-        Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsByUserAsync();
         Task<ApiResponseDto<List<ContractDto>>> GetContractsByUserAsync();
         Task<ApiResponseDto<List<AccountCodeDto>>> GetAccountCodesAsync();
         Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync();
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
+        Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
     }
 }

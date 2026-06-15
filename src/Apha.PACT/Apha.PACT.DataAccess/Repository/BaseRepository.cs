@@ -1,5 +1,6 @@
 using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Apha.PACT.DataAccess.Repository
 {
@@ -12,14 +13,13 @@ namespace Apha.PACT.DataAccess.Repository
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        protected PagedData<T> ApplyPaging<T>(IEnumerable<T> source, int page, int pageSize)
+        protected static async Task<PagedData<T>> ApplyPaging<T>(IQueryable<T> source, int page, int pageSize)
         {
-            var list = source.ToList();
-            var totalRecords = list.Count;
-            var result = list
+            var totalRecords = await source.CountAsync();
+            var result = await source
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
             var pagination = new PaginationData
             {

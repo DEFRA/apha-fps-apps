@@ -10,11 +10,14 @@ namespace Apha.Costbook.DataAccess.Repositories;
 public class StaffRequirementRepository : RepositoryBase<StaffRequirement>, IStaffRequirementRepository
 {
     private readonly IFPSYearContext _fpsYearContext;
-
-    public StaffRequirementRepository(CostbookDbContext context, IFPSYearContext fpsYearContext)
+    private readonly IProjectRepository _projectRepo;
+    private readonly ISettingsRepository _settingsRepo;
+    public StaffRequirementRepository(CostbookDbContext context, IFPSYearContext fpsYearContext, ISettingsRepository settingsRepo, IProjectRepository projectRepo)
         : base(context)
     {
         _fpsYearContext = fpsYearContext;
+        _settingsRepo = settingsRepo;
+        _projectRepo = projectRepo;
     }
 
     /// <summary>
@@ -94,7 +97,43 @@ public class StaffRequirementRepository : RepositoryBase<StaffRequirement>, ISta
             .ExecuteDeleteAsync();
         return deleted > 0;
     }
+    public async Task<IEnumerable<PayRateLookup>> GetPayRatesAsync(string projectId, int year, bool isDefra)
+    {
+        var decodedId = HttpUtility.UrlDecode(projectId);
 
+        var currentYearSetting = await _settingsRepo.GetSettingValueByIdAsync("CurrentYear");
+
+        if (string.IsNullOrEmpty(currentYearSetting) || !int.TryParse(currentYearSetting, out int fyear))
+        {
+            throw new InvalidOperationException("CurrentYear setting not found or invalid in settings table.");
+        }
+
+        var rows = await _context.WorkGroupGrades
+            .AsNoTracking()
+            .Join(
+                _context.ProfitCentreGrades.AsNoTracking(),
+                wg => new { ProfitCentreGrade = wg.ProfitCentreGrade, FpsYear = wg.FpsYear },
+                pc => new { ProfitCentreGrade = pc.PcGrade, FpsYear = (int?)pc.FpsYear },
+                (wg, pc) => new { wg.WgGrade, pc.ChargeRate, pc.DefraChargeRate, pc.PayRate, pc.Npr, pc.Ohr })
+            .Where(x => isDefra ? x.DefraChargeRate != 0 : x.ChargeRate != 0)
+            .ToListAsync();
+
+        double inflationFactor = await _projectRepo.GetInflationFactorAsync("InflationStaff", decodedId, year, fyear);
+
+        return rows.Select(x =>
+        {
+            var baseRate = isDefra ? (double?)x.DefraChargeRate : (double?)x.ChargeRate;
+            return new PayRateLookup
+            {
+                WgGrade = x.WgGrade,
+                ChargeRate = (decimal?)baseRate,
+                PayRate = (decimal?)x.PayRate,
+                Npr = (decimal?)x.Npr,
+                Ohr = (decimal?)x.Ohr,
+                ChargeRateWithInflamation = baseRate.HasValue ? (decimal?)(baseRate.Value * inflationFactor) : null
+            };
+        });
+    }
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private static IQueryable<StaffRequirementDetailView> ApplySorting(

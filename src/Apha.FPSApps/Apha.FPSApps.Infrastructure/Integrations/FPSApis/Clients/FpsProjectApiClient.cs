@@ -118,6 +118,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<ProjectDto>> UpdateFpsPortfolioAsync(ProjectDto project)
+        {
+            var request = _mapper.Map<ProjectReq>(project);
+            var response = await _http.PatchAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.UpdateFpsPortfolio, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<bool>> DeleteProjectAsync(string parentProject)
         {
             var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteProject, Uri.EscapeDataString(parentProject)));
@@ -210,26 +221,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<CostCentreWorkgroupDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsAsync()
-        {
-            var response = await _http.GetAsync<List<ProjectGroupRes>>(FpsApiEndpoints.GetProgrammeNewProjectProjectGroups);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
-
-            var dto = _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
-            return ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
-        }
-
-        public async Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsByUserAsync()
-        {
-            var response = await _http.GetAsync<List<ProjectGroupRes>>(FpsApiEndpoints.GetProjectGroupsByUser);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
-
-            var dto = _mapper.Map<ApiResponseDto<List<ProjectGroupDto>>>(response);
-            return ApiResponseDto<List<ProjectGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
-        }
-
         public async Task<ApiResponseDto<List<ContractDto>>> GetContractsByUserAsync()
         {
             var response = await _http.GetAsync<List<ContractRes>>(FpsApiEndpoints.GetContractsByUser);
@@ -264,6 +255,21 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             QueryParameters<string> query, string programNo, string workTypeFilter)
         {
             var baseUrl = string.Format(FpsApiEndpoints.GetProjectProfitability, Uri.EscapeDataString(programNo));
+            var url = QueryStringHelper.AddQueryString(baseUrl, query);
+            url += (url.Contains('?') ? "&" : "?") + $"workTypeFilter={Uri.EscapeDataString(workTypeFilter)}";
+
+            var response = await _http.GetAsync<List<ProjectProfitabilityRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectProfitabilityDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectProfitabilityDto>>>(response);
+            return ApiResponseDto<List<ProjectProfitabilityDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(
+            QueryParameters<string> query, string projectGroup, string workTypeFilter)
+        {
+            var baseUrl = string.Format(FpsApiEndpoints.GetProjectGroupProfitability, Uri.EscapeDataString(projectGroup));
             var url = QueryStringHelper.AddQueryString(baseUrl, query);
             url += (url.Contains('?') ? "&" : "?") + $"workTypeFilter={Uri.EscapeDataString(workTypeFilter)}";
 

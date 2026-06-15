@@ -116,6 +116,24 @@ namespace Apha.FPS.Application.Services
             return updated == null ? null : _mapper.Map<ProjectDto>(updated);
         }
 
+        public async Task<ProjectDto?> UpdateFpsPortfolioDetailsAsync(ProjectDto projectDto)
+        {
+            if (!string.IsNullOrWhiteSpace(projectDto.Program) &&
+                !await _projectRepository.CheckProgramExistsAsync(projectDto.Program))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot update portfolio: Program '{projectDto.Program}' does not exist.",
+                        "PROGRAM_NOT_FOUND")
+                ]);
+            }
+
+            var project = _mapper.Map<Project>(projectDto);
+            var updated = await _projectRepository.UpdateFpsPortfolioDetailsAsync(project);
+            return updated == null ? null : _mapper.Map<ProjectDto>(updated);
+        }
+
         public async Task<bool> DeleteProjectAsync(string parentProject)
         {
             var hasAssociations = await _projectRepository.HasAssociatedJobCodesAsync(parentProject);
@@ -136,6 +154,13 @@ namespace Apha.FPS.Application.Services
         {
             var filter = _mapper.Map<PaginationParameters<string>>(query);
             var projects = await _projectRepository.GetProjectsByProgramAsync(filter, programNo);
+            return _mapper.Map<PaginatedResult<ProjectDto>>(projects);
+        }
+
+        public async Task<PaginatedResult<ProjectDto>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup)
+        {
+            var filter = _mapper.Map<PaginationParameters<string>>(query);
+            var projects = await _projectRepository.GetProjectsByProjectGroupAsync(filter, projectGroup);
             return _mapper.Map<PaginatedResult<ProjectDto>>(projects);
         }
 
@@ -214,6 +239,14 @@ namespace Apha.FPS.Application.Services
         {
             var pagedResult = await _projectRepository.GetProjectProfitabilityAsync(
                 _mapper.Map<PaginationParameters<string>>(query), programNo, workTypeFilter);
+            return _mapper.Map<PaginatedResult<ProjectProfitabilityDto>>(pagedResult);
+        }
+
+        public async Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectGroupProfitabilityAsync(
+            QueryParameters<string> query, string projectGroup, string workTypeFilter)
+        {
+            var pagedResult = await _projectRepository.GetProjectGroupProfitabilityAsync(
+                _mapper.Map<PaginationParameters<string>>(query), projectGroup, workTypeFilter);
             return _mapper.Map<PaginatedResult<ProjectProfitabilityDto>>(pagedResult);
         }
     }

@@ -83,7 +83,6 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Division> Divisions { get; set; }
         public virtual DbSet<Agency> Agencies { get; set; }
 
-
         public virtual DbSet<AdditionalCostView> AdditionalCostViews { get; set; }
         public virtual DbSet<AccountCategory> AccountCategories { get; set; }
         public virtual DbSet<WorkGroupStaff> WorkGroupStaffs { get; set; }
@@ -91,7 +90,11 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<ProfitCentreGradeView> ProfitCentreGradeViews { get; set; }
         public virtual DbSet<WorkGroupGradeView> WorkGroupGradeViews { get; set; }
         public virtual DbSet<WorkGroupEmployeeView> WorkGroupEmployeeViews { get; set; }
+        public virtual DbSet<PactStaff> PactStaffs { get; set; }
+
+
         public virtual DbSet<ProjectStaffPlanView> ProjectStaffPlanViews { get; set; }
+        public virtual DbSet<ProjectGroupStaffPlanView> ProjectGroupStaffPlanViews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -262,6 +265,9 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectStaffPlanViewMap());
             modelBuilder.Entity<ProjectStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new ProjectGroupStaffPlanViewMap());
+            modelBuilder.Entity<ProjectGroupStaffPlanView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new TimeCostCalcsMap());
             modelBuilder.Entity<TimeCostCalcs>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -281,6 +287,14 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
             modelBuilder.Entity<MonthlyTime>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new PactStaffMap());
+            modelBuilder.Entity<PactStaff>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new MonthlyOutputMap());
+            modelBuilder.Entity<MonthlyOutput>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new GradeMap());
+            modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

@@ -13,5 +13,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<bool> DeleteProfitCentreAsync(string profitCentreId);
         Task<IEnumerable<ProfitCentreDto>> GetAllProfitCentresAsync();        
         Task<bool> UpdateProfitCentreSettingsAsync(string profitCentre, int timesheet, int outputsheet, short timesheetlayout);
+        Task<PaginatedResult<ProfitCentreCostDto>> GetPagedProfitCenterCostSummaryAsync(
+            QueryParameters<string> query, double monthNumber);
     }
 }

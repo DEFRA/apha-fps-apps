@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.FPS.Api.Controllers
 {
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [Route("api/v{version:apiVersion}/DivisionGrade")]
     [ApiController]
     [ApiVersion("1.0")]
@@ -86,6 +86,13 @@ namespace Apha.FPS.Api.Controllers
         {
             var gradeCodes = await _maintDGService.GetAllGradeCodesAsync();
             return Ok(gradeCodes);
+        }
+
+        [HttpGet("divisiongrades")]
+        public async Task<ActionResult<List<string>>> GetAllDivisionGradeCodesAsync()
+        {
+            var codes = await _maintDGService.GetAllDivisionGradeCodesAsync();
+            return Ok(codes);
         }
     }
 }

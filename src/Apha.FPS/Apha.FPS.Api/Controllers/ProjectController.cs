@@ -13,7 +13,7 @@ namespace Apha.FPS.Api.Controllers
     /// <summary>
     /// API controller for managing project data.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/project")]
@@ -103,6 +103,21 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
         }
 
+        /// <summary>
+        /// Retrieves a paginated list of projects for a given project group.
+        /// </summary>
+        [HttpGet("paged/by-project-group")]
+        public async Task<IActionResult> GetProjectsByProjectGroupAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string projectGroup)
+        {
+            if (string.IsNullOrWhiteSpace(projectGroup))
+                return BadRequest("projectGroup is required.");
+
+            var result = await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
         //Below methods moved from ProjectMaintenanceController
         [HttpGet]
         public async Task<ActionResult<List<ProjectRes>>> GetAllProjectsAsync()
@@ -146,6 +161,16 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<ProjectRes>(updated));
         }
 
+        [HttpPatch("external/fps-portfolio")]
+        public async Task<ActionResult<ProjectRes>> UpdateFpsPortfolioDetailsAsync([FromBody] ProjectReq request)
+        {
+            var projectDto = _mapper.Map<ProjectDto>(request);
+            var updated = await _projectService.UpdateFpsPortfolioDetailsAsync(projectDto);
+            if (updated == null)
+                throw new ArgumentException($"Project record with ID: {request.ParentProject} not found");
+            return Ok(_mapper.Map<ProjectRes>(updated));
+        }
+
         [HttpPut]
         public async Task<ActionResult<ProjectRes>> UpdateProjectRootAsync([FromBody] ProjectReq request)
         {
@@ -180,6 +205,24 @@ namespace Apha.FPS.Api.Controllers
 
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _projectService.GetProjectProfitabilityAsync(filter, programNo, workTypeFilter);
+            return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityRes>>(result));
+        }
+
+        /// <summary>
+        /// Returns paginated project profitability rows for the given project group.
+        /// workTypeFilter: "all" (default) | "approved" | "not-approved"
+        /// </summary>
+        [HttpGet("profitability/by-project-group/{projectGroup}")]
+        public async Task<IActionResult> GetProjectGroupProfitabilityAsync(
+            [FromQuery] PaginationReq<string> query,
+            string projectGroup,
+            [FromQuery] string workTypeFilter = "all")
+        {
+            if (string.IsNullOrWhiteSpace(projectGroup))
+                throw new ArgumentException("projectGroup is required.");
+
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _projectService.GetProjectGroupProfitabilityAsync(filter, projectGroup, workTypeFilter);
             return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityRes>>(result));
         }
     }
