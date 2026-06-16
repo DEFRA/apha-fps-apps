@@ -16,7 +16,14 @@ var requestedJobArg = args.Length > 0
     ? args[0]
     : Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
 
-if (string.Equals(requestedJobArg, "HealthCheck", StringComparison.OrdinalIgnoreCase))
+// Startup probe: fast-exit only when there is no real execution context (e.g. CI smoke test).
+// When BATCH_JOB_EXECUTION_ID is present the API has pre-created an Initiated record and
+// the worker must go through the full orchestrator to transition it to Completed.
+var hasRealExecutionId = !string.IsNullOrWhiteSpace(
+    Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID")
+    ?? Environment.GetEnvironmentVariable("BATCH_EXECUTION_ID"));
+
+if (string.Equals(requestedJobArg, "HealthCheck", StringComparison.OrdinalIgnoreCase) && !hasRealExecutionId)
 {
     Console.WriteLine("HealthCheck OK");
     return 0;
