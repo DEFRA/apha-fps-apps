@@ -1096,7 +1096,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
-        public async Task GetPagedProjectsAsync_ReturnsEmpty_WhenNoProjects()
+        public async Task GetPagedProjectsAsync_ReturnsEmpty_WhenNoProjectViews()
         {
             var repo = CreateRepository(projectViews: new List<ProjectView>());
             var query = new PaginationParameters<string>(page: 1, pageSize: 10);

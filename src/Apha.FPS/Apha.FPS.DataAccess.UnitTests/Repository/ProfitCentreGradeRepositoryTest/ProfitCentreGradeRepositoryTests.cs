@@ -876,5 +876,53 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreGradeRepositoryTe
         }
 
         #endregion
+
+        #region ExistsForGradeCodeAsync Tests
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task ExistsForGradeCodeAsync_ReturnsFalse_WhenGradeCodeIsEmptyOrWhiteSpace(string gradeCode)
+        {
+            var repo = CreateRepository(grades: []);
+
+            var result = await repo.ExistsForGradeCodeAsync(gradeCode);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsForGradeCodeAsync_ReturnsTrue_WhenGradeCodeExists()
+        {
+            var grades = new List<ProfitCentreGrade> { BuildGrade("G001", gradeCode: "GCA") };
+            var repo = CreateRepository(grades: grades);
+
+            var result = await repo.ExistsForGradeCodeAsync("GCA");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsForGradeCodeAsync_ReturnsFalse_WhenGradeCodeDoesNotExist()
+        {
+            var grades = new List<ProfitCentreGrade> { BuildGrade("G001", gradeCode: "GCA") };
+            var repo = CreateRepository(grades: grades);
+
+            var result = await repo.ExistsForGradeCodeAsync("NONEXISTENT");
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsForGradeCodeAsync_ReturnsFalse_WhenNoGrades()
+        {
+            var repo = CreateRepository(grades: []);
+
+            var result = await repo.ExistsForGradeCodeAsync("GCA");
+
+            Assert.False(result);
+        }
+
+        #endregion
     }
 }

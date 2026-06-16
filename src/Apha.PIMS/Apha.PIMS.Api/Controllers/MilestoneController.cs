@@ -50,7 +50,8 @@ namespace Apha.PIMS.Api.Controllers
         {
             MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
             dto.Project = project;
-            MilestoneDto result = await _service.SaveMilestoneAsync(dto);
+            string? changedBy = User.Identity?.Name is { } name ? name[..Math.Min(10, name.Length)] : null;
+            MilestoneDto result = await _service.SaveMilestoneAsync(dto, changedBy);
             return Ok(_mapper.Map<MilestoneRes>(result));
         }
 
@@ -62,7 +63,8 @@ namespace Apha.PIMS.Api.Controllers
             MilestoneDto dto = _mapper.Map<MilestoneDto>(request);
             dto.Project = project;
             dto.Number = decodedId;
-            MilestoneDto result = await _service.UpdateMilestoneAsync(dto);
+            string? changedBy = User.Identity?.Name is { } name ? name[..Math.Min(10, name.Length)] : null;
+            MilestoneDto result = await _service.UpdateMilestoneAsync(dto, changedBy);
             return Ok(_mapper.Map<MilestoneRes>(result));
         }
 

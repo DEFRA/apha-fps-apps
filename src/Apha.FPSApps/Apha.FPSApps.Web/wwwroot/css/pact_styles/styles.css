@@ -1336,7 +1336,7 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
    ============================================================ */
 .ytd_total_div { width: 100%; border: 1px solid var(--govuk-border-colour); border-top: 0; background-color: var(--govuk-surface-background-colour, #f4f8fb); height: 46px; }
 
-.clear-search-btn { position: absolute; top: 0px; right: 3px; border: 1px solid var(--govuk-border-colour); height: 28px; margin: 0; text-align: center; display: flex; width: 32px; }
+
 .clear-search-btn span { line-height: 10px !important; }
 
 .heading_with_txtbox { padding: 0px 10px 0px 10px; display: flex; justify-content: space-between; margin-left: -15px; align-items: center; margin-right: -15px; flex-direction: row; }

@@ -38,6 +38,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IAgencyService, AgencyService>();
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
+            services.AddScoped<IAccountCategoryService, AccountCategoryService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IAccountCodeService, AccountCodeService>();
             services.AddScoped<ISubAccountService, SubAccountService>();
@@ -48,6 +49,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
+            // TRANSFORMENGINE: IGradeService/GradeService registered � Phase 5 frmMaintGrade migration
+            services.AddScoped<IGradeService, GradeService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             return services;
         }
@@ -71,6 +74,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IDivisionRepository, DivisionRepository>();
             services.AddScoped<IAgencyRepository, AgencyRepository>();
             services.AddScoped<IAdditionalCostRepository, AdditionalCostRepository>();
+            services.AddScoped<IAccountCategoryRepository, AccountCategoryRepository>();
             services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
             services.AddScoped<IAccountCodeRepository, AccountCodeRepository>();
             services.AddScoped<ISubAccountRepository, SubAccountRepository>();
@@ -82,6 +86,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
             services.AddScoped<IDivisionGradeRepository, DivisionGradeRepository>();
             services.AddScoped<IProjectStaffPlanRepository, ProjectStaffPlanRepository>();
+            // TRANSFORMENGINE: IGradeRepository/GradeRepository registered � Phase 5 frmMaintGrade migration
+            services.AddScoped<IGradeRepository, GradeRepository>();
             services.AddScoped<IProjectGroupStaffPlanRepository, ProjectGroupStaffPlanRepository>();
             return services;
 

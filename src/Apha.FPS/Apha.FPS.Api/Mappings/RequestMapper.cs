@@ -56,6 +56,8 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<YearMasterRes, YearMasterDto>().ReverseMap();
             CreateMap<DivisionReq, DivisionDto>().ReverseMap();
             CreateMap<DivisionRes, DivisionDto>().ReverseMap();
+            CreateMap<GradeDto, GradeRes>().ReverseMap();
+            CreateMap<GradeReq, GradeDto>().ReverseMap();
             CreateMap<DivisionGradeReq, DivisionGradeDto>().ReverseMap();
             CreateMap<DivisionGradeRes, DivisionGradeDto>().ReverseMap();
             CreateMap<AgencyRes, AgencyDto>().ReverseMap();
@@ -70,6 +72,7 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<TimeCostCalcsTotalsDto, TimeCostCalcsTotalsRes>().ReverseMap();
             CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
             CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
+            CreateMap<AccountCategoryDto, AccountCategoryReq>().ReverseMap();
             CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
             CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
             CreateMap<CostCentreWorkgroup, CostCentreWorkgroupRes>().ReverseMap();

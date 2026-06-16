@@ -43,5 +43,8 @@ namespace Apha.FPS.Core.Interfaces
 
         /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
         Task<List<string>> GetAllPcGradesAsync();
+
+        /// <summary>Returns true if any ProfitCentreGrade row references the given GradeCode.</summary>
+        Task<bool> ExistsForGradeCodeAsync(string gradeCode);
     }
 }
