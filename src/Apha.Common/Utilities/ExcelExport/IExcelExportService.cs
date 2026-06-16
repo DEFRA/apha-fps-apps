@@ -18,5 +18,10 @@ namespace Apha.Common.Utilities.ExcelExport
             IEnumerable<WorkGroupOutputSheetRow> rows);        
 
         byte[] ExportToExcelMultiSheet(IEnumerable<ExcelSheetDefinition> sheets);
+
+        byte[] BuildBudgetBidsCrosstabExcel(
+            IEnumerable<string> accounts,
+            IEnumerable<string> workgroups,
+            Dictionary<string, Dictionary<string, decimal>> bidLookup);
     }
 }

@@ -919,8 +919,16 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public async Task ExportToExcel_WithWorkgroupsAndBids_ReturnsExcelFile()
         {
             // Arrange
+            var fakeBytes = new byte[] { 1, 2, 3, 4, 5 };
             SetupDefaultWorkGroups("PC01");
-            SetupDefaultBidView("WG01");   // also stubs GetAccountCategoriesAsync
+            SetupDefaultBidView("WG01");   // stubs GetBidViewAsync + GetAccountCategoriesAsync
+
+            _excelExportService
+                .BuildBudgetBidsCrosstabExcel(
+                    Arg.Any<IEnumerable<string>>(),
+                    Arg.Any<IEnumerable<string>>(),
+                    Arg.Any<Dictionary<string, Dictionary<string, decimal>>>())
+                .Returns(fakeBytes);
 
             // Act
             var result = await _controller.ExportToExcel("PC01", 2024);
@@ -929,43 +937,79 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
             var fileResult = Assert.IsType<FileContentResult>(result);
             Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileResult.ContentType);
             Assert.Equal("qryBidxCrosstab_2024.xlsx", fileResult.FileDownloadName);
-            Assert.NotEmpty(fileResult.FileContents);
+            Assert.Equal(fakeBytes, fileResult.FileContents);
+
+            _excelExportService.Received(1)
+                .BuildBudgetBidsCrosstabExcel(
+                    Arg.Is<IEnumerable<string>>(a => a.Contains("ACC1")),
+                    Arg.Is<IEnumerable<string>>(w => w.Contains("WG01")),
+                    Arg.Is<Dictionary<string, Dictionary<string, decimal>>>(d => d.ContainsKey("ACC1")));
         }
 
         [Fact]
-        public async Task ExportToExcel_WhenWorkgroupServiceFails_ReturnsEmptyExcel()
+        public async Task ExportToExcel_WhenWorkgroupServiceFails_ReturnsExcelFile()
         {
             // Arrange
+            var fakeBytes = new byte[] { 1, 2, 3 };
             _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync("PC01")
                 .Returns(ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error" } }, new ApiMetaDto()));
             _budgetBidsService.GetAccountCategoriesAsync()
                 .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>()));
 
+            _excelExportService
+                .BuildBudgetBidsCrosstabExcel(
+                    Arg.Any<IEnumerable<string>>(),
+                    Arg.Any<IEnumerable<string>>(),
+                    Arg.Any<Dictionary<string, Dictionary<string, decimal>>>())
+                .Returns(fakeBytes);
+
             // Act
             var result = await _controller.ExportToExcel("PC01", 2024);
 
             // Assert
             var fileResult = Assert.IsType<FileContentResult>(result);
-            Assert.NotEmpty(fileResult.FileContents);
+            Assert.Equal(fakeBytes, fileResult.FileContents);
+
+            // Workgroup service failed → both collections arrive empty
+            _excelExportService.Received(1)
+                .BuildBudgetBidsCrosstabExcel(
+                    Arg.Is<IEnumerable<string>>(a => !a.Any()),
+                    Arg.Is<IEnumerable<string>>(w => !w.Any()),
+                    Arg.Is<Dictionary<string, Dictionary<string, decimal>>>(d => !d.Any()));
         }
 
         [Fact]
         public async Task ExportToExcel_WhenNoBids_ReturnsExcelWithHeadersOnly()
         {
             // Arrange
+            var fakeBytes = new byte[] { 1, 2, 3 };
             SetupDefaultWorkGroups("PC01");
             _budgetBidsService.GetBidViewAsync("WG01")
                 .Returns(ApiResponseDto<List<BidViewDto>>.SuccessResponse(new List<BidViewDto>()));
             _budgetBidsService.GetAccountCategoriesAsync()
                 .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>()));
 
+            _excelExportService
+                .BuildBudgetBidsCrosstabExcel(
+                    Arg.Any<IEnumerable<string>>(),
+                    Arg.Any<IEnumerable<string>>(),
+                    Arg.Any<Dictionary<string, Dictionary<string, decimal>>>())
+                .Returns(fakeBytes);
+
             // Act
             var result = await _controller.ExportToExcel("PC01", 2024);
 
             // Assert
             var fileResult = Assert.IsType<FileContentResult>(result);
-            Assert.NotEmpty(fileResult.FileContents);
+            Assert.Equal(fakeBytes, fileResult.FileContents);
+
+            // No bids → empty bidLookup; workgroup column still present, no account rows
+            _excelExportService.Received(1)
+                .BuildBudgetBidsCrosstabExcel(
+                    Arg.Is<IEnumerable<string>>(a => !a.Any()),
+                    Arg.Is<IEnumerable<string>>(w => w.Contains("WG01")),
+                    Arg.Is<Dictionary<string, Dictionary<string, decimal>>>(d => !d.Any()));
         }
 
         #endregion
