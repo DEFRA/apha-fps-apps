@@ -296,4 +296,19 @@
       return result;
     });
   };
+
+  window.showGovukYesNo = function (message) {
+    pending = pending.then(function () {
+      return openDialog({
+        type: "confirm",
+        message: message,
+        okText: "Yes",
+        cancelText: "No"
+      });
+    });
+
+    return pending.then(function (result) {
+      return result;
+    });
+  };
 })();
