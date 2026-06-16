@@ -16,14 +16,9 @@ var requestedJobArg = args.Length > 0
     ? args[0]
     : Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
 
-// Startup probe: fast-exit only when there is no real execution context (e.g. CI smoke test).
-// When BATCH_JOB_EXECUTION_ID is present the API has pre-created an Initiated record and
-// the worker must go through the full orchestrator to transition it to Completed.
-var hasRealExecutionId = !string.IsNullOrWhiteSpace(
-    Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID")
-    ?? Environment.GetEnvironmentVariable("BATCH_EXECUTION_ID"));
-
-if (string.Equals(requestedJobArg, "HealthCheck", StringComparison.OrdinalIgnoreCase) && !hasRealExecutionId)
+// HealthCheck is a pure process liveness probe — no DB, no orchestrator, no execution contract.
+// The API must never create an Initiated record for HealthCheck invocations.
+if (string.Equals(requestedJobArg, "HealthCheck", StringComparison.OrdinalIgnoreCase))
 {
     Console.WriteLine("HealthCheck OK");
     return 0;
