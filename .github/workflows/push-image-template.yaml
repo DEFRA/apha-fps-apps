@@ -186,10 +186,18 @@ jobs:
           echo "Worker exit code: $exit_code"
           docker logs test-container --tail 50 || true
 
-          # Hello-world style healthcheck for workers: verify process startup marker.
-          if ! docker logs test-container 2>&1 | grep -q "Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator"; then
-            echo "Worker did not reach startup checkpoint"
-            exit 1
+          # HealthCheck short-circuits before host startup; assert HealthCheck output.
+          if [ "${BATCH_JOB_NAME:-HealthCheck}" = "HealthCheck" ]; then
+            if ! docker logs test-container 2>&1 | grep -q "HealthCheck OK"; then
+              echo "Worker HealthCheck did not emit expected success marker"
+              exit 1
+            fi
+          else
+            # Non-HealthCheck worker runs should reach startup checkpoint.
+            if ! docker logs test-container 2>&1 | grep -q "Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator"; then
+              echo "Worker did not reach startup checkpoint"
+              exit 1
+            fi
           fi
 
           # Accept normal completion (0) and dependency-outage (5) in CI.
