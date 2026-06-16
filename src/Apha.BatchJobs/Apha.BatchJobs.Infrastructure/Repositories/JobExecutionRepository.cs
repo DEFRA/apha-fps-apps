@@ -609,21 +609,9 @@ ON CONFLICT (jobexecutionid) DO NOTHING;", cancellationToken);
         if (existing != null)
             return existing.JobId;
 
-        var now = DateTime.UtcNow;
-        var row = new TblJobMaster
-        {
-            JobName = jobName,
-            Frequency = null,
-            Note = "Auto-created by worker runtime",
-            TimeToLive = DefaultTimeToLiveSeconds,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
-
-        _context.TblJobMaster.Add(row);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return row.JobId;
+        throw new InvalidOperationException(
+            $"Job master record not found for job name '{jobName}'. " +
+            $"Job must be created and configured in the database before execution.");
     }
 
     private async Task<int> EnsureStatusAsync(int jobId, string status, CancellationToken cancellationToken)
