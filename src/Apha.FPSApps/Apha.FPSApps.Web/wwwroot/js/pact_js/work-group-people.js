@@ -358,10 +358,6 @@ $(document).ready(function () {
 
     // ── Pre-select work group when returning from a child page ────────────
     if (preselectedWorkGroup) {
-        var $matchRow = $('#workGroupDropdownBody tr[data-value="' + preselectedWorkGroup + '"]');
-        if ($matchRow.length) {
-            $('#workGroupSelect').val($matchRow.find('td:first').text().trim());
-        }
         onWorkGroupPickChange(preselectedWorkGroup);
     }
 
@@ -377,6 +373,8 @@ $(document).ready(function () {
     });
 });
 
+
+var isClearing = false;
 
 function initializeMultiColumnDropdown() {
     /*Multicolumn dropdown functionality for program selection*/
@@ -405,7 +403,13 @@ function initializeMultiColumnDropdown() {
                 personSelectDropdown_input.value = '';
             },
             onClear: function (dropdown) { 
-                onWorkGroupPickChange(dropdown.originalData[0].WorkGroupName);
+                if (isClearing) return;
+                isClearing = true;
+                if (personSelectDropdown) {
+                    personSelectDropdown.clear();
+                }
+                onWorkGroupPickChange(null);
+                isClearing = false;
             }
 
         }
@@ -440,7 +444,13 @@ function initializeMultiColumnDropdown() {
 
             },
             onClear: function (dropdown) {
-                onPersonPickChange(dropdown.originalData[0].Name, null);  
+                if (isClearing) return;
+                isClearing = true;
+                if (workGroupSelectDropdown) {
+                    workGroupSelectDropdown.clear();
+                }
+                onPersonPickChange(null, null);
+                isClearing = false;
             }
         }
     });
@@ -450,4 +460,9 @@ function initializeMultiColumnDropdown() {
 
 document.addEventListener('DOMContentLoaded', async function () {
     initializeMultiColumnDropdown();
+
+    // Pre-select work group in the multi-column dropdown when returning from a child page
+    if (preselectedWorkGroup && workGroupSelectDropdown) {
+        workGroupSelectDropdown.setValue(preselectedWorkGroup);
+    }
 });
