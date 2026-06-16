@@ -760,7 +760,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPactPayTotals(string project, short year)
         {
-            QueryParameters<string> allRecords = new() { Page = 1, PageSize = int.MaxValue };
+            QueryParameters<string> allRecords = new() { Page = -1, PageSize = int.MaxValue };
             ApiResponseDto<List<PactPayDto>> response =
                 await _yearCostsService.GetPactPayAsync(project, year, allRecords);
 
@@ -778,6 +778,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             string project, short year, PaginationFilter<string> request)
         {
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            queryParameters.Page = -1;
             ApiResponseDto<List<PactPayDto>> response =
                 await _yearCostsService.GetPactPayAsync(project, year, queryParameters);
 
@@ -797,7 +798,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 GridId = "pactPayGrid",
                 Title = "Pact Pay",
                 ShowCheckboxColumn = false,
-                ShowPagination = true,
+                ShowPagination = false,
                 KeyProperty = "Month",
                 AllowAdd = false,
                 AllowEdit = false,
@@ -862,7 +863,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [HttpGet]
         public async Task<IActionResult> GetMonthlyPactTotals(string project, short year)
         {
-            QueryParameters<string> allRecords = new() { Page = 1, PageSize = int.MaxValue };
+            QueryParameters<string> allRecords = new() { Page = -1, PageSize = int.MaxValue };
             ApiResponseDto<List<MonthlyPactDto>> response =
                 await _yearCostsService.GetMonthlyPactDataAsync(project, year, allRecords);
 
@@ -883,7 +884,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [HttpGet]
         public async Task<IActionResult> GetMonthlyPactFpsPlanned(string project, short year)
         {
-            QueryParameters<string> allRecords = new() { Page = 1, PageSize = int.MaxValue };
+            QueryParameters<string> allRecords = new() { Page = -1, PageSize = int.MaxValue };
 
             ApiResponseDto<FpsYearTotalsDto> fpsResponse =
                 await _yearCostsService.GetFpsYearTotalsAsync(project, year);
@@ -927,6 +928,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             string project, short year, PaginationFilter<string> request)
         {
             QueryParameters<string> queryParameters = _mapper.Map<QueryParameters<string>>(request);
+            queryParameters.Page = -1;
             ApiResponseDto<List<MonthlyPactDto>> response =
                 await _yearCostsService.GetMonthlyPactDataAsync(project, year, queryParameters);
 
@@ -946,12 +948,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 GridId = "monthlyPactGrid",
                 Title = "Monthly Pact Data",
                 ShowCheckboxColumn = false,
-                ShowPagination = true,
+                ShowPagination = false,
                 KeyProperty = "MonthNo",
                 AllowAdd = false,
                 AllowEdit = false,
                 AllowDelete = false,
-                AllowView = false,
+                AllowView = false,                
                 ExtraFilterMethod = "getYearCostsExtraFilters",
                 BindGridUrl = "/PIMS/ProjectYearCosts/LoadMonthlyPactGrid",
                 Data = items,
@@ -961,10 +963,14 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         }
 
         private static string GetAbbreviatedMonthName(double monthno)
-            => monthno >= 1 && monthno <= 12
-                ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat
-                    .GetAbbreviatedMonthName((int)monthno)
-                : monthno.ToString();
+        {
+            int m = (int)monthno;
+            if (m < 1 || m > 12) return monthno.ToString();
+            m = (m + 3) % 12;
+            if (m == 0) m = 12;  // financial month 9 → calendar Dec (mod = 0)
+            return System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat
+                .GetAbbreviatedMonthName(m);
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetPlanVsActualsTotals(string project, short year)

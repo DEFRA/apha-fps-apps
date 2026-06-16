@@ -166,7 +166,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectDetailsServiceTest
                 EndDate = new DateTime(2024, 12, 31),
                 CostbookNumber = "CB001",
                 Riskid = 1,
-                UseProjectYears = true
+                UseProjectYears = false
             };
 
             var createdEntity = new ProjectDetail
@@ -179,7 +179,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectDetailsServiceTest
                 EndDate = new DateTime(2024, 12, 31),
                 CostbookNumber = "CB001",
                 Riskid = 1,
-                UseProjectYears = true
+                UseProjectYears = false
             };
 
             var expectedDto = new ProjectDetailDto
@@ -192,7 +192,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectDetailsServiceTest
                 EndDate = new DateTime(2024, 12, 31),
                 CostbookNumber = "CB001",
                 Riskid = 1,
-                UseProjectYears = true
+                UseProjectYears = false
             };
 
             _mockRepository.GetPimsDetailAsync(dto.Parentproject!)
@@ -209,12 +209,47 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProjectDetailsServiceTest
             result.Parentproject.Should().Be("PP001");
             result.Version.Should().Be("1.0");
             result.Riskid.Should().Be(1);
+            dto.UseProjectYears.Should().BeFalse();
+            result.UseProjectYears.Should().BeFalse();
 
             await _mockRepository.Received(1).GetPimsDetailAsync(dto.Parentproject!);
             _mockMapper.Received(1).Map<ProjectDetail>(dto);
             await _mockRepository.Received(1).AddPimsDetailAsync(newEntity);
             _mockMapper.Received(1).Map<ProjectDetailDto>(createdEntity);
             await _mockRepository.DidNotReceive().UpdatePimsDetailAsync(Arg.Any<ProjectDetail>());
+        }
+
+        [Fact]
+        public async Task SavePimsDetailAsync_WhenProjectDoesNotExist_SetsUseProjectYearsToFalse()
+        {
+            // Arrange — dto starts with UseProjectYears = true; service must override it to false
+            // before mapping (VBA Form_BeforeInsert: UseProjectYear defaults to False on new records)
+            var dto = new ProjectDetailDto
+            {
+                Parentproject = "PP001",
+                Version = "1.0",
+                UseProjectYears = true
+            };
+
+            var newEntity  = new ProjectDetail { Parentproject = "PP001", Version = "1.0", UseProjectYears = false };
+            var createdEntity = new ProjectDetail { Parentproject = "PP001", Version = "1.0", UseProjectYears = false };
+            var expectedDto   = new ProjectDetailDto { Parentproject = "PP001", Version = "1.0", UseProjectYears = false };
+
+            _mockRepository.GetPimsDetailAsync(dto.Parentproject!)
+                .Returns(Task.FromResult<ProjectDetail?>(null));
+            _mockMapper.Map<ProjectDetail>(dto).Returns(newEntity);
+            _mockRepository.AddPimsDetailAsync(newEntity).Returns(Task.FromResult(createdEntity));
+            _mockMapper.Map<ProjectDetailDto>(createdEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.SavePimsDetailAsync(dto);
+
+            // Assert
+            dto.UseProjectYears.Should().BeFalse();
+            result.UseProjectYears.Should().BeFalse();
+
+            _mockMapper.Received(1).Map<ProjectDetail>(dto);
+            await _mockRepository.Received(1).AddPimsDetailAsync(newEntity);
         }
 
         [Fact]

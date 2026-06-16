@@ -17,6 +17,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.Costbook.YearlyDetailsControlle
 public class YearlyDetailsControllerTests
 {
     private readonly ICostBookYearlyDetailsService _service;
+    private readonly ICostBookProjectSummaryService _summaryService;
     private readonly IMapper _mapper;
     private readonly YearlyDetailsController _controller;
     private static readonly string[] value = ["WgGrade is required."];
@@ -24,8 +25,9 @@ public class YearlyDetailsControllerTests
     public YearlyDetailsControllerTests()
     {
         _service = Substitute.For<ICostBookYearlyDetailsService>();
+        _summaryService = Substitute.For<ICostBookProjectSummaryService>();
         _mapper = Substitute.For<IMapper>();
-        _controller = new YearlyDetailsController(_service, _mapper);
+        _controller = new YearlyDetailsController(_service, _summaryService, _mapper);
         _controller.TempData = Substitute.For<ITempDataDictionary>();
 
         var urlHelper = Substitute.For<IUrlHelper>();
@@ -72,8 +74,6 @@ public class YearlyDetailsControllerTests
         _mapper.Map<List<ProjectYearRateItem>>(Arg.Any<List<ProjectYearDto>>())
             .Returns(new List<ProjectYearRateItem>());
 
-        SetupLookupMocks();
-
         // Act
         var result = await _controller.Index("2024/001");
 
@@ -99,8 +99,6 @@ public class YearlyDetailsControllerTests
 
         _mapper.Map<List<ProjectYearRateItem>>(Arg.Any<List<ProjectYearDto>>())
             .Returns(new List<ProjectYearRateItem>());
-
-        SetupLookupMocks();
 
         // Act
         var result = await _controller.Index("2024/001", 2);
@@ -508,20 +506,6 @@ public class YearlyDetailsControllerTests
 
     #region Helpers
 
-    private void SetupLookupMocks()
-    {
-        _service.GetPayRatesAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<PayRateDto>>.SuccessResponse(new List<PayRateDto>()));
-        _service.GetTestCodeLookupsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<TestCodeLookupDto>>.SuccessResponse(new List<TestCodeLookupDto>()));
-        _service.GetAllAnimalsAsync()
-            .Returns(ApiResponseDto<List<AnimalLookupDto>>.SuccessResponse(new List<AnimalLookupDto>()));
-        _service.GetAccountCategoriesAsync()
-            .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>()));
-        _service.GetAnimalRatesAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<AnimalRateDto>>.SuccessResponse(new List<AnimalRateDto>()));
-    }
-
     #endregion
 
     #region CreateStaff GET
@@ -805,8 +789,6 @@ public class YearlyDetailsControllerTests
         _service.GetProjectYearsAsync(Arg.Any<string>())
             .Returns(ApiResponseDto<List<ProjectYearDto>>.FailureResponse(null, new ApiMetaDto()));
 
-        SetupLookupMocks();
-
         var result = await _controller.Index("2024/001");
 
         var viewResult = Assert.IsType<ViewResult>(result);
@@ -818,7 +800,7 @@ public class YearlyDetailsControllerTests
     [Fact]
     public async Task Index_PopulatesDefraDropdowns_WhenIsDefraProject()
     {
-        var header = new ProjectHeaderDto { ProjectId = "2024/001", IsDefraProject = 1 };
+        var header = new ProjectHeaderDto { ProjectId = "2024/001", IsDefraProject = -1 };
         _service.GetProjectHeaderAsync(Arg.Any<string>())
             .Returns(ApiResponseDto<ProjectHeaderDto>.SuccessResponse(header));
 
@@ -828,8 +810,6 @@ public class YearlyDetailsControllerTests
 
         _mapper.Map<List<ProjectYearRateItem>>(Arg.Any<List<ProjectYearDto>>())
             .Returns(new List<ProjectYearRateItem>());
-
-        SetupLookupMocks();
 
         var result = await _controller.Index("2024/001", 1);
 
@@ -1133,284 +1113,71 @@ public class YearlyDetailsControllerTests
     [Fact]
     public async Task GetYearTotals_ReturnsJsonWithAllTotals()
     {
-        var staffDto = new StaffRequirementDto { StaffCost = 100.0 };
-        var testDto  = new TestRequirementDto  { TestCost  = 50.0  };
-        var animalDto = new AnimalRequirementDto { AnimalCost = 25.0 };
-        var acDto    = new AdditionalCostDto   { CostEntered = 10.0 };
-
-        var pagedResult = new PaginatedResult<StaffRequirementDto>(new List<StaffRequirementDto> { staffDto }, 1);
-        _service.GetStaffRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<StaffRequirementDto>>.SuccessResponse(pagedResult));
-        _mapper.Map<List<StaffRequirementItem>>(Arg.Any<IEnumerable<StaffRequirementDto>>())
-            .Returns(new List<StaffRequirementItem> { new() { StaffCost = 100.0 } });
-
-        var testPagedResult = new PaginatedResult<TestRequirementDto>(new List<TestRequirementDto> { testDto }, 1);
-        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(testPagedResult));
-        _mapper.Map<List<TestRequirementItem>>(Arg.Any<IEnumerable<TestRequirementDto>>())
-            .Returns(new List<TestRequirementItem> { new() { TestCost = 50.0 } });
-
-        _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(new PaginatedResult<AnimalRequirementDto>(new List<AnimalRequirementDto> { animalDto }, 1)));
-        _mapper.Map<List<AnimalRequirementItem>>(Arg.Any<IEnumerable<AnimalRequirementDto>>())
-            .Returns(new List<AnimalRequirementItem> { new() { AnimalCost = 25.0 } });
-
-        _service.GetAdditionalCostsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AdditionalCostDto>>.SuccessResponse(new PaginatedResult<AdditionalCostDto>(new List<AdditionalCostDto> { acDto }, 1)));
-        _mapper.Map<List<AdditionalCostItem>>(Arg.Any<IEnumerable<AdditionalCostDto>>())
-            .Returns(new List<AdditionalCostItem> { new() { CostEntered = 10.0 } });
+        var summary = new ProjectYearCostSummaryDto
+        {
+            Project = "2024/001",
+            Year = 2024,
+            StaffCostTotal = 100.0,
+            TestCostTotal = 50.0,
+            AnimalCostTotal = 25.0,
+            AdditionalCostTotal = 10.0,
+            GrandTotal = 185.0
+        };
+        _summaryService.GetProjectYearCostSummaryAsync("2024/001", 2024)
+            .Returns(ApiResponseDto<ProjectYearCostSummaryDto>.SuccessResponse(summary));
 
         var result = await _controller.GetYearTotals("2024/001", 2024);
 
-        var jsonResult = Assert.IsType<JsonResult>(result);
-        var element = GetJsonResultElement(jsonResult);
+        var element = GetJsonResultElement(Assert.IsType<JsonResult>(result));
         Assert.Equal(100.0, element.GetProperty("staffCostTotal").GetDouble());
         Assert.Equal(50.0,  element.GetProperty("testCostTotal").GetDouble());
         Assert.Equal(25.0,  element.GetProperty("animalCostTotal").GetDouble());
         Assert.Equal(10.0,  element.GetProperty("additionalCostTotal").GetDouble());
         Assert.Equal(185.0, element.GetProperty("grandTotal").GetDouble());
+        await _summaryService.Received(1).GetProjectYearCostSummaryAsync("2024/001", 2024);
     }
 
     [Fact]
-    public async Task GetYearTotals_ReturnsZeroTotals_WhenAllServicesFail()
+    public async Task GetYearTotals_ReturnsZeroTotals_WhenServiceFails()
     {
-        _service.GetStaffRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<StaffRequirementDto>>.FailureResponse(null, new ApiMetaDto()));
-        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<TestRequirementDto>>.FailureResponse(null, new ApiMetaDto()));
-        _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.FailureResponse(null, new ApiMetaDto()));
-        _service.GetAdditionalCostsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AdditionalCostDto>>.FailureResponse(null, new ApiMetaDto()));
+        _summaryService.GetProjectYearCostSummaryAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<ProjectYearCostSummaryDto>.FailureResponse(null, new ApiMetaDto()));
 
         var result = await _controller.GetYearTotals("2024/001", 2024);
 
-        var jsonResult = Assert.IsType<JsonResult>(result);
-        var element = GetJsonResultElement(jsonResult);
-        Assert.Equal(0, element.GetProperty("staffCostTotal").GetDouble());
-        Assert.Equal(0, element.GetProperty("testCostTotal").GetDouble());
-        Assert.Equal(0, element.GetProperty("animalCostTotal").GetDouble());
-        Assert.Equal(0, element.GetProperty("additionalCostTotal").GetDouble());
-        Assert.Equal(0, element.GetProperty("grandTotal").GetDouble());
+        var element = GetJsonResultElement(Assert.IsType<JsonResult>(result));
+        Assert.Equal(0.0, element.GetProperty("staffCostTotal").GetDouble());
+        Assert.Equal(0.0, element.GetProperty("testCostTotal").GetDouble());
+        Assert.Equal(0.0, element.GetProperty("animalCostTotal").GetDouble());
+        Assert.Equal(0.0, element.GetProperty("additionalCostTotal").GetDouble());
+        Assert.Equal(0.0, element.GetProperty("grandTotal").GetDouble());
+    }
+
+    [Fact]
+    public async Task GetYearTotals_ReturnsZeroTotals_WhenServiceReturnsNullData()
+    {
+        _summaryService.GetProjectYearCostSummaryAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<ProjectYearCostSummaryDto>.SuccessResponse(null!));
+
+        var result = await _controller.GetYearTotals("2024/001", 2024);
+
+        var element = GetJsonResultElement(Assert.IsType<JsonResult>(result));
+        Assert.Equal(0.0, element.GetProperty("staffCostTotal").GetDouble());
+        Assert.Equal(0.0, element.GetProperty("grandTotal").GetDouble());
     }
 
     [Fact]
     public async Task GetYearTotals_DecodesEncodedProjectId()
     {
-        // Arrange – project id with a forward slash URL-encoded as %2F
         const string encodedId = "2024%2F001";
         const string decodedId = "2024/001";
 
-        var pagedResult = new PaginatedResult<StaffRequirementDto>(new List<StaffRequirementDto>(), 0);
-        _service.GetStaffRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<StaffRequirementDto>>.SuccessResponse(pagedResult));
-        _mapper.Map<List<StaffRequirementItem>>(Arg.Any<IEnumerable<StaffRequirementDto>>())
-            .Returns(new List<StaffRequirementItem>());
+        _summaryService.GetProjectYearCostSummaryAsync(Arg.Any<string>(), Arg.Any<int>())
+            .Returns(ApiResponseDto<ProjectYearCostSummaryDto>.FailureResponse(null, new ApiMetaDto()));
 
-        var testPagedResult = new PaginatedResult<TestRequirementDto>(new List<TestRequirementDto>(), 0);
-        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(testPagedResult));
-        _mapper.Map<List<TestRequirementItem>>(Arg.Any<IEnumerable<TestRequirementDto>>())
-            .Returns(new List<TestRequirementItem>());
+        await _controller.GetYearTotals(encodedId, 2024);
 
-        _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(new PaginatedResult<AnimalRequirementDto>(new List<AnimalRequirementDto>(), 0)));
-        _mapper.Map<List<AnimalRequirementItem>>(Arg.Any<IEnumerable<AnimalRequirementDto>>())
-            .Returns(new List<AnimalRequirementItem>());
-
-        _service.GetAdditionalCostsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AdditionalCostDto>>.SuccessResponse(new PaginatedResult<AdditionalCostDto>(new List<AdditionalCostDto>(), 0)));
-        _mapper.Map<List<AdditionalCostItem>>(Arg.Any<IEnumerable<AdditionalCostDto>>())
-            .Returns(new List<AdditionalCostItem>());
-
-        var result = await _controller.GetYearTotals(encodedId, 2024);
-
-        // Verify the decoded id was forwarded to the service
-        await _service.Received(1).GetStaffRequirementsAsync(decodedId, 2024, Arg.Any<QueryParameters<string>>());
-        await _service.Received(1).GetTestRequirementsAsync(decodedId, 2024, Arg.Any<QueryParameters<string>>());
-        await _service.Received(1).GetAnimalRequirementsAsync(decodedId, 2024, Arg.Any<QueryParameters<string>>());
-        await _service.Received(1).GetAdditionalCostsAsync(decodedId, 2024, Arg.Any<QueryParameters<string>>());
-        Assert.IsType<JsonResult>(result);
-    }
-
-    [Fact]
-    public async Task GetYearTotals_UsesPageMinusOne_ForStaffQuery()
-    {
-        // Verifies that allStaffQuery is built with Page = -1 so all rows are fetched
-        QueryParameters<string>? capturedQuery = null;
-        var pagedResult = new PaginatedResult<StaffRequirementDto>(new List<StaffRequirementDto>(), 0);
-
-        _service.GetStaffRequirementsAsync(
-            Arg.Any<string>(), Arg.Any<int>(),
-            Arg.Do<QueryParameters<string>>(q => capturedQuery = q))
-            .Returns(ApiResponseDto<PaginatedResult<StaffRequirementDto>>.SuccessResponse(pagedResult));
-        _mapper.Map<List<StaffRequirementItem>>(Arg.Any<IEnumerable<StaffRequirementDto>>())
-            .Returns(new List<StaffRequirementItem>());
-
-        var testPagedResult = new PaginatedResult<TestRequirementDto>(new List<TestRequirementDto>(), 0);
-        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(testPagedResult));
-        _mapper.Map<List<TestRequirementItem>>(Arg.Any<IEnumerable<TestRequirementDto>>())
-            .Returns(new List<TestRequirementItem>());
-
-        _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(new PaginatedResult<AnimalRequirementDto>(new List<AnimalRequirementDto>(), 0)));
-        _mapper.Map<List<AnimalRequirementItem>>(Arg.Any<IEnumerable<AnimalRequirementDto>>())
-            .Returns(new List<AnimalRequirementItem>());
-
-        _service.GetAdditionalCostsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AdditionalCostDto>>.SuccessResponse(new PaginatedResult<AdditionalCostDto>(new List<AdditionalCostDto>(), 0)));
-        _mapper.Map<List<AdditionalCostItem>>(Arg.Any<IEnumerable<AdditionalCostDto>>())
-            .Returns(new List<AdditionalCostItem>());
-
-        await _controller.GetYearTotals("2024/001", 2024);
-
-        Assert.NotNull(capturedQuery);
-        Assert.Equal(-1, capturedQuery!.Page);
-        Assert.Equal(int.MaxValue, capturedQuery.PageSize);
-    }
-
-    [Fact]
-    public async Task GetYearTotals_AggregatesMultipleStaffRows()
-    {
-        // Covers CalculateYearTotals – Sum across multiple staff records
-        var pagedResult = new PaginatedResult<StaffRequirementDto>(
-            new List<StaffRequirementDto>
-            {
-                new() { StaffCost = 60.0 },
-                new() { StaffCost = 40.0 }
-            }, 2);
-        _service.GetStaffRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<StaffRequirementDto>>.SuccessResponse(pagedResult));
-        _mapper.Map<List<StaffRequirementItem>>(Arg.Any<IEnumerable<StaffRequirementDto>>())
-            .Returns(new List<StaffRequirementItem> { new() { StaffCost = 60.0 }, new() { StaffCost = 40.0 } });
-
-        var testPagedResult = new PaginatedResult<TestRequirementDto>(new List<TestRequirementDto>(), 0);
-        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(testPagedResult));
-        _mapper.Map<List<TestRequirementItem>>(Arg.Any<IEnumerable<TestRequirementDto>>())
-            .Returns(new List<TestRequirementItem>());
-
-        _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(new PaginatedResult<AnimalRequirementDto>(new List<AnimalRequirementDto>(), 0)));
-        _mapper.Map<List<AnimalRequirementItem>>(Arg.Any<IEnumerable<AnimalRequirementDto>>())
-            .Returns(new List<AnimalRequirementItem>());
-
-        _service.GetAdditionalCostsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AdditionalCostDto>>.SuccessResponse(new PaginatedResult<AdditionalCostDto>(new List<AdditionalCostDto>(), 0)));
-        _mapper.Map<List<AdditionalCostItem>>(Arg.Any<IEnumerable<AdditionalCostDto>>())
-            .Returns(new List<AdditionalCostItem>());
-
-        var result = await _controller.GetYearTotals("2024/001", 2024);
-
-        var element = GetJsonResultElement(Assert.IsType<JsonResult>(result));
-        Assert.Equal(100.0, element.GetProperty("staffCostTotal").GetDouble());
-        Assert.Equal(100.0, element.GetProperty("grandTotal").GetDouble());
-    }
-
-    [Fact]
-    public async Task GetYearTotals_TreatsNullCostItemsAsZero()
-    {
-        // Covers StaffCost ?? 0, TestCost ?? 0, AnimalCost ?? 0 branches in CalculateYearTotals
-        var pagedResult = new PaginatedResult<StaffRequirementDto>(
-            new List<StaffRequirementDto> { new() { StaffCost = null } }, 1);
-        _service.GetStaffRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<StaffRequirementDto>>.SuccessResponse(pagedResult));
-        _mapper.Map<List<StaffRequirementItem>>(Arg.Any<IEnumerable<StaffRequirementDto>>())
-            .Returns(new List<StaffRequirementItem> { new() { StaffCost = null } });
-
-        var testPagedResult = new PaginatedResult<TestRequirementDto>(new List<TestRequirementDto> { new() { TestCost = null } }, 1);
-        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(testPagedResult));
-        _mapper.Map<List<TestRequirementItem>>(Arg.Any<IEnumerable<TestRequirementDto>>())
-            .Returns(new List<TestRequirementItem> { new() { TestCost = null } });
-
-        _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(new PaginatedResult<AnimalRequirementDto>(new List<AnimalRequirementDto> { new() { AnimalCost = null } }, 1)));
-        _mapper.Map<List<AnimalRequirementItem>>(Arg.Any<IEnumerable<AnimalRequirementDto>>())
-            .Returns(new List<AnimalRequirementItem> { new() { AnimalCost = null } });
-
-        _service.GetAdditionalCostsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AdditionalCostDto>>.SuccessResponse(new PaginatedResult<AdditionalCostDto>(new List<AdditionalCostDto> { new() { CostEntered = 5.0 } }, 1)));
-        _mapper.Map<List<AdditionalCostItem>>(Arg.Any<IEnumerable<AdditionalCostDto>>())
-            .Returns(new List<AdditionalCostItem> { new() { CostEntered = 5.0 } });
-
-        var result = await _controller.GetYearTotals("2024/001", 2024);
-
-        var element = GetJsonResultElement(Assert.IsType<JsonResult>(result));
-        Assert.Equal(0, element.GetProperty("staffCostTotal").GetDouble());
-        Assert.Equal(0, element.GetProperty("testCostTotal").GetDouble());
-        Assert.Equal(0, element.GetProperty("animalCostTotal").GetDouble());
-        Assert.Equal(5.0, element.GetProperty("additionalCostTotal").GetDouble());
-        Assert.Equal(5.0, element.GetProperty("grandTotal").GetDouble());
-    }
-
-    [Fact]
-    public async Task GetYearTotals_ReturnsCorrectTotals_WhenOnlyStaffServiceFails()
-    {
-        // Partial failure – staff fails, others succeed
-        _service.GetStaffRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<StaffRequirementDto>>.FailureResponse(null, new ApiMetaDto()));
-
-        var testPagedResult = new PaginatedResult<TestRequirementDto>(new List<TestRequirementDto> { new() { TestCost = 30.0 } }, 1);
-        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(testPagedResult));
-        _mapper.Map<List<TestRequirementItem>>(Arg.Any<IEnumerable<TestRequirementDto>>())
-            .Returns(new List<TestRequirementItem> { new() { TestCost = 30.0 } });
-
-        _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(new PaginatedResult<AnimalRequirementDto>(new List<AnimalRequirementDto> { new() { AnimalCost = 20.0 } }, 1)));
-        _mapper.Map<List<AnimalRequirementItem>>(Arg.Any<IEnumerable<AnimalRequirementDto>>())
-            .Returns(new List<AnimalRequirementItem> { new() { AnimalCost = 20.0 } });
-
-        _service.GetAdditionalCostsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AdditionalCostDto>>.SuccessResponse(new PaginatedResult<AdditionalCostDto>(new List<AdditionalCostDto> { new() { CostEntered = 10.0 } }, 1)));
-        _mapper.Map<List<AdditionalCostItem>>(Arg.Any<IEnumerable<AdditionalCostDto>>())
-            .Returns(new List<AdditionalCostItem> { new() { CostEntered = 10.0 } });
-
-        var result = await _controller.GetYearTotals("2024/001", 2024);
-
-        var element = GetJsonResultElement(Assert.IsType<JsonResult>(result));
-        Assert.Equal(0,    element.GetProperty("staffCostTotal").GetDouble());
-        Assert.Equal(30.0, element.GetProperty("testCostTotal").GetDouble());
-        Assert.Equal(20.0, element.GetProperty("animalCostTotal").GetDouble());
-        Assert.Equal(10.0, element.GetProperty("additionalCostTotal").GetDouble());
-        Assert.Equal(60.0, element.GetProperty("grandTotal").GetDouble());
-    }
-
-    [Fact]
-    public async Task GetYearTotals_ReturnsCorrectTotals_WhenOnlyAdditionalCostServiceFails()
-    {
-        // Partial failure – additional costs fail, others succeed
-        var pagedResult = new PaginatedResult<StaffRequirementDto>(
-            new List<StaffRequirementDto> { new() { StaffCost = 80.0 } }, 1);
-        _service.GetStaffRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<StaffRequirementDto>>.SuccessResponse(pagedResult));
-        _mapper.Map<List<StaffRequirementItem>>(Arg.Any<IEnumerable<StaffRequirementDto>>())
-            .Returns(new List<StaffRequirementItem> { new() { StaffCost = 80.0 } });
-
-        var testPagedResult = new PaginatedResult<TestRequirementDto>(new List<TestRequirementDto> { new() { TestCost = 20.0 } }, 1);
-        _service.GetTestRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<TestRequirementDto>>.SuccessResponse(testPagedResult));
-        _mapper.Map<List<TestRequirementItem>>(Arg.Any<IEnumerable<TestRequirementDto>>())
-            .Returns(new List<TestRequirementItem> { new() { TestCost = 20.0 } });
-
-        _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(new PaginatedResult<AnimalRequirementDto>(new List<AnimalRequirementDto>(), 0)));
-        _mapper.Map<List<AnimalRequirementItem>>(Arg.Any<IEnumerable<AnimalRequirementDto>>())
-            .Returns(new List<AnimalRequirementItem>());
-
-        _service.GetAdditionalCostsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
-            .Returns(ApiResponseDto<PaginatedResult<AdditionalCostDto>>.FailureResponse(null, new ApiMetaDto()));
-
-        var result = await _controller.GetYearTotals("2024/001", 2024);
-
-        var element = GetJsonResultElement(Assert.IsType<JsonResult>(result));
-        Assert.Equal(80.0,  element.GetProperty("staffCostTotal").GetDouble());
-        Assert.Equal(20.0,  element.GetProperty("testCostTotal").GetDouble());
-        Assert.Equal(0,     element.GetProperty("animalCostTotal").GetDouble());
-        Assert.Equal(0,     element.GetProperty("additionalCostTotal").GetDouble());
-        Assert.Equal(100.0, element.GetProperty("grandTotal").GetDouble());
+        await _summaryService.Received(1).GetProjectYearCostSummaryAsync(decodedId, 2024);
     }
 
     #endregion
@@ -1533,8 +1300,6 @@ public class YearlyDetailsControllerTests
         _mapper.Map<List<ProjectYearRateItem>>(Arg.Any<List<ProjectYearDto>>())
             .Returns(expectedRates);
 
-        SetupLookupMocks();
-
         var result = await _controller.Index("2024/001", 1);
 
         var viewResult = Assert.IsType<ViewResult>(result);
@@ -1554,8 +1319,6 @@ public class YearlyDetailsControllerTests
         // Return empty year list so selectedYear stays 0
         _service.GetProjectYearsAsync(Arg.Any<string>())
             .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
-
-        SetupLookupMocks();
 
         var result = await _controller.Index("2024/001");
 
@@ -1580,8 +1343,6 @@ public class YearlyDetailsControllerTests
         _service.AddProjectYearAsync(Arg.Any<string>(), 2024, Arg.Any<ProjectYearDto>())
             .Returns(ApiResponseDto<ProjectYearDto>.SuccessResponse(new ProjectYearDto { YearValue = 2024 }));
 
-        SetupLookupMocks();
-
         var result = await _controller.Index("2024/001");
 
         var viewResult = Assert.IsType<ViewResult>(result);
@@ -1600,8 +1361,6 @@ public class YearlyDetailsControllerTests
             .Returns(ApiResponseDto<ProjectHeaderDto>.SuccessResponse(header));
         _service.GetProjectYearsAsync(Arg.Any<string>())
             .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
-
-        SetupLookupMocks();
 
         var result = await _controller.Index("2024/001");
 
@@ -1622,8 +1381,6 @@ public class YearlyDetailsControllerTests
             .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
         _service.AddProjectYearAsync(Arg.Any<string>(), 2024, Arg.Any<ProjectYearDto>())
             .Returns(ApiResponseDto<ProjectYearDto>.FailureResponse(null, new ApiMetaDto()));
-
-        SetupLookupMocks();
 
         var result = await _controller.Index("2024/001");
 
@@ -1687,67 +1444,13 @@ public class YearlyDetailsControllerTests
     #region PopulateDropdownsAsync – failure / empty data branches
 
     [Fact]
-    public async Task Index_SetsEmptyDropdowns_WhenPayRateServiceFails()
+    public async Task Index_SetsEmptyAccountCatOptions_WhenAccountCategoryServiceFails()
     {
         var header = new ProjectHeaderDto { ProjectId = "2024/001", IsDefraProject = 0 };
         _service.GetProjectHeaderAsync(Arg.Any<string>())
             .Returns(ApiResponseDto<ProjectHeaderDto>.SuccessResponse(header));
         _service.GetProjectYearsAsync(Arg.Any<string>())
             .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
-
-        // Pay rates fail
-        _service.GetPayRatesAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<PayRateDto>>.FailureResponse(null, new ApiMetaDto()));
-        _service.GetAnimalRatesAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<AnimalRateDto>>.SuccessResponse(new List<AnimalRateDto>()));
-        _service.GetAccountCategoriesAsync()
-            .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>()));
-
-        var result = await _controller.Index("2024/001");
-
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<YearlyDetailsViewModel>(viewResult.Model);
-        Assert.Empty(model.WgGradeOptions);
-    }
-
-    [Fact]
-    public async Task Index_SetsEmptyDropdowns_WhenAnimalRateServiceFails()
-    {
-        var header = new ProjectHeaderDto { ProjectId = "2024/001", IsDefraProject = 0 };
-        _service.GetProjectHeaderAsync(Arg.Any<string>())
-            .Returns(ApiResponseDto<ProjectHeaderDto>.SuccessResponse(header));
-        _service.GetProjectYearsAsync(Arg.Any<string>())
-            .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
-
-        _service.GetPayRatesAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<PayRateDto>>.SuccessResponse(new List<PayRateDto>()));
-        // Animal rates fail
-        _service.GetAnimalRatesAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<AnimalRateDto>>.FailureResponse(null, new ApiMetaDto()));
-        _service.GetAccountCategoriesAsync()
-            .Returns(ApiResponseDto<List<AccountCategoryDto>>.SuccessResponse(new List<AccountCategoryDto>()));
-
-        var result = await _controller.Index("2024/001");
-
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<YearlyDetailsViewModel>(viewResult.Model);
-        Assert.Empty(model.AnimalTypeOptions);
-    }
-
-    [Fact]
-    public async Task Index_SetsEmptyDropdowns_WhenAccountCategoryServiceFails()
-    {
-        var header = new ProjectHeaderDto { ProjectId = "2024/001", IsDefraProject = 0 };
-        _service.GetProjectHeaderAsync(Arg.Any<string>())
-            .Returns(ApiResponseDto<ProjectHeaderDto>.SuccessResponse(header));
-        _service.GetProjectYearsAsync(Arg.Any<string>())
-            .Returns(ApiResponseDto<List<ProjectYearDto>>.SuccessResponse(new List<ProjectYearDto>()));
-
-        _service.GetPayRatesAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<PayRateDto>>.SuccessResponse(new List<PayRateDto>()));
-        _service.GetAnimalRatesAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<bool>())
-            .Returns(ApiResponseDto<List<AnimalRateDto>>.SuccessResponse(new List<AnimalRateDto>()));
-        // Account categories fail
         _service.GetAccountCategoriesAsync()
             .Returns(ApiResponseDto<List<AccountCategoryDto>>.FailureResponse(null, new ApiMetaDto()));
 
