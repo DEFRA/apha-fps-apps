@@ -167,7 +167,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
 
             // Assert — URL must contain the projectStatus param
             await _httpExecutor.Received(1).GetAsync<List<ProjectProfitabilityVlaRes>>(
-                Arg.Is<string>(url => url.Contains("projectStatus=Approved")));
+                Arg.Is<string>(url => url.Contains("Filter.ProjectStatus=Approved")));
         }
 
         [Fact]
@@ -187,7 +187,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
 
             // Assert
             await _httpExecutor.Received(1).GetAsync<List<ProjectProfitabilityVlaRes>>(
-                Arg.Is<string>(url => url.Contains("programNo=P001")));
+                Arg.Is<string>(url => url.Contains("Filter.ProgramNo=P001")));
         }
 
         [Fact]
@@ -207,7 +207,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
 
             // Assert
             await _httpExecutor.Received(1).GetAsync<List<ProjectProfitabilityVlaRes>>(
-                Arg.Is<string>(url => url.Contains("manager=JohnSmith")));
+                Arg.Is<string>(url => url.Contains("Filter.Manager=JohnSmith")));
         }
 
         [Fact]
@@ -227,7 +227,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
 
             // Assert
             await _httpExecutor.Received(1).GetAsync<List<ProjectProfitabilityVlaRes>>(
-                Arg.Is<string>(url => url.Contains("customer=ACMELtd")));
+                Arg.Is<string>(url => url.Contains("Filter.Customer=ACMELtd")));
         }
 
         [Fact]
@@ -253,10 +253,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             // Assert — all 4 optional params appended
             await _httpExecutor.Received(1).GetAsync<List<ProjectProfitabilityVlaRes>>(
                 Arg.Is<string>(url =>
-                    url.Contains("projectStatus=Approved") &&
-                    url.Contains("programNo=P001") &&
-                    url.Contains("manager=JohnSmith") &&
-                    url.Contains("customer=ACMELtd")));
+                    url.Contains("Filter.ProjectStatus=Approved") &&
+                    url.Contains("Filter.ProgramNo=P001") &&
+                    url.Contains("Filter.Manager=JohnSmith") &&
+                    url.Contains("Filter.Customer=ACMELtd")));
         }
 
         [Fact]
@@ -297,10 +297,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
             // Assert — URL must NOT contain any filter param keys when all are null
             await _httpExecutor.Received(1).GetAsync<List<ProjectProfitabilityVlaRes>>(
                 Arg.Is<string>(url =>
-                    !url.Contains("projectStatus=") &&
-                    !url.Contains("programNo=") &&
-                    !url.Contains("manager=") &&
-                    !url.Contains("customer=")));
+                    !url.Contains("Filter.ProjectStatus=") &&
+                    !url.Contains("Filter.ProgramNo=") &&
+                    !url.Contains("Filter.Manager=") &&
+                    !url.Contains("Filter.Customer=")));
         }
 
         #endregion

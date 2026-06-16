@@ -8,32 +8,6 @@
 <main class="govuk-main-wrapper govuk-!-padding-top-0 asu-main-content" id="main-content" role="main">
     <div class="container-fluid">
 
-        @* ── Breadcrumb ──────────────────────────────────────────────────────── *@
-        @* TRANSFORMENGINE: breadcrumb replicated from HTML prototype:
-               Home > Program Management > Project Profitability for VLA *@
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div class="row fps-sr-breadcrumb-row">
-                    <div class="fps-sr-breadcrumb-flex">
-                        <div class="govuk-grid-column-two-thirds govuk-!-padding-left-0">
-                            <nav class="govuk-breadcrumbs" aria-label="Breadcrumb">
-                                <ol class="govuk-breadcrumbs__list">
-                                    <li class="govuk-breadcrumbs__list-item">
-                                        <a class="govuk-breadcrumbs__link" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a>
-                                    </li>
-                                    <li class="govuk-breadcrumbs__list-item">
-                                        @* TRANSFORMENGINE TODO: confirm correct MVC route for Program Management *@
-                                        <a class="govuk-breadcrumbs__link" href="@Url.Action("Index", "ProgramManagement", new { area = "FPS" })">Program Management</a>
-                                    </li>
-                                    <li class="govuk-breadcrumbs__list-item">Project Profitability for VLA</li>
-                                </ol>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         @* ── Page title ──────────────────────────────────────────────────────── *@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">

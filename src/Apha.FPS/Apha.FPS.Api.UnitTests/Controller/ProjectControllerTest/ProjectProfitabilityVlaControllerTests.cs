@@ -54,8 +54,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
 
             // Act
             var result = await _controller.GetProjectProfitabilityVlaAsync(
-                projectStatus: null, programNo: null, manager: null, customer: null,
-                page: 1, pageSize: 15);
+                new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 });
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -85,12 +84,18 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
 
             // Act
             var result = await _controller.GetProjectProfitabilityVlaAsync(
-                projectStatus: "Approved",
-                programNo: "P001",
-                manager: "John Smith",
-                customer: "ACME Ltd",
-                page: 1,
-                pageSize: 10);
+                new QueryParameters<ProjectProfitabilityVlaReq>
+                {
+                    Page = 1,
+                    PageSize = 10,
+                    Filter = new ProjectProfitabilityVlaReq
+                    {
+                        ProjectStatus = "Approved",
+                        ProgramNo = "P001",
+                        Manager = "John Smith",
+                        Customer = "ACME Ltd"
+                    }
+                });
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -120,8 +125,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
 
             // Act
             var result = await _controller.GetProjectProfitabilityVlaAsync(
-                projectStatus: null, programNo: null, manager: null, customer: null,
-                page: 1, pageSize: 15);
+                new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 });
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -146,8 +150,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
 
             // Act — call with default values
             var result = await _controller.GetProjectProfitabilityVlaAsync(
-                projectStatus: null, programNo: null, manager: null, customer: null,
-                page: 1, pageSize: 15);
+                new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 });
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
@@ -174,8 +177,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
 
             // Act
             await _controller.GetProjectProfitabilityVlaAsync(
-                projectStatus: null, programNo: null, manager: null, customer: null,
-                page: 1, pageSize: 15);
+                new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 });
 
             // Assert — mapper is invoked once with the service result
             _mapper.Received(1).Map<PaginationRes<ProjectProfitabilityVlaRes>>(serviceResult);
@@ -191,8 +193,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 _controller.GetProjectProfitabilityVlaAsync(
-                    projectStatus: null, programNo: null, manager: null, customer: null,
-                    page: 1, pageSize: 15));
+                    new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 }));
         }
 
         #endregion

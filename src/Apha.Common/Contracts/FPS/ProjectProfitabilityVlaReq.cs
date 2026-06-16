@@ -37,17 +37,5 @@ namespace Apha.Common.Contracts.FPS
         [MaxLength(100)]
         public string? Customer { get; set; }
 
-        // TRANSFORMENGINE: pagination — aligns with DataGridComponent pageSizeOptions [5,10,15,20,25,30]
-        /// <summary>
-        /// 1-based page number. Defaults to 1 if not supplied.
-        /// </summary>
-        [Range(1, int.MaxValue)]
-        public int Page { get; set; } = 1;
-
-        /// <summary>
-        /// Number of rows per page. Defaults to 15 (DataGrid default). Valid options: 5, 10, 15, 20, 25, 30.
-        /// </summary>
-        [Range(1, 100)]
-        public int PageSize { get; set; } = 15;
-    }
+        }
 }

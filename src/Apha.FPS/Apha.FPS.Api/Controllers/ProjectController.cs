@@ -243,58 +243,15 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
         }
 
-        // TRANSFORMENGINE: new endpoint — frmJobcodeTotalsVLA migration
-        //   Route: GET /api/v1/project/profitability-vla
-        //   Filter dimensions from HTML prototype: projectStatus, programNo, manager, customer
-        //   All filter fields are optional; omitting returns all rows (matches HTML "All ..." defaults).
         /// <summary>
         /// Returns a paginated list of VLA project profitability rows filtered by
         /// project status, program, manager, and/or customer.
         /// All filter parameters are optional; omitting a parameter returns all rows
-        /// for that dimension (equivalent to selecting "All" in the HTML prototype dropdowns).
+        /// for that dimension.
         /// </summary>
-        /// <param name="projectStatus">Optional filter: "Approved", "Completed", or "Not Approved".</param>
-        /// <param name="programNo">Optional filter by program number/name.</param>
-        /// <param name="manager">Optional filter by manager name.</param>
-        /// <param name="customer">Optional filter by customer name.</param>
-        /// <param name="page">1-based page number (default: 1).</param>
-        /// <param name="pageSize">Rows per page (default: 15, max: 100).</param>
         [HttpGet("profitability-vla")]
-        public async Task<IActionResult> GetProjectProfitabilityVlaAsync(
-            [FromQuery] string? projectStatus = null,
-            [FromQuery] string? programNo = null,
-            [FromQuery] string? manager = null,
-            [FromQuery] string? customer = null,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 15)
+        public async Task<IActionResult> GetProjectProfitabilityVlaAsync([FromQuery] QueryParameters<ProjectProfitabilityVlaReq> query)
         {
-            // TRANSFORMENGINE: build QueryParameters<ProjectProfitabilityVlaReq> from individual
-            //   query-string params rather than binding the whole Req object via [FromQuery] to
-            //   keep the public route contract flat and consistent with how the HTML prototype JS
-            //   constructs the GET request (individual named params on the URL).
-
-            // TRANSFORMENGINE [Phase 14 security fix]: clamp pagination params to safe bounds.
-            //   Flat int bindings carry no [Range] annotation so client could pass arbitrary values.
-            //   Consistent with [Range(1,100)] on ProjectProfitabilityVlaReq.PageSize (Phase 1 contract).
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 1;
-            if (pageSize > 100) pageSize = 100;
-
-            var query = new QueryParameters<ProjectProfitabilityVlaReq>
-            {
-                Page = page,
-                PageSize = pageSize,
-                Filter = new ProjectProfitabilityVlaReq
-                {
-                    ProjectStatus = projectStatus,
-                    ProgramNo = programNo,
-                    Manager = manager,
-                    Customer = customer,
-                    Page = page,
-                    PageSize = pageSize
-                }
-            };
-
             var result = await _projectService.GetProjectProfitabilityVlaAsync(query);
             return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityVlaRes>>(result));
         }
