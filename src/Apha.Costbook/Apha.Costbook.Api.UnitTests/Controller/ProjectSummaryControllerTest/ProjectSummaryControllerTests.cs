@@ -343,6 +343,7 @@ public class ProjectSummaryControllerTests
         var response = Assert.IsType<ApiResponse<ProjectYearCostSummaryRes>>(okResult.Value);
 
         Assert.True(response.Success);
+        Assert.NotNull(response.Data);
         Assert.Equal(0.0, response.Data.StaffCostTotal);
         Assert.Equal(0.0, response.Data.TestCostTotal);
         Assert.Equal(0.0, response.Data.AnimalCostTotal);

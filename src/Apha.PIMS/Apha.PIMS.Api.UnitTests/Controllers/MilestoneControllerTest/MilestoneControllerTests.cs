@@ -1,10 +1,11 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -21,7 +22,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         {
             _service    = Substitute.For<IMilestoneService>();
             _mapper     = Substitute.For<IMapper>();
-            _controller = new MilestoneController(_service, _mapper);
+            _controller = new MilestoneController(_service, _mapper)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext()
+                }
+            };
         }
 
         #region GetAllMilestones
@@ -210,7 +217,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var savedRes = new MilestoneRes { Project = project, Number = "M1" };
 
             _mapper.Map<MilestoneDto>(request).Returns(dto);
-            _service.SaveMilestoneAsync(dto).Returns(savedDto);
+            _service.SaveMilestoneAsync(dto, Arg.Any<string?>()).Returns(savedDto);
             _mapper.Map<MilestoneRes>(savedDto).Returns(savedRes);
 
             // Act
@@ -224,7 +231,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             Assert.Equal(project, dto.Project);
 
             _mapper.Received(1).Map<MilestoneDto>(request);
-            await _service.Received(1).SaveMilestoneAsync(dto);
+            await _service.Received(1).SaveMilestoneAsync(dto, Arg.Any<string?>());
             _mapper.Received(1).Map<MilestoneRes>(savedDto);
         }
 
@@ -237,13 +244,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var dto     = new MilestoneDto { Number = "M1" };
 
             _mapper.Map<MilestoneDto>(request).Returns(dto);
-            _service.SaveMilestoneAsync(dto).Throws(new Exception("Validation error"));
+            _service.SaveMilestoneAsync(dto, Arg.Any<string?>()).Throws(new Exception("Validation error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.SaveMilestone(project, request));
 
             _mapper.Received(1).Map<MilestoneDto>(request);
-            await _service.Received(1).SaveMilestoneAsync(dto);
+            await _service.Received(1).SaveMilestoneAsync(dto, Arg.Any<string?>());
             _mapper.DidNotReceive().Map<MilestoneRes>(Arg.Any<MilestoneDto>());
         }
 
@@ -268,7 +275,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var updatedRes = new MilestoneRes { Project = project, Number = number, Description = "Updated milestone" };
 
             _mapper.Map<MilestoneDto>(request).Returns(dto);
-            _service.UpdateMilestoneAsync(dto).Returns(updatedDto);
+            _service.UpdateMilestoneAsync(dto, Arg.Any<string?>()).Returns(updatedDto);
             _mapper.Map<MilestoneRes>(updatedDto).Returns(updatedRes);
 
             // Act
@@ -283,7 +290,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             Assert.Equal(number,  dto.Number);
 
             _mapper.Received(1).Map<MilestoneDto>(request);
-            await _service.Received(1).UpdateMilestoneAsync(dto);
+            await _service.Received(1).UpdateMilestoneAsync(dto, Arg.Any<string?>());
             _mapper.Received(1).Map<MilestoneRes>(updatedDto);
         }
 
@@ -301,7 +308,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var updatedRes = new MilestoneRes { Project = project, Number = decodedNumber };
 
             _mapper.Map<MilestoneDto>(request).Returns(dto);
-            _service.UpdateMilestoneAsync(dto).Returns(updatedDto);
+            _service.UpdateMilestoneAsync(dto, Arg.Any<string?>()).Returns(updatedDto);
             _mapper.Map<MilestoneRes>(updatedDto).Returns(updatedRes);
 
             // Act
@@ -322,13 +329,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var dto     = new MilestoneDto();
 
             _mapper.Map<MilestoneDto>(request).Returns(dto);
-            _service.UpdateMilestoneAsync(dto).Throws(new Exception("Not found"));
+            _service.UpdateMilestoneAsync(dto, Arg.Any<string?>()).Throws(new Exception("Not found"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.UpdateMilestone(project, number, request));
 
             _mapper.Received(1).Map<MilestoneDto>(request);
-            await _service.Received(1).UpdateMilestoneAsync(dto);
+            await _service.Received(1).UpdateMilestoneAsync(dto, Arg.Any<string?>());
             _mapper.DidNotReceive().Map<MilestoneRes>(Arg.Any<MilestoneDto>());
         }
 
@@ -882,3 +889,4 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         #endregion
     }
 }
+

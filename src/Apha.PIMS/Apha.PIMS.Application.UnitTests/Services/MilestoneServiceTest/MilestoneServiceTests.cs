@@ -1,4 +1,4 @@
-ï»¿using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Application.Services;
 using Apha.PIMS.Application.Validation;
@@ -299,7 +299,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
         #endregion
 
-        #region SaveMilestoneAsync â€” validation
+        #region SaveMilestoneAsync — validation
 
         [Fact]
         public async Task SaveMilestoneAsync_ThrowsBusinessValidationError_WhenProjectIsEmpty()
@@ -395,7 +395,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
         [Fact]
         public async Task SaveMilestoneAsync_CollectsAllValidationErrors_WhenAllFieldsInvalid()
         {
-            // Arrange â€” every validated field is invalid at once
+            // Arrange — every validated field is invalid at once
             var dto = new MilestoneDto
             {
                 Project       = string.Empty,
@@ -429,7 +429,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             // Assert
             await _mockRepository.DidNotReceive().GetMilestoneAsync(Arg.Any<string>(), Arg.Any<string>());
-            await _mockRepository.DidNotReceive().AddMilestoneAsync(Arg.Any<Milestone>());
+            await _mockRepository.DidNotReceive().AddMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>());
         }
 
         [Fact]
@@ -447,17 +447,17 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             // Assert
             ex.Errors.Should().ContainSingle(e => e.Code == "NUMBER_EXISTS");
-            await _mockRepository.DidNotReceive().AddMilestoneAsync(Arg.Any<Milestone>());
+            await _mockRepository.DidNotReceive().AddMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>());
         }
 
         #endregion
 
-        #region SaveMilestoneAsync â€” mutual exclusions (ApplyMutualExclusions)
+        #region SaveMilestoneAsync — mutual exclusions (ApplyMutualExclusions)
 
         [Fact]
         public async Task SaveMilestoneAsync_WhenDateCompletedIsSet_ClearsOnTargetAndUnderSdReview()
         {
-            // Arrange â€” ApplyMutualExclusions mutates dto in place, so we inspect dto after the call.
+            // Arrange — ApplyMutualExclusions mutates dto in place, so we inspect dto after the call.
             var dto = ValidMilestoneDto();
             dto.DateCompleted = DateTime.Today.AddDays(-1);
             dto.OnTarget      = 1;
@@ -465,7 +465,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             _mockRepository.GetMilestoneAsync(dto.Project, dto.Number).Returns((Milestone?)null);
             _mockMapper.Map<Milestone>(Arg.Any<object>()).Returns(new Milestone());
-            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>()).Returns(new Milestone());
+            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>()).Returns(new Milestone());
             _mockMapper.Map<MilestoneDto>(Arg.Any<Milestone>()).Returns(new MilestoneDto { Project = "PP001", Number = "M1", DateDue = DateTime.Today.AddDays(30) });
 
             // Act
@@ -480,7 +480,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
         [Fact]
         public async Task SaveMilestoneAsync_WhenOnTargetIsSet_ClearsUnderSdReviewAndDateCompleted()
         {
-            // Arrange â€” no DateCompleted so the first exclusion block does not fire first.
+            // Arrange — no DateCompleted so the first exclusion block does not fire first.
             var dto = ValidMilestoneDto();
             dto.OnTarget      = 1;
             dto.UnderSdReview = 1;
@@ -488,7 +488,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             _mockRepository.GetMilestoneAsync(dto.Project, dto.Number).Returns((Milestone?)null);
             _mockMapper.Map<Milestone>(Arg.Any<object>()).Returns(new Milestone());
-            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>()).Returns(new Milestone());
+            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>()).Returns(new Milestone());
             _mockMapper.Map<MilestoneDto>(Arg.Any<Milestone>()).Returns(new MilestoneDto { Project = "PP001", Number = "M1", DateDue = DateTime.Today.AddDays(30) });
 
             // Act
@@ -502,7 +502,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
         [Fact]
         public async Task SaveMilestoneAsync_WhenUnderSdReviewIsSet_ClearsOnTargetAndDateCompleted()
         {
-            // Arrange â€” OnTarget is 0 so the second exclusion block does not fire.
+            // Arrange — OnTarget is 0 so the second exclusion block does not fire.
             var dto = ValidMilestoneDto();
             dto.UnderSdReview = 1;
             dto.OnTarget      = 0;
@@ -510,7 +510,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             _mockRepository.GetMilestoneAsync(dto.Project, dto.Number).Returns((Milestone?)null);
             _mockMapper.Map<Milestone>(Arg.Any<object>()).Returns(new Milestone());
-            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>()).Returns(new Milestone());
+            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>()).Returns(new Milestone());
             _mockMapper.Map<MilestoneDto>(Arg.Any<Milestone>()).Returns(new MilestoneDto { Project = "PP001", Number = "M1", DateDue = DateTime.Today.AddDays(30) });
 
             // Act
@@ -523,7 +523,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
         #endregion
 
-        #region SaveMilestoneAsync â€” happy path
+        #region SaveMilestoneAsync — happy path
 
         [Fact]
         public async Task SaveMilestoneAsync_CallsAddAndReturnsMappedDto_WhenValid()
@@ -536,7 +536,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             _mockRepository.GetMilestoneAsync(dto.Project, dto.Number).Returns((Milestone?)null);
             _mockMapper.Map<Milestone>(Arg.Any<object>()).Returns(entity);
-            _mockRepository.AddMilestoneAsync(entity).Returns(created);
+            _mockRepository.AddMilestoneAsync(entity, Arg.Any<string?>()).Returns(created);
             _mockMapper.Map<MilestoneDto>(created).Returns(resultDto);
 
             // Act
@@ -546,12 +546,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             result.Should().NotBeNull();
             result.Project.Should().Be("PP001");
             result.Number.Should().Be("M1");
-            await _mockRepository.Received(1).AddMilestoneAsync(entity);
+            await _mockRepository.Received(1).AddMilestoneAsync(entity, Arg.Any<string?>());
         }
 
         #endregion
 
-        #region UpdateMilestoneAsync â€” validation
+        #region UpdateMilestoneAsync — validation
 
         [Fact]
         public async Task UpdateMilestoneAsync_ThrowsBusinessValidationError_WhenProjectIsEmpty()
@@ -656,7 +656,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             // Assert
             await _mockRepository.DidNotReceive().GetMilestoneAsync(Arg.Any<string>(), Arg.Any<string>());
-            await _mockRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<Milestone>());
+            await _mockRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>());
         }
 
         [Fact]
@@ -672,12 +672,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             // Assert
             ex.Errors.Should().ContainSingle(e => e.Code == "NOT_FOUND");
-            await _mockRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<Milestone>());
+            await _mockRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>());
         }
 
         #endregion
 
-        #region UpdateMilestoneAsync â€” happy path
+        #region UpdateMilestoneAsync — happy path
 
         [Fact]
         public async Task UpdateMilestoneAsync_CallsUpdateAndReturnsMappedDto_WhenValid()
@@ -689,7 +689,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             var resultDto = new MilestoneDto { Project = dto.Project, Number = dto.Number };
 
             _mockRepository.GetMilestoneAsync(dto.Project, dto.Number).Returns(existing);
-            _mockRepository.UpdateMilestoneAsync(existing).Returns(updated);
+            _mockRepository.UpdateMilestoneAsync(existing, Arg.Any<string?>()).Returns(updated);
             _mockMapper.Map<MilestoneDto>(updated).Returns(resultDto);
 
             // Act
@@ -699,7 +699,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             result.Should().NotBeNull();
             result.Project.Should().Be("PP001");
             result.Number.Should().Be("M1");
-            await _mockRepository.Received(1).UpdateMilestoneAsync(existing);
+            await _mockRepository.Received(1).UpdateMilestoneAsync(existing, Arg.Any<string?>());
         }
 
         #endregion
@@ -957,7 +957,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
         #endregion
 
-        #region SaveMilestoneFormDatesAsync â€” validation
+        #region SaveMilestoneFormDatesAsync — validation
 
         [Fact]
         public async Task SaveMilestoneFormDatesAsync_ThrowsBusinessValidationError_WhenParentProjectIsEmpty()
@@ -1006,7 +1006,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
         #endregion
 
-        #region SaveMilestoneFormDatesAsync â€” add vs update
+        #region SaveMilestoneFormDatesAsync — add vs update
 
         [Fact]
         public async Task SaveMilestoneFormDatesAsync_CallsAdd_WhenNoExistingRecord()
@@ -1234,3 +1234,4 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
         #endregion
     }
 }
+

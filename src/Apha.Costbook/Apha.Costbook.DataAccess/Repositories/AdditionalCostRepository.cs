@@ -8,7 +8,7 @@ using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
-public class AdditionalCostRepository : RepositoryBase<AdditionalCost>, IAdditionalCostRepository
+public class AdditionalCostRepository : RepositoryBase, IAdditionalCostRepository
 {
     public AdditionalCostRepository(CostbookDbContext context) : base(context) { }
 
@@ -43,9 +43,8 @@ public class AdditionalCostRepository : RepositoryBase<AdditionalCost>, IAdditio
             .Distinct();
 
         baseQuery = ApplySorting(baseQuery, query.SortBy, query.Descending);
-
-        var result = await baseQuery.ToListAsync();
-        return ApplyPaging(result, query.Page, query.PageSize);
+        
+        return await ApplyPaging(baseQuery, query.Page, query.PageSize);
     }
 
     public async Task<AdditionalCost> AddAdditionalCostAsync(AdditionalCost additionalCost)
