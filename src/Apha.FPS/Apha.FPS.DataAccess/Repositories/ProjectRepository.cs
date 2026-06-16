@@ -107,9 +107,23 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query)
         {
-            var projectQuery = _dbContext.Projects
-                .AsNoTracking()
-                .AsQueryable();
+            var projectQuery = _dbContext.ProjectViews
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId))
+                .Select(pv => new Project
+                {
+                    ParentProject = pv.ParentProject ?? string.Empty,
+                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
+                    Program = pv.Program ?? string.Empty,
+                    Customer = pv.Customer ?? string.Empty,
+                    Contract = pv.Contract ?? string.Empty,
+                    Disease = pv.Disease ?? string.Empty,
+                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                    CostCentre = pv.CostCentre,
+                    OracleProjectCode = pv.OracleProjectCode,
+                    SubAccountCode = pv.SubAccountCode,
+                    IsDefraProject = pv.IsDefraProject ?? 0,
+                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
+                }).AsQueryable();
 
             projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
