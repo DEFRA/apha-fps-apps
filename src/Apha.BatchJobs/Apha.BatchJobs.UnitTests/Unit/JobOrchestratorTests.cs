@@ -38,6 +38,26 @@ public sealed class JobOrchestratorTests
 
         _execRepo.IsCancellationRequestedAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(false));
+        
+        // Mock GetExecutionByJobExecutionIdAsync to return pre-created Initiated record
+        _execRepo.GetExecutionByJobExecutionIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(args => 
+            {
+                var jobExecutionId = (Guid)args[0];
+                return Task.FromResult<JobExecutionRecord?>(new JobExecutionRecord
+                {
+                    ExecutionId = 1,
+                    JobExecutionId = jobExecutionId,
+                    JobQueueId = Guid.NewGuid(),
+                    JobName = "TestJob",
+                    UserId = "test-user",
+                    JobType = JobType.Unknown,
+                    RunMode = RunMode.Manual,
+                    Status = JobStatus.Initiated,
+                    StartedAt = DateTime.UtcNow,
+                    RetryAttempts = 0
+                });
+            });
     }
 
     private static IServiceScopeFactory CreateScopeFactory(IJobExecutionRepository execRepo)
@@ -146,19 +166,16 @@ public sealed class JobOrchestratorTests
         _lockRepo.TryAcquireLockAsync("TestJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(false);
 
-        // Act
+        // Act / Assert
         var jobExecutionId = Guid.NewGuid();
-        var result = await _orchestrator.RunAsync("TestJob", RunMode.Scheduled, jobExecutionId, "test-user");
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _orchestrator.RunAsync("TestJob", RunMode.Scheduled, jobExecutionId, "test-user"));
 
         // Assert — job factory was never called
         _factory.DidNotReceive().Create(Arg.Any<string>());
 
         // Assert — no execution records written
         await _execRepo.DidNotReceive().CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>());
-
-        // Assert — result indicates skip
-        Assert.Equal(JobStatus.Skipped, result.Status);
-        Assert.Equal(TimeSpan.Zero, result.Duration);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -368,11 +385,20 @@ public sealed class JobOrchestratorTests
         // Act — simulate two concurrent runs
         var task1 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled, Guid.NewGuid(), "test-user");
         var task2 = _orchestrator.RunAsync("ConcurrentJob", RunMode.Scheduled, Guid.NewGuid(), "test-user");
-        var results = await Task.WhenAll(task1, task2);
+        try
+        {
+            await Task.WhenAll(task1, task2);
+        }
+        catch (InvalidOperationException)
+        {
+            // Expected: one concurrent call fails lock acquisition.
+        }
 
-        // Assert — exactly one completed, one skipped
-        Assert.Equal(1, results.Count(r => r.Status == JobStatus.Completed));
-        Assert.Equal(1, results.Count(r => r.Status == JobStatus.Skipped));
+        // Assert — exactly one completed and one failed due to lock contention
+        Assert.Equal(1, new[] { task1, task2 }.Count(t => t.Status == TaskStatus.RanToCompletion));
+        Assert.Equal(1, new[] { task1, task2 }.Count(t => t.IsFaulted));
+        Assert.Contains(new[] { task1, task2 }.First(t => t.IsFaulted).Exception!.Flatten().InnerExceptions,
+            ex => ex is InvalidOperationException);
 
         // Assert — job executed exactly once
         await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());

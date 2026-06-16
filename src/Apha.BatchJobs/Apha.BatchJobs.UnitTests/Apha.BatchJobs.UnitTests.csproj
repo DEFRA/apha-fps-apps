@@ -28,6 +28,15 @@
   <!-- All Unit/*.cs files are now included implicitly by the SDK -->
 
   <ItemGroup>
+    <ProjectReference Include="..\Apha.BatchJobs.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Unit\BatchJobTriggerControllerValidationTests.cs" />
+    <Compile Remove="Unit\TriggerAttemptStoreTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 

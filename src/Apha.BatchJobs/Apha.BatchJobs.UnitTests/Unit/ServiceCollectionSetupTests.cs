@@ -156,18 +156,29 @@ public sealed class ServiceCollectionSetupTests
 
         while (current != null)
         {
-            var hasProject = File.Exists(Path.Combine(current.FullName, "BatchJobs.csproj"));
-            var hasAppSettings = File.Exists(Path.Combine(current.FullName, "appsettings.json"));
-
-            if (hasProject && hasAppSettings)
+            // Look for Worker project directory which contains appsettings.json
+            var workerPath = Path.Combine(current.FullName, "Apha.BatchJobs.Worker");
+            if (Directory.Exists(workerPath) && File.Exists(Path.Combine(workerPath, "appsettings.json")))
             {
-                return current.FullName;
+                return workerPath;
             }
 
             current = current.Parent;
         }
+        
+        // Try relative path from test execution directory
+        var testDir = new DirectoryInfo(AppContext.BaseDirectory);
+        for (int i = 0; i < 6 && testDir?.Parent != null; i++)
+        {
+            testDir = testDir.Parent;
+            var candidate = Path.Combine(testDir.FullName, "src", "Apha.BatchJobs", "Apha.BatchJobs.Worker");
+            if (File.Exists(Path.Combine(candidate, "appsettings.json")))
+            {
+                return candidate;
+            }
+        }
 
-        throw new DirectoryNotFoundException("Could not locate the BatchJobs project root.");
+        throw new DirectoryNotFoundException("Could not locate the Apha.BatchJobs.Worker directory with appsettings.json.");
     }
 }
 

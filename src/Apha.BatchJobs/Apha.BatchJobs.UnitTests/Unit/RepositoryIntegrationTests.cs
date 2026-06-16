@@ -83,24 +83,44 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         Assert.True(CanRunIntegrationTests(), _skipReason);
 
         var jobQueueId = Guid.NewGuid();
-        var record = new JobExecutionRecord
-        {
-            ExecutionId = 0,
-            JobName = "IntegrationExecutionJob",
-            JobExecutionId = Guid.NewGuid(),
-            JobQueueId = jobQueueId,
-            UserId = "test-user",
-            JobType = JobType.Unknown,
-            RunMode = RunMode.Manual,
-            Status = JobStatus.Running,
-            StartedAt = DateTime.UtcNow,
-            RetryAttempts = 0
-        };
-
+        var jobExecutionId = Guid.NewGuid();
+        
+        // First create Initiated record as per new contract
         await using (var context = CreateDbContext())
         {
             var repository = new JobExecutionRepository(context);
-            _ = await repository.CreateExecutionRecordAsync(record);
+            await repository.CreateExecutionRecordAsync(new JobExecutionRecord
+            {
+                ExecutionId = 0,
+                JobName = "IntegrationExecutionJob",
+                JobExecutionId = jobExecutionId,
+                JobQueueId = jobQueueId,
+                UserId = "test-user",
+                JobType = JobType.Unknown,
+                RunMode = RunMode.Manual,
+                Status = JobStatus.Initiated,
+                StartedAt = DateTime.UtcNow,
+                RetryAttempts = 0
+            });
+        }
+
+        // Now create Running record
+        await using (var context = CreateDbContext())
+        {
+            var repository = new JobExecutionRepository(context);
+            _ = await repository.CreateExecutionRecordAsync(new JobExecutionRecord
+            {
+                ExecutionId = 0,
+                JobName = "IntegrationExecutionJob",
+                JobExecutionId = jobExecutionId,
+                JobQueueId = jobQueueId,
+                UserId = "test-user",
+                JobType = JobType.Unknown,
+                RunMode = RunMode.Manual,
+                Status = JobStatus.Running,
+                StartedAt = DateTime.UtcNow,
+                RetryAttempts = 0
+            });
         }
 
         var queueRows = await ScalarIntAsync(
@@ -121,17 +141,34 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         Assert.True(CanRunIntegrationTests(), _skipReason);
 
         var jobQueueId = Guid.NewGuid();
+        var jobExecutionId = Guid.NewGuid();
         var startedAt = DateTime.UtcNow.AddMinutes(-1);
 
         await using (var context = CreateDbContext())
         {
             var repository = new JobExecutionRepository(context);
 
+            // First create Initiated record
             await repository.CreateExecutionRecordAsync(new JobExecutionRecord
             {
                 ExecutionId = 0,
                 JobName = "IntegrationUpdateJob",
-                JobExecutionId = Guid.NewGuid(),
+                JobExecutionId = jobExecutionId,
+                JobQueueId = jobQueueId,
+                UserId = "test-user",
+                JobType = JobType.Unknown,
+                RunMode = RunMode.Scheduled,
+                Status = JobStatus.Initiated,
+                StartedAt = DateTime.UtcNow,
+                RetryAttempts = 0
+            });
+
+            // Then create Running record
+            await repository.CreateExecutionRecordAsync(new JobExecutionRecord
+            {
+                ExecutionId = 0,
+                JobName = "IntegrationUpdateJob",
+                JobExecutionId = jobExecutionId,
                 JobQueueId = jobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -145,7 +182,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "IntegrationUpdateJob",
-                JobExecutionId = Guid.NewGuid(),
+                JobExecutionId = jobExecutionId,
                 JobQueueId = jobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -223,8 +260,9 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         Assert.True(CanRunIntegrationTests(), _skipReason);
 
         var jobQueueId = Guid.NewGuid();
+        var jobExecutionId = Guid.NewGuid();
 
-        // Create initial record
+        // Create Initiated record
         await using (var context = CreateDbContext())
         {
             var repository = new JobExecutionRepository(context);
@@ -232,7 +270,26 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationPartialFailJob",
-                JobExecutionId = Guid.NewGuid(),
+                JobExecutionId = jobExecutionId,
+                JobQueueId = jobQueueId,
+                UserId = "test-user",
+                JobType = JobType.Unknown,
+                RunMode = RunMode.Manual,
+                Status = JobStatus.Initiated,
+                StartedAt = DateTime.UtcNow,
+                RetryAttempts = 0
+            });
+        }
+
+        // Create Running record
+        await using (var context = CreateDbContext())
+        {
+            var repository = new JobExecutionRepository(context);
+            await repository.CreateExecutionRecordAsync(new JobExecutionRecord
+            {
+                ExecutionId = 0,
+                JobName = "DegradationPartialFailJob",
+                JobExecutionId = jobExecutionId,
                 JobQueueId = jobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -254,7 +311,7 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
             {
                 ExecutionId = 0,
                 JobName = "DegradationPartialFailJob",
-                JobExecutionId = Guid.NewGuid(),
+                JobExecutionId = jobExecutionId,
                 JobQueueId = jobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -294,21 +351,42 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
 
         var firstJobQueueId = Guid.NewGuid();
         var secondJobQueueId = Guid.NewGuid();
+        var firstJobExecutionId = Guid.NewGuid();
+        var secondJobExecutionId = Guid.NewGuid();
 
-        // First worker acquires lock
+        // First worker creates Initiated record then acquires lock
         await using (var context = CreateDbContext())
         {
-            var repository = new BatchLockRepository(context);
-            var acquired = await repository.TryAcquireLockAsync("DegradationLockContentionJob", firstJobQueueId, 2);
+            var repository = new JobExecutionRepository(context);
+            await repository.CreateExecutionRecordAsync(new JobExecutionRecord
+            {
+                ExecutionId = 0,
+                JobName = "ContentionTestJob",
+                JobExecutionId = firstJobExecutionId,
+                JobQueueId = firstJobQueueId,
+                UserId = "test-user",
+                JobType = JobType.Unknown,
+                RunMode = RunMode.Scheduled,
+                Status = JobStatus.Initiated,
+                StartedAt = DateTime.UtcNow,
+                RetryAttempts = 0
+            });
+        }
+
+        // First worker acquires lock
+        await using (var contextLock = CreateDbContext())
+        {
+            var lockRepository = new BatchLockRepository(contextLock);
+            var acquired = await lockRepository.TryAcquireLockAsync("ContentionTestJob", firstJobQueueId, 2);
             Assert.True(acquired);
 
-            // Create execution record for first run
-            var executionRepo = new JobExecutionRepository(context);
+            // Create Running record for first execution
+            var executionRepo = new JobExecutionRepository(contextLock);
             await executionRepo.CreateExecutionRecordAsync(new JobExecutionRecord
             {
                 ExecutionId = 0,
-                JobName = "DegradationLockContentionJob",
-                JobExecutionId = Guid.NewGuid(),
+                JobName = "ContentionTestJob",
+                JobExecutionId = firstJobExecutionId,
                 JobQueueId = firstJobQueueId,
                 UserId = "test-user",
                 JobType = JobType.Unknown,
@@ -320,10 +398,10 @@ public sealed class RepositoryIntegrationTests : IAsyncLifetime
         }
 
         // Second worker attempts to acquire lock (should fail, no record created)
-        await using (var context = CreateDbContext())
+        await using (var contextSecond = CreateDbContext())
         {
-            var repository = new BatchLockRepository(context);
-            var acquired = await repository.TryAcquireLockAsync("DegradationLockContentionJob", secondJobQueueId, 300);
+            var lockRepository = new BatchLockRepository(contextSecond);
+            var acquired = await lockRepository.TryAcquireLockAsync("ContentionTestJob", secondJobQueueId, 300);
             Assert.False(acquired);
         }
 
