@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.PIMS.Core.Entities;
 using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
@@ -12,7 +12,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
     {
         /// <summary>
         /// Creates a MilestoneRepository with in-memory data for all DbSets.
-        /// All parameters are optional â€” omitted sets are initialised as empty.
+        /// All parameters are optional — omitted sets are initialised as empty.
         /// </summary>
         private static MilestoneRepository CreateRepository(
             IEnumerable<Milestone>? milestones = null,
@@ -26,15 +26,18 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             var milestoneTypesMockSet    = RepositoryTestHelper.CreateMockDbSet(milestoneTypes    ?? Enumerable.Empty<MilestoneType>());
             var milestoneFormDatesMockSet = RepositoryTestHelper.CreateMockDbSet(milestoneFormDates ?? Enumerable.Empty<MilestoneFormDates>());
             var radtrackDataMockSet      = RepositoryTestHelper.CreateMockDbSet(radtrackData      ?? Enumerable.Empty<ProjectRadTrackData>());
+            var logMilestonesMockSet     = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<LogMilestone>());
 
             RepositoryTestHelper.SetupDbSetOperations(milestonesMockSet);
             RepositoryTestHelper.SetupDbSetOperations(milestoneFormDatesMockSet);
+            RepositoryTestHelper.SetupDbSetOperations(logMilestonesMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
             mockContext.Setup(x => x.Milestones).Returns(milestonesMockSet.Object);
             mockContext.Setup(x => x.MilestoneTypes).Returns(milestoneTypesMockSet.Object);
             mockContext.Setup(x => x.MilestoneFormDates).Returns(milestoneFormDatesMockSet.Object);
             mockContext.Setup(x => x.ProjectRadTrackData).Returns(radtrackDataMockSet.Object);
+            mockContext.Setup(x => x.LogMilestones).Returns(logMilestonesMockSet.Object);
 
             return new MilestoneRepository(mockContext.Object);
         }
@@ -47,7 +50,8 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             MilestoneRepository Repo,
             Mock<DbSet<Milestone>> MilestonesDbSet,
             Mock<DbSet<MilestoneFormDates>> MilestoneFormDatesDbSet,
-            Mock<PimsDbContext> Context)
+            Mock<PimsDbContext> Context,
+            Mock<DbSet<LogMilestone>> LogMilestonesDbSet)
             CreateRepositoryWithMocks(
                 IEnumerable<Milestone>? milestones = null,
                 IEnumerable<MilestoneType>? milestoneTypes = null,
@@ -60,24 +64,27 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             var milestoneTypesMockSet    = RepositoryTestHelper.CreateMockDbSet(milestoneTypes    ?? Enumerable.Empty<MilestoneType>());
             var milestoneFormDatesMockSet = RepositoryTestHelper.CreateMockDbSet(milestoneFormDates ?? Enumerable.Empty<MilestoneFormDates>());
             var radtrackDataMockSet      = RepositoryTestHelper.CreateMockDbSet(radtrackData      ?? Enumerable.Empty<ProjectRadTrackData>());
+            var logMilestonesMockSet     = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<LogMilestone>());
 
             RepositoryTestHelper.SetupDbSetOperations(milestonesMockSet);
             RepositoryTestHelper.SetupDbSetOperations(milestoneFormDatesMockSet);
+            RepositoryTestHelper.SetupDbSetOperations(logMilestonesMockSet);
             RepositoryTestHelper.SetupSaveChanges(mockContext);
 
             mockContext.Setup(x => x.Milestones).Returns(milestonesMockSet.Object);
             mockContext.Setup(x => x.MilestoneTypes).Returns(milestoneTypesMockSet.Object);
             mockContext.Setup(x => x.MilestoneFormDates).Returns(milestoneFormDatesMockSet.Object);
             mockContext.Setup(x => x.ProjectRadTrackData).Returns(radtrackDataMockSet.Object);
+            mockContext.Setup(x => x.LogMilestones).Returns(logMilestonesMockSet.Object);
 
             var repo = new MilestoneRepository(mockContext.Object);
-            return (repo, milestonesMockSet, milestoneFormDatesMockSet, mockContext);
+            return (repo, milestonesMockSet, milestoneFormDatesMockSet, mockContext, logMilestonesMockSet);
         }
 
         private static PaginationParameters<string> DefaultParameters(int page = 1, int pageSize = 10)
             => new PaginationParameters<string> { Page = page, PageSize = pageSize };
 
-        #region GetAllMilestonesAsync â€” filtering, ordering, paging
+        #region GetAllMilestonesAsync — filtering, ordering, paging
 
         [Fact]
         public async Task GetAllMilestonesAsync_ReturnsMilestonesForMatchingProject()
@@ -189,7 +196,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
 
         #endregion
 
-        #region GetMilestoneAsync â€” found and not-found cases
+        #region GetMilestoneAsync — found and not-found cases
 
         [Fact]
         public async Task GetMilestoneAsync_ReturnsMilestone_WhenProjectAndNumberMatch()
@@ -284,13 +291,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
 
         #endregion
 
-        #region AddMilestoneAsync â€” return value & side effects
+        #region AddMilestoneAsync — return value & side effects
 
         [Fact]
         public async Task AddMilestoneAsync_AddsEntityAndReturnsIt()
         {
             // Arrange
-            var (repo, _, _, _) = CreateRepositoryWithMocks();
+            var (repo, _, _, _, _) = CreateRepositoryWithMocks();
             var entity = new Milestone
             {
                 Project     = "PP001",
@@ -300,7 +307,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             };
 
             // Act
-            var result = await repo.AddMilestoneAsync(entity);
+            var result = await repo.AddMilestoneAsync(entity, null);
 
             // Assert
             Assert.NotNull(result);
@@ -313,11 +320,11 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         public async Task AddMilestoneAsync_CallsDbSetAdd()
         {
             // Arrange
-            var (repo, milestonesDbSet, _, _) = CreateRepositoryWithMocks();
+            var (repo, milestonesDbSet, _, _, _) = CreateRepositoryWithMocks();
             var entity = new Milestone { Project = "PP001", Number = "M1", DateDue = new DateTime(2024, 1, 1) };
 
             // Act
-            await repo.AddMilestoneAsync(entity);
+            await repo.AddMilestoneAsync(entity, null);
 
             // Assert
             milestonesDbSet.Verify(x => x.Add(entity), Times.Once);
@@ -327,21 +334,21 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         public async Task AddMilestoneAsync_CallsSaveChangesAsync()
         {
             // Arrange
-            var (repo, _, _, mockContext) = CreateRepositoryWithMocks();
+            var (repo, _, _, mockContext, _) = CreateRepositoryWithMocks();
             var entity = new Milestone { Project = "PP001", Number = "M1", DateDue = new DateTime(2024, 1, 1) };
 
             // Act
-            await repo.AddMilestoneAsync(entity);
+            await repo.AddMilestoneAsync(entity, null);
 
-            // Assert
-            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+            // Assert — called twice: once for the milestone, once for the log entry
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 2);
         }
 
         [Fact]
         public async Task AddMilestoneAsync_MapsAllFields()
         {
             // Arrange
-            var (repo, milestonesDbSet, _, _) = CreateRepositoryWithMocks();
+            var (repo, milestonesDbSet, _, _, _) = CreateRepositoryWithMocks();
 
             Milestone? captured = null;
             milestonesDbSet
@@ -364,7 +371,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             };
 
             // Act
-            await repo.AddMilestoneAsync(entity);
+            await repo.AddMilestoneAsync(entity, null);
 
             // Assert
             Assert.NotNull(captured);
@@ -383,13 +390,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
 
         #endregion
 
-        #region UpdateMilestoneAsync â€” return value & side effects
+        #region UpdateMilestoneAsync — return value & side effects
 
         [Fact]
         public async Task UpdateMilestoneAsync_ReturnsEntity()
         {
             // Arrange
-            var (repo, _, _, _) = CreateRepositoryWithMocks();
+            var (repo, _, _, _, _) = CreateRepositoryWithMocks();
             var entity = new Milestone
             {
                 Project     = "PP001",
@@ -399,7 +406,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
             };
 
             // Act
-            var result = await repo.UpdateMilestoneAsync(entity);
+            var result = await repo.UpdateMilestoneAsync(entity, null);
 
             // Assert
             Assert.NotNull(result);
@@ -411,11 +418,11 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         public async Task UpdateMilestoneAsync_CallsDbSetUpdate()
         {
             // Arrange
-            var (repo, milestonesDbSet, _, _) = CreateRepositoryWithMocks();
+            var (repo, milestonesDbSet, _, _, _) = CreateRepositoryWithMocks();
             var entity = new Milestone { Project = "PP001", Number = "M1", DateDue = new DateTime(2024, 1, 1) };
 
             // Act
-            await repo.UpdateMilestoneAsync(entity);
+            await repo.UpdateMilestoneAsync(entity, null);
 
             // Assert
             milestonesDbSet.Verify(x => x.Update(entity), Times.Once);
@@ -425,14 +432,126 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         public async Task UpdateMilestoneAsync_CallsSaveChangesAsync()
         {
             // Arrange
-            var (repo, _, _, mockContext) = CreateRepositoryWithMocks();
+            var (repo, _, _, mockContext, _) = CreateRepositoryWithMocks();
             var entity = new Milestone { Project = "PP001", Number = "M1", DateDue = new DateTime(2024, 1, 1) };
 
             // Act
-            await repo.UpdateMilestoneAsync(entity);
+            await repo.UpdateMilestoneAsync(entity, null);
+
+            // Assert — called twice: once for the milestone, once for the log entry
+            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 2);
+        }
+
+        #endregion
+
+        #region AddMilestoneAsync / UpdateMilestoneAsync — log entry
+
+        [Fact]
+        public async Task AddMilestoneAsync_AddsLogEntry_WithUpdateTypeI()
+        {
+            // Arrange
+            var (repo, _, _, _, logDbSet) = CreateRepositoryWithMocks();
+            var entity = new Milestone { Project = "PP001", Number = "M1", DateDue = new DateTime(2024, 6, 1) };
+
+            // Act
+            await repo.AddMilestoneAsync(entity, "user1");
 
             // Assert
-            RepositoryTestHelper.VerifySaveChanges(mockContext, times: 1);
+            logDbSet.Verify(x => x.Add(It.Is<LogMilestone>(l =>
+                l.Project    == "PP001" &&
+                l.Number     == "M1"   &&
+                l.UpdateType == 'I'    &&
+                l.ChangedBy  == "user1")), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateMilestoneAsync_AddsLogEntry_WithUpdateTypeU()
+        {
+            // Arrange
+            var (repo, _, _, _, logDbSet) = CreateRepositoryWithMocks();
+            var entity = new Milestone { Project = "PP001", Number = "M1", DateDue = new DateTime(2024, 6, 1) };
+
+            // Act
+            await repo.UpdateMilestoneAsync(entity, "user2");
+
+            // Assert
+            logDbSet.Verify(x => x.Add(It.Is<LogMilestone>(l =>
+                l.Project    == "PP001" &&
+                l.Number     == "M1"   &&
+                l.UpdateType == 'U'    &&
+                l.ChangedBy  == "user2")), Times.Once);
+        }
+
+        [Fact]
+        public async Task AddMilestoneAsync_LogEntry_HasDateChangedSet()
+        {
+            // Arrange
+            var (repo, _, _, _, logDbSet) = CreateRepositoryWithMocks();
+            var entity = new Milestone { Project = "PP001", Number = "M1", DateDue = new DateTime(2024, 6, 1) };
+            var before = DateTime.UtcNow.AddSeconds(-1);
+
+            // Act
+            await repo.AddMilestoneAsync(entity, null);
+
+            // Assert
+            logDbSet.Verify(x => x.Add(It.Is<LogMilestone>(l =>
+                l.DateChanged.HasValue &&
+                l.DateChanged.Value >= before)), Times.Once);
+        }
+
+        [Fact]
+        public async Task AddMilestoneAsync_LogEntry_NullChangedBy_IsAllowed()
+        {
+            // Arrange
+            var (repo, _, _, _, logDbSet) = CreateRepositoryWithMocks();
+            var entity = new Milestone { Project = "PP001", Number = "M1", DateDue = new DateTime(2024, 6, 1) };
+
+            // Act
+            await repo.AddMilestoneAsync(entity, null);
+
+            // Assert
+            logDbSet.Verify(x => x.Add(It.Is<LogMilestone>(l => l.ChangedBy == null)), Times.Once);
+        }
+
+        [Fact]
+        public async Task AddMilestoneAsync_MilestoneIsSaved_EvenIfLogFails()
+        {
+            // Arrange — make the second SaveChangesAsync (log save) throw
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<PimsDbContext>();
+            var milestonesMockSet    = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<Milestone>());
+            var milestoneTypesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<MilestoneType>());
+            var formDatesMockSet     = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<MilestoneFormDates>());
+            var radtrackMockSet      = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<ProjectRadTrackData>());
+            var logMockSet           = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<LogMilestone>());
+
+            RepositoryTestHelper.SetupDbSetOperations(milestonesMockSet);
+            RepositoryTestHelper.SetupDbSetOperations(formDatesMockSet);
+            RepositoryTestHelper.SetupDbSetOperations(logMockSet);
+
+            int saveCallCount = 0;
+            mockContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() =>
+                {
+                    saveCallCount++;
+                    if (saveCallCount == 2) throw new Exception("Log DB error");
+                    return 1;
+                });
+
+            mockContext.Setup(x => x.Milestones).Returns(milestonesMockSet.Object);
+            mockContext.Setup(x => x.MilestoneTypes).Returns(milestoneTypesMockSet.Object);
+            mockContext.Setup(x => x.MilestoneFormDates).Returns(formDatesMockSet.Object);
+            mockContext.Setup(x => x.ProjectRadTrackData).Returns(radtrackMockSet.Object);
+            mockContext.Setup(x => x.LogMilestones).Returns(logMockSet.Object);
+
+            var repo = new MilestoneRepository(mockContext.Object);
+            var entity = new Milestone { Project = "PP001", Number = "M1", DateDue = new DateTime(2024, 6, 1) };
+
+            // Act — should not throw despite the log save failing
+            var result = await repo.AddMilestoneAsync(entity, "user1");
+
+            // Assert — milestone was returned and first save completed
+            Assert.NotNull(result);
+            Assert.Equal(2, saveCallCount); // both saves were attempted
         }
 
         #endregion
@@ -442,7 +561,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         [Fact]
         public async Task DeleteMilestoneAsync_ThrowsException_BecauseBulkDeleteRequiresDatabase()
         {
-            // Arrange â€” ExecuteDeleteAsync is a bulk EF Core operation that cannot
+            // Arrange — ExecuteDeleteAsync is a bulk EF Core operation that cannot
             // be exercised against an in-memory mock query provider.
             var milestones = new List<Milestone>
             {
@@ -457,7 +576,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
 
         #endregion
 
-        #region GetMilestoneTypesAsync â€” filtering and ordering
+        #region GetMilestoneTypesAsync — filtering and ordering
 
         [Fact]
         public async Task GetMilestoneTypesAsync_ReturnsAllTypes_WhenNoFilterProvided()
@@ -572,7 +691,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
 
         #endregion
 
-        #region GetAllMilestoneFormDatesAsync â€” filtering, ordering, paging
+        #region GetAllMilestoneFormDatesAsync — filtering, ordering, paging
 
         [Fact]
         public async Task GetAllMilestoneFormDatesAsync_ReturnsFormDatesForMatchingParentProject()
@@ -667,7 +786,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
 
         #endregion
 
-        #region GetMilestoneFormDatesAsync â€” found and not-found cases
+        #region GetMilestoneFormDatesAsync — found and not-found cases
 
         [Fact]
         public async Task GetMilestoneFormDatesAsync_ReturnsFormDates_WhenYearAndParentProjectMatch()
@@ -741,13 +860,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
 
         #endregion
 
-        #region AddMilestoneFormDatesAsync â€” return value & side effects
+        #region AddMilestoneFormDatesAsync — return value & side effects
 
         [Fact]
         public async Task AddMilestoneFormDatesAsync_AddsEntityAndReturnsIt()
         {
             // Arrange
-            var (repo, _, _, _) = CreateRepositoryWithMocks();
+            var (repo, _, _, _, _) = CreateRepositoryWithMocks();
             var entity = new MilestoneFormDates
             {
                 Year          = 2024,
@@ -769,7 +888,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         public async Task AddMilestoneFormDatesAsync_CallsDbSetAdd()
         {
             // Arrange
-            var (repo, _, milestoneFormDatesDbSet, _) = CreateRepositoryWithMocks();
+            var (repo, _, milestoneFormDatesDbSet, _, _) = CreateRepositoryWithMocks();
             var entity = new MilestoneFormDates { Year = 2024, ParentProject = "PP001" };
 
             // Act
@@ -783,7 +902,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         public async Task AddMilestoneFormDatesAsync_CallsSaveChangesAsync()
         {
             // Arrange
-            var (repo, _, _, mockContext) = CreateRepositoryWithMocks();
+            var (repo, _, _, mockContext, _) = CreateRepositoryWithMocks();
             var entity = new MilestoneFormDates { Year = 2024, ParentProject = "PP001" };
 
             // Act
@@ -797,7 +916,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         public async Task AddMilestoneFormDatesAsync_MapsAllMonthFields()
         {
             // Arrange
-            var (repo, _, milestoneFormDatesDbSet, _) = CreateRepositoryWithMocks();
+            var (repo, _, milestoneFormDatesDbSet, _, _) = CreateRepositoryWithMocks();
 
             MilestoneFormDates? captured = null;
             milestoneFormDatesDbSet
@@ -845,13 +964,13 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
 
         #endregion
 
-        #region UpdateMilestoneFormDatesAsync â€” return value & side effects
+        #region UpdateMilestoneFormDatesAsync — return value & side effects
 
         [Fact]
         public async Task UpdateMilestoneFormDatesAsync_ReturnsEntity()
         {
             // Arrange
-            var (repo, _, _, _) = CreateRepositoryWithMocks();
+            var (repo, _, _, _, _) = CreateRepositoryWithMocks();
             var entity = new MilestoneFormDates
             {
                 Year          = 2024,
@@ -872,7 +991,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         public async Task UpdateMilestoneFormDatesAsync_CallsDbSetUpdate()
         {
             // Arrange
-            var (repo, _, milestoneFormDatesDbSet, _) = CreateRepositoryWithMocks();
+            var (repo, _, milestoneFormDatesDbSet, _, _) = CreateRepositoryWithMocks();
             var entity = new MilestoneFormDates { Year = 2024, ParentProject = "PP001" };
 
             // Act
@@ -886,7 +1005,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         public async Task UpdateMilestoneFormDatesAsync_CallsSaveChangesAsync()
         {
             // Arrange
-            var (repo, _, _, mockContext) = CreateRepositoryWithMocks();
+            var (repo, _, _, mockContext, _) = CreateRepositoryWithMocks();
             var entity = new MilestoneFormDates { Year = 2024, ParentProject = "PP001" };
 
             // Act
@@ -903,7 +1022,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         [Fact]
         public async Task DeleteMilestoneFormDatesAsync_ThrowsException_BecauseBulkDeleteRequiresDatabase()
         {
-            // Arrange â€” ExecuteDeleteAsync is a bulk EF Core operation that cannot
+            // Arrange — ExecuteDeleteAsync is a bulk EF Core operation that cannot
             // be exercised against an in-memory mock query provider.
             var formDates = new List<MilestoneFormDates>
             {
@@ -923,7 +1042,7 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         [Fact]
         public async Task UpdateFormRequiredAsync_ThrowsException_BecauseBulkUpdateRequiresDatabase()
         {
-            // Arrange â€” ExecuteUpdateAsync is a bulk EF Core operation that cannot
+            // Arrange — ExecuteUpdateAsync is a bulk EF Core operation that cannot
             // be exercised against an in-memory mock query provider.
             var radtrackData = new List<ProjectRadTrackData>
             {
@@ -939,3 +1058,5 @@ namespace Apha.PIMS.DataAccess.UnitTests.Repository.MilestoneRepositoryTest
         #endregion
     }
 }
+
+

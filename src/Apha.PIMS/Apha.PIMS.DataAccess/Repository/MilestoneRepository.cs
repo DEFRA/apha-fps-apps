@@ -36,17 +36,33 @@ namespace Apha.PIMS.DataAccess.Repository
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Project == project && m.Number == number);
 
-        public async Task<Milestone> AddMilestoneAsync(Milestone entity)
+        public async Task<Milestone> AddMilestoneAsync(Milestone entity, string? changedBy)
         {
             _dbContext.Milestones.Add(entity);
             await _dbContext.SaveChangesAsync();
+
+            try
+            {
+                _dbContext.LogMilestones.Add(BuildLogEntry(entity, 'I', changedBy));
+                await _dbContext.SaveChangesAsync();
+            }
+            catch { /* log write failure must not affect the milestone operation */ }
+
             return entity;
         }
 
-        public async Task<Milestone> UpdateMilestoneAsync(Milestone entity)
+        public async Task<Milestone> UpdateMilestoneAsync(Milestone entity, string? changedBy)
         {
             _dbContext.Milestones.Update(entity);
             await _dbContext.SaveChangesAsync();
+
+            try
+            {
+                _dbContext.LogMilestones.Add(BuildLogEntry(entity, 'U', changedBy));
+                await _dbContext.SaveChangesAsync();
+            }
+            catch { /* log write failure must not affect the milestone operation */ }
+
             return entity;
         }
         public async Task<bool> DeleteMilestoneAsync(string project, string number)
@@ -197,5 +213,28 @@ namespace Apha.PIMS.DataAccess.Repository
 
             return await ApplyPaging(query, parameters.Page, parameters.PageSize);
         }
+
+        private static LogMilestone BuildLogEntry(Milestone m, char updateType, string? changedBy)
+            => new()
+            {
+                Project              = m.Project,
+                Number               = m.Number,
+                Description          = m.Description,
+                DateDue              = DateTime.SpecifyKind(m.DateDue, DateTimeKind.Unspecified),
+                DateCompleted        = m.DateCompleted.HasValue
+                                           ? DateTime.SpecifyKind(m.DateCompleted.Value, DateTimeKind.Unspecified)
+                                           : null,
+                DateFormReceived     = m.DateFormReceived.HasValue
+                                           ? DateTime.SpecifyKind(m.DateFormReceived.Value, DateTimeKind.Unspecified)
+                                           : null,
+                UnderSdReview        = m.UnderSdReview,
+                OnTarget             = m.OnTarget,
+                ProjectLeaderComment = m.ProjectLeaderComment,
+                CapsComment          = m.CapsComment,
+                IdType               = string.IsNullOrEmpty(m.IdType) ? null : m.IdType[0],
+                DateChanged          = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                ChangedBy            = changedBy,
+                UpdateType           = updateType
+            };
     }
 }
