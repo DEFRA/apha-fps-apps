@@ -98,7 +98,8 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "AccountCategory" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="AccountCategoryMaintenance" asp-action="Index">
                 Maintain Account Cats
             </a>
         </li>

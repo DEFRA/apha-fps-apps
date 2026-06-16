@@ -88,6 +88,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
             CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
             CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
+            CreateMap<AccountCategoryDto, AccountCategoryReq>().ReverseMap();
 
             // View Project Plan vs Actual Tests
             CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
