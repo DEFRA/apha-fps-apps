@@ -152,6 +152,16 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<bool> ExistsForGradeCodeAsync(string gradeCode)
+        {
+            if (string.IsNullOrWhiteSpace(gradeCode))
+                return false;
+
+            return await _context.DivisionGrades
+                .AsNoTracking()
+                .AnyAsync(dg => dg.GradeCode == gradeCode);
+        }
+
         private static IQueryable<DivisionGrade> ApplyFilter(IQueryable<DivisionGrade> query, string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter))

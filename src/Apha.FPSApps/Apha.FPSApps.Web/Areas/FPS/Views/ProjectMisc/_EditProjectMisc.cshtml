@@ -1,0 +1,108 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProjectMiscItem
+
+<div class="modal-header">
+    <h5 class="modal-title" id="tblMiscProjectDataModalLabel">Edit Project Data</h5>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()" data-bs-dismiss="modal">X</button>
+</div>
+
+<div class="modal-body cc-modal-body">
+    <p class="app-mandatory-note"><span class="app-required" aria-hidden="true">*</span> Mandatory Fields</p>
+
+    <form id="editProjectMiscForm" novalidate>
+        <div class="govuk-error-summary" role="alert"
+             aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+            <h2 class="govuk-error-summary__title" id="error-summary-title">
+                There is a problem
+            </h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list">
+                </ul>
+            </div>
+        </div>
+
+        <input type="hidden" asp-for="ParentProject" />
+
+        <div class="govuk-grid-row cc-modal-form-grid">
+
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-mpd-project">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="ParentProject">
+                        Project:<span class="app-required" aria-hidden="true">*</span>
+                    </label>
+                    <input class="govuk-input govuk-!-font-size-16" asp-for="ParentProject"
+                           type="text" aria-required="true" aria-describedby="err-modal-mpd-project" readonly>
+                    <p class="govuk-error-message govuk-!-display-none" id="err-modal-mpd-project">
+                        <span class="govuk-visually-hidden">Error:</span>
+                        <span asp-validation-for="ParentProject"></span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-mpd-program">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Program">
+                        Program:<span class="app-required" aria-hidden="true">*</span>
+                    </label>
+                    <input class="govuk-input govuk-!-font-size-16" asp-for="Program"
+                               type="text" aria-required="true" aria-describedby="err-modal-mpd-program" readonly>
+                    <p class="govuk-error-message govuk-!-display-none" id="err-modal-mpd-program">
+                        <span class="govuk-visually-hidden">Error:</span>
+                        <span asp-validation-for="Program"></span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-mpd-costcentre">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="CostCentre">
+                        CostCentre
+                    </label>
+                    <input class="govuk-input govuk-!-font-size-16" asp-for="CostCentre"
+                           type="text" aria-required="true" aria-describedby="err-modal-mpd-costcentre">
+                    <p class="govuk-error-message govuk-!-display-none" id="err-modal-mpd-costcentre">
+                        <span class="govuk-visually-hidden">Error:</span>
+                        <span asp-validation-for="CostCentre"></span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-mpd-oracleprojectcode">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="OracleProjectCode">
+                        OracleProjectCode
+                    </label>
+                    <input class="govuk-input govuk-!-font-size-16" asp-for="OracleProjectCode"
+                           type="text" aria-required="true" aria-describedby="err-modal-mpd-oracleprojectcode">
+                    <p class="govuk-error-message govuk-!-display-none" id="err-modal-mpd-oracleprojectcode">
+                        <span class="govuk-visually-hidden">Error:</span>
+                        <span asp-validation-for="OracleProjectCode"></span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-mpd-subaccountcode">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="SubAccountCode">
+                        SubAccountCode
+                    </label>
+                    <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                            asp-for="SubAccountCode"
+                            asp-items="@Model.SubAccountCodeList"
+                            aria-required="true" aria-label="Select sub account code"
+                            aria-describedby="err-modal-mpd-subaccountcode">
+                    </select>
+                    <p class="govuk-error-message govuk-!-display-none" id="err-modal-mpd-subaccountcode">
+                        <span class="govuk-visually-hidden">Error:</span>
+                        <span asp-validation-for="SubAccountCode"></span>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<div class="modal-footer sup_flex_space_center">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" data-bs-dismiss="modal" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="updateProjectMisc()">Update</button>
+</div>

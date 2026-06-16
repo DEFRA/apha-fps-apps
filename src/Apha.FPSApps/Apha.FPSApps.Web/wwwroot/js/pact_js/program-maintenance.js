@@ -1,5 +1,6 @@
 var selectedProjectCode = '';
-
+let programmSelectDropdown = null;
+let selectedProgramm = null;
 $(document).ready(function () {
     // ── Program Dropdown ───
     var $input = $('#programSelect');
@@ -86,6 +87,7 @@ function loadProgram(programNo) {
                 $('#Program_Minim').val(d.minim);
                 $('#Program_Directorate').val(d.directorate);
                 clearValidationErrors('#programDetailForm');
+                 
             }
         },
         error: function () {
@@ -150,8 +152,67 @@ function selectProject(btn) {
     $row.addClass('selected-row');
 }
 
+
+
+function initializeMultiColumnDropdown() {
+    /*Multicolumn dropdown functionality for program selection*/
+    programmSelectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'programmSelectDropdown',
+        containerSelector: '#programSelectMultiDropdown',//name as per cshtml div id
+        placeholder: 'Select a Program',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by code or description',
+        labelText: '',//this label will come at the top of dropdown, can be set as per requirement
+        columns: [
+            { field: 'Value', header: 'Code', width: '80px' },
+            { field: 'Text', header: 'Progamme Name', width: '150px' },
+        ],
+        data: programListData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection:false,//this will only clear searchbox and not selected value
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                selectedProgramm = selectedItem.Value;
+                loadProgram(selectedItem.Value); 
+                
+            },
+            onClear: function (dropdown) {
+                let initialRecord = dropdown.originalData[0].Value;
+                const programmSelectDropdown_input = document.getElementById('programmSelectDropdown_input');
+                programmSelectDropdown_input.value = initialRecord;
+                loadProgram(initialRecord);
+               // clearSelectedProgramm(dropdown.originalData[0].Value)
+            }
+
+        }
+    });
+    populateInitalRecordOnPageLoad();
+}
+
+function populateInitalRecordOnPageLoad() {
+    if (programListData && programListData.length > 0) {
+        const firstrecord = programListData[0].Value;
+        const programmSelectDropdown_input = document.getElementById('programmSelectDropdown_input');
+        if (programmSelectDropdown_input && firstrecord) {
+            programmSelectDropdown_input.value = firstrecord;
+            loadProgram(firstrecord);
+        }
+    }
+}
+
+function clearSelectedProgramm() {
+    if (programmSelectDropdown) {
+        programmSelectDropdown.clear(); // This triggers onClear callback
+        populateInitalRecordOnPageLoad();
+    }
+}
+
+
 // Auto-select the first project row after the projects grid reloads
 document.addEventListener('gridReloaded', function (e) {
+    initializeMultiColumnDropdown();
+   
     if (e.detail && e.detail.gridId === 'projectsGrid') {
         var $firstRow = $('#tbl_projectsGrid tbody tr[data-id]:first');
         if ($firstRow.length) {
