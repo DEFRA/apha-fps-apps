@@ -1,5 +1,6 @@
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +37,21 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
 
             return rows.DistinctBy(b => b.Account).ToList();
+        }
+
+        public async Task<PagedData<BidView>> GetBidViewPagedAsync(PaginationParameters<string> query, string workgroup)
+        {
+            var q = _context.BidViews
+                .AsNoTracking()
+                .Where(b => b.WorkGroupName == workgroup
+                         && b.UserEmail != null && b.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .AsQueryable();
+
+            q = ApplyBidViewFilter(q, query.Filter);
+            q = ApplyBidViewSort(q, query.SortBy, query.Descending);
+
+            var result = (await q.ToListAsync()).DistinctBy(b => b.Account).ToList();
+            return base.ApplyPaging(result, query.Page > 0 ? query.Page : 1, query.PageSize > 0 ? query.PageSize : 10);
         }
 
         public async Task<Bid?> GetBidByIdAsync(string WorkGroupName, string account)
@@ -139,6 +155,41 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(a => a.RcSpecific == -1)
                 .OrderBy(a => a.AccShortName)
                 .ToListAsync();
+        }
+
+        private static IQueryable<BidView> ApplyBidViewFilter(IQueryable<BidView> query, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return query;
+
+            if (filter.TrimStart().StartsWith('{'))
+            {
+                try
+                {
+                    var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(filter,
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (dict != null)
+                    {
+                        if (dict.TryGetValue("WorkGroupName", out var wg) && !string.IsNullOrWhiteSpace(wg))
+                            query = query.Where(b => EF.Functions.ILike(b.WorkGroupName, $"%{wg}%"));
+                        if (dict.TryGetValue("Account", out var acc) && !string.IsNullOrWhiteSpace(acc))
+                            query = query.Where(b => EF.Functions.ILike(b.Account, $"%{acc}%"));
+                    }
+                }
+                catch { }
+            }
+            return query;
+        }
+
+        private static IQueryable<BidView> ApplyBidViewSort(IQueryable<BidView> query, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "workgroupname" => descending ? query.OrderByDescending(b => b.WorkGroupName) : query.OrderBy(b => b.WorkGroupName),
+                "account"       => descending ? query.OrderByDescending(b => b.Account)       : query.OrderBy(b => b.Account),
+                "genbid"        => descending ? query.OrderByDescending(b => b.GenBid)        : query.OrderBy(b => b.GenBid),
+                _               => query.OrderBy(b => b.Account)
+            };
         }
     }
 }

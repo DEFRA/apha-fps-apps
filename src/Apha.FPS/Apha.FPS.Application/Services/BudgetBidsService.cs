@@ -1,5 +1,6 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
@@ -22,6 +23,14 @@ namespace Apha.FPS.Application.Services
             ArgumentException.ThrowIfNullOrWhiteSpace(workgroup);
             var entities = await _repository.GetBidViewAsync(workgroup);
             return _mapper.Map<List<BidViewDto>>(entities);
+        }
+
+        public async Task<PaginatedResult<BidViewDto>> GetBidViewPagedAsync(QueryParameters<string> query, string workgroup)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(workgroup);
+            var parameters = _mapper.Map<Apha.FPS.Core.Pagination.PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetBidViewPagedAsync(parameters, workgroup);
+            return _mapper.Map<PaginatedResult<BidViewDto>>(pagedData);
         }
 
         public async Task<BidDto?> GetBidByIdAsync(string WorkGroupName, string account)

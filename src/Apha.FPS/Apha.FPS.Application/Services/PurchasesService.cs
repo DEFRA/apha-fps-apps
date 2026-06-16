@@ -1,5 +1,6 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using AutoMapper;
@@ -22,6 +23,15 @@ namespace Apha.FPS.Application.Services
             ArgumentException.ThrowIfNullOrWhiteSpace(WorkGroupName);
             var entities = await _repository.GetPurchasesAsync(WorkGroupName, account);
             return _mapper.Map<List<PurchaseDto>>(entities);
+        }
+
+        public async Task<PaginatedResult<PurchaseDto>> GetPurchasesPagedAsync(
+            QueryParameters<string> query, string WorkGroupName, string account)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(WorkGroupName);
+            var parameters = _mapper.Map<Apha.FPS.Core.Pagination.PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetPurchasesPagedAsync(parameters, WorkGroupName, account);
+            return _mapper.Map<PaginatedResult<PurchaseDto>>(pagedData);
         }
 
         public async Task<PurchaseDto?> GetPurchaseByIdAsync(string WorkGroupName, string account, string itemDescription)

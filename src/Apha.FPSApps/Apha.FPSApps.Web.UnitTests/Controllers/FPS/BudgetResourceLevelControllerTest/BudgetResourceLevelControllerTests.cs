@@ -20,7 +20,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
     public class BudgetResourceLevelControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workGroupService;
+        private readonly IWorkGroupService _workGroupService;
         private readonly IBudgetBidsService _budgetBidsService;
         private readonly IPurchasesService _purchasesService;
         private readonly IProfitCentreService _profitCentreService;
@@ -30,7 +30,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.BudgetResourceLevelControll
         public BudgetResourceLevelControllerTests()
         {
             _mapper              = Substitute.For<IMapper>();
-            _workGroupService    = Substitute.For<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService>();
+            _workGroupService    = Substitute.For<IWorkGroupService>();
             _budgetBidsService   = Substitute.For<IBudgetBidsService>();
             _purchasesService    = Substitute.For<IPurchasesService>();
             _profitCentreService = Substitute.For<IProfitCentreService>();

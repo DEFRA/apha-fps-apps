@@ -1,6 +1,8 @@
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -34,6 +36,18 @@ namespace Apha.FPS.Api.Controllers
         {
             var result = await _service.GetBidViewAsync(workgroup);
             return Ok(_mapper.Map<List<BidViewRes>>(result));
+        }
+
+        /// <summary>
+        /// Returns a paged, filtered and sorted list of bid view records for a given workgroup.
+        /// </summary>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetBidViewPagedAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string workgroup)
+        {
+            var result = await _service.GetBidViewPagedAsync(query, workgroup);
+            return Ok(_mapper.Map<PaginationRes<BidViewRes>>(result));
         }
 
         /// <summary>

@@ -1,6 +1,8 @@
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -34,6 +36,19 @@ namespace Apha.FPS.Api.Controllers
         {
             var result = await _service.GetPurchasesAsync(WorkGroupName, account);
             return Ok(_mapper.Map<List<PurchaseRes>>(result));
+        }
+
+        /// <summary>
+        /// Returns a paged, filtered and sorted list of purchases for a given workgroup and account.
+        /// </summary>
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPurchasesPagedAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string WorkGroupName,
+            [FromQuery] string account)
+        {
+            var result = await _service.GetPurchasesPagedAsync(query, WorkGroupName, account);
+            return Ok(_mapper.Map<PaginationRes<PurchaseRes>>(result));
         }
 
         /// <summary>

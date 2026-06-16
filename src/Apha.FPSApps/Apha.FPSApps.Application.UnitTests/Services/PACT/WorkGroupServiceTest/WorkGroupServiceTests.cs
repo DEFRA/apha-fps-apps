@@ -1244,8 +1244,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
                 new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
                 new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
             };
-            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups);
-            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2, TotalPages = 1 });
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1").Returns(allResponse);
 
             // Act
             var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
@@ -1258,7 +1258,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
             Assert.Equal(2, result.Pagination!.TotalRecords);
             Assert.Equal(1, result.Pagination.PageNumber);
             Assert.Equal(10, result.Pagination.PageSize);
-            await _pactWorkGroupApiClient.Received(1).GetWorkGroupsByProfitCentreForBudgetAsync("PC1");
+            await _pactWorkGroupApiClient.Received(1).GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
         }
 
         [Fact]
@@ -1266,8 +1266,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse([]);
-            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse([], new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 });
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1").Returns(allResponse);
 
             // Act
             var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
@@ -1287,7 +1287,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
             var failResponse = ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(errors, new ApiMetaDto());
-            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(failResponse);
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1").Returns(failResponse);
 
             // Act
             var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
@@ -1295,7 +1295,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            await _pactWorkGroupApiClient.Received(1).GetWorkGroupsByProfitCentreForBudgetAsync("PC1");
+            await _pactWorkGroupApiClient.Received(1).GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
         }
 
         [Fact]
@@ -1303,13 +1303,12 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 2, PageSize = 1 };
-            var workGroups = new List<WorkGroupViewDto>
+            var pagedList = new List<WorkGroupViewDto>
             {
-                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
                 new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
             };
-            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups);
-            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+            var pagedResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(pagedList, new PaginationDto { PageNumber = 2, PageSize = 1, TotalRecords = 2, TotalPages = 2 });
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1").Returns(pagedResponse);
 
             // Act
             var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
@@ -1335,13 +1334,12 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
                 PageSize = 10,
                 Filter = """{"WorkGroupName":"WG1"}"""
             };
-            var workGroups = new List<WorkGroupViewDto>
+            var filteredList = new List<WorkGroupViewDto>
             {
-                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
-                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" }
             };
-            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups);
-            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+            var filteredResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(filteredList, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 });
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1").Returns(filteredResponse);
 
             // Act
             var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
@@ -1359,13 +1357,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "WorkGroupName", Descending = false };
-            var workGroups = new List<WorkGroupViewDto>
+            var sortedList = new List<WorkGroupViewDto>
             {
-                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" },
-                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" }
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
             };
-            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups);
-            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+            var sortedResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(sortedList, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2, TotalPages = 1 });
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1").Returns(sortedResponse);
 
             // Act
             var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");
@@ -1383,13 +1381,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "WorkGroupName", Descending = true };
-            var workGroups = new List<WorkGroupViewDto>
+            var sortedList = new List<WorkGroupViewDto>
             {
-                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
-                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" }
             };
-            var allResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workGroups);
-            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetAsync("PC1").Returns(allResponse);
+            var sortedResponse = ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(sortedList, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2, TotalPages = 1 });
+            _pactWorkGroupApiClient.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1").Returns(sortedResponse);
 
             // Act
             var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, "PC1");

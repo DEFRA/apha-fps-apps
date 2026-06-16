@@ -16,6 +16,7 @@ namespace Apha.PACT.Core.Interfaces
         Task<PagedData<WorkGroupValidTimeCode>> GetWorkGroupValidTimeCodeAsync(PaginationParameters<string> query, string workGroup);
         Task<PagedData<WorkGroup>> GetWorkGroupsByProfitCentreAsync(PaginationParameters<string> query, string profitCentre);
         Task<List<WorkGroupView>> GetWorkGroupsByProfitCentreForBudgetAsync(string profitCentre);
+        Task<PagedData<WorkGroupView>> GetWorkGroupsByProfitCentreForBudgetPagedAsync(PaginationParameters<string> query, string profitCentre);
         Task<bool> SetSendEmailForProfitCentreWorkGroupsAsync(string profitCentre, short flag);
         Task<bool> SetSendEmailForAllWorkGroupsAsync(short flag);
         Task<bool> UpdateWorkGroupEmailAsync(string workGroupName, short sendEmail, string? emailRecipient);

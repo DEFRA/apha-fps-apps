@@ -25,11 +25,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public async Task<ApiResponseDto<List<string>>> GetAllWorkGroupNamesAsync()
         {
             var response = await _http.GetAsync<List<string>>(PactApiEndpoints.GetAllWorkGroupNames);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<string>>>(response);
 
-            var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
-            return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<string>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<string>>>(response);
+                return ApiResponseDto<List<string>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<List<WorkGroupViewDto>>> GetWorkGroupsByProfitCentreForBudgetAsync(string profitCentre)
@@ -38,21 +43,50 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 PactApiEndpoints.GetWorkGroupsByProfitCentreForBudget,
                 "profitCentre", profitCentre);
             var response = await _http.GetAsync<List<WorkGroupViewRes>>(url);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<WorkGroupViewDto>>>(response);
 
-            var dto = _mapper.Map<ApiResponseDto<List<WorkGroupViewDto>>>(response);
-            return ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(dto.Errors, dto.Meta);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<WorkGroupViewDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupViewDto>>>(response);
+                return ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        public async Task<ApiResponseDto<List<WorkGroupViewDto>>> GetWorkGroupsByProfitCentreForBudgetPagedAsync(
+            QueryParameters<string> query, string profitCentre)
+        {
+            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetWorkGroupsByProfitCentreForBudgetPaged, query);
+            url = QueryHelpers.AddQueryString(url, "profitCentre", profitCentre);
+
+            var response = await _http.GetAsync<List<WorkGroupViewRes>>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<WorkGroupViewDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupViewDto>>>(response);
+                return ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync()
         {
             var response = await _http.GetAsync<List<WorkGroupRes>>(PactApiEndpoints.GetAllWorkGroups);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
 
-            var dto = _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
-            return ApiResponseDto<List<WorkGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
+                return ApiResponseDto<List<WorkGroupDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<List<WorkGroupTimeCodeDto>>> GetPagedWorkGroupTimeCodesAsync(
@@ -65,11 +99,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 url += $"&monthNumber={monthNumber.Value}";
 
             var response = await _http.GetAsync<List<WorkGroupTimeCodeRes>>(url);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<WorkGroupTimeCodeDto>>>(response);
 
-            var dto = _mapper.Map<ApiResponseDto<List<WorkGroupTimeCodeDto>>>(response);
-            return ApiResponseDto<List<WorkGroupTimeCodeDto>>.FailureResponse(dto.Errors, dto.Meta);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<WorkGroupTimeCodeDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupTimeCodeDto>>>(response);
+                return ApiResponseDto<List<WorkGroupTimeCodeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>> GetPagedWorkGroupValidTimeCodesAsync(
@@ -80,11 +119,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
 
             var response = await _http.GetAsync<List<WorkGroupValidTimeCodeRes>>(url);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>>(response);
 
-            var dto = _mapper.Map<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>>(response);
-            return ApiResponseDto<List<WorkGroupValidTimeCodeDto>>.FailureResponse(dto.Errors, dto.Meta);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>>(response);
+                return ApiResponseDto<List<WorkGroupValidTimeCodeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<WgSummarisedStaffTimeUsageDto>> GetWgSummarisedStaffTimeUsageAsync(
@@ -94,11 +138,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             url += $"&staffName={Uri.EscapeDataString(staffName)}";
 
             var response = await _http.GetAsync<WgSummarisedStaffTimeUsageRes>(url);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<WgSummarisedStaffTimeUsageDto>>(response);
 
-            var failureResponse = _mapper.Map<ApiResponseDto<WgSummarisedStaffTimeUsageDto>>(response);
-            return ApiResponseDto<WgSummarisedStaffTimeUsageDto>.FailureResponse(failureResponse.Errors, failureResponse.Meta);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<WgSummarisedStaffTimeUsageDto>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<WgSummarisedStaffTimeUsageDto>>(response);
+                return ApiResponseDto<WgSummarisedStaffTimeUsageDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<List<WorkGroupDto>>> GetWorkGroupsByProfitCentreAsync(
@@ -108,11 +157,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             url = QueryHelpers.AddQueryString(url, "profitCentre", profitCentre);
 
             var response = await _http.GetAsync<List<WorkGroupRes>>(url);
-            if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
 
-            var dto = _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
-            return ApiResponseDto<List<WorkGroupDto>>.FailureResponse(dto.Errors, dto.Meta);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(response);
+                return ApiResponseDto<List<WorkGroupDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<bool>> SetSendEmailForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
@@ -122,10 +176,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 PactApiEndpoints.SetSendEmailForProfitCentreWorkGroups, request);
 
             if (response.Success)
+            {
                 return _mapper.Map<ApiResponseDto<bool>>(response);
-
-            var failureDto = _mapper.Map<ApiResponseDto<bool>>(response);
-            return ApiResponseDto<bool>.FailureResponse(failureDto.Errors, failureDto.Meta);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+                return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<bool>> SetSendEmailForAllWorkGroupsAsync(short flag)
@@ -135,10 +193,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 PactApiEndpoints.SetSendEmailForAllWorkGroups, request);
 
             if (response.Success)
+            {
                 return _mapper.Map<ApiResponseDto<bool>>(response);
-
-            var failureDto = _mapper.Map<ApiResponseDto<bool>>(response);
-            return ApiResponseDto<bool>.FailureResponse(failureDto.Errors, failureDto.Meta);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+                return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<bool>> UpdateWorkGroupEmailAsync(
@@ -154,10 +216,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var response = await _http.PutAsync<UpdateWorkGroupEmailReq, bool?>(url, request);
 
             if (response.Success)
+            {
                 return _mapper.Map<ApiResponseDto<bool>>(response);
-
-            var failureDto = _mapper.Map<ApiResponseDto<bool>>(response);
-            return ApiResponseDto<bool>.FailureResponse(failureDto.Errors, failureDto.Meta);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+                return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
     }
 }

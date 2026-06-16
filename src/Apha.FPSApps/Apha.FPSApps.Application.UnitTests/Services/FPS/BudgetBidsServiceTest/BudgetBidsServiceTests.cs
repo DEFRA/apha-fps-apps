@@ -289,8 +289,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
                 new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m },
                 new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m }
             };
-            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
-            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2, TotalPages = 1 });
+            _fpsBudgetBidsApiClient.GetBidViewPagedAsync(query, "WG01").Returns(allResponse);
 
             // Act
             var result = await _sut.GetBidViewPagedAsync(query, "WG01");
@@ -303,7 +303,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
             Assert.Equal(2, result.Pagination!.TotalRecords);
             Assert.Equal(1, result.Pagination.PageNumber);
             Assert.Equal(10, result.Pagination.PageSize);
-            await _fpsBudgetBidsApiClient.Received(1).GetBidViewAsync("WG01");
+            await _fpsBudgetBidsApiClient.Received(1).GetBidViewPagedAsync(query, "WG01");
         }
 
         [Fact]
@@ -311,8 +311,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse([]);
-            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse([], new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 });
+            _fpsBudgetBidsApiClient.GetBidViewPagedAsync(query, "WG01").Returns(allResponse);
 
             // Act
             var result = await _sut.GetBidViewPagedAsync(query, "WG01");
@@ -332,7 +332,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
             var failResponse = ApiResponseDto<List<BidViewDto>>.FailureResponse(errors, new ApiMetaDto());
-            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(failResponse);
+            _fpsBudgetBidsApiClient.GetBidViewPagedAsync(query, "WG01").Returns(failResponse);
 
             // Act
             var result = await _sut.GetBidViewPagedAsync(query, "WG01");
@@ -340,7 +340,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
             // Assert
             Assert.NotNull(result);
             Assert.False(result.Success);
-            await _fpsBudgetBidsApiClient.Received(1).GetBidViewAsync("WG01");
+            await _fpsBudgetBidsApiClient.Received(1).GetBidViewPagedAsync(query, "WG01");
         }
 
         [Fact]
@@ -348,13 +348,12 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 2, PageSize = 1 };
-            var bidList = new List<BidViewDto>
+            var pagedList = new List<BidViewDto>
             {
-                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m },
                 new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m }
             };
-            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
-            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+            var pagedResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(pagedList, new PaginationDto { PageNumber = 2, PageSize = 1, TotalRecords = 2, TotalPages = 2 });
+            _fpsBudgetBidsApiClient.GetBidViewPagedAsync(query, "WG01").Returns(pagedResponse);
 
             // Act
             var result = await _sut.GetBidViewPagedAsync(query, "WG01");
@@ -380,13 +379,12 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
                 PageSize = 10,
                 Filter = """{"Account":"ACC1"}"""
             };
-            var bidList = new List<BidViewDto>
+            var filteredList = new List<BidViewDto>
             {
-                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m },
-                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m }
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m }
             };
-            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
-            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+            var filteredResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(filteredList, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 });
+            _fpsBudgetBidsApiClient.GetBidViewPagedAsync(query, "WG01").Returns(filteredResponse);
 
             // Act
             var result = await _sut.GetBidViewPagedAsync(query, "WG01");
@@ -404,13 +402,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "Account", Descending = false };
-            var bidList = new List<BidViewDto>
+            var sortedList = new List<BidViewDto>
             {
-                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m },
-                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m }
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m },
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m }
             };
-            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
-            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+            var sortedResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(sortedList, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2, TotalPages = 1 });
+            _fpsBudgetBidsApiClient.GetBidViewPagedAsync(query, "WG01").Returns(sortedResponse);
 
             // Act
             var result = await _sut.GetBidViewPagedAsync(query, "WG01");
@@ -428,13 +426,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.BudgetBidsServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "Account", Descending = true };
-            var bidList = new List<BidViewDto>
+            var sortedList = new List<BidViewDto>
             {
-                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m },
-                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m }
+                new() { WorkGroupName = "WG01", Account = "ACC2", GenBid = 200m },
+                new() { WorkGroupName = "WG01", Account = "ACC1", GenBid = 100m }
             };
-            var allResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(bidList);
-            _fpsBudgetBidsApiClient.GetBidViewAsync("WG01").Returns(allResponse);
+            var sortedResponse = ApiResponseDto<List<BidViewDto>>.SuccessResponse(sortedList, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2, TotalPages = 1 });
+            _fpsBudgetBidsApiClient.GetBidViewPagedAsync(query, "WG01").Returns(sortedResponse);
 
             // Act
             var result = await _sut.GetBidViewPagedAsync(query, "WG01");

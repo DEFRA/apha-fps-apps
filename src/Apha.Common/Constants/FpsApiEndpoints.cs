@@ -186,6 +186,7 @@ namespace Apha.Common.Constants
 
         // Generic Bid — Budget Bids
         public const string GetBids = "api/v1/budgetbids?workgroup={0}";
+        public const string GetBidsPagedView = "api/v1/budgetbids/paged";
         public const string GetBidByWorkgroupAccount = "api/v1/budgetbids/{0}/{1}";
         public const string CreateBudgetBid = "api/v1/budgetbids";
         public const string UpdateBudgetBid = "api/v1/budgetbids";
@@ -194,6 +195,7 @@ namespace Apha.Common.Constants
 
         // Generic Bid — Purchases
         public const string GetGenericPurchases = "api/v1/purchases?WorkGroupName={0}&account={1}";
+        public const string GetGenericPurchasesPaged = "api/v1/purchases/paged";
         public const string GetPurchaseByKeys = "api/v1/purchases/{0}/{1}/{2}";
         public const string CreateGenericPurchase = "api/v1/purchases";
         public const string UpdateGenericPurchase = "api/v1/purchases";

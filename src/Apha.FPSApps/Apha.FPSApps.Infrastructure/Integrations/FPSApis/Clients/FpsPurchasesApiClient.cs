@@ -1,10 +1,14 @@
 using Apha.Common.Constants;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
+using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
@@ -24,10 +28,34 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var response = await _http.GetAsync<List<PurchaseRes>>(string.Format(FpsApiEndpoints.GetGenericPurchases, WorkGroupName, account));
 
             if (response.Success)
+            {
                 return _mapper.Map<ApiResponseDto<List<PurchaseDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<PurchaseDto>>>(response);
+                return ApiResponseDto<List<PurchaseDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
 
-            var responseDto = _mapper.Map<ApiResponseDto<List<PurchaseDto>>>(response);
-            return ApiResponseDto<List<PurchaseDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        public async Task<ApiResponseDto<List<PurchaseDto>>> GetPurchasesPagedAsync(
+            QueryParameters<string> query, string WorkGroupName, string account)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetGenericPurchasesPaged, query);
+            url = QueryHelpers.AddQueryString(url, "WorkGroupName", WorkGroupName);
+            url = QueryHelpers.AddQueryString(url, "account", account);
+
+            var response = await _http.GetAsync<List<PurchaseRes>>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<PurchaseDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<PurchaseDto>>>(response);
+                return ApiResponseDto<List<PurchaseDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<PurchaseDto>> GetPurchaseByIdAsync(string WorkGroupName, string account, string itemDescription)
@@ -35,10 +63,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var response = await _http.GetAsync<PurchaseRes>(string.Format(FpsApiEndpoints.GetPurchaseByKeys, WorkGroupName, account, itemDescription));
 
             if (response.Success)
+            {
                 return _mapper.Map<ApiResponseDto<PurchaseDto>>(response);
-
-            var responseDto = _mapper.Map<ApiResponseDto<PurchaseDto>>(response);
-            return ApiResponseDto<PurchaseDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<PurchaseDto>>(response);
+                return ApiResponseDto<PurchaseDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<PurchaseDto>> CreatePurchaseAsync(PurchaseDto purchase)
@@ -47,10 +79,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var response = await _http.PostAsync<PurchaseReq, PurchaseRes>(FpsApiEndpoints.CreateGenericPurchase, req);
 
             if (response.Success)
+            {
                 return _mapper.Map<ApiResponseDto<PurchaseDto>>(response);
-
-            var responseDto = _mapper.Map<ApiResponseDto<PurchaseDto>>(response);
-            return ApiResponseDto<PurchaseDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<PurchaseDto>>(response);
+                return ApiResponseDto<PurchaseDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<PurchaseDto>> UpdatePurchaseAsync(PurchaseDto purchase)
@@ -59,10 +95,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var response = await _http.PutAsync<PurchaseReq, PurchaseRes>(FpsApiEndpoints.UpdateGenericPurchase, req);
 
             if (response.Success)
+            {
                 return _mapper.Map<ApiResponseDto<PurchaseDto>>(response);
-
-            var responseDto = _mapper.Map<ApiResponseDto<PurchaseDto>>(response);
-            return ApiResponseDto<PurchaseDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<PurchaseDto>>(response);
+                return ApiResponseDto<PurchaseDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<bool>> DeletePurchaseAsync(PurchaseDto purchase)
@@ -70,10 +110,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             var response = await _http.DeleteAsync<bool?>(string.Format(FpsApiEndpoints.DeleteGenericPurchase, purchase.WorkGroupName, purchase.Account, purchase.ItemDescription));
 
             if (response.Success)
+            {
                 return _mapper.Map<ApiResponseDto<bool>>(response);
-
-            var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
-            return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+                return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
         }
     }
 }

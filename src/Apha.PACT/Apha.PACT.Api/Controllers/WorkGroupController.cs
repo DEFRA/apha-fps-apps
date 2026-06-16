@@ -139,6 +139,16 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<List<WorkGroupViewRes>>(result));
         }
 
+        /// <summary>Returns a paged, filtered and sorted list of workgroups for a profit centre (budget view).</summary>
+        [HttpGet("budget/by-profitcentre/paged")]
+        public async Task<IActionResult> GetWorkGroupsByProfitCentreForBudgetPagedAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string profitCentre)
+        {
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, profitCentre);
+            return Ok(_mapper.Map<PaginationRes<WorkGroupViewRes>>(result));
+        }
+
         /// <summary>
         /// Returns a paged, filtered, and sorted list of work groups for the specified profit centre.
         /// Pagination, sort column, sort direction, and column filters are supplied via

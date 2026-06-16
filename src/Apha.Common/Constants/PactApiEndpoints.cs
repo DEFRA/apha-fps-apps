@@ -39,6 +39,7 @@ namespace Apha.Common.Constants
         public const string GetPagedSummarisedWorkgroupTime = "api/v1/workgroup/paged/summarisedtimeusage";        
         public const string GetPagedWorkGroupsByProfitCentre = "api/v1/workgroup/profitcentre";
         public const string GetWorkGroupsByProfitCentreForBudget = "api/v1/workgroup/budget/by-profitcentre";
+        public const string GetWorkGroupsByProfitCentreForBudgetPaged = "api/v1/workgroup/budget/by-profitcentre/paged";
         public const string SetSendEmailForProfitCentreWorkGroups = "api/v1/workgroup/setsendemail/profitcentre";
         public const string SetSendEmailForAllWorkGroups = "api/v1/workgroup/setsendemail/all";
         public const string UpdateWorkGroupEmail = "api/v1/workgroup/{0}/email";        
