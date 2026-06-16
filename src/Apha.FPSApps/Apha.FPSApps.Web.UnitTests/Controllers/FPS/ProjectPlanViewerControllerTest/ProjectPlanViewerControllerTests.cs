@@ -2077,5 +2077,340 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         }
 
         #endregion
+
+        #region ProjectDetails Partial ViewModel Population Tests
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesProjectDetailsProgramFromDto()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal("P01", model.ProjectDetails.Program);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesProjectDetailsFullFields()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            var details = model.ProjectDetails.ProjectDetails;
+            Assert.Equal("AH0001", details.ProjectCode);
+            Assert.Equal("Test Project", details.Description);
+            Assert.Equal("TP", details.ShortTitle);
+            Assert.Equal("DEFRA", details.Customer);
+            Assert.Equal("John", details.Manager);
+            Assert.Equal("TB", details.Disease);
+            Assert.Equal("Active", details.ProjectStatus);
+            Assert.Equal("CB01", details.CostBookNo);
+            Assert.Equal("C001", details.Contract);
+            Assert.Equal(1, details.IsDefraProject);
+            Assert.Equal("RC1", details.OwningRc);
+            Assert.Equal("G1", details.ProjectGroup);
+            Assert.Equal("IAC01", details.IncomeAccountCode);
+            Assert.Equal("SAC01", details.SubAccountCode);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesProjectDetailsCurrencyFields()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            var details = model.ProjectDetails.ProjectDetails;
+            Assert.Equal(1000m, details.CustIncome);
+            Assert.Equal(500m, details.TransferIncome);
+            Assert.Equal(100m, details.TargetProfit);
+            Assert.Equal(5000m, details.BudgetCvl);
+            Assert.Equal(200m, details.PvsIncome);
+            Assert.Equal(50m, details.PlanCaseWorkDebit);
+            Assert.Equal(300m, details.CarryOver);
+            Assert.Equal(10m, details.CarryOverSeed);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesCommentsField()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal("Test comments", model.ProjectDetails.ProjectDetails.Comments);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesTotalStaffPlanCost()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(1000m, model.ProjectDetails.TotalStaffPlanCost);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesTotalAnimalPlanCost()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(500m, model.ProjectDetails.TotalAnimalPlanCost);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesTotalAdditionalPlanCost()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(300m, model.ProjectDetails.TotalAdditionalPlanCost);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_CalculatesTotalTestPlanCost()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            // BuildTestRequirementDto: UnitPrice = 25, NoRequired = 10 => 250
+            Assert.Equal(250m, model.ProjectDetails.TotalTestPlanCost);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesStaffPlanVsActualTotals()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(1000m, model.ProjectDetails.StaffTotalPlannedCost);
+            Assert.Equal(50, model.ProjectDetails.StaffTotalActualHrs);
+            Assert.Equal(800, model.ProjectDetails.StaffTotalActualCost);
+            // 800 / 1000 * 100 = 80
+            Assert.Equal(80, model.ProjectDetails.StaffPercentOfPlan);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesTestPlanVsActualTotals()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            // planned = 25 * 10 = 250
+            Assert.Equal(250m, model.ProjectDetails.TestTotalPlannedCost);
+            // actual = 200
+            Assert.Equal(200.0, model.ProjectDetails.TestTotalActualCost);
+            // 200 / 250 * 100 = 80
+            Assert.Equal(80, model.ProjectDetails.TestPercentOfPlan);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesAnimalPlanVsActualTotals()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(500m, model.ProjectDetails.AnimalTotalPlannedCost);
+            Assert.Equal(400m, model.ProjectDetails.AnimalTotalActualCost);
+            // 400 / 500 * 100 = 80
+            Assert.Equal(80, model.ProjectDetails.AnimalPercentOfPlan);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_PopulatesAdditionalPlanVsActualTotals()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(300m, model.ProjectDetails.AdditionalTotalPlannedCost);
+            Assert.Equal(250m, model.ProjectDetails.AdditionalTotalActualCost);
+            // 250 / 300 * 100 = 83.33...
+            Assert.True(model.ProjectDetails.AdditionalPercentOfPlan > 83 && model.ProjectDetails.AdditionalPercentOfPlan < 84);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_WhenStaffActualIsNull_DefaultsToZero()
+        {
+            SetupProjectDetailsServices("AH0001");
+            _timeCostCalcsService.GetTotalActualByProjectAsync("AH0001")
+                .Returns(ApiResponseDto<TimeCostCalcsTotalsDto>.SuccessResponse(null!));
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(0, model.ProjectDetails.StaffTotalActualHrs);
+            Assert.Equal(0, model.ProjectDetails.StaffTotalActualCost);
+            Assert.Equal(0, model.ProjectDetails.StaffPercentOfPlan);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_WhenZeroStaffPlannedCost_PercentIsZero()
+        {
+            SetupProjectDetailsServices("AH0001");
+            _staffJobService.GetTotalStaffCostAsync("AH0001")
+                .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(0, model.ProjectDetails.StaffPercentOfPlan);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_WhenTestResultFails_TestTotalsAreZero()
+        {
+            SetupProjectDetailsServices("AH0001");
+            var failedResponse = ApiResponseDto<List<TestRequirementDto>>.FailureResponse(
+                new List<ApiErrorDto>(), new ApiMetaDto());
+            _testRequirementService.GetPagedTestReqmtbyProjectAsync(Arg.Any<QueryParameters<string>>(), "AH0001")
+                .Returns(failedResponse);
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(0m, model.ProjectDetails.TotalTestPlanCost);
+            Assert.Equal(0m, model.ProjectDetails.TestTotalPlannedCost);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_WhenZeroAnimalPlannedCost_PercentIsZero()
+        {
+            SetupProjectDetailsServices("AH0001");
+            _animalPlanService.GetTotalAnimalCostAsync("AH0001")
+                .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(0, model.ProjectDetails.AnimalPercentOfPlan);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_WhenZeroAdditionalPlannedCost_PercentIsZero()
+        {
+            SetupProjectDetailsServices("AH0001");
+            _additionalCostService.GetTotalItemCostAsync("AH0001")
+                .Returns(ApiResponseDto<decimal>.SuccessResponse(0m));
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(0, model.ProjectDetails.AdditionalPercentOfPlan);
+        }
+
+        [Fact]
+        public async Task Index_WithNoProjectCode_ProjectDetailsHasEmptySelectedCode()
+        {
+            SetupDefaultServices();
+
+            var result = await _controller.Index();
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(string.Empty, model.ProjectDetails.SelectedProjectCode);
+        }
+
+        [Fact]
+        public async Task Index_WithNoProjectCode_ProjectDetailsTotalsAreZero()
+        {
+            SetupDefaultServices();
+
+            var result = await _controller.Index();
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(0m, model.ProjectDetails.TotalStaffPlanCost);
+            Assert.Equal(0m, model.ProjectDetails.TotalTestPlanCost);
+            Assert.Equal(0m, model.ProjectDetails.TotalAnimalPlanCost);
+            Assert.Equal(0m, model.ProjectDetails.TotalAdditionalPlanCost);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_ProjectDetailsGridConfigsAreInitialized()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal("planSummaryStaffGrid", model.ProjectDetails.PlanSummaryStaffGrid.GridId);
+            Assert.Equal("planSummaryTestGrid", model.ProjectDetails.PlanSummaryTestGrid.GridId);
+            Assert.Equal("planSummaryAnimalGrid", model.ProjectDetails.PlanSummaryAnimalGrid.GridId);
+            Assert.Equal("planSummaryAdditionalGrid", model.ProjectDetails.PlanSummaryAdditionalGrid.GridId);
+            Assert.Equal("staffPlanGrid", model.ProjectDetails.StaffPlanGrid.GridId);
+            Assert.Equal("testPlanGrid", model.ProjectDetails.TestPlanGrid.GridId);
+            Assert.Equal("animalPlanGrid", model.ProjectDetails.AnimalPlanGrid.GridId);
+            Assert.Equal("additionalCostPlanGrid", model.ProjectDetails.AdditionalPlanGrid.GridId);
+            Assert.Equal("actualAnimalCostGrid", model.ProjectDetails.AnimalActualGrid.GridId);
+            Assert.Equal("actualAdditionalCostGrid", model.ProjectDetails.AdditionalActualGrid.GridId);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_WhenProjectNotFound_DoesNotPopulateDetails()
+        {
+            SetupDefaultServices();
+            var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "404" } };
+            _projectService.GetProjectByIdAsync("AH0001")
+                .Returns(ApiResponseDto<ProjectDto>.FailureResponse(errors, new ApiMetaDto()));
+
+            var result = await _controller.Index(projectCode: "AH0001");
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal(string.Empty, model.ProjectDetails.Program);
+            Assert.Equal(0m, model.ProjectDetails.TotalStaffPlanCost);
+        }
+
+        [Fact]
+        public async Task Index_WithProjectCode_SkipsSessionLookup()
+        {
+            SetupProjectDetailsServices("AH0001");
+
+            await _controller.Index(projectCode: "AH0001");
+
+            await _appStateService.DidNotReceive().GetSessionAsync<string>(Arg.Any<string>());
+        }
+
+        #endregion
     }
 }

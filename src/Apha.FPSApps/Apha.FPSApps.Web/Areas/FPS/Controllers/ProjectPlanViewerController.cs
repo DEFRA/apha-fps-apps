@@ -86,17 +86,17 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ProjectDetails = new ProjectDetailsPartialViewModel
                 {
                     SelectedProjectCode = selectedProjectCode,
-                    PlanSummaryStaffGrid = GetReadOnlyStaffGrid("planSummaryStaffGrid", "Staff Plan"),
-                    PlanSummaryTestGrid = GetReadOnlyTestPlanGrid("planSummaryTestGrid", "Test Plan"),
-                    PlanSummaryAnimalGrid = GetReadOnlyAnimalGrid("planSummaryAnimalGrid", "Animal Plan"),
-                    PlanSummaryAdditionalGrid = GetReadOnlyAdditionalGrid("planSummaryAdditionalGrid", "Additional Cost Plan"),
-                    StaffPlanGrid = GetReadOnlyStaffGrid("staffPlanGrid", "Planned Time (FPS)"),
+                    PlanSummaryStaffGrid = GetReadOnlyStaffGrid("planSummaryStaffGrid", "Staff Plans"),
+                    PlanSummaryTestGrid = GetReadOnlyTestPlanGrid("planSummaryTestGrid", "Test Plans"),
+                    PlanSummaryAnimalGrid = GetReadOnlyAnimalGrid("planSummaryAnimalGrid", "Animal Plans"),
+                    PlanSummaryAdditionalGrid = GetReadOnlyAdditionalGrid("planSummaryAdditionalGrid", "Additional Cost Plans"),
+                    StaffPlanGrid = GetReadOnlyStaffGrid("staffPlanGrid", "Staff Plans"),
                     StaffActualGrid = GetReadOnlyCompareStaff2Grid(),
-                    TestPlanGrid = GetReadOnlyTestPlanGrid("testPlanGrid", "Planned Tests (FPS)"),
+                    TestPlanGrid = GetReadOnlyTestPlanGrid("testPlanGrid", "Test Plans"),
                     TestActualGrid = GetReadOnlyTestActualGrid(),
-                    AnimalPlanGrid = GetReadOnlyAnimalGrid("animalPlanGrid", "Planned Animals (FPS)"),
+                    AnimalPlanGrid = GetReadOnlyAnimalGrid("animalPlanGrid", "Animal Plans"),
                     AnimalActualGrid = GetReadOnlyActualCostGrid("actualAnimalCostGrid", "Actual Animal Costs (PACT)"),
-                    AdditionalPlanGrid = GetReadOnlyAdditionalGrid("additionalCostPlanGrid", "Planned Additional Costs (FPS)"),
+                    AdditionalPlanGrid = GetReadOnlyAdditionalGrid("additionalCostPlanGrid", "Additional Cost Plans"),
                     AdditionalActualGrid = GetReadOnlyActualCostGrid("actualAdditionalCostGrid", "Actual Additional Costs (PACT)")
                 }
             };
@@ -478,6 +478,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private static DataGridConfig<StaffJobItemViewModel> GetReadOnlyStaffGrid(string gridId, string title)
         {
+            var columns = new List<DataGridColumn>
+            {
+                new DataGridColumn { PropertyName = "WorkGroupGrade", DisplayName = "WG Grad", Width = 100, ColumnType = GridColumnType.Text, IsVisible = true, IsFilterable = true },
+                new DataGridColumn { PropertyName = "Name", DisplayName = "Name", Width = 169, ColumnType = GridColumnType.Text, IsVisible = true, IsFilterable = true },
+                new DataGridColumn { PropertyName = "PlannedHours", DisplayName = "Hours", Width = 100, ColumnType = GridColumnType.Number, IsVisible = true, IsFilterable = true },
+                new DataGridColumn { PropertyName = "ChargeRate", DisplayName = "Charge Rate", Width = 100, ColumnType = GridColumnType.GbpValue, IsVisible = true },
+                new DataGridColumn { PropertyName = "StaffCost", DisplayName = "Cost", Width = 110, ColumnType = GridColumnType.GbpValue, IsVisible = true }
+            };
+
             return new DataGridConfig<StaffJobItemViewModel>
             {
                 GridId = gridId,
@@ -491,13 +500,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = $"get{gridId}ExtraFilters",
                 BindGridUrl = $"/FPS/ProjectPlanViewer/LoadStaffPlanGrid?gridId={gridId}",
                 Data = new List<StaffJobItemViewModel>(),
-                Columns = GridDataProvider.GetColumnsDefination<StaffJobItemViewModel>(null),
+                Columns = columns,
                 Pagination = new PaginationModel()
             };
         }
 
         private static DataGridConfig<TestPlanActualItem> GetReadOnlyTestPlanGrid(string gridId, string title)
         {
+            var columns = new List<DataGridColumn>
+            {
+                new DataGridColumn { PropertyName = "TestCode", DisplayName = "TestCode", Width = 120, ColumnType = GridColumnType.Text, IsVisible = true, IsFilterable = true },
+                new DataGridColumn { PropertyName = "UnitPrice", DisplayName = "UnitPrice", Width = 120, ColumnType = GridColumnType.GbpValue, IsVisible = true },
+                new DataGridColumn { PropertyName = "NoRequired", DisplayName = "NoRequired", Width = 110, ColumnType = GridColumnType.DecimalNumber, IsVisible = true },
+                new DataGridColumn { PropertyName = "TestCost", DisplayName = "Cost", Width = 110, ColumnType = GridColumnType.GbpValue, IsVisible = true }
+            };
+
             return new DataGridConfig<TestPlanActualItem>
             {
                 GridId = gridId,
@@ -511,13 +528,22 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = $"get{gridId}ExtraFilters",
                 BindGridUrl = $"/FPS/ProjectPlanViewer/LoadTestPlanGrid?gridId={gridId}",
                 Data = new List<TestPlanActualItem>(),
-                Columns = GridDataProvider.GetColumnsDefination<TestPlanActualItem>(null),
+                Columns = columns,
                 Pagination = new PaginationModel()
             };
         }
 
         private static DataGridConfig<AnimalPlanItem> GetReadOnlyAnimalGrid(string gridId, string title)
         {
+            var columns = new List<DataGridColumn>
+            {
+                new DataGridColumn { PropertyName = "AnimalType", DisplayName = "Animal Type", Width = 120, ColumnType = GridColumnType.Text, IsVisible = true, IsFilterable = true },
+                new DataGridColumn { PropertyName = "NumberOfDays", DisplayName = "No Days", Width = 80, ColumnType = GridColumnType.DecimalNumber, IsVisible = true },
+                new DataGridColumn { PropertyName = "NumberOfAnimals", DisplayName = "No Animals", Width = 100, ColumnType = GridColumnType.DecimalNumber, IsVisible = true },
+                new DataGridColumn { PropertyName = "DailyRate", DisplayName = "DailyRate", Width = 120, ColumnType = GridColumnType.GbpValue, IsVisible = true },
+                new DataGridColumn { PropertyName = "AnimalCost", DisplayName = "Cost", Width = 110, ColumnType = GridColumnType.GbpValue, IsVisible = true }
+            };
+
             return new DataGridConfig<AnimalPlanItem>
             {
                 GridId = gridId,
@@ -531,13 +557,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = $"get{gridId}ExtraFilters",
                 BindGridUrl = $"/FPS/ProjectPlanViewer/LoadAnimalPlanGrid?gridId={gridId}",
                 Data = new List<AnimalPlanItem>(),
-                Columns = GridDataProvider.GetColumnsDefination<AnimalPlanItem>(null),
+                Columns = columns,
                 Pagination = new PaginationModel()
             };
         }
 
         private static DataGridConfig<AdditionalCostItemViewModel> GetReadOnlyAdditionalGrid(string gridId, string title)
         {
+            var columns = new List<DataGridColumn>
+            {
+                new DataGridColumn { PropertyName = "Account", DisplayName = "Account", Width = 130, ColumnType = GridColumnType.Text, IsVisible = true, IsFilterable = true },
+                new DataGridColumn { PropertyName = "Description", DisplayName = "Description", Width = 160, ColumnType = GridColumnType.Text, IsVisible = true, IsFilterable = true },
+                new DataGridColumn { PropertyName = "ItemCost", DisplayName = "Cost", Width = 110, ColumnType = GridColumnType.GbpValue, IsVisible = true }
+            };
+
             return new DataGridConfig<AdditionalCostItemViewModel>
             {
                 GridId = gridId,
@@ -551,13 +584,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = $"get{gridId}ExtraFilters",
                 BindGridUrl = $"/FPS/ProjectPlanViewer/LoadAdditionalCostGrid?gridId={gridId}",
                 Data = new List<AdditionalCostItemViewModel>(),
-                Columns = GridDataProvider.GetColumnsDefination<AdditionalCostItemViewModel>(null),
+                Columns = columns,
                 Pagination = new PaginationModel()
             };
         }
 
         private static DataGridConfig<CompareStaff2Item> GetReadOnlyCompareStaff2Grid()
         {
+            var columns = GridDataProvider.GetColumnsDefination<CompareStaff2Item>(null);
+            foreach (var col in columns)
+            {
+                if (col.PropertyName == "WorkGroup") col.DisplayName = "Work Group";
+                else if (col.PropertyName == "GradeCode") col.DisplayName = "Grade";
+                else if (col.PropertyName == "JobCode") col.DisplayName = "Job Code";
+            }
+
             return new DataGridConfig<CompareStaff2Item>
             {
                 GridId = "staffActualGrid",
@@ -571,7 +612,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = "getStaffActualGridExtraFilters",
                 BindGridUrl = "/FPS/ProjectPlanViewer/LoadStaffActualGrid",
                 Data = new List<CompareStaff2Item>(),
-                Columns = GridDataProvider.GetColumnsDefination<CompareStaff2Item>(null),
+                Columns = columns,
                 Pagination = new PaginationModel()
             };
         }
@@ -598,6 +639,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private static DataGridConfig<ActualProjectCostItem> GetReadOnlyActualCostGrid(string gridId, string title)
         {
+            var columns = GridDataProvider.GetColumnsDefination<ActualProjectCostItem>(null);
+            foreach (var col in columns)
+            {
+                if (col.PropertyName == "AcctCode") col.DisplayName = "Acct Code";
+            }
+
             return new DataGridConfig<ActualProjectCostItem>
             {
                 GridId = gridId,
@@ -611,7 +658,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = $"get{gridId}ExtraFilters",
                 BindGridUrl = $"/FPS/ProjectPlanViewer/LoadActualCostGrid?gridId={gridId}",
                 Data = new List<ActualProjectCostItem>(),
-                Columns = GridDataProvider.GetColumnsDefination<ActualProjectCostItem>(null),
+                Columns = columns,
                 Pagination = new PaginationModel()
             };
         }
@@ -729,7 +776,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            var gridConfig = GetReadOnlyStaffGrid(gridId ?? "planSummaryStaffGrid", "Staff Plan");
+            var gridConfig = GetReadOnlyStaffGrid(gridId ?? "planSummaryStaffGrid", "Staff Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
 
@@ -762,7 +809,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            var gridConfig = GetReadOnlyTestPlanGrid(gridId ?? "planSummaryTestGrid", "Test Plan");
+            var gridConfig = GetReadOnlyTestPlanGrid(gridId ?? "planSummaryTestGrid", "Test Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
 
@@ -793,7 +840,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            var gridConfig = GetReadOnlyAnimalGrid(gridId ?? "planSummaryAnimalGrid", "Animal Plan");
+            var gridConfig = GetReadOnlyAnimalGrid(gridId ?? "planSummaryAnimalGrid", "Animal Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
 
@@ -824,7 +871,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            var gridConfig = GetReadOnlyAdditionalGrid(gridId ?? "planSummaryAdditionalGrid", "Additional Cost Plan");
+            var gridConfig = GetReadOnlyAdditionalGrid(gridId ?? "planSummaryAdditionalGrid", "Additional Cost Plans");
             gridConfig.Data = items;
             gridConfig.Pagination = paginationModel;
 
