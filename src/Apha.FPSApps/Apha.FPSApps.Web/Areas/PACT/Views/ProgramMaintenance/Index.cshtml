@@ -15,35 +15,9 @@
                 </h1>
             </div>
             <div class="govuk-grid-column-one-half sup_margin_tb_5 sup_padding_right_8 sup_flex_end_center">
-                <label class="govuk-label govuk-!-font-weight-bold sup_margin_0 sup_margin_left_10" for="programSelect">Select a Program:</label>
-                <div class="sup_margin_left_10" style="position: relative; z-index: 50;">
-                    <input type="text" id="programSelect" placeholder="Select Program" autocomplete="off"
-                           class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width: 400px; cursor: pointer;" />
-                    <div id="programDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
-                            max-height:260px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
-                            box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
-                        <input type="text" id="programSearchBox" placeholder="Type to search program"
-                               style="width:100%; padding:6px 8px; border:0; border-bottom:1px solid #b1b4b6; outline:none; box-sizing:border-box;" />
-                        <table style="width:100%; border-collapse:collapse; font-size:14px;">
-                            <thead style="background:#f3f2f1; position:sticky; top:0; z-index:10;">
-                                <tr>
-                                    <th style="padding:6px 8px; text-align:left;">Code</th>
-                                    <th style="padding:6px 8px; text-align:left;">Program Name</th>
-                                </tr>
-                            </thead>
-                            <tbody id="programDropdownBody">
-                                @foreach (var item in Model.ProgramList)
-                                {
-                                    var parts = item.Text?.Split(" - ", 2);
-                                    <tr data-value="@item.Value" style="cursor:pointer;">
-                                        <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@parts?[0]</td>
-                                        <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(parts?.Length > 1 ? parts[1] : "")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+
+                <span class="govuk-label govuk-!-font-weight-bold sup_margin_0">Select a Program:</span>
+                <div id="programSelectMultiDropdown" class="govuk-grid-column-two-thirds sup_p_0 sup_margin_left_10"></div>
             </div>
         </div>
     </div>
@@ -140,8 +114,11 @@
 </div>
 
 <input type="hidden" id="selectedProgramNo" value="@Model.SelectedProgramNo" />
-
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
 @section Scripts {
+  
     <script src="~/js/ajax-form-validation.js"></script>
     <script>
         var programMaintenanceConfig = {
@@ -149,7 +126,9 @@
             saveProgramUrl: '@Url.Action("Save", "ProgramMaintenance", new { area = "PACT" })',
             projectMaintenanceUrl: '@Url.Action("Details", "ProjectMaintenance", new { area = "PACT" })'
         };
+         const programListData =   @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ProgramList));
     </script>
+    <script src="~/js/common/multicolumn-dropdown.component.js"></script>
     <script src="~/js/pact_js/program-maintenance.js"></script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

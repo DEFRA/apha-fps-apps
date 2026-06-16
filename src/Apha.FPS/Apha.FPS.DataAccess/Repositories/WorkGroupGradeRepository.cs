@@ -100,6 +100,16 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<bool> ExistsForGradeCodeAsync(string gradeCode)
+        {
+            if (string.IsNullOrWhiteSpace(gradeCode))
+                return false;
+
+            return await _dbContext.WorkgroupGrades
+                .AsNoTracking()
+                .AnyAsync(wgg => wgg.GradeCode == gradeCode);
+        }
+
         // ─── Sorting ──────────────────────────────────────────────────────────────
 
         private static IQueryable ApplySorting(IQueryable<WorkgroupGrade> query, string? sortBy, bool descending)

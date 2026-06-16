@@ -8,32 +8,33 @@
 
 <!-- Page title bar -->
 <div class="govuk-grid-row sup_margin_left_right_0">
-    <div class="govuk-grid-column-full">
-        <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom govuk-!-margin-bottom-2">
-            <div class="sup_flex_left_center">
-                Portfolio Time Codes for:
-                <label class="sup_hidden_label" for="sp-projectcode">project code</label>
-                <select id="sp-projectcode" class="govuk-select govuk-!-font-size-16 govuk-input--width-20" 
-                        style="margin-left: 10px;" onchange="onPortfolioChange(this.value)">
-                    <option value="">-- Select Portfolio --</option>
-                    @foreach (var option in Model.PortfolioOptions)
-                    {
-                        if (option.Value == selectedPortfolio)
-                        {
-                            <option value="@option.Value" selected>@option.Text</option>
-                        }
-                        else
-                        {
-                            <option value="@option.Value">@option.Text</option>
-                        }
-                    }
-                </select>
-            </div>
-            <div>
-                <a asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index" 
-                   class="govuk-back-link">Back</a>
-            </div>
+    <div class="govuk-grid-column-full sup_flex_align_center sup_border-bottom">
+        <h1 class="heading_with_txtbox govuk-heading-s sup_margin_bottom_0   govuk-!-margin-bottom-2 govuk-grid-column-one-third">
+            Portfolio Time Codes for:           
         </h1>
+        <div class="sup_flex_left_center govuk-grid-column-one-third">
+               
+            <label class="sup_hidden_label" for="sp-projectcode">project code</label>
+            <select id="sp-projectcode" class="govuk-select govuk-!-font-size-16 govuk-grid-column-three-quarters"
+                    style="margin-left: 10px;" onchange="onPortfolioChange(this.value)">
+                <option value="">-- Select Portfolio --</option>
+                @foreach (var option in Model.PortfolioOptions)
+                {
+                    if (option.Value == selectedPortfolio)
+                    {
+                        <option value="@option.Value" selected>@option.Text</option>
+                    }
+                    else
+                    {
+                        <option value="@option.Value">@option.Text</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="govuk-grid-column-one-half sup_text_align_right">
+            <a asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index"
+               class="govuk-back-link">Back</a>
+        </div>
     </div>
 </div>
 
@@ -72,7 +73,7 @@
 
         <!-- Project Job Codes Grid -->
         <div class="govuk-grid-row sup_margin_left_right_0">
-            <div class="sup_border">
+            <div class="sup_border sup_margin_top_10">
                 <div id="@($"gridContainer_{Model.JobCodeGrid.GridId}")">
                     @await Html.PartialAsync("_DataGrid", Model.JobCodeGrid)
                 </div>
