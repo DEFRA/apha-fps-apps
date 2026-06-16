@@ -156,6 +156,18 @@ try
     userId = Environment.GetEnvironmentVariable("BATCH_REQUESTED_BY")
         ?? "system";
 
+    if (LooksLikeTemplatePlaceholder(jobName))
+    {
+        throw new InvalidOperationException(
+            $"BATCH_JOB_NAME resolved to template placeholder '{jobName}'. Provide a real registered job name.");
+    }
+
+    if (LooksLikeTemplatePlaceholder(userId))
+    {
+        throw new InvalidOperationException(
+            $"BATCH_REQUESTED_BY resolved to template placeholder '{userId}'. Provide a real requester identity.");
+    }
+
     if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
     {
         if (strictExecutionContractMode && !allowScheduledMabArchiveGeneratedExecutionId)
@@ -564,6 +576,17 @@ static DateTime? ParseRequestedAtUtc(string? requestedAtUtcRaw, Microsoft.Extens
     }
 
     return parsedRequestedAtUtc.UtcDateTime;
+}
+
+static bool LooksLikeTemplatePlaceholder(string? value)
+{
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        return false;
+    }
+
+    var trimmed = value.Trim();
+    return trimmed.Length > 2 && trimmed[0] == '<' && trimmed[^1] == '>';
 }
 
 static async Task VerifyExecutionContractAsync(

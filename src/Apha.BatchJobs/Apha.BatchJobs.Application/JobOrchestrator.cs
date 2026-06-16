@@ -90,22 +90,6 @@ public sealed class JobOrchestrator : IJobOrchestrator
         CancellationToken cancellationToken = default)
     {
         var startedAt = DateTime.UtcNow;
-        
-        // Attempt to acquire lock using a temporary jobQueueId; fetch real one after lock succeeds
-        var tempJobQueueId = Guid.NewGuid();
-        
-        _logger.LogInformation("Acquiring execution lock for '{JobName}' | JobExecutionId={JobExecutionId}...", jobName, jobExecutionId);
-        var lockAcquired = await _lockRepository.TryAcquireLockAsync(
-            jobName, tempJobQueueId, _lockTimeoutSeconds, cancellationToken);
-
-        if (!lockAcquired)
-        {
-            _logger.LogError(
-                "Job '{JobName}' is already running (lock held by another process). Cannot start execution | JobExecutionId={JobExecutionId}",
-                jobName, jobExecutionId);
-            throw new InvalidOperationException(
-                $"Job '{jobName}' is already running and cannot accept another execution at this time.");
-        }
 
         // Fetch the Initiated record created by API layer
         var existingExecution = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
@@ -122,6 +106,19 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _logger.LogInformation(
             "[Worker → DB] ✓ Fetched Initiated record | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | CurrentStatus={CurrentStatus}",
             jobName, jobExecutionId, jobQueueId, existingExecution.Status);
+
+        _logger.LogInformation("Acquiring execution lock for '{JobName}' | JobExecutionId={JobExecutionId}...", jobName, jobExecutionId);
+        var lockAcquired = await _lockRepository.TryAcquireLockAsync(
+            jobName, jobQueueId, _lockTimeoutSeconds, cancellationToken);
+
+        if (!lockAcquired)
+        {
+            _logger.LogError(
+                "Job '{JobName}' is already running (lock held by another process). Cannot start execution | JobExecutionId={JobExecutionId}",
+                jobName, jobExecutionId);
+            throw new InvalidOperationException(
+                $"Job '{jobName}' is already running and cannot accept another execution at this time.");
+        }
         
         using var runScope = _logger.BeginScope(new Dictionary<string, object>
         {
@@ -355,6 +352,12 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     }
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            // Capture failures raised before/around ExecuteAsync (for example factory resolution)
+            // so execution state is persisted correctly as Failed/Cancelled.
+            jobException = ex;
         }
         finally
         {

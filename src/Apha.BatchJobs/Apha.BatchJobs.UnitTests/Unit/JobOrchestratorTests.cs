@@ -219,6 +219,38 @@ public sealed class JobOrchestratorTests
         await _lockRepo.Received(1).ReleaseLockAsync("FailingJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task RunAsync_WhenFactoryCreateFails_WritesFailedRecordAndReleasesLock()
+    {
+        // Arrange
+        var capturedUpdateStatus = new List<JobStatus>();
+        var capturedErrorMessage = new List<string?>();
+
+        _factory.Create("MissingJob")
+            .Returns(_ => throw new InvalidOperationException("Job 'MissingJob' is not registered."));
+
+        _lockRepo.TryAcquireLockAsync("MissingJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(100);
+        _execRepo.UpdateExecutionRecordAsync(
+                     Arg.Do<JobExecutionRecord>(r => { capturedUpdateStatus.Add(r.Status); capturedErrorMessage.Add(r.ErrorMessage); }),
+                     Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        // Act
+        var jobExecutionId = Guid.NewGuid();
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _orchestrator.RunAsync("MissingJob", RunMode.Manual, jobExecutionId, "test-user"));
+
+        // Assert
+        Assert.Single(capturedUpdateStatus);
+        Assert.Equal(JobStatus.Failed, capturedUpdateStatus[0]);
+        Assert.Single(capturedErrorMessage);
+        Assert.Equal("Job 'MissingJob' is not registered.", capturedErrorMessage[0]);
+        await _lockRepo.Received(1).ReleaseLockAsync("MissingJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
     // ─────────────────────────────────────────────────────────────
     // Cancellation — record written as Cancelled, lock released
     // ─────────────────────────────────────────────────────────────
