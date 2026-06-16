@@ -143,11 +143,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
             // Assert
             Assert.NotNull(result);
-            // ApplyPaging is called on already-paginated data (10 items from DB),
-            // then Skip((2-1)*10).Take(10) results in 0 items
-            Assert.Empty(result.Data);
-            Assert.Equal(10, result.PaginationData.TotalRecords);
-            Assert.Equal(1, result.PaginationData.TotalPages);
+            // ApplyPaging receives the full 25-record query; page 2 of 10 returns 10 items
+            Assert.Equal(10, result.Data.Count);
+            Assert.Equal(25, result.PaginationData.TotalRecords);
+            Assert.Equal(3, result.PaginationData.TotalPages);
             Assert.Equal(2, result.PaginationData.PageNumber);
             Assert.Equal(10, result.PaginationData.PageSize);
         }
@@ -179,11 +178,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
             // Assert
             Assert.NotNull(result);
-            // ApplyPaging is called on already-paginated data (5 items from DB),
-            // then Skip((3-1)*10).Take(10) results in 0 items
-            Assert.Empty(result.Data);
-            Assert.Equal(5, result.PaginationData.TotalRecords);
-            Assert.Equal(1, result.PaginationData.TotalPages);
+            // ApplyPaging receives the full 25-record query; page 3 of 10 returns the remaining 5 items
+            Assert.Equal(5, result.Data.Count);
+            Assert.Equal(25, result.PaginationData.TotalRecords);
+            Assert.Equal(3, result.PaginationData.TotalPages);
         }
 
         [Fact]
@@ -213,10 +211,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
 
             // Assert
             Assert.NotNull(result);
+            // Page 10 is beyond the 5 records, so Data is empty; TotalRecords reflects the full count
             Assert.Empty(result.Data);
-            // ApplyPaging counts 0 items from DB pagination, so total is 0
-            Assert.Equal(0, result.PaginationData.TotalRecords);
-            Assert.Equal(0, result.PaginationData.TotalPages);
+            Assert.Equal(5, result.PaginationData.TotalRecords);
+            Assert.Equal(1, result.PaginationData.TotalPages);
         }
 
         #endregion
@@ -490,9 +488,10 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.RecreateAndReleaseSummaryRep
             Assert.NotNull(result.PaginationData);
             Assert.Equal(3, result.PaginationData.PageNumber);
             Assert.Equal(15, result.PaginationData.PageSize);
-            // ApplyPaging counts 12 items (from DB Skip/Take), not original 42
-            Assert.Equal(12, result.PaginationData.TotalRecords);
-            Assert.Equal(1, result.PaginationData.TotalPages);
+            // ApplyPaging counts all 42 records; page 3 of 15 returns the remaining 12 items
+            Assert.Equal(42, result.PaginationData.TotalRecords);
+            Assert.Equal(3, result.PaginationData.TotalPages);
+            Assert.Equal(12, result.Data.Count);
         }
 
         #endregion

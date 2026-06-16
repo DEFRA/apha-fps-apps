@@ -94,8 +94,7 @@ namespace Apha.PACT.DataAccess.Repository
             else
                 baseQuery = baseQuery.OrderBy(e => e.Name);
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<PagedData<WorkGroupValidTimeCode>> GetWorkGroupValidTimeCodeAsync(
@@ -137,8 +136,7 @@ namespace Apha.PACT.DataAccess.Repository
             else
                 baseQuery = baseQuery.OrderBy(e => e.ParentProject);
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<IEnumerable<WgSummarisedStaffTimeUsageView>> GetWgSummarisedStaffTimeUsageAsync(
@@ -275,8 +273,7 @@ namespace Apha.PACT.DataAccess.Repository
                 ? baseQuery.OrderByDescending(e => EF.Property<object>(e, sortBy))
                 : baseQuery.OrderBy(e => EF.Property<object>(e, sortBy));
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<bool> SetSendEmailForProfitCentreWorkGroupsAsync(string profitCentre, short flag)

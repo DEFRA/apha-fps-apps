@@ -12,5 +12,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> DeleteAsync(string divisionGradeCode);
         Task<List<string>> GetAllGradeCodesAsync();
         Task<List<string>> GetAllDivisionGradeCodesAsync();
+        /// <summary>Returns true if any DivisionGrade row references the given GradeCode.</summary>
+        Task<bool> ExistsForGradeCodeAsync(string gradeCode);
     }
 }

@@ -35,8 +35,7 @@ namespace Apha.PACT.DataAccess.Repository
             query = ApplyTestOrProductFilter(query, parameters.Filter);
             query = ApplySorting(query, parameters.SortBy, parameters.Descending);
 
-            var result = await query.ToListAsync();
-            return ApplyPaging(result, parameters.Page, parameters.PageSize);
+            return await ApplyPaging(query, parameters.Page, parameters.PageSize);
         }
 
         public async Task<TestorProduct?> GetTestOrProductByIdAsync(string itemCode)
