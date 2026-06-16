@@ -9,13 +9,10 @@ using System.Linq.Expressions;
 
 namespace Apha.PIMS.DataAccess.Repository
 {
-    public class ProjectListRepository : IProjectListRepository
+    public class ProjectListRepository : BaseRepository, IProjectListRepository
     {
-        private readonly PimsDbContext _context;
-
-        public ProjectListRepository(PimsDbContext context)
+        public ProjectListRepository(PimsDbContext context) : base(context)
         {
-            _context = context;
         }
         public async Task<PagedData<ProjectListView>> GetAllProjectsAsync(PaginationParameters<string> queryFilter)
         {
@@ -24,13 +21,10 @@ namespace Apha.PIMS.DataAccess.Repository
             query = ApplyFilter(query, queryFilter.Filter);
 
 
-            query = ApplySorting(query, queryFilter.SortBy, queryFilter.Descending);
+            query = ApplySorting(query, queryFilter.SortBy, queryFilter.Descending);          
 
 
-            List<ProjectListView> result = await query.ToListAsync();
-
-
-            return ApplyPaging(result, queryFilter.Page, queryFilter.PageSize);
+            return await ApplyPaging(query, queryFilter.Page, queryFilter.PageSize);
         }
 
         public async Task<List<ProjectListView>> GetAllProjectsForDropDownAsync()
@@ -119,12 +113,9 @@ namespace Apha.PIMS.DataAccess.Repository
             query = ApplyFilter(query, queryFilter.Filter);
 
             // Apply sorting
-            query = ApplySorting(query, queryFilter.SortBy, queryFilter.Descending);
+            query = ApplySorting(query, queryFilter.SortBy, queryFilter.Descending);           
 
-            // Execute query and apply paging
-            List<ProjectListView> result = await query.ToListAsync();
-
-            return ApplyPaging(result, queryFilter.Page, queryFilter.PageSize);
+            return await ApplyPaging(query, queryFilter.Page, queryFilter.PageSize);
         }
 
         public async Task<List<Projects>> GetYearlyDetailsByProjectAsync(string parentproject)
@@ -213,28 +204,6 @@ namespace Apha.PIMS.DataAccess.Repository
             bool descending)
             => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
 
-        private static PagedData<ProjectListView> ApplyPaging(List<ProjectListView> data, int page, int pageSize)
-        {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 10;
-
-            int totalCount = data.Count;
-            int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-            List<ProjectListView> pagedItems = data
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            PaginationData paginationData = new()
-            {
-                TotalRecords = totalCount,
-                PageNumber = page,
-                PageSize = pageSize,
-                TotalPages = totalPages
-            };
-
-            return new PagedData<ProjectListView>(pagedItems, paginationData);
-        }
+       
     }
 }

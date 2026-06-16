@@ -26,8 +26,8 @@ namespace Apha.PIMS.DataAccess.Repository
 
             baseQuery = (IQueryable<Comment>)ApplySorting(baseQuery, query.SortBy, query.Descending);
 
-            List<Comment> result = await baseQuery.ToListAsync();
-            return base.ApplyPaging(result, query.Page, query.PageSize);
+            
+            return await base.ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<Comment?> GetByIdAsync(int commentNo)

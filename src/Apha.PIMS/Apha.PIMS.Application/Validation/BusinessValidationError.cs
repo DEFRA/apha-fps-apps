@@ -4,9 +4,9 @@
     {
         public string Message { get; set; }
         public string Code { get; set; }
-        public object Details { get; set; }
+        public object? Details { get; set; }
 
-        public BusinessValidationError(string message, string code, object details = null)
+        public BusinessValidationError(string message, string code, object? details = null)
         {
             Message = message;
             Code = code;
