@@ -33,6 +33,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ResourceCentreMaintenanceItem, ProfitCentreDto>().ReverseMap();
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
             CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();
+            CreateMap<AccountCategoryViewModel, AccountCategoryDto>().ReverseMap();
             CreateMap<TestPlanActualItem, TestRequirementDto>().ReverseMap();
             CreateMap<ActualTestOutputItem, MonthlyOutputDto>().ReverseMap();
 

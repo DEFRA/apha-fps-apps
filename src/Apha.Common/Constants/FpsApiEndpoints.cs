@@ -142,6 +142,13 @@ namespace Apha.Common.Constants
         public const string UpdateAdditionalCost = "api/v1/additionalcost";
         public const string DeleteAdditionalCost = "api/v1/additionalcost?jobCode={0}&account={1}&description={2}";
 
+        // Account Category Maintenance
+        public const string GetFilteredAccountCategories = "api/v1/accountcategory?filterType={0}";
+        public const string GetAccountCategoryById = "api/v1/accountcategory/{0}";
+        public const string CreateAccountCategory = "api/v1/accountcategory";
+        public const string UpdateAccountCategory = "api/v1/accountcategory/{0}";
+        public const string DeleteAccountCategory = "api/v1/accountcategory/{0}";
+
         // View Project Plan vs Actual Tests
         public const string GetMonthlyOutputByProject = "api/v1/MonthlyOutput?projectCode={0}";
         public const string GetMonthlyOutputTotalsByProject = "api/v1/MonthlyOutput/totals?projectCode={0}";

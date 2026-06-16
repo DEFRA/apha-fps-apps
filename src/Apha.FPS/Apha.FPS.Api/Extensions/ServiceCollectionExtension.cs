@@ -38,6 +38,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IDivisionService, DivisionService>();
             services.AddScoped<IAgencyService, AgencyService>();
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
+            services.AddScoped<IAccountCategoryService, AccountCategoryService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IAccountCodeService, AccountCodeService>();
             services.AddScoped<ISubAccountService, SubAccountService>();
@@ -73,6 +74,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IDivisionRepository, DivisionRepository>();
             services.AddScoped<IAgencyRepository, AgencyRepository>();
             services.AddScoped<IAdditionalCostRepository, AdditionalCostRepository>();
+            services.AddScoped<IAccountCategoryRepository, AccountCategoryRepository>();
             services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
             services.AddScoped<IAccountCodeRepository, AccountCodeRepository>();
             services.AddScoped<ISubAccountRepository, SubAccountRepository>();
