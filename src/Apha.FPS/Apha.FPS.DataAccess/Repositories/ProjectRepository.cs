@@ -158,10 +158,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 _ => queryable.OrderBy(p => p.ParentProject)
             };
 
-            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
-            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
-
-            var result = await projectQuery.ToListAsync();
+            var result = await queryable.ToListAsync();
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
