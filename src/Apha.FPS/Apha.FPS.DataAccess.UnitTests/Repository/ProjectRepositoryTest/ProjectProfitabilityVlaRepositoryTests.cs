@@ -12,10 +12,15 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 {
     public class ProjectProfitabilityVlaRepositoryTests
     {
-        // TRANSFORMENGINE: factory method — only ProjectProfitabilityVlaViews DbSet needed
-        //   for VLA tests; other DbSets left as Moq defaults (empty queryable).
+        /// <summary>
+        /// Creates a <see cref="ProjectRepository"/> with mocked DbSets.
+        /// Projects and Programs drive filter/sort/page behaviour.
+        /// All cost tables (StaffJobs, TestRequirements, etc.) are empty so every
+        /// computed cost field is 0 — keeping filter tests focused on metadata.
+        /// </summary>
         private static ProjectRepository CreateRepository(
-            IEnumerable<ProjectProfitabilityVlaView>? vlaViews = null,
+            IEnumerable<Project>? projects = null,
+            IEnumerable<Program>? programs = null,
             string userEmailId = "test@example.com",
             int fpsYear = 2024)
         {
@@ -25,25 +30,73 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
             var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
 
-            var mockSet = RepositoryTestHelper.CreateMockDbSet(vlaViews ?? Enumerable.Empty<ProjectProfitabilityVlaView>());
-            mockContext.Setup(x => x.ProjectProfitabilityVlaViews).Returns(mockSet.Object);
+            mockContext.Setup(x => x.Projects)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(projects ?? Enumerable.Empty<Project>()).Object);
+            mockContext.Setup(x => x.Programs)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(programs ?? Enumerable.Empty<Program>()).Object);
+
+            // Empty cost tables — all computed costs will be 0 in these tests
+            mockContext.Setup(x => x.StaffJobs)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<StaffJob>()).Object);
+            mockContext.Setup(x => x.WorkGroupEmployees)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroupEmployee>()).Object);
+            mockContext.Setup(x => x.WorkgroupGrades)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkgroupGrade>()).Object);
+            mockContext.Setup(x => x.ProfitCentreGrades)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<ProfitCentreGrade>()).Object);
+            mockContext.Setup(x => x.AdditionalCosts)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<AdditionalCost>()).Object);
+            mockContext.Setup(x => x.TestRequirements)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<TestRequirement>()).Object);
+            mockContext.Setup(x => x.AnimalRequests)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<AnimalRequest>()).Object);
+            mockContext.Setup(x => x.Animals)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<Animal>()).Object);
 
             return new ProjectRepository(mockContext.Object, mockRequestContext.Object);
         }
 
+        private static Project MakeProject(
+            string code,
+            string status = "Approved",
+            string program = "P001",
+            string customer = "ACME",
+            decimal? budget = null) => new()
+        {
+            ParentProject  = code,
+            ProjectTitle   = code,
+            Program        = program,
+            Customer       = customer,
+            ProjectStatus  = status,
+            BudgetCvl      = budget,
+            Disease        = string.Empty,
+            Contract       = string.Empty,
+            IsDefraProject = 0,
+            FpsYear        = 2024
+        };
+
+        private static Program MakeProgram(
+            string no,
+            string? manager = null,
+            decimal? target = null) => new()
+        {
+            ProgramNo  = no,
+            Manager    = manager,
+            Target     = target,
+            SectorName = "charge",
+            FpsYear    = 2024
+        };
+
         #region GetProjectProfitabilityVlaAsync
 
         [Fact]
-        public async Task GetProjectProfitabilityVlaAsync_WithEmptyView_ReturnsEmptyPage()
+        public async Task GetProjectProfitabilityVlaAsync_WithEmptyProjects_ReturnsEmptyPage()
         {
-            // Arrange
-            var repo = CreateRepository(vlaViews: new List<ProjectProfitabilityVlaView>());
+            var repo = CreateRepository(projects: new List<Project>());
             var query = new PaginationParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 };
 
-            // Act
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
-            // Assert
             Assert.NotNull(result);
             Assert.Empty(result.Data);
             Assert.Equal(0, result.PaginationData.TotalRecords);
@@ -52,21 +105,22 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_WithData_ReturnsAllRowsWhenNoFilter()
         {
-            // Arrange
-            var views = new List<ProjectProfitabilityVlaView>
+            var projects = new List<Project>
             {
-                new() { JobCode = "PP001", Status = "Approved",     Program = "P001", Manager = "John",  Customer = "ACME",  StaffCosts = 1000m, Budget = 5000m, Profit = 4000m, TargetProfit = 3500m, OffTarget = 500m },
-                new() { JobCode = "PP002", Status = "Completed",    Program = "P002", Manager = "Jane",  Customer = "Beta",  StaffCosts = 2000m, Budget = 6000m, Profit = 4000m, TargetProfit = 3000m, OffTarget = 1000m },
-                new() { JobCode = "PP003", Status = "Not Approved", Program = "P001", Manager = "John",  Customer = "Gamma", StaffCosts = 500m,  Budget = 2000m, Profit = 1500m, TargetProfit = 2000m, OffTarget = -500m }
+                MakeProject("PP001", "Approved",     "P001", "ACME"),
+                MakeProject("PP002", "Completed",    "P002", "Beta"),
+                MakeProject("PP003", "Not Approved", "P001", "Gamma")
             };
-            var repo = CreateRepository(vlaViews: views);
+            var programs = new List<Program>
+            {
+                MakeProgram("P001", "John"),
+                MakeProgram("P002", "Jane")
+            };
+            var repo = CreateRepository(projects, programs);
             var query = new PaginationParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 };
 
-            // Act
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
-            // Assert
-            Assert.NotNull(result);
             Assert.Equal(3, result.Data.Count());
             Assert.Equal(3, result.PaginationData.TotalRecords);
         }
@@ -74,25 +128,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_WithProjectStatusFilter_FiltersOnStatusField()
         {
-            // Arrange
-            var views = new List<ProjectProfitabilityVlaView>
+            var projects = new List<Project>
             {
-                new() { JobCode = "PP001", Status = "Approved",  Program = "P001", StaffCosts = 1000m },
-                new() { JobCode = "PP002", Status = "Completed", Program = "P001", StaffCosts = 2000m },
-                new() { JobCode = "PP003", Status = "Approved",  Program = "P002", StaffCosts = 500m }
+                MakeProject("PP001", "Approved",  "P001"),
+                MakeProject("PP002", "Completed", "P001"),
+                MakeProject("PP003", "Approved",  "P002")
             };
-            var repo = CreateRepository(vlaViews: views);
+            var repo = CreateRepository(projects);
             var query = new PaginationParameters<ProjectProfitabilityVlaReq>
             {
-                Page = 1,
-                PageSize = 15,
+                Page = 1, PageSize = 15,
                 Filter = new ProjectProfitabilityVlaReq { ProjectStatus = "Approved" }
             };
 
-            // Act
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
-            // Assert — only Approved rows returned
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, v => Assert.Equal("Approved", v.Status));
         }
@@ -100,25 +150,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_WithProgramNoFilter_FiltersOnProgramField()
         {
-            // Arrange
-            var views = new List<ProjectProfitabilityVlaView>
+            var projects = new List<Project>
             {
-                new() { JobCode = "PP001", Program = "P001", Status = "Approved", StaffCosts = 1000m },
-                new() { JobCode = "PP002", Program = "P002", Status = "Approved", StaffCosts = 2000m },
-                new() { JobCode = "PP003", Program = "P001", Status = "Completed", StaffCosts = 500m }
+                MakeProject("PP001", program: "P001"),
+                MakeProject("PP002", program: "P002"),
+                MakeProject("PP003", program: "P001")
             };
-            var repo = CreateRepository(vlaViews: views);
+            var repo = CreateRepository(projects);
             var query = new PaginationParameters<ProjectProfitabilityVlaReq>
             {
-                Page = 1,
-                PageSize = 15,
+                Page = 1, PageSize = 15,
                 Filter = new ProjectProfitabilityVlaReq { ProgramNo = "P001" }
             };
 
-            // Act
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
-            // Assert — only P001 rows returned
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, v => Assert.Equal("P001", v.Program));
         }
@@ -126,25 +172,26 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_WithManagerFilter_FiltersOnManagerField()
         {
-            // Arrange
-            var views = new List<ProjectProfitabilityVlaView>
+            var projects = new List<Project>
             {
-                new() { JobCode = "PP001", Manager = "John Smith", Status = "Approved", StaffCosts = 1000m },
-                new() { JobCode = "PP002", Manager = "Jane Doe",   Status = "Approved", StaffCosts = 2000m },
-                new() { JobCode = "PP003", Manager = "John Smith", Status = "Completed", StaffCosts = 500m }
+                MakeProject("PP001", program: "P001"),
+                MakeProject("PP002", program: "P002"),
+                MakeProject("PP003", program: "P001")
             };
-            var repo = CreateRepository(vlaViews: views);
+            var programs = new List<Program>
+            {
+                MakeProgram("P001", manager: "John Smith"),
+                MakeProgram("P002", manager: "Jane Doe")
+            };
+            var repo = CreateRepository(projects, programs);
             var query = new PaginationParameters<ProjectProfitabilityVlaReq>
             {
-                Page = 1,
-                PageSize = 15,
+                Page = 1, PageSize = 15,
                 Filter = new ProjectProfitabilityVlaReq { Manager = "John Smith" }
             };
 
-            // Act
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
-            // Assert — VLA-specific manager filter dimension
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, v => Assert.Equal("John Smith", v.Manager));
         }
@@ -152,25 +199,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_WithCustomerFilter_FiltersOnCustomerField()
         {
-            // Arrange
-            var views = new List<ProjectProfitabilityVlaView>
+            var projects = new List<Project>
             {
-                new() { JobCode = "PP001", Customer = "ACME Ltd", Status = "Approved", StaffCosts = 1000m },
-                new() { JobCode = "PP002", Customer = "Beta Corp", Status = "Approved", StaffCosts = 2000m },
-                new() { JobCode = "PP003", Customer = "ACME Ltd", Status = "Completed", StaffCosts = 500m }
+                MakeProject("PP001", customer: "ACME Ltd"),
+                MakeProject("PP002", customer: "Beta Corp"),
+                MakeProject("PP003", customer: "ACME Ltd")
             };
-            var repo = CreateRepository(vlaViews: views);
+            var repo = CreateRepository(projects);
             var query = new PaginationParameters<ProjectProfitabilityVlaReq>
             {
-                Page = 1,
-                PageSize = 15,
+                Page = 1, PageSize = 15,
                 Filter = new ProjectProfitabilityVlaReq { Customer = "ACME Ltd" }
             };
 
-            // Act
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
-            // Assert — VLA-specific customer filter dimension
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, v => Assert.Equal("ACME Ltd", v.Customer));
         }
@@ -178,22 +221,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_PagingIsApplied()
         {
-            // Arrange
-            var views = Enumerable.Range(1, 10).Select(i => new ProjectProfitabilityVlaView
-            {
-                JobCode  = $"PP{i:D3}",
-                Status   = "Approved",
-                Program  = "P001",
-                StaffCosts = i * 100m
-            }).ToList();
-
-            var repo = CreateRepository(vlaViews: views);
+            var projects = Enumerable.Range(1, 10)
+                .Select(i => MakeProject($"PP{i:D3}", program: "P001"))
+                .ToList();
+            var repo = CreateRepository(projects);
             var query = new PaginationParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 3 };
 
-            // Act
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
-            // Assert
             Assert.Equal(3, result.Data.Count());
             Assert.Equal(10, result.PaginationData.TotalRecords);
         }
@@ -201,25 +236,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_DefaultSort_OrdersByJobCodeAscending()
         {
-            // Arrange — JobCodes inserted out of order
-            var views = new List<ProjectProfitabilityVlaView>
+            var projects = new List<Project>
             {
-                new() { JobCode = "PP003", Status = "Approved", StaffCosts = 300m },
-                new() { JobCode = "PP001", Status = "Approved", StaffCosts = 100m },
-                new() { JobCode = "PP002", Status = "Approved", StaffCosts = 200m }
+                MakeProject("PP003"),
+                MakeProject("PP001"),
+                MakeProject("PP002")
             };
-            var repo = CreateRepository(vlaViews: views);
+            var repo = CreateRepository(projects);
             var query = new PaginationParameters<ProjectProfitabilityVlaReq>
             {
-                Page = 1,
-                PageSize = 15,
-                SortBy = null   // no explicit sort — defaults to JobCode ascending
+                Page = 1, PageSize = 15,
+                SortBy = null
             };
 
-            // Act
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
-            // Assert
             var data = result.Data.ToList();
             Assert.Equal("PP001", data[0].JobCode);
             Assert.Equal("PP002", data[1].JobCode);
@@ -227,42 +258,49 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         [Fact]
-        public async Task GetProjectProfitabilityVlaAsync_WithSingleRow_ReturnsThatRow()
+        public async Task GetProjectProfitabilityVlaAsync_WithSingleRow_ReturnsComputedFinancials()
         {
-            // Arrange
-            var views = new List<ProjectProfitabilityVlaView>
+            // With no cost-table data, all cost fields are 0.
+            // Profit = BudgetCvl - TotalCosts = 5000 - 0 = 5000.
+            // TargetProfit comes from Program.Target (not Project.Profit).
+            // OffTarget = Profit - TargetProfit = 5000 - 3000 = 2000.
+            var projects = new List<Project>
             {
                 new()
                 {
-                    JobCode      = "PP001",
-                    Status       = "Approved",
-                    Program      = "P001",
-                    Manager      = "John Smith",
-                    Customer     = "ACME Ltd",
-                    StaffCosts   = 1500m,
-                    TestCost     = 200m,
-                    AnimalCosts  = 300m,
-                    AdditionalCosts = 100m,
-                    TotalCosts   = 2100m,
-                    Budget       = 5000m,
-                    Profit       = 2900m,
-                    TargetProfit = 3000m,
-                    OffTarget    = -100m
+                    ParentProject  = "PP001",
+                    ProjectTitle   = "Test Project",
+                    Program        = "P001",
+                    Customer       = "ACME Ltd",
+                    ProjectStatus  = "Approved",
+                    BudgetCvl      = 5000m,
+                    Disease        = string.Empty,
+                    Contract       = string.Empty,
+                    IsDefraProject = 0,
+                    FpsYear        = 2024
                 }
             };
-            var repo = CreateRepository(vlaViews: views);
+            var programs = new List<Program>
+            {
+                MakeProgram("P001", manager: "John Smith", target: 3000m)
+            };
+            var repo = CreateRepository(projects, programs);
             var query = new PaginationParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 };
 
-            // Act
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
-            // Assert
             Assert.Single(result.Data);
             var row = result.Data.First();
-            Assert.Equal("PP001", row.JobCode);
-            Assert.Equal(1500m, row.StaffCosts);
-            Assert.Equal(5000m, row.Budget);
-            Assert.Equal(-100m, row.OffTarget);
+            Assert.Equal("PP001",       row.JobCode);
+            Assert.Equal("ACME Ltd",    row.Customer);
+            Assert.Equal("John Smith",  row.Manager);
+            Assert.Equal("Approved",    row.Status);
+            Assert.Equal(5000m,         row.Budget);
+            Assert.Equal(0m,            row.StaffCosts);
+            Assert.Equal(0m,            row.TotalCosts);
+            Assert.Equal(5000m,         row.Profit);       // Budget - TotalCosts
+            Assert.Equal(3000m,         row.TargetProfit); // Programme.Target
+            Assert.Equal(2000m,         row.OffTarget);    // Profit - TargetProfit
         }
 
         #endregion
