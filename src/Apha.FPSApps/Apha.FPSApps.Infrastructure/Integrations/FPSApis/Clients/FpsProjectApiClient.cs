@@ -32,6 +32,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsForAllUsersAsync()
+        {
+            var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllProjectsForAllUsers);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetAllPactProjectsAsync()
         {
             var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllPactProjects);
