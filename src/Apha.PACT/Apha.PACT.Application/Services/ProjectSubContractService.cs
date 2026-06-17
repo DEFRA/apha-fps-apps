@@ -89,7 +89,7 @@ namespace Apha.PACT.Application.Services
         {
             // Push filter to the repository so the DB query is already filtered
             PaginationParameters<string> parameters = _mapper.Map<PaginationParameters<string>>(query);
-            
+
           var data = await _repository.GetMonthlySubContractsSummaryAsync(parameters);
 
             // Discover all months present in filtered data (used to build columns)
@@ -135,6 +135,38 @@ namespace Apha.PACT.Application.Services
                     TotalPages = totalPages,
                     TotalRecords = totalRecords
                 }
+            };
+        }
+
+        public async Task<PaginatedResult<SubContractRmsImportRowDto>> GetFailedSubContractRmsAsync(QueryParameters<string> query, string importedBy)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetFailedSubContractRmsAsync(parameters, importedBy);
+            return _mapper.Map<PaginatedResult<SubContractRmsImportRowDto>>(pagedData);
+        }
+
+        public async Task<List<SubContractRmsImportRowDto>> GetFailedSubContractRmsForExportAsync(string importedBy)
+        {
+            var rows = await _repository.GetFailedSubContractRmsForExportAsync(importedBy);
+            return _mapper.Map<List<SubContractRmsImportRowDto>>(rows);
+        }
+
+        public async Task<int> DeleteFailedSubContractRmsByUserAsync(string importedBy)
+        {
+            return await _repository.DeleteFailedSubContractRmsByUserAsync(importedBy);
+        }
+
+        public async Task<SubContractRmsImportResultDto> ImportSubContractRmsAsync(SubContractRmsImportDto request, string importedBy)
+        {
+            var coreRequest = _mapper.Map<SubContractRmsImport>(request);
+            var result = await _repository.ImportSubContractRmsAsync(coreRequest, importedBy);
+            var totalCount = result.PassedCount + result.FailedCount;
+
+            return new SubContractRmsImportResultDto
+            {
+                PassedCount = result.PassedCount,
+                FailedCount = result.FailedCount,
+                Message = $"Import completed successfully. Passed records: {result.PassedCount} out of {totalCount}."
             };
         }
 

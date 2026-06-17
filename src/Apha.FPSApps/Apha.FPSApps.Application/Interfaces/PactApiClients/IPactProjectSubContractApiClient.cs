@@ -16,5 +16,9 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
         Task<ApiResponseDto<List<ProjectSubContractDto>>> GetFpsProjectSubContractsAsync(QueryParameters<string> query, string? project, bool filterByAnimalAcctCodes = false);
         Task<ApiResponseDto<decimal>> GetFpsProjectSubContractTotalAmountAsync(string? project, bool filterByAnimalAcctCodes = false);
         Task<ApiResponseDto<MonthlySubContractsPivotDto>> GetMonthlySubContractsSummaryAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<SubContractRmsImportRowDto>>> GetFailedSubContractRmsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<SubContractRmsImportResultDto>> ImportSubContractRmsAsync(SubContractRmsImportReqDto request);
+        Task<byte[]> ExportFailedSubContractRmsAsync();
+        Task<ApiResponseDto<bool>> DeleteFailedSubContractRmsByUserAsync();
     }
 }

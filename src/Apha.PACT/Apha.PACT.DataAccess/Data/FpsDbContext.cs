@@ -48,6 +48,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<Settings> Settings { get; set; }
         public virtual DbSet<ReleasePeriod> ReleasePeriods { get; set; }
         public virtual DbSet<ProjectView> ProjectViews { get; set; }
+        public virtual DbSet<ProjectSubcontractStaging> ProjectSubcontractStagings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -140,6 +141,7 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectViewMap());
             modelBuilder.Entity<ProjectView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new ProjectSubcontractStagingMap());
         }
     }
 }

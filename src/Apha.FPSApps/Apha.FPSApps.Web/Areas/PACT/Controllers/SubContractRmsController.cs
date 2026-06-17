@@ -2,6 +2,7 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
+using PactProjectSubContractService = Apha.FPSApps.Application.Interfaces.PACT.IProjectSubContractService;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
+using System.IO;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
@@ -20,13 +22,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     public class SubContractRmsController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IProjectSubContractService _subContractService;
+        private readonly PactProjectSubContractService _subContractService;
         private readonly IProjectService _projectService;
         private readonly IMonthService _monthService;
 
         public SubContractRmsController(
             IMapper mapper,
-            IProjectSubContractService subContractService,
+            PactProjectSubContractService subContractService,
             IProjectService projectService,
             IMonthService monthService)
         {
@@ -171,6 +173,88 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return Json(new { success = false, message = "Failed to delete subcontract." });
         }
 
+        [HttpGet]
+        public IActionResult DownloadTemplate()
+        {
+            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "PACT", "SubContractRMS-Template.xlsx");
+            if (!System.IO.File.Exists(templatePath))
+                return NotFound();
+
+            var bytes = System.IO.File.ReadAllBytes(templatePath);
+            var fileName = $"SubContractRMS_{DateTime.Now:yyyyMMdd}.xlsx";
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Import([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return Json(new { success = false, message = "Please select an Excel file to import." });
+            }
+
+            var result = await _subContractService.ImportSubContractRmsAsync(file);
+            if (!result.Success || result.Data == null)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = result.Errors?.FirstOrDefault()?.Message ?? "Import failed."
+                });
+            }
+
+            return Json(new
+            {
+                success = true,
+                passedCount = result.Data.PassedCount,
+                failedCount = result.Data.FailedCount,
+                message = result.Data.Message
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ViewFailedSubContractRms()
+        {
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "Id",
+                Descending = false
+            };
+
+            var grid = await BuildFailedSubContractRmsGridAsync(request);
+            return PartialView("_FailedSubContractRms", grid);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadFailedSubContractRmsGrid(PaginationFilter<string> request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var grid = await BuildFailedSubContractRmsGridAsync(request);
+            return PartialView("_DataGrid", grid);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportFailedSubContractRms()
+        {
+            var bytes = await _subContractService.ExportFailedSubContractRmsAsync();
+            var fileName = $"SubContractRMS_{DateTime.Now:yyyyMMdd}_failed.xlsx";
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteAllFailedSubContractRms()
+        {
+            var result = await _subContractService.DeleteFailedSubContractRmsByUserAsync();
+            if (result.Success)
+                return Json(new { success = result.Data });
+
+            return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete records." });
+        }
+
         // ── PRIVATE GRID BUILDERS ─────────────────────────────────────────────
 
         private async Task<DataGridConfig<SubContractRmsItem>> BuildRmsSubContractGridAsync(
@@ -207,7 +291,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return new DataGridConfig<SubContractRmsItem>
             {
                 GridId = "rmsSubContractsGrid",
-                Title = string.Empty,
+                Title = "Animal format",
                 KeyProperty = "SubContCounter",
                 AddFunction = "addSubContractRms",
                 EditFunction = "editSubContractRms",
@@ -216,6 +300,47 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 ExtraFilterMethod = "getRmsSubContractFilters",
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<SubContractRmsItem>(),
+                Pagination = pagination,
+                CurrentFilters = filterDict
+            };
+        }
+
+        private async Task<DataGridConfig<SubContractRmsFailedItem>> BuildFailedSubContractRmsGridAsync(PaginationFilter<string> request)
+        {
+            var query = _mapper.Map<QueryParameters<string>>(request);
+            var response = await _subContractService.GetFailedSubContractRmsAsync(query);
+
+            var items = response.Data != null
+                ? _mapper.Map<List<SubContractRmsFailedItem>>(response.Data)
+                : new List<SubContractRmsFailedItem>();
+
+            var pagination = response.Pagination != null
+                ? _mapper.Map<PaginationModel>(response.Pagination)
+                : new PaginationModel();
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
+                             ?? new Dictionary<string, string>();
+
+            return new DataGridConfig<SubContractRmsFailedItem>
+            {
+                GridId = "rmsFailedSubContractsGrid",
+                Title = "Failed records",
+                KeyProperty = "Project",
+                BindGridUrl = "/PACT/SubContractRms/LoadFailedSubContractRmsGrid",
+                ExportUrl = "/PACT/SubContractRms/ExportFailedSubContractRms",
+                BulkDeleteFunction = "deleteAllFailedSubContractRms",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                AllowCopy = false,
+                AllowView = false,
+                AllowExport = true,
+                AllowBulkDelete = true,
+                BulkCopyButtonText = string.Empty,
+                Data = items,
+                Columns = GridDataProvider.GetColumnsDefination<SubContractRmsFailedItem>(),
                 Pagination = pagination,
                 CurrentFilters = filterDict
             };

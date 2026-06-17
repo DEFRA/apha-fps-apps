@@ -4,6 +4,8 @@ using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Core.Interfaces;
+using Apha.Common.Utilities.ExcelExport;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -15,13 +17,17 @@ namespace Apha.PACT.Api.UnitTests.Controller.ProjectSubContractControllerTest
     {
         private readonly IProjectSubContractService _serviceMock;
         private readonly IMapper _mapperMock;
+        private readonly ICurrentUserContext _currentUserContextMock;
+        private readonly IExcelExportService _excelExportServiceMock;
         private readonly ProjectSubContractController _controller;
 
         public ProjectSubContractControllerTests()
         {
             _serviceMock = Substitute.For<IProjectSubContractService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new ProjectSubContractController(_serviceMock, _mapperMock);
+            _currentUserContextMock = Substitute.For<ICurrentUserContext>();
+            _excelExportServiceMock = Substitute.For<IExcelExportService>();
+            _controller = new ProjectSubContractController(_serviceMock, _mapperMock, _currentUserContextMock, _excelExportServiceMock);
         }
 
         #region GetPaged

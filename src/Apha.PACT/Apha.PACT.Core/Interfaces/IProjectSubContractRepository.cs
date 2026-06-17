@@ -14,5 +14,9 @@ namespace Apha.PACT.Core.Interfaces
         Task<ProjectSubContract> UpdateAsync(ProjectSubContract entity);
         Task<bool> DeleteAsync(int subContCounter);
         Task<List<MonthlySubContractsSummary>> GetMonthlySubContractsSummaryAsync(PaginationParameters<string> parameters);
+        Task<PagedData<SubContractRmsImportRow>> GetFailedSubContractRmsAsync(PaginationParameters<string> query, string importedBy);
+        Task<List<SubContractRmsImportRow>> GetFailedSubContractRmsForExportAsync(string importedBy);
+        Task<int> DeleteFailedSubContractRmsByUserAsync(string importedBy);
+        Task<SubContractRmsImportResult> ImportSubContractRmsAsync(SubContractRmsImport request, string importedBy);
     }
 }

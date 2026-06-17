@@ -28,6 +28,10 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<ProjectInvoiceRes, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectSubContractReq, ProjectSubContractDto>().ReverseMap();
             CreateMap<ProjectSubContractRes, ProjectSubContractDto>().ReverseMap();
+            CreateMap<SubContractRmsImportRowReq, SubContractRmsImportRowDto>().ReverseMap();
+            CreateMap<SubContractRmsImportRowRes, SubContractRmsImportRowDto>().ReverseMap();
+            CreateMap<SubContractRmsImportReq, SubContractRmsImportDto>().ReverseMap();
+            CreateMap<SubContractRmsImportRes, SubContractRmsImportResultDto>().ReverseMap();
             CreateMap<TestCapabilityReq, TestCapabilityDto>().ReverseMap();
             CreateMap<TestCapabilityRes, TestCapabilityDto>().ReverseMap();
             CreateMap<TestRequirementReq, TestRequirementtDto>().ReverseMap();

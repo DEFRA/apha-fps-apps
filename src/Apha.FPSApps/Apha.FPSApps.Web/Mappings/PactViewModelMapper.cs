@@ -32,6 +32,7 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(dest => dest.Counter, opt => opt.MapFrom(src => src.SubContCounter));
 
             CreateMap<SubContractRmsItem, ProjectSubContractDto>().ReverseMap();
+            CreateMap<SubContractRmsImportRowDto, SubContractRmsFailedItem>().ReverseMap();
 
             CreateMap<TestCapabilityItem, TestCapabilityDto>().ReverseMap();
             CreateMap<ConstituentTestItem, TestCapabilityDto>().ReverseMap();

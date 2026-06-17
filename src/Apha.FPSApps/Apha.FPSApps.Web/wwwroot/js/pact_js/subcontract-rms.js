@@ -11,12 +11,7 @@ function getRmsSubContractFilters() {
 }
 
 function updateSelectedMonthText() {
-    const monthSelect = document.getElementById('dpSelectmonth');
-    const selectedText = monthSelect && monthSelect.selectedIndex > 0
-        ? monthSelect.options[monthSelect.selectedIndex].text
-        : '';
-
-    document.getElementById('txtSelectedMonth').value = selectedText;
+    document.getElementById('txtSelectedMonth').value = document.getElementById('dpSelectmonth').value;
 }
 
 function reloadRmsGrid() {
@@ -115,6 +110,101 @@ function saveProjectCost() {
     });
 }
 
+function downloadSubContractRmsTemplate() {
+    const downloadUrl = '/PACT/SubContractRms/DownloadTemplate';
+
+    $.ajax({
+        url: downloadUrl,
+        type: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (blob, status, xhr) {
+            const disposition = xhr.getResponseHeader('Content-Disposition') || '';
+            const fileNameMatch = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+            const fileName = decodeURIComponent(fileNameMatch?.[1] || fileNameMatch?.[2] || 'SubContractRMS-Template.xlsx');
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showGovukAlert('Template downloaded successfully. Please use the template to import Sub-Contract RMS data.');
+        },
+        error: function () {
+            showGovukAlert('Template download failed. Please try again.');
+        }
+    });
+}
+
+function importSubContractRms(file) {
+    if (!file) {
+        showGovukAlert('Please select an Excel file to import.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    $.ajax({
+        url: '/PACT/SubContractRms/Import',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+            if (response.success) {
+                const msg = response.message || ('Import completed. Passed: ' + (response.passedCount || 0));
+                showGovukAlert(msg);
+                reloadRmsGrid();
+            } else {
+                showGovukAlert(response.message || 'Import failed.');
+            }
+        },
+        error: function () {
+            showGovukAlert('An error occurred while importing file.');
+        }
+    });
+}
+
+function openFailedSubContractRmsPopup() {
+    $.get('/PACT/SubContractRms/ViewFailedSubContractRms', function (html) {
+        $('#modaPopupBody').html(html);        
+        $('#modalPopup').addClass('show');
+    }).fail(function () {
+        showGovukAlert('Failed to load failed records.');
+    });
+}
+
+function deleteAllFailedSubContractRms() {
+    showGovukConfirm('Delete all failed records for current user?').then(function (confirmed) {
+        if (!confirmed) return;
+
+        $.ajax({
+            url: '/PACT/SubContractRms/DeleteAllFailedSubContractRms',
+            type: 'DELETE',
+            success: function (response) {
+                if (response.success) {
+                    var manager = window['gridManager_rmsFailedSubContractsGrid'];
+                    if (manager) {
+                        manager.reloadGrid({ page: 1, sortBy: 'Id', descending: false });
+                    }
+                    showGovukAlert('Failed records deleted successfully.');
+                } else {
+                    showGovukAlert(response.message || 'Failed to delete failed records.');
+                }
+            },
+            error: function () {
+                showGovukAlert('An error occurred while deleting failed records.');
+            }
+        });
+    });
+}
+
 $(document).ready(function () {
     updateSelectedMonthText();
 
@@ -124,6 +214,24 @@ $(document).ready(function () {
         updateSelectedMonthText();
         reloadRmsGrid();
     });
+
+    $('#templateExcel').on('click', function (e) {
+        e.preventDefault();
+        downloadSubContractRmsTemplate();
+    });
+
+    $('#csvInput').on('change', function () {
+        const file = this.files && this.files[0];
+        if (!file) return;
+
+        importSubContractRms(file);
+        $(this).val('');
+    });
+
+    $('#viewFailedBtn').on('click', function (e) {
+        e.preventDefault();
+        openFailedSubContractRmsPopup();
+    });
 });
 
 window.getRmsSubContractFilters = getRmsSubContractFilters;
@@ -131,3 +239,7 @@ window.addSubContractRms = addSubContractRms;
 window.editSubContractRms = editSubContractRms;
 window.deleteSubContractRms = deleteSubContractRms;
 window.saveProjectCost = saveProjectCost;
+window.downloadSubContractRmsTemplate = downloadSubContractRmsTemplate;
+window.importSubContractRms = importSubContractRms;
+window.openFailedSubContractRmsPopup = openFailedSubContractRmsPopup;
+window.deleteAllFailedSubContractRms = deleteAllFailedSubContractRms;

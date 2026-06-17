@@ -27,11 +27,21 @@ namespace Apha.Common.Utilities.ExcelExport
                 for (int col = 0; col < properties.Length; col++)
                 {
                     var rawValue = ConvertExcelValue(properties[col].GetValue(item));
-                    worksheet.Cell(row, col + 1).Value = XLCellValue.FromObject(rawValue);                     
+                    worksheet.Cell(row, col + 1).Value = XLCellValue.FromObject(rawValue);
                 }
 
                 row++;
             }
+
+            int lastDataRow = Math.Max(1, row - 1);
+            int lastDataColumn = Math.Max(1, properties.Length);
+
+            var headerRange = worksheet.Range(1, 1, 1, lastDataColumn);
+            headerRange.Style.Font.Bold = true;
+
+            var allCellsRange = worksheet.Range(1, 1, lastDataRow, lastDataColumn);
+            allCellsRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            allCellsRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);

@@ -3,6 +3,8 @@ using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Core.Interfaces;
+using Apha.Common.Utilities.ExcelExport;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -21,11 +23,19 @@ namespace Apha.PACT.Api.Controllers
     {
         private readonly IProjectSubContractService _service;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserContext _currentUserContext;
+        private readonly IExcelExportService _excelExportService;
 
-        public ProjectSubContractController(IProjectSubContractService service, IMapper mapper)
+        public ProjectSubContractController(
+            IProjectSubContractService service,
+            IMapper mapper,
+            ICurrentUserContext currentUserContext,
+            IExcelExportService excelExportService)
         {
             _service = service;
             _mapper = mapper;
+            _currentUserContext = currentUserContext;
+            _excelExportService = excelExportService;
         }
 
         /// <summary>Retrieves a paginated list of Project Sub-Contract records.</summary>
@@ -102,6 +112,58 @@ namespace Apha.PACT.Api.Controllers
         {
             MonthlySubContractsPivotDto result = await _service.GetMonthlySubContractsSummaryAsync(query);
             return Ok(_mapper.Map<MonthlySubContractsPivotRes>(result));
+        }
+
+        [HttpGet("rms/failed")]
+        public async Task<IActionResult> GetFailedSubContractRms([FromQuery] QueryParameters<string> query)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var result = await _service.GetFailedSubContractRmsAsync(query, importedBy);
+            return Ok(_mapper.Map<PaginationRes<SubContractRmsImportRowRes>>(result));
+        }
+
+        [HttpGet("rms/failed/export")]
+        public async Task<IActionResult> ExportFailedSubContractRms()
+        {
+            var importedBy = _currentUserContext.UserId;
+            var rows = await _service.GetFailedSubContractRmsForExportAsync(importedBy);
+
+            var exportRows = rows.Select(x => new
+            {
+                x.Project,
+                x.TestJob,
+                x.Month,
+                x.Amount,
+                x.WorkGroup,
+                x.AcctCode,
+                x.Supplier,
+                x.Description,
+                x.SupplierNumber,
+                x.DailyRate,
+                x.AnimalDays,
+                x.ValidationFailure
+            }).ToList();
+
+            var bytes = _excelExportService.ExportToExcel(exportRows, "SubContractRMS_Failed");
+            var fileName = $"SubContractRMS_{DateTime.Now:yyyyMMdd}_failed.xlsx";
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
+        [HttpDelete("rms/failed/user")]
+        public async Task<IActionResult> DeleteFailedSubContractRmsByUser()
+        {
+            var importedBy = _currentUserContext.UserId;
+            var deletedCount = await _service.DeleteFailedSubContractRmsByUserAsync(importedBy);
+            return Ok(deletedCount > 0);
+        }
+
+        [HttpPost("rms/import")]
+        public async Task<IActionResult> ImportSubContractRms([FromBody] SubContractRmsImportReq request)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var dto = _mapper.Map<SubContractRmsImportDto>(request);
+            var result = await _service.ImportSubContractRmsAsync(dto, importedBy);
+            return Ok(_mapper.Map<SubContractRmsImportRes>(result));
         }
     }
 }
