@@ -609,6 +609,28 @@ static async Task VerifyExecutionContractAsync(
             $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' already belongs to job '{existingExecution.JobName}', not '{requestedJobName}'.");
     }
 
+    logger.LogInformation(
+        "Found existing execution record | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | Status={Status}",
+        jobExecutionId,
+        existingExecution.JobQueueId,
+        existingExecution.Status);
+
+    if (existingExecution.Status == JobStatus.Initiated)
+    {
+        logger.LogInformation(
+            "Execution contract pre-check passed | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | JobName={JobName}",
+            jobExecutionId,
+            existingExecution.JobQueueId,
+            requestedJobName);
+        return;
+    }
+
+    if (existingExecution.Status == JobStatus.Running)
+    {
+        throw new InvalidOperationException(
+            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is already running (JobQueueId={existingExecution.JobQueueId}). Parallel execution not permitted.");
+    }
+
     var isTerminal = existingExecution.Status is JobStatus.Completed
         or JobStatus.Failed
         or JobStatus.Cancelled;
@@ -616,20 +638,10 @@ static async Task VerifyExecutionContractAsync(
     if (isTerminal)
     {
         throw new InvalidOperationException(
-            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' was already used by terminal execution '{existingExecution.Status}' (ExecutionId={existingExecution.ExecutionId}). Replays are not permitted.");
-    }
-
-    if (existingExecution.Status == JobStatus.Initiated)
-    {
-        logger.LogInformation(
-            "Execution contract pre-check passed | JobExecutionId={JobExecutionId} | JobName={JobName} | ExistingStatus={ExistingStatus}",
-            jobExecutionId,
-            requestedJobName,
-            existingExecution.Status);
-        return;
+            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' was already used by terminal execution '{existingExecution.Status}' (JobQueueId={existingExecution.JobQueueId}). Replays are not permitted.");
     }
 
     throw new InvalidOperationException(
-        $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is already active with status '{existingExecution.Status}' (ExecutionId={existingExecution.ExecutionId}).");
+        $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is in an unexpected status '{existingExecution.Status}' (JobQueueId={existingExecution.JobQueueId}). Expected: Initiated, Running, Completed, Failed, or Cancelled.");
 }
 

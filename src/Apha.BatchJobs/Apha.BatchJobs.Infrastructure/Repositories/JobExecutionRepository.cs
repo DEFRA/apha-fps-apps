@@ -242,9 +242,15 @@ public class JobExecutionRepository : IJobExecutionRepository
         if (execution == null)
             return null;
 
-        var parsedStatus = Enum.TryParse<JobStatus>(execution.Status, true, out var status)
-            ? status
-            : JobStatus.Failed;
+        if (!Enum.TryParse<JobStatus>(execution.Status, true, out var status))
+        {
+            _logger.LogError(
+                "Status parsing failed for JobExecutionId | JobExecutionId={JobExecutionId} | StatusFromDb={StatusValue}",
+                execution.JobExecutionId,
+                execution.Status);
+            throw new InvalidOperationException(
+                $"Invalid status '{execution.Status}' in database for JobExecutionId '{execution.JobExecutionId}'.");
+        }
 
         return new JobExecutionRecord
         {
@@ -255,7 +261,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             UserId = execution.RequestedBy,
             JobType = JobType.Unknown,
             RunMode = RunMode.Manual,
-            Status = parsedStatus,
+            Status = status,
             RequestedAtUtc = execution.RequestedAtUtc,
             StartedAt = execution.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = execution.EndDateTime,
