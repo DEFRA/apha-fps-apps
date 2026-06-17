@@ -10,12 +10,13 @@ namespace Apha.FPS.Core.Interfaces
         Task<PagedData<ProjectProfitabilityView>> GetProjectProfitabilityAsync(PaginationParameters<string> query, string programNo, string workTypeFilter);
         Task<PagedData<ProjectProfitabilityView>> GetProjectGroupProfitabilityAsync(PaginationParameters<string> query, string projectGroup, string workTypeFilter);
 
-        // TRANSFORMENGINE: new method — VLA-filtered project profitability list
+        // TRANSFORMENGINE: new method â€” VLA-filtered project profitability list
         //   Added for frmJobcodeTotalsVLA migration; filter dimensions: ProjectStatus,
         //   ProgramNo, Manager, Customer (from ProjectProfitabilityVlaReq).
         //   Returns paged ProjectProfitabilityVlaView rows from vprojectprofitabilityvla view.
         Task<PagedData<ProjectProfitabilityVlaView>> GetProjectProfitabilityVlaAsync(PaginationParameters<ProjectProfitabilityVlaReq> query);
         Task<IEnumerable<ProjectView>> GetAllProjectsAsync();
+        Task<IEnumerable<Project>> GetAllProjectsForAllUsersAsync();
         Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync();
         Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query);
         Task<PagedData<ProjectView>> GetPagedProjectsByUserAsync(PaginationParameters<string> query);

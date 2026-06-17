@@ -1,4 +1,4 @@
-﻿using Apha.Common.Contracts.FPS;
+ï»¿using Apha.Common.Contracts.FPS;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -25,6 +25,12 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.ProjectViews
                 .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId)).ToListAsync();
+        }
+
+        public async Task<IEnumerable<Project>> GetAllProjectsForAllUsersAsync()
+        {
+            return await _dbContext.Projects
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync()
@@ -544,7 +550,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        // ── ProgrammeNewProject operations ──────────────────────────────────
+        // -- ProgrammeNewProject operations ----------------------------------
 
         /// <summary>
         /// Checks whether a project code already exists — derived from qryProjectCheck.
@@ -566,7 +572,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(s => s.Contract == oldProject);
         }
 
-        // ── Delete pre-condition checks (moved to service layer) ────────────
+        // -- Delete pre-condition checks (moved to service layer) ------------
 
         public async Task<bool> HasPlannedTestsAsync(string parentProject)
         {
@@ -1140,7 +1146,7 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        // ── Private helpers ────────────────────────────────────────────────
+        // -- Private helpers ------------------------------------------------
 
         private static ProjectLog MapProjectToLog(Project p, string operation, string userId) => new()
         {
@@ -1417,7 +1423,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(results, query.Page, query.PageSize);
         }
 
-        // ── VLA Project Profitability ─────────────────────────────────────────
+        // â”€â”€ VLA Project Profitability â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>
         /// Returns paginated project profitability data for the VLA view.
@@ -1427,17 +1433,17 @@ namespace Apha.FPS.DataAccess.Repositories
         /// No database view is used.
         ///
         /// Filter dimensions (all optional, case-insensitive):
-        ///   ProjectStatus — filterProjectStatus in the HTML prototype
-        ///   ProgramNo     — filterProgram
-        ///   Manager       — filterManager (from tlkpProgram.Manager, VLA-specific)
-        ///   Customer      — filterCustomer (from tlkpProject.Customer, VLA-specific)
+        ///   ProjectStatus â€” filterProjectStatus in the HTML prototype
+        ///   ProgramNo     â€” filterProgram
+        ///   Manager       â€” filterManager (from tlkpProgram.Manager, VLA-specific)
+        ///   Customer      â€” filterCustomer (from tlkpProject.Customer, VLA-specific)
         /// </summary>
         public async Task<PagedData<ProjectProfitabilityVlaView>> GetProjectProfitabilityVlaAsync(
             PaginationParameters<ProjectProfitabilityVlaReq> query)
         {
             var filter = query.Filter;
 
-            // LEFT JOIN Projects → Programs to expose Manager (from programme) and TargetProfit.
+            // LEFT JOIN Projects â†’ Programs to expose Manager (from programme) and TargetProfit.
             // _dbContext.Projects and _dbContext.Programs both carry HasQueryFilter for FpsYear,
             // so year scoping is applied automatically.
             var projectsQuery = (from p in _dbContext.Projects.AsNoTracking()
@@ -1481,7 +1487,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var projectCodes = projects.Select(p => p.ParentProject).ToList();
 
-            // Staff costs — identical computation to ComputeProfitabilityAsync
+            // Staff costs â€” identical computation to ComputeProfitabilityAsync
             var staffCosts = await (
                 from sj in _dbContext.StaffJobs
                 join wge in _dbContext.WorkGroupEmployees on sj.StaffId equals wge.PactId

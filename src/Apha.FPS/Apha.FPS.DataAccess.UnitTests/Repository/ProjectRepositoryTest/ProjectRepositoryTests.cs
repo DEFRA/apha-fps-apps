@@ -1,4 +1,4 @@
-﻿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -114,7 +114,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 new() { ParentProject = "PP001", ProjectTitle = "Project One",   Program = "P001", Customer = "DEFRA", UserEmail = "test@example.com" },
                 new() { ParentProject = "PP002", ProjectTitle = "Project Two",   Program = "P002", Customer = "APHA",  UserEmail = "test@example.com" },
-                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P003", Customer = "DEFRA", UserEmail = "other@example.com" } // different user â€” excluded
+                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P003", Customer = "DEFRA", UserEmail = "other@example.com" } // different user — excluded
             };
             var repo = CreateRepository(projectViews: projectViews);
 
@@ -142,10 +142,66 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Empty(result);
         }
 
+        #endregion
+
+        #region GetAllProjectsForAllUsersAsync Tests
+
+        [Fact]
+        public async Task GetAllProjectsForAllUsersAsync_ReturnsAllProjects_WithoutEmailFilter()
+        {
+            // Arrange � Projects table data; no user email filtering expected
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", Disease = "TB", Contract = "C001", ProjectStatus = "Active", IncomeAccountCode = "IAC01" },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two", Program = "P002", Customer = "APHA", Disease = "FMD", Contract = "C002", ProjectStatus = "Active", IncomeAccountCode = "IAC02" }
+            };
+            var repo = CreateRepository(projects: projects);
+
+            // Act
+            var result = (await repo.GetAllProjectsForAllUsersAsync()).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Equal("PP001", result[0].ParentProject);
+            Assert.Equal("PP002", result[1].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForAllUsersAsync_ReturnsEmptyList_WhenNoProjectsExist()
+        {
+            // Arrange
+            var repo = CreateRepository(projects: new List<Project>());
+
+            // Act
+            var result = (await repo.GetAllProjectsForAllUsersAsync()).ToList();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForAllUsersAsync_ReturnsAllProjects_RegardlessOfUserEmail()
+        {
+            // Arrange � projects exist but current user email does not matter for unfiltered
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", Disease = "TB", Contract = "C001", ProjectStatus = "Active", IncomeAccountCode = "IAC01" },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two", Program = "P002", Customer = "APHA", Disease = "FMD", Contract = "C002", ProjectStatus = "Active", IncomeAccountCode = "IAC02" },
+                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P003", Customer = "EA", Disease = "AI", Contract = "C003", ProjectStatus = "Closed", IncomeAccountCode = "IAC03" }
+            };
+            var repo = CreateRepository(projects: projects, userEmailId: "differentuser@example.com");
+
+            // Act
+            var result = (await repo.GetAllProjectsForAllUsersAsync()).ToList();
+
+            // Assert � all projects returned regardless of user context
+            Assert.Equal(3, result.Count);
+        }
+
         [Fact]
         public async Task GetAllProjectsAsync_ReturnsEmptyList_WhenNoMatchingUserEmail()
         {
-            // Arrange â€” all views belong to a different user
+            // Arrange — all views belong to a different user
             var projectViews = new List<ProjectView>
             {
                 new() { ParentProject = "PP001", ProjectTitle = "Project One", UserEmail = "other@example.com" },
@@ -258,7 +314,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetAllProjectsAsync_PreservesNullValues_ForNullableFields()
         {
-            // Arrange â€” all nullable fields are null; GetAllProjectsAsync returns ProjectView as-is (no projection)
+            // Arrange — all nullable fields are null; GetAllProjectsAsync returns ProjectView as-is (no projection)
             var projectViews = new List<ProjectView>
             {
                 new()
@@ -281,7 +337,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Act
             var result = await repo.GetAllProjectsAsync();
 
-            // Assert â€” ProjectView is returned as-is; null values are preserved
+            // Assert — ProjectView is returned as-is; null values are preserved
             var project = Assert.Single(result);
             Assert.Null(project.ParentProject);
             Assert.Null(project.ProjectTitle);
@@ -374,7 +430,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectByIdAsync_IsCaseSensitive()
         {
-            // Arrange â€” match is on exact ParentProject string
+            // Arrange — match is on exact ParentProject string
             var projects = new List<Project>
             {
                 new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", ProjectStatus = "Active", Disease = "D001", Contract = "C001", IncomeAccountCode = "INC001" }
@@ -498,7 +554,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task GetProjectsByProgramAsync_AppliesNullCoalescing_ForNullableFields()
         {
-            // Arrange â€” ParentProject, ProjectTitle and IsDefraProject are null; Program is set to match the filter
+            // Arrange — ParentProject, ProjectTitle and IsDefraProject are null; Program is set to match the filter
             var projectViews = new List<ProjectView>
             {
                 new() { ParentProject = null, ProjectTitle = null, Program = "P001", IsDefraProject = null, BudgetCvl = null, UserEmail = "test@example.com" }
@@ -1541,7 +1597,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task UpdateFpsPortfolioDetailsAsync_WrongFpsYear_ReturnsNull()
         {
-            // Arrange — project row has year 2023 but context year is 2024
+            // Arrange � project row has year 2023 but context year is 2024
             var projects = new List<Project>
             {
                 new()
@@ -1606,7 +1662,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Act
             var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
 
-            // Assert — PP001 updated, PP002 untouched
+            // Assert � PP001 updated, PP002 untouched
             Assert.NotNull(result);
             Assert.Equal("PP001",          result.ParentProject);
             Assert.Equal("Updated Title A", result.ProjectTitle);
@@ -1618,7 +1674,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         [Fact]
         public async Task UpdateFpsPortfolioDetailsAsync_DoesNotModifyUnrelatedFields()
         {
-            // Arrange — ensure IncomeAccountCode is not changed by the method
+            // Arrange � ensure IncomeAccountCode is not changed by the method
             var projects = new List<Project>
             {
                 new()
@@ -1641,7 +1697,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             // Act
             var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
 
-            // Assert — IncomeAccountCode and BudgetCvl are not modified
+            // Assert � IncomeAccountCode and BudgetCvl are not modified
             Assert.NotNull(result);
             Assert.Equal("PRESERVED", result.IncomeAccountCode);
             Assert.Equal(999m, result.BudgetCvl);
