@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Apha.FPS.Core.Entities
 {
     public partial class Workgroup
     {
-        public string WorkgroupName { get; set; } = null!;
+        public string WorkGroupName { get; set; } = null!;
 
         public string ProfitCentre { get; set; } = null!;
 

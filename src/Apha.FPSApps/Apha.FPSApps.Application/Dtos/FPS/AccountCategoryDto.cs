@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Apha.FPSApps.Application.Dtos.FPS
 {
+    [ExcludeFromCodeCoverage]
     public class AccountCategoryDto
     {
         public string AccShortName { get; set; } = null!;

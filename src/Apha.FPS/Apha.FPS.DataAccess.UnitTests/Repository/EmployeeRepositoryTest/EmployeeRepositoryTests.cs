@@ -1481,8 +1481,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             };
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "Group A" },
-                new() { WorkgroupName = "Group B" }
+                new() { WorkGroupName = "Group A" },
+                new() { WorkGroupName = "Group B" }
             };
             var pactGrades = new List<PactWorkGroupGradeView>
             {
