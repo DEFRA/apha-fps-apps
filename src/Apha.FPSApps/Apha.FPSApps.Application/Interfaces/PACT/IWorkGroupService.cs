@@ -6,6 +6,9 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
 {
     public interface IWorkGroupService
     {
+        Task<ApiResponseDto<List<string>>> GetAllWorkGroupNamesAsync();
+        Task<ApiResponseDto<List<WorkGroupViewDto>>> GetWorkGroupsByProfitCentreForBudgetAsync(string profitCentre);
+        Task<ApiResponseDto<List<WorkGroupViewDto>>> GetWorkGroupsByProfitCentreForBudgetPagedAsync(QueryParameters<string> query, string profitCentre);
         Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync();
         Task<ApiResponseDto<List<WorkGroupTimeCodeDto>>> GetPagedWorkGroupTimeCodesAsync(QueryParameters<string> query, string workGroup, int monthNumber);
         Task<ApiResponseDto<List<WorkGroupValidTimeCodeDto>>> GetPagedWorkGroupValidTimeCodesAsync(QueryParameters<string> query, string workGroup);

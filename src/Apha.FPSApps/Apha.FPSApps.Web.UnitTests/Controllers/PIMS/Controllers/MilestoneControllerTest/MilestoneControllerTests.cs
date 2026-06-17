@@ -68,14 +68,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
                 .Returns([]);
             _mapper.Map<List<MilestoneFormDatesItem>>(Arg.Any<List<MilestoneFormDatesDto>>())
                 .Returns([]);
-
-            _milestoneService.GetLogMilestonesAsync(
-                    Arg.Any<QueryParameters<string>>(),
-                    Arg.Any<string?>(),
-                    Arg.Any<string?>(),
-                    Arg.Any<string?>())
-                .Returns(new ApiResponseDto<List<LogMilestoneDto>> { Success = true, Data = [] });
-            _mapper.Map<List<LogMilestoneItem>>(Arg.Any<List<LogMilestoneDto>>()).Returns([]);
         }
 
         /// <summary>Sets up mocks for the LoadMilestoneGrid / LoadMilestoneFormDatesGrid path.</summary>
@@ -968,7 +960,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
         }
 
         [Fact]
-        public async Task LogIndex_ReturnsViewResultWithMilestoneViewModel()
+        public async Task LogIndex_ReturnsViewResultWithLogMilestoneViewModel()
         {
             // Arrange
             SetupSuccessfulLogIndexMocks();
@@ -978,7 +970,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.IsType<MilestoneViewModel>(viewResult.Model);
+            Assert.IsType<LogMilestoneViewModel>(viewResult.Model);
         }
 
         [Fact]
@@ -991,7 +983,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
             var result = await _controller.LogIndex("PP001");
 
             // Assert
-            var model = Assert.IsType<MilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
+            var model = Assert.IsType<LogMilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
             Assert.Equal("PP001", model.Parentproject);
         }
 
@@ -1005,7 +997,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
             var result = await _controller.LogIndex(null);
 
             // Assert
-            var model = Assert.IsType<MilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
+            var model = Assert.IsType<LogMilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
             Assert.Equal(string.Empty, model.Parentproject);
         }
 
@@ -1024,7 +1016,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.MilestoneContr
             var result = await _controller.LogIndex("PP001");
 
             // Assert
-            var model = Assert.IsType<MilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
+            var model = Assert.IsType<LogMilestoneViewModel>(Assert.IsType<ViewResult>(result).Model);
             Assert.Equal(2, model.ProjectOptions.Count);
             Assert.Contains(model.ProjectOptions, o => o.Value == "PP001");
             Assert.Contains(model.ProjectOptions, o => o.Value == "PP002");

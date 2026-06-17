@@ -10,13 +10,13 @@ namespace Apha.FPS.DataAccess.Data
 
         public void Configure(EntityTypeBuilder<Workgroup> entity)
         {
-            entity.HasKey(e => new { e.WorkgroupName, e.FpsYear }).HasName("pk_workgroup");
+            entity.HasKey(e => new { e.WorkGroupName, e.FpsYear }).HasName("pk_workgroup");
 
             entity.ToTable("workgroup", "fps");
 
             entity.HasIndex(e => e.ProfitCentre, "workgroup_profitcentre");
 
-            entity.Property(e => e.WorkgroupName)
+            entity.Property(e => e.WorkGroupName)
                 .HasMaxLength(50)
                 .HasColumnName("workgroup");
             entity.Property(e => e.CentralOverhead)

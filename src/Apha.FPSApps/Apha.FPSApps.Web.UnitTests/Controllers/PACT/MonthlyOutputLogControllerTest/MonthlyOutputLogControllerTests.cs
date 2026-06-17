@@ -10,6 +10,7 @@ using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using IWorkGroupService = Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyOutputLogControllerTest
 {
