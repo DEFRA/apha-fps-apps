@@ -286,6 +286,7 @@ public class YearlyDetailsController : Controller
     {
         var validationResult = ValidateModel();
         if (validationResult is not null) return validationResult;
+        item.NumberOfTests ??= 0;
         var decodedProjectId = HttpUtility.UrlDecode(projectId);
         var dto = _mapper.Map<TestRequirementDto>(item);
         dto.Project = decodedProjectId;
@@ -312,6 +313,7 @@ public class YearlyDetailsController : Controller
     {
         var validationResult = ValidateModel();
         if (validationResult is not null) return validationResult;
+        item.NumberOfTests ??= 0;
         var decodedProjectId = HttpUtility.UrlDecode(projectId);
         var dto = _mapper.Map<TestRequirementDto>(item);
         dto.Project = decodedProjectId;
@@ -344,6 +346,8 @@ public class YearlyDetailsController : Controller
     {
         var validationResult = ValidateModel();
         if (validationResult is not null) return validationResult;
+        item.NumberOfAnimals ??= 0;
+        item.NumberOfDays ??= 0;
         var decodedProjectId = HttpUtility.UrlDecode(projectId);
         var dto = _mapper.Map<AnimalRequirementDto>(item);
         dto.Project = decodedProjectId;
@@ -370,6 +374,8 @@ public class YearlyDetailsController : Controller
     {
         var validationResult = ValidateModel();
         if (validationResult is not null) return validationResult;
+        item.NumberOfAnimals ??= 0;
+        item.NumberOfDays ??= 0;
         var decodedProjectId = HttpUtility.UrlDecode(projectId);
         var dto = _mapper.Map<AnimalRequirementDto>(item);
         dto.Project = decodedProjectId;
