@@ -133,7 +133,7 @@
                gm.reloadGrid({ page: 1 }) used — NOT gm.reload() (does not exist). *@
         <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
             <div class="govuk-grid-column-full sup_p_0">
-                <div id="gridContainer_projectProfitabilityList">
+                <div id="gridContainer_projectProfitabilityVlaGrid">
                     @await Html.PartialAsync("_DataGrid", Model.ProfitabilityVlaGrid)
                 </div>
             </div>
@@ -371,14 +371,17 @@
 
         // ── Initialise on page load ──────────────────────────────────────────────
         $(document).ready(function () {
-            // Fetch initial summary totals from server
+            // Trigger initial grid data load via AJAX (Index() returns empty Data; grid
+            // must fetch its first page through the LoadProjectProfitabilityVlaGrid endpoint).
+            reloadProjectProfitabilityVlaGrid();
+
+            // Fetch initial summary totals in parallel with the grid load.
             updateProjectProfitabilityVlaSummary();
 
-            // Refresh summary totals after every DataGrid reload
-            // TRANSFORMENGINE: listens for the custom grid-reloaded event emitted by _DataGrid partial.
-            //   TRANSFORMENGINE TODO: confirm the _DataGrid partial emits 'gridReloaded' or equivalent
-            //   event on projectProfitabilityVlaGrid; adjust event name/container selector if needed.
-            $(document).on('gridReloaded', '#gridContainer_projectProfitabilityList', function () {
+            // Refresh summary totals after every DataGrid reload.
+            // _DataGrid dispatches 'gridReloaded' on document itself (not on a child element),
+            // so the listener must be a direct document handler — NOT a delegated selector.
+            $(document).on('gridReloaded', function () {
                 updateProjectProfitabilityVlaSummary();
             });
         });
