@@ -37,9 +37,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         }
 
-        public async Task<ApiResponseDto<IEnumerable<ProgramDto>>> GetAllProgramsForAllUsers()
+        public async Task<ApiResponseDto<IEnumerable<ProgramDto>>> GetAllProgramsForAllUsersAsync()
         {
-            var response = await _http.GetAsync<IEnumerable<ProgramDto>>(FpsApiEndpoints.GetAllProgramsUnfiltered);
+            var response = await _http.GetAsync<IEnumerable<ProgramDto>>(FpsApiEndpoints.GetAllProgramsForAllUsers);
             if (response.Success)
             {
                 return _mapper.Map<ApiResponseDto<IEnumerable<ProgramDto>>>(response);

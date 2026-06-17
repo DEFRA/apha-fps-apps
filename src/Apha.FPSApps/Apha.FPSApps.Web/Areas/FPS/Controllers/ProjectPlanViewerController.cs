@@ -424,7 +424,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task<List<SelectListItem>> GetProgramListAsync()
         {
-            var result = await _programService.GetAllProgramsForAllUsers();
+            var result = await _programService.GetAllProgramsForAllUsersAsync();
             if (result.Success && result.Data != null)
             {
                 return result.Data

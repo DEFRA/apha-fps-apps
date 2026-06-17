@@ -101,16 +101,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProgramServiceTest
             };
             var expectedResponse = ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs);
 
-            _fpsProgramApiClient.GetAllProgramsForAllUsers().Returns(expectedResponse);
+            _fpsProgramApiClient.GetAllProgramsForAllUsersAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _programService.GetAllProgramsForAllUsers();
+            var result = await _programService.GetAllProgramsForAllUsersAsync();
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count());
-            await _fpsProgramApiClient.Received(1).GetAllProgramsForAllUsers();
+            await _fpsProgramApiClient.Received(1).GetAllProgramsForAllUsersAsync();
         }
 
         [Fact]
@@ -119,10 +119,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProgramServiceTest
             // Arrange
             var expectedResponse = ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(new List<ProgramDto>());
 
-            _fpsProgramApiClient.GetAllProgramsForAllUsers().Returns(expectedResponse);
+            _fpsProgramApiClient.GetAllProgramsForAllUsersAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _programService.GetAllProgramsForAllUsers();
+            var result = await _programService.GetAllProgramsForAllUsersAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -140,10 +140,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProgramServiceTest
             };
             var expectedResponse = ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _fpsProgramApiClient.GetAllProgramsForAllUsers().Returns(expectedResponse);
+            _fpsProgramApiClient.GetAllProgramsForAllUsersAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _programService.GetAllProgramsForAllUsers();
+            var result = await _programService.GetAllProgramsForAllUsersAsync();
 
             // Assert
             Assert.NotNull(result);
