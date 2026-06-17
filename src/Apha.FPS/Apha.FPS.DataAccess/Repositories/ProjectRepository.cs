@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Contracts.FPS;
+using Apha.Common.Contracts.FPS;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
