@@ -1,0 +1,17 @@
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Pagination;
+
+namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
+{
+    public interface IFpsBudgetBidsApiClient
+    {
+        Task<ApiResponseDto<List<BidViewDto>>> GetBidViewAsync(string workgroup);
+        Task<ApiResponseDto<List<BidViewDto>>> GetBidViewPagedAsync(QueryParameters<string> query, string workgroup);
+        Task<ApiResponseDto<BidDto>> GetBidByIdAsync(string workgroupName, string account);
+        Task<ApiResponseDto<BidDto>> CreateBidAsync(BidDto bid);
+        Task<ApiResponseDto<BidDto>> UpdateBidAsync(BidDto bid);
+        Task<ApiResponseDto<bool>> DeleteBidAsync(BidDto bid);
+        Task<ApiResponseDto<List<AccountCategoryDto>>> GetAccountCategoriesAsync();
+    }
+}
