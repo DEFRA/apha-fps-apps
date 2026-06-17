@@ -299,11 +299,6 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new GradeMap());
             modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
-
-            // TRANSFORMENGINE: register ProjectProfitabilityVlaView map — keyless view for frmJobcodeTotalsVLA;
-            //   no HasQueryFilter — entity has no FpsYear column; see DEFERRED note in file header if year
-            //   scoping must be added once the vprojectprofitabilityvla view DDL is confirmed.
-            modelBuilder.ApplyConfiguration(new ProjectProfitabilityVlaViewMap());
         }
     }
 }
