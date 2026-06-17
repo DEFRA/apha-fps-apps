@@ -120,7 +120,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
                     new List<ProjectGroupDto> { new() { ProjectGroupName = "G1", ProjectGroup = "G1" } }));
 
             // Projects
-            _projectService.GetAllProjectsUnfilteredAsync()
+            _projectService.GetAllProjectsForAllUsersAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
                     new List<ProjectDto> { BuildProjectDto(projectCode) }));
 
@@ -509,7 +509,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(new List<ProgramDto>()));
             _projectService.GetAllProjectGroupsAsync()
                 .Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(new List<ProjectGroupDto>()));
-            _projectService.GetAllProjectsUnfilteredAsync()
+            _projectService.GetAllProjectsForAllUsersAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>()));
             _appStateService.GetSessionAsync<string>(Arg.Any<string>()).Returns((string?)null);
 
@@ -528,7 +528,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(errors, new ApiMetaDto()));
             _projectService.GetAllProjectGroupsAsync()
                 .Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(new List<ProjectGroupDto>()));
-            _projectService.GetAllProjectsUnfilteredAsync()
+            _projectService.GetAllProjectsForAllUsersAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>()));
             _appStateService.GetSessionAsync<string>(Arg.Any<string>()).Returns((string?)null);
 

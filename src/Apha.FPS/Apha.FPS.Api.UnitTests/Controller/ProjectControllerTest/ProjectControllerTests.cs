@@ -579,10 +579,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
 
         #endregion
 
-        #region GetAllProjectsUnfilteredAsync
+        #region GetAllProjectsForAllUsersAsync
 
         [Fact]
-        public async Task GetAllProjectsUnfilteredAsync_HappyPath_ReturnsOk()
+        public async Task GetAllProjectsForAllUsersAsync_HappyPath_ReturnsOk()
         {
             // Arrange
             var serviceResult = new List<ProjectDto>
@@ -596,40 +596,40 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
                 new() { ParentProject = "PP002", ProjectTitle = "Beta Project" }
             };
 
-            _serviceMock.GetAllProjectsUnfilteredAsync().Returns(serviceResult);
+            _serviceMock.GetAllProjectsForAllUsersAsync().Returns(serviceResult);
             _mapperMock.Map<List<ProjectRes>>(serviceResult).Returns(mappedResult);
 
             // Act
-            var result = await _controller.GetAllProjectsUnfilteredAsync();
+            var result = await _controller.GetAllProjectsForAllUsersAsync();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(mappedResult, okResult.Value);
-            await _serviceMock.Received(1).GetAllProjectsUnfilteredAsync();
+            await _serviceMock.Received(1).GetAllProjectsForAllUsersAsync();
         }
 
         [Fact]
-        public async Task GetAllProjectsUnfilteredAsync_NullResult_ThrowsArgumentException()
+        public async Task GetAllProjectsForAllUsersAsync_NullResult_ThrowsArgumentException()
         {
             // Arrange
-            _serviceMock.GetAllProjectsUnfilteredAsync().Returns((IEnumerable<ProjectDto>)null!);
+            _serviceMock.GetAllProjectsForAllUsersAsync().Returns((IEnumerable<ProjectDto>)null!);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllProjectsUnfilteredAsync());
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllProjectsForAllUsersAsync());
         }
 
         [Fact]
-        public async Task GetAllProjectsUnfilteredAsync_EmptyResult_ReturnsOkWithEmptyList()
+        public async Task GetAllProjectsForAllUsersAsync_EmptyResult_ReturnsOkWithEmptyList()
         {
             // Arrange
             var serviceResult = new List<ProjectDto>();
             var mappedResult = new List<ProjectRes>();
 
-            _serviceMock.GetAllProjectsUnfilteredAsync().Returns(serviceResult);
+            _serviceMock.GetAllProjectsForAllUsersAsync().Returns(serviceResult);
             _mapperMock.Map<List<ProjectRes>>(serviceResult).Returns(mappedResult);
 
             // Act
-            var result = await _controller.GetAllProjectsUnfilteredAsync();
+            var result = await _controller.GetAllProjectsForAllUsersAsync();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);

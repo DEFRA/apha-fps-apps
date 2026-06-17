@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 
 namespace Apha.FPS.Application.Interfaces
@@ -6,7 +6,7 @@ namespace Apha.FPS.Application.Interfaces
     public interface IProjectService
     {
         Task<IEnumerable<ProjectDto>> GetAllProjectsAsync();
-        Task<IEnumerable<ProjectDto>> GetAllProjectsUnfilteredAsync();
+        Task<IEnumerable<ProjectDto>> GetAllProjectsForAllUsersAsync();
         Task<IEnumerable<ProjectDto>> GetAllPactProjectsAsync();
         Task<PaginatedResult<ProjectDto>> GetPagedProjectsAsync(QueryParameters<string> query);
         Task<PaginatedResult<ProjectDto>> GetPagedPactProjectsAsync(QueryParameters<string> query);

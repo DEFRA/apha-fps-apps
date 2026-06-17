@@ -450,7 +450,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task<List<SelectListItem>> GetProjectListAsync()
         {
-            var result = await _projectService.GetAllProjectsUnfilteredAsync();
+            var result = await _projectService.GetAllProjectsForAllUsersAsync();
 
             if (result != null && result.Success && result.Data != null)
             {

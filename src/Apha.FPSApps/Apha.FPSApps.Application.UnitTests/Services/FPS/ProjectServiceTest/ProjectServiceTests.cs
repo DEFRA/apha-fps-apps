@@ -1233,10 +1233,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
 
         #endregion
 
-        #region GetAllProjectsUnfilteredAsync Tests
+        #region GetAllProjectsForAllUsersAsync Tests
 
         [Fact]
-        public async Task GetAllProjectsUnfilteredAsync_WithSuccessResponse_ReturnsProjectList()
+        public async Task GetAllProjectsForAllUsersAsync_WithSuccessResponse_ReturnsProjectList()
         {
             // Arrange
             var projects = new List<ProjectDto>
@@ -1246,28 +1246,28 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
             };
             var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects);
 
-            _fpsProjectApiClient.GetAllProjectsUnfilteredAsync().Returns(expectedResponse);
+            _fpsProjectApiClient.GetAllProjectsForAllUsersAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _projectService.GetAllProjectsUnfilteredAsync();
+            var result = await _projectService.GetAllProjectsForAllUsersAsync();
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _fpsProjectApiClient.Received(1).GetAllProjectsUnfilteredAsync();
+            await _fpsProjectApiClient.Received(1).GetAllProjectsForAllUsersAsync();
         }
 
         [Fact]
-        public async Task GetAllProjectsUnfilteredAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        public async Task GetAllProjectsForAllUsersAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
         {
             // Arrange
             var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>());
 
-            _fpsProjectApiClient.GetAllProjectsUnfilteredAsync().Returns(expectedResponse);
+            _fpsProjectApiClient.GetAllProjectsForAllUsersAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _projectService.GetAllProjectsUnfilteredAsync();
+            var result = await _projectService.GetAllProjectsForAllUsersAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -1276,7 +1276,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
         }
 
         [Fact]
-        public async Task GetAllProjectsUnfilteredAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task GetAllProjectsForAllUsersAsync_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
             var errors = new List<ApiErrorDto>
@@ -1285,10 +1285,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
             };
             var expectedResponse = ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _fpsProjectApiClient.GetAllProjectsUnfilteredAsync().Returns(expectedResponse);
+            _fpsProjectApiClient.GetAllProjectsForAllUsersAsync().Returns(expectedResponse);
 
             // Act
-            var result = await _projectService.GetAllProjectsUnfilteredAsync();
+            var result = await _projectService.GetAllProjectsForAllUsersAsync();
 
             // Assert
             Assert.NotNull(result);

@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Application.Validation;
@@ -128,10 +128,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
         #endregion
 
-        #region GetAllProjectsUnfilteredAsync
+        #region GetAllProjectsForAllUsersAsync
 
         [Fact]
-        public async Task GetAllProjectsUnfilteredAsync_WithValidData_ReturnsMappedDtoList()
+        public async Task GetAllProjectsForAllUsersAsync_WithValidData_ReturnsMappedDtoList()
         {
             // Arrange
             var projectEntities = new List<Project>
@@ -146,64 +146,64 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
                 new() { ParentProject = "PROJ002", ProjectTitle = "TB Eradication" }
             };
 
-            _mockRepository.GetAllProjectsUnfilteredAsync()
+            _mockRepository.GetAllProjectsForAllUsersAsync()
                 .Returns(Task.FromResult<IEnumerable<Project>>(projectEntities));
 
             _mockMapper.Map<IEnumerable<ProjectDto>>(projectEntities)
                 .Returns(expectedDtos);
 
             // Act
-            var result = await _sut.GetAllProjectsUnfilteredAsync();
+            var result = await _sut.GetAllProjectsForAllUsersAsync();
 
             // Assert
             result.Should().NotBeNull();
             result.Should().HaveCount(2);
             result.First().ParentProject.Should().Be("PROJ001");
 
-            await _mockRepository.Received(1).GetAllProjectsUnfilteredAsync();
+            await _mockRepository.Received(1).GetAllProjectsForAllUsersAsync();
             _mockMapper.Received(1).Map<IEnumerable<ProjectDto>>(projectEntities);
         }
 
         [Fact]
-        public async Task GetAllProjectsUnfilteredAsync_WithEmptyList_ReturnsEmptyDtoList()
+        public async Task GetAllProjectsForAllUsersAsync_WithEmptyList_ReturnsEmptyDtoList()
         {
             // Arrange
             var emptyEntities = new List<Project>();
             var emptyDtos = new List<ProjectDto>();
 
-            _mockRepository.GetAllProjectsUnfilteredAsync()
+            _mockRepository.GetAllProjectsForAllUsersAsync()
                 .Returns(Task.FromResult<IEnumerable<Project>>(emptyEntities));
 
             _mockMapper.Map<IEnumerable<ProjectDto>>(emptyEntities)
                 .Returns(emptyDtos);
 
             // Act
-            var result = await _sut.GetAllProjectsUnfilteredAsync();
+            var result = await _sut.GetAllProjectsForAllUsersAsync();
 
             // Assert
             result.Should().NotBeNull();
             result.Should().BeEmpty();
 
-            await _mockRepository.Received(1).GetAllProjectsUnfilteredAsync();
+            await _mockRepository.Received(1).GetAllProjectsForAllUsersAsync();
             _mockMapper.Received(1).Map<IEnumerable<ProjectDto>>(emptyEntities);
         }
 
         [Fact]
-        public async Task GetAllProjectsUnfilteredAsync_WhenRepositoryThrowsException_PropagatesException()
+        public async Task GetAllProjectsForAllUsersAsync_WhenRepositoryThrowsException_PropagatesException()
         {
             // Arrange
             var expectedException = new Exception("Database connection failed");
 
-            _mockRepository.GetAllProjectsUnfilteredAsync()
+            _mockRepository.GetAllProjectsForAllUsersAsync()
                 .Returns(Task.FromException<IEnumerable<Project>>(expectedException));
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(
-                async () => await _sut.GetAllProjectsUnfilteredAsync()
+                async () => await _sut.GetAllProjectsForAllUsersAsync()
             );
 
             exception.Message.Should().Be("Database connection failed");
-            await _mockRepository.Received(1).GetAllProjectsUnfilteredAsync();
+            await _mockRepository.Received(1).GetAllProjectsForAllUsersAsync();
         }
 
         #endregion
@@ -1373,7 +1373,7 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         [Fact]
         public async Task UpdateFpsPortfolioDetailsAsync_WhenProgramIsNullOrEmpty_SkipsProgramCheck()
         {
-            // Arrange — null/empty program bypasses the FK guard
+            // Arrange � null/empty program bypasses the FK guard
             var inputDto = new ProjectDto
             {
                 ParentProject = "PP001", Program = null!,

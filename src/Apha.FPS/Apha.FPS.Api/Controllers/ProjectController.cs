@@ -137,9 +137,9 @@ namespace Apha.FPS.Api.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<ActionResult<List<ProjectRes>>> GetAllProjectsUnfilteredAsync()
+        public async Task<ActionResult<List<ProjectRes>>> GetAllProjectsForAllUsersAsync()
         {
-            var projects = await _projectService.GetAllProjectsUnfilteredAsync();
+            var projects = await _projectService.GetAllProjectsForAllUsersAsync();
             if (projects == null)
                 throw new ArgumentException("Project records not found");
             return Ok(_mapper.Map<List<ProjectRes>>(projects));
