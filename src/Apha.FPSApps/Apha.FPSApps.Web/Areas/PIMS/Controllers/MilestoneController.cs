@@ -54,14 +54,13 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
             viewModel.MilestonesGrid = await BuildMilestonesGridAsync(project, defaultRequest);
             viewModel.MilestoneFormDatesGrid = await BuildMilestoneFormDatesGridAsync(project, defaultRequest);
-            viewModel.LogMilestonesGrid = await BuildLogMilestonesGridAsync(defaultRequest, null, null, null);
             return View(viewModel);
         }
 
         [HttpGet]
         public async Task<IActionResult> LogIndex(string? project = null)
         {
-            MilestoneViewModel viewModel = new();
+            LogMilestoneViewModel viewModel = new();
             ApiResponseDto<List<ProjectListMilestoneDto>> allProjects =
                 await _projectListService.GetAllProjectsForMilestoneAsync();
 
