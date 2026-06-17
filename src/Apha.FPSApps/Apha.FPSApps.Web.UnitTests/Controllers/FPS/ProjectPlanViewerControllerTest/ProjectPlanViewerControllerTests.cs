@@ -420,29 +420,27 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         }
 
         [Fact]
-        public async Task Index_WithProgram_FiltersProjectsByProgram()
+        public async Task Index_WithProgram_SetsSelectedProgramInModel()
         {
             SetupDefaultServices();
-            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P01")
-                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
-                    new List<ProjectDto> { BuildProjectDto() }));
 
             var result = await _controller.Index(program: "P01");
 
-            await _projectService.Received(1).GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P01");
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal("P01", model.SelectedProgram);
         }
 
         [Fact]
-        public async Task Index_WithProjectGroup_FiltersProjectsByGroup()
+        public async Task Index_WithProjectGroup_SetsSelectedProjectGroupInModel()
         {
             SetupDefaultServices();
-            _projectService.GetProjectsByProjectGroupAsync(Arg.Any<QueryParameters<string>>(), "G1")
-                .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
-                    new List<ProjectDto> { BuildProjectDto() }));
 
             var result = await _controller.Index(projectGroup: "G1");
 
-            await _projectService.Received(1).GetProjectsByProjectGroupAsync(Arg.Any<QueryParameters<string>>(), "G1");
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProjectPlanViewerViewModel>(viewResult.Model);
+            Assert.Equal("G1", model.SelectedProjectGroup);
         }
 
         [Fact]
