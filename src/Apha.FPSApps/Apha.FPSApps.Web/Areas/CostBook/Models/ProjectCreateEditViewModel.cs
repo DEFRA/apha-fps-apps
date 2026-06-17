@@ -26,6 +26,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public string? SubmittedByFName { get; set; }
         public string? SubmittedByLName { get; set; }
         public DateTime? DateOfSubmission { get; set; }
+        [Required(ErrorMessage = "Please select Prepared By")]
         public string? PreparedBy { get; set; }
         public int? Inflation { get; set; }
         public int? FinancialYears { get; set; }
