@@ -578,5 +578,64 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         }
 
         #endregion
+
+        #region GetAllProjectsUnfilteredAsync
+
+        [Fact]
+        public async Task GetAllProjectsUnfilteredAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var serviceResult = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Project" }
+            };
+            var mappedResult = new List<ProjectRes>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Project" }
+            };
+
+            _serviceMock.GetAllProjectsUnfilteredAsync().Returns(serviceResult);
+            _mapperMock.Map<List<ProjectRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAllProjectsUnfilteredAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(mappedResult, okResult.Value);
+            await _serviceMock.Received(1).GetAllProjectsUnfilteredAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProjectsUnfilteredAsync_NullResult_ThrowsArgumentException()
+        {
+            // Arrange
+            _serviceMock.GetAllProjectsUnfilteredAsync().Returns((IEnumerable<ProjectDto>)null!);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllProjectsUnfilteredAsync());
+        }
+
+        [Fact]
+        public async Task GetAllProjectsUnfilteredAsync_EmptyResult_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            var serviceResult = new List<ProjectDto>();
+            var mappedResult = new List<ProjectRes>();
+
+            _serviceMock.GetAllProjectsUnfilteredAsync().Returns(serviceResult);
+            _mapperMock.Map<List<ProjectRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAllProjectsUnfilteredAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        #endregion
     }
 }

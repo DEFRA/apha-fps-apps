@@ -136,6 +136,15 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<List<ProjectRes>>(projects));
         }
 
+        [HttpGet("all")]
+        public async Task<ActionResult<List<ProjectRes>>> GetAllProjectsUnfilteredAsync()
+        {
+            var projects = await _projectService.GetAllProjectsUnfilteredAsync();
+            if (projects == null)
+                throw new ArgumentException("Project records not found");
+            return Ok(_mapper.Map<List<ProjectRes>>(projects));
+        }
+
         [HttpGet("pactview")]
         public async Task<ActionResult<PaginationRes<ProjectRes>>> GetPagedPactProjectsAsync(
     [FromQuery] QueryParameters<string> query)

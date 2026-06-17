@@ -26,6 +26,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId)).ToListAsync();
         }
 
+        public async Task<IEnumerable<Project>> GetAllProjectsUnfilteredAsync()
+        {
+            return await _dbContext.Projects
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync()
         {
             return await _dbContext.PactProjectViews

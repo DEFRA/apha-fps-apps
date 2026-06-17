@@ -142,6 +142,62 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Empty(result);
         }
 
+        #endregion
+
+        #region GetAllProjectsUnfilteredAsync Tests
+
+        [Fact]
+        public async Task GetAllProjectsUnfilteredAsync_ReturnsAllProjects_WithoutEmailFilter()
+        {
+            // Arrange — Projects table data; no user email filtering expected
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", Disease = "TB", Contract = "C001", ProjectStatus = "Active", IncomeAccountCode = "IAC01" },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two", Program = "P002", Customer = "APHA", Disease = "FMD", Contract = "C002", ProjectStatus = "Active", IncomeAccountCode = "IAC02" }
+            };
+            var repo = CreateRepository(projects: projects);
+
+            // Act
+            var result = (await repo.GetAllProjectsUnfilteredAsync()).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Equal("PP001", result[0].ParentProject);
+            Assert.Equal("PP002", result[1].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsUnfilteredAsync_ReturnsEmptyList_WhenNoProjectsExist()
+        {
+            // Arrange
+            var repo = CreateRepository(projects: new List<Project>());
+
+            // Act
+            var result = (await repo.GetAllProjectsUnfilteredAsync()).ToList();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsUnfilteredAsync_ReturnsAllProjects_RegardlessOfUserEmail()
+        {
+            // Arrange — projects exist but current user email does not matter for unfiltered
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", Program = "P001", Customer = "DEFRA", Disease = "TB", Contract = "C001", ProjectStatus = "Active", IncomeAccountCode = "IAC01" },
+                new() { ParentProject = "PP002", ProjectTitle = "Project Two", Program = "P002", Customer = "APHA", Disease = "FMD", Contract = "C002", ProjectStatus = "Active", IncomeAccountCode = "IAC02" },
+                new() { ParentProject = "PP003", ProjectTitle = "Project Three", Program = "P003", Customer = "EA", Disease = "AI", Contract = "C003", ProjectStatus = "Closed", IncomeAccountCode = "IAC03" }
+            };
+            var repo = CreateRepository(projects: projects, userEmailId: "differentuser@example.com");
+
+            // Act
+            var result = (await repo.GetAllProjectsUnfilteredAsync()).ToList();
+
+            // Assert — all projects returned regardless of user context
+            Assert.Equal(3, result.Count);
+        }
+
         [Fact]
         public async Task GetAllProjectsAsync_ReturnsEmptyList_WhenNoMatchingUserEmail()
         {

@@ -41,6 +41,39 @@ namespace Apha.FPS.Application.UnitTests.Services.ProgramServiceTest
         }
 
         [Fact]
+        public async Task GetAllProgramsUnfilteredAsync_ReturnsMappedDtos()
+        {
+            var programs = new List<Program> { new Program { ProgramNo = "P1" }, new Program { ProgramNo = "P2" } };
+            var dtos = new List<ProgramDto> { new ProgramDto { ProgramNo = "P1" }, new ProgramDto { ProgramNo = "P2" } };
+
+            _mockRepository.GetAllProgramsUnfilteredAsync().Returns(programs);
+            _mockMapper.Map<IEnumerable<ProgramDto>>(programs).Returns(dtos);
+
+            var result = await _sut.GetAllProgramsUnfilteredAsync();
+
+            result.Should().NotBeNull();
+            result.Should().HaveCount(2);
+            result.Should().BeEquivalentTo(dtos);
+            await _mockRepository.Received(1).GetAllProgramsUnfilteredAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProgramsUnfilteredAsync_WithEmptyList_ReturnsEmptyDtoList()
+        {
+            var emptyPrograms = new List<Program>();
+            var emptyDtos = new List<ProgramDto>();
+
+            _mockRepository.GetAllProgramsUnfilteredAsync().Returns(emptyPrograms);
+            _mockMapper.Map<IEnumerable<ProgramDto>>(emptyPrograms).Returns(emptyDtos);
+
+            var result = await _sut.GetAllProgramsUnfilteredAsync();
+
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+            await _mockRepository.Received(1).GetAllProgramsUnfilteredAsync();
+        }
+
+        [Fact]
         public async Task GetAllProgramsAsync_WithQuery_ReturnsPaginatedResult()
         {
             var query = new QueryParameters<string>();

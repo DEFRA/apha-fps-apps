@@ -110,7 +110,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         private void SetupDefaultServices(string projectCode = "AH0001")
         {
             // Programs
-            _programService.GetAllProgramsAsync()
+            _programService.GetAllProgramsUnfilteredAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(
                     new List<ProgramDto> { new() { ProgramNo = "P01" } }));
 
@@ -120,7 +120,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
                     new List<ProjectGroupDto> { new() { ProjectGroupName = "G1", ProjectGroup = "G1" } }));
 
             // Projects
-            _projectService.GetAllProjectsAsync()
+            _projectService.GetAllProjectsUnfilteredAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(
                     new List<ProjectDto> { BuildProjectDto(projectCode) }));
 
@@ -507,11 +507,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         [Fact]
         public async Task Index_WhenProgramServiceReturnsEmpty_ProgramListIsEmpty()
         {
-            _programService.GetAllProgramsAsync()
+            _programService.GetAllProgramsUnfilteredAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(new List<ProgramDto>()));
             _projectService.GetAllProjectGroupsAsync()
                 .Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(new List<ProjectGroupDto>()));
-            _projectService.GetAllProjectsAsync()
+            _projectService.GetAllProjectsUnfilteredAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>()));
             _appStateService.GetSessionAsync<string>(Arg.Any<string>()).Returns((string?)null);
 
@@ -526,11 +526,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         public async Task Index_WhenProgramServiceFails_ProgramListIsEmpty()
         {
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "500" } };
-            _programService.GetAllProgramsAsync()
+            _programService.GetAllProgramsUnfilteredAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(errors, new ApiMetaDto()));
             _projectService.GetAllProjectGroupsAsync()
                 .Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(new List<ProjectGroupDto>()));
-            _projectService.GetAllProjectsAsync()
+            _projectService.GetAllProjectsUnfilteredAsync()
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>()));
             _appStateService.GetSessionAsync<string>(Arg.Any<string>()).Returns((string?)null);
 

@@ -26,6 +26,12 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<ProjectDto>>(projects);
         }
 
+        public async Task<IEnumerable<ProjectDto>> GetAllProjectsUnfilteredAsync()
+        {
+            var projects = await _projectRepository.GetAllProjectsUnfilteredAsync();
+            return _mapper.Map<IEnumerable<ProjectDto>>(projects);
+        }
+
         public async Task<IEnumerable<ProjectDto>> GetAllPactProjectsAsync()
         {
             var projects = await _projectRepository.GetAllPactProjectsAsync();

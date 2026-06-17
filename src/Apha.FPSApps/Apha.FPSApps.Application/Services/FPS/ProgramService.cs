@@ -20,6 +20,11 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsApiClient.FpsProgram.GetAllProgramsAsync();
         }
 
+        public async Task<ApiResponseDto<IEnumerable<ProgramDto>>> GetAllProgramsUnfilteredAsync()
+        {
+            return await _fpsApiClient.FpsProgram.GetAllProgramsUnfilteredAsync();
+        }
+
         public async Task<ApiResponseDto<List<ProgramDto>>> GetAllProgramsAsync(QueryParameters<string> query)
         {
             return await _fpsApiClient.FpsProgram.GetAllProgramsAsync(query);

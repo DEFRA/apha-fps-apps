@@ -128,6 +128,86 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
         #endregion
 
+        #region GetAllProjectsUnfilteredAsync
+
+        [Fact]
+        public async Task GetAllProjectsUnfilteredAsync_WithValidData_ReturnsMappedDtoList()
+        {
+            // Arrange
+            var projectEntities = new List<Project>
+            {
+                new() { ParentProject = "PROJ001", ProjectTitle = "FMD Survey", ProjectStatus = "Active", Disease = "FMD", Contract = "CON001", Customer = "DEFRA", Program = "P001", IncomeAccountCode = "IAC01" },
+                new() { ParentProject = "PROJ002", ProjectTitle = "TB Eradication", ProjectStatus = "Active", Disease = "TB", Contract = "CON002", Customer = "APHA", Program = "P002", IncomeAccountCode = "IAC02" }
+            };
+
+            var expectedDtos = new List<ProjectDto>
+            {
+                new() { ParentProject = "PROJ001", ProjectTitle = "FMD Survey" },
+                new() { ParentProject = "PROJ002", ProjectTitle = "TB Eradication" }
+            };
+
+            _mockRepository.GetAllProjectsUnfilteredAsync()
+                .Returns(Task.FromResult<IEnumerable<Project>>(projectEntities));
+
+            _mockMapper.Map<IEnumerable<ProjectDto>>(projectEntities)
+                .Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetAllProjectsUnfilteredAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(2);
+            result.First().ParentProject.Should().Be("PROJ001");
+
+            await _mockRepository.Received(1).GetAllProjectsUnfilteredAsync();
+            _mockMapper.Received(1).Map<IEnumerable<ProjectDto>>(projectEntities);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsUnfilteredAsync_WithEmptyList_ReturnsEmptyDtoList()
+        {
+            // Arrange
+            var emptyEntities = new List<Project>();
+            var emptyDtos = new List<ProjectDto>();
+
+            _mockRepository.GetAllProjectsUnfilteredAsync()
+                .Returns(Task.FromResult<IEnumerable<Project>>(emptyEntities));
+
+            _mockMapper.Map<IEnumerable<ProjectDto>>(emptyEntities)
+                .Returns(emptyDtos);
+
+            // Act
+            var result = await _sut.GetAllProjectsUnfilteredAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetAllProjectsUnfilteredAsync();
+            _mockMapper.Received(1).Map<IEnumerable<ProjectDto>>(emptyEntities);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsUnfilteredAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetAllProjectsUnfilteredAsync()
+                .Returns(Task.FromException<IEnumerable<Project>>(expectedException));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetAllProjectsUnfilteredAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetAllProjectsUnfilteredAsync();
+        }
+
+        #endregion
+
         #region GetProjectByIdAsync
 
         [Fact]

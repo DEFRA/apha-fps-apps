@@ -35,6 +35,19 @@ namespace Apha.FPS.DataAccess.Repositories
                 }).ToListAsync();
         }
 
+        public async Task<IEnumerable<Program>> GetAllProgramsUnfilteredAsync()
+        {
+            return await _dbContext.Programs
+                .Select(p => new Program
+                {
+                    ProgramNo = p.ProgramNo,
+                    ProgramName = p.ProgramName,
+                    Directorate = p.Directorate,
+                    Target = p.Target,
+                    Manager = p.Manager
+                }).ToListAsync();
+        }
+
         public async Task<PagedData<Program>> GetAllProgramsAsync(PaginationParameters<string> query)
         {
 

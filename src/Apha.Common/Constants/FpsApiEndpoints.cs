@@ -66,6 +66,7 @@ namespace Apha.Common.Constants
 
         // Program
         public const string GetAllPrograms = "api/v1/program";
+        public const string GetAllProgramsUnfiltered = "api/v1/program/all";
         public const string GetPagedPrograms = "api/v1/program/paged";
         public const string GetProgramById = "api/v1/program/{0}";
         public const string CreateProgram = "api/v1/program";
@@ -74,6 +75,7 @@ namespace Apha.Common.Constants
 
         // Project
         public const string GetAllProjects = "api/v1/project";
+        public const string GetAllProjectsUnfiltered = "api/v1/project/all";
         public const string GetAllProjectsPaged = "api/v1/project/paged/all";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";

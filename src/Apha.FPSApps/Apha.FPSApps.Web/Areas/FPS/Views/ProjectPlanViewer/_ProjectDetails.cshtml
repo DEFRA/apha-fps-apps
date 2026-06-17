@@ -254,7 +254,7 @@
                                     </div>
                                 </div>
 
-                                <div class="govuk-grid-column-one-half mt-3">
+                                <div class="govuk-grid-column-one-half">
                                     <div class="container-fluid">
                                         <div class="row">
                                             <div class="col-lg-12 p-0 mt-2">
@@ -310,7 +310,7 @@
                                     </div>
                                 </div>
 
-                                <div class="govuk-grid-column-one-half mt-3">
+                                <div class="govuk-grid-column-one-half">
                                     <div class="container-fluid">
                                         <div class="row">
                                             <div class="col-lg-12 p-0 mt-2">
@@ -364,7 +364,7 @@
                                     </div>
                                 </div>
 
-                                <div class="govuk-grid-column-one-half mt-3">
+                                <div class="govuk-grid-column-one-half">
                                     <div class="container-fluid">
                                         <div class="row">
                                             <div class="col-lg-12 p-0 mt-2">
@@ -418,7 +418,7 @@
                                     </div>
                                 </div>
 
-                                <div class="govuk-grid-column-one-half mt-3">
+                                <div class="govuk-grid-column-one-half">
                                     <div class="container-fluid">
                                         <div class="row">
                                             <div class="col-lg-12 p-0 mt-2">
@@ -507,7 +507,7 @@
             return { parentProject: getProjectCode() };
         };
         window.getactualAnimalCostGridExtraFilters = function () {
-            return { parentProject: getProjectCode() };
+            return { parentProject: getProjectCode(), animalOnly: true };
         };
         window.getplanSummaryAdditionalGridExtraFilters = function () {
             return { parentProject: getProjectCode() };
@@ -516,7 +516,7 @@
             return { parentProject: getProjectCode() };
         };
         window.getactualAdditionalCostGridExtraFilters = function () {
-            return { parentProject: getProjectCode() };
+            return { parentProject: getProjectCode(), animalOnly: false };
         };
 
         function setVal(id, value) {

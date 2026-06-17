@@ -9,6 +9,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<PagedData<ProjectProfitabilityView>> GetProjectProfitabilityAsync(PaginationParameters<string> query, string programNo, string workTypeFilter);
         Task<PagedData<ProjectProfitabilityView>> GetProjectGroupProfitabilityAsync(PaginationParameters<string> query, string projectGroup, string workTypeFilter);
         Task<IEnumerable<ProjectView>> GetAllProjectsAsync();
+        Task<IEnumerable<Project>> GetAllProjectsUnfilteredAsync();
         Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync();
         Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query);
         Task<PagedData<PactProjectView>> GetPagedPactProjectsAsync(PaginationParameters<string> query);

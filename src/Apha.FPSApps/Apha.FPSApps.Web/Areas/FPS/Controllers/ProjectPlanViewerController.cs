@@ -64,7 +64,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var programList = await GetProgramListAsync();
             var projectGroupList = await GetProjectGroupListAsync();
-            var projectList = await GetProjectListAsync(program, projectGroup);
+            var projectList = await GetProjectListAsync();
 
             if (string.IsNullOrWhiteSpace(projectCode))
                 projectCode = await _appStateService.GetSessionAsync<string>(SessionKeys.SelectedProjectCode);
@@ -424,7 +424,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task<List<SelectListItem>> GetProgramListAsync()
         {
-            var result = await _programService.GetAllProgramsAsync();
+            var result = await _programService.GetAllProgramsUnfilteredAsync();
             if (result.Success && result.Data != null)
             {
                 return result.Data
@@ -448,23 +448,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return new List<SelectListItem>();
         }
 
-        private async Task<List<SelectListItem>> GetProjectListAsync(string? programme = null, string? projectGroup = null)
+        private async Task<List<SelectListItem>> GetProjectListAsync()
         {
-            ApiResponseDto<List<ProjectDto>>? result = null;
-            var query = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
-
-            if (!string.IsNullOrWhiteSpace(programme))
-            {
-                result = await _projectService.GetProjectsByProgramAsync(query, programme);
-            }
-            else if (!string.IsNullOrWhiteSpace(projectGroup))
-            {
-                result = await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
-            }
-            else
-            {
-                result = await _projectService.GetAllProjectsAsync();
-            }
+            var result = await _projectService.GetAllProjectsUnfilteredAsync();
 
             if (result != null && result.Success && result.Data != null)
             {

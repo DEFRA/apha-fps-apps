@@ -41,6 +41,17 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<List<ProgramRes>>(programDto));
         }
 
+        [HttpGet("all")]
+        public async Task<ActionResult> GetAllProgramsUnfilteredAsync()
+        {
+            var programDto = await _programService.GetAllProgramsUnfilteredAsync();
+            if (programDto == null)
+            {
+                throw new ArgumentException("Program records not found");
+            }
+            return Ok(_mapper.Map<List<ProgramRes>>(programDto));
+        }
+
         [HttpGet("paged")]
         public async Task<ActionResult> GetAllProgramsPagedAsync(
             [FromQuery] QueryParameters<string> query)

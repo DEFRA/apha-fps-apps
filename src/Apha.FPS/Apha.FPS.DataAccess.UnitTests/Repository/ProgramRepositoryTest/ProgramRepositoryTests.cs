@@ -168,6 +168,62 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
 
         #endregion
 
+        #region GetAllProgramsUnfilteredAsync
+
+        [Fact]
+        public async Task GetAllProgramsUnfilteredAsync_ReturnsAllPrograms_WithoutEmailFilter()
+        {
+            // Arrange — Programs table has records; no user email filtering expected
+            var programs = new List<Core.Entities.Program>
+            {
+                new() { ProgramNo = "P001", ProgramName = "Alpha" },
+                new() { ProgramNo = "P002", ProgramName = "Beta" }
+            };
+            var repo = CreateRepository(programs, [], []);
+
+            // Act
+            var result = (await repo.GetAllProgramsUnfilteredAsync()).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Equal("P001", result[0].ProgramNo);
+            Assert.Equal("P002", result[1].ProgramNo);
+        }
+
+        [Fact]
+        public async Task GetAllProgramsUnfilteredAsync_ReturnsEmptyList_WhenNoProgramsExist()
+        {
+            // Arrange
+            var repo = CreateRepository([], [], []);
+
+            // Act
+            var result = (await repo.GetAllProgramsUnfilteredAsync()).ToList();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetAllProgramsUnfilteredAsync_ReturnsAllPrograms_RegardlessOfUserEmail()
+        {
+            // Arrange — programs exist but current user email does not matter for unfiltered
+            var programs = new List<Core.Entities.Program>
+            {
+                new() { ProgramNo = "P001", ProgramName = "Alpha" },
+                new() { ProgramNo = "P002", ProgramName = "Beta" },
+                new() { ProgramNo = "P003", ProgramName = "Gamma" }
+            };
+            var repo = CreateRepository(programs, [], [], userEmailId: "differentuser@example.com");
+
+            // Act
+            var result = (await repo.GetAllProgramsUnfilteredAsync()).ToList();
+
+            // Assert — all programs returned regardless of the user context
+            Assert.Equal(3, result.Count);
+        }
+
+        #endregion
+
         #region GetProgramByIdAsync
 
         [Fact]

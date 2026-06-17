@@ -88,6 +88,72 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProgramServiceTest
 
         #endregion
 
+        #region GetAllProgramsUnfilteredAsync Tests
+
+        [Fact]
+        public async Task GetAllProgramsUnfilteredAsync_WithSuccessResponse_ReturnsProgramList()
+        {
+            // Arrange
+            var programs = new List<ProgramDto>
+            {
+                new ProgramDto { ProgramNo = "P001", ProgramName = "Program One" },
+                new ProgramDto { ProgramNo = "P002", ProgramName = "Program Two" }
+            };
+            var expectedResponse = ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs);
+
+            _fpsProgramApiClient.GetAllProgramsUnfilteredAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _programService.GetAllProgramsUnfilteredAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count());
+            await _fpsProgramApiClient.Received(1).GetAllProgramsUnfilteredAsync();
+        }
+
+        [Fact]
+        public async Task GetAllProgramsUnfilteredAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(new List<ProgramDto>());
+
+            _fpsProgramApiClient.GetAllProgramsUnfilteredAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _programService.GetAllProgramsUnfilteredAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllProgramsUnfilteredAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsProgramApiClient.GetAllProgramsUnfilteredAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _programService.GetAllProgramsUnfilteredAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        #endregion
+
         #region GetAllProgramsAsync (with QueryParameters) Tests
 
         [Fact]

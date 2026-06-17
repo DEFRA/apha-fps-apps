@@ -25,6 +25,12 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<ProgramDto>>(programs);
         }
 
+        public async Task<IEnumerable<ProgramDto>> GetAllProgramsUnfilteredAsync()
+        {
+            var programs = await _programRepository.GetAllProgramsUnfilteredAsync();
+            return _mapper.Map<IEnumerable<ProgramDto>>(programs);
+        }
+
         public async Task<PaginatedResult<ProgramDto>> GetAllProgramsAsync(QueryParameters<string> query)
         {
             var filter = _mapper.Map<PaginationParameters<string>>(query);

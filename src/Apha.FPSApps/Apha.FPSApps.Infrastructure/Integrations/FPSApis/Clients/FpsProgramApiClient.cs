@@ -37,6 +37,20 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         }
 
+        public async Task<ApiResponseDto<IEnumerable<ProgramDto>>> GetAllProgramsUnfilteredAsync()
+        {
+            var response = await _http.GetAsync<IEnumerable<ProgramDto>>(FpsApiEndpoints.GetAllProgramsUnfiltered);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<IEnumerable<ProgramDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<ProgramDto>>>(response);
+                return ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
         public async Task<ApiResponseDto<List<ProgramDto>>> GetAllProgramsAsync(QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedPrograms, query);
