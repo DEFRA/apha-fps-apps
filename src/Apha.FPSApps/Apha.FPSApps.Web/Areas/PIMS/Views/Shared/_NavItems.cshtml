@@ -8,32 +8,33 @@
             </div>
 
             <!-- Print Reports -->
-            <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="pims-print-reports" allow-edit="true">
-                    <div class="align-menu-text"><span>Print Reports</span></div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow" width="12" /></span>
-                </button>
-                <div class="dropdown-menu" id="pims-print-reports">
-                    <a class="dropdown-item" href="#">Project Details Report</a>
-                </div>
-            </div>
 
+            <div class="nav-item dropdown">
+                <a class="nav-button" href="#">
+                    <div class="align-menu-text"><span>Print Reports</span></div>
+                </a>
+            </div>
+            
             <!-- Milestones -->
             <div class="nav-item dropdown">
                 <a class="nav-button" asp-area="PIMS" asp-controller="Milestone" asp-action="Index">
                     <div class="align-menu-text"><span>Milestone</span></div>
                 </a>
             </div>
-
+                <!-- PMD Milestones -->
+            <div class="nav-item dropdown">
+                <a class="nav-button" href="#">
+                    <div class="align-menu-text"><span>PMD Milestone</span></div>
+                </a>
+            </div>
             <!-- Maintenance -->
             <div class="nav-item dropdown">
-                <button class="nav-button dropdown-toggle" data-dropdown="pims-maintenance" allow-edit="true">
+                <a class="nav-button" href="#">
                     <div class="align-menu-text"><span>Maintenance</span></div>
-                    <span class="arrow"><img src="~/images/arrow-down.svg" alt="down arrow" width="12" /></span>
-                </button>
-                <div class="dropdown-menu" id="pims-maintenance">
-                    <a class="dropdown-item" href="#">Maintenance List</a>
-                </div>
+                </a>
             </div>
+
+           
+            
 
          

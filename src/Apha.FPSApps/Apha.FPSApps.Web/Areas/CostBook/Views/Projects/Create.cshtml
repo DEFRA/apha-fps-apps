@@ -212,7 +212,7 @@
                                     <input asp-for="SubmittedByFName" class="govuk-input width-200 margin_left_5">
                                     <span asp-validation-for="SubmittedByFName" class="govuk-error-message"></span>
                                 </div>
-                                <label asp-for="PreparedBy" class="govuk-label label_width mb-0 pt-1">Prepared by:</label>
+                                <label asp-for="PreparedBy" class="govuk-label label_width mb-0 pt-1">Prepared by:<span class="sup_color_red">*</span></label>
                                 <div>
                                     <select asp-for="PreparedBy" asp-items="Model.AvailableStaff" class="govuk-select inline-select"><option value="">Select PreparedBy </option></select>
                                     <span asp-validation-for="PreparedBy" class="govuk-error-message"></span>
