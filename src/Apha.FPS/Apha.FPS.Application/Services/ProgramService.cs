@@ -25,9 +25,9 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<ProgramDto>>(programs);
         }
 
-        public async Task<IEnumerable<ProgramDto>> GetAllProgramsUnfilteredAsync()
+        public async Task<IEnumerable<ProgramDto>> GetAllProgramsForAllUsersAsync()
         {
-            var programs = await _programRepository.GetAllProgramsUnfilteredAsync();
+            var programs = await _programRepository.GetAllProgramsForAllUsers();
             return _mapper.Map<IEnumerable<ProgramDto>>(programs);
         }
 

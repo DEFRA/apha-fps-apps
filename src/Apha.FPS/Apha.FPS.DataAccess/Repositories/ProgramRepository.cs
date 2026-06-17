@@ -35,7 +35,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 }).ToListAsync();
         }
 
-        public async Task<IEnumerable<Program>> GetAllProgramsUnfilteredAsync()
+        public async Task<IEnumerable<Program>> GetAllProgramsForAllUsers()
         {
             return await _dbContext.Programs
                 .Select(p => new Program

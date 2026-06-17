@@ -88,10 +88,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProgramServiceTest
 
         #endregion
 
-        #region GetAllProgramsUnfilteredAsync Tests
+        #region GetAllProgramsForAllUsers Tests
 
         [Fact]
-        public async Task GetAllProgramsUnfilteredAsync_WithSuccessResponse_ReturnsProgramList()
+        public async Task GetAllProgramsForAllUsers_WithSuccessResponse_ReturnsProgramList()
         {
             // Arrange
             var programs = new List<ProgramDto>
@@ -101,28 +101,28 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProgramServiceTest
             };
             var expectedResponse = ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs);
 
-            _fpsProgramApiClient.GetAllProgramsUnfilteredAsync().Returns(expectedResponse);
+            _fpsProgramApiClient.GetAllProgramsForAllUsers().Returns(expectedResponse);
 
             // Act
-            var result = await _programService.GetAllProgramsUnfilteredAsync();
+            var result = await _programService.GetAllProgramsForAllUsers();
 
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count());
-            await _fpsProgramApiClient.Received(1).GetAllProgramsUnfilteredAsync();
+            await _fpsProgramApiClient.Received(1).GetAllProgramsForAllUsers();
         }
 
         [Fact]
-        public async Task GetAllProgramsUnfilteredAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        public async Task GetAllProgramsForAllUsers_WithEmptyResult_ReturnsSuccessWithEmptyList()
         {
             // Arrange
             var expectedResponse = ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(new List<ProgramDto>());
 
-            _fpsProgramApiClient.GetAllProgramsUnfilteredAsync().Returns(expectedResponse);
+            _fpsProgramApiClient.GetAllProgramsForAllUsers().Returns(expectedResponse);
 
             // Act
-            var result = await _programService.GetAllProgramsUnfilteredAsync();
+            var result = await _programService.GetAllProgramsForAllUsers();
 
             // Assert
             Assert.NotNull(result);
@@ -131,7 +131,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProgramServiceTest
         }
 
         [Fact]
-        public async Task GetAllProgramsUnfilteredAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task GetAllProgramsForAllUsers_WhenApiFails_ReturnsFailureResponse()
         {
             // Arrange
             var errors = new List<ApiErrorDto>
@@ -140,10 +140,10 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProgramServiceTest
             };
             var expectedResponse = ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(errors, new ApiMetaDto());
 
-            _fpsProgramApiClient.GetAllProgramsUnfilteredAsync().Returns(expectedResponse);
+            _fpsProgramApiClient.GetAllProgramsForAllUsers().Returns(expectedResponse);
 
             // Act
-            var result = await _programService.GetAllProgramsUnfilteredAsync();
+            var result = await _programService.GetAllProgramsForAllUsers();
 
             // Assert
             Assert.NotNull(result);

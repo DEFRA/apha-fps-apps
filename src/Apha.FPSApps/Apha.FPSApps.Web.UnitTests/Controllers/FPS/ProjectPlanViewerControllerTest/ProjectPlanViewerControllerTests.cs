@@ -110,7 +110,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         private void SetupDefaultServices(string projectCode = "AH0001")
         {
             // Programs
-            _programService.GetAllProgramsUnfilteredAsync()
+            _programService.GetAllProgramsForAllUsers()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(
                     new List<ProgramDto> { new() { ProgramNo = "P01" } }));
 
@@ -505,7 +505,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         [Fact]
         public async Task Index_WhenProgramServiceReturnsEmpty_ProgramListIsEmpty()
         {
-            _programService.GetAllProgramsUnfilteredAsync()
+            _programService.GetAllProgramsForAllUsers()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(new List<ProgramDto>()));
             _projectService.GetAllProjectGroupsAsync()
                 .Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(new List<ProjectGroupDto>()));
@@ -524,7 +524,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectPlanViewerController
         public async Task Index_WhenProgramServiceFails_ProgramListIsEmpty()
         {
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "500" } };
-            _programService.GetAllProgramsUnfilteredAsync()
+            _programService.GetAllProgramsForAllUsers()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.FailureResponse(errors, new ApiMetaDto()));
             _projectService.GetAllProjectGroupsAsync()
                 .Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(new List<ProjectGroupDto>()));

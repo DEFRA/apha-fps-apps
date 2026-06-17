@@ -168,10 +168,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
 
         #endregion
 
-        #region GetAllProgramsUnfilteredAsync
+        #region GetAllProgramsForAllUsers
 
         [Fact]
-        public async Task GetAllProgramsUnfilteredAsync_ReturnsAllPrograms_WithoutEmailFilter()
+        public async Task GetAllProgramsForAllUsers_ReturnsAllPrograms_WithoutEmailFilter()
         {
             // Arrange — Programs table has records; no user email filtering expected
             var programs = new List<Core.Entities.Program>
@@ -182,7 +182,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             var repo = CreateRepository(programs, [], []);
 
             // Act
-            var result = (await repo.GetAllProgramsUnfilteredAsync()).ToList();
+            var result = (await repo.GetAllProgramsForAllUsers()).ToList();
 
             // Assert
             Assert.Equal(2, result.Count);
@@ -191,20 +191,20 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllProgramsUnfilteredAsync_ReturnsEmptyList_WhenNoProgramsExist()
+        public async Task GetAllProgramsForAllUsers_ReturnsEmptyList_WhenNoProgramsExist()
         {
             // Arrange
             var repo = CreateRepository([], [], []);
 
             // Act
-            var result = (await repo.GetAllProgramsUnfilteredAsync()).ToList();
+            var result = (await repo.GetAllProgramsForAllUsers()).ToList();
 
             // Assert
             Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetAllProgramsUnfilteredAsync_ReturnsAllPrograms_RegardlessOfUserEmail()
+        public async Task GetAllProgramsForAllUsers_ReturnsAllPrograms_RegardlessOfUserEmail()
         {
             // Arrange — programs exist but current user email does not matter for unfiltered
             var programs = new List<Core.Entities.Program>
@@ -216,7 +216,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProgramRepositoryTest
             var repo = CreateRepository(programs, [], [], userEmailId: "differentuser@example.com");
 
             // Act
-            var result = (await repo.GetAllProgramsUnfilteredAsync()).ToList();
+            var result = (await repo.GetAllProgramsForAllUsers()).ToList();
 
             // Assert — all programs returned regardless of the user context
             Assert.Equal(3, result.Count);

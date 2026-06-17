@@ -42,9 +42,9 @@ namespace Apha.FPS.Api.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<ActionResult> GetAllProgramsUnfilteredAsync()
+        public async Task<ActionResult> GetAllProgramsForAllUsersAsync()
         {
-            var programDto = await _programService.GetAllProgramsUnfilteredAsync();
+            var programDto = await _programService.GetAllProgramsForAllUsersAsync();
             if (programDto == null)
             {
                 throw new ArgumentException("Program records not found");

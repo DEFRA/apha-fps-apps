@@ -53,29 +53,29 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
 
         #endregion
 
-        #region GetAllProgramsUnfilteredAsync
+        #region GetAllProgramsForAllUsersAsync
 
         [Fact]
-        public async Task GetAllProgramsUnfilteredAsync_HappyPath_ReturnsOk()
+        public async Task GetAllProgramsForAllUsersAsync_HappyPath_ReturnsOk()
         {
             var serviceResult = new List<ProgramDto> { new ProgramDto { ProgramNo = "P1" } };
             var mappedResult = new List<ProgramRes> { new ProgramRes { ProgramNo = "P1" } };
 
-            _serviceMock.GetAllProgramsUnfilteredAsync().Returns(serviceResult);
+            _serviceMock.GetAllProgramsForAllUsersAsync().Returns(serviceResult);
             _mapperMock.Map<List<ProgramRes>>(serviceResult).Returns(mappedResult);
 
-            var result = await _controller.GetAllProgramsUnfilteredAsync();
+            var result = await _controller.GetAllProgramsForAllUsersAsync();
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mappedResult, okResult.Value);
         }
 
         [Fact]
-        public async Task GetAllProgramsUnfilteredAsync_NullResult_ThrowsArgumentException()
+        public async Task GetAllProgramsForAllUsersAsync_NullResult_ThrowsArgumentException()
         {
-            _serviceMock.GetAllProgramsUnfilteredAsync().Returns((List<ProgramDto>)null!);
+            _serviceMock.GetAllProgramsForAllUsersAsync().Returns((List<ProgramDto>)null!);
 
-            await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllProgramsUnfilteredAsync());
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllProgramsForAllUsersAsync());
         }
 
         #endregion
