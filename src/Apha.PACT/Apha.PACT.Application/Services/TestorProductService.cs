@@ -234,5 +234,27 @@ namespace Apha.PACT.Application.Services
                 throw new ArgumentException($"Validation failed: {string.Join(" ", validationErrors)}");
             }
         }
-    }
+
+        // ── TestPriceCheck (frmTestPriceCheck — qryTestPriceZero) ──────────────────────────────
+
+        public async Task<PaginatedResult<TestPriceCheckDto>> GetTestPriceCheckPagedAsync(
+            QueryParameters<string> query,
+            string priceFilter,
+            string? owner)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetTestPriceCheckPagedAsync(parameters, priceFilter, owner);
+            return _mapper.Map<PaginatedResult<TestPriceCheckDto>>(pagedData);
+        }
+
+        public async Task<TestPriceCheckDto?> GetTestPriceCheckByKeyAsync(string testCode, string jobCode)
+        {
+            var entity = await _repository.GetTestPriceCheckByKeyAsync(testCode, jobCode);
+            return entity == null ? null : _mapper.Map<TestPriceCheckDto>(entity);
+        }
+
+        public async Task<bool> UpdateTestPriceCheckAsync(string testCode, string jobCode, TestPriceCheckDto dto)
+            => await _repository.UpdateTestPriceCheckAsync(testCode, jobCode, dto.IsDefraProject, dto.TestPrice, dto.DefraUnitPrice);
+
+        }
 }

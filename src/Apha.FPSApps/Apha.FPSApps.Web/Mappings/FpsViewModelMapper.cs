@@ -14,6 +14,9 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap(typeof(PaginationFilter<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap<StaffJobItemViewModel, StaffJobViewDto>().ReverseMap();
             CreateMap<PaginationModel, PaginationDto>().ReverseMap();
+            CreateMap<TestPriceCheckDto, TestPriceCheckItem>()
+                .ForMember(d => d.IsDefraProjectList, o => o.Ignore());
+            CreateMap<TestPriceCheckItem, TestPriceCheckDto>();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();

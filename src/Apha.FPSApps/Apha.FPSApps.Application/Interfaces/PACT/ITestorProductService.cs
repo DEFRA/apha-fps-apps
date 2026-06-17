@@ -13,6 +13,9 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
         Task<ApiResponseDto<TestorProductDto>> UpdateTestOrProductAsync(string itemCode, TestorProductDto dto);
         Task<ApiResponseDto<bool>> DeleteTestOrProductAsync(string itemCode);
         Task<ApiResponseDto<List<string>>> GetOwnersAsync();
+        Task<ApiResponseDto<List<TestPriceCheckDto>>> GetTestPriceCheckPagedAsync(QueryParameters<string> query, string priceFilter, string? owner);
+        Task<ApiResponseDto<TestPriceCheckDto>> GetTestPriceCheckByKeyAsync(string testCode, string jobCode);
+        Task<ApiResponseDto<bool>> UpdateTestPriceCheckByKeyAsync(string testCode, string jobCode, TestPriceCheckDto dto);
     }
 }
 

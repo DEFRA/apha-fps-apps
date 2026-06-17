@@ -8,6 +8,7 @@ using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 {
@@ -105,6 +106,49 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var dto = _mapper.Map<ApiResponseDto<List<string>>>(response);
             return ApiResponseDto<List<string>>.FailureResponse(dto.Errors, dto.Meta);
 
+        }
+
+        public async Task<ApiResponseDto<List<TestPriceCheckDto>>> GetTestPriceCheckPagedAsync(
+            QueryParameters<string> query, string priceFilter, string? owner)
+        {
+            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetTestPriceCheckPaged, query);
+            url = QueryHelpers.AddQueryString(url, "priceFilter", priceFilter);
+            if (!string.IsNullOrWhiteSpace(owner))
+                url = QueryHelpers.AddQueryString(url, "owner", owner);
+
+            var response = await _http.GetAsync<List<TestPriceCheckRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<TestPriceCheckDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<TestPriceCheckDto>>>(response);
+            return ApiResponseDto<List<TestPriceCheckDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<TestPriceCheckDto>> GetTestPriceCheckByKeyAsync(string testCode, string jobCode)
+        {
+            var url = string.Format(PactApiEndpoints.GetTestPriceCheckByKey,
+                Uri.EscapeDataString(testCode), Uri.EscapeDataString(jobCode));
+
+            var response = await _http.GetAsync<TestPriceCheckRes>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<TestPriceCheckDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<TestPriceCheckDto>>(response);
+            return ApiResponseDto<TestPriceCheckDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<bool>> UpdateTestPriceCheckByKeyAsync(string testCode, string jobCode, TestPriceCheckDto dto)
+        {
+            var url = string.Format(PactApiEndpoints.UpdateTestPriceCheckByKey,
+                Uri.EscapeDataString(testCode), Uri.EscapeDataString(jobCode));
+
+            var request = _mapper.Map<TestPriceCheckReq>(dto);
+            var response = await _http.PutAsync<TestPriceCheckReq, bool>(url, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
+
+            var result = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(result.Errors, result.Meta);
         }
     }
 }

@@ -63,7 +63,7 @@ namespace Apha.PACT.DataAccess.Repository
 
         public async Task<bool> DeleteTestOrProductAsync(string itemCode)
         {
-            var entity = await _context.TestorProducts  
+            var entity = await _context.TestorProducts
                 .FirstOrDefaultAsync(t => t.ItemCode == itemCode && t.FpsYear == _fpsRequestContext.FpsYear);
             if (entity == null) return false;
             _context.TestorProducts.Remove(entity);
@@ -106,11 +106,11 @@ namespace Apha.PACT.DataAccess.Repository
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            query = ApplyILikeFilter(dict, "ItemCode",        query, (q, v) => q.Where(x => EF.Functions.ILike(x.ItemCode, v)));
+            query = ApplyILikeFilter(dict, "ItemCode", query, (q, v) => q.Where(x => EF.Functions.ILike(x.ItemCode, v)));
             query = ApplyILikeFilter(dict, "ItemDescription", query, (q, v) => q.Where(x => x.ItemDescription != null && EF.Functions.ILike(x.ItemDescription, v)));
-            query = ApplyILikeFilter(dict, "ShortDescription",query, (q, v) => q.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, v)));
-            query = ApplyILikeFilter(dict, "Owner",           query, (q, v) => q.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, v)));
-            query = ApplyILikeFilter(dict, "TestManager",     query, (q, v) => q.Where(x => x.TestManager != null && EF.Functions.ILike(x.TestManager, v)));
+            query = ApplyILikeFilter(dict, "ShortDescription", query, (q, v) => q.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, v)));
+            query = ApplyILikeFilter(dict, "Owner", query, (q, v) => q.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, v)));
+            query = ApplyILikeFilter(dict, "TestManager", query, (q, v) => q.Where(x => x.TestManager != null && EF.Functions.ILike(x.TestManager, v)));
 
             return query;
         }
@@ -130,13 +130,13 @@ namespace Apha.PACT.DataAccess.Repository
         {
             var sortMap = new Dictionary<string, Expression<Func<TestorProduct, object?>>>
             {
-                ["itemcode"]        = e => e.ItemCode,
+                ["itemcode"] = e => e.ItemCode,
                 ["itemdescription"] = e => e.ItemDescription,
-                ["shortdescription"]= e => e.ShortDescription,
-                ["owner"]           = e => e.Owner,
-                ["testmanager"]     = e => e.TestManager,
-                ["unitpricevla"]    = e => e.UnitPriceVla,
-                ["defraunitprice"]  = e => e.DefraUnitPrice,
+                ["shortdescription"] = e => e.ShortDescription,
+                ["owner"] = e => e.Owner,
+                ["testmanager"] = e => e.TestManager,
+                ["unitpricevla"] = e => e.UnitPriceVla,
+                ["defraunitprice"] = e => e.DefraUnitPrice,
             };
 
             var key = sortBy?.ToLower() ?? string.Empty;
@@ -145,5 +145,151 @@ namespace Apha.PACT.DataAccess.Repository
 
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
+
+        // ── TestPriceCheck (frmTestPriceCheck — qryTestPriceZero) ──────────────────────────────
+
+        public async Task<PagedData<TestPriceCheckView>> GetTestPriceCheckPagedAsync(
+            PaginationParameters<string> query,
+            string priceFilter,
+            string? owner)
+        {
+            // Step 1 — IQueryable: build base join query.
+            var baseQuery = BuildTestPriceCheckBaseQuery();
+
+            baseQuery = ApplyTestPriceCheckFilter(baseQuery, query.Filter);
+
+            // Step 3 — SQL-side owner dropdown filter (exact match)
+            if (!string.IsNullOrWhiteSpace(owner))
+                baseQuery = baseQuery.Where(x => x.Owner == owner);
+
+            // Step 4 — SQL-side price filter
+            // NormalPrice expression: CASE WHEN IsDefraProject != 0 THEN DefraUnitPrice ELSE UnitPriceVla END
+            baseQuery = priceFilter switch
+            {
+                "zero" => baseQuery.Where(x => x.TestPrice == 0m),
+                "non-standard" => baseQuery.Where(x =>
+                    x.TestPrice != 0m &&
+                    x.TestPrice != (x.IsDefraProject != 0 ? (decimal?)x.DefraUnitPrice : x.UnitPriceVla)),
+                _ => baseQuery.Where(x =>
+                    x.TestPrice == 0m ||
+                    x.TestPrice != (x.IsDefraProject != 0 ? (decimal?)x.DefraUnitPrice : x.UnitPriceVla))
+            };
+
+            // Step 5 — SQL-side sorting
+            var sorted = ApplyTestPriceCheckSorting(baseQuery, query.SortBy, query.Descending);
+
+            // Step 6 — SQL-side paging (COUNT + LIMIT/OFFSET)
+            var paged = await ApplyPaging(sorted, query.Page, query.PageSize);
+
+            // Step 7 — Compute derived fields on paged subset only
+            foreach (var row in paged.Data)
+            {
+                row.NormalPrice = row.IsDefraProject != 0 ? (decimal?)row.DefraUnitPrice : row.UnitPriceVla;
+                row.IsZeroPrice = row.TestPrice == 0m;
+                row.IsNotStandard = row.TestPrice != row.NormalPrice;
+            }
+
+            return paged;
+        }
+
+        public async Task<TestPriceCheckView?> GetTestPriceCheckByKeyAsync(string testCode, string jobCode)
+        {
+            var row = await BuildTestPriceCheckBaseQuery()
+                .FirstOrDefaultAsync(x => x.TestCode == testCode && x.JobCode == jobCode);
+
+            if (row == null) return null;
+
+            row.NormalPrice   = row.IsDefraProject != 0 ? (decimal?)row.DefraUnitPrice : row.UnitPriceVla;
+            row.IsZeroPrice   = row.TestPrice == 0m;
+            row.IsNotStandard = row.TestPrice != row.NormalPrice;
+            return row;
+        }
+
+        public async Task<bool> UpdateTestPriceCheckAsync(
+            string testCode, string jobCode, short isDefraProject, decimal? testPrice, decimal? defraUnitPrice)
+        {
+            await _context.Projects
+                .Where(p => p.ParentProject == jobCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsDefraProject, isDefraProject));
+
+            await _context.TestRequirements
+                .Where(r => r.TestCode == testCode && r.Buyer == jobCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(r => r.UnitPrice, testPrice));
+
+            await _context.TestorProducts
+                .Where(tp => tp.ItemCode == testCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(tp => tp.DefraUnitPrice, defraUnitPrice));
+
+            return true;
+        }
+
+        private IQueryable<TestPriceCheckView> BuildTestPriceCheckBaseQuery()
+        {
+            return (from tr in _context.TestRequirements
+                    join p  in _context.ProjectViews   on tr.Buyer    equals p.ParentProject
+                    join tp in _context.TestorProducts on tr.TestCode equals tp.ItemCode
+                    where(EF.Functions.ILike(p.UserEmail!, _fpsRequestContext.UserEmailId))
+                    select new TestPriceCheckView
+                    {
+                        TestCode       = tr.TestCode,
+                        JobCode        = tr.Buyer,
+                        NoTests        = tr.NoRequired,
+                        TestPrice      = tr.UnitPrice,
+                        UnitPriceVla   = tp.UnitPriceVla,
+                        DefraUnitPrice = tp.DefraUnitPrice,
+                        Program        = p.Program,
+                        Manager        = p.Manager,
+                        Owner          = tp.Owner,
+                        IsDefraProject = p.IsDefraProject ?? 0,
+                        FpsYear        = tr.FpsYear
+                    }).Distinct().AsNoTracking();
+        }
+
+        private static IQueryable<TestPriceCheckView> ApplyTestPriceCheckSorting(
+            IQueryable<TestPriceCheckView> source, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "jobcode" => descending ? source.OrderByDescending(x => x.JobCode) : source.OrderBy(x => x.JobCode),
+                "manager" => descending ? source.OrderByDescending(x => x.Manager) : source.OrderBy(x => x.Manager),
+                "program" => descending ? source.OrderByDescending(x => x.Program) : source.OrderBy(x => x.Program),
+                "notests" => descending ? source.OrderByDescending(x => x.NoTests) : source.OrderBy(x => x.NoTests),
+                "testprice" => descending ? source.OrderByDescending(x => x.TestPrice) : source.OrderBy(x => x.TestPrice),
+                "normalprice" => descending
+                    ? source.OrderByDescending(x => x.IsDefraProject != 0 ? (decimal?)x.DefraUnitPrice : x.UnitPriceVla)
+                    : source.OrderBy(x => x.IsDefraProject != 0 ? (decimal?)x.DefraUnitPrice : x.UnitPriceVla),
+                "unitpricevla" => descending ? source.OrderByDescending(x => x.UnitPriceVla) : source.OrderBy(x => x.UnitPriceVla),
+                "defraunitprice" => descending ? source.OrderByDescending(x => x.DefraUnitPrice) : source.OrderBy(x => x.DefraUnitPrice),
+                "owner" => descending ? source.OrderByDescending(x => x.Owner) : source.OrderBy(x => x.Owner),
+                _ => descending ? source.OrderByDescending(x => x.TestCode) : source.OrderBy(x => x.TestCode),
+            };
+        }
+
+        private static IQueryable<TestPriceCheckView> ApplyTestPriceCheckFilter(
+            IQueryable<TestPriceCheckView> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("TestCode", out var tc) && tc != null)
+                query = query.Where(x => EF.Functions.ILike(x.TestCode, $"%{tc}%"));
+            if (dict.TryGetValue("JobCode", out var jc) && jc != null)
+                query = query.Where(x => EF.Functions.ILike(x.JobCode, $"%{jc}%"));
+            if (dict.TryGetValue("Owner", out var ow) && ow != null)
+                query = query.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, $"%{ow}%"));
+            if (dict.TryGetValue("Program", out var pg) && pg != null)
+                query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{pg}%"));
+            if (dict.TryGetValue("Manager", out var mg) && mg != null)
+                query = query.Where(x => x.Manager != null && EF.Functions.ILike(x.Manager, $"%{mg}%"));
+
+            return query;
+        }
+
     }
 }
