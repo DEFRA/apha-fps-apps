@@ -155,6 +155,71 @@ public sealed class JobOrchestratorTests
         Assert.Equal(requestedAtUtc, capturedCreateRecord!.RequestedAtUtc);
     }
 
+    [Fact]
+    public async Task RunAsync_WhenScheduledAndInitiatedMissing_CreatesInitiatedAndContinues()
+    {
+        // Arrange
+        var jobExecutionId = Guid.NewGuid();
+        var createdJobQueueId = Guid.NewGuid();
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns("ScheduledFallbackJob");
+
+        _execRepo.GetExecutionByJobExecutionIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<JobExecutionRecord?>(null));
+        _execRepo.CreateInitiatedRecordAsync(
+                "ScheduledFallbackJob",
+                jobExecutionId,
+                "scheduler-user",
+                Arg.Any<DateTime>(),
+                RunMode.Scheduled,
+                Arg.Any<CancellationToken>())
+            .Returns(createdJobQueueId);
+        _factory.Create("ScheduledFallbackJob").Returns(job);
+        _lockRepo.TryAcquireLockAsync("ScheduledFallbackJob", createdJobQueueId, Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+            .Returns(11);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _orchestrator.RunAsync("ScheduledFallbackJob", RunMode.Scheduled, jobExecutionId, "scheduler-user");
+
+        // Assert
+        await _execRepo.Received(1).CreateInitiatedRecordAsync(
+            "ScheduledFallbackJob",
+            jobExecutionId,
+            "scheduler-user",
+            Arg.Any<DateTime>(),
+            RunMode.Scheduled,
+            Arg.Any<CancellationToken>());
+        await job.Received(1).ExecuteAsync(Arg.Any<CancellationToken>());
+        Assert.Equal(JobStatus.Completed, result.Status);
+        Assert.Equal(createdJobQueueId, result.JobQueueId);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenManualAndInitiatedMissing_ThrowsAndDoesNotCreateInitiated()
+    {
+        // Arrange
+        var jobExecutionId = Guid.NewGuid();
+        _execRepo.GetExecutionByJobExecutionIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<JobExecutionRecord?>(null));
+
+        // Act / Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _orchestrator.RunAsync("ManualMissingInitiated", RunMode.Manual, jobExecutionId, "manual-user"));
+
+        await _execRepo.DidNotReceive().CreateInitiatedRecordAsync(
+            Arg.Any<string>(),
+            Arg.Any<Guid>(),
+            Arg.Any<string>(),
+            Arg.Any<DateTime>(),
+            Arg.Any<RunMode>(),
+            Arg.Any<CancellationToken>());
+        _factory.DidNotReceive().Create(Arg.Any<string>());
+    }
+
     // ─────────────────────────────────────────────────────────────
     // Lock already held — job must be skipped (not executed)
     // ─────────────────────────────────────────────────────────────

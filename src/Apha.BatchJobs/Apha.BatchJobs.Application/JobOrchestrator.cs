@@ -93,6 +93,58 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         // Fetch the Initiated record created by API layer
         var existingExecution = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
+
+        if (existingExecution == null && runMode == RunMode.Scheduled)
+        {
+            var initiatedRequestedAtUtc = requestedAtUtc ?? startedAt;
+
+            try
+            {
+                var createdJobQueueId = await _executionRepository.CreateInitiatedRecordAsync(
+                    jobName,
+                    jobExecutionId,
+                    userId,
+                    initiatedRequestedAtUtc,
+                    runMode,
+                    cancellationToken);
+
+                existingExecution = new JobExecutionRecord
+                {
+                    ExecutionId = 0,
+                    JobName = jobName,
+                    JobExecutionId = jobExecutionId,
+                    JobQueueId = createdJobQueueId,
+                    UserId = userId,
+                    JobType = JobType.Unknown,
+                    RunMode = runMode,
+                    Status = JobStatus.Initiated,
+                    RequestedAtUtc = initiatedRequestedAtUtc,
+                    StartedAt = initiatedRequestedAtUtc
+                };
+
+                _logger.LogWarning(
+                    "Initiated record was missing for scheduled run. Created fallback Initiated row in worker | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId}",
+                    jobName,
+                    jobExecutionId,
+                    createdJobQueueId);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == PostgresErrorCodes.UniqueViolation)
+            {
+                existingExecution = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
+
+                if (existingExecution == null)
+                {
+                    throw;
+                }
+
+                _logger.LogInformation(
+                    "Initiated record appeared concurrently while creating fallback. Proceeding with existing row | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId}",
+                    jobName,
+                    jobExecutionId,
+                    existingExecution.JobQueueId);
+            }
+        }
+
         if (existingExecution == null)
         {
             _logger.LogError(
