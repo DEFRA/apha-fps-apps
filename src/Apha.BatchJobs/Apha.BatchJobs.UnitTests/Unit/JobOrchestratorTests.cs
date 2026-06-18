@@ -156,26 +156,26 @@ public sealed class JobOrchestratorTests
     }
 
     [Fact]
-    public async Task RunAsync_WhenScheduledAndInitiatedMissing_CreatesInitiatedAndContinues()
+    public async Task RunAsync_WhenScheduledMabArchiveAndInitiatedMissing_CreatesInitiatedAndContinues()
     {
         // Arrange
         var jobExecutionId = Guid.NewGuid();
         var createdJobQueueId = Guid.NewGuid();
         var job = Substitute.For<IBatchJob>();
-        job.Name.Returns("ScheduledFallbackJob");
+        job.Name.Returns("MABArchive");
 
         _execRepo.GetExecutionByJobExecutionIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<JobExecutionRecord?>(null));
         _execRepo.CreateInitiatedRecordAsync(
-                "ScheduledFallbackJob",
+                "MABArchive",
                 jobExecutionId,
                 "scheduler-user",
                 Arg.Any<DateTime>(),
                 RunMode.Scheduled,
                 Arg.Any<CancellationToken>())
             .Returns(createdJobQueueId);
-        _factory.Create("ScheduledFallbackJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("ScheduledFallbackJob", createdJobQueueId, Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _factory.Create("MABArchive").Returns(job);
+        _lockRepo.TryAcquireLockAsync("MABArchive", createdJobQueueId, Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(true);
         _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
             .Returns(11);
@@ -183,11 +183,11 @@ public sealed class JobOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _orchestrator.RunAsync("ScheduledFallbackJob", RunMode.Scheduled, jobExecutionId, "scheduler-user");
+        var result = await _orchestrator.RunAsync("MABArchive", RunMode.Scheduled, jobExecutionId, "scheduler-user");
 
         // Assert
         await _execRepo.Received(1).CreateInitiatedRecordAsync(
-            "ScheduledFallbackJob",
+            "MABArchive",
             jobExecutionId,
             "scheduler-user",
             Arg.Any<DateTime>(),
@@ -210,6 +210,30 @@ public sealed class JobOrchestratorTests
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => _orchestrator.RunAsync("ManualMissingInitiated", RunMode.Manual, jobExecutionId, "manual-user"));
 
+        await _execRepo.DidNotReceive().CreateInitiatedRecordAsync(
+            Arg.Any<string>(),
+            Arg.Any<Guid>(),
+            Arg.Any<string>(),
+            Arg.Any<DateTime>(),
+            Arg.Any<RunMode>(),
+            Arg.Any<CancellationToken>());
+        _factory.DidNotReceive().Create(Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenScheduledNonMabArchiveAndInitiatedMissing_ThrowsAndDoesNotCreateInitiated()
+    {
+        // Arrange
+        var jobExecutionId = Guid.NewGuid();
+
+        _execRepo.GetExecutionByJobExecutionIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<JobExecutionRecord?>(null));
+
+        // Act / Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _orchestrator.RunAsync("RecreateSummaries", RunMode.Scheduled, jobExecutionId, "scheduler-user"));
+
+        // Assert
         await _execRepo.DidNotReceive().CreateInitiatedRecordAsync(
             Arg.Any<string>(),
             Arg.Any<Guid>(),

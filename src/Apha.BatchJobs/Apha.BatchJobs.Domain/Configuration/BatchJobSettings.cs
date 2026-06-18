@@ -50,4 +50,5 @@ public sealed class BatchJobSettings
     /// Poll interval in seconds for checking durable cancellation requests while a job is running.
     /// </summary>
     public int CancellationPollIntervalSeconds { get; set; } = 2;
+
 }

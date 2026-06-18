@@ -26,8 +26,6 @@ if (string.Equals(requestedJobArg, "HealthCheck", StringComparison.OrdinalIgnore
 
 var builder = Host.CreateApplicationBuilder(args);
 
-var strictExecutionContractMode = ResolveStrictExecutionContractMode(builder.Configuration);
-
 builder.Configuration
     .SetBasePath(builder.Environment.ContentRootPath)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -146,7 +144,7 @@ try
             requestedAtUtc);
     }
     
-    var allowScheduledMabArchiveGeneratedExecutionId =
+    var isWorkerManagedMabArchiveScheduledRun =
         runMode == RunMode.Scheduled
         && string.Equals(jobName, "MABArchive", StringComparison.OrdinalIgnoreCase);
     Guid jobExecutionId;
@@ -170,10 +168,10 @@ try
 
     if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
     {
-        if (strictExecutionContractMode && !allowScheduledMabArchiveGeneratedExecutionId)
+        if (!isWorkerManagedMabArchiveScheduledRun)
         {
             throw new InvalidOperationException(
-                "BATCH_JOB_EXECUTION_ID is required in strict execution contract mode.");
+                "BATCH_JOB_EXECUTION_ID is required. Only Scheduled MABArchive runs may be worker-managed.");
         }
 
         jobExecutionId = Guid.NewGuid();
@@ -183,10 +181,10 @@ try
     }
     else if (!Guid.TryParse(jobExecutionIdEnv, out jobExecutionId))
     {
-        if (strictExecutionContractMode && !allowScheduledMabArchiveGeneratedExecutionId)
+        if (!isWorkerManagedMabArchiveScheduledRun)
         {
             throw new InvalidOperationException(
-                "BATCH_JOB_EXECUTION_ID must be a valid GUID in strict execution contract mode.");
+                "BATCH_JOB_EXECUTION_ID must be a valid GUID. Only Scheduled MABArchive runs may be worker-managed.");
         }
 
         jobExecutionId = Guid.NewGuid();
@@ -236,9 +234,9 @@ try
         await using var executionScope = serviceProvider.CreateAsyncScope();
         var executionRepository = executionScope.ServiceProvider.GetRequiredService<IJobExecutionRepository>();
 
-        if (strictExecutionContractMode)
+        if (!isWorkerManagedMabArchiveScheduledRun)
         {
-            await VerifyExecutionContractAsync(
+            await ValidatePreCreatedInitiatedRecordAsync(
                 jobName,
                 jobExecutionId,
                 executionRepository,
@@ -248,8 +246,9 @@ try
         else
         {
             logger.LogInformation(
-                "Strict execution contract disabled; skipping Initiated pre-check | JobExecutionId={JobExecutionId}",
-                jobExecutionId);
+                "Execution contract pre-check skipped for worker-managed Scheduled MABArchive run | JobExecutionId={JobExecutionId} | WorkerManagedMabArchiveScheduledRun={WorkerManagedMabArchiveScheduledRun}",
+                jobExecutionId,
+                isWorkerManagedMabArchiveScheduledRun);
         }
 
         var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
@@ -551,11 +550,6 @@ static int ResolveIntSetting(IConfiguration configuration, string configKey, str
     return defaultValue;
 }
 
-static bool ResolveStrictExecutionContractMode(IConfiguration configuration)
-{
-    return configuration.GetValue("BatchJobs:StrictExecutionContractMode", false);
-}
-
 static DateTime? ParseRequestedAtUtc(string? requestedAtUtcRaw, Microsoft.Extensions.Logging.ILogger logger)
 {
     if (string.IsNullOrWhiteSpace(requestedAtUtcRaw))
@@ -589,7 +583,7 @@ static bool LooksLikeTemplatePlaceholder(string? value)
     return trimmed.Length > 2 && trimmed[0] == '<' && trimmed[^1] == '>';
 }
 
-static async Task VerifyExecutionContractAsync(
+static async Task ValidatePreCreatedInitiatedRecordAsync(
     string requestedJobName,
     Guid jobExecutionId,
     IJobExecutionRepository executionRepository,

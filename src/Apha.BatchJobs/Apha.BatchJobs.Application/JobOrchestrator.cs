@@ -94,7 +94,11 @@ public sealed class JobOrchestrator : IJobOrchestrator
         // Fetch the Initiated record created by API layer
         var existingExecution = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
 
-        if (existingExecution == null && runMode == RunMode.Scheduled)
+        var shouldAutoCreateInitiated =
+            runMode == RunMode.Scheduled
+            && string.Equals(jobName, "MABArchive", StringComparison.OrdinalIgnoreCase);
+
+        if (existingExecution == null && shouldAutoCreateInitiated)
         {
             var initiatedRequestedAtUtc = requestedAtUtc ?? startedAt;
 
@@ -123,10 +127,11 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 };
 
                 _logger.LogWarning(
-                    "Initiated record was missing for scheduled run. Created fallback Initiated row in worker | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId}",
+                    "Initiated record was missing for scheduled MABArchive run. Created fallback Initiated row in worker | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode}",
                     jobName,
                     jobExecutionId,
-                    createdJobQueueId);
+                    createdJobQueueId,
+                    runMode);
             }
             catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == PostgresErrorCodes.UniqueViolation)
             {
@@ -138,10 +143,11 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 }
 
                 _logger.LogInformation(
-                    "Initiated record appeared concurrently while creating fallback. Proceeding with existing row | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId}",
+                    "Initiated record appeared concurrently while creating fallback. Proceeding with existing row | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode}",
                     jobName,
                     jobExecutionId,
-                    existingExecution.JobQueueId);
+                    existingExecution.JobQueueId,
+                    runMode);
             }
         }
 
