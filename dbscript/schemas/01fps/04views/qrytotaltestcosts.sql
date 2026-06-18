@@ -12,3 +12,4 @@ JOIN fps.tlkpproject p
     ON p.parentproject = tr.jobcode
    AND p.fpsyear = tr.fpsyear
 GROUP BY tr.jobcode, tr.fpsyear;
+
