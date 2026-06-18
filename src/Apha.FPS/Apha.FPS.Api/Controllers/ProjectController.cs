@@ -104,6 +104,16 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves a paginated list of all projects.
+        /// </summary>
+        [HttpGet("paged/all")]
+        public async Task<IActionResult> GetAllProjectsPagedAsync([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _projectService.GetPagedProjectsAsync(query);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
+        /// <summary>
         /// Retrieves a paginated list of projects for a given project group.
         /// </summary>
         [HttpGet("paged/by-project-group")]
@@ -123,6 +133,15 @@ namespace Apha.FPS.Api.Controllers
         public async Task<ActionResult<List<ProjectRes>>> GetAllProjectsAsync()
         {
             var projects = await _projectService.GetAllProjectsAsync();
+            return Ok(_mapper.Map<List<ProjectRes>>(projects));
+        }
+
+        [HttpGet("all")]
+        public async Task<ActionResult<List<ProjectRes>>> GetAllProjectsForAllUsersAsync()
+        {
+            var projects = await _projectService.GetAllProjectsForAllUsersAsync();
+            if (projects == null)
+                throw new ArgumentException("Project records not found");
             return Ok(_mapper.Map<List<ProjectRes>>(projects));
         }
 
@@ -156,6 +175,16 @@ namespace Apha.FPS.Api.Controllers
         {
             var projectDto = _mapper.Map<ProjectDto>(request);
             var updated = await _projectService.UpdatePactPortfolioDetailsAsync(projectDto);
+            if (updated == null)
+                throw new ArgumentException($"Project record with ID: {request.ParentProject} not found");
+            return Ok(_mapper.Map<ProjectRes>(updated));
+        }
+
+        [HttpPatch("external/fps-portfolio")]
+        public async Task<ActionResult<ProjectRes>> UpdateFpsPortfolioDetailsAsync([FromBody] ProjectReq request)
+        {
+            var projectDto = _mapper.Map<ProjectDto>(request);
+            var updated = await _projectService.UpdateFpsPortfolioDetailsAsync(projectDto);
             if (updated == null)
                 throw new ArgumentException($"Project record with ID: {request.ParentProject} not found");
             return Ok(_mapper.Map<ProjectRes>(updated));

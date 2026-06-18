@@ -30,7 +30,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<EmployeeDto, EmployeeReq>().ReverseMap();
             CreateMap<EmployeeDto, EmployeeRes>().ReverseMap();
 
-            CreateMap<ProjectDto, ProjectReq>().ReverseMap();
+// FPS Project
+// CustIncome in the FPS API wire format lives in ProjectReq.BudgetExt (see FPS RequestMapper)
+CreateMap<ProjectDto, ProjectReq>()
+    .ForMember(d => d.BudgetExt, o => o.MapFrom(s => s.CustIncome))
+    .ReverseMap()
+    .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt));
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
 
             CreateMap<StatusDto, StatusRes>().ReverseMap();
@@ -60,11 +65,19 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
+            // TRANSFORMENGINE: Grade mappings added — Phase 10 (Step 15a)
+            // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
+            CreateMap<GradeDto, GradeReq>().ReverseMap();
+            CreateMap<GradeDto, GradeRes>().ReverseMap();
+
+
+            // Agency
             CreateMap<AgencyDto, AgencyRes>().ReverseMap();
 
             CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
             CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
             CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
+            CreateMap<AccountCategoryDto, AccountCategoryReq>().ReverseMap();
 
             CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
 
@@ -77,6 +90,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
             CreateMap<ProfitCentreDto, ProfitCentreReq>().ReverseMap();
+            CreateMap<ProfitCentreCostDto, ProfitCentreCostRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeReq>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
@@ -87,11 +101,25 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
 
+            // Project Group Staff Plan view
+            CreateMap<ProjectGroupStaffPlanViewDto, ProjectGroupStaffPlanViewRes>().ReverseMap();
+
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
 
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
+                      
+
+            // BudgetResourceLevel
+            CreateMap<BidDto, BidReq>().ReverseMap();
+            CreateMap<BidDto, BidRes>().ReverseMap();
+            CreateMap<BidViewDto, BidViewRes>().ReverseMap();
+            CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
+            CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
+
+
         }
     }
 }
+

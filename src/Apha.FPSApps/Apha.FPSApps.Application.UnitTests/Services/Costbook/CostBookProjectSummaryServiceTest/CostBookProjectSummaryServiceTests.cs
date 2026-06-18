@@ -412,6 +412,90 @@ namespace Apha.FPSApps.Application.UnitTests.Costbook.CostBookProjectSummaryServ
 
         #endregion
 
+        #region GetProjectYearCostSummaryAsync Tests
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_WithValidParams_ReturnsCostSummary()
+        {
+            // Arrange
+            var projectId = "P001";
+            var year = 2024;
+            var summaryDto = new ProjectYearCostSummaryDto
+            {
+                Project             = projectId,
+                Year                = year,
+                StaffCostTotal      = 1000.0,
+                TestCostTotal       = 200.0,
+                AnimalCostTotal     = 300.0,
+                AdditionalCostTotal = 50.0,
+                GrandTotal          = 1550.0
+            };
+            var expectedResponse = ApiResponseDto<ProjectYearCostSummaryDto>.SuccessResponse(summaryDto);
+
+            _costBookProjectSummaryApiClient.GetProjectYearCostSummaryAsync(projectId, year).Returns(expectedResponse);
+
+            // Act
+            var result = await _costBookProjectSummaryService.GetProjectYearCostSummaryAsync(projectId, year);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(projectId, result.Data.Project);
+            Assert.Equal(year,      result.Data.Year);
+            Assert.Equal(1000.0,    result.Data.StaffCostTotal);
+            Assert.Equal(200.0,     result.Data.TestCostTotal);
+            Assert.Equal(300.0,     result.Data.AnimalCostTotal);
+            Assert.Equal(50.0,      result.Data.AdditionalCostTotal);
+            Assert.Equal(1550.0,    result.Data.GrandTotal);
+            await _costBookProjectSummaryApiClient.Received(1).GetProjectYearCostSummaryAsync(projectId, year);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var projectId = "INVALID";
+            var year = 2024;
+            var errors = new List<ApiErrorDto>
+            {
+                new ApiErrorDto { Message = "Project not found", Code = "NOT_FOUND" }
+            };
+            var expectedResponse = ApiResponseDto<ProjectYearCostSummaryDto>.FailureResponse(errors, new ApiMetaDto());
+
+            _costBookProjectSummaryApiClient.GetProjectYearCostSummaryAsync(projectId, year).Returns(expectedResponse);
+
+            // Act
+            var result = await _costBookProjectSummaryService.GetProjectYearCostSummaryAsync(projectId, year);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("NOT_FOUND", result.Errors[0].Code);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_PassesCorrectProjectIdAndYear()
+        {
+            // Arrange
+            var projectId = "P123";
+            var year = 2025;
+            var expectedResponse = ApiResponseDto<ProjectYearCostSummaryDto>.SuccessResponse(
+                new ProjectYearCostSummaryDto { Project = projectId, Year = year });
+
+            _costBookProjectSummaryApiClient.GetProjectYearCostSummaryAsync(projectId, year).Returns(expectedResponse);
+
+            // Act
+            await _costBookProjectSummaryService.GetProjectYearCostSummaryAsync(projectId, year);
+
+            // Assert
+            await _costBookProjectSummaryApiClient.Received(1).GetProjectYearCostSummaryAsync(projectId, year);
+        }
+
+        #endregion
+
         #region ExportProjectSummaryToExcelAsync Tests
 
         [Fact]

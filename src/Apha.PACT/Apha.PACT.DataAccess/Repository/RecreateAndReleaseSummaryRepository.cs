@@ -55,25 +55,17 @@ namespace Apha.PACT.DataAccess.Repository
                 baseQuery = baseQuery.OrderByDescending(e => e.Log.DateDone);
             }
 
-            // Apply pagination at database level before materialization
-            var pagedQuery = baseQuery
-                .Skip((parameters.Page - 1) * parameters.PageSize)
-                .Take(parameters.PageSize);
-
-            // Materialize only the paginated results
-            var result = await pagedQuery.ToListAsync();
-
             // Map to the result model
-            var mappedData = result.Select(r => new RecreateSummaryLogWithComment
+            var mappedData = baseQuery.Select(r => new RecreateSummaryLogWithComment
             {
                 Id = r.Log.Id,
                 UserId = r.Log.UserId,
                 Comments = r.UserComments ?? string.Empty,
                 Period = r.Log.Period,
                 DateDone = r.Log.DateDone,
-            }).ToList();
+            });
 
-            return base.ApplyPaging(mappedData, parameters.Page, parameters.PageSize);
+            return await ApplyPaging(mappedData, parameters.Page, parameters.PageSize);
         }
 
 
@@ -81,13 +73,14 @@ namespace Apha.PACT.DataAccess.Repository
         {
             var releaseSummary = new ReleaseSummary()
             {
-                ReleasePeriods = await GetReleasePeriodAsync(),
+                ReleasePeriods = await GetReleasePeriodsAsync(),
                 Setting = await GetSettingByIdAsync("SendEmail")
             };
 
             return releaseSummary;
         }
 
+      
         private async Task<string?> GetSettingByIdAsync(string settingId)
         {
             var setting = await _context.Settings
@@ -97,7 +90,7 @@ namespace Apha.PACT.DataAccess.Repository
             return setting?.Setting;
         }
 
-        private async Task<IList<ReleasePeriod>> GetReleasePeriodAsync()
+        public async Task<IList<ReleasePeriod>> GetReleasePeriodsAsync()
         {
             return await _context.ReleasePeriods
                             .AsNoTracking()

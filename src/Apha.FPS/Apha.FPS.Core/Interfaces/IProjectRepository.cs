@@ -1,14 +1,15 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 
 namespace Apha.FPS.Core.Interfaces
 {
     public interface IProjectRepository
     {
-        // ProjectProfitability — project profitability query
+        // ProjectProfitability � project profitability query
         Task<PagedData<ProjectProfitabilityView>> GetProjectProfitabilityAsync(PaginationParameters<string> query, string programNo, string workTypeFilter);
         Task<PagedData<ProjectProfitabilityView>> GetProjectGroupProfitabilityAsync(PaginationParameters<string> query, string projectGroup, string workTypeFilter);
         Task<IEnumerable<ProjectView>> GetAllProjectsAsync();
+        Task<IEnumerable<Project>> GetAllProjectsForAllUsersAsync();
         Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync();
         Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query);
         Task<PagedData<PactProjectView>> GetPagedPactProjectsAsync(PaginationParameters<string> query);
@@ -17,6 +18,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<Project> UpdateProjectAsync(Project project);
         Task<Project?> UpdatePactProjectDetailsAsync(Project project);
         Task<Project?> UpdatePactPortfolioDetailsAsync(Project project);
+        Task<Project?> UpdateFpsPortfolioDetailsAsync(Project project);
         Task<bool> DeleteProjectAsync(string parentProject);
         Task<bool> HasAssociatedJobCodesAsync(string parentProject);
         Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo);

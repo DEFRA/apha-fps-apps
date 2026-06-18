@@ -14,7 +14,7 @@
     <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-2">
         <div class="govuk-grid-column-full">
             <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
-                qrySummaryStaffEffort
+               SID3 Staff Effort &mdash; @projectId
                 <a asp-area="CostBook" asp-controller="YearlyDetails" asp-action="Index"
                    asp-route-projectId="@projectId" class="govuk-back-link sup_align_right">Back</a>
             </h1>
@@ -37,9 +37,7 @@
                         <div class="project-main-column">
                             <div class="project-year-costs-shell" style="margin:1px; overflow:auto;">
 
-                                <div class="form-header project-year-costs-header">
-                                    <h3 class="govuk-heading-s">SID3 Staff Effort &mdash; @projectId</h3>
-                                </div>
+                               
 
                                 <div id="gridContainer_staffEffortGrid">
                                     @await Html.PartialAsync("_DataGrid", Model.Grid)

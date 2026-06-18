@@ -256,14 +256,14 @@ namespace Apha.FPS.DataAccess.Repositories
                 queryStaff = _dbContext.Workgroups
                     .AsNoTracking()
                     .Join(_dbContext.PactWorkGroupGradeViews.AsNoTracking(),
-                        wg    => wg.WorkgroupName,
+                        wg    => wg.WorkGroupName,
                         grade => grade.WorkGroup,
                         (wg, grade) => new { wg, grade })
                     .Join(_dbContext.WorkGroupStaffs.AsNoTracking(),
                         wgGrade => wgGrade.grade.WgGrade,
                         staff   => staff.WorkGroupGrade,
                         (wgGrade, staff) => new { wgGrade.wg, staff })
-                    .Where(x => x.wg.WorkgroupName == workGroup)
+                    .Where(x => x.wg.WorkGroupName == workGroup)
                     .Select(x => x.staff);
             }
 

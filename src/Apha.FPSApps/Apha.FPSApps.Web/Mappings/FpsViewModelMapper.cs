@@ -29,33 +29,52 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ActualProjectCostItem, ProjectSubContractDto>().ReverseMap();
             CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
             CreateMap<DivisionGradeItem, DivisionGradeDto>().ReverseMap();
+            CreateMap<GradeItem, GradeDto>().ReverseMap();
             CreateMap<ResourceCentreMaintenanceItem, ProfitCentreDto>().ReverseMap();
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
             CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();
+            CreateMap<AccountCategoryViewModel, AccountCategoryDto>().ReverseMap();
             CreateMap<TestPlanActualItem, TestRequirementDto>().ReverseMap();
             CreateMap<ActualTestOutputItem, MonthlyOutputDto>().ReverseMap();
 
             CreateMap<ProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();
 
-            CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>()
-                .ForMember(d => d.MakeAvailable,   o => o.MapFrom(s => s.MakeAvailable ? 1 : 0))
-                .ForMember(d => d.TimeRecorder,    o => o.MapFrom(s => s.TimeRecorder ? 1 : 0))
-                .ForMember(d => d.Name,            o => o.MapFrom(s => s.StaffName ?? string.Empty))
-                .ForMember(d => d.WorkGroupGrade,  o => o.MapFrom(s => s.WgGrade ?? string.Empty))
-                .ForMember(d => d.SpNumber,        o => o.MapFrom(s => s.SpNumber ?? string.Empty))
-                .ReverseMap()
-                .ForMember(d => d.MakeAvailable,   o => o.MapFrom(s => s.MakeAvailable != 0))
-                .ForMember(d => d.TimeRecorder,    o => o.MapFrom(s => s.TimeRecorder != 0))
-                .ForMember(d => d.StaffName,       o => o.MapFrom(s => s.Name))
-                .ForMember(d => d.WgGrade,         o => o.MapFrom(s => s.WorkGroupGrade))
-                .ForMember(d => d.SpNumber,        o => o.MapFrom(s => s.SpNumber));
+// PortfolioNew
+CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
+
+// Resource Set-Up
+CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>()
+    .ForMember(d => d.MakeAvailable,   o => o.MapFrom(s => s.MakeAvailable ? 1 : 0))
+    .ForMember(d => d.TimeRecorder,    o => o.MapFrom(s => s.TimeRecorder ? 1 : 0))
+    .ForMember(d => d.Name,            o => o.MapFrom(s => s.StaffName ?? string.Empty))
+    .ForMember(d => d.WorkGroupGrade,  o => o.MapFrom(s => s.WgGrade ?? string.Empty))
+    .ForMember(d => d.SpNumber,        o => o.MapFrom(s => s.SpNumber ?? string.Empty))
+    .ReverseMap()
+    .ForMember(d => d.MakeAvailable,   o => o.MapFrom(s => s.MakeAvailable != 0))
+    .ForMember(d => d.TimeRecorder,    o => o.MapFrom(s => s.TimeRecorder != 0))
+    .ForMember(d => d.StaffName,       o => o.MapFrom(s => s.Name))
+    .ForMember(d => d.WgGrade,         o => o.MapFrom(s => s.WorkGroupGrade))
+    .ForMember(d => d.SpNumber,        o => o.MapFrom(s => s.SpNumber));
 
             CreateMap<ProfitCentreGradeMaintItem, ProfitCentreGradeDto>().ReverseMap();
 
+            // BudgetResourceLevel
+            CreateMap<BudgetResourceCentreLevelItem, BidViewDto>().ReverseMap();
+            CreateMap<PurchaseItem, PurchaseDto>().ReverseMap();
+            CreateMap<WorkGroupItem, WorkGroupDto>()
+                .ForMember(d => d.WorkGroupName, o => o.MapFrom(s => s.WorkGroupName))
+                .ReverseMap()
+                .ForMember(d => d.WorkGroup, o => o.MapFrom(s => s.WorkGroupName));
+
+            // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityItem>().ReverseMap();
 
             CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();
 
+            // Project Group Staff Plan view
+            CreateMap<ProjectGroupStaffPlanViewItem, ProjectGroupStaffPlanViewDto>().ReverseMap();
+
+            // Test Supplier
             CreateMap<TestSupplierItem, Apha.FPSApps.Application.Dtos.PACT.TestSupplierViewDto>().ReverseMap();
             CreateMap<TestSupplierItem, TestRequirementDto>()
                 .ForMember(d => d.TestCode, o => o.MapFrom(s => s.TestCode))
@@ -74,6 +93,15 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<PlanStaffZTCodeItemViewModel, StaffJobViewDto>().ReverseMap();
             CreateMap<PlanStaffZTCodeItemViewModel, StaffJobDto>()
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
+                .ReverseMap();
+
+            // Misc Project Data
+            CreateMap<ProjectDto, ProjectMiscItem>()
+                .ForMember(d => d.ParentProject, o => o.MapFrom(s => s.ParentProject))
+                .ForMember(d => d.Program, o => o.MapFrom(s => s.Program))
+                .ForMember(d => d.CostCentre, o => o.MapFrom(s => s.CostCentre))
+                .ForMember(d => d.OracleProjectCode, o => o.MapFrom(s => s.OracleProjectCode))
+                .ForMember(d => d.SubAccountCode, o => o.MapFrom(s => s.SubAccountCode))
                 .ReverseMap();
         }
     }

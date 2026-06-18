@@ -26,6 +26,9 @@ namespace Apha.FPS.Core.Interfaces
         /// <summary>Returns all Grade codes for dropdown population.</summary>
         Task<List<string>> GetAllGradeCodesAsync();
 
+        /// <summary>Returns true if any WorkgroupGrade row references the given GradeCode.</summary>
+        Task<bool> ExistsForGradeCodeAsync(string gradeCode);
+
         // Existing methods for backward compatibility
         Task<PagedData<WorkGroupGradeView>> GetWorkGroupGradesAsync(PaginationParameters<string> query, string profitCentreGrade);
         Task<bool> DeleteWorkGroupGradeAsync(string wgGrade);

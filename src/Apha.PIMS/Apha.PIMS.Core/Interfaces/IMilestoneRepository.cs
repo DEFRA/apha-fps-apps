@@ -10,8 +10,8 @@ namespace Apha.PIMS.Core.Interfaces
     {
         Task<PagedData<Milestone>> GetAllMilestonesAsync(PaginationParameters<string> parameters, string project);
         Task<Milestone?> GetMilestoneAsync(string project, string number);
-        Task<Milestone> AddMilestoneAsync(Milestone entity);
-        Task<Milestone> UpdateMilestoneAsync(Milestone entity);
+        Task<Milestone> AddMilestoneAsync(Milestone entity, string? changedBy);
+        Task<Milestone> UpdateMilestoneAsync(Milestone entity, string? changedBy);
         Task<bool> DeleteMilestoneAsync(string project, string number);
         Task<bool> UpdateFormRequiredAsync(string parentproject, bool formRequired);
         // Lookup
@@ -23,5 +23,8 @@ namespace Apha.PIMS.Core.Interfaces
         Task<MilestoneFormDates> AddMilestoneFormDatesAsync(MilestoneFormDates entity);
         Task<MilestoneFormDates> UpdateMilestoneFormDatesAsync(MilestoneFormDates entity);
         Task<bool> DeleteMilestoneFormDatesAsync(short year, string parentProject);
+
+        // Log Milestone operations
+        Task<PagedData<LogMilestone>> GetLogMilestonesAsync(PaginationParameters<string> parameters, string? project, string? numberPart1, string? numberPart2);
     }
 }

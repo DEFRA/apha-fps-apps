@@ -20,11 +20,16 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers;
 public class YearlyDetailsController : Controller
 {
     private readonly ICostBookYearlyDetailsService _service;
+    private readonly ICostBookProjectSummaryService _summaryService;
     private readonly IMapper _mapper;
 
-    public YearlyDetailsController(ICostBookYearlyDetailsService service, IMapper mapper)
+    public YearlyDetailsController(
+        ICostBookYearlyDetailsService service,
+        ICostBookProjectSummaryService summaryService,
+        IMapper mapper)
     {
         _service = service;
+        _summaryService = summaryService;
         _mapper = mapper;
     }
 
@@ -97,27 +102,27 @@ public class YearlyDetailsController : Controller
     public async Task<IActionResult> GetYearTotals(string projectId, int year)
     {
         var decodedProjectId = HttpUtility.UrlDecode(projectId);
-        var viewModel = new YearlyDetailsViewModel();
 
-        // Fetch all staff rows (not just one page) so the total is correct
-        var allStaffQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
-        viewModel.StaffGrid = await BuildStaffGridAsync(decodedProjectId, year, allStaffQuery);
-        var allTestQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
-        viewModel.TestGrid = await BuildTestGridAsync(decodedProjectId, year, allTestQuery);
-        var allAnimalQuery = new QueryParameters<string> { Page = -1, PageSize = int.MaxValue };
-        viewModel.AnimalGrid = await BuildAnimalGridAsync(decodedProjectId, year, allAnimalQuery);
-        var allAdditionalCostQuery = new QueryParameters<string> { Page = 1, PageSize = int.MaxValue };
-        viewModel.AdditionalCostGrid = await BuildAdditionalCostGridAsync(decodedProjectId, year, allAdditionalCostQuery);
+        var response = await _summaryService.GetProjectYearCostSummaryAsync(decodedProjectId, year);
 
-        CalculateYearTotals(viewModel);
+        if (!response.Success || response.Data is null)
+            return Json(new
+            {
+                staffCostTotal      = 0.0,
+                testCostTotal       = 0.0,
+                animalCostTotal     = 0.0,
+                additionalCostTotal = 0.0,
+                grandTotal          = 0.0
+            });
 
+        var summary = response.Data;
         return Json(new
         {
-            staffCostTotal = viewModel.StaffCostTotal,
-            testCostTotal = viewModel.TestCostTotal,
-            animalCostTotal = viewModel.AnimalCostTotal,
-            additionalCostTotal = viewModel.AdditionalCostTotal,
-            grandTotal = viewModel.GrandTotal
+            staffCostTotal      = summary.StaffCostTotal,
+            testCostTotal       = summary.TestCostTotal,
+            animalCostTotal     = summary.AnimalCostTotal,
+            additionalCostTotal = summary.AdditionalCostTotal,
+            grandTotal          = summary.GrandTotal
         });
     }
 
@@ -281,6 +286,7 @@ public class YearlyDetailsController : Controller
     {
         var validationResult = ValidateModel();
         if (validationResult is not null) return validationResult;
+        item.NumberOfTests ??= 0;
         var decodedProjectId = HttpUtility.UrlDecode(projectId);
         var dto = _mapper.Map<TestRequirementDto>(item);
         dto.Project = decodedProjectId;
@@ -307,6 +313,7 @@ public class YearlyDetailsController : Controller
     {
         var validationResult = ValidateModel();
         if (validationResult is not null) return validationResult;
+        item.NumberOfTests ??= 0;
         var decodedProjectId = HttpUtility.UrlDecode(projectId);
         var dto = _mapper.Map<TestRequirementDto>(item);
         dto.Project = decodedProjectId;
@@ -339,6 +346,8 @@ public class YearlyDetailsController : Controller
     {
         var validationResult = ValidateModel();
         if (validationResult is not null) return validationResult;
+        item.NumberOfAnimals ??= 0;
+        item.NumberOfDays ??= 0;
         var decodedProjectId = HttpUtility.UrlDecode(projectId);
         var dto = _mapper.Map<AnimalRequirementDto>(item);
         dto.Project = decodedProjectId;
@@ -365,6 +374,8 @@ public class YearlyDetailsController : Controller
     {
         var validationResult = ValidateModel();
         if (validationResult is not null) return validationResult;
+        item.NumberOfAnimals ??= 0;
+        item.NumberOfDays ??= 0;
         var decodedProjectId = HttpUtility.UrlDecode(projectId);
         var dto = _mapper.Map<AnimalRequirementDto>(item);
         dto.Project = decodedProjectId;

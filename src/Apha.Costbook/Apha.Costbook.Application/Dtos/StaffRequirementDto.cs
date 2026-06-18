@@ -12,7 +12,7 @@ public class StaffRequirementDto
     public int? Year { get; set; }
     [Required(ErrorMessage = "WG Grade is required.")]
     public string WgGrade { get; set; } = null!;
-    [Required(ErrorMessage = "Name is required.")]
+    
     public string? Name { get; set; }
     [Required(ErrorMessage = "Hours is required.")]
     public double? Nohours { get; set; }

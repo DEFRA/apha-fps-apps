@@ -45,6 +45,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<StaffEffortPivotRes, StaffEffortPivotDto>().ReverseMap();
             CreateMap<ProjectCostsRowRes, ProjectCostsRowDto>().ReverseMap();
             CreateMap<ProjectCostsPivotRes, ProjectCostsPivotDto>().ReverseMap();
+            CreateMap<ProjectYearCostSummaryRes, ProjectYearCostSummaryDto>().ReverseMap();
         }
     }
 }

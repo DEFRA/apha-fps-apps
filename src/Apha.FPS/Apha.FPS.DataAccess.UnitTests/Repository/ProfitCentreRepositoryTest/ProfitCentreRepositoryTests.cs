@@ -542,7 +542,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         {
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC01" }
             };
             var repo = CreateRepository(profitCentres: [BuildEntity("PC01")], workgroups: workgroups);
             var result = await repo.HasLinkedWorkgroupsAsync("PC01");
@@ -800,6 +800,87 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
             var result = await repo.DeleteProfitCentreAsync("PC01");
 
             Assert.True(result);
+        }
+
+        #endregion
+
+        #region GetProfitCenterCostSummaryAsync Tests
+
+        private static ProfitCentreRepository CreateRepositoryWithTimeCostCalcs(
+            IEnumerable<TimeCostCalcs>? timeCostCalcs = null,
+            IEnumerable<Workgroup>? workgroups = null)
+        {
+            var requestContext = Substitute.For<IFpsRequestContext>();
+            requestContext.FpsYear.Returns(2024);
+            requestContext.UserEmailId.Returns("test@example.com");
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestContext);
+
+            var tccSet = RepositoryTestHelper.CreateMockDbSet(timeCostCalcs ?? []);
+            mockContext.Setup(x => x.TimeCostCalcs).Returns(tccSet.Object);
+
+            var wgSet = RepositoryTestHelper.CreateMockDbSet(workgroups ?? []);
+            mockContext.Setup(x => x.Workgroups).Returns(wgSet.Object);
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            return new ProfitCentreRepository(mockContext.Object, requestContext);
+        }
+
+        #endregion
+
+        #region GetPagedProfitCenterCostSummaryAsync Tests
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_ThrowsArgumentNullException_WhenParametersIsNull()
+        {
+            // Arrange
+            var repo = CreateRepositoryWithTimeCostCalcs([], []);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                repo.GetPagedProfitCenterCostSummaryAsync(null!, 0.0));
+        }
+
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithMonthNumber_ReturnsFilteredPagedData()
+        {
+            // Arrange
+            const short monthNumber = 1;
+            var workgroups = new List<Workgroup>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC02" }
+            };
+            var timeCostCalcs = new List<TimeCostCalcs>
+            {
+                new() { WorkGroup = "WG1", ChargeRate = 100m, Time = 10, Class = "Charge", Month = 1 },
+                new() { WorkGroup = "WG2", ChargeRate = 200m, Time = 8, Class = "Charge", Month = 2 }
+            };
+            var repo = CreateRepositoryWithTimeCostCalcs(timeCostCalcs, workgroups);
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 5 };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, monthNumber);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("PC01", result.Data.First().ProfitCentre);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+        }
+        [Fact]
+        public async Task GetPagedProfitCenterCostSummaryAsync_WithEmptyResult_ReturnsEmptyPagedData()
+        {
+            // Arrange
+            var repo = CreateRepositoryWithTimeCostCalcs([], []);
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetPagedProfitCenterCostSummaryAsync(parameters, 0.0);
+
+            // Assert
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         #endregion

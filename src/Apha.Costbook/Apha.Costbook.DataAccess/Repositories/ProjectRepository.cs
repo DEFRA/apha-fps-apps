@@ -11,17 +11,15 @@ using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories
 {
-    public class ProjectRepository : IProjectRepository
+    public class ProjectRepository : RepositoryBase,IProjectRepository
     {
-        private readonly CostbookDbContext _context;
         private readonly ISettingsRepository _settingsRepository;
 
-        public ProjectRepository(CostbookDbContext context, ISettingsRepository settingsRepository)
+        public ProjectRepository(CostbookDbContext context, ISettingsRepository settingsRepository) : base(context)
         {
-            _context = context;
             _settingsRepository = settingsRepository;
         }
-
+       
         public async Task<PagedData<Project>> GetPaginatedProjectsAsync(PaginationParameters<string> queryFilter)
         {
             var queryProjects = _context.Projects
@@ -36,10 +34,9 @@ namespace Apha.Costbook.DataAccess.Repositories
             queryProjects = (IQueryable<Project>)ApplySorting(queryProjects, queryFilter.SortBy, queryFilter.Descending);
 
             // Execute query
-            var result = await queryProjects.ToListAsync();
-
-            // Apply paging
-            return ApplyPaging(result, queryFilter.Page, queryFilter.PageSize);
+           
+            return await ApplyPaging(queryProjects, queryFilter.Page, queryFilter.PageSize);
+            
         }
 
         public async Task<IEnumerable<Project>> GetProjectsAsync(string? contractFilter, string? submittedByFilter)
@@ -715,10 +712,10 @@ namespace Apha.Costbook.DataAccess.Repositories
 
             // UNION ALL in memory then GROUP BY Project, Category, pivot by YearNo
             var union = animalsRows
-                .Concat(exceptionalRows.Select(r => new { r.Project, r.YearNo, r.Cost, r.Category }))
-                .Concat(ohrRows.Select(r => new { r.Project, r.YearNo, r.Cost, r.Category }))
-                .Concat(payRows.Select(r => new { r.Project, r.YearNo, r.Cost, r.Category }))
-                .Concat(testsRows.Select(r => new { r.Project, r.YearNo, r.Cost, r.Category }))
+                .Concat(exceptionalRows.Select(r => new { Project = (string?)r.Project, r.YearNo, r.Cost, r.Category }))
+                .Concat(ohrRows.Select(r => new { Project = (string?)r.Project, r.YearNo, r.Cost, r.Category }))
+                .Concat(payRows.Select(r => new { Project = (string?)r.Project, r.YearNo, r.Cost, r.Category }))
+                .Concat(testsRows.Select(r => new { Project = (string?)r.Project, r.YearNo, r.Cost, r.Category }))
                 .ToList();
 
             var years = union.Select(r => r.YearNo).Distinct().OrderBy(y => y).ToList();
@@ -831,28 +828,7 @@ namespace Apha.Costbook.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        // Paging logic similar to FPS ApplyPaging (assuming it exists in base repository)
-        private static PagedData<Project> ApplyPaging(List<Project> data, int page, int pageSize)
-        {
-            var totalCount = data.Count;
-            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-            var pagedItems = data
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            var paginationData = new PaginationData
-            {
-                TotalRecords = totalCount,
-                PageNumber = page,
-                PageSize = pageSize,
-                TotalPages = totalPages
-            };
-
-            return new PagedData<Project>(pagedItems, paginationData);
-        }
-
+        
         public async Task<ProjectSummaryExportData> GetProjectSummaryExportDataAsync(string projectId)
         {
             var decodedProjectId = HttpUtility.UrlDecode(projectId);
@@ -1002,6 +978,55 @@ namespace Apha.Costbook.DataAccess.Repositories
 
                 return inflation + inflation2;
             }
+        }
+
+        public async Task<ProjectYearCostSummary> GetProjectYearCostSummaryAsync(string projectId, int year)
+        {
+            var decodedId = HttpUtility.UrlDecode(projectId);
+
+            // SELECT DISTINCTROW tblStaffRequ.Project, tblStaffRequ.Year,
+            //        Sum([ChargeRate]*[NoHours]) AS StaffCost
+            double staffCostTotal = await _context.StaffRequirements
+                .AsNoTracking()
+                .Where(s => s.Project == decodedId && s.Year == year)
+                .SumAsync(s => s.Chargerate.HasValue && s.Nohours.HasValue
+                    ? s.Chargerate.Value * s.Nohours.Value
+                    : 0.0);
+
+            // SELECT DISTINCTROW tblTestRequ.Project, tblTestRequ.Year,
+            //        Sum([UnitPrice]*[NoTests]) AS TestCost
+            double testCostTotal = await _context.TestRequirements
+                .AsNoTracking()
+                .Where(t => t.Project == decodedId && t.Year == year)
+                .SumAsync(t => t.UnitPrice.HasValue && t.NumberOfTests.HasValue
+                    ? t.UnitPrice.Value * t.NumberOfTests.Value
+                    : 0.0);
+
+            // SELECT DISTINCTROW tblAnimalReq.Project, tblAnimalReq.Year,
+            //        Sum([Number of Days]*[Number of Animals]*[DailyRate]) AS AnimalCost
+            double animalCostTotal = await _context.AnimalRequirements
+                .AsNoTracking()
+                .Where(a => a.Project == decodedId && a.Year == year)
+                .SumAsync(a => a.NumberOfDays.HasValue && a.NumberOfAnimals.HasValue && a.DailyRate.HasValue
+                    ? a.NumberOfDays.Value * a.NumberOfAnimals.Value * a.DailyRate.Value
+                    : 0.0);
+
+            // SELECT DISTINCTROW tblAdditionalCosts.Project, tblAdditionalCosts.Year,
+            //        Sum(ItemCost) AS LineCost
+            double additionalCostTotal = (double)await _context.AdditionalCosts
+                .AsNoTracking()
+                .Where(ac => ac.Project == decodedId && ac.Year == year)
+                .SumAsync(ac => ac.ItemCost ?? 0.0);
+
+            return new ProjectYearCostSummary
+            {
+                Project             = decodedId,
+                Year                = year,
+                StaffCostTotal      = staffCostTotal,
+                TestCostTotal       = testCostTotal,
+                AnimalCostTotal     = animalCostTotal,
+                AdditionalCostTotal = additionalCostTotal
+            };
         }
 
         public async Task<double> GetInflationFactorAsync(string infType, string projectId, int year, int currentYear)

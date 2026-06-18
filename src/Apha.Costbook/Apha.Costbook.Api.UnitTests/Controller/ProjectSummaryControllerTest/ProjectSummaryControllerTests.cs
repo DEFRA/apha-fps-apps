@@ -275,6 +275,99 @@ public class ProjectSummaryControllerTests
         await _service.Received(1).GetProjectCostsPivotAsync(id, Arg.Any<QueryParameters<string>?>());
     }
 
+    // ─── GetProjectYearCostSummary ────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetProjectYearCostSummary_ReturnsOkResult_WithMappedApiResponse()
+    {
+        // Arrange
+        var projectId = "PRJ-001";
+        var year = 2024;
+        var dto = new ProjectYearCostSummaryDto
+        {
+            Project = projectId,
+            Year = year,
+            StaffCostTotal = 1000.0,
+            TestCostTotal = 200.0,
+            AnimalCostTotal = 300.0,
+            AdditionalCostTotal = 50.0
+        };
+        var res = new ProjectYearCostSummaryRes
+        {
+            Project = projectId,
+            Year = year,
+            StaffCostTotal = 1000.0,
+            TestCostTotal = 200.0,
+            AnimalCostTotal = 300.0,
+            AdditionalCostTotal = 50.0,
+            GrandTotal = 1550.0
+        };
+
+        _service.GetProjectYearCostSummaryAsync(projectId, year).Returns(dto);
+        _mapper.Map<ProjectYearCostSummaryRes>(dto).Returns(res);
+
+        // Act
+        var result = await _controller.GetProjectYearCostSummary(projectId, year);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<ApiResponse<ProjectYearCostSummaryRes>>(okResult.Value);
+
+        Assert.True(response.Success);
+        Assert.Equal(res, response.Data);
+        Assert.NotNull(response.Errors);
+        Assert.Empty(response.Errors);
+        Assert.NotNull(response.Meta);
+
+        await _service.Received(1).GetProjectYearCostSummaryAsync(projectId, year);
+        _mapper.Received(1).Map<ProjectYearCostSummaryRes>(dto);
+    }
+
+    [Fact]
+    public async Task GetProjectYearCostSummary_WithZeroCosts_ReturnsOkResult_WithZeroTotals()
+    {
+        // Arrange
+        var projectId = "PRJ-001";
+        var year = 2024;
+        var dto = new ProjectYearCostSummaryDto { Project = projectId, Year = year };
+        var res = new ProjectYearCostSummaryRes { Project = projectId, Year = year };
+
+        _service.GetProjectYearCostSummaryAsync(projectId, year).Returns(dto);
+        _mapper.Map<ProjectYearCostSummaryRes>(dto).Returns(res);
+
+        // Act
+        var result = await _controller.GetProjectYearCostSummary(projectId, year);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<ApiResponse<ProjectYearCostSummaryRes>>(okResult.Value);
+
+        Assert.True(response.Success);
+        Assert.NotNull(response.Data);
+        Assert.Equal(0.0, response.Data.StaffCostTotal);
+        Assert.Equal(0.0, response.Data.TestCostTotal);
+        Assert.Equal(0.0, response.Data.AnimalCostTotal);
+        Assert.Equal(0.0, response.Data.AdditionalCostTotal);
+        Assert.Equal(0.0, response.Data.GrandTotal);
+
+        await _service.Received(1).GetProjectYearCostSummaryAsync(projectId, year);
+    }
+
+    [Fact]
+    public async Task GetProjectYearCostSummary_WithException_ThrowsException()
+    {
+        // Arrange
+        var projectId = "PRJ-001";
+        var year = 2024;
+
+        _service.GetProjectYearCostSummaryAsync(projectId, year).Throws(new Exception("Database error"));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<Exception>(() => _controller.GetProjectYearCostSummary(projectId, year));
+
+        await _service.Received(1).GetProjectYearCostSummaryAsync(projectId, year);
+    }
+
     // ─── ExportToExcel ────────────────────────────────────────────────────────
 
     [Fact]

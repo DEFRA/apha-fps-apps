@@ -69,22 +69,24 @@
             <label asp-for="Name" class="govuk-label">
                 Name <span class="sup_color_red">*</span>
             </label>
-            <input asp-for="Name" type="text" class="govuk-input" required />
-            <span asp-validation-for="Name" class="govuk-error-message" style="display:none;"></span>
+            <input asp-for="Name" type="text" class="govuk-input" />
+            
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="Nohours" class="govuk-label">
                 Hrs <span class="sup_color_red">*</span>
             </label>
-            <input asp-for="Nohours" type="number" step="0.01" class="govuk-input" required />
-            <span asp-validation-for="Nohours" class="govuk-error-message" style="display:none;"></span>
+            <input asp-for="Nohours" type="number"  class="govuk-input"
+                   value="@(Model.Nohours ?? 0)" />
+           
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="Nodays" class="govuk-label">
                 Days <span class="sup_color_red">*</span>
             </label>
-            <input asp-for="Nodays" type="number"  class="govuk-input" required />
-            <span asp-validation-for="Nodays" class="govuk-error-message" style="display:none;"></span>
+            <input asp-for="Nodays" type="number"  class="govuk-input"
+                   value="@(Model.Nodays ?? 0)" />
+            
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="Chargerate" class="govuk-label">

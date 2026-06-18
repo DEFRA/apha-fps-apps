@@ -17,7 +17,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeLogControllerTe
     {
         private readonly IMapper _mapper;
         private readonly IPactMonthlyTimeService _logService;
-        private readonly IWorkGroupService _workGroupService;
+        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workGroupService;
         private readonly ITestorProductService _testorProductService;
         private readonly IProjectService _projectService;
         private readonly IProjectJobCodeService _jobCodeService;
@@ -28,7 +28,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.MonthlyTimeLogControllerTe
         {
             _mapper = Substitute.For<IMapper>();
             _logService = Substitute.For<IPactMonthlyTimeService>();
-            _workGroupService = Substitute.For<IWorkGroupService>();
+            _workGroupService = Substitute.For<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService>();
             _testorProductService = Substitute.For<ITestorProductService>();
             _projectService = Substitute.For<IProjectService>();
             _jobCodeService = Substitute.For<IProjectJobCodeService>();

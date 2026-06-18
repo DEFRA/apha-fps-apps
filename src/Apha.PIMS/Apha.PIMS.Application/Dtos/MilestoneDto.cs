@@ -18,5 +18,6 @@ namespace Apha.PIMS.Application.Dtos
         public string? CapsComment { get; set; }
         public string? IdType { get; set; }
         public bool IsLate { get; set; }
+        public string? ChangedBy { get; set; }
     }
 }

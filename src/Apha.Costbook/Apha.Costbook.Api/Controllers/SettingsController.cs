@@ -22,7 +22,7 @@ namespace Apha.Costbook.Api.Controllers
         [HttpGet("getvaluebyid")]
         public async Task<IActionResult> GetSettingValueByIdAsync([FromQuery] string? id)
         {
-            var number = await _settingsService.GetSettingValueByIdAsync(id);
+            var number = await _settingsService.GetSettingValueByIdAsync(id ?? string.Empty);
             var response = new ApiResponse<string>
             {
                 Success = true,

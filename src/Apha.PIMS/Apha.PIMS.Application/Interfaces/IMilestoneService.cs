@@ -10,8 +10,8 @@ namespace Apha.PIMS.Application.Interfaces
     {
         Task<PaginatedResult<MilestoneDto>> GetAllMilestonesAsync(QueryParameters<string> parameters, string project);
         Task<MilestoneDto?> GetMilestoneAsync(string project, string number);
-        Task<MilestoneDto> SaveMilestoneAsync(MilestoneDto dto);
-        Task<MilestoneDto> UpdateMilestoneAsync(MilestoneDto dto);
+        Task<MilestoneDto> SaveMilestoneAsync(MilestoneDto dto, string? changedBy = null);
+        Task<MilestoneDto> UpdateMilestoneAsync(MilestoneDto dto, string? changedBy = null);
         Task<bool> DeleteMilestoneAsync(string project, string number);
         Task<bool> UpdateFormRequiredAsync(string parentproject, bool formRequired);
 
@@ -22,5 +22,7 @@ namespace Apha.PIMS.Application.Interfaces
         Task<MilestoneFormDatesDto?> GetMilestoneFormDatesAsync(short year, string parentProject);
         Task<MilestoneFormDatesDto> SaveMilestoneFormDatesAsync(MilestoneFormDatesDto dto);
         Task<bool> DeleteMilestoneFormDatesAsync(short year, string parentProject);
+
+        Task<PaginatedResult<LogMilestoneDto>> GetLogMilestonesAsync(QueryParameters<string> parameters, string? project, string? numberPart1, string? numberPart2);
     }
 }

@@ -32,6 +32,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsForAllUsersAsync()
+        {
+            var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllProjectsForAllUsers);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetAllPactProjectsAsync()
         {
             var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllPactProjects);
@@ -44,7 +54,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query)
         {
-            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProjects, query);
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetAllProjectsPaged, query);
             var response = await _http.GetAsync<List<ProjectRes>>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
@@ -111,6 +121,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             var request = _mapper.Map<ProjectReq>(project);
             var response = await _http.PatchAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.UpdatePactPortfolio, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<ProjectDto>>(response);
+            return ApiResponseDto<ProjectDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<ProjectDto>> UpdateFpsPortfolioAsync(ProjectDto project)
+        {
+            var request = _mapper.Map<ProjectReq>(project);
+            var response = await _http.PatchAsync<ProjectReq, ProjectRes>(FpsApiEndpoints.UpdateFpsPortfolio, request);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<ProjectDto>>(response);
 
