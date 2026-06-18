@@ -7,6 +7,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
     public interface IFpsProgramApiClient
     {
         Task<ApiResponseDto<IEnumerable<ProgramDto>>> GetAllProgramsAsync();
+        Task<ApiResponseDto<IEnumerable<ProgramDto>>> GetAllProgramsForAllUsersAsync();
         Task<ApiResponseDto<List<ProgramDto>>> GetAllProgramsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<ProgramDto?>> GetProgramByIdAsync(string programNo);
         Task<ApiResponseDto<ProgramDto>> AddProgramAsync(ProgramDto programDto);

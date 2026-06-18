@@ -10,10 +10,8 @@ public class AnimalRequirementDto
     [Required(ErrorMessage = "Year is required.")]
     public int? Year { get; set; }
     [Required(ErrorMessage = "Animal Type is required.")]
-    public string AnimalType { get; set; } = null!;
-    [Required(ErrorMessage = "Number of Days is required.")]
-    public double? NumberOfDays { get; set; }
-    [Required(ErrorMessage = "Number of Animals is required.")]
+    public string AnimalType { get; set; } = null!;    
+    public double? NumberOfDays { get; set; }    
     public double? NumberOfAnimals { get; set; }
     [Required(ErrorMessage = "Daily Rate is required.")]
     public double? DailyRate { get; set; }

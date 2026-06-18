@@ -8,6 +8,7 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
     {
         Task<ApiResponseDto<List<ProjectDto>>> GetAllPactProjectsAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsAsync();
+        Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsForAllUsersAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<ProjectDto>> GetProjectByIdAsync(string parentProject);

@@ -53,6 +53,33 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProgramControllerTest
 
         #endregion
 
+        #region GetAllProgramsForAllUsersAsync
+
+        [Fact]
+        public async Task GetAllProgramsForAllUsersAsync_HappyPath_ReturnsOk()
+        {
+            var serviceResult = new List<ProgramDto> { new ProgramDto { ProgramNo = "P1" } };
+            var mappedResult = new List<ProgramRes> { new ProgramRes { ProgramNo = "P1" } };
+
+            _serviceMock.GetAllProgramsForAllUsersAsync().Returns(serviceResult);
+            _mapperMock.Map<List<ProgramRes>>(serviceResult).Returns(mappedResult);
+
+            var result = await _controller.GetAllProgramsForAllUsersAsync();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetAllProgramsForAllUsersAsync_NullResult_ThrowsArgumentException()
+        {
+            _serviceMock.GetAllProgramsForAllUsersAsync().Returns((List<ProgramDto>)null!);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => _controller.GetAllProgramsForAllUsersAsync());
+        }
+
+        #endregion
+
         #region GetAllProgramsPagedAsync
 
         [Fact]

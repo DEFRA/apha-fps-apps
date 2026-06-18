@@ -32,11 +32,14 @@ namespace Apha.Common.Constants
 
         // Work Group
         public const string GetAllWorkGroups = "api/v1/workgroup";
+        public const string GetAllWorkGroupNames = "api/v1/workgroup/names";
         public const string GetPagedWorkGroupTimeCodes = "api/v1/workgroup/paged/timecodes";
         public const string GetPagedWorkGroupValidTimeCodes = "api/v1/workgroup/paged/validtimecodes";
         public const string GetWgSummarisedStaffTimeUsage = "api/v1/workgroup/staff/paged/summarisedtimeusage";
         public const string GetPagedSummarisedWorkgroupTime = "api/v1/workgroup/paged/summarisedtimeusage";        
         public const string GetPagedWorkGroupsByProfitCentre = "api/v1/workgroup/profitcentre";
+        public const string GetWorkGroupsByProfitCentreForBudget = "api/v1/workgroup/budget/by-profitcentre";
+        public const string GetWorkGroupsByProfitCentreForBudgetPaged = "api/v1/workgroup/budget/by-profitcentre/paged";
         public const string SetSendEmailForProfitCentreWorkGroups = "api/v1/workgroup/setsendemail/profitcentre";
         public const string SetSendEmailForAllWorkGroups = "api/v1/workgroup/setsendemail/all";
         public const string UpdateWorkGroupEmail = "api/v1/workgroup/{0}/email";        
