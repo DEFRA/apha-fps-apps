@@ -1,29 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — FpsApiDtoMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-06-11
- *
- * CHANGED:
- *   - Phase 10 VERIFY pass: confirmed WorkGroupEmployeeDto <-> WorkGroupEmployeeReq and
- *     WorkGroupEmployeeDto <-> WorkGroupEmployeeRes CreateMap entries exist and cover all
- *     new fields (TimeRecorder, StartDate, EndDate, HoursPerWeek) by AutoMapper convention
- *     (property names are identical across DTO and Req/Res — no ForMember overrides needed)
- *
- * PRESERVED:
- *   - All existing CreateMap entries unchanged
- *   - Namespace Apha.FPSApps.Infrastructure.Mappings unchanged
- *   - All lookup, pagination, and domain-entity mapper registrations unchanged
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: WorkGroupEmployeeReq intentionally omits read-only fields
- *     (SpNumber, WorkGroupGrade, Name, HrsAvail) present in WorkGroupEmployeeDto.
- *     AutoMapper silently ignores unmapped destination properties by default — confirm
- *     ValidateInlineMaps or AssertConfigurationIsValid is not enabled project-wide before
- *     accepting this as safe.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
@@ -56,60 +30,44 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<EmployeeDto, EmployeeReq>().ReverseMap();
             CreateMap<EmployeeDto, EmployeeRes>().ReverseMap();
 
-            // FPS Project
             CreateMap<ProjectDto, ProjectReq>().ReverseMap();
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
 
-            // FPS Lookups
             CreateMap<StatusDto, StatusRes>().ReverseMap();
             CreateMap<DiseaseDto, DiseaseRes>().ReverseMap();
             CreateMap<CustomerDto, CustomerRes>().ReverseMap();
             CreateMap<ContractDto, ContractRes>().ReverseMap();
             CreateMap<ProjectGroupDto, ProjectGroupRes>().ReverseMap();
 
-
-
-            // FPS Animal Plan
             CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
             CreateMap<AnimalDto, AnimalRes>().ReverseMap();
             CreateMap<AnimalRequestDto, AnimalRequestReq>().ReverseMap();
             CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();
 
-            // FPS Animal Master
             CreateMap<AnimalDto, AnimalReq>().ReverseMap();
 
-            // YEar Master
             CreateMap<YearMasterDto, YearMasterRes>().ReverseMap();
             CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
 
-            // Testor Product
             CreateMap<TestorProductDto, Apha.Common.Contracts.FPS.TestorProductRes>().ReverseMap();
 
-            // View Project Plan vs Actual Staff
             CreateMap<TimeCostCalcsViewDto, TimeCostCalcsViewRes>().ReverseMap();
             CreateMap<TimeCostCalcsTotalsDto, TimeCostCalcsTotalsRes>().ReverseMap();
 
-            // Division
             CreateMap<DivisionDto, DivisionRes>().ReverseMap();
             CreateMap<DivisionDto, DivisionReq>().ReverseMap();
 
-            // Division Grade
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
-           
-            // Agency
             CreateMap<AgencyDto, AgencyRes>().ReverseMap();
 
-            // Additional Cost
             CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
             CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
             CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
 
-            // View Project Plan vs Actual Tests
             CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
 
-            // ProgrammeNewProject (merged into ProjectDto - mappings above)
             CreateMap<AccountCodeDto, AccountCodeRes>().ReverseMap();
             CreateMap<SubAccountDto, SubAccountRes>()
                 .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
@@ -117,31 +75,22 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<WorkGroupStaffDto, WorkGroupStaffRes>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
 
-            // Resource Set-Up
             CreateMap<ProfitCentreDto, ProfitCentreRes>().ReverseMap();
             CreateMap<ProfitCentreDto, ProfitCentreReq>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeReq>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
-            // TRANSFORMENGINE: Phase 10 VERIFY — TimeRecorder (int), StartDate (DateTime?), EndDate (DateTime?),
-            // HoursPerWeek (double?) present on both DTO and Req/Res; AutoMapper convention maps them by name.
-            // WorkGroupEmployeeReq omits read-only fields (SpNumber, WorkGroupGrade, Name, HrsAvail) — see file header.
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
 
-            // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
 
-            // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
 
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 
-            // WorkgroupGrade  
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
 
-
-            // Job Code (ZT lookup) - now served from PACT API
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
         }
     }

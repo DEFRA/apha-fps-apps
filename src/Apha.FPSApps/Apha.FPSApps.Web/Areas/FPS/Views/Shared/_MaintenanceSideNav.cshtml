@@ -75,9 +75,11 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "WorkGroupStaffMaintenance" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="WorkGroupStaffMaintenance" asp-action="Index">
                 Maintain WG Staff
             </a>
+          
         </li>
         <li>
             <a class="dropdown-item@(Model == "StaffMaintenance" ? " sidenav-title" : "")"

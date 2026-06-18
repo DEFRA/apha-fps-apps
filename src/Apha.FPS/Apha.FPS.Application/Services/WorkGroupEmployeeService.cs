@@ -1,31 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — WorkGroupEmployeeService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services
- * Migrated : 2026-06-11
- *
- * CHANGED:
- *   - Implemented CreateWorkGroupEmployeeAsync(WorkGroupEmployeeDto dto) — maps DTO → entity,
- *     delegates to IWorkGroupEmployeeRepository.CreateWorkGroupEmployeeAsync, maps result back to DTO.
- *   - Service now satisfies updated IWorkGroupEmployeeService interface (CreateWorkGroupEmployeeAsync added).
- *
- * PRESERVED:
- *   - GetWorkGroupEmployeeAsync, GetWorkGroupEmployeeByIdAsync, UpdateWorkGroupEmployeeAsync,
- *     DeleteWorkGroupEmployeeAsync implementations unchanged
- *   - Constructor DI pattern (IWorkGroupEmployeeRepository + IMapper) unchanged
- *   - ArgumentException / ArgumentNullException guard pattern preserved
- *   - No DbContext injected — all data access via repository interface
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: HrsAvail computation (HrsPaid - Leave - SickSpecial) is delegated to
- *     WorkGroupEmployeeRepository.CreateWorkGroupEmployeeAsync (Phase 4). Verify the repository
- *     sets HrsAvail before persisting so this service layer does not need to replicate it.
- *   - TRANSFORMENGINE TODO: Duplicate PactId guard — if the repository enforces unique PactId per
- *     FpsYear at DB level, a duplicate create will surface as a DbUpdateException. Consider catching
- *     and rethrowing as InvalidOperationException with a user-friendly message here if needed.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
@@ -49,27 +21,43 @@ namespace Apha.FPS.Application.Services
 
         public async Task<PaginatedResult<WorkGroupEmployeeDto>> GetWorkGroupEmployeeAsync(QueryParameters<string> query, string wgGrade)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(wgGrade);
+            ArgumentNullException.ThrowIfNull(query);
+
             var filter = _mapper.Map<PaginationParameters<string>>(query);
-            var pagedData = await _repository.GetWorkGroupEmployeeAsync(filter, wgGrade);
+            var pagedData = await _repository.GetWorkGroupEmployeeAsync(filter, wgGrade ?? string.Empty);
             return _mapper.Map<PaginatedResult<WorkGroupEmployeeDto>>(pagedData);
         }
 
         public async Task<WorkGroupEmployeeDto?> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(pactId);
+            if (string.IsNullOrWhiteSpace(pactId))
+            {
+                throw new ArgumentException("PACT Id is required.");
+            }
+
             var entity = await _repository.GetWorkGroupEmployeeByIdAsync(pactId);
-            return _mapper.Map<WorkGroupEmployeeDto>(entity);
+            return _mapper.Map<WorkGroupEmployeeDto?>(entity);
         }
 
-        // TRANSFORMENGINE: CreateWorkGroupEmployeeAsync added — POST /api/v1/wgstaff
-        // Maps WorkGroupEmployeeDto → WorkGroupEmployee entity, delegates create to repository,
-        // maps persisted entity back to DTO. HrsAvail computation deferred to repository (Phase 4).
         public async Task<WorkGroupEmployeeDto> CreateWorkGroupEmployeeAsync(WorkGroupEmployeeDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
-            ArgumentException.ThrowIfNullOrWhiteSpace(dto.PactId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(dto.WorkGroupGrade);
+
+            if (string.IsNullOrWhiteSpace(dto.PactId))
+            {
+                throw new ArgumentException("PACT Id is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.WorkGroupGrade))
+            {
+                throw new ArgumentException("Work Group Grade is required.");
+            }
+
+            var existing = await _repository.GetWorkGroupEmployeeByIdAsync(dto.PactId);
+            if (existing != null)
+            {
+                throw new ArgumentException($"WorkGroupEmployee with PACT Id '{dto.PactId}' already exists.");
+            }
 
             var entity = _mapper.Map<WorkGroupEmployee>(dto);
             var created = await _repository.CreateWorkGroupEmployeeAsync(entity);
@@ -79,6 +67,18 @@ namespace Apha.FPS.Application.Services
         public async Task<WorkGroupEmployeeDto> UpdateWorkGroupEmployeeAsync(WorkGroupEmployeeDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
+
+            if (string.IsNullOrWhiteSpace(dto.PactId))
+            {
+                throw new ArgumentException("PACT Id is required.");
+            }
+
+            var existing = await _repository.GetWorkGroupEmployeeByIdAsync(dto.PactId);
+            if (existing == null)
+            {
+                throw new KeyNotFoundException($"WorkGroupEmployee with PACT Id '{dto.PactId}' not found.");
+            }
+
             var entity = _mapper.Map<WorkGroupEmployee>(dto);
             var updated = await _repository.UpdateWorkGroupEmployeeAsync(entity);
             return _mapper.Map<WorkGroupEmployeeDto>(updated);
@@ -86,7 +86,17 @@ namespace Apha.FPS.Application.Services
 
         public async Task<bool> DeleteWorkGroupEmployeeAsync(string pactId)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(pactId);
+            if (string.IsNullOrWhiteSpace(pactId))
+            {
+                throw new ArgumentException("PACT Id is required.");
+            }
+
+            var existing = await _repository.GetWorkGroupEmployeeByIdAsync(pactId);
+            if (existing == null)
+            {
+                throw new KeyNotFoundException($"WorkGroupEmployee with PACT Id '{pactId}' was not found.");
+            }
+
             return await _repository.DeleteWorkGroupEmployeeAsync(pactId);
         }
     }

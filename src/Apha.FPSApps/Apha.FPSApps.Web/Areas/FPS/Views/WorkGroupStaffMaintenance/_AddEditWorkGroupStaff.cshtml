@@ -1,28 +1,6 @@
-<!-- TRANSFORMENGINE MIGRATION — MaintWGStaff/_AddEditMaintWGStaff.cshtml
-     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
-     Migrated : 2026-06-11
-     CHANGED  : New modal partial for Add/Edit WG Staff — bound to WorkGroupEmployeeItem.
-                Fields derived from GovUkCrudModal.create({ fields: [...] }) in fps_maintain_wg_staff.js.
-                14 JS modal fields + hidden SpNumber = 15 asp-for bindings total.
-     PRESERVED: JS field order: pactId, staffName, wgGrade, status, classCode, hrsPaid, leave,
-                sickSpecial, hrsAvail, available, timeRecorder, startDate, endDate, hoursPerWeek.
-     DEFERRED :
-       TRANSFORMENGINE TODO: Available? and Time recorder? selects default their selected option
-         based on the current Model bool value rendered server-side. Verify FpsViewModelMapper
-         ForMember for MakeAvailable (int<->bool) and TimeRecorder (int<->bool) is wired before
-         edit mode pre-populates these selects correctly.
-       TRANSFORMENGINE TODO: PactId is the record key. In Add mode the user must enter it (JS
-         validation: pactId > 0). In Edit mode it is rendered as disabled + hidden to prevent
-         mutation. Verify backend Create endpoint accepts a user-supplied PactId vs auto-generating.
-       TRANSFORMENGINE TODO: HrsAvail is computed server-side (HrsPaid - Leave - SickSpecial).
-         Rendered disabled here. A client-side recalc could be added if UX requires live preview. -->
-
 @model Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupEmployeeItem
 
-@* TRANSFORMENGINE: human_review — verify before running *@
-
 @{
-    // TRANSFORMENGINE: isEditMode = PactId is non-null/empty (string PK).
     var isEditMode = !string.IsNullOrWhiteSpace(Model?.PactId);
     var title = isEditMode ? "Edit WG Staff" : "Add WG Staff";
     var saveLabel = isEditMode ? "Update" : "Save";
@@ -45,17 +23,9 @@
     <form id="formMaintWGStaff" class="row g-2">
         @Html.AntiForgeryToken()
 
-        @* ── Hidden edit-mode flag ── *@
         <input type="hidden" id="hdnIsEdit" value="@(isEditMode ? "true" : "false")" />
-
-        @* ── SpNumber — not a JS modal field; hidden, used as contextual identifier for display.
-               IsVisible=false in WorkGroupEmployeeItem; not posted in DTO but preserved here.
-               TRANSFORMENGINE: SpNumber hidden for transport; no asp-for output field needed in save payload. *@
         <input type="hidden" id="SpNumber" asp-for="SpNumber" />
 
-        @* ── 1. PACT Id — JS field: { id: 'wgStaffPactId', key: 'pactId', type: 'number' }
-               PK and visible grid column. In Add mode: user entry (required, > 0).
-               In Edit mode: disabled (key cannot change) + hidden for save payload. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="PactId">
@@ -63,7 +33,6 @@
                 </label>
                 @if (isEditMode)
                 {
-                    @* TRANSFORMENGINE: PactId — edit mode: disabled display + hidden for payload *@
                     <input class="govuk-input govuk-!-font-size-16"
                            id="PactId"
                            asp-for="PactId"
@@ -73,7 +42,6 @@
                 }
                 else
                 {
-                    @* TRANSFORMENGINE: PactId — add mode: editable number input, required *@
                     <input class="govuk-input govuk-!-font-size-16"
                            id="PactId"
                            asp-for="PactId"
@@ -85,8 +53,6 @@
             </div>
         </div>
 
-        @* ── 2. Staff Name — JS field: { id: 'wgStaffName', key: 'staffName', type: 'text' }
-               Required. Maps to WorkGroupEmployeeDto.Name via FpsViewModelMapper ForMember. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="StaffName">
@@ -101,8 +67,6 @@
             </div>
         </div>
 
-        @* ── 3. WG Grade — JS field: { id: 'wgStaffGrade', key: 'wgGrade', type: 'text' }
-               Required. Maps to WorkGroupEmployeeDto.WorkGroupGrade via FpsViewModelMapper ForMember. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="WgGrade">
@@ -117,8 +81,6 @@
             </div>
         </div>
 
-        @* ── 4. Status — JS field: { id: 'wgStaffStatus', key: 'status', type: 'text', defaultValue: 'I' }
-               Required. Maps to WorkGroupEmployeeDto.PersonStatus. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="PersonStatus">
@@ -134,8 +96,6 @@
             </div>
         </div>
 
-        @* ── 5. Class — JS field: { id: 'wgStaffClass', key: 'classCode', type: 'text', defaultValue: 'A' }
-               Nullable. Maps to WorkGroupEmployeeDto.PersonClass. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="PersonClass">
@@ -150,8 +110,6 @@
             </div>
         </div>
 
-        @* ── 6. HrsPaid — JS field: { id: 'wgStaffHrsPaid', key: 'hrsPaid', type: 'number', defaultValue: 0 }
-               Required double. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HrsPaid">
@@ -167,8 +125,6 @@
             </div>
         </div>
 
-        @* ── 7. Leave — JS field: { id: 'wgStaffLeave', key: 'leave', type: 'number', defaultValue: 0 }
-               Required double. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Leave">
@@ -184,8 +140,6 @@
             </div>
         </div>
 
-        @* ── 8. SickSpecial — JS field: { id: 'wgStaffSickSpecial', key: 'sickSpecial', type: 'number', defaultValue: 0 }
-               Required double. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="SickSpecial">
@@ -201,9 +155,6 @@
             </div>
         </div>
 
-        @* ── 9. HrsAvail — JS field: { id: 'wgStaffHrsAvail', key: 'hrsAvail', type: 'number', defaultValue: 0 }
-               Read-only: computed server-side (HrsPaid - Leave - SickSpecial). GridColumnType.ReadOnly.
-               TRANSFORMENGINE: disabled — not posted in DTO. saveMaintWGStaff() reads this for DTO.HrsAvail. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HrsAvail">
@@ -218,10 +169,6 @@
             </div>
         </div>
 
-        @* ── 10. Available? — JS field: { id: 'wgStaffAvailable', key: 'available', type: 'select',
-                options: [{ value: 'false', text: 'No' }, { value: 'true', text: 'Yes' }] }
-               bool in WorkGroupEmployeeItem; int (0/1) in Dto via FpsViewModelMapper.
-               TRANSFORMENGINE: Safe manual <option> pattern — @if/@else block (never @(...) in attribute area). *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="MakeAvailable">
@@ -246,11 +193,6 @@
             </div>
         </div>
 
-        @* ── 11. Time recorder? — JS field: { id: 'wgStaffRecorder', key: 'timeRecorder', type: 'select',
-                options: [{ value: 'false', text: 'No' }, { value: 'true', text: 'Yes' }] }
-               Default 'true' in JS add defaults (timeRecorder: true).
-               bool in WorkGroupEmployeeItem; int (0/1) in Dto via FpsViewModelMapper.
-               TRANSFORMENGINE: Safe manual <option> pattern — @if/@else block only. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="TimeRecorder">
@@ -275,8 +217,6 @@
             </div>
         </div>
 
-        @* ── 12. Start Date — JS field: { id: 'wgStaffStartDate', key: 'startDate', type: 'date' }
-               Nullable DateTime?. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="StartDate">
@@ -290,8 +230,6 @@
             </div>
         </div>
 
-        @* ── 13. End Date — JS field: { id: 'wgStaffEndDate', key: 'endDate', type: 'date' }
-               Nullable DateTime?. *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="EndDate">
@@ -305,8 +243,6 @@
             </div>
         </div>
 
-        @* ── 14. Hours per week — JS field: { id: 'wgStaffHoursPerWeek', key: 'hoursPerWeek', type: 'number' }
-               Nullable double?. Empty string in JS means "not set". *@
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
                 <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HoursPerWeek">

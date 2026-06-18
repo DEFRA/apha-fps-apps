@@ -1,30 +1,5 @@
-// TRANSFORMENGINE: human_review — verify before running
-/*
- * TRANSFORMENGINE MIGRATION — WorkGroupEmployeeRepository.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-06-11
- *
- * CHANGED:
- *   - Added CreateWorkGroupEmployeeAsync(WorkGroupEmployee entity) to implement IWorkGroupEmployeeRepository.CreateWorkGroupEmployeeAsync
- *   - HrsAvail computed server-side (HrsPaid - Leave - SickSpecial) before entity is persisted — mirrors UpdateWorkGroupEmployeeAsync pattern
- *   - ArgumentNullException.ThrowIfNull guard added on entry, consistent with existing Update method guard
- *
- * PRESERVED:
- *   - GetWorkGroupEmployeeByIdAsync — Employee join for Name composition
- *   - UpdateWorkGroupEmployeeAsync — HrsAvail recalculation on update
- *   - GetWorkGroupEmployeeAsync — paginated, user-email-scoped, wgGrade-filtered list with Employee join
- *   - DeleteWorkGroupEmployeeAsync — hard delete by pactId
- *   - HasAssociatedStaffAsync — AnyAsync guard for WG Grade deletion
- *   - ApplyFilter / ApplySorting — private LINQ helpers for SpNumber and Name
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify composite PK (PactId, FpsYear) uniqueness — CreateWorkGroupEmployeeAsync does not guard against
- *     duplicate (pactId, fpsYear) entries; add a pre-insert AnyAsync check if duplicate prevention is required by business rules
- *   - TRANSFORMENGINE TODO: FpsYear on new entity must be supplied by caller (WorkGroupEmployeeService); confirm service sets it from
- *     IFpsRequestContext.FpsYear before invoking CreateWorkGroupEmployeeAsync
- */
-
 using System.Dynamic;
+using System.Linq.Expressions;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -45,12 +20,10 @@ namespace Apha.FPS.DataAccess.Repositories
             _requestContext = requestContext;
         }
 
-        // TRANSFORMENGINE: CreateWorkGroupEmployeeAsync added — maps to POST /api/v1/wgstaff; HrsAvail computed (HrsPaid - Leave - SickSpecial) before persist
         public async Task<WorkGroupEmployee> CreateWorkGroupEmployeeAsync(WorkGroupEmployee entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
 
-            // TRANSFORMENGINE: HrsAvail is a stored value (not a DB computed column) — must be calculated here before insert, consistent with UpdateWorkGroupEmployeeAsync
             entity.HrsAvail = entity.HrsPaid - (entity.Leave + entity.SickSpecial);
 
             await _dbContext.WorkGroupEmployees.AddAsync(entity);
@@ -60,7 +33,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<WorkGroupEmployeeView?> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
-            return await _dbContext.WorkGroupEmployees
+            return await _dbContext.WorkGroupEmployeeViews
                 .AsNoTracking()
                 .Where(wg => wg.PactId == pactId)
                 .Join(
@@ -69,17 +42,25 @@ namespace Apha.FPS.DataAccess.Repositories
                     e => e.SPNumber,
                     (wg, e) => new WorkGroupEmployeeView
                     {
-                        PactId         = wg.PactId,
-                        SpNumber       = wg.SpNumber,
+                        PactId = wg.PactId,
+                        SpNumber = wg.SpNumber,
                         WorkGroupGrade = wg.WorkGroupGrade,
-                        Name           = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
-                        PersonStatus   = wg.PersonStatus,
-                        PersonClass    = wg.PersonClass,
-                        HrsPaid        = wg.HrsPaid,
-                        Leave          = wg.Leave,
-                        SickSpecial    = wg.SickSpecial,
-                        HrsAvail       = wg.HrsAvail,
-                        MakeAvailable  = wg.MakeAvailable,
+                        Name = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
+                        PersonStatus = wg.PersonStatus,
+                        PersonClass = wg.PersonClass,
+                        HrsPaid = wg.HrsPaid,
+                        Leave = wg.Leave,
+                        SickSpecial = wg.SickSpecial,
+                        HrsAvail = wg.HrsAvail,
+                        MakeAvailable = wg.MakeAvailable,
+                        TimeRecorder = wg.TimeRecorder,
+                        StartDate = wg.StartDate,
+                        EndDate = wg.EndDate,
+                        HoursPerWeek = wg.HoursPerWeek,
+                        FpsYear = wg.FpsYear,
+                        UserId = wg.UserId,
+                        Dt2Username = wg.Dt2Username,
+                        UserEmail = wg.UserEmail
                     })
                 .FirstOrDefaultAsync(default);
         }
@@ -87,64 +68,71 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<WorkGroupEmployee> UpdateWorkGroupEmployeeAsync(WorkGroupEmployee entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
+
             var existing = await _dbContext.WorkGroupEmployees
                 .FirstOrDefaultAsync(x => x.PactId == entity.PactId);
             if (existing == null)
-                throw new KeyNotFoundException($"WorkGroupEmployee with PACTid '{entity.PactId}' was not found.");
+                throw new KeyNotFoundException();
 
-            existing.HrsPaid       = entity.HrsPaid;
-            existing.Leave         = entity.Leave;
-            existing.SickSpecial   = entity.SickSpecial;
-            existing.HrsAvail      = entity.HrsPaid - (entity.Leave + entity.SickSpecial);
-            existing.PersonStatus  = entity.PersonStatus;
-            existing.PersonClass   = entity.PersonClass;
+            existing.HrsPaid = entity.HrsPaid;
+            existing.Leave = entity.Leave;
+            existing.SickSpecial = entity.SickSpecial;
+            existing.HrsAvail = entity.HrsPaid - (entity.Leave + entity.SickSpecial);
+            existing.PersonStatus = entity.PersonStatus;
+            existing.PersonClass = entity.PersonClass;
             existing.MakeAvailable = entity.MakeAvailable;
+            existing.TimeRecorder = entity.TimeRecorder;
+            existing.StartDate = entity.StartDate;
+            existing.EndDate = entity.EndDate;
+            existing.HoursPerWeek = entity.HoursPerWeek;
 
             await _dbContext.SaveChangesAsync(default);
             return existing;
         }
-      
+
         public async Task<PagedData<WorkGroupEmployeeView>> GetWorkGroupEmployeeAsync(
             PaginationParameters<string> query,
             string wgGrade)
         {
-            var all = await _dbContext.WorkGroupEmployeeViews
+            var workGroupEmployeeQuery = _dbContext.WorkGroupEmployeeViews
                 .AsNoTracking()
-                .Where(x => x.WorkGroupGrade == wgGrade
+                .Where(x => (string.IsNullOrWhiteSpace(wgGrade) || x.WorkGroupGrade == wgGrade)
                          && x.PersonStatus != "I"
-                         && x.UserEmail != null && x.UserEmail.ToLower() == _requestContext.UserEmailId)
+                         && x.UserEmail != null
+                         && x.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .Join(
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
                     e => e.SPNumber,
                     (wg, e) => new WorkGroupEmployeeView
                     {
-                        PactId         = wg.PactId,
-                        SpNumber       = wg.SpNumber,
+                        PactId = wg.PactId,
+                        SpNumber = wg.SpNumber,
                         WorkGroupGrade = wg.WorkGroupGrade,
-                        Name           = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
-                        PersonStatus   = wg.PersonStatus,
-                        PersonClass    = wg.PersonClass,
-                        HrsPaid        = wg.HrsPaid,
-                        Leave          = wg.Leave,
-                        SickSpecial    = wg.SickSpecial,
-                        HrsAvail       = wg.HrsAvail,
-                        MakeAvailable  = wg.MakeAvailable,
-                        TimeRecorder   = wg.TimeRecorder,
-                        StartDate      = wg.StartDate,
-                        EndDate        = wg.EndDate,
-                        HoursPerWeek   = wg.HoursPerWeek,
-                        FpsYear        = wg.FpsYear,
-                        UserId         = wg.UserId,
-                        Dt2Username    = wg.Dt2Username,
-                        UserEmail      = wg.UserEmail,
+                        Name = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
+                        PersonStatus = wg.PersonStatus,
+                        PersonClass = wg.PersonClass,
+                        HrsPaid = wg.HrsPaid,
+                        Leave = wg.Leave,
+                        SickSpecial = wg.SickSpecial,
+                        HrsAvail = wg.HrsAvail,
+                        MakeAvailable = wg.MakeAvailable,
+                        TimeRecorder = wg.TimeRecorder,
+                        StartDate = wg.StartDate,
+                        EndDate = wg.EndDate,
+                        HoursPerWeek = wg.HoursPerWeek,
+                        FpsYear = wg.FpsYear,
+                        UserId = wg.UserId,
+                        Dt2Username = wg.Dt2Username,
+                        UserEmail = wg.UserEmail
                     })
-                .ToListAsync();
+                .AsQueryable();
 
-            var filtered = ApplyFilter(all.AsQueryable(), query.Filter);
-            var sorted   = ApplySorting(filtered, query.SortBy, query.Descending);
+            workGroupEmployeeQuery = ApplyWorkGroupEmployeeFilter(workGroupEmployeeQuery, query.Filter);
+            workGroupEmployeeQuery = (IQueryable<WorkGroupEmployeeView>)ApplySorting(workGroupEmployeeQuery, query.SortBy, query.Descending);
 
-            return ApplyPaging(sorted, query.Page, query.PageSize);
+            var result = await workGroupEmployeeQuery.ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
         public async Task<bool> DeleteWorkGroupEmployeeAsync(string pactId)
@@ -168,9 +156,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(e => e.WorkGroupGrade == wgGrade);
         }
 
-        private static IQueryable<WorkGroupEmployeeView> ApplyFilter(IQueryable<WorkGroupEmployeeView> query, string? filter)
+        private static IQueryable<WorkGroupEmployeeView> ApplyWorkGroupEmployeeFilter(IQueryable<WorkGroupEmployeeView> query, string? filter)
         {
-            if (string.IsNullOrWhiteSpace(filter))
+            if (string.IsNullOrEmpty(filter))
                 return query;
 
             dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
@@ -179,23 +167,47 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
+            if (dict.TryGetValue("PactId", out var pactId) && pactId != null)
+                query = query.Where(x => EF.Functions.ILike(x.PactId, $"%{pactId}%"));
+
             if (dict.TryGetValue("SpNumber", out var spNumber) && spNumber != null)
-                query = query.Where(x => x.SpNumber != null && x.SpNumber.Contains(spNumber.ToString()!));
+                query = query.Where(x => x.SpNumber != null && EF.Functions.ILike(x.SpNumber, $"%{spNumber}%"));
 
             if (dict.TryGetValue("Name", out var name) && name != null)
-                query = query.Where(x => x.Name != null && x.Name.Contains(name.ToString()!));
+                query = query.Where(x => x.Name != null && EF.Functions.ILike(x.Name, $"%{name}%"));
+
+            if (dict.TryGetValue("WorkGroupGrade", out var workGroupGrade) && workGroupGrade != null)
+                query = query.Where(x => x.WorkGroupGrade != null && EF.Functions.ILike(x.WorkGroupGrade, $"%{workGroupGrade}%"));
 
             return query;
         }
 
-        private static IQueryable<WorkGroupEmployeeView> ApplySorting(IQueryable<WorkGroupEmployeeView> query, string? sortBy, bool descending)
+        private static IQueryable ApplySorting(IQueryable<WorkGroupEmployeeView> query, string? sortBy, bool descending)
         {
-            return sortBy?.ToLower() switch
+            if (string.IsNullOrEmpty(sortBy))
             {
-                "spnumber" => descending ? query.OrderByDescending(x => x.SpNumber) : query.OrderBy(x => x.SpNumber),
-                "name"     => descending ? query.OrderByDescending(x => x.Name)     : query.OrderBy(x => x.Name),
-                _          => query.OrderBy(x => x.Name)
+                return query;
+            }
+
+            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+        }
+
+        private static IQueryable ApplySortingByProperty(IQueryable<WorkGroupEmployeeView> query, string property, bool descending)
+        {
+            return property switch
+            {
+                "pactid" => ApplyOrder(query, i => i.PactId, descending),
+                "spnumber" => ApplyOrder(query, i => i.SpNumber, descending),
+                "name" => ApplyOrder(query, i => i.Name, descending),
+                "workgroupgrade" => ApplyOrder(query, i => i.WorkGroupGrade, descending),
+                "personstatus" => ApplyOrder(query, i => i.PersonStatus, descending),
+                _ => query
             };
+        }
+
+        private static IQueryable ApplyOrder<T>(IQueryable<WorkGroupEmployeeView> query, Expression<Func<WorkGroupEmployeeView, T>> keySelector, bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
     }
 }
