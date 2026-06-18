@@ -80,6 +80,13 @@ internal sealed class RsQryTotalTestCostsView
     public decimal? TotalTestCosts { get; set; }
 }
 
+internal sealed class RsQryTotalTestCostsRefinedValidationView
+{
+    public int FpsYear { get; set; }
+    public required string JobCode { get; set; }
+    public decimal? TotalTestCosts { get; set; }
+}
+
 internal sealed class RsProjectMonthTable
 {
     public required string Project { get; set; }

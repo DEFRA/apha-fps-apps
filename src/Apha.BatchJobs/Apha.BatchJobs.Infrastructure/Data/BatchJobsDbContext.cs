@@ -90,6 +90,7 @@ public class BatchJobsDbContext : DbContext
     internal DbSet<RsQryTotalAnimalCostsView> RsQryTotalAnimalCosts { get; set; }
     internal DbSet<RsQryTotalStaffCostsView> RsQryTotalStaffCosts { get; set; }
     internal DbSet<RsQryTotalTestCostsView> RsQryTotalTestCosts { get; set; }
+    internal DbSet<RsQryTotalTestCostsRefinedValidationView> RsQryTotalTestCostsRefinedValidation { get; set; }
     internal DbSet<RsProjectMonthTable> RsProjectMonth { get; set; }
     internal DbSet<RsTimeCostCalcsTable> RsTimeCostCalcs { get; set; }
     internal DbSet<RsProjectMonthCaseworkTable> RsProjectMonthCasework { get; set; }
@@ -1762,6 +1763,15 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsQryTotalTestCostsView>(entity =>
         {
             entity.ToView("qrytotaltestcosts", schema: "fps");
+            entity.HasNoKey();
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+            entity.Property(e => e.JobCode).HasColumnName("jobcode");
+            entity.Property(e => e.TotalTestCosts).HasColumnName("totaltestcosts");
+        });
+
+        modelBuilder.Entity<RsQryTotalTestCostsRefinedValidationView>(entity =>
+        {
+            entity.ToView("qrytotaltestcosts_refined_validation", schema: "fps");
             entity.HasNoKey();
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");

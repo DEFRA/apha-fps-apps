@@ -53,6 +53,16 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
                 _logger.LogInformation("Strict year isolation check passed for totals source views");
             }
 
+            var testCostsSource = _settings.UseRefinedTestCostsValidationView
+                ? _context.RsQryTotalTestCostsRefinedValidation.Select(x => new { x.JobCode, x.FpsYear, x.TotalTestCosts })
+                : _context.RsQryTotalTestCosts.Select(x => new { x.JobCode, x.FpsYear, x.TotalTestCosts });
+
+            _logger.LogInformation(
+                "Using test costs source view: {TestCostsSourceView}",
+                _settings.UseRefinedTestCostsValidationView
+                    ? "fps.qrytotaltestcosts_refined_validation"
+                    : "fps.qrytotaltestcosts");
+
             var deleteRows = await _context.RsFpsYearTotals
                 .Where(row => row.FpsYear == targetYear)
                 .ExecuteDeleteAsync(cancellationToken);
@@ -76,7 +86,7 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
                     on new { t.ParentProject, t.FpsYear } equals new { ParentProject = s.JobCode, s.FpsYear }
                     into staffCostsJoin
                 from s in staffCostsJoin.DefaultIfEmpty()
-                join tst in _context.RsQryTotalTestCosts
+                join tst in testCostsSource
                     on new { t.ParentProject, t.FpsYear } equals new { ParentProject = tst.JobCode, tst.FpsYear }
                     into testCostsJoin
                 from tst in testCostsJoin.DefaultIfEmpty()
@@ -198,7 +208,17 @@ public sealed class ReloadFpsTotalsService : IReloadFpsTotalsService
         await ProbeViewYearColumnAsync("qrytotaladditionalcosts", _context.RsQryTotalAdditionalCosts.Select(x => x.FpsYear));
         await ProbeViewYearColumnAsync("qrytotalanimalcosts", _context.RsQryTotalAnimalCosts.Select(x => x.FpsYear));
         await ProbeViewYearColumnAsync("qrytotalstaffcosts", _context.RsQryTotalStaffCosts.Select(x => x.FpsYear));
-        await ProbeViewYearColumnAsync("qrytotaltestcosts", _context.RsQryTotalTestCosts.Select(x => x.FpsYear));
+
+        if (_settings.UseRefinedTestCostsValidationView)
+        {
+            await ProbeViewYearColumnAsync(
+                "qrytotaltestcosts_refined_validation",
+                _context.RsQryTotalTestCostsRefinedValidation.Select(x => x.FpsYear));
+        }
+        else
+        {
+            await ProbeViewYearColumnAsync("qrytotaltestcosts", _context.RsQryTotalTestCosts.Select(x => x.FpsYear));
+        }
 
         if (missingViews.Count == 0)
         {

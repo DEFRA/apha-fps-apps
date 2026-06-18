@@ -22,6 +22,13 @@ public class MabArchiveSettings
     public bool StrictYearIsolation { get; set; } = true;
 
     /// <summary>
+    /// Temporary proof toggle. When true, totals rebuild reads test costs from
+    /// fps.qrytotaltestcosts_refined_validation instead of fps.qrytotaltestcosts.
+    /// Keep false by default to preserve current production path.
+    /// </summary>
+    public bool UseRefinedTestCostsValidationView { get; set; } = false;
+
+    /// <summary>
     /// Email recipient for failure notifications.
     /// </summary>
     public string? AdminNotificationEmail { get; set; }
