@@ -39,22 +39,22 @@ namespace Apha.FPSApps.Web.Mappings
 
             CreateMap<ProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();
 
-// PortfolioNew
-CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
+            // PortfolioNew
+            CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
 
-// Resource Set-Up
-CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>()
-    .ForMember(d => d.MakeAvailable,   o => o.MapFrom(s => s.MakeAvailable ? 1 : 0))
-    .ForMember(d => d.TimeRecorder,    o => o.MapFrom(s => s.TimeRecorder ? 1 : 0))
-    .ForMember(d => d.Name,            o => o.MapFrom(s => s.StaffName ?? string.Empty))
-    .ForMember(d => d.WorkGroupGrade,  o => o.MapFrom(s => s.WgGrade ?? string.Empty))
-    .ForMember(d => d.SpNumber,        o => o.MapFrom(s => s.SpNumber ?? string.Empty))
-    .ReverseMap()
-    .ForMember(d => d.MakeAvailable,   o => o.MapFrom(s => s.MakeAvailable != 0))
-    .ForMember(d => d.TimeRecorder,    o => o.MapFrom(s => s.TimeRecorder != 0))
-    .ForMember(d => d.StaffName,       o => o.MapFrom(s => s.Name))
-    .ForMember(d => d.WgGrade,         o => o.MapFrom(s => s.WorkGroupGrade))
-    .ForMember(d => d.SpNumber,        o => o.MapFrom(s => s.SpNumber));
+            // Resource Set-Up
+            CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>()
+                .ForMember(d => d.MakeAvailable,   o => o.MapFrom(s => s.MakeAvailable ? 1 : 0))
+                .ForMember(d => d.TimeRecorder,    o => o.MapFrom(s => s.TimeRecorder ? 1 : 0))
+                .ForMember(d => d.Name,            o => o.MapFrom(s => s.StaffName ?? string.Empty))
+                .ForMember(d => d.WorkGroupGrade,  o => o.MapFrom(s => s.WgGrade ?? string.Empty))
+                .ForMember(d => d.SpNumber,        o => o.MapFrom(s => s.SpNumber ?? string.Empty))
+                .ReverseMap()
+                .ForMember(d => d.MakeAvailable,   o => o.MapFrom(s => s.MakeAvailable != 0))
+                .ForMember(d => d.TimeRecorder,    o => o.MapFrom(s => s.TimeRecorder != 0))
+                .ForMember(d => d.StaffName,       o => o.MapFrom(s => s.Name))
+                .ForMember(d => d.WgGrade,         o => o.MapFrom(s => s.WorkGroupGrade))
+                .ForMember(d => d.SpNumber,        o => o.MapFrom(s => s.SpNumber));
 
             CreateMap<ProfitCentreGradeMaintItem, ProfitCentreGradeDto>().ReverseMap();
 
