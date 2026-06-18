@@ -106,6 +106,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
             var response = Assert.IsType<TestPriceCheckRes>(ok.Value);
             Assert.Equal("T001",   response.TestCode);
             Assert.Equal("JOB001", response.JobCode);
+            Assert.Equal(50m,      response.TestPrice);
         }
 
         [Fact]
