@@ -146,7 +146,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
             var result = await _controller.UpdateTestPriceCheck("T001", "JOB001", request);
 
             var ok = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(true, ok.Value);
+            Assert.True((bool)ok.Value!);
         }
 
         [Fact]
@@ -176,7 +176,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
             var result = await _controller.UpdateTestPriceCheck("T001", "JOB001", request);
 
             var ok = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(false, ok.Value);
+            Assert.False((bool)ok.Value!);
         }
 
         [Fact]

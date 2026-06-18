@@ -169,10 +169,10 @@ namespace Apha.PACT.DataAccess.Repository
                 "zero" => baseQuery.Where(x => x.TestPrice == 0m),
                 "non-standard" => baseQuery.Where(x =>
                     x.TestPrice != 0m &&
-                    x.TestPrice != (x.IsDefraProject != 0 ? (decimal?)x.DefraUnitPrice : x.UnitPriceVla)),
+                    x.TestPrice != (x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla)),
                 _ => baseQuery.Where(x =>
                     x.TestPrice == 0m ||
-                    x.TestPrice != (x.IsDefraProject != 0 ? (decimal?)x.DefraUnitPrice : x.UnitPriceVla))
+                    x.TestPrice != (x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla))
             };
 
             // Step 5 — SQL-side sorting
@@ -184,7 +184,7 @@ namespace Apha.PACT.DataAccess.Repository
             // Step 7 — Compute derived fields on paged subset only
             foreach (var row in paged.Data)
             {
-                row.NormalPrice = row.IsDefraProject != 0 ? (decimal?)row.DefraUnitPrice : row.UnitPriceVla;
+                row.NormalPrice = row.IsDefraProject != 0 ? row.DefraUnitPrice : row.UnitPriceVla;
                 row.IsZeroPrice = row.TestPrice == 0m;
                 row.IsNotStandard = row.TestPrice != row.NormalPrice;
             }
@@ -199,7 +199,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             if (row == null) return null;
 
-            row.NormalPrice   = row.IsDefraProject != 0 ? (decimal?)row.DefraUnitPrice : row.UnitPriceVla;
+            row.NormalPrice   = row.IsDefraProject != 0 ? row.DefraUnitPrice : row.UnitPriceVla;
             row.IsZeroPrice   = row.TestPrice == 0m;
             row.IsNotStandard = row.TestPrice != row.NormalPrice;
             return row;
@@ -250,20 +250,22 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return sortBy?.ToLower() switch
             {
-                "jobcode" => descending ? source.OrderByDescending(x => x.JobCode) : source.OrderBy(x => x.JobCode),
-                "manager" => descending ? source.OrderByDescending(x => x.Manager) : source.OrderBy(x => x.Manager),
-                "program" => descending ? source.OrderByDescending(x => x.Program) : source.OrderBy(x => x.Program),
-                "notests" => descending ? source.OrderByDescending(x => x.NoTests) : source.OrderBy(x => x.NoTests),
-                "testprice" => descending ? source.OrderByDescending(x => x.TestPrice) : source.OrderBy(x => x.TestPrice),
-                "normalprice" => descending
-                    ? source.OrderByDescending(x => x.IsDefraProject != 0 ? (decimal?)x.DefraUnitPrice : x.UnitPriceVla)
-                    : source.OrderBy(x => x.IsDefraProject != 0 ? (decimal?)x.DefraUnitPrice : x.UnitPriceVla),
-                "unitpricevla" => descending ? source.OrderByDescending(x => x.UnitPriceVla) : source.OrderBy(x => x.UnitPriceVla),
-                "defraunitprice" => descending ? source.OrderByDescending(x => x.DefraUnitPrice) : source.OrderBy(x => x.DefraUnitPrice),
-                "owner" => descending ? source.OrderByDescending(x => x.Owner) : source.OrderBy(x => x.Owner),
-                _ => descending ? source.OrderByDescending(x => x.TestCode) : source.OrderBy(x => x.TestCode),
+                "jobcode"        => ApplyOrder(source, x => x.JobCode,       descending),
+                "manager"        => ApplyOrder(source, x => x.Manager,       descending),
+                "program"        => ApplyOrder(source, x => x.Program,       descending),
+                "notests"        => ApplyOrder(source, x => x.NoTests,       descending),
+                "testprice"      => ApplyOrder(source, x => x.TestPrice,     descending),
+                "normalprice"    => ApplyOrder(source, x => x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla, descending),
+                "unitpricevla"   => ApplyOrder(source, x => x.UnitPriceVla,  descending),
+                "defraunitprice" => ApplyOrder(source, x => x.DefraUnitPrice, descending),
+                "owner"          => ApplyOrder(source, x => x.Owner,         descending),
+                _                => ApplyOrder(source, x => x.TestCode,      descending),
             };
         }
+
+        private static IQueryable<T> ApplyOrder<T, TKey>(
+            IQueryable<T> source, Expression<Func<T, TKey>> keySelector, bool descending)
+            => descending ? source.OrderByDescending(keySelector) : source.OrderBy(keySelector);
 
         private static IQueryable<TestPriceCheckView> ApplyTestPriceCheckFilter(
             IQueryable<TestPriceCheckView> query, string? filter)
