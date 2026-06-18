@@ -70,6 +70,15 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
             new TestorProduct { ItemCode = "T002", UnitPriceVla = 100m, DefraUnitPrice = 120m, Owner = "CD", FpsYear = DefaultFpsYear }
         ];
 
+        // Non-standard seed: T001 TestPrice=60m ≠ UnitPriceVla=50m (non-standard, non-zero)
+        // → both T001 and T002 pass the "all" (default) price filter so sorting / column
+        //   filter tests always have two rows in the result to verify order / matching.
+        private static IEnumerable<TestRequirement> SeedRequirementsNonStandard() =>
+        [
+            new TestRequirement { TestCode = "T001", Buyer = "JOB001", NoRequired = 5,  UnitPrice = 60m, FpsYear = DefaultFpsYear },
+            new TestRequirement { TestCode = "T002", Buyer = "JOB002", NoRequired = 10, UnitPrice = 0m,  FpsYear = DefaultFpsYear }
+        ];
+
         // ── In-memory factory — used only by UpdateTestPriceCheckAsync test ───────
         private static (FpsDbContext Context, TestorProductRepository Repo) CreateInMemoryContext()
         {
@@ -239,6 +248,229 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
 
             await Assert.ThrowsAsync<InvalidOperationException>(
                 () => repo.UpdateTestPriceCheckAsync("T001", "JOB001", 0, 50m, 80m));
+        }
+
+        [Fact]
+        public async Task UpdateTestPriceCheckAsync_DefraProject_ThrowsInvalidOperationException()
+        {
+            var (context, repo) = CreateInMemoryContext();
+            await SeedInMemoryAsync(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.UpdateTestPriceCheckAsync("T001", "JOB001", -1, 40m, 90m));
+        }
+
+        [Fact]
+        public async Task UpdateTestPriceCheckAsync_NullPrices_ThrowsInvalidOperationException()
+        {
+            var (context, repo) = CreateInMemoryContext();
+            await SeedInMemoryAsync(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.UpdateTestPriceCheckAsync("T002", "JOB002", -1, null, null));
+        }
+
+        [Fact]
+        public async Task UpdateTestPriceCheckAsync_NullTestPrice_ThrowsInvalidOperationException()
+        {
+            var (context, repo) = CreateInMemoryContext();
+            await SeedInMemoryAsync(context);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.UpdateTestPriceCheckAsync("T001", "JOB001", -1, null, 90m));
+        }
+
+        #endregion
+
+        #region ApplyTestPriceCheckSorting
+
+        [Theory]
+        [InlineData("testcode",      false, "T001", "T002")]
+        [InlineData("testcode",      true,  "T002", "T001")]
+        [InlineData("jobcode",       false, "JOB001", "JOB002")]
+        [InlineData("jobcode",       true,  "JOB002", "JOB001")]
+        [InlineData("manager",       false, "Jones",  "Smith")]
+        [InlineData("manager",       true,  "Smith",  "Jones")]
+        [InlineData("program",       false, "PROG1",  "PROG2")]
+        [InlineData("program",       true,  "PROG2",  "PROG1")]
+        [InlineData("owner",         false, "AB", "CD")]
+        [InlineData("owner",         true,  "CD", "AB")]
+        [InlineData("notests",       false, "T001", "T002")]
+        [InlineData("notests",       true,  "T002", "T001")]
+        [InlineData("testprice",     false, "T002", "T001")]
+        [InlineData("testprice",     true,  "T001", "T002")]
+        [InlineData("unitpricevla",  false, "T001", "T002")]
+        [InlineData("unitpricevla",  true,  "T002", "T001")]
+        [InlineData("defraunitprice",false, "T001", "T002")]
+        [InlineData("defraunitprice",true,  "T002", "T001")]
+        [InlineData("normalprice",   false, "T001", "T002")]  // T001 VLA=50m, T002 Defra=120m
+        [InlineData("normalprice",   true,  "T002", "T001")]
+        [InlineData("unknown",       false, "T001", "T002")]  // default: sort by TestCode asc
+        [InlineData("unknown",       true,  "T002", "T001")]  // default: sort by TestCode desc
+        public async Task GetTestPriceCheckPagedAsync_Sorting_ReturnsExpectedOrder(
+            string sortBy, bool descending, string expectedFirst, string expectedSecond)
+        {
+            // SeedRequirementsNonStandard: T001=60m (non-standard), T002=0m (zero)
+            // → both pass the "all" price filter, giving two rows to verify order.
+            var repo = CreateRepositoryWithMocks(
+                SeedRequirementsNonStandard(), SeedProjectViews(), SeedTestorProducts());
+
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending
+            };
+
+            var result = await repo.GetTestPriceCheckPagedAsync(parameters, "all", null);
+
+            Assert.Equal(2, result.Data.Count);
+
+            // Determine which field to read back depending on the sort column
+            var firstValue = sortBy switch
+            {
+                "jobcode"        => result.Data.ElementAt(0).JobCode,
+                "manager"        => result.Data.ElementAt(0).Manager,
+                "program"        => result.Data.ElementAt(0).Program,
+                "owner"          => result.Data.ElementAt(0).Owner,
+                _                => result.Data.ElementAt(0).TestCode
+            };
+            Assert.Equal(expectedFirst, firstValue);
+        }
+
+        #endregion
+
+        #region ApplyTestPriceCheckFilter
+
+        [Theory]
+        [InlineData("TestCode", "T001", 1, "T001")]
+        [InlineData("TestCode", "T002", 1, "T002")]
+        [InlineData("TestCode", "NONE", 0, null)]
+        public async Task GetTestPriceCheckPagedAsync_FilterByTestCode_ReturnsMatchingRows(
+            string filterKey, string filterValue, int expectedCount, string? expectedTestCode)
+        {
+            var repo = CreateRepositoryWithMocks(
+                SeedRequirementsNonStandard(), SeedProjectViews(), SeedTestorProducts());
+
+            var filter = $"{{\"{filterKey}\":\"{filterValue}\"}}";
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, Filter = filter
+            };
+
+            var result = await repo.GetTestPriceCheckPagedAsync(parameters, "all", null);
+
+            Assert.Equal(expectedCount, result.Data.Count);
+            if (expectedTestCode != null)
+                Assert.All(result.Data, row => Assert.Contains(filterValue, row.TestCode));
+        }
+
+        [Theory]
+        [InlineData("JobCode", "JOB001", 1)]
+        [InlineData("JobCode", "JOB002", 1)]
+        [InlineData("JobCode", "NONE",   0)]
+        public async Task GetTestPriceCheckPagedAsync_FilterByJobCode_ReturnsMatchingRows(
+            string filterKey, string filterValue, int expectedCount)
+        {
+            var repo = CreateRepositoryWithMocks(
+                SeedRequirementsNonStandard(), SeedProjectViews(), SeedTestorProducts());
+
+            var filter = $"{{\"{filterKey}\":\"{filterValue}\"}}";
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, Filter = filter
+            };
+
+            var result = await repo.GetTestPriceCheckPagedAsync(parameters, "all", null);
+
+            Assert.Equal(expectedCount, result.Data.Count);
+        }
+
+        [Theory]
+        [InlineData("Owner", "AB", 1)]
+        [InlineData("Owner", "CD", 1)]
+        [InlineData("Owner", "ZZ", 0)]
+        public async Task GetTestPriceCheckPagedAsync_FilterByOwner_ReturnsMatchingRows(
+            string filterKey, string filterValue, int expectedCount)
+        {
+            var repo = CreateRepositoryWithMocks(
+                SeedRequirementsNonStandard(), SeedProjectViews(), SeedTestorProducts());
+
+            var filter = $"{{\"{filterKey}\":\"{filterValue}\"}}";
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, Filter = filter
+            };
+
+            var result = await repo.GetTestPriceCheckPagedAsync(parameters, "all", null);
+
+            Assert.Equal(expectedCount, result.Data.Count);
+        }
+
+        [Theory]
+        [InlineData("Program", "PROG1", 1)]
+        [InlineData("Program", "PROG2", 1)]
+        [InlineData("Program", "NONE",  0)]
+        public async Task GetTestPriceCheckPagedAsync_FilterByProgram_ReturnsMatchingRows(
+            string filterKey, string filterValue, int expectedCount)
+        {
+            var repo = CreateRepositoryWithMocks(
+                SeedRequirementsNonStandard(), SeedProjectViews(), SeedTestorProducts());
+
+            var filter = $"{{\"{filterKey}\":\"{filterValue}\"}}";
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, Filter = filter
+            };
+
+            var result = await repo.GetTestPriceCheckPagedAsync(parameters, "all", null);
+
+            Assert.Equal(expectedCount, result.Data.Count);
+        }
+
+        [Theory]
+        [InlineData("Manager", "Smith", 1)]
+        [InlineData("Manager", "Jones", 1)]
+        [InlineData("Manager", "NONE",  0)]
+        public async Task GetTestPriceCheckPagedAsync_FilterByManager_ReturnsMatchingRows(
+            string filterKey, string filterValue, int expectedCount)
+        {
+            var repo = CreateRepositoryWithMocks(
+                SeedRequirementsNonStandard(), SeedProjectViews(), SeedTestorProducts());
+
+            var filter = $"{{\"{filterKey}\":\"{filterValue}\"}}";
+            var parameters = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10, Filter = filter
+            };
+
+            var result = await repo.GetTestPriceCheckPagedAsync(parameters, "all", null);
+
+            Assert.Equal(expectedCount, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetTestPriceCheckPagedAsync_NullFilter_ReturnsAllRows()
+        {
+            var repo = CreateRepositoryWithMocks(
+                SeedRequirementsNonStandard(), SeedProjectViews(), SeedTestorProducts());
+
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            var result = await repo.GetTestPriceCheckPagedAsync(parameters, "all", null);
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetTestPriceCheckPagedAsync_EmptyFilter_ReturnsAllRows()
+        {
+            var repo = CreateRepositoryWithMocks(
+                SeedRequirementsNonStandard(), SeedProjectViews(), SeedTestorProducts());
+
+            var parameters = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "" };
+
+            var result = await repo.GetTestPriceCheckPagedAsync(parameters, "all", null);
+
+            Assert.Equal(2, result.Data.Count);
         }
 
         #endregion
