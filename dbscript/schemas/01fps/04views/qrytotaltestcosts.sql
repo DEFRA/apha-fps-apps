@@ -1,15 +1,14 @@
 -- View: fps.qrytotaltestcosts
--- Updated 2026-06-16: Added fpsyear column for strict year isolation in MABArchive job
--- See CR011 for cloud DB deployment
+-- Updated 2026-06-17: Enforce year-scoped join to prevent cross-year row amplification
+-- See CR014 for cloud DB deployment
 
 CREATE OR REPLACE VIEW fps.qrytotaltestcosts AS
 SELECT
     tr.jobcode,
-    p.fpsyear,
+    tr.fpsyear,
     SUM(tr.notests * tr.testprice) AS totaltestcosts
 FROM fps.vtbltestrequ tr
-INNER JOIN fps.tlkpproject p
+JOIN fps.tlkpproject p
     ON p.parentproject = tr.jobcode
-GROUP BY
-    tr.jobcode,
-    p.fpsyear;
+   AND p.fpsyear = tr.fpsyear
+GROUP BY tr.jobcode, tr.fpsyear;

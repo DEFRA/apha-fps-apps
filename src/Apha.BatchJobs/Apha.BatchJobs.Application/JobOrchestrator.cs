@@ -4,6 +4,7 @@ using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -581,10 +582,46 @@ public sealed class JobOrchestrator : IJobOrchestrator
         HttpRequestException => true,                  // Network/HTTP transient error
         System.Net.Sockets.SocketException => true,   // Network socket failure
         IOException => true,                           // Transient I/O error
+
+        // EF execution strategy exhausted retries. Retry only when root cause is transient infra.
+        RetryLimitExceededException retryLimitExceededException
+            => HasTransientInfrastructureCause(retryLimitExceededException.InnerException),
+
+        // Wrapper exception: allow retry when an inner transient infra cause is present.
+        AggregateException aggregateException
+            => aggregateException.InnerExceptions.Any(HasTransientInfrastructureCause),
         
-        // Default: do NOT retry (fail-safe: assume permanent unless proven transient)
-        _ => false
+        // Default: do NOT retry unless an inner transient infra cause is present.
+        _ => HasTransientInfrastructureCause(ex.InnerException)
     };
+
+    private static bool HasTransientInfrastructureCause(Exception? ex)
+    {
+        if (ex is null)
+        {
+            return false;
+        }
+
+        if (ex is AggregateException aggregateException)
+        {
+            return aggregateException.InnerExceptions.Any(HasTransientInfrastructureCause);
+        }
+
+        for (var current = ex; current is not null; current = current.InnerException)
+        {
+            if (current is TimeoutException
+                or NpgsqlException
+                or DbUpdateException
+                or HttpRequestException
+                or System.Net.Sockets.SocketException
+                or IOException)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private int? ResolveRuntimeTimeoutSeconds(IBatchJob job)
     {

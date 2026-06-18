@@ -665,6 +665,12 @@ public sealed class JobOrchestratorTests
         Assert.False(JobOrchestrator.IsRetryable(new NotImplementedException()));
         Assert.False(JobOrchestrator.IsRetryable(new Exception("generic transient")));
         Assert.True(JobOrchestrator.IsRetryable(new TimeoutException()));
+        Assert.True(JobOrchestrator.IsRetryable(new Microsoft.EntityFrameworkCore.Storage.RetryLimitExceededException(
+            "retry limit exceeded",
+            new TimeoutException("read timeout"))));
+        Assert.False(JobOrchestrator.IsRetryable(new Microsoft.EntityFrameworkCore.Storage.RetryLimitExceededException(
+            "retry limit exceeded",
+            new InvalidOperationException("invalid state"))));
     }
 
     [Fact]
