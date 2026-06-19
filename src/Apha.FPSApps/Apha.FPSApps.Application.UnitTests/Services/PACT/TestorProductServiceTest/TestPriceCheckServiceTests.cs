@@ -69,6 +69,40 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestListServiceTest
             Assert.Single(result.Errors!);
         }
 
+        [Fact]
+        public async Task GetTestPriceCheckPagedAsync_PreservesNoTestsOnDto()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var items = new List<TestPriceCheckDto>
+            {
+                new() { TestCode = "T001", JobCode = "JOB001", NoTests = 7.5 }
+            };
+            var response = ApiResponseDto<List<TestPriceCheckDto>>.SuccessResponse(items);
+            _apiClient.GetTestPriceCheckPagedAsync(query, "all", null).Returns(response);
+
+            var result = await _service.GetTestPriceCheckPagedAsync(query, "all", null);
+
+            Assert.True(result.Success);
+            Assert.Equal(7.5, result.Data!.First().NoTests);
+        }
+
+        [Fact]
+        public async Task GetTestPriceCheckPagedAsync_PreservesFpsYearOnDto()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var items = new List<TestPriceCheckDto>
+            {
+                new() { TestCode = "T001", JobCode = "JOB001", FpsYear = 2024 }
+            };
+            var response = ApiResponseDto<List<TestPriceCheckDto>>.SuccessResponse(items);
+            _apiClient.GetTestPriceCheckPagedAsync(query, "all", null).Returns(response);
+
+            var result = await _service.GetTestPriceCheckPagedAsync(query, "all", null);
+
+            Assert.True(result.Success);
+            Assert.Equal(2024, result.Data!.First().FpsYear);
+        }
+
         #endregion
 
         #region GetTestPriceCheckByKeyAsync
