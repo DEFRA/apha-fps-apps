@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Apha.Common\Apha.Common.csproj" />
   </ItemGroup>
 
 </Project>
