@@ -568,5 +568,185 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         #endregion
+
+        #region Null-model filter guard
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_NullModelFilter_ReturnsAllRows()
+        {
+            // JSON "null" deserialises to null — exercises the filterModel == null guard in ParseFilterDict
+            var projects = new List<Project>
+            {
+                MakeProject("PP001"),
+                MakeProject("PP002")
+            };
+            var repo  = CreateRepository(projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15, Filter = "null" };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        #endregion
+
+        #region ComputeProfitabilityForVlaAsync grouping lambdas
+
+        private static ProjectRepository CreateRepositoryWithVlaCostData(
+            IEnumerable<Project> projects,
+            IEnumerable<Program>? programs = null,
+            IEnumerable<TestRequirement>? testRequirements = null,
+            IEnumerable<AnimalRequest>? animalRequests = null,
+            IEnumerable<Animal>? animals = null,
+            string userEmailId = "test@example.com",
+            int fpsYear = 2024)
+        {
+            var mockRequestContext = new Mock<IFpsRequestContext>();
+            mockRequestContext.Setup(x => x.UserEmailId).Returns(userEmailId);
+            mockRequestContext.Setup(x => x.FpsYear).Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
+
+            mockContext.Setup(x => x.Projects)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(projects).Object);
+            mockContext.Setup(x => x.Programs)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(programs ?? Enumerable.Empty<Program>()).Object);
+            mockContext.Setup(x => x.StaffJobs)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<StaffJob>()).Object);
+            mockContext.Setup(x => x.WorkGroupEmployees)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroupEmployee>()).Object);
+            mockContext.Setup(x => x.WorkgroupGrades)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkgroupGrade>()).Object);
+            mockContext.Setup(x => x.ProfitCentreGrades)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<ProfitCentreGrade>()).Object);
+            mockContext.Setup(x => x.AdditionalCosts)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<AdditionalCost>()).Object);
+            mockContext.Setup(x => x.TestRequirements)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(testRequirements ?? Enumerable.Empty<TestRequirement>()).Object);
+            mockContext.Setup(x => x.AnimalRequests)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(animalRequests ?? Enumerable.Empty<AnimalRequest>()).Object);
+            mockContext.Setup(x => x.Animals)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(animals ?? Enumerable.Empty<Animal>()).Object);
+
+            return new ProjectRepository(mockContext.Object, mockRequestContext.Object);
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithTestRequirements_ComputesTestCost()
+        {
+            // Exercises testCostsRaw GroupBy/Select lambdas in ComputeProfitabilityForVlaAsync
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", Program = "P001", Customer = "ACME",
+                        ProjectStatus = "Approved", BudgetCvl = 1000m,
+                        Disease = string.Empty, Contract = string.Empty,
+                        IsDefraProject = 0, FpsYear = 2024 }
+            };
+            var testReqs = new List<TestRequirement>
+            {
+                new() { Buyer = "PP001", NoRequired = 4d, UnitPrice = 25m, TestCode = "T1", FpsYear = 2024 },
+                new() { Buyer = "PP001", NoRequired = 1d, UnitPrice = 50m, TestCode = "T2", FpsYear = 2024 }
+            };
+
+            var repo  = CreateRepositoryWithVlaCostData(projects, testRequirements: testReqs);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            var row = Assert.Single(result.Data);
+            // 4×25 + 1×50 = 150
+            Assert.Equal(150m, row.TestCost);
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithAnimalRequests_ComputesAnimalCosts()
+        {
+            // Exercises animalCostsRaw GroupBy/ToDictionary lambdas in ComputeProfitabilityForVlaAsync
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", Program = "P001", Customer = "ACME",
+                        ProjectStatus = "Approved", BudgetCvl = 2000m,
+                        Disease = string.Empty, Contract = string.Empty,
+                        IsDefraProject = 0, FpsYear = 2024 }
+            };
+            var animalReqs = new List<AnimalRequest>
+            {
+                new() { JobCode = "PP001", AnimalType = "PIG", NumberOfAnimals = 3d, NumberOfDays = 4d, FpsYear = 2024 }
+            };
+            var animals = new List<Animal>
+            {
+                new() { AnimalType = "PIG", DailyRate = 8m, DefraDailyRate = 16m, FpsYear = 2024 }
+            };
+
+            var repo  = CreateRepositoryWithVlaCostData(projects, animalRequests: animalReqs, animals: animals);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            var row = Assert.Single(result.Data);
+            // IsDefraProject=0 → DailyRate: 3 × 4 × £8 = £96
+            Assert.Equal(96m, row.AnimalCosts);
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithStaffCosts_ComputesStaffMap()
+        {
+            // Exercises staffCosts Where/GroupBy/ToDictionary lambdas in ComputeProfitabilityForVlaAsync
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", Program = "P001", Customer = "ACME",
+                        ProjectStatus = "Approved", BudgetCvl = 5000m,
+                        Disease = string.Empty, Contract = string.Empty,
+                        IsDefraProject = 0, FpsYear = 2024 }
+            };
+            var programs = new List<Program>
+            {
+                new() { ProgramNo = "P001", Target = 0m, SectorName = "charge", FpsYear = 2024 }
+            };
+            var staffJobs = new List<StaffJob>
+            {
+                new() { StaffId = "S001", JobCode = "PP001", PlannedHours = 8d, FpsYear = 2024 }
+            };
+            var workGroupEmployees = new List<WorkGroupEmployee>
+            {
+                new() { PactId = "S001", WorkGroupGrade = "WG1", SpNumber = "SP1",
+                        PersonStatus = "A", FpsYear = 2024 }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG1", ProfitCentreGrade = "PCG1", GradeCode = "GC1", Workgroup = "WG", FpsYear = 2024 }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PCG1", ChargeRate = 25m, DefraChargeRate = 40m,
+                        DivisionGrade = "DG1", GradeCode = "GC1", ProfitCentre = "PC1", FpsYear = 2024 }
+            };
+
+            var mockRequestContext = new Mock<IFpsRequestContext>();
+            mockRequestContext.Setup(x => x.UserEmailId).Returns("test@example.com");
+            mockRequestContext.Setup(x => x.FpsYear).Returns(2024);
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
+            mockContext.Setup(x => x.Projects).Returns(RepositoryTestHelper.CreateMockDbSet(projects).Object);
+            mockContext.Setup(x => x.Programs).Returns(RepositoryTestHelper.CreateMockDbSet(programs).Object);
+            mockContext.Setup(x => x.StaffJobs).Returns(RepositoryTestHelper.CreateMockDbSet(staffJobs).Object);
+            mockContext.Setup(x => x.WorkGroupEmployees).Returns(RepositoryTestHelper.CreateMockDbSet(workGroupEmployees).Object);
+            mockContext.Setup(x => x.WorkgroupGrades).Returns(RepositoryTestHelper.CreateMockDbSet(workgroupGrades).Object);
+            mockContext.Setup(x => x.ProfitCentreGrades).Returns(RepositoryTestHelper.CreateMockDbSet(profitCentreGrades).Object);
+            mockContext.Setup(x => x.AdditionalCosts).Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<AdditionalCost>()).Object);
+            mockContext.Setup(x => x.TestRequirements).Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<TestRequirement>()).Object);
+            mockContext.Setup(x => x.AnimalRequests).Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<AnimalRequest>()).Object);
+            mockContext.Setup(x => x.Animals).Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<Animal>()).Object);
+            var repo = new ProjectRepository(mockContext.Object, mockRequestContext.Object);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            var row = Assert.Single(result.Data);
+            // SectorName="charge" → sectorCharge=1 → staffCosts included
+            // 8 hours × £25 chargeRate = £200
+            Assert.Equal(200m, row.StaffCosts);
+        }
+
+        #endregion
     }
 }

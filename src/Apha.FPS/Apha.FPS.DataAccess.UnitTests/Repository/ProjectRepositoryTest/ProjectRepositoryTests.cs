@@ -2533,6 +2533,48 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("SUB003", items[2].SubAccountCode);
         }
 
+        [Fact]
+        public async Task GetPagedProjectsAsync_UnknownSortKey_DefaultsToParentProjectAscending()
+        {
+            // Arrange — exercises the `_ => query.OrderBy(p => p.ParentProject)` branch in ApplySortingByProperty
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "PP003", Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP001", Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP002", Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+            };
+            var repo  = CreateRepository(projectViews: projectViews);
+            var query = new PaginationParameters<string>(sortBy: "unknownfield", descending: false, page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedProjectsAsync(query);
+
+            // Assert
+            var items = result.Data.ToList();
+            Assert.Equal("PP001", items[0].ParentProject);
+            Assert.Equal("PP002", items[1].ParentProject);
+            Assert.Equal("PP003", items[2].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsAsync_NullModelFilter_ReturnsAllProjects()
+        {
+            // Arrange — JSON "null" deserialises to null, exercising the filterModel == null guard in ApplyProjectFilter
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+                new() { ParentProject = "PP002", Program = "P1", Customer = "C1", Contract = "C1", Disease = "D1", ProjectStatus = "A", IncomeAccountCode = "I1", UserEmail = "test@example.com" },
+            };
+            var repo  = CreateRepository(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10) { Filter = "null" };
+
+            // Act
+            var result = await repo.GetPagedProjectsAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
         #endregion
 
         #region GetPagedPactProjectsAsync Filter and Sorting Tests
@@ -2596,6 +2638,25 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             };
             var repo  = CreateRepository(pactProjectViews: pactViews);
             var query = new PaginationParameters<string>(page: 1, pageSize: 10) { Filter = null };
+
+            // Act
+            var result = await repo.GetPagedPactProjectsAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsAsync_NullModelFilter_ReturnsAllProjects()
+        {
+            // Arrange — JSON "null" deserialises to null, exercising the filterModel == null guard in ApplyPactProjectFilter
+            var pactViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta" },
+            };
+            var repo  = CreateRepository(pactProjectViews: pactViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10) { Filter = "null" };
 
             // Act
             var result = await repo.GetPagedPactProjectsAsync(query);
