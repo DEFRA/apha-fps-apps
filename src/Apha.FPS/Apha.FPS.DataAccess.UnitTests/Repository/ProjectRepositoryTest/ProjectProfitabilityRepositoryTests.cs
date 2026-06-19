@@ -5,6 +5,7 @@ using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
 using Moq;
+using FpsProgram = Apha.FPS.Core.Entities.Program;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 {
@@ -312,6 +313,54 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             var data = result.Data.ToList();
             Assert.Equal("Approved", data[0].ProjectStatus);
             Assert.Equal("Not Approved", data[1].ProjectStatus);
+        }
+
+        [Theory]
+        [InlineData("jobcode")]
+        [InlineData("totalcosts")]
+        [InlineData("budgetcvl")]
+        [InlineData("jcprofit")]
+        [InlineData("offtarget")]
+        [InlineData("projectstatus")]
+        [InlineData("jctotalstaffcosts")]
+        [InlineData("jctotaltestcosts")]
+        [InlineData("jctotalanimalcosts")]
+        [InlineData("jctotaladditionalcosts")]
+        [InlineData("targetprofit")]
+        [InlineData("unknownkey")]
+        public async Task GetProjectProfitabilityAsync_AllSortKeys_DoNotThrowAndReturnSameCount(string sortBy)
+        {
+            var projectViews = Enumerable.Range(1, 3)
+                .Select(i => MakeView($"PP00{i}", program: "P001", budget: i * 1000m, profit: i * 100m))
+                .ToList();
+            var programs = new List<Program> { new() { ProgramNo = "P001", Target = 5000m } };
+            var repo  = CreateRepository(projectViews, programs);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                SortBy = sortBy, Descending = false
+            };
+
+            var result = await repo.GetProjectProfitabilityAsync(query, "P001", "all");
+
+            Assert.Equal(3, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityAsync_EmptyFilter_ReturnsAllProjects()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeView("PP001", program: "P001"),
+                MakeView("PP002", program: "P001")
+            };
+            var programs = new List<Program> { new() { ProgramNo = "P001", Target = 10000m } };
+            var repo  = CreateRepository(projectViews, programs);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = string.Empty };
+
+            var result = await repo.GetProjectProfitabilityAsync(query, "P001", "all");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
         }
     }
 }

@@ -5,6 +5,7 @@ using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
 using Moq;
+using FpsProgram = Apha.FPS.Core.Entities.Program;
 using Xunit;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest

@@ -1694,10 +1694,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
         private static ProjectProfitabilityVlaView BuildVlaProfitabilityRow(
             VlaProjectEntry p,
-            Dictionary<string?, decimal> staffMap,
-            Dictionary<string?, decimal> additionalMap,
-            Dictionary<string?, decimal> testMap,
-            Dictionary<string?, decimal> animalCostByJob)
+            Dictionary<string, decimal> staffMap,
+            Dictionary<string, decimal> additionalMap,
+            Dictionary<string, decimal> testMap,
+            Dictionary<string, decimal> animalCostByJob)
         {
             var staff      = staffMap.TryGetValue(p.ParentProject!, out var s)  ? s  : 0m;
             var additional = additionalMap.TryGetValue(p.ParentProject!, out var a) ? a : 0m;
