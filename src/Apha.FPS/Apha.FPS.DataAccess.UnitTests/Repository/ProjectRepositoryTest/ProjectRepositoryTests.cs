@@ -27,6 +27,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             IEnumerable<MonthlyTime>? monthlyTimes = null,
             IEnumerable<ProjectInvoice>? projectInvoices = null,
             IEnumerable<ProjectSubContract>? projectSubContracts = null,
+            IEnumerable<ProjectGroupView>? projectGroupViews = null,
+            IEnumerable<Program>? programs = null,
             string userEmailId = "test@example.com", // always lowercase - matches middleware ToLowerInvariant()
             int fpsYear = 2024)
         {
@@ -99,6 +101,18 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(projectSubContracts);
                 mockContext.Setup(x => x.ProjectSubContracts).Returns(mockSet.Object);
+            }
+
+            if (projectGroupViews != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(projectGroupViews);
+                mockContext.Setup(x => x.ProjectGroupViews).Returns(mockSet.Object);
+            }
+
+            if (programs != null)
+            {
+                var mockSet = RepositoryTestHelper.CreateMockDbSet(programs);
+                mockContext.Setup(x => x.Programs).Returns(mockSet.Object);
             }
 
             return new ProjectRepository(mockContext.Object, mockRequestContext.Object);
@@ -1617,6 +1631,288 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Null(result);
         }
 
+        #endregion
+
+        #region CheckProgramExistsAsync Tests
+
+        [Fact]
+        public async Task CheckProgramExistsAsync_ReturnsTrue_WhenProgramExists()
+        {
+            var programs = new List<Program> { new() { ProgramNo = "P001" } };
+            var repo = CreateRepository(programs: programs);
+
+            var result = await repo.CheckProgramExistsAsync("P001");
+
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task CheckProgramExistsAsync_ReturnsFalse_WhenProgramDoesNotExist()
+        {
+            var programs = new List<Program> { new() { ProgramNo = "P001" } };
+            var repo = CreateRepository(programs: programs);
+
+            var result = await repo.CheckProgramExistsAsync("P999");
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task CheckProgramExistsAsync_ReturnsTrue_WhenProgramNoIsNullOrEmpty()
+        {
+            var repo = CreateRepository(programs: new List<Program>());
+
+            Assert.True(await repo.CheckProgramExistsAsync(null!));
+            Assert.True(await repo.CheckProgramExistsAsync(string.Empty));
+            Assert.True(await repo.CheckProgramExistsAsync("   "));
+        }
+
+        #endregion
+
+        #region GetProjectsByProjectGroupAsync Tests
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupAsync_ReturnsProjectsForGroup()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "test@example.com" }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectGroup = "Group1", ProjectTitle = "Alpha", Program = "P001", Customer = "DEFRA", Contract = "C1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "INC1" },
+                new() { ParentProject = "PP002", ProjectGroup = "Group1", ProjectTitle = "Beta",  Program = "P001", Customer = "APHA",  Contract = "C2", Disease = "D2", ProjectStatus = "Active", IncomeAccountCode = "INC2" },
+                new() { ParentProject = "PP003", ProjectGroup = "Group2", ProjectTitle = "Gamma", Program = "P001", Customer = "EA",    Contract = "C3", Disease = "D3", ProjectStatus = "Active", IncomeAccountCode = "INC3" }
+            };
+            var repo = CreateRepository(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetProjectsByProjectGroupAsync(query, "Group1");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Equal("Group1", p.ProjectGroup));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupAsync_ReturnsEmpty_WhenGroupHasNoProjects()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "EmptyGroup", UserEmail = "test@example.com" }
+            };
+            var repo = CreateRepository(projects: new List<Project>(), projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetProjectsByProjectGroupAsync(query, "EmptyGroup");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupAsync_FilterByParentProject_ReturnsMatchingProjects()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "test@example.com" }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectGroup = "Group1", ProjectTitle = "Alpha", Program = "P001", Customer = "DEFRA", Contract = "C1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "INC1" },
+                new() { ParentProject = "PP002", ProjectGroup = "Group1", ProjectTitle = "Beta",  Program = "P001", Customer = "APHA",  Contract = "C2", Disease = "D2", ProjectStatus = "Active", IncomeAccountCode = "INC2" },
+                new() { ParentProject = "XX003", ProjectGroup = "Group1", ProjectTitle = "Gamma", Program = "P001", Customer = "EA",    Contract = "C3", Disease = "D3", ProjectStatus = "Active", IncomeAccountCode = "INC3" }
+            };
+            var repo = CreateRepository(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ParentProject\":\"PP\"}"
+            };
+
+            var result = await repo.GetProjectsByProjectGroupAsync(query, "Group1");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("PP", p.ParentProject));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupAsync_FilterByProjectTitle_ReturnsMatchingProjects()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "test@example.com" }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectGroup = "Group1", ProjectTitle = "FMD Survey",     Program = "P001", Customer = "DEFRA", Contract = "C1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "INC1" },
+                new() { ParentProject = "PP002", ProjectGroup = "Group1", ProjectTitle = "TB Eradication", Program = "P001", Customer = "APHA",  Contract = "C2", Disease = "D2", ProjectStatus = "Active", IncomeAccountCode = "INC2" },
+                new() { ParentProject = "PP003", ProjectGroup = "Group1", ProjectTitle = "FMD Outbreak",   Program = "P001", Customer = "EA",    Contract = "C3", Disease = "D3", ProjectStatus = "Active", IncomeAccountCode = "INC3" }
+            };
+            var repo = CreateRepository(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ProjectTitle\":\"FMD\"}"
+            };
+
+            var result = await repo.GetProjectsByProjectGroupAsync(query, "Group1");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("FMD", p.ProjectTitle));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupAsync_FilterByManager_ReturnsMatchingProjects()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "test@example.com" }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectGroup = "Group1", ProjectTitle = "Alpha", Manager = "Alice", Program = "P001", Customer = "DEFRA", Contract = "C1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "INC1" },
+                new() { ParentProject = "PP002", ProjectGroup = "Group1", ProjectTitle = "Beta",  Manager = "Bob",   Program = "P001", Customer = "APHA",  Contract = "C2", Disease = "D2", ProjectStatus = "Active", IncomeAccountCode = "INC2" }
+            };
+            var repo = CreateRepository(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"Manager\":\"Alice\"}"
+            };
+
+            var result = await repo.GetProjectsByProjectGroupAsync(query, "Group1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("PP001", result.Data.First().ParentProject);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupAsync_PagingIsApplied()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "test@example.com" }
+            };
+            var projects = Enumerable.Range(1, 5).Select(i => new Project
+            {
+                ParentProject = $"PP00{i}", ProjectGroup = "Group1",
+                ProjectTitle = $"Project {i}", Program = "P001",
+                Customer = "DEFRA", Contract = "C", Disease = "D",
+                ProjectStatus = "Active", IncomeAccountCode = "INC"
+            }).ToList();
+            var repo = CreateRepository(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 2 };
+
+            var result = await repo.GetProjectsByProjectGroupAsync(query, "Group1");
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(5, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        #region NormalizeDateTimesToUnspecified Tests (via UpdateFpsPortfolioDetailsAsync)
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_NormalizesDateCreated_WhenKindIsUtc()
+        {
+            // Arrange — DateCreated has Kind=Utc; NormalizeDateTimesToUnspecified should convert it to Unspecified
+            var utcDate = new DateTime(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2024,
+                    ProjectTitle = "Title", Program = "P001", Customer = "DEFRA",
+                    ProjectStatus = "Active", Disease = "D", Contract = "C",
+                    IncomeAccountCode = "INC",
+                    DateCreated = utcDate
+                }
+            };
+            var projectLogs = new List<ProjectLog>();
+            var repo = CreateRepository(projects: projects, projectLogs: projectLogs, fpsYear: 2024);
+            var incoming = new Project
+            {
+                ParentProject = "PP001", ProjectTitle = "New Title", Program = "P001",
+                Customer = "DEFRA", ProjectStatus = "Active", Disease = "D",
+                Contract = "C"
+            };
+
+            var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
+
+            Assert.NotNull(result);
+            Assert.True(
+                result.DateCreated == null || result.DateCreated.Value.Kind == DateTimeKind.Unspecified,
+                "DateCreated Kind should be Unspecified after normalization");
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_NormalizesDateCosted_WhenKindIsLocal()
+        {
+            // Arrange — DateCosted has Kind=Local; should be converted to Unspecified
+            var localDate = new DateTime(2024, 6, 1, 12, 0, 0, DateTimeKind.Local);
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2024,
+                    ProjectTitle = "Title", Program = "P001", Customer = "DEFRA",
+                    ProjectStatus = "Active", Disease = "D", Contract = "C",
+                    IncomeAccountCode = "INC",
+                    DateCosted = localDate
+                }
+            };
+            var projectLogs = new List<ProjectLog>();
+            var repo = CreateRepository(projects: projects, projectLogs: projectLogs, fpsYear: 2024);
+            var incoming = new Project
+            {
+                ParentProject = "PP001", ProjectTitle = "New Title", Program = "P001",
+                Customer = "DEFRA", ProjectStatus = "Active", Disease = "D",
+                Contract = "C"
+            };
+
+            var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
+
+            Assert.NotNull(result);
+            Assert.True(
+                result.DateCosted == null || result.DateCosted.Value.Kind == DateTimeKind.Unspecified,
+                "DateCosted Kind should be Unspecified after normalization");
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_DoesNotChangeDates_WhenKindIsAlreadyUnspecified()
+        {
+            // Arrange — both dates already Unspecified; normalization is a no-op
+            var unspecDate = new DateTime(2024, 6, 1, 12, 0, 0, DateTimeKind.Unspecified);
+            var projects = new List<Project>
+            {
+                new()
+                {
+                    ParentProject = "PP001", FpsYear = 2024,
+                    ProjectTitle = "Title", Program = "P001", Customer = "DEFRA",
+                    ProjectStatus = "Active", Disease = "D", Contract = "C",
+                    IncomeAccountCode = "INC",
+                    DateCreated = unspecDate,
+                    DateCosted  = unspecDate
+                }
+            };
+            var projectLogs = new List<ProjectLog>();
+            var repo = CreateRepository(projects: projects, projectLogs: projectLogs, fpsYear: 2024);
+            var incoming = new Project
+            {
+                ParentProject = "PP001", ProjectTitle = "New Title", Program = "P001",
+                Customer = "DEFRA", ProjectStatus = "Active", Disease = "D",
+                Contract = "C"
+            };
+
+            var result = await repo.UpdateFpsPortfolioDetailsAsync(incoming);
+
+            Assert.NotNull(result);
+            Assert.Equal(DateTimeKind.Unspecified, result.DateCreated!.Value.Kind);
+            Assert.Equal(DateTimeKind.Unspecified, result.DateCosted!.Value.Kind);
+        }
+
+        #endregion
+
         [Fact]
         public async Task UpdateFpsPortfolioDetailsAsync_EmptyRepository_ReturnsNull()
         {
@@ -1702,7 +1998,5 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("PRESERVED", result.IncomeAccountCode);
             Assert.Equal(999m, result.BudgetCvl);
         }
-
-        #endregion
     }
 }
