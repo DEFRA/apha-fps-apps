@@ -193,11 +193,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<SubContractRmsImportResultDto>.FailureResponse(failDto.Errors, failDto.Meta ?? new ApiMetaDto());
         }
 
-        public async Task<byte[]> ExportFailedSubContractRmsAsync()
-        {
-            return await _http.GetFileAsync(PactApiEndpoints.ExportFailedProjectSubContractRms);
-        }
-
         public async Task<ApiResponseDto<bool>> DeleteFailedSubContractRmsByUserAsync()
         {
             var response = await _http.DeleteAsync<bool?>(PactApiEndpoints.DeleteFailedProjectSubContractRmsByUser);

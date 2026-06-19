@@ -19,7 +19,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
         Task<ApiResponseDto<MonthlySubContractsPivotDto>> GetMonthlySubContractsSummaryAsync(QueryParameters<string> query);
         Task<ApiResponseDto<List<SubContractRmsImportRowDto>>> GetFailedSubContractRmsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<SubContractRmsImportResultDto>> ImportSubContractRmsAsync(IFormFile file);
-        Task<byte[]> ExportFailedSubContractRmsAsync();
         Task<ApiResponseDto<bool>> DeleteFailedSubContractRmsByUserAsync();
     }
 }

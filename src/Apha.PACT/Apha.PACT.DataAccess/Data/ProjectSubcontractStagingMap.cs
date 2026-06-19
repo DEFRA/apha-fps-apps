@@ -17,11 +17,13 @@ namespace Apha.PACT.DataAccess.Data
                 .HasMaxLength(30)
                 .HasColumnName("acctcode");
             entity.Property(e => e.Amount)
-                .HasColumnType("money")
+                .HasMaxLength(10)
                 .HasColumnName("amount");
-            entity.Property(e => e.AnimalDays).HasColumnName("animaldays");
+            entity.Property(e => e.AnimalDays)
+                .HasMaxLength(10)
+                .HasColumnName("animaldays");
             entity.Property(e => e.DailyRate)
-                .HasColumnType("money")
+                .HasMaxLength(10)
                 .HasColumnName("dailyrate");
             entity.Property(e => e.Description)
                 .HasMaxLength(255)
@@ -41,14 +43,18 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.IsPassed)
                 .HasDefaultValue(false)
                 .HasColumnName("ispassed");
-            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.Month)
+                .HasMaxLength(10)
+                .HasColumnName("month");
             entity.Property(e => e.Project)
                 .HasMaxLength(20)
                 .HasColumnName("project");
             entity.Property(e => e.Supplier)
                 .HasMaxLength(50)
                 .HasColumnName("supplier");
-            entity.Property(e => e.SupplierNumber).HasColumnName("suppliernumber");
+            entity.Property(e => e.SupplierNumber)
+                .HasMaxLength(10)
+                .HasColumnName("suppliernumber");
             entity.Property(e => e.TestJob)
                 .HasMaxLength(50)
                 .HasColumnName("testjob");

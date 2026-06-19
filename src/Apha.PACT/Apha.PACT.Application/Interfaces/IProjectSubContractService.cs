@@ -15,7 +15,6 @@ namespace Apha.PACT.Application.Interfaces
         Task<bool> DeleteAsync(int subContCounter);
         Task<MonthlySubContractsPivotDto> GetMonthlySubContractsSummaryAsync(QueryParameters<string> query);
         Task<PaginatedResult<SubContractRmsImportRowDto>> GetFailedSubContractRmsAsync(QueryParameters<string> query, string importedBy);
-        Task<List<SubContractRmsImportRowDto>> GetFailedSubContractRmsForExportAsync(string importedBy);
         Task<int> DeleteFailedSubContractRmsByUserAsync(string importedBy);
         Task<SubContractRmsImportResultDto> ImportSubContractRmsAsync(SubContractRmsImportDto request, string importedBy);
     }

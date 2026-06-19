@@ -143,6 +143,18 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToListAsync();
         }
 
+        public async Task<HashSet<string>> GetValidProjectsForCurrentFpsYearAsync()
+        {
+            var fpsYear = _fpsRequestContext.FpsYear;
+            return await _context.Projects
+                .AsNoTracking()
+                .Where(p => p.FpsYear == fpsYear)
+                .Select(p => p.ParentProject)
+                .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
+        }
+
+        public int GetCurrentFpsYear() => _fpsRequestContext.FpsYear;
+
         public async Task<PagedData<SubContractRmsImportRow>> GetFailedSubContractRmsAsync(PaginationParameters<string> query, string importedBy)
         {
             var latestImportedDate = await _context.ProjectSubcontractStagings
@@ -193,42 +205,6 @@ namespace Apha.PACT.DataAccess.Repository
             return ApplyPaging(rows, query.Page, query.PageSize);
         }
 
-        public async Task<List<SubContractRmsImportRow>> GetFailedSubContractRmsForExportAsync(string importedBy)
-        {
-            var latestImportedDate = await _context.ProjectSubcontractStagings
-                .AsNoTracking()
-                .Where(x => x.ImportedBy == importedBy && x.IsPassed == false)
-                .MaxAsync(x => (DateTime?)x.ImportedDate);
-
-            if (!latestImportedDate.HasValue)
-            {
-                return new List<SubContractRmsImportRow>();
-            }
-
-            return await _context.ProjectSubcontractStagings
-                .AsNoTracking()
-                .Where(x => x.ImportedBy == importedBy && x.IsPassed == false && x.ImportedDate == latestImportedDate.Value)
-                .OrderBy(x => x.Id)
-                .Select(x => new SubContractRmsImportRow
-                {
-                    Id = x.Id,
-                    Project = x.Project,
-                    TestJob = x.TestJob,
-                    Month = x.Month,
-                    Amount = x.Amount,
-                    WorkGroup = x.WorkGroup,
-                    AcctCode = x.AcctCode,
-                    Supplier = x.Supplier,
-                    Description = x.Description,
-                    SupplierNumber = x.SupplierNumber,
-                    DailyRate = x.DailyRate,
-                    AnimalDays = x.AnimalDays,
-                    ValidationFailure = x.ValidationFailure,
-                    ImportedDate = x.ImportedDate
-                })
-                .ToListAsync();
-        }
-
         public async Task<int> DeleteFailedSubContractRmsByUserAsync(string importedBy)
         {
             var rows = await _context.ProjectSubcontractStagings
@@ -244,97 +220,29 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<SubContractRmsImportResult> ImportSubContractRmsAsync(SubContractRmsImport request, string importedBy)
+        public async Task<SubContractRmsImportResult> ImportSubContractRmsAsync(List<ProjectSubContract> passedRows, List<ProjectSubcontractStaging> failedRows)
         {
-            var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            var fpsYear = _fpsRequestContext.FpsYear;
-            var fileName = request.FileName ?? "SubContractRMS-Import.xlsx";
-
-            if (request.Rows.Count == 0)
+            if (passedRows.Count == 0 && failedRows.Count == 0)
             {
                 return new SubContractRmsImportResult { PassedCount = 0, FailedCount = 0 };
             }
 
-            var validProjects = await _context.Projects
-                .AsNoTracking()
-                .Where(p => p.FpsYear == fpsYear)
-                .Select(p => p.ParentProject)
-                .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
-
-            var passCount = 0;
-            var failCount = 0;
-            var toInsert = new List<ProjectSubContract>();
-            var failedRowsToStage = new List<ProjectSubcontractStaging>();
-
-            foreach (var source in request.Rows)
+            if (passedRows.Count > 0)
             {
-                var row = new ProjectSubcontractStaging
-                {
-                    Project = source.Project,
-                    TestJob = source.TestJob,
-                    Month = source.Month,
-                    Amount = source.Amount,
-                    WorkGroup = source.WorkGroup,
-                    AcctCode = source.AcctCode,
-                    Supplier = source.Supplier,
-                    Description = source.Description,
-                    SupplierNumber = source.SupplierNumber,
-                    DailyRate = source.DailyRate,
-                    AnimalDays = source.AnimalDays,
-                    Filename = fileName,
-                    ImportedBy = importedBy,
-                    ImportedDate = now,
-                    IsPassed = false,
-                    IsExported = false,
-                    ValidationFailure = string.Empty
-                };
-
-                var failures = ValidateStagedRow(row, validProjects);
-
-                if (failures.Count == 0)
-                {
-                    toInsert.Add(new ProjectSubContract
-                    {
-                        Project = row.Project,
-                        TestJob = row.TestJob,
-                        Month = row.Month,
-                        Amount = row.Amount,
-                        WorkGroup = row.WorkGroup,
-                        AcctCode = row.AcctCode,
-                        Supplier = row.Supplier,
-                        Description = row.Description,
-                        SupplierNumber = row.SupplierNumber,
-                        DailyRate = row.DailyRate,
-                        AnimalDays = row.AnimalDays,
-                        FpsYear = fpsYear
-                    });
-                    passCount++;
-                }
-                else
-                {
-                    row.IsPassed = false;
-                    row.ValidationFailure = string.Join("\n", failures);
-                    failedRowsToStage.Add(row);
-                    failCount++;
-                }
+                await _context.ProjectSubContracts.AddRangeAsync(passedRows);
             }
 
-            if (toInsert.Count > 0)
+            if (failedRows.Count > 0)
             {
-                await _context.ProjectSubContracts.AddRangeAsync(toInsert);
-            }
-
-            if (failedRowsToStage.Count > 0)
-            {
-                await _context.ProjectSubcontractStagings.AddRangeAsync(failedRowsToStage);
+                await _context.ProjectSubcontractStagings.AddRangeAsync(failedRows);
             }
 
             await _context.SaveChangesAsync();
 
             return new SubContractRmsImportResult
             {
-                PassedCount = passCount,
-                FailedCount = failCount
+                PassedCount = passedRows.Count,
+                FailedCount = failedRows.Count
             };
         }
 
@@ -357,35 +265,6 @@ namespace Apha.PACT.DataAccess.Repository
             query = ApplySupplierNumberFilter(dict, query);
 
             return query;
-        }
-
-        private static List<string> ValidateStagedRow(ProjectSubcontractStaging row, HashSet<string> validProjects)
-        {
-            var failures = new List<string>();
-
-            if (string.IsNullOrWhiteSpace(row.Project))
-                failures.Add("Project is required.");
-            else if (!validProjects.Contains(row.Project))
-                failures.Add($"Project '{row.Project}' does not exist in current FPS year.");
-
-            if (!row.Month.HasValue)
-                failures.Add("Month is required.");
-            else if (row.Month.Value < 1 || row.Month.Value > 12)
-                failures.Add("Month must be between 1 and 12.");
-
-            if (!row.Amount.HasValue)
-                failures.Add("Amount is required.");
-
-            if (row.SupplierNumber.HasValue && row.SupplierNumber.Value < 0)
-                failures.Add("Supplier Number cannot be negative.");
-
-            if (row.DailyRate.HasValue && row.DailyRate.Value < 0)
-                failures.Add("Daily Rate cannot be negative.");
-
-            if (row.AnimalDays.HasValue && row.AnimalDays.Value < 0)
-                failures.Add("Animal Days cannot be negative.");
-
-            return failures;
         }
 
         private static IQueryable<ProjectSubContract> ApplyStringFilter(
@@ -434,15 +313,23 @@ namespace Apha.PACT.DataAccess.Repository
 
         private static IQueryable<ProjectSubcontractStaging> ApplyFailedMonthFilter(IDictionary<string, object> dict, IQueryable<ProjectSubcontractStaging> query)
         {
-            if (dict.TryGetValue("Month", out object? month) && month != null && int.TryParse(month.ToString(), out int monthValue))
-                query = query.Where(x => (int?)x.Month == monthValue);
+            if (dict.TryGetValue("Month", out object? month) && month != null)
+            {
+                var monthValue = month.ToString();
+                if (!string.IsNullOrWhiteSpace(monthValue))
+                    query = query.Where(x => x.Month == monthValue);
+            }
             return query;
         }
 
         private static IQueryable<ProjectSubcontractStaging> ApplyFailedSupplierNumberFilter(IDictionary<string, object> dict, IQueryable<ProjectSubcontractStaging> query)
         {
-            if (dict.TryGetValue("SupplierNumber", out object? supplierNumber) && supplierNumber != null && int.TryParse(supplierNumber.ToString(), out int supplierNumberValue))
-                query = query.Where(x => x.SupplierNumber == supplierNumberValue);
+            if (dict.TryGetValue("SupplierNumber", out object? supplierNumber) && supplierNumber != null)
+            {
+                var supplierNumberValue = supplierNumber.ToString();
+                if (!string.IsNullOrWhiteSpace(supplierNumberValue))
+                    query = query.Where(x => x.SupplierNumber == supplierNumberValue);
+            }
             return query;
         }
 

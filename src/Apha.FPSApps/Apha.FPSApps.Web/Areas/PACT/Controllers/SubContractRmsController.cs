@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
 using System.IO;
+using Apha.Common.Utilities.ExcelExport;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
@@ -25,17 +26,20 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private readonly PactProjectSubContractService _subContractService;
         private readonly IProjectService _projectService;
         private readonly IMonthService _monthService;
+        private readonly IExcelExportService _excelExportService;
 
         public SubContractRmsController(
             IMapper mapper,
             PactProjectSubContractService subContractService,
             IProjectService projectService,
-            IMonthService monthService)
+            IMonthService monthService,
+            IExcelExportService excelExportService)
         {
             _mapper = mapper;
             _subContractService = subContractService;
             _projectService = projectService;
             _monthService = monthService;
+            _excelExportService = excelExportService;
         }
 
         [HttpGet]
@@ -240,7 +244,20 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportFailedSubContractRms()
         {
-            var bytes = await _subContractService.ExportFailedSubContractRmsAsync();
+            var exportQuery = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = int.MaxValue,
+                SortBy = "Id",
+                Descending = false
+            };
+
+            var response = await _subContractService.GetFailedSubContractRmsAsync(exportQuery);
+            var items = response.Success && response.Data != null
+                ? _mapper.Map<List<SubContractRmsFailedItem>>(response.Data)
+                : new List<SubContractRmsFailedItem>();
+
+            var bytes = _excelExportService.ExportToExcel(items, "SubContractRMS_Failed");
             var fileName = $"SubContractRMS_{DateTime.Now:yyyyMMdd}_failed.xlsx";
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }

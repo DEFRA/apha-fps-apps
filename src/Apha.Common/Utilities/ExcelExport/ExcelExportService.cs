@@ -17,7 +17,7 @@ namespace Apha.Common.Utilities.ExcelExport
 
             for (int i = 0; i < properties.Length; i++)
             {
-                worksheet.Cell(1, i + 1).Value = properties[i].Name;
+                worksheet.Cell(1, i + 1).Value = GetColumnHeader(properties[i]);
             }
 
             int row = 2;

@@ -70,8 +70,8 @@ namespace Apha.FPSApps.Application.Services.PACT
             };
 
             var headerMap = BuildHeaderMap(usedRows.First());
-            var missingHeaders = GetMissingRequiredHeaders(headerMap).ToList();
-            if (missingHeaders.Count > 0)
+            var hasMissingHeaders = GetMissingRequiredHeaders(headerMap).Any();
+            if (hasMissingHeaders)
             {
                 return ApiResponseDto<SubContractRmsImportResultDto>.FailureResponse(
                     new List<ApiErrorDto>
@@ -85,29 +85,40 @@ namespace Apha.FPSApps.Application.Services.PACT
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
             }
 
+            var colProject = headerMap[NormalizeHeader("Project")];
+            var colTestJob = headerMap[NormalizeHeader("Test Job")];
+            var colMonth = headerMap[NormalizeHeader("Month")];
+            var colAmount = headerMap[NormalizeHeader("Amount")];
+            //var colWorkGroup = headerMap[NormalizeHeader("Work Group")];
+            var colAccountCode = headerMap[NormalizeHeader("Account Code")];
+            var colSupplier = headerMap[NormalizeHeader("Supplier")];
+            var colDescription = headerMap[NormalizeHeader("Description")];
+            var colSupplierNumber = headerMap[NormalizeHeader("Supplier Number")];
+            var colDailyRate = headerMap[NormalizeHeader("Daily Rate")];
+            var colAnimalDays = headerMap[NormalizeHeader("Animal Days")];
+
+            request.Rows = new List<SubContractRmsImportRowDto>(Math.Max(usedRows.Count - 1, 0));
+
             foreach (var row in usedRows.Skip(1))
             {
                 request.Rows.Add(new SubContractRmsImportRowDto
                 {
-                    Project = GetText(row, headerMap, "Project"),
-                    TestJob = GetText(row, headerMap, "TestJob", "Test Job"),
-                    Month = TryGetDouble(GetCell(row, headerMap, "Month")),
-                    Amount = TryGetDecimal(GetCell(row, headerMap, "Amount")),
-                    WorkGroup = GetText(row, headerMap, "WorkGroup", "Work Group"),
-                    AcctCode = GetText(row, headerMap, "AcctCode", "Acct Code", "AccountCode", "Account Code"),
-                    Supplier = GetText(row, headerMap, "Supplier"),
-                    Description = GetText(row, headerMap, "Description"),
-                    SupplierNumber = TryGetInt(GetCell(row, headerMap, "SupplierNumber", "Supplier Number")),
-                    DailyRate = TryGetDecimal(GetCell(row, headerMap, "DailyRate", "Daily Rate")),
-                    AnimalDays = TryGetInt(GetCell(row, headerMap, "AnimalDays", "Animal Days"))
+                    Project = GetText(row.Cell(colProject)),
+                    TestJob = GetText(row.Cell(colTestJob)),
+                    Month = GetText(row.Cell(colMonth)),
+                    Amount = GetText(row.Cell(colAmount)),
+                    //WorkGroup = GetText(row.Cell(colWorkGroup)),
+                    AcctCode = GetText(row.Cell(colAccountCode)),
+                    Supplier = GetText(row.Cell(colSupplier)),
+                    Description = GetText(row.Cell(colDescription)),
+                    SupplierNumber = GetText(row.Cell(colSupplierNumber)),
+                    DailyRate = GetText(row.Cell(colDailyRate)),
+                    AnimalDays = GetText(row.Cell(colAnimalDays))
                 });
             }
 
             return await _pactClient.PactProjectSubContract.ImportSubContractRmsAsync(request);
         }
-
-        public async Task<byte[]> ExportFailedSubContractRmsAsync()
-            => await _pactClient.PactProjectSubContract.ExportFailedSubContractRmsAsync();
 
         public async Task<ApiResponseDto<bool>> DeleteFailedSubContractRmsByUserAsync()
             => await _pactClient.PactProjectSubContract.DeleteFailedSubContractRmsByUserAsync();
@@ -134,11 +145,11 @@ namespace Apha.FPSApps.Application.Services.PACT
             }
 
             return row.Cell(1);
-        }
+        }       
 
-        private static string? GetText(IXLRangeRow row, Dictionary<string, int> headerMap, params string[] headerNames)
+        private static string? GetText(IXLCell cell)
         {
-            var cell = GetCell(row, headerMap, headerNames);
+            if (cell == null || cell.IsEmpty()) return null;
             var text = cell.GetString()?.Trim();
             return string.IsNullOrWhiteSpace(text) ? null : text;
         }
@@ -148,58 +159,30 @@ namespace Apha.FPSApps.Application.Services.PACT
             return new string((value ?? string.Empty).Where(char.IsLetterOrDigit).ToArray());
         }
 
+        private static readonly string[] TemplateHeaders =
+        {
+            "Project",
+            "Test Job",
+            "Month",
+            "Amount",
+            //"Work Group",
+            "Account Code",
+            "Supplier",
+            "Description",
+            "Supplier Number",
+            "Daily Rate",
+            "Animal Days"
+        };
+
         private static IEnumerable<string> GetMissingRequiredHeaders(Dictionary<string, int> headerMap)
         {
-            var requiredHeaderGroups = new List<(string DisplayName, string[] Aliases)>
+            foreach (var header in TemplateHeaders)
             {
-                ("Project", new[] { "Project" }),
-                ("Test Job", new[] { "TestJob", "Test Job" }),
-                ("Month", new[] { "Month" }),
-                ("Amount", new[] { "Amount" }),
-                //("Work Group", new[] { "WorkGroup", "Work Group" }),
-                ("Account Code", new[] { "AcctCode", "Acct Code", "AccountCode", "Account Code" }),
-                ("Supplier", new[] { "Supplier" }),
-                ("Description", new[] { "Description" }),
-                ("Supplier Number", new[] { "SupplierNumber", "Supplier Number" }),
-                ("Daily Rate", new[] { "DailyRate", "Daily Rate" }),
-                ("Animal Days", new[] { "AnimalDays", "Animal Days" })
-            };
-
-            foreach (var (displayName, aliases) in requiredHeaderGroups)
-            {
-                var found = aliases.Any(a => headerMap.ContainsKey(NormalizeHeader(a)));
-                if (!found)
-                    yield return displayName;
+                if (!headerMap.ContainsKey(NormalizeHeader(header)))
+                    yield return header;
             }
         }
 
-        private static decimal? TryGetDecimal(IXLCell cell)
-        {
-            if (cell == null || cell.IsEmpty()) return null;
 
-            var text = cell.GetString()?.Trim();
-            if (decimal.TryParse(text, out var parsed)) return parsed;
-            if (decimal.TryParse(text?.Replace(",", string.Empty), out parsed)) return parsed;
-            return null;
-        }
-
-        private static double? TryGetDouble(IXLCell cell)
-        {
-            if (cell == null || cell.IsEmpty()) return null;
-
-            var text = cell.GetString()?.Trim();
-            if (double.TryParse(text, out var parsed)) return parsed;
-            if (double.TryParse(text?.Replace(",", string.Empty), out parsed)) return parsed;
-            return null;
-        }
-
-        private static int? TryGetInt(IXLCell cell)
-        {
-            if (cell == null || cell.IsEmpty()) return null;
-
-            var text = cell.GetString()?.Trim();
-            if (int.TryParse(text, out var parsed)) return parsed;
-            return null;
-        }
     }
 }
