@@ -1461,7 +1461,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Program!, $"%{programNo}%"));
 
             if (!string.IsNullOrWhiteSpace(manager))
-                rawQuery = rawQuery.Where(x => x.pg != null && EF.Functions.ILike(x.pg.Manager, $"%{manager}%"));
+                rawQuery = rawQuery.Where(x => x.pg != null && EF.Functions.ILike(x.pg.Manager!, $"%{manager}%"));
 
             if (!string.IsNullOrWhiteSpace(customer))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Customer!, $"%{customer}%"));
