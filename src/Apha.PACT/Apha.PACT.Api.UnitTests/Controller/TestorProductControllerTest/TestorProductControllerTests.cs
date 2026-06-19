@@ -43,7 +43,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
             var result = await _controller.GetAllTestorProductsAsync();
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
-            var list = Assert.IsAssignableFrom<List<TestorProductRes>>(ok.Value);
+            var list = Assert.IsType<List<TestorProductRes>>(ok.Value, exactMatch: false);
             Assert.Equal(2, list.Count);
             Assert.Equal("T001", list[0].ItemCode);
             Assert.Equal("T002", list[1].ItemCode);
@@ -57,7 +57,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
             var result = await _controller.GetAllTestorProductsAsync();
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
-            var list = Assert.IsAssignableFrom<List<TestorProductRes>>(ok.Value);
+            var list = Assert.IsType<List<TestorProductRes>>(ok.Value, exactMatch: false);
             Assert.Empty(list);
         }
 
@@ -390,7 +390,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var resultList = Assert.IsAssignableFrom<IEnumerable<string>>(okResult.Value);
+            var resultList = Assert.IsType<List<string>>(okResult.Value, exactMatch: false);
             Assert.Empty(resultList);
         }
 

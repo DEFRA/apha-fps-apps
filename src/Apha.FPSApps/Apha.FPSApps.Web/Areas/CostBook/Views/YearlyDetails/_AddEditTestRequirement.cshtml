@@ -72,7 +72,8 @@
             <label asp-for="NumberOfTests" class="govuk-label">
                 No <span class="sup_color_red">*</span>
             </label>
-            <input asp-for="NumberOfTests" type="number" step="0.01" class="govuk-input" required />
+            <input asp-for="NumberOfTests" type="number" step="0.01" class="govuk-input"
+                   value="@(Model.NumberOfTests ?? 0)" />
             <span asp-validation-for="NumberOfTests" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">

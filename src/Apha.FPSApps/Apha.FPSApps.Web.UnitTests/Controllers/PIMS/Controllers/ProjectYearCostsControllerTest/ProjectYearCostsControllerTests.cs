@@ -1501,7 +1501,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PIMS.Controllers.ProjectYearCos
                 await _controller.LoadMonthlyPactGrid(DefaultRequest(), "PP001", 2024));
             DataGridConfig<MonthlyPactItem> grid =
                 Assert.IsType<DataGridConfig<MonthlyPactItem>>(result.Model);
-            Assert.Equal("Mar", grid.Data[0].Periodname);
+            // Financial month 3 → (3+3)%12 = 6 → calendar June
+            Assert.Equal("Jun", grid.Data[0].Periodname);
         }
 
         [Fact]

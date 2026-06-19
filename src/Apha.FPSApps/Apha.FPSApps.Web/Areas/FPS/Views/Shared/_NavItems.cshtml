@@ -97,7 +97,7 @@
             <a class="dropdown-item" href="#">Stage 1 Plans</a>
             <a class="dropdown-item" href="#">ASU Data View</a>
             <a class="dropdown-item" href="#">VLA Project Totals</a>
-            <a class="dropdown-item" href="#">Generic Bids</a>
+            <a class="dropdown-item" asp-area="FPS" asp-controller="BudgetResourceLevel" asp-action="Index">Generic Bids</a>
             <a class="dropdown-item" href="#">Project Audit Trails</a>
         </div>
         <div class="dropdown-col" style="min-width:310px">
@@ -121,7 +121,7 @@
     </div>
 </div>
 
-<!-- Lab Testing Manager's -->
+            <!-- Lab Testing Manager's -->
             <div class="nav-item dropdown">
                 <button class="nav-button dropdown-toggle" data-dropdown="lab-testing-manager" allow-edit="true">
                     <div class="align-menu-text"><span>Lab Testing Manager's</span></div>
@@ -155,7 +155,7 @@
 
 <!-- Project Plan Viewer -->
 <div class="nav-item">
-    <a class="nav-button" href="#" allow-edit="true">
+    <a class="nav-button" asp-area="FPS" asp-controller="ProjectPlanViewer" asp-action="Index" allow-edit="true">
         <div class="align-menu-text"><span>Project Plan Viewer</span></div>
     </a>
 </div>

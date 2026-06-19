@@ -333,7 +333,17 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestOrProductRepositoryTest
                 "owner"          => result.Data.ElementAt(0).Owner,
                 _                => result.Data.ElementAt(0).TestCode
             };
+            var secondValue = sortBy switch
+            {
+                "jobcode"        => result.Data.ElementAt(1).JobCode,
+                "manager"        => result.Data.ElementAt(1).Manager,
+                "program"        => result.Data.ElementAt(1).Program,
+                "owner"          => result.Data.ElementAt(1).Owner,
+                _                => result.Data.ElementAt(1).TestCode
+            };
+            
             Assert.Equal(expectedFirst, firstValue);
+            Assert.Equal(expectedSecond, secondValue);
         }
 
         #endregion

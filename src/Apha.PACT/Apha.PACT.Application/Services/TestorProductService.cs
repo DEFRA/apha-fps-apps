@@ -66,7 +66,7 @@ namespace Apha.PACT.Application.Services
             // Validate required fields
             if (string.IsNullOrWhiteSpace(dto.ItemCode))
             {
-                throw new ArgumentException("Item Code is required.", nameof(dto.ItemCode));
+                throw new ArgumentException("Item Code is required.");
             }
 
             // Check for duplicate primary key
@@ -100,7 +100,7 @@ namespace Apha.PACT.Application.Services
             // Validate required fields
             if (string.IsNullOrWhiteSpace(dto.ItemCode))
             {
-                throw new ArgumentException("Item Code is required for update.", nameof(dto.ItemCode));
+                throw new ArgumentException("Item Code is required for update.");
             }
 
             // Verify entity exists before update
@@ -229,7 +229,7 @@ namespace Apha.PACT.Application.Services
             }
 
             // Throw exception if any validation errors found
-            if (validationErrors.Any())
+            if (validationErrors.Count != 0)
             {
                 throw new ArgumentException($"Validation failed: {string.Join(" ", validationErrors)}");
             }
