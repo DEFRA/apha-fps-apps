@@ -1,5 +1,4 @@
-using Apha.Common.Contracts.FPS;
-using Apha.FPS.Application.Dtos;
+﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
@@ -264,25 +263,12 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<PaginatedResult<ProjectProfitabilityDto>>(pagedResult);
         }
 
-        // TRANSFORMENGINE: new method — VLA-filtered project profitability list
-        //   frmJobcodeTotalsVLA migration: read-only paged query with four optional filter
-        //   dimensions (ProjectStatus, ProgramNo, Manager, Customer) carried in
-        //   QueryParameters<ProjectProfitabilityVlaReq>.Filter.
-        //   No write-path business guards required — this is a read-only list endpoint.
         public async Task<PaginatedResult<ProjectProfitabilityVlaDto>> GetProjectProfitabilityVlaAsync(
-            QueryParameters<ProjectProfitabilityVlaReq> query)
+            QueryParameters<string> query, string? projectStatus = null, string? programNo = null, string? manager = null, string? customer = null)
         {
-            // TRANSFORMENGINE: validate non-null input per phase rules before first await
             ArgumentNullException.ThrowIfNull(query);
-
-            // TRANSFORMENGINE: map Application-layer QueryParameters → Core PaginationParameters
-            //   preserving Search, SortBy, Descending, Page, PageSize, and Filter payload.
             var pagedResult = await _projectRepository.GetProjectProfitabilityVlaAsync(
-                _mapper.Map<PaginationParameters<ProjectProfitabilityVlaReq>>(query));
-
-            // TRANSFORMENGINE: map Core PagedData<ProjectProfitabilityVlaView>
-            //   → Application PaginatedResult<ProjectProfitabilityVlaDto>
-            //   via EntityMapper.CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>
+                _mapper.Map<PaginationParameters<string>>(query), projectStatus, programNo, manager, customer);
             return _mapper.Map<PaginatedResult<ProjectProfitabilityVlaDto>>(pagedResult);
         }
     }

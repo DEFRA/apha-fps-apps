@@ -1,4 +1,3 @@
-using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
@@ -33,18 +32,10 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         public async Task GetProjectProfitabilityVlaAsync_WithValidQuery_ReturnsMappedPaginatedResult()
         {
             // Arrange
-            var query = new QueryParameters<ProjectProfitabilityVlaReq>
-            {
-                Page = 1,
-                PageSize = 15,
-                Filter = new ProjectProfitabilityVlaReq { ProjectStatus = "Approved", ProgramNo = "P001" }
-            };
-            var paginationParams = new PaginationParameters<ProjectProfitabilityVlaReq>
-            {
-                Page = 1,
-                PageSize = 15,
-                Filter = query.Filter
-            };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 15 };
+            var projectStatus = "Approved";
+            var programNo = "P001";
+            var paginationParams = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
             var views = new List<ProjectProfitabilityVlaView>
             {
@@ -62,31 +53,28 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
                 },
                 new PaginationDto { PageNumber = 1, PageSize = 15, TotalRecords = 2 });
 
-            _mockMapper.Map<PaginationParameters<ProjectProfitabilityVlaReq>>(query)
-                .Returns(paginationParams);
-            _mockRepository.GetProjectProfitabilityVlaAsync(paginationParams)
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetProjectProfitabilityVlaAsync(paginationParams, projectStatus, programNo, null, null)
                 .Returns(pagedData);
-            _mockMapper.Map<PaginatedResult<ProjectProfitabilityVlaDto>>(pagedData)
-                .Returns(expectedResult);
+            _mockMapper.Map<PaginatedResult<ProjectProfitabilityVlaDto>>(pagedData).Returns(expectedResult);
 
             // Act
-            var result = await _sut.GetProjectProfitabilityVlaAsync(query);
+            var result = await _sut.GetProjectProfitabilityVlaAsync(query, projectStatus, programNo);
 
             // Assert
             result.Should().NotBeNull();
             result.Should().Be(expectedResult);
-            await _mockRepository.Received(1).GetProjectProfitabilityVlaAsync(paginationParams);
-            _mockMapper.Received(1).Map<PaginationParameters<ProjectProfitabilityVlaReq>>(query);
+            await _mockRepository.Received(1).GetProjectProfitabilityVlaAsync(paginationParams, projectStatus, programNo, null, null);
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
             _mockMapper.Received(1).Map<PaginatedResult<ProjectProfitabilityVlaDto>>(pagedData);
-
         }
 
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_WithEmptyRepositoryResult_ReturnsEmptyPaginatedResult()
         {
             // Arrange
-            var query = new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 };
-            var paginationParams = new PaginationParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 15 };
+            var paginationParams = new PaginationParameters<string> { Page = 1, PageSize = 15 };
             var emptyPagedData = new PagedData<ProjectProfitabilityVlaView>(
                 new List<ProjectProfitabilityVlaView>(),
                 new PaginationData { PageNumber = 1, PageSize = 15, TotalRecords = 0 });
@@ -94,8 +82,8 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
                 new List<ProjectProfitabilityVlaDto>(),
                 new PaginationDto { PageNumber = 1, PageSize = 15, TotalRecords = 0 });
 
-            _mockMapper.Map<PaginationParameters<ProjectProfitabilityVlaReq>>(query).Returns(paginationParams);
-            _mockRepository.GetProjectProfitabilityVlaAsync(paginationParams).Returns(emptyPagedData);
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetProjectProfitabilityVlaAsync(paginationParams, null, null, null, null).Returns(emptyPagedData);
             _mockMapper.Map<PaginatedResult<ProjectProfitabilityVlaDto>>(emptyPagedData).Returns(emptyResult);
 
             // Act
@@ -118,19 +106,9 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_WithNoFilters_DelegatesToRepositoryWithMappedParams()
         {
-            // Arrange — no filter fields set; verifies delegation path with null filter
-            var query = new QueryParameters<ProjectProfitabilityVlaReq>
-            {
-                Page = 2,
-                PageSize = 25,
-                Filter = new ProjectProfitabilityVlaReq()
-            };
-            var paginationParams = new PaginationParameters<ProjectProfitabilityVlaReq>
-            {
-                Page = 2,
-                PageSize = 25,
-                Filter = query.Filter
-            };
+            // Arrange — no filter fields set; verifies delegation path with null filters
+            var query = new QueryParameters<string> { Page = 2, PageSize = 25 };
+            var paginationParams = new PaginationParameters<string> { Page = 2, PageSize = 25 };
             var pagedData = new PagedData<ProjectProfitabilityVlaView>(
                 new List<ProjectProfitabilityVlaView>(),
                 new PaginationData { PageNumber = 2, PageSize = 25, TotalRecords = 0 });
@@ -138,26 +116,26 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
                 new List<ProjectProfitabilityVlaDto>(),
                 new PaginationDto { PageNumber = 2, PageSize = 25, TotalRecords = 0 });
 
-            _mockMapper.Map<PaginationParameters<ProjectProfitabilityVlaReq>>(query).Returns(paginationParams);
-            _mockRepository.GetProjectProfitabilityVlaAsync(paginationParams).Returns(pagedData);
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetProjectProfitabilityVlaAsync(paginationParams, null, null, null, null).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<ProjectProfitabilityVlaDto>>(pagedData).Returns(emptyResult);
 
             // Act
             await _sut.GetProjectProfitabilityVlaAsync(query);
 
             // Assert
-            await _mockRepository.Received(1).GetProjectProfitabilityVlaAsync(paginationParams);
+            await _mockRepository.Received(1).GetProjectProfitabilityVlaAsync(paginationParams, null, null, null, null);
         }
 
         [Fact]
         public async Task GetProjectProfitabilityVlaAsync_WhenRepositoryThrows_PropagatesException()
         {
             // Arrange
-            var query = new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 };
-            var paginationParams = new PaginationParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 15 };
+            var paginationParams = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
-            _mockMapper.Map<PaginationParameters<ProjectProfitabilityVlaReq>>(query).Returns(paginationParams);
-            _mockRepository.GetProjectProfitabilityVlaAsync(paginationParams)
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetProjectProfitabilityVlaAsync(paginationParams, null, null, null, null)
                 .ThrowsAsync(new InvalidOperationException("DB connection failed"));
 
             // Act & Assert

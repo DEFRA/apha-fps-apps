@@ -1,5 +1,4 @@
-using Apha.Common.Contracts.FPS;
-using Apha.FPS.Application.Dtos;
+﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 
 namespace Apha.FPS.Application.Interfaces
@@ -30,11 +29,6 @@ namespace Apha.FPS.Application.Interfaces
 
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
-
-        // TRANSFORMENGINE: new method — VLA-filtered project profitability list
-        //   Added for frmJobcodeTotalsVLA migration. Filter dimensions: ProjectStatus,
-        //   ProgramNo, Manager, Customer (from ProjectProfitabilityVlaReq carried
-        //   inside QueryParameters<T>.Filter).
-        Task<PaginatedResult<ProjectProfitabilityVlaDto>> GetProjectProfitabilityVlaAsync(QueryParameters<ProjectProfitabilityVlaReq> query);
+        Task<PaginatedResult<ProjectProfitabilityVlaDto>> GetProjectProfitabilityVlaAsync(QueryParameters<string> query, string? projectStatus = null, string? programNo = null, string? manager = null, string? customer = null);
     }
 }

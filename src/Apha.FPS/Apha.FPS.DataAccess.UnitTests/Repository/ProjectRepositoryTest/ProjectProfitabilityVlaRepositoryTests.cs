@@ -1,5 +1,4 @@
-using Apha.Common.Contracts.FPS;
-using Apha.Common.Helpers.Repository;
+﻿using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -93,7 +92,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         public async Task GetProjectProfitabilityVlaAsync_WithEmptyProjects_ReturnsEmptyPage()
         {
             var repo = CreateRepository(projects: new List<Project>());
-            var query = new PaginationParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
@@ -117,7 +116,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 MakeProgram("P002", "Jane")
             };
             var repo = CreateRepository(projects, programs);
-            var query = new PaginationParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
@@ -135,13 +134,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 MakeProject("PP003", "Approved",  "P002")
             };
             var repo = CreateRepository(projects);
-            var query = new PaginationParameters<ProjectProfitabilityVlaReq>
-            {
-                Page = 1, PageSize = 15,
-                Filter = new ProjectProfitabilityVlaReq { ProjectStatus = "Approved" }
-            };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
-            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+            var result = await repo.GetProjectProfitabilityVlaAsync(query, projectStatus: "Approved");
 
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, v => Assert.Equal("Approved", v.Status));
@@ -157,13 +152,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 MakeProject("PP003", program: "P001")
             };
             var repo = CreateRepository(projects);
-            var query = new PaginationParameters<ProjectProfitabilityVlaReq>
-            {
-                Page = 1, PageSize = 15,
-                Filter = new ProjectProfitabilityVlaReq { ProgramNo = "P001" }
-            };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
-            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+            var result = await repo.GetProjectProfitabilityVlaAsync(query, programNo: "P001");
 
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, v => Assert.Equal("P001", v.Program));
@@ -184,13 +175,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 MakeProgram("P002", manager: "Jane Doe")
             };
             var repo = CreateRepository(projects, programs);
-            var query = new PaginationParameters<ProjectProfitabilityVlaReq>
-            {
-                Page = 1, PageSize = 15,
-                Filter = new ProjectProfitabilityVlaReq { Manager = "John Smith" }
-            };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
-            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+            var result = await repo.GetProjectProfitabilityVlaAsync(query, manager: "John Smith");
 
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, v => Assert.Equal("John Smith", v.Manager));
@@ -206,13 +193,9 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 MakeProject("PP003", customer: "ACME Ltd")
             };
             var repo = CreateRepository(projects);
-            var query = new PaginationParameters<ProjectProfitabilityVlaReq>
-            {
-                Page = 1, PageSize = 15,
-                Filter = new ProjectProfitabilityVlaReq { Customer = "ACME Ltd" }
-            };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
-            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+            var result = await repo.GetProjectProfitabilityVlaAsync(query, customer: "ACME Ltd");
 
             Assert.Equal(2, result.Data.Count());
             Assert.All(result.Data, v => Assert.Equal("ACME Ltd", v.Customer));
@@ -225,7 +208,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 .Select(i => MakeProject($"PP{i:D3}", program: "P001"))
                 .ToList();
             var repo = CreateRepository(projects);
-            var query = new PaginationParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 3 };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 3 };
 
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 
@@ -243,7 +226,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 MakeProject("PP002")
             };
             var repo = CreateRepository(projects);
-            var query = new PaginationParameters<ProjectProfitabilityVlaReq>
+            var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 15,
                 SortBy = null
@@ -285,7 +268,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
                 MakeProgram("P001", manager: "John Smith", target: 3000m)
             };
             var repo = CreateRepository(projects, programs);
-            var query = new PaginationParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 };
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
 
             var result = await repo.GetProjectProfitabilityVlaAsync(query);
 

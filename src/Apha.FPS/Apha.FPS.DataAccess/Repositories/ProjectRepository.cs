@@ -1,4 +1,4 @@
-using Apha.Common.Contracts.FPS;
+﻿using Apha.Common.Contracts.FPS;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -539,8 +539,8 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return property switch
             {
-                string s when s.Equals("parentproject", StringComparison.OrdinalIgnoreCase) => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
-                string s when s.Equals("projecttitle", StringComparison.OrdinalIgnoreCase) => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
+                "parentproject" => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
+                "projecttitle"  => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
                 _ => query.OrderBy(e => e.ParentProject)
             };
         }
@@ -1199,6 +1199,15 @@ namespace Apha.FPS.DataAccess.Repositories
             string? ProjectStatus,
             string? Program);
 
+        private record VlaProjectEntry(
+            string? ParentProject,
+            decimal? BudgetCvl,
+            string? ProjectStatus,
+            string? Program,
+            string? Customer,
+            string? Manager,
+            decimal? ProgrammeTarget);
+
         /// <summary>
         /// Returns paginated project profitability data for a given programme.
         /// Translates qryProjectProfitability3: Projects + Programs + aggregate cost sub-queries.
@@ -1423,71 +1432,106 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(results, query.Page, query.PageSize);
         }
 
-        // â”€â”€ VLA Project Profitability â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── VLA Project Profitability ──────────────────────────────────────────
 
         /// <summary>
         /// Returns paginated project profitability data for the VLA view.
-        /// Reuses the cost computation approach from <see cref="ComputeProfitabilityAsync"/>:
-        /// queries <c>Projects</c> with a LEFT JOIN to <c>Programs</c> for Manager and Target
-        /// (TargetProfit), then computes staff, test, animal, and additional costs in-memory.
-        /// No database view is used.
-        ///
         /// Filter dimensions (all optional, case-insensitive):
-        ///   ProjectStatus â€” filterProjectStatus in the HTML prototype
-        ///   ProgramNo     â€” filterProgram
-        ///   Manager       â€” filterManager (from tlkpProgram.Manager, VLA-specific)
-        ///   Customer      â€” filterCustomer (from tlkpProject.Customer, VLA-specific)
+        ///   projectStatus, programNo, manager, customer.
         /// </summary>
         public async Task<PagedData<ProjectProfitabilityVlaView>> GetProjectProfitabilityVlaAsync(
-            PaginationParameters<ProjectProfitabilityVlaReq> query)
+            PaginationParameters<string> query,
+            string? projectStatus = null,
+            string? programNo = null,
+            string? manager = null,
+            string? customer = null)
         {
-            var filter = query.Filter;
-
-            // LEFT JOIN Projects â†’ Programs to expose Manager (from programme) and TargetProfit.
-            // _dbContext.Projects and _dbContext.Programs both carry HasQueryFilter for FpsYear,
-            // so year scoping is applied automatically.
             var projectsQuery = (from p in _dbContext.Projects.AsNoTracking()
                                  join pg in _dbContext.Programs on p.Program equals pg.ProgramNo into pgJoin
                                  from pg in pgJoin.DefaultIfEmpty()
-                                 select new
-                                 {
+                                 select new VlaProjectEntry(
                                      p.ParentProject,
-                                     p.Customer,
+                                     p.BudgetCvl,
                                      p.ProjectStatus,
                                      p.Program,
-                                     p.BudgetCvl,
-                                     p.IsDefraProject,
-                                     Manager = pg == null ? null : pg.Manager,
-                                     ProgrammeTarget = pg == null ? (decimal?)null : pg.Target
-                                 }).AsQueryable();
+                                     p.Customer,
+                                     pg == null ? null : pg.Manager,
+                                     pg == null ? (decimal?)null : pg.Target)).AsQueryable();
 
-            if (filter != null)
-            {
-                if (!string.IsNullOrWhiteSpace(filter.ProjectStatus))
-                    projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.ProjectStatus, $"%{filter.ProjectStatus}%"));
+            if (!string.IsNullOrWhiteSpace(projectStatus))
+                projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
 
-                if (!string.IsNullOrWhiteSpace(filter.ProgramNo))
-                    projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.Program, $"%{filter.ProgramNo}%"));
+            if (!string.IsNullOrWhiteSpace(programNo))
+                projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.Program!, $"%{programNo}%"));
 
-                // Manager comes from the Programme (left join); null-check guards against projects with no programme.
-                if (!string.IsNullOrWhiteSpace(filter.Manager))
-                    projectsQuery = projectsQuery.Where(x => x.Manager != null && EF.Functions.ILike(x.Manager, $"%{filter.Manager}%"));
+            if (!string.IsNullOrWhiteSpace(manager))
+                projectsQuery = projectsQuery.Where(x => x.Manager != null && EF.Functions.ILike(x.Manager, $"%{manager}%"));
 
-                if (!string.IsNullOrWhiteSpace(filter.Customer))
-                    projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.Customer, $"%{filter.Customer}%"));
-            }
+            if (!string.IsNullOrWhiteSpace(customer))
+                projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.Customer!, $"%{customer}%"));
 
             if (!string.IsNullOrWhiteSpace(query.Search))
-                projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.ParentProject, $"%{query.Search}%"));
+                projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{query.Search}%"));
+
+            projectsQuery = ApplyVlaProfitabilityFilter(projectsQuery, query.Filter);
 
             var projects = await projectsQuery.ToListAsync();
 
             if (projects.Count == 0)
                 return ApplyPaging(new List<ProjectProfitabilityVlaView>(), query.Page, query.PageSize);
 
+            return await ComputeProfitabilityForVlaAsync(query, projects);
+        }
+
+        private static IQueryable<VlaProjectEntry> ApplyVlaProfitabilityFilter(IQueryable<VlaProjectEntry> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{jobCode}%"));
+
+            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+                query = query.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{parentProject}%"));
+
+            return query;
+        }
+
+        private static List<ProjectProfitabilityVlaView> ApplyVlaSorting(
+            List<ProjectProfitabilityVlaView> results, string? sortBy, bool descending)
+        {
+            return sortBy switch
+            {
+                string s when s.Equals("jobcode", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.JobCode).ToList() : results.OrderBy(v => v.JobCode).ToList(),
+                string s when s.Equals("program", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.Program).ToList() : results.OrderBy(v => v.Program).ToList(),
+                string s when s.Equals("customer", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.Customer).ToList() : results.OrderBy(v => v.Customer).ToList(),
+                string s when s.Equals("manager", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.Manager).ToList() : results.OrderBy(v => v.Manager).ToList(),
+                string s when s.Equals("status", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.Status).ToList() : results.OrderBy(v => v.Status).ToList(),
+                string s when s.Equals("staffcosts", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.StaffCosts).ToList() : results.OrderBy(v => v.StaffCosts).ToList(),
+                string s when s.Equals("testcost", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.TestCost).ToList() : results.OrderBy(v => v.TestCost).ToList(),
+                string s when s.Equals("animalcosts", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.AnimalCosts).ToList() : results.OrderBy(v => v.AnimalCosts).ToList(),
+                string s when s.Equals("additionalcosts", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.AdditionalCosts).ToList() : results.OrderBy(v => v.AdditionalCosts).ToList(),
+                string s when s.Equals("totalcosts", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.TotalCosts).ToList() : results.OrderBy(v => v.TotalCosts).ToList(),
+                string s when s.Equals("budget", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.Budget).ToList() : results.OrderBy(v => v.Budget).ToList(),
+                string s when s.Equals("profit", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.Profit).ToList() : results.OrderBy(v => v.Profit).ToList(),
+                string s when s.Equals("targetprofit", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.TargetProfit).ToList() : results.OrderBy(v => v.TargetProfit).ToList(),
+                string s when s.Equals("offtarget", StringComparison.OrdinalIgnoreCase) => descending ? results.OrderByDescending(v => v.OffTarget).ToList() : results.OrderBy(v => v.OffTarget).ToList(),
+                _ => results.OrderBy(v => v.JobCode).ToList()
+            };
+        }
+
+        private async Task<PagedData<ProjectProfitabilityVlaView>> ComputeProfitabilityForVlaAsync(
+            PaginationParameters<string> query,
+            List<VlaProjectEntry> projects)
+        {
             var projectCodes = projects.Select(p => p.ParentProject).ToList();
 
-            // Staff costs â€” identical computation to ComputeProfitabilityAsync
             var staffCosts = await (
                 from sj in _dbContext.StaffJobs
                 join wge in _dbContext.WorkGroupEmployees on sj.StaffId equals wge.PactId
@@ -1507,7 +1551,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 })
                 .ToListAsync();
 
-            // Additional costs
             var additionalCosts = await _dbContext.AdditionalCosts
                 .AsNoTracking()
                 .Where(ac => projectCodes.Contains(ac.JobCode))
@@ -1515,7 +1558,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Select(g => new { JobCode = g.Key, TotalAdditional = g.Sum(x => x.ItemCost) })
                 .ToListAsync();
 
-            // Test costs
             var testCostsRaw = await _dbContext.TestRequirements
                 .AsNoTracking()
                 .Where(tr => projectCodes.Contains(tr.Buyer))
@@ -1532,7 +1574,6 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Select(g => new { JobCode = g.Key, TotalTest = g.Sum(x => x.NoRequired * x.UnitPrice) })
                 .ToList();
 
-            // Animal costs
             var animalCostsRaw = await (
                 from ar in _dbContext.AnimalRequests
                 join p in _dbContext.Projects on ar.JobCode equals p.ParentProject
@@ -1591,25 +1632,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 };
             }).ToList();
 
-            // Apply sorting in-memory (after cost computation)
-            results = query.SortBy switch
-            {
-                string s when s.Equals("jobcode", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.JobCode).ToList() : results.OrderBy(v => v.JobCode).ToList(),
-                string s when s.Equals("program", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.Program).ToList() : results.OrderBy(v => v.Program).ToList(),
-                string s when s.Equals("customer", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.Customer).ToList() : results.OrderBy(v => v.Customer).ToList(),
-                string s when s.Equals("manager", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.Manager).ToList() : results.OrderBy(v => v.Manager).ToList(),
-                string s when s.Equals("status", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.Status).ToList() : results.OrderBy(v => v.Status).ToList(),
-                string s when s.Equals("staffcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.StaffCosts).ToList() : results.OrderBy(v => v.StaffCosts).ToList(),
-                string s when s.Equals("testcost", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.TestCost).ToList() : results.OrderBy(v => v.TestCost).ToList(),
-                string s when s.Equals("animalcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.AnimalCosts).ToList() : results.OrderBy(v => v.AnimalCosts).ToList(),
-                string s when s.Equals("additionalcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.AdditionalCosts).ToList() : results.OrderBy(v => v.AdditionalCosts).ToList(),
-                string s when s.Equals("totalcosts", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.TotalCosts).ToList() : results.OrderBy(v => v.TotalCosts).ToList(),
-                string s when s.Equals("budget", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.Budget).ToList() : results.OrderBy(v => v.Budget).ToList(),
-                string s when s.Equals("profit", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.Profit).ToList() : results.OrderBy(v => v.Profit).ToList(),
-                string s when s.Equals("targetprofit", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.TargetProfit).ToList() : results.OrderBy(v => v.TargetProfit).ToList(),
-                string s when s.Equals("offtarget", StringComparison.OrdinalIgnoreCase) => query.Descending ? results.OrderByDescending(v => v.OffTarget).ToList() : results.OrderBy(v => v.OffTarget).ToList(),
-                _ => results.OrderBy(v => v.JobCode).ToList()
-            };
+            results = ApplyVlaSorting(results, query.SortBy, query.Descending);
 
             return ApplyPaging(results, query.Page, query.PageSize);
         }

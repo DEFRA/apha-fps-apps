@@ -47,20 +47,20 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
                 PaginationData = new Pagination { PageNumber = 1, PageSize = 15, TotalRecords = 2 }
             };
 
-            _projectService.GetProjectProfitabilityVlaAsync(Arg.Any<QueryParameters<ProjectProfitabilityVlaReq>>())
+            _projectService.GetProjectProfitabilityVlaAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(serviceResult);
             _mapper.Map<PaginationRes<ProjectProfitabilityVlaRes>>(serviceResult)
                 .Returns(expectedRes);
 
             // Act
             var result = await _controller.GetProjectProfitabilityVlaAsync(
-                new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 });
+                new QueryParameters<string> { Page = 1, PageSize = 15 });
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             okResult.Value.Should().Be(expectedRes);
             await _projectService.Received(1)
-                .GetProjectProfitabilityVlaAsync(Arg.Any<QueryParameters<ProjectProfitabilityVlaReq>>());
+                .GetProjectProfitabilityVlaAsync(Arg.Any<QueryParameters<string>>());
         }
 
         [Fact]
@@ -73,38 +73,23 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
             var expectedRes = new PaginationRes<ProjectProfitabilityVlaRes>();
 
             _projectService.GetProjectProfitabilityVlaAsync(
-                    Arg.Is<QueryParameters<ProjectProfitabilityVlaReq>>(q =>
-                        q.Filter != null &&
-                        q.Filter.ProjectStatus == "Approved" &&
-                        q.Filter.ProgramNo == "P001" &&
-                        q.Filter.Manager == "John Smith" &&
-                        q.Filter.Customer == "ACME Ltd"))
+                    Arg.Any<QueryParameters<string>>(), "Approved", "P001", "John Smith", "ACME Ltd")
                 .Returns(serviceResult);
             _mapper.Map<PaginationRes<ProjectProfitabilityVlaRes>>(serviceResult).Returns(expectedRes);
 
             // Act
             var result = await _controller.GetProjectProfitabilityVlaAsync(
-                new QueryParameters<ProjectProfitabilityVlaReq>
-                {
-                    Page = 1,
-                    PageSize = 10,
-                    Filter = new ProjectProfitabilityVlaReq
-                    {
-                        ProjectStatus = "Approved",
-                        ProgramNo = "P001",
-                        Manager = "John Smith",
-                        Customer = "ACME Ltd"
-                    }
-                });
+                new QueryParameters<string> { Page = 1, PageSize = 10 },
+                projectStatus: "Approved",
+                programNo: "P001",
+                manager: "John Smith",
+                customer: "ACME Ltd");
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             await _projectService.Received(1)
-                .GetProjectProfitabilityVlaAsync(Arg.Is<QueryParameters<ProjectProfitabilityVlaReq>>(q =>
-                    q.Filter!.ProjectStatus == "Approved" &&
-                    q.Filter.ProgramNo == "P001" &&
-                    q.Filter.Manager == "John Smith" &&
-                    q.Filter.Customer == "ACME Ltd"));
+                .GetProjectProfitabilityVlaAsync(
+                    Arg.Any<QueryParameters<string>>(), "Approved", "P001", "John Smith", "ACME Ltd");
         }
 
         [Fact]
@@ -119,13 +104,13 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
                 Data = new List<ProjectProfitabilityVlaRes>()
             };
 
-            _projectService.GetProjectProfitabilityVlaAsync(Arg.Any<QueryParameters<ProjectProfitabilityVlaReq>>())
+            _projectService.GetProjectProfitabilityVlaAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(serviceResult);
             _mapper.Map<PaginationRes<ProjectProfitabilityVlaRes>>(serviceResult).Returns(expectedRes);
 
             // Act
             var result = await _controller.GetProjectProfitabilityVlaAsync(
-                new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 });
+                new QueryParameters<string> { Page = 1, PageSize = 15 });
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -142,20 +127,19 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
                 new PaginationDto { PageNumber = 1, PageSize = 15, TotalRecords = 0 });
 
             _projectService.GetProjectProfitabilityVlaAsync(
-                    Arg.Is<QueryParameters<ProjectProfitabilityVlaReq>>(q =>
-                        q.Page == 1 && q.PageSize == 15))
+                    Arg.Is<QueryParameters<string>>(q => q.Page == 1 && q.PageSize == 15))
                 .Returns(serviceResult);
             _mapper.Map<PaginationRes<ProjectProfitabilityVlaRes>>(serviceResult)
                 .Returns(new PaginationRes<ProjectProfitabilityVlaRes>());
 
             // Act — call with default values
             var result = await _controller.GetProjectProfitabilityVlaAsync(
-                new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 });
+                new QueryParameters<string> { Page = 1, PageSize = 15 });
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
             await _projectService.Received(1)
-                .GetProjectProfitabilityVlaAsync(Arg.Is<QueryParameters<ProjectProfitabilityVlaReq>>(q =>
+                .GetProjectProfitabilityVlaAsync(Arg.Is<QueryParameters<string>>(q =>
                     q.Page == 1 && q.PageSize == 15));
         }
 
@@ -171,13 +155,13 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
                 new PaginationDto { PageNumber = 1, PageSize = 15, TotalRecords = 1 });
             var expectedRes = new PaginationRes<ProjectProfitabilityVlaRes>();
 
-            _projectService.GetProjectProfitabilityVlaAsync(Arg.Any<QueryParameters<ProjectProfitabilityVlaReq>>())
+            _projectService.GetProjectProfitabilityVlaAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(serviceResult);
             _mapper.Map<PaginationRes<ProjectProfitabilityVlaRes>>(serviceResult).Returns(expectedRes);
 
             // Act
             await _controller.GetProjectProfitabilityVlaAsync(
-                new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 });
+                new QueryParameters<string> { Page = 1, PageSize = 15 });
 
             // Assert — mapper is invoked once with the service result
             _mapper.Received(1).Map<PaginationRes<ProjectProfitabilityVlaRes>>(serviceResult);
@@ -187,13 +171,13 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         public async Task GetProjectProfitabilityVlaAsync_WhenServiceThrows_PropagatesException()
         {
             // Arrange
-            _projectService.GetProjectProfitabilityVlaAsync(Arg.Any<QueryParameters<ProjectProfitabilityVlaReq>>())
+            _projectService.GetProjectProfitabilityVlaAsync(Arg.Any<QueryParameters<string>>())
                 .ThrowsAsync(new InvalidOperationException("Service failure"));
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 _controller.GetProjectProfitabilityVlaAsync(
-                    new QueryParameters<ProjectProfitabilityVlaReq> { Page = 1, PageSize = 15 }));
+                    new QueryParameters<string> { Page = 1, PageSize = 15 }));
         }
 
         #endregion

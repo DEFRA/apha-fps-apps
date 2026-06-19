@@ -1,4 +1,4 @@
-using Apha.Common.Constants;
+﻿using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -318,15 +318,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                 //   + [HttpGet("profitability-vla")] → "api/v1/project/profitability-vla"
                 var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetProjectProfitabilityVla, query);
 
-                // TRANSFORMENGINE: append optional flat filter params that the backend binds via [FromQuery]
                 if (!string.IsNullOrEmpty(projectStatus))
-                    url += (url.Contains('?') ? "&" : "?") + $"Filter.ProjectStatus={Uri.EscapeDataString(projectStatus)}";
+                    url += (url.Contains('?') ? "&" : "?") + $"projectStatus={Uri.EscapeDataString(projectStatus)}";
                 if (!string.IsNullOrEmpty(programNo))
-                    url += (url.Contains('?') ? "&" : "?") + $"Filter.ProgramNo={Uri.EscapeDataString(programNo)}";
+                    url += (url.Contains('?') ? "&" : "?") + $"programNo={Uri.EscapeDataString(programNo)}";
                 if (!string.IsNullOrEmpty(manager))
-                    url += (url.Contains('?') ? "&" : "?") + $"Filter.Manager={Uri.EscapeDataString(manager)}";
+                    url += (url.Contains('?') ? "&" : "?") + $"manager={Uri.EscapeDataString(manager)}";
                 if (!string.IsNullOrEmpty(customer))
-                    url += (url.Contains('?') ? "&" : "?") + $"Filter.Customer={Uri.EscapeDataString(customer)}";
+                    url += (url.Contains('?') ? "&" : "?") + $"customer={Uri.EscapeDataString(customer)}";
 
                 var response = await _http.GetAsync<List<ProjectProfitabilityVlaRes>>(url);
                 if (response.Success)
