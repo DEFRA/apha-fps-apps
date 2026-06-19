@@ -1427,3 +1427,74 @@ table#tblMonthPeriod > tbody > tr:hover { background-color: var(--govuk-surface-
 }
 
 /* summary End */
+
+.isCenterAligned {
+    overflow: visible;
+    margin: 0 auto;
+    width: 50vw;
+}
+
+.isCustomPivotGrid {
+    max-width: 35vw;
+
+    .govuk-table__cell:last-child {
+        text-align: left !important;
+    }
+}
+.isSubHeading {
+    color: #1d70b8;
+    border-bottom: 2px solid #1d70b8;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    font-size: 1.6rem;
+    line-height: 1.2;
+}
+.tr-section-panel {
+    border: 1px solid #d8dbe0;
+    background: #f7f8fa;
+    border-radius: 4px;
+    padding: 12px;
+    overflow: visible;
+    display: flow-root;
+}
+.tr-section-panel .govuk-grid-column-three-quarters {
+     border: 1px solid #d8dbe0;
+     border-radius: 4px;
+     padding: 12px;
+     background: #ffffff;
+    }
+ .tr-section-panel .govuk-label--l {
+     font-weight: 400;
+     font-size: 1rem;
+     line-height: 1.2;
+     margin-top: 4px;
+     color: #505a5f;
+ }
+.isCustomHeading {
+    color: #484949;
+    font-size: 1.1em;
+    padding-bottom: 7px;
+}
+#test-sale-capabilities-button {
+    display: block;
+    width: auto;
+    max-width: 240px;
+    margin: 4px auto 0;
+    padding: 8px 14px !important;
+    min-height: 36px;
+    color: #ffffff !important;
+    background-color: #00703c !important;
+    border: 2px solid transparent !important;
+    box-shadow: 0 2px 0 #002d18 !important;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+}
+.isSubHeading {
+    color: #1d70b8;
+    border-bottom: 2px solid #1d70b8;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    font-size: 1.6rem;
+    line-height: 1.2;
+}
