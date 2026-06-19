@@ -287,5 +287,285 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         #endregion
+
+        #region Search and Filter (query.Search / query.Filter)
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithSearchTerm_FiltersOnParentProject()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("ALPHA01"),
+                MakeProject("BETA001"),
+                MakeProject("ALPHA02")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15, Search = "ALPHA" };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, v => Assert.Contains("ALPHA", v.JobCode));
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithFilterJobCode_FiltersOnParentProject()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001"),
+                MakeProject("PP002"),
+                MakeProject("XQ003")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 15,
+                Filter = """{"JobCode":"PP"}"""
+            };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, v => Assert.StartsWith("PP", v.JobCode));
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithFilterParentProject_FiltersOnParentProject()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001"),
+                MakeProject("PP002"),
+                MakeProject("XQ003")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 15,
+                Filter = """{"ParentProject":"PP"}"""
+            };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_WithEmptyFilter_ReturnsAllRows()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001"),
+                MakeProject("PP002")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15, Filter = "" };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        #endregion
+
+        #region Financials — null budget / null target / no matching program
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_NullBudget_TreatedAsZero()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001", budget: null)
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            var row = result.Data.First();
+            Assert.Equal(0m, row.Budget ?? 0m);
+            Assert.Equal(0m, row.Profit);    // 0 - 0
+            Assert.Equal(0m, row.OffTarget); // 0 - 0
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_NullProgrammeTarget_TreatedAsZero()
+        {
+            var projects = new List<Project> { MakeProject("PP001", budget: 1000m) };
+            var programs = new List<Program> { MakeProgram("P001", target: null) };
+            var repo = CreateRepository(projects, programs);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            var row = result.Data.First();
+            Assert.Equal(0m, row.TargetProfit);
+            Assert.Equal(1000m, row.OffTarget); // profit(1000) - target(0)
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_ProjectWithNoMatchingProgram_ManagerAndTargetAreDefault()
+        {
+            // Project refers to P999 which has no entry in Programs → pg is null
+            var projects = new List<Project> { MakeProject("PP001", program: "P999", budget: 500m) };
+            var repo = CreateRepository(projects, programs: new List<Program>());
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 15 };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            var row = result.Data.First();
+            Assert.Null(row.Manager);
+            Assert.Equal(0m, row.TargetProfit);
+            Assert.Equal(500m, row.Profit);
+        }
+
+        #endregion
+
+        #region ApplyVlaSorting — all sort keys
+
+        [Theory]
+        [InlineData("jobcode",         false)]
+        [InlineData("jobcode",         true)]
+        [InlineData("program",         false)]
+        [InlineData("program",         true)]
+        [InlineData("customer",        false)]
+        [InlineData("customer",        true)]
+        [InlineData("manager",         false)]
+        [InlineData("manager",         true)]
+        [InlineData("status",          false)]
+        [InlineData("status",          true)]
+        [InlineData("staffcosts",      false)]
+        [InlineData("staffcosts",      true)]
+        [InlineData("testcost",        false)]
+        [InlineData("testcost",        true)]
+        [InlineData("animalcosts",     false)]
+        [InlineData("animalcosts",     true)]
+        [InlineData("additionalcosts", false)]
+        [InlineData("additionalcosts", true)]
+        [InlineData("totalcosts",      false)]
+        [InlineData("totalcosts",      true)]
+        [InlineData("budget",          false)]
+        [InlineData("budget",          true)]
+        [InlineData("profit",          false)]
+        [InlineData("profit",          true)]
+        [InlineData("targetprofit",    false)]
+        [InlineData("targetprofit",    true)]
+        [InlineData("offtarget",       false)]
+        [InlineData("offtarget",       true)]
+        public async Task GetProjectProfitabilityVlaAsync_SortKey_DoesNotThrowAndReturnsSameCount(
+            string sortBy, bool descending)
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001", budget: 1000m),
+                MakeProject("PP002", budget: 2000m),
+                MakeProject("PP003", budget: 3000m)
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 15,
+                SortBy = sortBy,
+                Descending = descending
+            };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            Assert.Equal(3, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_SortByJobcodeAscending_OrdersCorrectly()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP003"),
+                MakeProject("PP001"),
+                MakeProject("PP002")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 15,
+                SortBy = "jobcode",
+                Descending = false
+            };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            var codes = result.Data.Select(v => v.JobCode).ToList();
+            Assert.Equal(new[] { "PP001", "PP002", "PP003" }, codes);
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_SortByJobcodeDescending_OrdersCorrectly()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001"),
+                MakeProject("PP003"),
+                MakeProject("PP002")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 15,
+                SortBy = "jobcode",
+                Descending = true
+            };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            var codes = result.Data.Select(v => v.JobCode).ToList();
+            Assert.Equal(new[] { "PP003", "PP002", "PP001" }, codes);
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_SortByBudgetDescending_OrdersCorrectly()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP001", budget: 1000m),
+                MakeProject("PP002", budget: 3000m),
+                MakeProject("PP003", budget: 2000m)
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 15,
+                SortBy = "budget",
+                Descending = true
+            };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            var budgets = result.Data.Select(v => v.Budget).ToList();
+            Assert.Equal(new decimal?[] { 3000m, 2000m, 1000m }, budgets);
+        }
+
+        [Fact]
+        public async Task GetProjectProfitabilityVlaAsync_UnrecognisedSortKey_FallsBackToJobcodeAscending()
+        {
+            var projects = new List<Project>
+            {
+                MakeProject("PP003"),
+                MakeProject("PP001"),
+                MakeProject("PP002")
+            };
+            var repo = CreateRepository(projects);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 15,
+                SortBy = "unknownkey"
+            };
+
+            var result = await repo.GetProjectProfitabilityVlaAsync(query);
+
+            var codes = result.Data.Select(v => v.JobCode).ToList();
+            Assert.Equal(new[] { "PP001", "PP002", "PP003" }, codes);
+        }
+
+        #endregion
     }
 }
