@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [GridColumn(IsVisible = false)]
         public decimal TransferIncome { get; set; }
 
-        [Display(Name = "Budget CVL")]
+        [Display(Name = "Budget cvl")]
         [GridColumn(IsVisible = false)]
         public decimal? BudgetCvl { get; set; }
 

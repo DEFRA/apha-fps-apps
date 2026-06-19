@@ -36,7 +36,7 @@
 
         <!-- Job Code -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job Code:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId"><span class="sup_color_red">* </span>Job Code:</label>
             @if (isEdit)
             {
                 <input type="hidden" asp-for="JobCodeId" />

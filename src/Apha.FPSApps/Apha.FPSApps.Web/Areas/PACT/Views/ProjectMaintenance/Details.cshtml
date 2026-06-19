@@ -9,11 +9,13 @@
 <!-- ── Page title bar ────────────────────────────────────────────────── -->
 <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-full">
-        <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
-            Project Maintenance (not portfolios)
-            <a asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index" 
-               class="govuk-back-link sup_align_right">Back</a>
+        <h1 class="heading_with_txtbox govuk-heading-s sup_margin_bottom_0   govuk-!-margin-bottom-2 govuk-grid-column-one-third">
+            Project Maintenance (not portfolios)            
         </h1>
+        <div class="govuk-grid-column-one-full sup_text_align_right">
+        <a asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index"
+               class="govuk-back-link">Back</a>
+           </div>
     </div>
 </div>
 
@@ -200,51 +202,73 @@
                         </div>
                         <div class="sup_financial_area_wrapper govuk-grid-row">
                             <div class="govuk-grid-column-one-half">
-                                <div class="govuk-form-group sup_margin_bottom_10">
-                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.BudgetCvl">Budget-CVL</label>
+                                <div class="govuk-form-group sup_margin_bottom_10">                                   
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.BudgetCvl">Budget-cvl</label>
+                                    <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.BudgetCvl"
                                            type="number" step="0.01" readonly/>
+                                           </div>
                                     <span asp-validation-for="Project.BudgetCvl" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
                                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.TransferIncome">Transfer Inc</label>
+                                    <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.TransferIncome"
                                            type="number" step="0.01" />
+                                           </div>
                                     <span asp-validation-for="Project.TransferIncome" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
                                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.BudgetExt">Budget-Ext</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.BudgetExt"
                                            type="number" step="0.01" />
+                                           </div>
                                     <span asp-validation-for="Project.BudgetExt" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
                                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.PvsIncome">PVS Inc</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.PvsIncome"
                                            type="number" step="0.01" />
+                                           </div>
                                     <span asp-validation-for="Project.PvsIncome" class="govuk-error-message"></span>
                                 </div>
                             </div>
                             <div class="govuk-grid-column-one-half">
                                 <div class="govuk-form-group sup_margin_bottom_10"
                                      style="padding-top:0; padding-bottom:0;">
+                                   
                                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipEoy">WIP-EOY</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipEoy"
                                            type="number" step="0.01" />
+                                     </div>
                                     <span asp-validation-for="Project.WipEoy" class="govuk-error-message"></span>
                                 </div>
                                 <!-- WIP-Limit + WIP_Cur side by side -->
                                 <div style="display:flex; justify-content:flex-start; gap:26px;">
                                     <div class="govuk-form-group sup_margin_bottom_10">
                                         <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipLimit">WIP-Limit</label>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipLimit"
                                                type="number" step="0.01" />
+                                               </div>
                                         <span asp-validation-for="Project.WipLimit" class="govuk-error-message"></span>
                                     </div>
                                     <div class="govuk-form-group sup_margin_bottom_10">
                                         <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipCurrent">WIP_Cur</label>
+                                        <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipCurrent"
                                                type="number" step="0.01" />
+                                               </div>
                                         <span asp-validation-for="Project.WipCurrent" class="govuk-error-message"></span>
                                     </div>
                                 </div>
@@ -254,8 +278,11 @@
                                     <div>
                                         <div class="govuk-form-group">
                                             <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.FecCost">Forecast</label>
+                                            <div class="govuk-input__wrapper">
+                                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                             <input class="govuk-input govuk-!-font-size-16" asp-for="Project.FecCost"
                                                    type="number" step="0.01" />
+                                                   </div>
                                             <span asp-validation-for="Project.FecCost" class="govuk-error-message"></span>
                                         </div>
                                     </div>
