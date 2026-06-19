@@ -1,11 +1,13 @@
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
-using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Handler;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
@@ -109,7 +111,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new
             {
                 success = false,
-                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to update test price."
+                message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to update test price.",
+                errors = (response.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
             });
         }
 
