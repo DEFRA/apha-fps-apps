@@ -92,6 +92,13 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
              
 
+            // UserPermission
+            CreateMap<UserDto, UserRes>().ReverseMap();
+            CreateMap<UserReq, UserDto>().ReverseMap();
+            CreateMap<UserPermissionDto, UserPermissionRes>().ReverseMap();
+            CreateMap<UserPermissionReq, UserPermissionDto>().ReverseMap();
+            CreateMap<PermissionOptionsDto, PermissionOptionsRes>().ReverseMap();
+
             // BudgetResourceLevel
             CreateMap<BidDto, BidReq>().ReverseMap();
             CreateMap<BidDto, BidRes>().ReverseMap();

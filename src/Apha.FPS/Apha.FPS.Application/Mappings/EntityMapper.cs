@@ -79,6 +79,9 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
               
 
+            // UserPermission
+            CreateMap<User, UserDto>().ReverseMap();
+
             // BudgetResourceLevel
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();

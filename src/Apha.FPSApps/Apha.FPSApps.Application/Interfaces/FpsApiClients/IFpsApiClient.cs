@@ -27,6 +27,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsProjectGroupApiClient FpsProjectGroup { get; }
         IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         IFpsPurchasesApiClient FpsPurchases { get; }
+        IFpsUserPermissionApiClient FpsUserPermission { get; }
         // TRANSFORMENGINE: FpsGrade added
         IFpsGradeApiClient FpsGrade { get; }
     }

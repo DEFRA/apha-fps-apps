@@ -217,5 +217,16 @@ namespace Apha.Common.Constants
         public const string CreateGenericPurchase = "api/v1/purchases";
         public const string UpdateGenericPurchase = "api/v1/purchases";
         public const string DeleteGenericPurchase = "api/v1/purchases?WorkGroupName={0}&account={1}&itemDescription={2}";
+
+        // User Permission
+        public const string GetAllUsers = "api/v1/userpermission/users";
+        public const string GetPagedUsers = "api/v1/userpermission/users/paged";
+        public const string GetUserById = "api/v1/userpermission/users/{0}";
+        public const string CreateUser = "api/v1/userpermission/users";
+        public const string UpdateUser = "api/v1/userpermission/users";
+        public const string DeleteUser = "api/v1/userpermission/users/{0}";
+        public const string GetUserPermissions = "api/v1/userpermission/{0}/permissions";
+        public const string SaveUserPermissions = "api/v1/userpermission/{0}/permissions";
+        public const string GetPermissionOptions = "api/v1/userpermission/options";
     }
 }

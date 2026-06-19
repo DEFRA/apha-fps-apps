@@ -84,6 +84,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
+            services.AddScoped<Apha.FPSApps.Application.Interfaces.FPS.IUserPermissionService, Apha.FPSApps.Application.Services.FPS.UserPermissionService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();

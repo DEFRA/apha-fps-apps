@@ -1,0 +1,46 @@
+@{
+    var panelId = ViewData["PanelId"] as string ?? "panel";
+    var panelTitle = ViewData["PanelTitle"] as string ?? "Permissions";
+    var options = ViewData["Options"] as List<string> ?? new List<string>();
+}
+
+<section class="fps-mup-list-panel" aria-labelledby="@(panelId)Heading">
+    <h3 id="@(panelId)Heading" class="govuk-heading-s sup_align_heading sup_border sup_border_b_0">
+        @panelTitle
+    </h3>
+    <div class="fps-mup-panel-actions sup_border sup_border_t_0">
+        <button type="button" class="govuk-link mup-select-action" onclick="selectAll('@panelId')">Select all</button>
+        <button type="button" class="govuk-link mup-select-action" onclick="clearAll('@panelId')">Clear</button>
+        <span id="@(panelId)Count" class="govuk-hint govuk-!-margin-bottom-0">0 selected</span>
+    </div>
+    <div id="panel_@panelId" class="fps-mup-checkbox-list sup_border" role="group" aria-label="@panelTitle">
+        @if (options.Count == 0)
+        {
+            <p class="govuk-body-s" style="color:#666; padding: 8px;">No options available.</p>
+        }
+        else
+        {
+            @foreach (var opt in options)
+            {
+                var cbId = $"cb_{panelId}_{opt.Replace(" ", "_")}";
+                <label class="fps-mup-checkbox-label" for="@cbId">
+                    <input type="checkbox" id="@cbId" class="fps-mup-checkbox permission-item" value="@opt" />
+                    <span class="fps-mup-checkbox-text">@opt</span>
+                </label>
+            }
+        }
+    </div>
+</section>
+
+<script>
+    function selectAll(panelId) {
+        $('#panel_' + panelId + ' input.permission-item').prop('checked', true);
+        if (typeof updateCount === 'function') updateCount(panelId);
+        if (typeof updateSaveButtonState === 'function') updateSaveButtonState();
+    }
+    function clearAll(panelId) {
+        $('#panel_' + panelId + ' input.permission-item').prop('checked', false);
+        if (typeof updateCount === 'function') updateCount(panelId);
+        if (typeof updateSaveButtonState === 'function') updateSaveButtonState();
+    }
+</script>
