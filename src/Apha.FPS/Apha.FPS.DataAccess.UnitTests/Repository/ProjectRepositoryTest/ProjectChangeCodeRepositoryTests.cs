@@ -425,8 +425,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
             var repo = CreateRepository(ctx, req);
 
-            // project == null early-return path: no exception expected
+            // project == null early-return path: completes without exception and without any DB write
             await repo.DeleteProjectAndChildrenAsync("NOTFOUND");
+
+            ctx.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
