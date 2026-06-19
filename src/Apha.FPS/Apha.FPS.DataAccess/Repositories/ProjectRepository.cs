@@ -1446,61 +1446,57 @@ namespace Apha.FPS.DataAccess.Repositories
             string? manager = null,
             string? customer = null)
         {
-            var projectsQuery = (from p in _dbContext.Projects.AsNoTracking()
-                                 join pg in _dbContext.Programs on p.Program equals pg.ProgramNo into pgJoin
-                                 from pg in pgJoin.DefaultIfEmpty()
-                                 select new VlaProjectEntry(
-                                     p.ParentProject,
-                                     p.BudgetCvl,
-                                     p.ProjectStatus,
-                                     p.Program,
-                                     p.Customer,
-                                     pg == null ? null : pg.Manager,
-                                     pg == null ? (decimal?)null : pg.Target)).AsQueryable();
+            // Use an anonymous projection so EF Core can translate all Where predicates.
+            // Projecting directly to a named record type (VlaProjectEntry) and then composing
+            // Where clauses on it produces untranslatable expressions like new VlaProjectEntry(...).Program.
+            var rawQuery = (from p in _dbContext.Projects.AsNoTracking()
+                            join pg in _dbContext.Programs on p.Program equals pg.ProgramNo into pgJoin
+                            from pg in pgJoin.DefaultIfEmpty()
+                            select new { p, pg }).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(projectStatus))
-                projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.ProjectStatus!, $"%{projectStatus}%"));
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ProjectStatus!, $"%{projectStatus}%"));
 
             if (!string.IsNullOrWhiteSpace(programNo))
-                projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.Program!, $"%{programNo}%"));
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Program!, $"%{programNo}%"));
 
             if (!string.IsNullOrWhiteSpace(manager))
-                projectsQuery = projectsQuery.Where(x => x.Manager != null && EF.Functions.ILike(x.Manager, $"%{manager}%"));
+                rawQuery = rawQuery.Where(x => x.pg != null && EF.Functions.ILike(x.pg.Manager, $"%{manager}%"));
 
             if (!string.IsNullOrWhiteSpace(customer))
-                projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.Customer!, $"%{customer}%"));
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Customer!, $"%{customer}%"));
 
             if (!string.IsNullOrWhiteSpace(query.Search))
-                projectsQuery = projectsQuery.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{query.Search}%"));
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{query.Search}%"));
 
-            projectsQuery = ApplyVlaProfitabilityFilter(projectsQuery, query.Filter);
+            if (!string.IsNullOrEmpty(query.Filter))
+            {
+                dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(query.Filter);
+                if (filterModel != null)
+                {
+                    var dict = (IDictionary<string, object>)filterModel;
+                    if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
+                        rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{jobCode}%"));
+                    if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+                        rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{parentProject}%"));
+                }
+            }
 
-            var projects = await projectsQuery.ToListAsync();
+            var projects = await rawQuery
+                .Select(x => new VlaProjectEntry(
+                    x.p.ParentProject,
+                    x.p.BudgetCvl,
+                    x.p.ProjectStatus,
+                    x.p.Program,
+                    x.p.Customer,
+                    x.pg == null ? null : x.pg.Manager,
+                    x.pg == null ? (decimal?)null : x.pg.Target))
+                .ToListAsync();
 
             if (projects.Count == 0)
                 return ApplyPaging(new List<ProjectProfitabilityVlaView>(), query.Page, query.PageSize);
 
             return await ComputeProfitabilityForVlaAsync(query, projects);
-        }
-
-        private static IQueryable<VlaProjectEntry> ApplyVlaProfitabilityFilter(IQueryable<VlaProjectEntry> query, string? filter)
-        {
-            if (string.IsNullOrEmpty(filter))
-                return query;
-
-            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
-            if (filterModel == null)
-                return query;
-
-            var dict = (IDictionary<string, object>)filterModel;
-
-            if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{jobCode}%"));
-
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject!, $"%{parentProject}%"));
-
-            return query;
         }
 
         private static List<ProjectProfitabilityVlaView> ApplyVlaSorting(
