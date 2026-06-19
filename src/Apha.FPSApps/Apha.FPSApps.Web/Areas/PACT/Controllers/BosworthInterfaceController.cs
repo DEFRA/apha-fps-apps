@@ -67,12 +67,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> GenerateTimeSaleWorkgroupReport(string profitCentre)
+        public async Task<IActionResult> GenerateTimeSaleWorkgroupReport(string workGroup)
         {
-            var response = await _bosworthInterfaceService.GetTimeSaleProfitCentreAsync(profitCentre);
+            var response = await _bosworthInterfaceService.GetTimeSaleProfitCentreAsync(workGroup);
 
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TimeSaleWorkgroup");
-            var fileName = $"TimeSaleWorkgroup_{profitCentre}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            var fileName = $"TimeSaleWorkgroup_{workGroup}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }

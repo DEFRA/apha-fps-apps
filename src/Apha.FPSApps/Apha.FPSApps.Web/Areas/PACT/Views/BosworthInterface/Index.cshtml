@@ -201,7 +201,7 @@
                     window.URL.revokeObjectURL(url);
                 },
                 error: function () {
-                    alert('An error occurred while exporting.');
+                    showGovukAlert('An error occurred while exporting.');
                 }
             });
         }
@@ -232,6 +232,8 @@
                 }
             });
 
+            var isClearingTimeSale = false;
+
             var selectProfitCentreDropdown = new MultiColumnDropdownComponent({
                 dropdownId: 'selectProfitCentreDropdown',
                 containerSelector: '#selectProfitCentreMultiDropdown',
@@ -250,9 +252,19 @@
                 callbacks: {
                     onSelect: function (selectedItem, dropdown) {
                         selectedProfitCentreValue = selectedItem.ProfitCentreName;
+                        if (!isClearingTimeSale) {
+                            isClearingTimeSale = true;
+                            selectWorkGroupDropdown.clear();
+                            isClearingTimeSale = false;
+                        }
                     },
                     onClear: function (dropdown) {
                         selectedProfitCentreValue = null;
+                        if (!isClearingTimeSale) {
+                            isClearingTimeSale = true;
+                            selectWorkGroupDropdown.clear();
+                            isClearingTimeSale = false;
+                        }
                     }
                 }
             });
@@ -270,14 +282,24 @@
                 ],
                 data: workGroupOptionsListData,
                 displayField: 'WorkGroupName',
-                valueField: 'ProfitCentre',
+                valueField: 'WorkGroupName',
                 clearButtonClearsSelection: true,
                 callbacks: {
                     onSelect: function (selectedItem, dropdown) {
-                        selectedWorkGroupValue = selectedItem.ProfitCentre;
+                        selectedWorkGroupValue = selectedItem.WorkGroupName;
+                        if (!isClearingTimeSale) {
+                            isClearingTimeSale = true;
+                            selectProfitCentreDropdown.clear();
+                            isClearingTimeSale = false;
+                        }
                     },
                     onClear: function (dropdown) {
                         selectedWorkGroupValue = null;
+                        if (!isClearingTimeSale) {
+                            isClearingTimeSale = true;
+                            selectProfitCentreDropdown.clear();
+                            isClearingTimeSale = false;
+                        }
                     }
                 }
             });
@@ -357,7 +379,7 @@
             $('#export-project-link').on('click', function (e) {
                 e.preventDefault();
                 if (!selectedProjectValue) {
-                    alert('Please select a project first.');
+                    showGovukAlert('Please select a project first.');
                     return;
                 }
                 downloadExcelReport(
@@ -369,7 +391,7 @@
             $('#export-profit-centre-link').on('click', function (e) {
                 e.preventDefault();
                 if (!selectedProfitCentreValue) {
-                    alert('Please select a profit centre first.');
+                    showGovukAlert('Please select a profit centre first.');
                     return;
                 }
                 downloadExcelReport(
@@ -381,7 +403,7 @@
             $('#export-workgroup-link').on('click', function (e) {
                 e.preventDefault();
                 if (!selectedWorkGroupValue) {
-                    alert('Please select a work group first.');
+                    showGovukAlert('Please select a work group first.');
                     return;
                 }
                 downloadExcelReport(
@@ -403,7 +425,7 @@
                         { parentProject: selectedBuyingProjectValue }
                     );
                 } else {
-                    alert('Please select a Selling Workgroup or a Buying Project first.');
+                    showGovukAlert('Please select a Selling Workgroup or a Buying Project first.');
                 }
             });
         });
