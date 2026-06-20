@@ -1,4 +1,4 @@
-using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+ï»¿using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -34,7 +34,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         public IFpsPurchasesApiClient FpsPurchases { get; }
 
-        // TRANSFORMENGINE: FpsGrade added — Phase 9
         public IFpsGradeApiClient FpsGrade { get; }
 
         // Income/Contribution from Time Sales (frmTimeSellerPC)
@@ -67,7 +66,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsProjectGroup = new FpsProjectGroupApiClient(http, mapper);
             FpsBudgetBids = new FpsBudgetBidsApiClient(http, mapper);
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
-            // TRANSFORMENGINE: FpsGrade wired
             FpsGrade = new FpsGradeApiClient(http, mapper);
 
             // Income/Contribution from Time Sales (frmTimeSellerPC)

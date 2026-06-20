@@ -48,7 +48,6 @@ namespace Apha.Common.Constants
         public const string DeleteDivision = "api/v1/division/{0}";
 
         // Grade Maintenance (frmMaintGrade → api/v1/Grade) — added Phase 14
-        // TRANSFORMENGINE: Grade endpoint constants added — FpsGradeApiClient should switch to these from inline literals
         public const string GetPagedGrades = "api/v1/Grade/paged";
         public const string GetGradeById = "api/v1/Grade/{0}";
         public const string CreateGrade = "api/v1/Grade";
