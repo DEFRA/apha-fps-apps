@@ -130,6 +130,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
                       
 
+            // Income/Contribution from Time Sales (frmTimeSellerPC)
+            CreateMap<TimeSellerPcRowDto, TimeSellerPcRowRes>().ReverseMap();
+            CreateMap<TimeSellerPcTotalsDto, TimeSellerPcTotalsRes>().ReverseMap();
+
             // BudgetResourceLevel
             CreateMap<BidDto, BidReq>().ReverseMap();
             CreateMap<BidDto, BidRes>().ReverseMap();

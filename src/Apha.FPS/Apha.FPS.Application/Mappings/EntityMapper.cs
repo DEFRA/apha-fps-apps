@@ -42,7 +42,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Division, DivisionDto>().ReverseMap();
             CreateMap<DivisionGrade, DivisionGradeDto>().ReverseMap();
 
-            // TRANSFORMENGINE: Grade <-> GradeDto — ForMember required: Grade.DescLong <-> GradeDto.Description (field rename)
+            // TRANSFORMENGINE: Grade <-> GradeDto ï¿½ ForMember required: Grade.DescLong <-> GradeDto.Description (field rename)
             CreateMap<Grade, GradeDto>()
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.DescLong))
                 .ReverseMap()
@@ -83,6 +83,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
+
         }
     }
 }

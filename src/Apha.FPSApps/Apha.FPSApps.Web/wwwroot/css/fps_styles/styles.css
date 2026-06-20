@@ -3759,3 +3759,93 @@ body,
     }
 }
 
+/* ── Contribution Summary: column group header row ────────────────────── */
+.grid-column-group-row th {
+    padding: 4px 6px;
+    font-size: 13px;
+    font-weight: 700;
+    border-bottom: 2px solid #1d70b8;
+    vertical-align: bottom;
+    white-space: nowrap;
+}
+
+.grid-column-group-cell--labelled {
+    background-color: #e8f0fe;
+    color: #0b0c0c;
+    text-align: center;
+    border-left: 2px solid #1d70b8;
+    border-right: 2px solid #1d70b8;
+}
+
+.grid-column-group-cell--empty {
+    background-color: transparent;
+    border: none;
+}
+
+/* ── Contribution Summary: totals summary boxes ───────────────────────── */
+.fps-cs-panel {
+    padding: 10px;
+    margin-top: 8px;
+}
+
+.fps-cs-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
+    gap: 8px;
+}
+
+.fps-cs-summary-box {
+    padding: 8px;
+    background: #fff;
+}
+
+.fps-cs-summary-box-title {
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-align: center;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #b1b4b6;
+}
+
+.fps-cs-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.fps-cs-summary-row span {
+    flex: 1;
+    color: #0b0c0c;
+}
+
+.fps-cs-summary-row strong {
+    white-space: nowrap;
+}
+
+.fps-cs-summary-total {
+    border-top: 1px solid #b1b4b6;
+    padding-top: 8px;
+    margin-top: 12px;
+}
+
+.fps-cs-summary-shortfall strong {
+    color: #d4351c;
+}
+
+@media (max-width: 1200px) {
+    .fps-cs-summary-grid {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .fps-cs-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.text-AlignRight {
+    text-align: right;
+}

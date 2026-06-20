@@ -67,7 +67,31 @@
         <div class="grid-scroll-container">
             <table id="@($"tbl_{Model.GridId}")" class="editable-grid-table govuk-table custom-table">
                 <thead class="govuk-table__head">
-                    <tr class="govuk-table__row"> 
+                    @if (Model.ColumnGroups != null && ((IEnumerable<dynamic>)Model.ColumnGroups).Any())
+                    {
+                        <tr class="govuk-table__row grid-column-group-row">
+                            @if (Model.ShowCheckboxColumn)
+                            {
+                                <th scope="col" class="grid-column-group-cell grid-column-group-cell--empty"></th>
+                            }
+                            @foreach (var group in Model.ColumnGroups)
+                            {
+                                if (string.IsNullOrEmpty((string)group.Label))
+                                {
+                                    <th scope="col" colspan="@group.Span" class="grid-column-group-cell grid-column-group-cell--empty"></th>
+                                }
+                                else
+                                {
+                                    <th scope="col" colspan="@group.Span" class="grid-column-group-cell grid-column-group-cell--labelled">@group.Label</th>
+                                }
+                            }
+                            @if (Model.AllowEdit || Model.AllowDelete || Model.AllowView)
+                            {
+                                <th scope="col" class="grid-column-group-cell grid-column-group-cell--empty"></th>
+                            }
+                        </tr>
+                    }
+                    <tr class="govuk-table__row">
                         @if (Model.ShowCheckboxColumn)
                         {
                             <th scope="col" class="govuk-table__header sup_p_0">

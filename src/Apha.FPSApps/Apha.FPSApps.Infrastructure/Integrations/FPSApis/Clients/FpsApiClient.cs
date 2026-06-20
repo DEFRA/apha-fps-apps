@@ -31,12 +31,14 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsProjectGroupStaffPlanApiClient FpsProjectGroupStaffPlan { get; }
         public IFpsProjectGroupApiClient FpsProjectGroup { get; }
 
-        public IFpsWorkGroupGradeApiClient FpsWorkgroupGrade { get; }
         public IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         public IFpsPurchasesApiClient FpsPurchases { get; }
 
-        // TRANSFORMENGINE: FpsGrade added — Phase 9 (FpsGradeApiClient for frmMaintGrade ? api/v1/Grade)
+        // TRANSFORMENGINE: FpsGrade added — Phase 9
         public IFpsGradeApiClient FpsGrade { get; }
+
+        // Income/Contribution from Time Sales (frmTimeSellerPC)
+        public IFpsTimeSellerPcApiClient FpsTimeSellerPc { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -63,11 +65,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsProjectGroupStaffPlan = new FpsProjectGroupStaffPlanApiClient(http, mapper);
             FpsAnimalMaster = new FpsAnimalApiClient(http, mapper);
             FpsProjectGroup = new FpsProjectGroupApiClient(http, mapper);
-            FpsWorkgroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
             FpsBudgetBids = new FpsBudgetBidsApiClient(http, mapper);
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
             // TRANSFORMENGINE: FpsGrade wired
             FpsGrade = new FpsGradeApiClient(http, mapper);
+
+            // Income/Contribution from Time Sales (frmTimeSellerPC)
+            FpsTimeSellerPc = new FpsTimeSellerPcApiClient(http, mapper);
         }
     }
 }

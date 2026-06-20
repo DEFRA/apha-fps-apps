@@ -89,6 +89,9 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
 
+            // Contribution Summary — row grid item
+            CreateMap<TimeSellerPcRowDto, ContributionSummaryRowItem>().ReverseMap();
+
             // Misc Project Data
             CreateMap<ProjectDto, ProjectMiscItem>()
                 .ForMember(d => d.ParentProject, o => o.MapFrom(s => s.ParentProject))

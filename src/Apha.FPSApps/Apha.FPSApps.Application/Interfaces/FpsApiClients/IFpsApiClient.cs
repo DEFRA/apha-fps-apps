@@ -29,5 +29,8 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsPurchasesApiClient FpsPurchases { get; }
         // TRANSFORMENGINE: FpsGrade added
         IFpsGradeApiClient FpsGrade { get; }
+
+        // Income/Contribution from Time Sales (frmTimeSellerPC)
+        IFpsTimeSellerPcApiClient FpsTimeSellerPc { get; }
     }
 }
