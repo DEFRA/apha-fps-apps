@@ -85,7 +85,7 @@ namespace Apha.FPS.DataAccess.Data
 
         public virtual DbSet<AdditionalCostView> AdditionalCostViews { get; set; }
         public virtual DbSet<AccountCategory> AccountCategories { get; set; }
-        public virtual DbSet<WorkGroupStaff> WorkGroupStaffs { get; set; }
+        
         public virtual DbSet<ProfitCentreView> ProfitCentreViews { get; set; }
         public virtual DbSet<ProfitCentreGradeView> ProfitCentreGradeViews { get; set; }
         public virtual DbSet<WorkGroupGradeView> WorkGroupGradeViews { get; set; }
@@ -290,9 +290,6 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new AccountCategoryMap());
             modelBuilder.Entity<AccountCategory>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
-
-            modelBuilder.ApplyConfiguration(new WorkGroupStaffMap());
-            modelBuilder.Entity<WorkGroupStaff>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new WorkGroupViewMap());
             modelBuilder.Entity<WorkGroupView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);

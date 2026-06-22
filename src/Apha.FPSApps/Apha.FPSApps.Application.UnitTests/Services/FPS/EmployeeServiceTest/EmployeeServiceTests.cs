@@ -700,7 +700,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var people = new List<WorkGroupStaffDto>
+            var people = new List<PactStaffDto>
             {
                 new()
                 {
@@ -731,8 +731,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
                     HrsAvail     = null
                 }
             };
-            var paginatedResult = new PaginatedResult<WorkGroupStaffDto>(people, 2, 1, 10);
-            var expectedResponse = ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>
+            var paginatedResult = new PaginatedResult<PactStaffDto>(people, 2, 1, 10);
+            var expectedResponse = ApiResponseDto<PaginatedResult<PactStaffDto>>
                 .SuccessResponse(paginatedResult);
 
             _fpsEmployeeApiClient.GetWorkGroupStaffAsync(query, null).Returns(expectedResponse);
@@ -779,8 +779,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var paginatedResult = new PaginatedResult<WorkGroupStaffDto>([], 0, 1, 10);
-            var expectedResponse = ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>
+            var paginatedResult = new PaginatedResult<PactStaffDto>([], 0, 1, 10);
+            var expectedResponse = ApiResponseDto<PaginatedResult<PactStaffDto>>
                 .SuccessResponse(paginatedResult);
 
             _fpsEmployeeApiClient.GetWorkGroupStaffAsync(query, "WG1").Returns(expectedResponse);
@@ -799,8 +799,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var paginatedResult = new PaginatedResult<WorkGroupStaffDto>([], 0, 1, 10);
-            var expectedResponse = ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>
+            var paginatedResult = new PaginatedResult<PactStaffDto>([], 0, 1, 10);
+            var expectedResponse = ApiResponseDto<PaginatedResult<PactStaffDto>>
                 .SuccessResponse(paginatedResult);
 
             _fpsEmployeeApiClient.GetWorkGroupStaffAsync(query, null).Returns(expectedResponse);
@@ -820,7 +820,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
         {
             // Arrange
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var failureResponse = ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.FailureResponse([], new ApiMetaDto());
+            var failureResponse = ApiResponseDto<PaginatedResult<PactStaffDto>>.FailureResponse([], new ApiMetaDto());
 
             _fpsEmployeeApiClient.GetWorkGroupStaffAsync(query, null).Returns(failureResponse);
 
