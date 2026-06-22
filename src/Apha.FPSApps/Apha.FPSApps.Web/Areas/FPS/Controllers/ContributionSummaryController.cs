@@ -87,7 +87,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                              ? rowsResult.Data
                              : [];
 
-            var items = _mapper.Map<List<ContributionSummaryRowItem>>(allRows);
+            var items = _mapper.Map<List<ContributionSummaryRowItem>>(allRows)
+                               .DistinctBy(r => (r.WgGrade, r.WorkGroup, r.ProfitCentreGrade))
+                               .ToList();
 
             // Apply column filters if supplied
             if (filterDict.TryGetValue("WgGrade", out var wgFilter) && !string.IsNullOrWhiteSpace(wgFilter))

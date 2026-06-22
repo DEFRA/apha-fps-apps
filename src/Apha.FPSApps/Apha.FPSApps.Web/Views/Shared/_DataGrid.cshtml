@@ -481,7 +481,7 @@
             $(gridContainerSelector).off('click', '.pagination a, .pagination span').on('click', '.pagination a, .pagination span', function (e) {
                 e.preventDefault();
                 var pageNo = $(this).data('pageno');
-                if ($(this).prop('disabled') || !pageNo || isNaN(pageNo) || pageNo < 1) return;
+                if ($(this).is('[disabled]') || !pageNo || isNaN(pageNo) || pageNo < 1) return;
 
                 gridManager.reloadGrid({ page: pageNo });
             });
