@@ -113,6 +113,17 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
 
+            // ProjectProfitabilityVla
+            // TRANSFORMENGINE: Project<->JobCode ForMember required — VlaRes.Project maps to VlaDto.JobCode;
+            //   ForMember(Id) handles int->int? coercion: Id=GetValueOrDefault(0) on reverse.
+            //   TotalCount is on Res only; silently ignored in Res->Dto direction (see DEFERRED note above).
+            CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
+                .ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode))
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.GetValueOrDefault(0)))
+                .ReverseMap()
+                .ForMember(d => d.JobCode, o => o.MapFrom(s => s.Project))
+                .ForMember(d => d.Id, o => o.MapFrom(s => (int?)s.Id));
+
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
 

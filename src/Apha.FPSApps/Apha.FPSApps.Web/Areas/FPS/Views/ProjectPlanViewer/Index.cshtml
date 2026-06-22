@@ -1,0 +1,162 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProjectPlanViewerViewModel
+@{
+    ViewData["Title"] = "Project Plan Viewer";
+}
+
+<script src="~/js/common/_govuk_tabs.js"></script>
+<link href="~/css/common/_govuk_tabs.css" rel="stylesheet" />
+
+
+<div class="container-fluid">
+
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full govuk-!-padding-0">
+            <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+                Project Plan Viewer
+            </h1>
+        </div>
+    </div>
+
+    <!-- Selection filters -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div class="govuk-!-margin-right-2 ">
+                <div class="search_panel sup_p_0 sup_border_b_0">
+                <div class="row govuk-!-margin-bottom-3">
+                    <div class="govuk-grid-column-one-third">
+                        <div class="govuk-form-group govuk-!-margin-bottom-0">
+                            <label class="govuk-label govuk-!-font-weight-bold" for="programSelect">Select a Programme</label>
+                            <select class="govuk-select govuk-!-font-size-16" id="programSelect" asp-items="Model.ProgramList">
+                                <option value="">--select--</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="govuk-grid-column-one-third">
+                        <div class="govuk-form-group govuk-!-margin-bottom-0">
+                            <label class="govuk-label govuk-!-font-weight-bold" for="projectGroupSelect">or Select Group</label>
+                            <select class="govuk-select govuk-!-font-size-16" id="projectGroupSelect" asp-items="Model.ProjectGroupList">
+                                <option value="">--select--</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="govuk-grid-column-one-third">
+                        <div class="govuk-form-group govuk-!-margin-bottom-0">
+                            <label class="govuk-label govuk-!-font-weight-bold" for="projectSelect">or Find Project</label>
+                            <select class="govuk-select govuk-!-font-size-16" id="projectSelect" asp-items="Model.ProjectList">
+                                <option value="">--select--</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Details Grid -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div id="gridContainer_@Model.ProjectDetailsGrid.GridId">
+                @await Html.PartialAsync("_DataGrid", Model.ProjectDetailsGrid)
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Details Partial (loaded on row click) -->
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <div id="projectDetailsContainer">
+                @await Html.PartialAsync("_ProjectDetails", Model.ProjectDetails)
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            const projectSelect = document.getElementById('projectSelect');
+            const programSelect = document.getElementById('programSelect');
+            const projectGroupSelect = document.getElementById('projectGroupSelect');
+
+            // Tracks which dropdown triggered the last grid reload
+            window.gridLoadTrigger = '';
+
+            // Grid ID for the project details master grid
+            const projectDetailsGridId = 'isProjectDetailsGrid';
+
+            function getSelectedProgram() {
+                return programSelect ? programSelect.value : '';
+            }
+
+            function getSelectedProjectGroup() {
+                return projectGroupSelect ? projectGroupSelect.value : '';
+            }
+
+            // Refresh the project details grid via the DataGrid mechanism
+            function refreshProjectDetailsGrid() {
+                var mgr = window['gridManager_' + projectDetailsGridId];
+                if (mgr && typeof mgr.reloadGrid === 'function') {
+                    mgr.reloadGrid({ page: 1 });
+                }
+            }
+
+            // Programme change
+            if (programSelect) {
+                programSelect.addEventListener('change', function () {
+                    if (projectGroupSelect) projectGroupSelect.value = '';
+                    if (projectSelect) projectSelect.value = '';
+                    if (window.clearProjectState) window.clearProjectState();
+
+                    if (programSelect.value) {
+                        window.gridLoadTrigger = 'program';
+                        refreshProjectDetailsGrid();
+                    }
+                });
+            }
+
+            // Project group change
+            if (projectGroupSelect) {
+                projectGroupSelect.addEventListener('change', function () {
+                    if (programSelect) programSelect.value = '';
+                    if (projectSelect) projectSelect.value = '';
+                    if (window.clearProjectState) window.clearProjectState();
+
+                    if (projectGroupSelect.value) {
+                        window.gridLoadTrigger = 'group';
+                        refreshProjectDetailsGrid();
+                    }
+                });
+            }
+
+            // Project selection change
+            if (projectSelect) {
+                projectSelect.addEventListener('change', function () {
+                    if (programSelect) programSelect.value = '';
+                    if (projectGroupSelect) projectGroupSelect.value = '';
+                    if (window.clearProjectState) window.clearProjectState();
+
+                    if (projectSelect.value) {
+                        window.gridLoadTrigger = 'project';
+                        refreshProjectDetailsGrid();
+                    }
+                });
+            }
+
+            // DataGrid extra filters - project details grid passes program/group/project filters
+            window.getisProjectDetailsGridExtraFilters = function () {
+                return {
+                    program: getSelectedProgram(),
+                    projectGroup: getSelectedProjectGroup(),
+                    parentProject: projectSelect ? projectSelect.value : ''
+                };
+            };
+        })();
+    </script>
+}

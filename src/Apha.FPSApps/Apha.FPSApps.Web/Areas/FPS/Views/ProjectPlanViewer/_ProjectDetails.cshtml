@@ -1,0 +1,763 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProjectDetailsPartialViewModel
+
+<!-- Details for selected project -->
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <div class="sup_search_panel">
+            <div class="display-flex sup_gap_8 align-items-center">
+                <label class="govuk-label--s" for="selectedProjectDetails">Details for</label>
+                <div class="m-0 p-0" style="display: flex; align-items: center; justify-content: flex-start;">
+                    <input class="govuk-input" id="selectedProjectDetails" type="text"
+                           value="@Model.SelectedProjectCode" readonly>
+                </div>
+                <div class="m-0 p-0" style="display: flex; align-items: center; justify-content: flex-start;">
+                    <input class="govuk-input" id="selectedProgramDetails" type="text"
+                           value="@Model.Program" aria-label="Selected Programme Details" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="hdnProjectCode" value="@Model.SelectedProjectCode" />
+
+<!-- Tabs section -->
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <section class="govuk-!-padding-left-0 govuk-!-padding-right-0" aria-label="project plan viewer tabs section">
+            <div class="govuk-tabs">
+                <ul class="govuk-tabs__list" role="tablist" aria-label="Project plan viewer sections">
+                    <li class="govuk-tabs__list-item govuk-tabs__list-item--selected" role="presentation">
+                        <a class="govuk-tabs__tab" id="tab-plan-summary" href="#panel-plan-summary" role="tab"
+                           aria-controls="panel-plan-summary" aria-selected="true" tabindex="0">Plan Summary</a>
+                    </li>
+                    <li class="govuk-tabs__list-item" role="presentation">
+                        <a class="govuk-tabs__tab" id="tab-full-project" href="#panel-full-project" role="tab"
+                           aria-controls="panel-full-project" aria-selected="false" tabindex="-1">Full Project Details</a>
+                    </li>
+                    <li class="govuk-tabs__list-item" role="presentation">
+                        <a class="govuk-tabs__tab" id="tab-staff-plan" href="#panel-staff-plan" role="tab"
+                           aria-controls="panel-staff-plan" aria-selected="false" tabindex="-1">Staff Plan vs Actuals</a>
+                    </li>
+                    <li class="govuk-tabs__list-item" role="presentation">
+                        <a class="govuk-tabs__tab" id="tab-test-plan" href="#panel-test-plan" role="tab"
+                           aria-controls="panel-test-plan" aria-selected="false" tabindex="-1">Tests Plan vs Actuals</a>
+                    </li>
+                    <li class="govuk-tabs__list-item" role="presentation">
+                        <a class="govuk-tabs__tab" id="tab-animal-plan" href="#panel-animal-plan" role="tab"
+                           aria-controls="panel-animal-plan" aria-selected="false" tabindex="-1">Animal Plan vs Actuals</a>
+                    </li>
+                    <li class="govuk-tabs__list-item" role="presentation">
+                        <a class="govuk-tabs__tab" id="tab-additional-plan" href="#panel-additional-plan" role="tab"
+                           aria-controls="panel-additional-plan" aria-selected="false" tabindex="-1">Additional Plan vs Actuals</a>
+                    </li>
+                </ul>
+
+                <!-- Plan Summary Tab -->
+                <div class="govuk-tabs__panel active" id="panel-plan-summary" role="tabpanel" aria-labelledby="tab-plan-summary">
+                    <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                        <div class="govuk-grid-column-full sup_p_0">
+                            <div class="govuk-grid-row">
+                                <div class="govuk-grid-column-one-half mt-2">
+                                    <div id="gridContainer_@Model.PlanSummaryStaffGrid.GridId">
+                                        @await Html.PartialAsync("_DataGrid", Model.PlanSummaryStaffGrid)
+                                    </div>
+                                    <div class="financial-summary govuk-!-margin-bottom-1 govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-margin-top-1">
+                                        <div class="pva-inline-summary govuk-!-padding-bottom-1 govuk-!-padding-top-1">
+                                            <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total :</span>
+                                            <input type="text" id="planSummaryStaffTotal" value="@Model.TotalStaffPlanCost.ToString("C2")"
+                                                   aria-label="Total Staff Plans" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="govuk-grid-column-one-half mt-2">
+                                    <div id="gridContainer_@Model.PlanSummaryTestGrid.GridId">
+                                        @await Html.PartialAsync("_DataGrid", Model.PlanSummaryTestGrid)
+                                    </div>
+                                    <div class="financial-summary govuk-!-margin-bottom-1 govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-margin-top-1">
+                                        <div class="pva-inline-summary govuk-!-padding-bottom-1 govuk-!-padding-top-1 sup_top_border_1">
+                                            <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total :</span>
+                                            <input type="text" id="planSummaryTestTotal" value="@Model.TotalTestPlanCost.ToString("C2")"
+                                                   aria-label="Total Test Plans" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="govuk-grid-row">
+                                <div class="govuk-grid-column-one-half mt-2">
+                                    <div id="gridContainer_@Model.PlanSummaryAnimalGrid.GridId">
+                                        @await Html.PartialAsync("_DataGrid", Model.PlanSummaryAnimalGrid)
+                                    </div>
+                                    <div class="financial-summary govuk-!-margin-bottom-1 govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-margin-top-1">
+                                        <div class="pva-inline-summary govuk-!-padding-bottom-1 govuk-!-padding-top-1 sup_top_border_1">
+                                            <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total :</span>
+                                            <input type="text" id="planSummaryAnimalTotal" value="@Model.TotalAnimalPlanCost.ToString("C2")"
+                                                   aria-label="Total Animal Plans" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="govuk-grid-column-one-half mt-2">
+                                    <div id="gridContainer_@Model.PlanSummaryAdditionalGrid.GridId">
+                                        @await Html.PartialAsync("_DataGrid", Model.PlanSummaryAdditionalGrid)
+                                    </div>
+                                    <div class="financial-summary govuk-!-margin-bottom-1 govuk-!-padding-bottom-0 govuk-!-padding-top-0 govuk-!-margin-top-1">
+                                        <div class="pva-inline-summary govuk-!-padding-bottom-1 govuk-!-padding-top-1 sup_top_border_1">
+                                            <span class="govuk-body govuk-!-font-size-16 govuk-!-margin-bottom-0">Total :</span>
+                                            <input type="text" id="planSummaryAdditionalTotal" value="@Model.TotalAdditionalPlanCost.ToString("C2")"
+                                                   aria-label="Total Additional Cost Plans" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Full Project Details Tab -->
+                <div class="govuk-tabs__panel" id="panel-full-project" role="tabpanel" aria-labelledby="tab-full-project">
+                    <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                        <div class="govuk-grid-column-full sup_p_0">
+                            <div class="form-container">
+                                <div class="form-left">
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="project-code">Project Code</label>
+                                        <input class="govuk-input" value="@Model.ProjectDetails.ProjectCode" id="project-code" type="text" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-description">Description:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.Description" id="fpd-description" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-shortTitle">ShortTitle:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.ShortTitle" id="fpd-shortTitle" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-customer">Customer:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.Customer" id="fpd-customer" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-programme">Programme:</label>
+                                        <input type="text" class="govuk-input" value="@Model.Program" id="fpd-programme" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-manager">Manager:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.Manager" id="fpd-manager" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-disease">Disease:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.Disease" id="fpd-disease" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-custIncome">Customer Income:</label>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@Model.ProjectDetails.CustIncome.ToString("C2")" id="fpd-custIncome" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-transferIncome">Transfer Income:</label>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@Model.ProjectDetails.TransferIncome.ToString("C2")" id="fpd-transferIncome" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-targetProfit">Target Profit:</label>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.TargetProfit ?? 0).ToString("C2"))" id="fpd-targetProfit" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-status">Status:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.ProjectStatus" id="fpd-status" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-costBookNo">CostBookNo:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.CostBookNo" id="fpd-costBookNo" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-contract">Contract No:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.Contract" id="fpd-contract" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-defraProject">Is Defra Project?</label>
+                                        <input type="text" class="govuk-input" value="@(Model.ProjectDetails.IsDefraProject == 1 ? "Yes" : "No")" id="fpd-defraProject" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-costCentre">Cost Centre:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.CostCentre" id="fpd-costCentre" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-resourceCentre">Resource Centre:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.OwningRc" id="fpd-resourceCentre" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-projectGroup">Project Group:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.ProjectGroup" id="fpd-projectGroup" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-incomeAccount">Income Account Code:</label>
+                                        <input type="text" class="govuk-input" value="@Model.ProjectDetails.IncomeAccountCode" id="fpd-incomeAccount" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="form-center">
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-budget">Budget:</label>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.BudgetCvl ?? 0).ToString("C2"))" id="fpd-budget" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0" style="align-items: flex-start;">
+                                        <label class="govuk-label" for="fpd-pvsIncome">PVS Income:(Surv Only)</label>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.PvsIncome ?? 0).ToString("C2"))" id="fpd-pvsIncome" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0" style="align-items: flex-start;">
+                                        <label class="govuk-label" for="fpd-planCWDebit">Plan CW Debit:(Surv Only)</label>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.PlanCaseWorkDebit ?? 0).ToString("C2"))" id="fpd-planCWDebit" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-carryOver">CarryOver:</label>
+                                        <input type="text" class="govuk-input text-AlignRight" value="@((Model.ProjectDetails.CarryOver ?? 0).ToString("C2"))" id="fpd-carryOver" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0">
+                                        <label class="govuk-label" for="fpd-carryOverSeed">CarryOverSeed:</label>
+                                        <input type="text" class="govuk-input" value="@((Model.ProjectDetails.CarryOverSeed ?? 0).ToString("C2"))" id="fpd-carryOverSeed" readonly>
+                                    </div>
+                                    <div class="govuk-form-group sup_margin_0" style="align-items: flex-start;">
+                                        <label class="govuk-label" for="fpd-comments">Comments:</label>
+                                        <textarea class="govuk-textarea sup_margin_0" rows="5" id="fpd-comments" readonly>@Model.ProjectDetails.Comments</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Staff Plan vs Actuals Tab -->
+                <div class="govuk-tabs__panel" id="panel-staff-plan" role="tabpanel" aria-labelledby="tab-staff-plan">
+                    <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                        <div class="govuk-grid-column-full sup_p_0">
+                            <div class="govuk-grid-row">
+                                <div class="govuk-grid-column-one-half mt-2">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-lg-12 p-0">
+                                                <div id="gridContainer_@Model.StaffPlanGrid.GridId">
+                                                    @await Html.PartialAsync("_DataGrid", Model.StaffPlanGrid)
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 p-0 mt-2">
+                                                <div class="financial-summary">
+                                                    <div class="pva-inline-summary">
+                                                        <label class="govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total Planned Cost :</label>
+                                                        <input type="text" value="@Model.StaffTotalPlannedCost.ToString("C2")" aria-label="Total Planned Cost"
+                                                               id="staff-planned-total-cost" class="govuk-input text-AlignRight pva-input-140" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="govuk-grid-column-one-half">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-lg-12 p-0 mt-2">
+                                                <div id="gridContainer_@Model.StaffActualGrid.GridId">
+                                                    @await Html.PartialAsync("_DataGrid", Model.StaffActualGrid)
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 p-0">
+                                                <div class="financial-summary mt-2">
+                                                    <div class="summary-row govuk-!-margin-0 pva-inline-summary">
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
+                                                        <input type="text" value="@Model.StaffTotalActualHrs.ToString("F2")" aria-label="Total Hrs"
+                                                               id="staff-total-hrs" class="govuk-input text-AlignRight pva-input-120" readonly>
+                                                        <input type="text" value="@Model.StaffTotalActualCost.ToString("C2")" aria-label="Total Actual Cost"
+                                                               id="staff-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
+                                                        <input type="text" value="@Model.StaffPercentOfPlan.ToString("F2")%" aria-label="Percent of Plan"
+                                                               id="staff-percent-plan" class="govuk-input text-AlignRight pva-input-95" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tests Plan vs Actuals Tab -->
+                <div class="govuk-tabs__panel" id="panel-test-plan" role="tabpanel" aria-labelledby="tab-test-plan">
+                    <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                        <div class="govuk-grid-column-full sup_p_0">
+                            <div class="govuk-grid-row">
+                                <div class="govuk-grid-column-one-half mt-2">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-lg-12 p-0">
+                                                <div id="gridContainer_@Model.TestPlanGrid.GridId">
+                                                    @await Html.PartialAsync("_DataGrid", Model.TestPlanGrid)
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 p-0 mt-2">
+                                                <div class="financial-summary">
+                                                    <div class="pva-inline-summary">
+                                                        <label class="govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total Planned Cost :</label>
+                                                        <input type="text" value="@Model.TestTotalPlannedCost.ToString("C2")" aria-label="Total Planned Cost"
+                                                               id="test-planned-total-cost" class="govuk-input text-AlignRight pva-input-140" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="govuk-grid-column-one-half">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-lg-12 p-0 mt-2">
+                                                <div id="gridContainer_@Model.TestActualGrid.GridId">
+                                                    @await Html.PartialAsync("_DataGrid", Model.TestActualGrid)
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 p-0">
+                                                <div class="financial-summary mt-2">
+                                                    <div class="summary-row govuk-!-margin-0 pva-inline-summary">
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
+                                                        <input type="text" value="@Model.TestTotalActualCost.ToString("C2")" aria-label="Total Actual Cost"
+                                                               id="test-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
+                                                        <input type="text" value="@Model.TestPercentOfPlan.ToString("F2")%" aria-label="Percent of Plan"
+                                                               id="test-percent-plan" class="govuk-input text-AlignRight pva-input-95" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Animal Plan vs Actuals Tab -->
+                <div class="govuk-tabs__panel" id="panel-animal-plan" role="tabpanel" aria-labelledby="tab-animal-plan">
+                    <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                        <div class="govuk-grid-column-full sup_p_0">
+                            <div class="govuk-grid-row">
+                                <div class="govuk-grid-column-one-half mt-2">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-lg-12 p-0">
+                                                <div id="gridContainer_@Model.AnimalPlanGrid.GridId">
+                                                    @await Html.PartialAsync("_DataGrid", Model.AnimalPlanGrid)
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 p-0 mt-2">
+                                                <div class="financial-summary">
+                                                    <div class="pva-inline-summary">
+                                                        <label class="govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total Planned Cost :</label>
+                                                        <input type="text" value="@Model.AnimalTotalPlannedCost.ToString("C2")" aria-label="Total Planned Cost"
+                                                               id="animal-planned-total-cost" class="govuk-input text-AlignRight pva-input-140" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="govuk-grid-column-one-half">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-lg-12 p-0 mt-2">
+                                                <div id="gridContainer_@Model.AnimalActualGrid.GridId">
+                                                    @await Html.PartialAsync("_DataGrid", Model.AnimalActualGrid)
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 p-0">
+                                                <div class="financial-summary mt-2">
+                                                    <div class="summary-row govuk-!-margin-0 pva-inline-summary">
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
+                                                        <input type="text" value="@Model.AnimalTotalActualCost.ToString("C2")" aria-label="Total Actual Cost"
+                                                               id="animal-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
+                                                        <input type="text" value="@Model.AnimalPercentOfPlan.ToString("F2")%" aria-label="Percent of Plan"
+                                                               id="animal-percent-plan" class="govuk-input text-AlignRight pva-input-95" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Plan vs Actuals Tab -->
+                <div class="govuk-tabs__panel" id="panel-additional-plan" role="tabpanel" aria-labelledby="tab-additional-plan">
+                    <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                        <div class="govuk-grid-column-full sup_p_0">
+                            <div class="govuk-grid-row">
+                                <div class="govuk-grid-column-one-half mt-2">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-lg-12 p-0">
+                                                <div id="gridContainer_@Model.AdditionalPlanGrid.GridId">
+                                                    @await Html.PartialAsync("_DataGrid", Model.AdditionalPlanGrid)
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 p-0 mt-2">
+                                                <div class="financial-summary">
+                                                    <div class="pva-inline-summary">
+                                                        <label class="govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Total Planned Cost :</label>
+                                                        <input type="text" value="@Model.AdditionalTotalPlannedCost.ToString("C2")" aria-label="Total Planned Cost"
+                                                               id="additional-planned-total-cost" class="govuk-input text-AlignRight pva-input-140" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="govuk-grid-column-one-half">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col-lg-12 p-0 mt-2">
+                                                <div id="gridContainer_@Model.AdditionalActualGrid.GridId">
+                                                    @await Html.PartialAsync("_DataGrid", Model.AdditionalActualGrid)
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 p-0">
+                                                <div class="financial-summary mt-2">
+                                                    <div class="summary-row govuk-!-margin-0 pva-inline-summary">
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 pva-nowrap-label">Totals:</label>
+                                                        <input type="text" value="@Model.AdditionalTotalActualCost.ToString("C2")" aria-label="Total Actual Cost"
+                                                               id="additional-total-cost" class="govuk-input text-AlignRight pva-input-160" readonly>
+                                                        <label class="govuk-label govuk-label--s govuk-!-margin-bottom-0 govuk-!-margin-left-3 pva-nowrap-label">Percent of Plan:</label>
+                                                        <input type="text" value="@Model.AdditionalPercentOfPlan.ToString("F2")%" aria-label="Percent of Plan"
+                                                               id="additional-percent-plan" class="govuk-input text-AlignRight pva-input-95" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    (function () {
+        'use strict';
+
+        var hdnProjectCode = document.getElementById('hdnProjectCode');
+        var projectSelect = document.getElementById('projectSelect');
+        var projectDetailsGridId = 'isProjectDetailsGrid';
+
+        var dependentGridIds = [
+            'planSummaryStaffGrid',
+            'planSummaryTestGrid',
+            'planSummaryAnimalGrid',
+            'planSummaryAdditionalGrid',
+            'staffPlanGrid',
+            'staffActualGrid',
+            'testPlanGrid',
+            'testActualGrid',
+            'animalPlanGrid',
+            'actualAnimalCostGrid',
+            'additionalCostPlanGrid',
+            'actualAdditionalCostGrid'
+        ];
+
+        function getProjectCode() {
+            return hdnProjectCode ? hdnProjectCode.value : '';
+        }
+
+        // Extra filter functions for dependent grids - pass parentProject to the controller
+        window.getplanSummaryTestGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.gettestPlanGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getTestActualGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getplanSummaryStaffGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getstaffPlanGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getstaffActualGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getStaffActualGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getplanSummaryAnimalGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getanimalPlanGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getactualAnimalCostGridExtraFilters = function () {
+            return { parentProject: getProjectCode(), animalOnly: true };
+        };
+        window.getplanSummaryAdditionalGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getadditionalCostPlanGridExtraFilters = function () {
+            return { parentProject: getProjectCode() };
+        };
+        window.getactualAdditionalCostGridExtraFilters = function () {
+            return { parentProject: getProjectCode(), animalOnly: false };
+        };
+
+        function setVal(id, value) {
+            var el = document.getElementById(id);
+            if (el) el.value = value || '';
+        }
+
+        function formatCurrency(value) {
+            if (value == null || isNaN(value)) return '£0.00';
+            return '£' + Number(value).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function reloadGrid(gridId) {
+            if (!getProjectCode()) return;
+            var mgr = window['gridManager_' + gridId];
+            if (mgr && typeof mgr.reloadGrid === 'function') {
+                mgr.reloadGrid({ page: 1 });
+            }
+        }
+
+        function refreshDependentGrids() {
+            dependentGridIds.forEach(function (id) {
+                reloadGrid(id);
+            });
+        }
+
+        function clearTotals() {
+            setVal('planSummaryStaffTotal', '');
+            setVal('planSummaryTestTotal', '');
+            setVal('planSummaryAnimalTotal', '');
+            setVal('planSummaryAdditionalTotal', '');
+            setVal('staff-planned-total-cost', '');
+            setVal('staff-total-hrs', '');
+            setVal('staff-total-cost', '');
+            setVal('staff-percent-plan', '');
+            setVal('test-planned-total-cost', '');
+            setVal('test-total-cost', '');
+            setVal('test-percent-plan', '');
+            setVal('animal-planned-total-cost', '');
+            setVal('animal-total-cost', '');
+            setVal('animal-percent-plan', '');
+            setVal('additional-planned-total-cost', '');
+            setVal('additional-total-cost', '');
+            setVal('additional-percent-plan', '');
+        }
+
+        function clearFullProjectDetails() {
+            var fields = [
+                'project-code', 'fpd-description', 'fpd-shortTitle', 'fpd-customer',
+                'fpd-programme', 'fpd-manager', 'fpd-disease', 'fpd-custIncome',
+                'fpd-transferIncome', 'fpd-targetProfit', 'fpd-status', 'fpd-costBookNo',
+                'fpd-contract', 'fpd-defraProject', 'fpd-costCentre', 'fpd-resourceCentre',
+                'fpd-projectGroup', 'fpd-incomeAccount', 'fpd-objectiveCode', 'fpd-budget',
+                'fpd-pvsIncome', 'fpd-planCWDebit', 'fpd-carryOver', 'fpd-carryOverSeed'
+            ];
+            fields.forEach(function (id) { setVal(id, ''); });
+            var comments = document.getElementById('fpd-comments');
+            if (comments) comments.textContent = '';
+        }
+
+        // Expose clearProjectState globally so Index.cshtml dropdown handlers can call it
+        window.clearProjectState = function () {
+            if (hdnProjectCode) hdnProjectCode.value = '';
+            setVal('selectedProjectDetails', '');
+            setVal('selectedProgramDetails', '');
+            clearTotals();
+            clearFullProjectDetails();
+        };
+
+        function updateFullProjectDetails(data) {
+            setVal('project-code', data.projectCode);
+            setVal('fpd-description', data.projectTitle);
+            setVal('fpd-shortTitle', data.shortTitle);
+            setVal('fpd-customer', data.customer);
+            setVal('fpd-programme', data.program);
+            setVal('fpd-manager', data.manager);
+            setVal('fpd-disease', data.disease);
+            setVal('fpd-custIncome', formatCurrency(data.custIncome));
+            setVal('fpd-transferIncome', formatCurrency(data.transferIncome));
+            setVal('fpd-targetProfit', formatCurrency(data.targetProfit));
+            setVal('fpd-status', data.projectStatus);
+            setVal('fpd-costBookNo', data.costBookNo);
+            setVal('fpd-contract', data.contract);
+            setVal('fpd-defraProject', data.isDefraProject === 1 ? 'Yes' : 'No');
+            setVal('fpd-costCentre', data.costCentre);
+            setVal('fpd-resourceCentre', data.owningRc);
+            setVal('fpd-projectGroup', data.projectGroup);
+            setVal('fpd-incomeAccount', data.incomeAccountCode);
+            setVal('fpd-objectiveCode', data.subAccountCode);
+            setVal('fpd-budget', formatCurrency(data.budgetCvl));
+            setVal('fpd-pvsIncome', formatCurrency(data.pvsIncome));
+            setVal('fpd-planCWDebit', formatCurrency(data.planCaseWorkDebit));
+            setVal('fpd-carryOver', formatCurrency(data.carryOver));
+            setVal('fpd-carryOverSeed', formatCurrency(data.carryOverSeed));
+            var comments = document.getElementById('fpd-comments');
+            if (comments) comments.textContent = data.comments || '';
+        }
+
+        // Load project details and refresh all dependent sections
+        async function loadProjectByCode(projectCode) {
+            if (!projectCode) {
+                window.clearProjectState();
+                refreshDependentGrids();
+                return;
+            }
+
+            // Fetch project details
+            try {
+                const detailResponse = await fetch('/FPS/ProjectPlanViewer/GetProjectDetails?projectCode=' + encodeURIComponent(projectCode));
+                const detailData = await detailResponse.json();
+                if (detailData.success) {
+                    setVal('selectedProgramDetails', detailData.program || '');
+                    updateFullProjectDetails(detailData);
+                }
+            } catch (e) {
+                console.error('Failed to load project details:', e);
+            }
+
+            // Fetch Plan Summary totals
+            try {
+                const summaryResponse = await fetch('/FPS/ProjectPlanViewer/GetPlanSummaryTotals?projectCode=' + encodeURIComponent(projectCode));
+                const summaryData = await summaryResponse.json();
+                if (summaryData.success) {
+                    setVal('planSummaryStaffTotal', formatCurrency(summaryData.totalStaffCost));
+                    setVal('planSummaryTestTotal', formatCurrency(summaryData.totalTestCost));
+                    setVal('planSummaryAnimalTotal', formatCurrency(summaryData.totalAnimalCost));
+                    setVal('planSummaryAdditionalTotal', formatCurrency(summaryData.totalAdditionalCost));
+                }
+            } catch (e) {
+                console.error('Failed to load plan summary totals:', e);
+            }
+
+            // Fetch Staff Plan vs Actuals totals
+            try {
+                const staffResponse = await fetch('/FPS/ProjectPlanViewer/GetStaffPlanVsActualTotals?projectCode=' + encodeURIComponent(projectCode));
+                const staffData = await staffResponse.json();
+                if (staffData.success) {
+                    setVal('staff-planned-total-cost', formatCurrency(staffData.totalPlannedCost));
+                    setVal('staff-total-hrs', Number(staffData.totalActualHrs || 0).toFixed(2));
+                    setVal('staff-total-cost', formatCurrency(staffData.totalActualCost));
+                    setVal('staff-percent-plan', Number(staffData.percentOfPlan || 0).toFixed(2) + '%');
+                }
+            } catch (e) {
+                console.error('Failed to load staff plan vs actual totals:', e);
+            }
+
+            // Fetch Test Plan vs Actuals totals
+            try {
+                const testResponse = await fetch('/FPS/ProjectPlanViewer/GetTestPlanVsActualTotals?projectCode=' + encodeURIComponent(projectCode));
+                const testData = await testResponse.json();
+                if (testData.success) {
+                    setVal('test-planned-total-cost', formatCurrency(testData.totalPlannedCost));
+                    setVal('test-total-cost', formatCurrency(testData.totalActualCost));
+                    setVal('test-percent-plan', Number(testData.percentOfPlan || 0).toFixed(2) + '%');
+                }
+            } catch (e) {
+                console.error('Failed to load test plan vs actual totals:', e);
+            }
+
+            // Fetch Animal Plan vs Actuals totals
+            try {
+                const animalResponse = await fetch('/FPS/ProjectPlanViewer/GetAnimalPlanVsActualTotals?projectCode=' + encodeURIComponent(projectCode));
+                const animalData = await animalResponse.json();
+                if (animalData.success) {
+                    setVal('animal-planned-total-cost', formatCurrency(animalData.totalPlannedCost));
+                    setVal('animal-total-cost', formatCurrency(animalData.totalActualCost));
+                    setVal('animal-percent-plan', Number(animalData.percentOfPlan || 0).toFixed(2) + '%');
+                }
+            } catch (e) {
+                console.error('Failed to load animal plan vs actual totals:', e);
+            }
+
+            // Fetch Additional Plan vs Actuals totals
+            try {
+                const additionalResponse = await fetch('/FPS/ProjectPlanViewer/GetAdditionalPlanVsActualTotals?projectCode=' + encodeURIComponent(projectCode));
+                const additionalData = await additionalResponse.json();
+                if (additionalData.success) {
+                    setVal('additional-planned-total-cost', formatCurrency(additionalData.totalPlannedCost));
+                    setVal('additional-total-cost', formatCurrency(additionalData.totalActualCost));
+                    setVal('additional-percent-plan', Number(additionalData.percentOfPlan || 0).toFixed(2) + '%');
+                }
+            } catch (e) {
+                console.error('Failed to load additional plan vs actual totals:', e);
+            }
+
+            // Refresh all dependent grids
+            refreshDependentGrids();
+        }
+
+        // Auto-select first row in a grid
+        function selectFirstRow(gridId, onRowSelected) {
+            var $firstRow = $('#gridContainer_' + gridId + ' table tbody tr:first');
+            if ($firstRow.length && $firstRow.data('id')) {
+                $firstRow.closest('table').find('tbody tr').removeClass('selected-row');
+                $firstRow.addClass('selected-row');
+                if (onRowSelected) onRowSelected($firstRow);
+            }
+        }
+
+        // Row selection handler for the project details grid
+        window.onProjectDetailsRowSelect = function (rowElement) {
+            var $row = $(rowElement);
+            var projectCode = $row.data('id');
+            if (!projectCode) return;
+
+            projectCode = String(projectCode);
+            if (hdnProjectCode) hdnProjectCode.value = projectCode;
+
+            // Update header
+            setVal('selectedProjectDetails', projectCode);
+
+            // Trigger full project load
+            loadProjectByCode(projectCode);
+        };
+
+        // After the project details grid reloads, auto-select the first row to cascade
+        document.addEventListener('gridReloaded', function (e) {
+            if (e.detail && e.detail.gridId === projectDetailsGridId) {
+                selectFirstRow(projectDetailsGridId, function ($row) {
+                    var projectCode = String($row.data('id') || '');
+                    if (projectCode) {
+                        if (hdnProjectCode) hdnProjectCode.value = projectCode;
+                        // Only update project dropdown if it was the trigger
+                        if (window.gridLoadTrigger === 'project' && projectSelect) {
+                            projectSelect.value = projectCode;
+                        }
+                        setVal('selectedProjectDetails', projectCode);
+                        loadProjectByCode(projectCode);
+                    } else {
+                        window.clearProjectState();
+                        refreshDependentGrids();
+                    }
+                });
+
+                // If grid is empty after reload, clear dependent state
+                var $rows = $('#gridContainer_' + projectDetailsGridId + ' table tbody tr');
+                if (!$rows.length || !$rows.first().data('id')) {
+                    window.clearProjectState();
+                    refreshDependentGrids();
+                }
+            }
+        });
+    })();
+</script> 

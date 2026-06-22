@@ -65,6 +65,7 @@ namespace Apha.Common.Constants
 
         // Program
         public const string GetAllPrograms = "api/v1/program";
+        public const string GetAllProgramsForAllUsers = "api/v1/program/all";
         public const string GetPagedPrograms = "api/v1/program/paged";
         public const string GetProgramById = "api/v1/program/{0}";
         public const string CreateProgram = "api/v1/program";
@@ -73,6 +74,9 @@ namespace Apha.Common.Constants
 
         // Project
         public const string GetAllProjects = "api/v1/project";
+        public const string GetPagedProjects = "api/v1/project/paged";
+        public const string GetPagedProjectsByUser = "api/v1/project/paged/by-user";
+        public const string GetAllProjectsForAllUsers = "api/v1/project/all";
         public const string GetAllProjectsPaged = "api/v1/project/paged/all";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";
@@ -189,6 +193,8 @@ namespace Apha.Common.Constants
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
         public const string GetProjectGroupProfitability = "api/v1/project/profitability/by-project-group/{0}";
+        // TRANSFORMENGINE: new endpoint — Phase 9 API client binds to backend GET api/v1/project/profitability-vla
+        public const string GetProjectProfitabilityVla = "api/v1/project/profitability-vla";
 
         // WorkgroupGrade Maintainence
         public const string GetPagedWorkgroupGrades = "api/v1/wggrades/paged";
