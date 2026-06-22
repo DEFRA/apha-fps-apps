@@ -16,14 +16,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         // ── Identity / ungrouped ────────────────────────────────────────────
 
         [Display(Name = "WG Grade")]
-        [GridColumn(Order = 1, Width = 100, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 1, Width = 100, Type = GridColumnType.Text, IsFilterable = true, IsVisible = false)]
         public string? WgGrade { get; set; }
 
-        [Display(Name = "Work Group")]
+        [Display(Name = "WG")]
         [GridColumn(Order = 2, Width = 130, Type = GridColumnType.Text, IsFilterable = true)]
         public string? WorkGroup { get; set; }
 
-        [Display(Name = "PC Grade")]
+        [Display(Name = "Grade")]
         [GridColumn(Order = 3, Width = 100, Type = GridColumnType.Text, IsFilterable = true)]
         public string? ProfitCentreGrade { get; set; }
 

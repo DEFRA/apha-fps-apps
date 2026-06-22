@@ -136,7 +136,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 //   5 ungrouped | 3 Total Planned Time | 3 Assured Planned Time | 2 Rate Efficacy Checker
                 ColumnGroups      =
                 [
-                    new() { Label = "",                        Span = 5 },
+                    new() { Label = "",                        Span = 4 },
                     new() { Label = "Total Planned Time",      Span = 3 },
                     new() { Label = "Assured Planned Time",    Span = 3 },
                     new() { Label = "Rate \"Efficacy\" Checker", Span = 2 },
