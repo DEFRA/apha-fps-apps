@@ -155,12 +155,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         private async Task<List<SelectListItem>> GetProfitCentreSelectListAsync()
         {
-            var result = await _profitCentreService.GetAllProfitCentresAsync();
+            var result = await _profitCentreService.GetProfitCentresAsync();
             if (result.Success && result.Data != null)
             {
                 return result.Data
-                    .OrderBy(p => p.ProfitCentreId)
-                    .Select(p => new SelectListItem { Value = p.ProfitCentreId, Text = p.ProfitCentreId })
+                    .Select(p => new SelectListItem { Value = p.ProfitCentreId, Text = $"{p.ProfitCentreId} - {p.ProfitCentreName}" })
                     .ToList();
             }
             return [];
