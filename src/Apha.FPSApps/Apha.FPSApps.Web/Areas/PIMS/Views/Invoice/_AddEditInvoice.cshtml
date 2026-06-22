@@ -296,15 +296,12 @@
     }
 
     function formatDateInput(input) {
-        var raw = input.value.replace(/[^\d]/g, '');
-        if (raw.length > 8) raw = raw.substring(0, 8);
-        var formatted = raw;
-        if (raw.length > 4) {
-            formatted = raw.substring(0, 2) + '/' + raw.substring(2, 4) + '/' + raw.substring(4);
-        } else if (raw.length > 2) {
-            formatted = raw.substring(0, 2) + '/' + raw.substring(2);
-        }
-        input.value = formatted;
+        // Allow only digits and / or - separators; strip everything else and cap at 10 chars.
+        // No auto-slash insertion so the user can freely type any format (e.g. yyyy/mm/dd)
+        // and validateAndSyncDate will catch the wrong format on blur.
+        var val = input.value.replace(/[^\d\/\-]/g, '');
+        if (val.length > 10) val = val.substring(0, 10);
+        input.value = val;
     }
 
     function validateAndSyncDate(displayId, hiddenId, errorId) {
@@ -317,6 +314,23 @@
             hidden.value = '';
             errorEl.style.display = 'none';
             errorEl.textContent = '';
+            return;
+        }
+
+        // Detect yyyy/mm/dd or yyyy-mm-dd entered by mistake
+        if (/^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(val)) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not yyyy/mm/dd';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        // Detect mm/dd/yyyy (US format): if the second segment > 12 it cannot be a month
+        var usMatch = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (usMatch && parseInt(usMatch[2], 10) > 12) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not mm/dd/yyyy';
+            errorEl.style.display = 'block';
             return;
         }
 
