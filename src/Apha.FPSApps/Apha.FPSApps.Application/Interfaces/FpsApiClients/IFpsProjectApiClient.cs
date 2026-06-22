@@ -10,6 +10,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsForAllUsersAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetAllPactProjectsAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsByUserAsync(QueryParameters<string> query);
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<ProjectDto>> GetProjectByIdAsync(string parentProject);
         Task<ApiResponseDto<ProjectDto>> CreateProjectAsync(ProjectDto project);
@@ -30,5 +31,16 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync();
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
+
+        // TRANSFORMENGINE: new method — maps to GET /api/v1/project/profitability-vla (Phase 5 backend endpoint)
+        // All four filter params are optional; each maps to a filter dropdown on the VLA page
+        // (filterProjectStatus, filterProgram, filterManager, filterCustomer in projectprofitability_vla.js).
+        // QueryParameters<string> carries page + pageSize for server-side DataGrid pagination.
+        Task<ApiResponseDto<List<ProjectProfitabilityVlaDto>>> GetProjectProfitabilityVlaAsync(
+            QueryParameters<string> query,
+            string? projectStatus = null,
+            string? programNo = null,
+            string? manager = null,
+            string? customer = null);
     }
 }
