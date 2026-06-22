@@ -1,3 +1,19 @@
+/*
+ * TRANSFORMENGINE MIGRATION — FpsApiDtoMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-22
+ *
+ * CHANGED:
+ *   - Added CostCentre CRUD mapper entries: CostCentreDto <-> CostCentreReq and CostCentreDto <-> CostCentreRes
+ *   - Entries placed adjacent to existing CostCentreWorkgroupDto mapping for locality
+ *
+ * PRESERVED:
+ *   - All existing CreateMap entries unchanged
+ *   - Existing CostCentreWorkgroupDto <-> CostCentreWorkgroupRes mapping (already present)
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - none — fully automated for this phase
+ */
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
@@ -75,7 +91,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
-            // TRANSFORMENGINE: Grade mappings added � Phase 10 (Step 15a)
+            // TRANSFORMENGINE: Grade mappings added � Phase 10 (Step 15a)
             // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
             CreateMap<GradeDto, GradeReq>().ReverseMap();
             CreateMap<GradeDto, GradeRes>().ReverseMap();
@@ -98,6 +114,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<SubAccountDto, SubAccountRes>()
                 .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
             CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
+
+            // TRANSFORMENGINE: CostCentre CRUD mappings added — Phase 10 (Step 15a)
+            // CostCentre CRUD: maps frontend CostCentreDto to/from backend CostCentreReq (POST/PUT)
+            //   and CostCentreRes (GET/GET-paged/POST/PUT responses)
+            CreateMap<CostCentreDto, CostCentreReq>().ReverseMap();
+            CreateMap<CostCentreDto, CostCentreRes>().ReverseMap();
+
             CreateMap<PactStaffDto, PactStaffRes>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
 

@@ -1,3 +1,18 @@
+/*
+ * TRANSFORMENGINE MIGRATION — FpsViewModelMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-22
+ *
+ * CHANGED:
+ *   - Added CostCentreItem <-> CostCentreDto CreateMap entry for frmMaintCostCentres grid row shape
+ *
+ * PRESERVED:
+ *   - All existing CreateMap entries unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: CostCentreItem is created in Phase 11 — verify property names
+ *     (CostCentreNo: double, ProfitCentre: string) match CostCentreDto exactly after Phase 11 completes
+ */
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -30,6 +45,12 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<DivisionViewModel, DivisionDto>().ReverseMap();
             CreateMap<DivisionGradeItem, DivisionGradeDto>().ReverseMap();
             CreateMap<GradeItem, GradeDto>().ReverseMap();
+
+            // TRANSFORMENGINE: CostCentreMaintenance grid row mapper — Phase 10 (Step 15b)
+            // Maps CostCentreItem (DataGrid row: CostCentreNo double, ProfitCentre string) <-> CostCentreDto
+            // TRANSFORMENGINE TODO: CostCentreItem is defined in Phase 11 — verify property alignment after Phase 11 completes
+            CreateMap<CostCentreItem, CostCentreDto>().ReverseMap();
+
             CreateMap<ResourceCentreMaintenanceItem, ProfitCentreDto>().ReverseMap();
             CreateMap<TestPlanItem, TestRequirementDto>().ReverseMap();
             CreateMap<AdditionalCostItemViewModel, AdditionalCostDto>().ReverseMap();

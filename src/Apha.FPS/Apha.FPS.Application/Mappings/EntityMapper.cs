@@ -84,6 +84,11 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
               
 
+            // TRANSFORMENGINE: CostCentre <-> CostCentreDto — frmMaintCostCentres migration (Phase 3)
+            //   Property names are aligned between entity and DTO; no ForMember overrides needed.
+            //   Covers: CostCentreNo (double), ProfitCentre (string), FpsYear (int).
+            CreateMap<CostCentre, CostCentreDto>().ReverseMap();
+
             // BudgetResourceLevel
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();

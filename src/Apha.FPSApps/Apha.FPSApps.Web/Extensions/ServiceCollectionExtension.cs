@@ -1,3 +1,19 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-22
+ *
+ * CHANGED:
+ *   - Added AddScoped<ICostCentreService, CostCentreService>() to AddServices()
+ *   - Registration placed alphabetically after ICostBookSettingsService and before IGradeService
+ *
+ * PRESERVED:
+ *   - All existing service registrations unchanged
+ *   - Existing using directives (Interfaces.FPS and Services.FPS already present)
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - none — fully automated for this phase
+ */
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -43,6 +59,9 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICostBookYearlyDetailsService, CostBookYearlyDetailsService>();
             services.AddScoped<ICostBookProjectSummaryService, CostBookProjectSummaryService>();
             services.AddScoped<ICostBookSettingsService, CostBookSettingsService>();
+            // TRANSFORMENGINE: ICostCentreService registered — Phase 10 (Step 15c)
+            // frmMaintCostCentres frontend CRUD service; AddScoped follows request-scoped API client pattern
+            services.AddScoped<ICostCentreService, CostCentreService>();
             services.AddScoped<IGradeService, GradeService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IDivisionService, DivisionService>();

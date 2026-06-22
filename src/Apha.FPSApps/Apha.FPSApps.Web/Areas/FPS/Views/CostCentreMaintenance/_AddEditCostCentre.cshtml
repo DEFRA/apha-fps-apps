@@ -1,0 +1,178 @@
+<!-- TRANSFORMENGINE MIGRATION — CostCentreMaintenance/_AddEditCostCentre.cshtml
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-06-22
+     Phase 14 Security Review : 2026-06-22 — PASS (no unresolved security findings)
+
+     CHANGED:
+       - New Razor modal partial replacing HTML prototype tblCostCentreModal inline markup
+       - Model: CostCentreItem (double CostCentreNo PK + string ProfitCentre)
+       - isEditMode: CostCentreNo != 0 (double default); controls Add vs Edit title/formId/saveAction
+       - modal-cc-number (CostCentreNo): input[type=number] editable in Add; disabled in Edit
+       - modal-cc-profit (ProfitCentre): <select> bound via asp-items to ViewBag.ProfitCentreList
+       - GovUK validation error groups mirroring costcenter_maintenance.js costCentreValidationFields
+         (fg-modal-cc-number, err-modal-cc-number / fg-modal-cc-profit, err-modal-cc-profit)
+       - Anti-forgery token included via @Html.AntiForgeryToken()
+       - Save/Update buttons call saveCostCentre() / updateCostCentre() defined in Index.cshtml Scripts section
+     PRESERVED:
+       - Two-column layout (govuk-grid-column-one-half each) from HTML prototype
+       - Error summary block structure (ccValidationSummary / ccValidationSummaryBody / ccValidationSummaryList IDs)
+       - All HTML IDs from prototype: modal-cc-number, modal-cc-profit, fg-modal-cc-number,
+         fg-modal-cc-profit, err-modal-cc-number, err-modal-cc-profit, err-modal-cc-number-msg,
+         err-modal-cc-profit-msg — these IDs are referenced by costcenter_maintenance.js validation
+       - All aria attributes (aria-required, aria-describedby, aria-label) from prototype
+       - Required asterisk markup <span class="app-required">*</span>
+       - Modal header/body/footer cc-modal-body / cc-modal-footer structure
+     SECURITY REVIEW (Phase 14):
+       - @Html.AntiForgeryToken() confirmed inside <form> — PASS
+       - No Html.Raw() calls — all values bound via asp-for or safe Razor expressions — PASS
+       - No hardcoded secrets, tokens, or environment-specific endpoints — PASS
+       - CostCentreNo (double) formatted with CultureInfo.InvariantCulture in hidden field and edit-mode value — PASS
+       - Edit-mode CostCentreNo uses 'disabled' attribute (not 'readonly') — field omitted from POST body — PASS
+       - onclick="@@saveAction" resolves only to static JS function names (saveCostCentre/updateCostCentre) — no user input — PASS
+       - hdnIsEdit used only for client-side JS routing; server-side auth not derived from hidden field — PASS
+     DEFERRED / REQUIRES HUMAN REVIEW:
+       - TRANSFORMENGINE TODO: CostCentreNo (modal-cc-number) was a populated <select> in the HTML
+         prototype with hardcoded option values. Here it is rendered as input[type=number] in Add mode
+         because the backend double key requires free entry and no dedicated CostCentreNo lookup
+         endpoint exists. If a lookup list becomes available, replace with <select asp-items>.
+       - RESOLVED (Phase 14): Controller Create GET / Edit GET previously returned PartialView without
+         setting ViewBag.ProfitCentreList. Fixed in Phase 14 — CostCentreMaintenanceController now calls
+         PopulatePartialDropdownsAsync() in Create GET and Edit GET before returning the partial.
+         ProfitCentre dropdown is correctly populated at runtime. -->
+@model Apha.FPSApps.Web.Areas.FPS.Models.CostCentreItem
+
+@{
+    @* TRANSFORMENGINE: isEditMode — CostCentreNo is a double value type; 0 means Add, non-zero means Edit *@
+    var isEditMode = Model?.CostCentreNo != 0;
+    var title = isEditMode ? "Edit Cost Centre" : "Add Cost Centre";
+    var formId = isEditMode ? "editCostCentreForm" : "addCostCentreForm";
+    var saveLabel = isEditMode ? "Update" : "Save";
+    var saveAction = isEditMode ? "updateCostCentre()" : "saveCostCentre()";
+
+    @* TRANSFORMENGINE: ProfitCentreList from ViewBag — populated by controller PopulatePartialDropdownsAsync.
+       RESOLVED (Phase 14): CostCentreMaintenanceController Create GET and Edit GET now call PopulatePartialDropdownsAsync()
+       before returning the partial — ViewBag.ProfitCentreList is set correctly at runtime. *@
+    var profitCentreItems = ViewBag.ProfitCentreList as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+                            ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title govuk-heading-s" style="margin: 0;" id="tblCostCentreModalLabel">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()" aria-label="Close">X</button>
+</div>
+
+<div class="modal-body cc-modal-body">
+
+    @* TRANSFORMENGINE: validation summary block — IDs match HTML prototype and JS clearCostCentreModalValidation() *@
+    <div id="ccValidationSummary" class="govuk-error-summary govuk-!-display-none" role="alert"
+         aria-labelledby="ccValidationSummaryTitle" tabindex="-1">
+        <h2 class="govuk-error-summary__title govuk-!-font-size-16" id="ccValidationSummaryTitle">
+            There is a problem
+        </h2>
+        <div class="govuk-error-summary__body govuk-!-display-none" id="ccValidationSummaryBody">
+            <ul class="govuk-list govuk-error-summary__list" id="ccValidationSummaryList"></ul>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <form id="@formId">
+            @Html.AntiForgeryToken()
+
+            @* TRANSFORMENGINE: hidden fields — original CostCentreNo for Edit POST identity;
+               isEdit flag consumed by Index.cshtml updateCostCentre() to select correct URL *@
+            <input type="hidden" id="hdnOriginalCostCentreNo" value="@(Model?.CostCentreNo.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0")" />
+            <input type="hidden" id="hdnIsEdit" value="@isEditMode.ToString().ToLower()" />
+
+            <div class="cc-modal-form-grid">
+                <div class="govuk-grid-row sup_padding_right_left_10">
+
+                    @* ── CostCentreNo field (modal-cc-number) ── *@
+                    <div class="govuk-grid-column-one-half">
+                        <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-cc-number">
+                            @* TRANSFORMENGINE: CostCentreNo — input[type=number] in Add (editable);
+                               disabled in Edit because PK cannot change.
+                               HTML prototype used a populated <select> — replaced with number input;
+                               see DEFERRED above for lookup-dropdown upgrade path. *@
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                                   for="modal-cc-number">
+                                CostCentre:<span class="app-required sup_color_red" aria-hidden="true">*</span>
+                            </label>
+                            @if (!isEditMode)
+                            {
+                                <input class="govuk-input govuk-!-font-size-16"
+                                       id="modal-cc-number"
+                                       name="CostCentreNo"
+                                       type="number"
+                                       step="any"
+                                       required
+                                       aria-required="true"
+                                       aria-label="Enter cost centre number"
+                                       aria-describedby="err-modal-cc-number" />
+                            }
+                            else
+                            {
+                                <input class="govuk-input govuk-input--disabled govuk-!-font-size-16"
+                                       id="modal-cc-number"
+                                       name="CostCentreNo"
+                                       type="number"
+                                       step="any"
+                                       disabled
+                                       aria-label="Cost centre number (read only)"
+                                       value="@(Model!.CostCentreNo.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                            }
+                            <p class="govuk-error-message govuk-!-display-none" id="err-modal-cc-number">
+                                <span class="govuk-visually-hidden">Error:</span>
+                                <span id="err-modal-cc-number-msg"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                    @* ── ProfitCentre field (modal-cc-profit) ── *@
+                    <div class="govuk-grid-column-one-half">
+                        <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-cc-profit">
+                            @* TRANSFORMENGINE: ProfitCentre — <select> with asp-items from ViewBag.ProfitCentreList
+                               (populated from ICostCentreService.GetAllCostCentresAsync() workgroup lookup).
+                               Both Add and Edit modes use the same editable dropdown. *@
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                                   for="modal-cc-profit">
+                                ProfitCentre:<span class="app-required sup_color_red" aria-hidden="true">*</span>
+                            </label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="modal-cc-profit"
+                                    name="ProfitCentre"
+                                    asp-for="ProfitCentre"
+                                    asp-items="@(new Microsoft.AspNetCore.Mvc.Rendering.SelectList(profitCentreItems, "Value", "Text", Model?.ProfitCentre))"
+                                    required
+                                    aria-required="true"
+                                    aria-label="Select profit centre"
+                                    aria-describedby="err-modal-cc-profit">
+                                <option value="">-- Select --</option>
+                            </select>
+                            <p class="govuk-error-message govuk-!-display-none" id="err-modal-cc-profit">
+                                <span class="govuk-visually-hidden">Error:</span>
+                                <span id="err-modal-cc-profit-msg"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<div class="modal-footer cc-modal-footer sup_flex_space_center">
+    <button type="button"
+            class="govuk-button govuk-button--secondary sup_margin_0"
+            data-module="govuk-button"
+            onclick="closeModal()">
+        Cancel
+    </button>
+    <button type="button"
+            class="govuk-button sup_margin_0"
+            data-module="govuk-button"
+            onclick="@saveAction">
+        @saveLabel
+    </button>
+</div>

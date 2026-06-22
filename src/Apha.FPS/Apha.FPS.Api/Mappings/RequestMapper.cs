@@ -1,3 +1,20 @@
+/*
+ * TRANSFORMENGINE MIGRATION — RequestMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI
+ * Migrated : 2026-06-22
+ *
+ * CHANGED:
+ *   - Added CostCentreReq <-> CostCentreDto mapping (frmMaintCostCentres POST/PUT request binding)
+ *   - Added CostCentreDto <-> CostCentreRes mapping (frmMaintCostCentres GET paged/by-id/POST/PUT response)
+ *
+ * PRESERVED:
+ *   - All existing mappings (StaffJob, Animal, Program, Project, Division, Grade, ProfitCentre, etc.)
+ *   - CostCentreWorkgroup <-> CostCentreWorkgroupRes mapping (existing workgroup-lookup endpoint)
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: CostCentreReq does not include FpsYear; controller sets it from IFpsRequestContext before passing to service. Verify this aligns with frontend contract expectations.
+ */
+
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
@@ -76,6 +93,11 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
             CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
             CreateMap<CostCentreWorkgroup, CostCentreWorkgroupRes>().ReverseMap();
+            // TRANSFORMENGINE: CostCentre CRUD mappings — Phase 5 frmMaintCostCentres migration
+            //   CostCentreReq → CostCentreDto (POST create, PUT update request binding; FpsYear excluded from Req — set server-side)
+            //   CostCentreDto → CostCentreRes (GET paged, GET by id, POST, PUT response)
+            CreateMap<CostCentreReq, CostCentreDto>().ReverseMap();
+            CreateMap<CostCentreDto, CostCentreRes>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
 
             // ResourceSetUp

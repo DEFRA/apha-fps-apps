@@ -221,5 +221,14 @@ namespace Apha.Common.Constants
         public const string CreateGenericPurchase = "api/v1/purchases";
         public const string UpdateGenericPurchase = "api/v1/purchases";
         public const string DeleteGenericPurchase = "api/v1/purchases?WorkGroupName={0}&account={1}&itemDescription={2}";
+
+        // Cost Centre Maintenance (frmMaintCostCentres → api/v1/costcentre) — added Phase 7
+        // TRANSFORMENGINE: CostCentre endpoint constants — FpsCostCentreApiClient binds to backend CostCentreController
+        public const string GetAllCostCentres = "api/v1/costcentre";
+        public const string GetPagedCostCentres = "api/v1/costcentre/paged";
+        public const string GetCostCentreById = "api/v1/costcentre/{0}";
+        public const string CreateCostCentre = "api/v1/costcentre";
+        public const string UpdateCostCentre = "api/v1/costcentre/{0}";
+        public const string DeleteCostCentre = "api/v1/costcentre/{0}";
     }
 }

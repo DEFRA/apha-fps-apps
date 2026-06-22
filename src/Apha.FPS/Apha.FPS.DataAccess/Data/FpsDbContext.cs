@@ -1,3 +1,24 @@
+/*
+ * TRANSFORMENGINE MIGRATION — FpsDbContext.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
+ * Migrated : 2026-06-22
+ *
+ * CHANGED:
+ *   - Added DbSet<CostCentre> CostCentres property for fps.costcentre table
+ *   - Registered ApplyConfiguration(new CostCentreMap()) in OnModelCreating
+ *   - Added HasQueryFilter for CostCentre scoped to FilterFpsYear (FpsYear == FilterFpsYear)
+ *
+ * PRESERVED:
+ *   - All existing DbSet properties and ApplyConfiguration registrations unchanged
+ *   - IFpsRequestContext injection and FilterFpsYear property unchanged
+ *   - All existing HasQueryFilter registrations unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: fps.costcentre is a PostgreSQL partitioned table (PARTITION BY LIST fpsyear).
+ *     The HasQueryFilter on FpsYear aligns with the partition key, which is correct — but verify
+ *     that insert/update operations through EF Core correctly route to the active year partition.
+ */
+
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -102,6 +123,9 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Bid> Bids { get; set; }
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
+
+        // TRANSFORMENGINE: Added for frmMaintCostCentres migration — fps.costcentre table
+        public virtual DbSet<CostCentre> CostCentres { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -313,6 +337,10 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new GradeMap());
             modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            // TRANSFORMENGINE: CostCentre map + year-scoped query filter — frmMaintCostCentres migration
+            modelBuilder.ApplyConfiguration(new CostCentreMap());
+            modelBuilder.Entity<CostCentre>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

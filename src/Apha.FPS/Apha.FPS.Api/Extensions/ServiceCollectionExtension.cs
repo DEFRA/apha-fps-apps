@@ -1,3 +1,21 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI
+ * Migrated : 2026-06-22
+ *
+ * CHANGED:
+ *   - Added ICostCentreService → CostCentreService scoped registration (AddServices)
+ *   - Added ICostCentreRepository → CostCentreRepository scoped registration (AddRepositories)
+ *
+ * PRESERVED:
+ *   - All existing service and repository registrations unchanged
+ *   - IFpsRequestContext/FpsRequestContext scoped registration unchanged
+ *   - IStoredProcRepository/StoredProcRepository registration unchanged (used by workgroup lookup endpoint)
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Spurious DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing using directive — remove if ExcelExportService no longer requires it, or confirm it is needed.
+ */
+
 using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;
@@ -48,11 +66,13 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
-            // TRANSFORMENGINE: IGradeService/GradeService registered � Phase 5 frmMaintGrade migration
+            // TRANSFORMENGINE: IGradeService/GradeService registered — Phase 5 frmMaintGrade migration
             services.AddScoped<IGradeService, GradeService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
+            // TRANSFORMENGINE: ICostCentreService/CostCentreService registered — Phase 5 frmMaintCostCentres migration
+            services.AddScoped<ICostCentreService, CostCentreService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -86,11 +106,13 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
             services.AddScoped<IDivisionGradeRepository, DivisionGradeRepository>();
             services.AddScoped<IProjectStaffPlanRepository, ProjectStaffPlanRepository>();
-            // TRANSFORMENGINE: IGradeRepository/GradeRepository registered � Phase 5 frmMaintGrade migration
+            // TRANSFORMENGINE: IGradeRepository/GradeRepository registered — Phase 5 frmMaintGrade migration
             services.AddScoped<IGradeRepository, GradeRepository>();
             services.AddScoped<IProjectGroupStaffPlanRepository, ProjectGroupStaffPlanRepository>();
             services.AddScoped<IBudgetBidsRepository, BudgetBidsRepository>();
             services.AddScoped<IPurchasesRepository, PurchasesRepository>();
+            // TRANSFORMENGINE: ICostCentreRepository/CostCentreRepository registered — Phase 5 frmMaintCostCentres migration
+            services.AddScoped<ICostCentreRepository, CostCentreRepository>();
             return services;
 
         }
