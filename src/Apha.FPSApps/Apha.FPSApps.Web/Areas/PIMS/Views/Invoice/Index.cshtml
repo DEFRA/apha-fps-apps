@@ -1,0 +1,329 @@
+
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PIMS.Models.InvoiceViewModel
+
+@{
+    ViewData["Title"] = "PIMS : Invoices";
+}
+
+<div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-1 govuk-!-padding-0">
+    <h5 class="govuk-heading-s sup_margin_0 govuk-!-padding-top-2 govuk-!-padding-right-0 govuk-!-padding-bottom-1 govuk-!-padding-left-5">
+        Invoices
+    </h5>
+</div>
+
+<div class="sup_flex">
+
+    <main class="main-content govuk-!-padding-top-0 sup_overflow_hidden">
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+
+                <!-- ── Filter toolbar ──────────────────────────────────────── -->
+               
+                <div class="inv-toolbar">
+                    <div class="inv-toolbar__row">
+                        <div class="inv-toolbar__item">
+                            <span class="govuk-label govuk-!-font-size-16 govuk-!-font-weight-bold">Filter</span>
+                        </div>
+
+                        @* Filter 1: Project *@
+                        <div class="inv-toolbar__item">
+                            <label class="govuk-label govuk-!-font-size-16" for="invFilterProject">Project</label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="invFilterProject"
+                                    aria-label="Filter by project">
+                                @foreach (var item in Model.ProjectList)
+                                {
+                                    if (item.Selected)
+                                    {
+                                        <option value="@item.Value" selected>@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        @* Filter 2: Surv Contract *@
+                       
+                        <div class="inv-toolbar__item">
+                            <label class="govuk-label govuk-!-font-size-16" for="invFilterSurvContract">Surv Contract</label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="invFilterSurvContract"
+                                    aria-label="Filter by surveillance contract">
+                                <option value="">       </option>
+                                @foreach (var item in Model.ContractList)
+                                {
+                                    if (item.Value == Model.FilterContract)
+                                    {
+                                        <option value="@item.Value" selected>@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        @* Filter 3: Year *@
+                        <div class="inv-toolbar__item">
+                            <label class="govuk-label govuk-!-font-size-16" for="invFilterYear">Year</label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="invFilterYear"
+                                    aria-label="Filter by year">
+                                <option value="">       </option>
+                                @foreach (var item in Model.YearList)
+                                {
+                                    if (item.Selected)
+                                    {
+                                        <option value="@item.Value" selected>@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        @* Filter 4: Program *@
+                        
+                        <div class="inv-toolbar__item">
+                            <label class="govuk-label govuk-!-font-size-16" for="invFilterProgram">Program</label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="invFilterProgram"
+                                    aria-label="Filter by program">
+                                <option value="">       </option>
+                                @foreach (var item in Model.ProgramList)
+                                {
+                                    if (item.Value == Model.FilterProgram)
+                                    {
+                                        <option value="@item.Value" selected>@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="inv-toolbar__item" style="justify-content: flex-end;">
+                            <button type="button"
+                                    class="govuk-button govuk-button--secondary govuk-!-font-size-16 sup_margin_0"
+                                    id="btnInvFilter"
+                                    onclick="applyInvoiceFilters()"
+                                    aria-label="Apply invoice filters">
+                                Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Invoices grid ────────────────────────────────────────── -->
+                <div class="govuk-grid-row sup_margin_left_right_0" style="margin-top: 8px;">
+                    <div class="govuk-grid-column-full">
+
+                        <div id="gridContainer_invoicesGrid">
+                            @await Html.PartialAsync("_DataGrid", Model.InvoicesGrid)
+                        </div>
+
+                        <!-- Totals footer — values populated via AJAX on load and on filter change -->
+                        <div id="invTotalsContainer">
+                            <div class="sup_total_footer" aria-label="Invoice totals">
+                                <span class="sup_total_footer__label">Totals:</span>
+                                <span class="sup_total_footer__value" id="invTotalPlanned">£0.00</span>
+                                <span class="sup_total_footer__value" id="invTotalAmountDue">£0.00</span>
+                                <span class="sup_total_footer__value" id="invTotalAmountInvoiced">£0.00</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ── Modal container (loaded via $.get AJAX) ──────────────────────── -->
+
+<div id="invModalContainer"></div>
+@Html.AntiForgeryToken()
+
+<script src="~/js/ajax-form-validation.js"></script>
+
+@section Scripts {
+    <script>
+        // ── Cached reference to the totals container ─────────────────────────────
+      
+        var $invTotals = null;
+
+        // ── Extra filter method — called automatically by _DataGrid on every reload ──
+       
+        function getInvoiceExtraFilters() {
+            return {
+                project:  document.getElementById('invFilterProject')?.value  || '',
+                contract: document.getElementById('invFilterSurvContract')?.value || '',
+                year:     document.getElementById('invFilterYear')?.value     || '',
+                program:  document.getElementById('invFilterProgram')?.value  || ''
+            };
+        }
+
+        // ── Apply filters — reload grid ───────────────────────────────────────────
+        
+        function applyInvoiceFilters() {
+            // Reload the DataGrid — ALWAYS gm.reloadGrid({ page: 1 }), not gm.reload()
+            var gm = window['gridManager_invoicesGrid'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }
+
+        // ── Refresh invoice totals via AJAX ──────────────────────────────────────
+       
+        function refreshInvoiceTotals() {
+            var filters = getInvoiceExtraFilters();
+            $.get('@Url.Action("GetInvoiceTotals", "Invoice", new { area = "PIMS" })', filters,
+                function (data) {
+                    if (!$invTotals) return;
+                    $invTotals.find('#invTotalPlanned').text(data.totalPlanned      ?? '');
+                    $invTotals.find('#invTotalAmountDue').text(data.totalDue         ?? '');
+                    $invTotals.find('#invTotalAmountInvoiced').text(data.totalInvoiced ?? '');
+                });
+        }
+
+        // ── Add Invoice ──────────────────────────────────────────────────────────
+        
+        function addInvoice() {
+            $.get('@Url.Action("GetAddEditInvoicePartial", "Invoice", new { area = "PIMS" })',
+                function (html) {
+                    $('#invModalContainer').html(html);
+                    var modal = document.getElementById('editInvoiceModal');
+                    if (modal) { modal.classList.add('open'); }
+                });
+        }
+
+        // ── Edit Invoice ─────────────────────────────────────────────────────────
+        function editInvoice(btn) {
+            var id = $(btn).data('id');
+            $.get('@Url.Action("GetAddEditInvoicePartial", "Invoice", new { area = "PIMS" })',
+                { id: id },
+                function (html) {
+                    $('#invModalContainer').html(html);
+                    var modal = document.getElementById('editInvoiceModal');
+                    if (modal) { modal.classList.add('open'); }
+                });
+        }
+
+        // ── Delete Invoice ────────────────────────────────────────────────────────
+        function deleteInvoice(btn) {
+            var id = $(btn).data('id');
+            showGovukConfirm('Are you sure you want to delete this invoice? This action cannot be undone.').then(function (result) {
+                if (!result) return;
+                var token = $('input[name="__RequestVerificationToken"]').val();
+                $.ajax({
+                    url: '@Url.Action("DeleteInvoice", "Invoice", new { area = "PIMS" })',
+                    type: 'DELETE',
+                    headers: { 'RequestVerificationToken': token },
+                    data: { id: id },
+                    success: function (data) {
+                        if (data.success) {
+                            showGovukAlert(data.message).then(function () {
+                                var gm = window['gridManager_invoicesGrid'];
+                                if (gm) { gm.reloadGrid({ page: 1 }); }
+                                applyInvoiceFilters();
+                            });
+                        } else {
+                            showGovukAlert(data.errors?.map(function(e) { return e.message; }).join(', ') || 'Delete failed. Please try again.');
+                        }
+                    },
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting the invoice.');
+                    }
+                });
+            });
+        }
+
+        // ── Save Invoice (called from _AddEditInvoice partial) ────────────────────
+        function saveInvoice() {
+            var form = document.getElementById('editInvoiceForm');
+            if (!form) return;
+            var $form  = $(form);
+            var $modal = $('#editInvoiceModal');
+
+            clearValidationErrors($modal);
+
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $modal);
+                return;
+            }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '@Url.Action("SaveInvoice", "Invoice", new { area = "PIMS" })',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': token },
+                data: $form.serialize(),
+                success: function (result) {
+                    if (result.success) {
+                        closeInvoiceModal();
+                        showGovukAlert(result.message).then(function () {
+                            var gm = window['gridManager_invoicesGrid'];
+                            if (gm) { gm.reloadGrid({ page: 1 }); }
+                            applyInvoiceFilters();
+                        });
+                    } else {
+                        displayServerValidationErrors(result.errors, 'Failed to save invoice.', '#editInvoiceModal');
+                    }
+                },
+                error: function () {
+                    showGovukAlert('An error occurred while saving the invoice.');
+                }
+            });
+        }
+
+        // ── Modal close helper ────────────────────────────────────────────────────
+        function closeInvoiceModal() {
+            var modal = document.getElementById('editInvoiceModal');
+            if (modal) { modal.classList.remove('open'); }
+        }
+
+        // ── Totals positioning helper ─────────────────────────────────────────────.
+        function positionInvoiceTotals() {
+            if (!$invTotals || !$invTotals.length) return;
+            var pag = document.querySelector('#gridContainer_invoicesGrid .sup_pagination_footer');
+            if (pag && pag.parentNode) {
+                pag.parentNode.insertBefore($invTotals[0], pag);
+            }
+        }
+
+        // ── Initialise totals on page load ────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function () {
+            $invTotals = $('#invTotalsContainer');
+
+            var gm = window['gridManager_invoicesGrid'];
+            if (gm) {
+                var _orig = gm.reloadGrid.bind(gm);
+                gm.reloadGrid = function (params) {
+                    if ($invTotals) { $invTotals.detach(); }
+                    _orig(params);
+                };
+            }
+
+            // Persistent listener — fires after every grid reload (sort, page, filter).
+            document.addEventListener('gridReloaded', function (e) {
+                if (e.detail && e.detail.gridId === 'invoicesGrid') {
+                    positionInvoiceTotals();  // re-insert before new pagination
+                    refreshInvoiceTotals();   // fetch real values now element is in DOM
+                }
+            });
+
+            positionInvoiceTotals();
+            setTimeout(applyInvoiceFilters, 300);
+        });
+    </script>
+}
