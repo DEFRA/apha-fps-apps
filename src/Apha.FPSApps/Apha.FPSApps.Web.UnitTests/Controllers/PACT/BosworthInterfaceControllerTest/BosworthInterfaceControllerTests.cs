@@ -54,7 +54,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
             _mapper.Map<List<Project>>(Arg.Any<List<ProjectDto>>())
                 .Returns([new Project { ParentProject = "P1", Manager = "M1" }]);
             _mapper.Map<List<ProfitCentre>>(Arg.Any<IEnumerable<ProfitCentreDto>>())
-                .Returns([new ProfitCentre { Division = "D1", ProfitCentreName = "PCName1" }]);
+                .Returns([new ProfitCentre { Division = "D1", ProfitCentreId = "PCName1" }]);
             _mapper.Map<List<WorkGroup>>(Arg.Any<List<WorkGroupDto>>())
                 .Returns([new WorkGroup { WorkGroupName = "WG1", ProfitCentre = "PC1" }]);
         }
@@ -191,7 +191,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
             _mapper.Map<List<Project>>(Arg.Any<List<ProjectDto>>())
                 .Returns([]);
             _mapper.Map<List<ProfitCentre>>(Arg.Any<IEnumerable<ProfitCentreDto>>())
-                .Returns([new ProfitCentre { Division = "Z", ProfitCentreName = "PCZ" }, new ProfitCentre { Division = "A", ProfitCentreName = "PCA" }]);
+                .Returns([new ProfitCentre { Division = "Z", ProfitCentreId = "PCZ" }, new ProfitCentre { Division = "A", ProfitCentreId = "PCA" }]);
             _mapper.Map<List<WorkGroup>>(Arg.Any<List<WorkGroupDto>>())
                 .Returns([]);
 

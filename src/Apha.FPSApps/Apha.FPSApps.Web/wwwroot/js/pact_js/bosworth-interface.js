@@ -74,16 +74,16 @@ $(document).ready(function () {
         searchPlaceholder: 'Type to search profit centre',
         labelText: '',
         columns: [
-            { field: 'ProfitCentreName', header: 'Profit Centre', width: '150px' },
+            { field: 'ProfitCentreId', header: 'Profit Centre', width: '150px' },
             { field: 'Division', header: 'Division', width: '150px' }
         ],
         data: profitCentreOptionsListData,
-        displayField: 'ProfitCentreName',
-        valueField: 'ProfitCentreName',
+        displayField: 'ProfitCentreId',
+        valueField: 'ProfitCentreId',
         clearButtonClearsSelection: true,
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
-                selectedProfitCentreValue = selectedItem.ProfitCentreName;
+                selectedProfitCentreValue = selectedItem.ProfitCentreId;
                 if (!isClearingTimeSale) {
                     isClearingTimeSale = true;
                     selectWorkGroupDropdown.clear();

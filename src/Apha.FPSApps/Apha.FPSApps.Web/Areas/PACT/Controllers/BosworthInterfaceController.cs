@@ -14,6 +14,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     [AuthorizeForScopes(ScopeKeySection = "FPSApiSettings:Scope, PACTApiSettings:Scope")]
     public class BosworthInterfaceController : Controller
     {
+        private const string ExcelContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
         private readonly IMapper _mapper;
         private readonly IBosworthInterfaceService _bosworthInterfaceService;
         private readonly IWorkGroupService _workGroupService;
@@ -52,7 +54,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TimePurchaseProject");
             var fileName = $"TimePurchaseProject_{project}.xlsx";
 
-            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return File(excelBytes, ExcelContentType, fileName);
         }
 
         [HttpPost]
@@ -63,7 +65,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TimeSaleProfitCentre");
             var fileName = $"TimeSaleProfitCentre_{profitCentre}.xlsx";
 
-            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return File(excelBytes, ExcelContentType, fileName);
         }
 
         [HttpPost]
@@ -74,7 +76,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TimeSaleWorkgroup");
             var fileName = $"TimeSaleWorkgroup_{workGroup}.xlsx";
 
-            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return File(excelBytes, ExcelContentType, fileName);
         }
 
         [HttpPost]
@@ -85,7 +87,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TestSaleSellingWorkgroup");
             var fileName = $"TestSaleSellingWorkgroup_{workGroup}.xlsx";
 
-            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return File(excelBytes, ExcelContentType, fileName);
         }
 
         [HttpPost]
@@ -96,7 +98,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TestSaleBuyingProject");
             var fileName = $"TestSaleBuyingProject_{parentProject}.xlsx";
 
-            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return File(excelBytes, ExcelContentType, fileName);
         }
 
         private async Task PopulateDropdownsAsync(BosworthInterfaceViewModel viewModel)
