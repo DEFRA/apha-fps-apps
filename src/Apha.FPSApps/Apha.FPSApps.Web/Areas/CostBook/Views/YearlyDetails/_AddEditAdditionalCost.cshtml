@@ -69,7 +69,8 @@
             <label asp-for="CostEntered" class="govuk-label">
                 Cost No <span class="sup_color_red">*</span>
             </label>
-            <input asp-for="CostEntered" type="number" step="0.01" class="govuk-input" required />
+            <input asp-for="CostEntered" type="number" step="0.01" class="govuk-input"
+                   value="@(Model.CostEntered != 0 ? Model.CostEntered.ToString() : "0")" />
             <span asp-validation-for="CostEntered" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">

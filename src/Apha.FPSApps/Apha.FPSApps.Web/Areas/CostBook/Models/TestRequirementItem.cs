@@ -16,7 +16,6 @@ public class TestRequirementItem
     public double? UnitPrice { get; set; }
 
     [Display(Name = "No")]
-    [Required(ErrorMessage = "Number of Tests is required.")]
     [GridColumn(Order = 3, Width = 70, Type = GridColumnType.DecimalNumber)]
     public double? NumberOfTests { get; set; }
 

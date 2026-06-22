@@ -12,6 +12,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public string JobCode { get; set; } = null!;
 
+
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
+        public string? WorkGroupGrade { get; set; }
+
         [Required(ErrorMessage = "Staff name is required")]
         [Display(Name = "Staff Name")]
         [StringLength(200, ErrorMessage = "Staff name cannot exceed 200 characters")]

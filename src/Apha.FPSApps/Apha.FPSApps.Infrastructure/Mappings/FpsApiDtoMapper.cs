@@ -128,6 +128,16 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Job Code (ZT lookup) - now served from PACT API
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
+                      
+
+            // BudgetResourceLevel
+            CreateMap<BidDto, BidReq>().ReverseMap();
+            CreateMap<BidDto, BidRes>().ReverseMap();
+            CreateMap<BidViewDto, BidViewRes>().ReverseMap();
+            CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
+            CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
+
+
         }
     }
 }

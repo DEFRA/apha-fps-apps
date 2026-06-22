@@ -7,7 +7,7 @@ using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
-public class StaffRequirementRepository : RepositoryBase<StaffRequirement>, IStaffRequirementRepository
+public class StaffRequirementRepository : RepositoryBase, IStaffRequirementRepository
 {
     private readonly IFPSYearContext _fpsYearContext;
     private readonly IProjectRepository _projectRepo;
@@ -68,8 +68,8 @@ public class StaffRequirementRepository : RepositoryBase<StaffRequirement>, ISta
 
         baseQuery = ApplySorting(baseQuery, query.SortBy, query.Descending);
 
-        List<StaffRequirementDetailView> result = await baseQuery.ToListAsync();
-        return ApplyPaging(result, query.Page, query.PageSize);
+      
+        return await ApplyPaging(baseQuery, query.Page, query.PageSize);
     }
 
     public async Task<StaffRequirement> AddStaffRequirementAsync(StaffRequirement staffRequirement)
@@ -140,7 +140,7 @@ public class StaffRequirementRepository : RepositoryBase<StaffRequirement>, ISta
         IQueryable<StaffRequirementDetailView> query, string? sortBy, bool descending)
     {
         if (string.IsNullOrEmpty(sortBy))
-            return query.OrderBy(c => c.WgGrade);
+            return query.OrderBy(c => c.WorkGroup).ThenBy(c => c.WgGrade);
 
         return sortBy.ToLower() switch
         {

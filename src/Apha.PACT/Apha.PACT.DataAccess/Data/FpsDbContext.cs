@@ -43,7 +43,8 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<WgSummarisedStaffTimeUsageView> WgSummarisedStaffTimeUsageViews { get; set; }
         public virtual DbSet<WorkGroupStaffView> PactStaffViews { get; set; }        
         public virtual DbSet<PactProfitCentreView> PactProfitCentreViews { get; set; }
-        public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }        
+        public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
+        public virtual DbSet<WorkGroupView> WorkGroupViews { get; set; }
         public virtual DbSet<RecreateSummaryLog> RecreateSummaryLogs { get; set; }
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<Settings> Settings { get; set; }
@@ -127,6 +128,9 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.Entity<SummarisedWgTimeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);            
 
             modelBuilder.ApplyConfiguration(new PactProfitCentreViewMap());
+                      
+            modelBuilder.ApplyConfiguration(new WorkGroupViewMap());
+            modelBuilder.Entity<WorkGroupView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
 

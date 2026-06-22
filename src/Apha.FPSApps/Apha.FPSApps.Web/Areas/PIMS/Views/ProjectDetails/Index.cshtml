@@ -356,24 +356,55 @@
                                                    maxlength="20" />
                                         </div>
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="start-date">
+                                            <label class="govuk-label govuk-!-font-size-16" for="StartDateDisplay">
                                                 Start Date
                                             </label>
-                                            <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
-                                                   id="start-date"
-                                                   asp-for="ProjectDetails.StartDate"
-                                                   type="date"
-                                                   style="min-width: stretch;" />
+                                            <div style="position:relative; display:inline-block; width:stretch;">
+                                                <input type="text"
+                                                       id="StartDateDisplay"
+                                                       class="govuk-input govuk-!-font-size-16"
+                                                       value="@(Model.ProjectDetails?.StartDate?.ToString("dd/MM/yyyy") ?? string.Empty)"
+                                                       placeholder="dd/mm/yyyy"
+                                                       autocomplete="off"
+                                                       onclick="openDatePicker('StartDatePicker')"
+                                                       style="cursor:pointer; width:stretch;"
+                                                       readonly>
+                                                <input type="hidden"
+                                                       name="ProjectDetails.StartDate"
+                                                       id="StartDateBinding"
+                                                       value="@(Model.ProjectDetails?.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)">
+                                                <input type="date"
+                                                       id="StartDatePicker"
+                                                       value="@(Model.ProjectDetails?.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                                                       style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                                       onchange="onStartDateChanged('StartDatePicker', 'StartDateDisplay', 'StartDateBinding')">
+                                            </div>
                                         </div>
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="end-date">
+                                            <label class="govuk-label govuk-!-font-size-16" for="EndDateDisplay">
                                                 End Date
                                             </label>
-                                            <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
-                                                   id="end-date"
-                                                   asp-for="ProjectDetails.EndDate"
-                                                   type="date"
-                                                   style="min-width: stretch;" />
+                                            <div style="position:relative; display:inline-block; width:stretch;">
+                                                <input type="text"
+                                                       id="EndDateDisplay"
+                                                       class="govuk-input govuk-!-font-size-16"
+                                                       value="@(Model.ProjectDetails?.EndDate?.ToString("dd/MM/yyyy") ?? string.Empty)"
+                                                       placeholder="dd/mm/yyyy"
+                                                       autocomplete="off"
+                                                       onclick="openDatePicker('EndDatePicker')"
+                                                       style="cursor:pointer; width:stretch;"
+                                                       readonly>
+                                                <input type="hidden"
+                                                       name="ProjectDetails.EndDate"
+                                                       id="EndDateBinding"
+                                                       value="@(Model.ProjectDetails?.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                                                       data-original-value="@(Model.ProjectDetails?.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)">
+                                                <input type="date"
+                                                       id="EndDatePicker"
+                                                       value="@(Model.ProjectDetails?.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                                                       style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                                       onchange="onEndDateChanged('EndDatePicker', 'EndDateDisplay', 'EndDateBinding')">
+                                            </div>
                                         </div>
                                     </div>
                                     <!-- Right sub-column -->
@@ -415,22 +446,53 @@
                                         </div>
                                         <div class="govuk-form-group" style="margin-top: 18px;">
                                             <label class="govuk-label govuk-!-font-size-16"
-                                                   for="revised-end-date">Revised End Date</label>
-                                            <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
-                                                   id="revised-end-date"
-                                                   asp-for="ProjectDetails.RevisedEndDate"
-                                                   type="date"
-                                                   style="min-width: stretch;" />
+                                                   for="RevisedEndDateDisplay">Revised End Date</label>
+                                            <div style="position:relative; display:inline-block; width:stretch;">
+                                                <input type="text"
+                                                       id="RevisedEndDateDisplay"
+                                                       class="govuk-input govuk-!-font-size-16"
+                                                       value="@(Model.ProjectDetails?.RevisedEndDate?.ToString("dd/MM/yyyy") ?? string.Empty)"
+                                                       placeholder="dd/mm/yyyy"
+                                                       autocomplete="off"
+                                                       onclick="openDatePicker('RevisedEndDatePicker')"
+                                                       style="cursor:pointer; width:stretch;"
+                                                       readonly>
+                                                <input type="hidden"
+                                                       name="ProjectDetails.RevisedEndDate"
+                                                       id="RevisedEndDateBinding"
+                                                       value="@(Model.ProjectDetails?.RevisedEndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                                                       data-original-value="@(Model.ProjectDetails?.RevisedEndDate?.ToString("yyyy-MM-dd") ?? string.Empty)">
+                                                <input type="date"
+                                                       id="RevisedEndDatePicker"
+                                                       value="@(Model.ProjectDetails?.RevisedEndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                                                       style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                                       onchange="onRevisedEndDateChanged('RevisedEndDatePicker', 'RevisedEndDateDisplay', 'RevisedEndDateBinding')">
+                                            </div>
                                         </div>
                                         <div class="govuk-form-group">
-                                            <label class="govuk-label govuk-!-font-size-16" for="closed-date">
+                                            <label class="govuk-label govuk-!-font-size-16" for="ClosedDateDisplay">
                                                 Closed Date
                                             </label>
-                                            <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
-                                                   id="closed-date"
-                                                   asp-for="ProjectDetails.ClosedDate"
-                                                   type="date"
-                                                   style="min-width: stretch;" />
+                                            <div style="position:relative; display:inline-block; width:stretch;">
+                                                <input type="text"
+                                                       id="ClosedDateDisplay"
+                                                       class="govuk-input govuk-!-font-size-16"
+                                                       value="@(Model.ProjectDetails?.ClosedDate?.ToString("dd/MM/yyyy") ?? string.Empty)"
+                                                       placeholder="dd/mm/yyyy"
+                                                       autocomplete="off"
+                                                       onclick="openDatePicker('ClosedDatePicker')"
+                                                       style="cursor:pointer; width:stretch;"
+                                                       readonly>
+                                                <input type="hidden"
+                                                       name="ProjectDetails.ClosedDate"
+                                                       id="ClosedDateBinding"
+                                                       value="@(Model.ProjectDetails?.ClosedDate?.ToString("yyyy-MM-dd") ?? string.Empty)">
+                                                <input type="date"
+                                                       id="ClosedDatePicker"
+                                                       value="@(Model.ProjectDetails?.ClosedDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                                                       style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                                       onchange="syncDateToText('ClosedDatePicker', 'ClosedDateDisplay', 'ClosedDateBinding')">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -497,6 +559,25 @@
 
 @section Scripts {
     <script>
+        function openDatePicker(pickerId) {
+            var picker = document.getElementById(pickerId);
+            if (picker) {
+                try { picker.showPicker(); } catch (e) { picker.click(); }
+            }
+        }
+
+        function syncDateToText(pickerId, displayId, hiddenId) {
+            var picker = document.getElementById(pickerId);
+            if (picker.value) {
+                var parts = picker.value.split('-');
+                document.getElementById(displayId).value = parts[2] + '/' + parts[1] + '/' + parts[0];
+                document.getElementById(hiddenId).value = picker.value;
+            } else {
+                document.getElementById(displayId).value = '';
+                document.getElementById(hiddenId).value = '';
+            }
+        }
+
         var commentsGridId   = '@Model.CommentsGrid.GridId';
         var currentProject   = '@parentproject';
         var currentEditIndex = null;
@@ -533,7 +614,7 @@
 
         // ── PIMS Details save ────────────────────────────────────────────
         function savePimsDetail() {
-            const form = document.getElementById('formPimsDetailRight');
+            const form  = document.getElementById('formPimsDetailRight');
             const token = form.querySelector('input[name="__RequestVerificationToken"]').value || null;
             const payload = {
                 Version: form.querySelector('[name="ProjectDetails.Version"]').value || null,
@@ -541,7 +622,7 @@
                 CustomerRef: form.querySelector('[name="ProjectDetails.CustomerRef"]').value || null,
                 StartDate: form.querySelector('[name="ProjectDetails.StartDate"]').value || null,
                 EndDate: form.querySelector('[name="ProjectDetails.EndDate"]').value || null,
-                CostbookNumber: form.querySelector('[name="ProjectDetails.CostbookNumber"]').value,
+                CostbookNumber: form.querySelector('[name="ProjectDetails.CostbookNumber"]').value || null,
                 Riskid: parseInt(form.querySelector('[name="ProjectDetails.Riskid"]').value) || null,
                 UseProjectYears: document.getElementById('use-project-yr').checked,
                 RevisedEndDate: form.querySelector('[name="ProjectDetails.RevisedEndDate"]').value || null,
@@ -556,13 +637,63 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    console.log(data.data);
                     showGovukAlert(data.message);
                 } else {
                     showGovukAlert(data.errors?.map(e => e.message).join(', ') || 'Failed to save PIMS details.');
                 }
             })
             .catch(() => showGovukAlert('An error occurred while saving PIMS details.'));
+        }
+
+        // ── VBA: EndDate_BeforeUpdate — Yes/No confirm when changing an existing end date ──
+        function onEndDateChanged(pickerId, displayId, bindingId) {
+            var picker   = document.getElementById(pickerId);
+            var binding  = document.getElementById(bindingId);
+            var display  = document.getElementById(displayId);
+            var original = binding.getAttribute('data-original-value') || '';
+            var newVal   = picker.value;
+
+            if (original && newVal !== original) {
+                showGovukYesNo(
+                    'If the end date of a project has been changed with the agreement of the customer, ' +
+                    'please enter in the \'Revised End Date\' field below, do not edit this field. ' +
+                    'Do you want to change the date in this field?'
+                ).then(function (confirmed) {
+                    if (confirmed) {
+                        syncDateToText(pickerId, displayId, bindingId);
+                    } else {
+                        // VBA: Cancel = True / Me.Undo — revert field to original
+                        picker.value  = original;
+                        binding.value = original;
+                        var parts     = original.split('-');
+                        display.value = original ? parts[2] + '/' + parts[1] + '/' + parts[0] : '';
+                    }
+                });
+            } else {
+                syncDateToText(pickerId, displayId, bindingId);
+            }
+        }
+
+        // ── VBA: StartDate_AfterUpdate — informational message, no cancel ──
+        function onStartDateChanged(pickerId, displayId, bindingId) {
+            syncDateToText(pickerId, displayId, bindingId);
+            var picker = document.getElementById(pickerId);
+            if (picker.value) {
+                var day = new Date(picker.value).getDate();
+                if (day !== 1) {
+                    showGovukAlert('Note, all calculations will use the first of this month as the start date.');
+                }
+            }
+        }
+
+        // ── VBA: RevisedEndDate_AfterUpdate — save then show informational message ──
+        function onRevisedEndDateChanged(pickerId, displayId, bindingId) {
+            syncDateToText(pickerId, displayId, bindingId);
+            var picker   = document.getElementById(pickerId);
+            var original = document.getElementById(bindingId).getAttribute('data-original-value') || '';
+            if (picker.value && picker.value !== original) {
+                showGovukAlert('Please remember to update the A&F Report data for this project.');
+            }
         }
 
         // ── Comment modal ─────────────────────────────────────────────────

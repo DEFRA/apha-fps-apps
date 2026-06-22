@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
@@ -23,6 +23,12 @@ namespace Apha.FPS.Application.Services
         public async Task<IEnumerable<ProjectDto>> GetAllProjectsAsync()
         {
             var projects = await _projectRepository.GetAllProjectsAsync();
+            return _mapper.Map<IEnumerable<ProjectDto>>(projects);
+        }
+
+        public async Task<IEnumerable<ProjectDto>> GetAllProjectsForAllUsersAsync()
+        {
+            var projects = await _projectRepository.GetAllProjectsForAllUsersAsync();
             return _mapper.Map<IEnumerable<ProjectDto>>(projects);
         }
 

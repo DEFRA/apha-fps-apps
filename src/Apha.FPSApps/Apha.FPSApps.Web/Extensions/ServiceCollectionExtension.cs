@@ -70,24 +70,23 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
-            services.AddScoped<IWorkgroupService, WorkgroupService>();
-
-            services.AddScoped<IWorkGroupService, WorkGroupService>();
             services.AddScoped<ITestorProductService, TestorProductService>();
             services.AddScoped<IMonthlyOutputService, MonthlyOutputService>();
             services.AddScoped<IPactMonthlyOutputService, PactMonthlyOutputService>();
             services.AddScoped<IPactMonthlyTimeService, PactMonthlyTimeService>();
             services.AddScoped<IProjectProfileService, ProjectProfileService>();
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
-            services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
-            services.AddScoped<IWorkGroupService, WorkGroupService>();
+            services.AddScoped<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService, Apha.FPSApps.Application.Services.PACT.WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
+            services.AddScoped<IBudgetBidsService, BudgetBidsService>();
+            services.AddScoped<IPurchasesService, PurchasesService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
             services.AddScoped<IPlanStaffZTCodeService, PlanStaffZTCodeService>();
             services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();

@@ -78,6 +78,11 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<ProjectProfitabilityView, ProjectProfitabilityDto>().ReverseMap();
             CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
               
+
+            // BudgetResourceLevel
+            CreateMap<Bid, BidDto>().ReverseMap();
+            CreateMap<BidView, BidViewDto>().ReverseMap();
+            CreateMap<Purchase, PurchaseDto>().ReverseMap();
         }
     }
 }
