@@ -42,6 +42,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             var defaultRequest = new PaginationFilter<string>();
 
+            // Apply parentProject filter if provided
+            if (!string.IsNullOrEmpty(parentProject))
+            {
+                defaultRequest.Filter = $"{{\"ParentProject\":\"{parentProject}\"}}";
+            }
             var invoicesGridTask = BuildInvoicesGridAsync(defaultRequest, parentProject);
             var subContractsGridTask = BuildSubContractsGridAsync(defaultRequest, parentProject);
             var invoiceTotalTask = _invoiceService.GetTotalAmountAsync(parentProject);

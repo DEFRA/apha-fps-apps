@@ -23,7 +23,7 @@ namespace Apha.PACT.DataAccess.Repository
         {
             var baseQuery = _context.TestRequirements
                 .AsNoTracking()
-                .Where(t => t.TestCode == testCode)
+                .Where(t => EF.Functions.ILike(t.TestCode, testCode))
                 .AsQueryable();
 
             baseQuery = ApplyTestReqmtFilter(baseQuery, query.Filter);
@@ -45,7 +45,7 @@ namespace Apha.PACT.DataAccess.Repository
             // money-type casting restrictions; it is calculated client-side after fetch.
             var baseQuery = (from tr in _context.TestRequirements
                              join p in _context.Projects on tr.Buyer equals p.ParentProject
-                             where tr.TestCode == testCode
+                             where EF.Functions.ILike(tr.TestCode, testCode)
                              && (showRejected || tr.Active == 1)
                              select new TestSupplierView
                              {
@@ -147,7 +147,7 @@ namespace Apha.PACT.DataAccess.Repository
             var baseQuery = (from t in _context.TestRequirements
                              join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
                              join p in _context.Projects on t.Buyer equals p.ParentProject
-                             where t.Buyer == parentProject
+                             where EF.Functions.ILike(t.Buyer, parentProject)
                              select new TestRequirementDetail
                              {
                                  TestCode = t.TestCode,

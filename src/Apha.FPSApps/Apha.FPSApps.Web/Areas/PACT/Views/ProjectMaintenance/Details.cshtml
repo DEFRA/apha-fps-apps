@@ -207,7 +207,7 @@
                                     <div class="govuk-input__wrapper">
                                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.BudgetCvl"
-                                           type="number" step="0.01" readonly/>
+                                           type="number" step="0.01" max="92233720368547758.07" readonly/>
                                            </div>
                                     <span asp-validation-for="Project.BudgetCvl" class="govuk-error-message"></span>
                                 </div>
@@ -216,7 +216,7 @@
                                     <div class="govuk-input__wrapper">
                                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.TransferIncome"
-                                           type="number" step="0.01" />
+                                           type="number" step="0.01" min="0" max="92233720368547758.07" />
                                            </div>
                                     <span asp-validation-for="Project.TransferIncome" class="govuk-error-message"></span>
                                 </div>
@@ -225,7 +225,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.BudgetExt"
-                                           type="number" step="0.01" />
+                                           type="number" step="0.01" min="0" max="92233720368547758.07" />
                                            </div>
                                     <span asp-validation-for="Project.BudgetExt" class="govuk-error-message"></span>
                                 </div>
@@ -234,7 +234,7 @@
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.PvsIncome"
-                                           type="number" step="0.01" />
+                                           type="number" step="0.01" min="0" max="92233720368547758.07" />
                                            </div>
                                     <span asp-validation-for="Project.PvsIncome" class="govuk-error-message"></span>
                                 </div>
@@ -242,12 +242,12 @@
                             <div class="govuk-grid-column-one-half">
                                 <div class="govuk-form-group sup_margin_bottom_10"
                                      style="padding-top:0; padding-bottom:0;">
-                                   
+
                                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipEoy">WIP-EOY</label>
                                     <div class="govuk-input__wrapper">
                                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipEoy"
-                                           type="number" step="0.01" />
+                                           type="number" step="0.01" min="0" max="92233720368547758.07" />
                                      </div>
                                     <span asp-validation-for="Project.WipEoy" class="govuk-error-message"></span>
                                 </div>
@@ -258,7 +258,7 @@
                                         <div class="govuk-input__wrapper">
                                             <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipLimit"
-                                               type="number" step="0.01" />
+                                               type="number" step="0.01" min="0" max="92233720368547758.07" />
                                                </div>
                                         <span asp-validation-for="Project.WipLimit" class="govuk-error-message"></span>
                                     </div>
@@ -267,7 +267,7 @@
                                         <div class="govuk-input__wrapper">
                                     <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipCurrent"
-                                               type="number" step="0.01" />
+                                               type="number" step="0.01" min="0" max="92233720368547758.07" />
                                                </div>
                                         <span asp-validation-for="Project.WipCurrent" class="govuk-error-message"></span>
                                     </div>
@@ -281,7 +281,7 @@
                                             <div class="govuk-input__wrapper">
                                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                             <input class="govuk-input govuk-!-font-size-16" asp-for="Project.FecCost"
-                                                   type="number" step="0.01" />
+                                                   type="number" step="0.01" min="0" max="92233720368547758.07" />
                                                    </div>
                                             <span asp-validation-for="Project.FecCost" class="govuk-error-message"></span>
                                         </div>
@@ -367,15 +367,44 @@
             var form = $('#projectDetailForm');
             var data = {};
             var decimalFields = ['BudgetCvl', 'TransferIncome', 'BudgetExt', 'PvsIncome', 'WipEoy', 'WipLimit', 'WipCurrent', 'FecCost'];
+            var editableDecimalFields = ['TransferIncome', 'BudgetExt', 'PvsIncome', 'WipEoy', 'WipLimit', 'WipCurrent', 'FecCost'];
+            var maxMoney = 92233720368547758.07;
+            var validationError = null;
+
             form.serializeArray().forEach(function(item) {
+                if (validationError) return; // Skip if already failed
+
                 var key = item.name.startsWith('Project.') ? item.name.substring('Project.'.length) : item.name;
                 if (decimalFields.indexOf(key) !== -1) {
                     var parsed = parseFloat(item.value);
+
+                    // Only validate editable fields (skip BudgetCvl as it's readonly)
+                    if (editableDecimalFields.indexOf(key) !== -1 && !isNaN(parsed)) {
+                        if (parsed < 0 || parsed > maxMoney) {
+                            validationError = key + ' must be between £0 and £92,233,720,368,547,758.07.';
+                            return;
+                        }
+
+                        // Check decimal places
+                        var decimalPart = parsed.toString().split('.')[1];
+                        if (decimalPart && decimalPart.length > 2) {
+                            validationError = key + ' must have at most 2 decimal places.';
+                            return;
+                        }
+                    }
+
                     data[key] = isNaN(parsed) ? 0 : parsed;
                 } else {
                     data[key] = item.value;
                 }
             });
+
+            // Stop if validation failed
+            if (validationError) {
+                showGovukAlert(validationError);
+                return;
+            }
+
             data.IsDefraProject = $('#IsDefraProject').is(':checked') ? -1 : 0;
             data.Finished = $('#Finished').is(':checked') ? 1 : 0;
             clearValidationErrors('#projectDetailForm');
@@ -386,12 +415,12 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        alert('Project updated successfully.');
+                        showGovukAlert('Project updated successfully.');
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#projectDetailForm');
                     }
                 },
-                error: function() { alert('An error occurred while saving.'); }
+                error: function() { showGovukAlert('An error occurred while saving.'); }
             });
         }
 
