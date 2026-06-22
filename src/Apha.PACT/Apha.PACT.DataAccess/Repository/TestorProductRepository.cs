@@ -154,7 +154,7 @@ namespace Apha.PACT.DataAccess.Repository
             string? owner)
         {
             // Step 1 — IQueryable: build base join query.
-            var baseQuery = BuildTestPriceCheckBaseQuery();
+            var baseQuery = BuildTestPriceCheckBaseQuery();            
 
             baseQuery = ApplyTestPriceCheckFilter(baseQuery, query.Filter);
 
@@ -170,13 +170,11 @@ namespace Apha.PACT.DataAccess.Repository
                 "non-standard" => baseQuery.Where(x =>
                     x.TestPrice != 0m &&
                     x.TestPrice != (x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla)),
-                _ => baseQuery.Where(x =>
-                    x.TestPrice == 0m ||
-                    x.TestPrice != (x.IsDefraProject != 0 ? x.DefraUnitPrice : x.UnitPriceVla))
+                _ => baseQuery
             };
 
             // Step 5 — SQL-side sorting
-            var sorted = ApplyTestPriceCheckSorting(baseQuery, query.SortBy, query.Descending);
+            var sorted = ApplyTestPriceCheckSorting(baseQuery, query.SortBy, query.Descending);           
 
             // Step 6 — SQL-side paging (COUNT + LIMIT/OFFSET)
             var paged = await ApplyPaging(sorted, query.Page, query.PageSize);

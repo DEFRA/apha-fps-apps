@@ -32,11 +32,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
             set => _noTests = value.HasValue ? Math.Round(value.Value) : null;
         }
 
-        [Display(Name = "Avg Price")]
+        [Display(Name = "Agr Price")]
         [GridColumn(Order = 6, Width = 100, Type = GridColumnType.GbpValue)]
         public decimal? TestPrice { get; set; }
 
-        [Display(Name = "Standard Price")]
+        [Display(Name = "Standard Price *")]
         [GridColumn(Order = 7, Width = 100, Type = GridColumnType.GbpValue)]
         public decimal? NormalPrice { get; set; }
 
