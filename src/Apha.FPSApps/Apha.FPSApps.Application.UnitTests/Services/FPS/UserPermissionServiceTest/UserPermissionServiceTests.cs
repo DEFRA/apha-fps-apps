@@ -333,7 +333,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
 
             Assert.NotNull(result);
             Assert.True(result.Success);
-            Assert.Equal(1, result.Data!.ProfitCentres.Count);
+            Assert.Single(result.Data!.ProfitCentres);
             await _mockApiClient.Received(1).GetPermissionOptionsAsync();
         }
 
