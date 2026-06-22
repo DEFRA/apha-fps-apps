@@ -50,7 +50,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _bosworthInterfaceService.GetTimePurchaseProjectAsync(project);
 
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TimePurchaseProject");
-            var fileName = $"TimePurchaseProject_{project}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            var fileName = $"TimePurchaseProject_{project}.xlsx";
 
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
@@ -61,7 +61,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _bosworthInterfaceService.GetTimeSaleProfitCentreAsync(profitCentre);
 
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TimeSaleProfitCentre");
-            var fileName = $"TimeSaleProfitCentre_{profitCentre}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            var fileName = $"TimeSaleProfitCentre_{profitCentre}.xlsx";
 
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
@@ -72,7 +72,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _bosworthInterfaceService.GetTimeSaleProfitCentreAsync(workGroup);
 
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TimeSaleWorkgroup");
-            var fileName = $"TimeSaleWorkgroup_{workGroup}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            var fileName = $"TimeSaleWorkgroup_{workGroup}.xlsx";
 
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
@@ -83,7 +83,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _bosworthInterfaceService.GetTestSaleSellingWorkgroupAsync(workGroup);
 
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TestSaleSellingWorkgroup");
-            var fileName = $"TestSaleSellingWorkgroup_{workGroup}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            var fileName = $"TestSaleSellingWorkgroup_{workGroup}.xlsx";
 
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
@@ -94,7 +94,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _bosworthInterfaceService.GetTestSaleBuyingProjectAsync(parentProject);
 
             var excelBytes = _excelExportService.ExportToExcel(response.Data ?? [], "TestSaleBuyingProject");
-            var fileName = $"TestSaleBuyingProject_{parentProject}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            var fileName = $"TestSaleBuyingProject_{parentProject}.xlsx";
 
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
