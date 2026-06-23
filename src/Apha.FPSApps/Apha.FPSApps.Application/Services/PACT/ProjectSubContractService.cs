@@ -94,7 +94,7 @@ namespace Apha.FPSApps.Application.Services.PACT
                     {
                         new ApiErrorDto
                         {
-                            Code = importResult.MissingHeaders.Any() ? "INVALID_TEMPLATE" : "EMPTY_FILE",
+                            Code = importResult.MissingHeaders.Count > 0 ? "INVALID_TEMPLATE" : "EMPTY_FILE",
                             Message = importResult.ErrorMessage ?? "Import failed."
                         }
                     },
