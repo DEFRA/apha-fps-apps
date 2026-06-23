@@ -1042,5 +1042,155 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         }
 
         #endregion
+
+        #region GetLogMilestonesAsync
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WithSuccessResponseAndData_ReturnsMappedDtoList()
+        {
+            // Arrange
+            const string project     = "PP001";
+            const string numberPart1 = "M";
+            const string numberPart2 = "1";
+            var parameters  = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var resList     = new List<LogMilestoneRes> { new() { Project = project, Number = "M1", Description = "Log Entry 1" } };
+            var apiResponse = new ApiResponse<List<LogMilestoneRes>> { Success = true, Data = resList };
+            var mappedDto   = ApiResponseDto<List<LogMilestoneDto>>.SuccessResponse(
+                new List<LogMilestoneDto> { new() { Project = project, Number = "M1", Description = "Log Entry 1" } });
+
+            _http.GetAsync<List<LogMilestoneRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<LogMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Single(result.Data);
+            Assert.Equal(project, result.Data[0].Project);
+            Assert.Equal("M1",    result.Data[0].Number);
+            await _http.Received(1).GetAsync<List<LogMilestoneRes>>(Arg.Any<string>());
+            _mapper.Received(1).Map<ApiResponseDto<List<LogMilestoneDto>>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var parameters  = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors      = new List<ApiError> { new() { Message = "Not found", Code = "NOT_FOUND" } };
+            var apiResponse = new ApiResponse<List<LogMilestoneRes>> { Success = false, Data = null, Errors = errors };
+            var mappedDto   = new ApiResponseDto<List<LogMilestoneDto>>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<LogMilestoneRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<LogMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetLogMilestonesAsync(parameters, null, null, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("NOT_FOUND", result.Errors[0].Code);
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WhenSuccessWithNullData_ReturnsFailureResponse()
+        {
+            // Arrange
+            var parameters  = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<LogMilestoneRes>> { Success = true, Data = null };
+            var mappedDto   = new ApiResponseDto<List<LogMilestoneDto>>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto>(),
+                Meta    = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<LogMilestoneRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<LogMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetLogMilestonesAsync(parameters, null, null, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WithAllOptionalParams_AppendsAllParamsToUrl()
+        {
+            // Arrange
+            const string project     = "PP001";
+            const string numberPart1 = "M";
+            const string numberPart2 = "5";
+            var parameters  = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<LogMilestoneRes>> { Success = true, Data = new List<LogMilestoneRes>() };
+            var mappedDto   = ApiResponseDto<List<LogMilestoneDto>>.SuccessResponse(new List<LogMilestoneDto>());
+
+            _http.GetAsync<List<LogMilestoneRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<LogMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
+
+            // Assert
+            await _http.Received(1).GetAsync<List<LogMilestoneRes>>(
+                Arg.Is<string>(u =>
+                    u.Contains(PimsApiEndpoints.GetLogMilestones) &&
+                    u.Contains($"project={Uri.EscapeDataString(project)}") &&
+                    u.Contains($"numberPart1={Uri.EscapeDataString(numberPart1)}") &&
+                    u.Contains($"numberPart2={Uri.EscapeDataString(numberPart2)}")));
+        }
+
+        [Theory]
+        [InlineData(null,  null,  null)]
+        [InlineData("",    "",    "")]
+        [InlineData("   ", "   ", "   ")]
+        public async Task GetLogMilestonesAsync_WhenOptionalParamsAreNullOrWhitespace_DoesNotAppendThem(
+            string? project, string? numberPart1, string? numberPart2)
+        {
+            // Arrange
+            var parameters  = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<LogMilestoneRes>> { Success = true, Data = new List<LogMilestoneRes>() };
+            var mappedDto   = ApiResponseDto<List<LogMilestoneDto>>.SuccessResponse(new List<LogMilestoneDto>());
+
+            _http.GetAsync<List<LogMilestoneRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<LogMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.GetLogMilestonesAsync(parameters, project, numberPart1, numberPart2);
+
+            // Assert — no optional params appended; URL must not contain the param keys
+            await _http.Received(1).GetAsync<List<LogMilestoneRes>>(
+                Arg.Is<string>(u =>
+                    !u.Contains("&project=") &&
+                    !u.Contains("&numberPart1=") &&
+                    !u.Contains("&numberPart2=")));
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WhenHttpExecutorThrows_PropagatesException()
+        {
+            // Arrange
+            var parameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _http.GetAsync<List<LogMilestoneRes>>(Arg.Any<string>()).ThrowsAsync(new Exception("Network error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _client.GetLogMilestonesAsync(parameters, "PP001", null, null));
+        }
+
+        #endregion
     }
 }

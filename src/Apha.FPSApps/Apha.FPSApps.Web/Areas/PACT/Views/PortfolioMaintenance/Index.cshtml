@@ -78,12 +78,10 @@
 
 <!-- ── Top header bar: heading + portfolio picker ──────────────────────────── -->
 <div class="govuk-grid-row sup_margin_left_right_0 sup_p_0 sup_margin_bottom_10">
-    <div class="govuk-grid-column-full sup_p_0 sup_border-bottom">
+    <div class="govuk-grid-column-full sup_flex_align_center sup_p_0 sup_border-bottom">
         <div class="govuk-grid-column-one-third">
-            <h1 class="heading_with_txtbox govuk-heading-s sup_margin_bottom_0 p-tb-10 p-l-10">
-                <div class="sup_flex_left_center">
-                    Portfolio Maintenance
-                </div>
+            <h1 class="heading_with_txtbox govuk-heading-s sup_margin_bottom_0 p-tb-10 p-l-10"> 
+                    Portfolio Maintenance 
             </h1>
         </div>
         <div class="govuk-grid-column-two-thirds sup_p_0">
@@ -92,36 +90,8 @@
                        class="govuk-label govuk-!-font-weight-bold sup_margin_top_bottom_5_10">
                     Select a Portfolio
                 </label>
-                <div class="tableselectdropdown input-group searchfiels govuk-!-width-two-thirds portfolio-picker-wrapper">
-                    <input type="text" id="dpselectportfolio" placeholder="Select Portfolio"
-                           class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
-                           autocomplete="off" readonly style="cursor:pointer;" />
-                    <div class="tbl-dropdown-panel" id="portfolioDropdownPanel">
-                        <input type="text" class="select-search-box" placeholder="Type to search portfolio" />
-                        <button type="button" class="govuk-button govuk-button--secondary clear-search-btn"
-                                aria-label="Clear search">
-                            <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
-                        </button>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Code</th>
-                                    <th>Portfolio Title</th>
-                                </tr>
-                            </thead>
-                            <tbody id="portfolioDropdownBody">
-                                @foreach (var item in Model.PortfolioOptions)
-                                {
-                                    var parts = item.Text.Split(" - ", 2);
-                                    <tr data-value="@item.Value" data-label="@item.Text">
-                                        <td>@parts[0]</td>
-                                        <td>@(parts.Length > 1 ? parts[1] : "")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <div id="portfolioSelectMultiDropdown" class="govuk-grid-column-two-thirds sup_p_0"></div>
+            </div>
                 @if (!string.IsNullOrEmpty(ViewBag.SourceWorkGroup as string))
                 {
                     <a href="@Url.Action("Index", "WorkGroupTestCapability", new { area = "PACT", workgroup = ViewBag.SourceWorkGroup })" 
@@ -131,7 +101,7 @@
                         Back
                     </a>
                 }
-            </div>
+            
         </div>
     </div>
 </div>
@@ -142,7 +112,7 @@
     <nav class="sidenav flex-column flex-shrink-0" id="shortnav">
         <button type="button" class="toggle-btn" onclick="toggleSidebar()" style="right:-8px; top:30px;" allow-edit="true">
             <img src="~/images/chevron-left-solid-full.svg" width="20" alt="toggle sidebar"
-                 style="margin:-4px 8px 0 -4px;" />
+                 style="margin:-14px 8px 0 -4px;" />
         </button>
         <ul>
             <li class="sidebar-link-two"
@@ -340,11 +310,17 @@
 
     </div>
 </div>
-
-@section Scripts {
-<script src="~/js/ajax-form-validation.js"></script>
-<script src="~/js/pact_js/portfolioMaintenance.js"></script>
-@{
-    await Html.RenderPartialAsync("_ValidationScriptsPartial");
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
 }
+@section Scripts {
+     <script>
+        const portfolioOptionsListData =   @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.PortfolioOptions));
+    </script>
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script src="~/js/common/multicolumn-dropdown.component.js"></script>
+    <script src="~/js/pact_js/portfolioMaintenance.js"></script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

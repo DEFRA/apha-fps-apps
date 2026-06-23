@@ -30,8 +30,7 @@ namespace Apha.PACT.DataAccess.Repository
             querySubContracts = ApplySubContractFilter(querySubContracts, query.Filter);
             querySubContracts = (IQueryable<ProjectSubContract>)ApplySorting(querySubContracts, query.SortBy, query.Descending);
 
-            List<ProjectSubContract> result = await querySubContracts.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(querySubContracts, query.Page, query.PageSize);
         }
 
         public async Task<decimal> GetTotalAmountAsync(string? project)
@@ -60,8 +59,7 @@ namespace Apha.PACT.DataAccess.Repository
             q = ApplySubContractFilter(q, query.Filter);
             q = (IQueryable<ProjectSubContract>)ApplySorting(q, query.SortBy, query.Descending);
 
-            List<ProjectSubContract> result = await q.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(q, query.Page, query.PageSize);
         }
 
         public async Task<decimal> GetFpsProjectSubContractTotalAmountAsync(string? project, bool filterByAnimalAcctCodes = false)
@@ -179,7 +177,7 @@ namespace Apha.PACT.DataAccess.Repository
             failedQuery = ApplyFailedSubContractFilter(failedQuery, query.Filter);
             failedQuery = (IQueryable<ProjectSubcontractStaging>)ApplyFailedSubContractSorting(failedQuery, query.SortBy, query.Descending);
 
-            var rows = await failedQuery
+            IQueryable<SubContractRmsImportRow> rows = failedQuery
                 .Select(x => new SubContractRmsImportRow
                 {
                     Id = x.Id,
@@ -196,10 +194,9 @@ namespace Apha.PACT.DataAccess.Repository
                     AnimalDays = x.AnimalDays,
                     ValidationFailure = x.ValidationFailure,
                     ImportedDate = x.ImportedDate
-                })
-                .ToListAsync();
+                });
 
-            return ApplyPaging(rows, query.Page, query.PageSize);
+            return await ApplyPaging(rows, query.Page, query.PageSize);
         }
 
         public async Task<int> DeleteFailedSubContractRmsByUserAsync(string importedBy)

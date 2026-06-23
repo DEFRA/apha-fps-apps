@@ -1,10 +1,11 @@
-﻿using Apha.Common.Contracts;
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.PIMS;
 using Apha.PIMS.Api.Controllers;
 using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Pagination;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -21,7 +22,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         {
             _service    = Substitute.For<IMilestoneService>();
             _mapper     = Substitute.For<IMapper>();
-            _controller = new MilestoneController(_service, _mapper);
+            _controller = new MilestoneController(_service, _mapper)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext()
+                }
+            };
         }
 
         #region GetAllMilestones
@@ -210,7 +217,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var savedRes = new MilestoneRes { Project = project, Number = "M1" };
 
             _mapper.Map<MilestoneDto>(request).Returns(dto);
-            _service.SaveMilestoneAsync(dto).Returns(savedDto);
+            _service.SaveMilestoneAsync(dto, Arg.Any<string?>()).Returns(savedDto);
             _mapper.Map<MilestoneRes>(savedDto).Returns(savedRes);
 
             // Act
@@ -224,7 +231,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             Assert.Equal(project, dto.Project);
 
             _mapper.Received(1).Map<MilestoneDto>(request);
-            await _service.Received(1).SaveMilestoneAsync(dto);
+            await _service.Received(1).SaveMilestoneAsync(dto, Arg.Any<string?>());
             _mapper.Received(1).Map<MilestoneRes>(savedDto);
         }
 
@@ -237,13 +244,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var dto     = new MilestoneDto { Number = "M1" };
 
             _mapper.Map<MilestoneDto>(request).Returns(dto);
-            _service.SaveMilestoneAsync(dto).Throws(new Exception("Validation error"));
+            _service.SaveMilestoneAsync(dto, Arg.Any<string?>()).Throws(new Exception("Validation error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.SaveMilestone(project, request));
 
             _mapper.Received(1).Map<MilestoneDto>(request);
-            await _service.Received(1).SaveMilestoneAsync(dto);
+            await _service.Received(1).SaveMilestoneAsync(dto, Arg.Any<string?>());
             _mapper.DidNotReceive().Map<MilestoneRes>(Arg.Any<MilestoneDto>());
         }
 
@@ -268,7 +275,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var updatedRes = new MilestoneRes { Project = project, Number = number, Description = "Updated milestone" };
 
             _mapper.Map<MilestoneDto>(request).Returns(dto);
-            _service.UpdateMilestoneAsync(dto).Returns(updatedDto);
+            _service.UpdateMilestoneAsync(dto, Arg.Any<string?>()).Returns(updatedDto);
             _mapper.Map<MilestoneRes>(updatedDto).Returns(updatedRes);
 
             // Act
@@ -283,7 +290,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             Assert.Equal(number,  dto.Number);
 
             _mapper.Received(1).Map<MilestoneDto>(request);
-            await _service.Received(1).UpdateMilestoneAsync(dto);
+            await _service.Received(1).UpdateMilestoneAsync(dto, Arg.Any<string?>());
             _mapper.Received(1).Map<MilestoneRes>(updatedDto);
         }
 
@@ -301,7 +308,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var updatedRes = new MilestoneRes { Project = project, Number = decodedNumber };
 
             _mapper.Map<MilestoneDto>(request).Returns(dto);
-            _service.UpdateMilestoneAsync(dto).Returns(updatedDto);
+            _service.UpdateMilestoneAsync(dto, Arg.Any<string?>()).Returns(updatedDto);
             _mapper.Map<MilestoneRes>(updatedDto).Returns(updatedRes);
 
             // Act
@@ -322,13 +329,13 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
             var dto     = new MilestoneDto();
 
             _mapper.Map<MilestoneDto>(request).Returns(dto);
-            _service.UpdateMilestoneAsync(dto).Throws(new Exception("Not found"));
+            _service.UpdateMilestoneAsync(dto, Arg.Any<string?>()).Throws(new Exception("Not found"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.UpdateMilestone(project, number, request));
 
             _mapper.Received(1).Map<MilestoneDto>(request);
-            await _service.Received(1).UpdateMilestoneAsync(dto);
+            await _service.Received(1).UpdateMilestoneAsync(dto, Arg.Any<string?>());
             _mapper.DidNotReceive().Map<MilestoneRes>(Arg.Any<MilestoneDto>());
         }
 
@@ -350,7 +357,7 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var value    = Assert.IsAssignableFrom<object>(okResult.Value);
+            var value    = Assert.IsType<object>(okResult.Value, exactMatch: false);
             Assert.NotNull(value);
 
             await _service.Received(1).DeleteMilestoneAsync(project, number);
@@ -756,5 +763,130 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
         }
 
         #endregion
+
+        #region GetLogMilestones
+
+        [Fact]
+        public async Task GetLogMilestones_ReturnsOkResult_WithMappedPaginatedResult()
+        {
+            // Arrange
+            var parameters       = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            const string project = "PP001";
+            const string part1   = "M";
+            const string part2   = "1";
+
+            var dtos = new List<LogMilestoneDto>
+            {
+                new() { Project = project, Number = "M1", Description = "Log Entry 1" },
+                new() { Project = project, Number = "M2", Description = "Log Entry 2" }
+            };
+            var paginatedResult = new PaginatedResult<LogMilestoneDto>(dtos, new PaginationDto { TotalRecords = 2 });
+
+            var resList = new List<LogMilestoneRes>
+            {
+                new() { Project = project, Number = "M1", Description = "Log Entry 1" },
+                new() { Project = project, Number = "M2", Description = "Log Entry 2" }
+            };
+            var paginationRes = new PaginationRes<LogMilestoneRes>(resList, new Pagination { TotalRecords = 2 });
+
+            _service.GetLogMilestonesAsync(parameters, project, part1, part2).Returns(paginatedResult);
+            _mapper.Map<PaginationRes<LogMilestoneRes>>(paginatedResult).Returns(paginationRes);
+
+            // Act
+            var result = await _controller.GetLogMilestones(parameters, project, part1, part2);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(paginationRes, okResult.Value);
+
+            await _service.Received(1).GetLogMilestonesAsync(parameters, project, part1, part2);
+            _mapper.Received(1).Map<PaginationRes<LogMilestoneRes>>(paginatedResult);
+        }
+
+        [Fact]
+        public async Task GetLogMilestones_ReturnsOkResult_WithEmptyData()
+        {
+            // Arrange
+            var parameters  = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var emptyResult = new PaginatedResult<LogMilestoneDto>(new List<LogMilestoneDto>(), new PaginationDto());
+            var emptyRes    = new PaginationRes<LogMilestoneRes>();
+
+            _service.GetLogMilestonesAsync(parameters, null, null, null).Returns(emptyResult);
+            _mapper.Map<PaginationRes<LogMilestoneRes>>(emptyResult).Returns(emptyRes);
+
+            // Act
+            var result = await _controller.GetLogMilestones(parameters);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(emptyRes, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetLogMilestones_WithNullOptionalParams_PassesNullsToService()
+        {
+            // Arrange
+            var parameters  = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var emptyResult = new PaginatedResult<LogMilestoneDto>(new List<LogMilestoneDto>(), new PaginationDto());
+            var emptyRes    = new PaginationRes<LogMilestoneRes>();
+
+            _service.GetLogMilestonesAsync(parameters, null, null, null).Returns(emptyResult);
+            _mapper.Map<PaginationRes<LogMilestoneRes>>(emptyResult).Returns(emptyRes);
+
+            // Act
+            await _controller.GetLogMilestones(parameters, null, null, null);
+
+            // Assert
+            await _service.Received(1).GetLogMilestonesAsync(
+                parameters,
+                Arg.Is<string?>(p  => p  == null),
+                Arg.Is<string?>(n1 => n1 == null),
+                Arg.Is<string?>(n2 => n2 == null));
+        }
+
+        [Fact]
+        public async Task GetLogMilestones_WithAllOptionalParams_PassesThemToService()
+        {
+            // Arrange
+            var parameters       = new QueryParameters<string> { Page = 2, PageSize = 5 };
+            const string project = "PP123";
+            const string part1   = "M";
+            const string part2   = "5";
+
+            var paginatedResult = new PaginatedResult<LogMilestoneDto>(new List<LogMilestoneDto>(), new PaginationDto());
+            var paginationRes   = new PaginationRes<LogMilestoneRes>();
+
+            _service.GetLogMilestonesAsync(parameters, project, part1, part2).Returns(paginatedResult);
+            _mapper.Map<PaginationRes<LogMilestoneRes>>(paginatedResult).Returns(paginationRes);
+
+            // Act
+            await _controller.GetLogMilestones(parameters, project, part1, part2);
+
+            // Assert
+            await _service.Received(1).GetLogMilestonesAsync(
+                Arg.Is<QueryParameters<string>>(p => p.Page == 2 && p.PageSize == 5),
+                Arg.Is<string?>(p  => p  == project),
+                Arg.Is<string?>(n1 => n1 == part1),
+                Arg.Is<string?>(n2 => n2 == part2));
+        }
+
+        [Fact]
+        public async Task GetLogMilestones_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var parameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _service.GetLogMilestonesAsync(parameters, null, null, null)
+                .Throws(new Exception("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetLogMilestones(parameters));
+
+            await _service.Received(1).GetLogMilestonesAsync(parameters, null, null, null);
+            _mapper.DidNotReceive().Map<PaginationRes<LogMilestoneRes>>(Arg.Any<PaginatedResult<LogMilestoneDto>>());
+        }
+
+        #endregion
     }
 }
+

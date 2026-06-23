@@ -193,5 +193,15 @@ namespace Apha.FPS.DataAccess.Repositories
                 .OrderBy(x => x)
                 .ToListAsync();
         }
+
+        public async Task<bool> ExistsForGradeCodeAsync(string gradeCode)
+        {
+            if (string.IsNullOrWhiteSpace(gradeCode))
+                return false;
+
+            return await _dbContext.ProfitCentreGrades
+                .AsNoTracking()
+                .AnyAsync(pcg => pcg.GradeCode == gradeCode);
+        }
     }
 }

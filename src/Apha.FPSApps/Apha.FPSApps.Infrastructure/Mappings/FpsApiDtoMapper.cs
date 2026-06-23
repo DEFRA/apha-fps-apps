@@ -75,7 +75,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
-           
+            // TRANSFORMENGINE: Grade mappings added — Phase 10 (Step 15a)
+            // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
+            CreateMap<GradeDto, GradeReq>().ReverseMap();
+            CreateMap<GradeDto, GradeRes>().ReverseMap();
+
+
             // Agency
             CreateMap<AgencyDto, AgencyRes>().ReverseMap();
 
@@ -83,6 +88,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<AdditionalCostDto, AdditionalCostReq>().ReverseMap();
             CreateMap<AdditionalCostDto, AdditionalCostRes>().ReverseMap();
             CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
+            CreateMap<AccountCategoryDto, AccountCategoryReq>().ReverseMap();
 
             // View Project Plan vs Actual Tests
             CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
@@ -92,7 +98,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<SubAccountDto, SubAccountRes>()
                 .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
             CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
-            CreateMap<WorkGroupStaffDto, WorkGroupStaffRes>().ReverseMap();
+            CreateMap<PactStaffDto, PactStaffRes>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
 
             // Resource Set-Up
@@ -108,8 +114,22 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
 
+            // ProjectProfitabilityVla
+            // TRANSFORMENGINE: Project<->JobCode ForMember required â€” VlaRes.Project maps to VlaDto.JobCode;
+            //   ForMember(Id) handles int->int? coercion: Id=GetValueOrDefault(0) on reverse.
+            //   TotalCount is on Res only; silently ignored in Res->Dto direction (see DEFERRED note above).
+            CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
+                .ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode))
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.GetValueOrDefault(0)))
+                .ReverseMap()
+                .ForMember(d => d.JobCode, o => o.MapFrom(s => s.Project))
+                .ForMember(d => d.Id, o => o.MapFrom(s => (int?)s.Id));
+
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
+
+            // Project Group Staff Plan view
+            CreateMap<ProjectGroupStaffPlanViewDto, ProjectGroupStaffPlanViewRes>().ReverseMap();
 
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 
@@ -119,6 +139,16 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // Job Code (ZT lookup) - now served from PACT API
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
+                      
+
+            // BudgetResourceLevel
+            CreateMap<BidDto, BidReq>().ReverseMap();
+            CreateMap<BidDto, BidRes>().ReverseMap();
+            CreateMap<BidViewDto, BidViewRes>().ReverseMap();
+            CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
+            CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
+
+
         }
     }
 }

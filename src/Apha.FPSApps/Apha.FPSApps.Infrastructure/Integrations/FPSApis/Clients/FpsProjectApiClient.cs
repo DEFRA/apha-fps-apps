@@ -1,4 +1,4 @@
-using Apha.Common.Constants;
+﻿using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -32,6 +32,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsForAllUsersAsync()
+        {
+            var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllProjectsForAllUsers);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetAllPactProjectsAsync()
         {
             var response = await _http.GetAsync<List<ProjectRes>>(FpsApiEndpoints.GetAllPactProjects);
@@ -44,7 +54,18 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query)
         {
-            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProjects, query);
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetAllProjectsPaged, query);
+            var response = await _http.GetAsync<List<ProjectRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsByUserAsync(QueryParameters<string> query)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedProjectsByUser, query);
             var response = await _http.GetAsync<List<ProjectRes>>(url);
             if (response.Success)
                 return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
@@ -279,6 +300,47 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
             var dto = _mapper.Map<ApiResponseDto<List<ProjectProfitabilityDto>>>(response);
             return ApiResponseDto<List<ProjectProfitabilityDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        // TRANSFORMENGINE: new method — Phase 9 implementation of IFpsProjectApiClient.GetProjectProfitabilityVlaAsync
+        //   HTTP GET api/v1/project/profitability-vla (backend Phase 5 controller route [HttpGet("profitability-vla")])
+        //   All four filter params are optional flat query-string params; pagination via QueryParameters<string>.
+        public async Task<ApiResponseDto<List<ProjectProfitabilityVlaDto>>> GetProjectProfitabilityVlaAsync(
+            QueryParameters<string> query,
+            string? projectStatus = null,
+            string? programNo = null,
+            string? manager = null,
+            string? customer = null)
+        {
+            try
+            {
+                // TRANSFORMENGINE: base URL matches backend [Route("api/v{version:apiVersion}/project")]
+                //   + [HttpGet("profitability-vla")] → "api/v1/project/profitability-vla"
+                var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetProjectProfitabilityVla, query);
+
+                if (!string.IsNullOrEmpty(projectStatus))
+                    url += (url.Contains('?') ? "&" : "?") + $"projectStatus={Uri.EscapeDataString(projectStatus)}";
+                if (!string.IsNullOrEmpty(programNo))
+                    url += (url.Contains('?') ? "&" : "?") + $"programNo={Uri.EscapeDataString(programNo)}";
+                if (!string.IsNullOrEmpty(manager))
+                    url += (url.Contains('?') ? "&" : "?") + $"manager={Uri.EscapeDataString(manager)}";
+                if (!string.IsNullOrEmpty(customer))
+                    url += (url.Contains('?') ? "&" : "?") + $"customer={Uri.EscapeDataString(customer)}";
+
+                var response = await _http.GetAsync<List<ProjectProfitabilityVlaRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<ProjectProfitabilityVlaDto>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<ProjectProfitabilityVlaDto>>>(response);
+                return ApiResponseDto<List<ProjectProfitabilityVlaDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                // TRANSFORMENGINE: catch block returns FailureResponse per Phase 9 error-handling pattern (Sonar S2139)
+                return ApiResponseDto<List<ProjectProfitabilityVlaDto>>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve Project Profitability VLA data", Code = InternalCodeError } },
+                    new ApiMetaDto());
+            }
         }
     }
 }

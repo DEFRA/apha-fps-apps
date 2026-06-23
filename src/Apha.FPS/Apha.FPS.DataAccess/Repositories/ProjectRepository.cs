@@ -26,6 +26,12 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId)).ToListAsync();
         }
 
+        public async Task<IEnumerable<Project>> GetAllProjectsForAllUsersAsync()
+        {
+            return await _dbContext.Projects
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync()
         {
             return await _dbContext.PactProjectViews
@@ -40,24 +46,7 @@ namespace Apha.FPS.DataAccess.Repositories
                                join pv in _dbContext.Projects on
                                new { pg.ProjectGroupName } equals new { ProjectGroupName = pv.ProjectGroup }
                                where EF.Functions.ILike(pg.UserEmail!, _requestContext.UserEmailId) && pg.ProjectGroupName == projectGroup
-                select(new Project
-                {
-                    ParentProject = pv.ParentProject ?? string.Empty,
-                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
-                    Program = pv.Program ?? string.Empty,
-                    Manager = pv.Manager,
-                    Customer = pv.Customer ?? string.Empty,
-                    Contract = pv.Contract ?? string.Empty,
-                    Disease = pv.Disease ?? string.Empty,
-                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
-                    ProjectGroup = pv.ProjectGroup,
-                    BudgetCvl = pv.BudgetCvl,
-                    CustIncome = pv.CustIncome,
-                    TransferIncome = pv.TransferIncome,
-                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,   
-                    IsDefraProject = pv.IsDefraProject,
-                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
-                })).AsQueryable();
+                               select pv).AsQueryable();
 
             projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
@@ -71,24 +60,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var projectQuery = _dbContext.ProjectViews
                 .AsNoTracking()
                 .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.Program == programNo)
-                .Select(pv => new Project
-                {
-                    ParentProject = pv.ParentProject ?? string.Empty,
-                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
-                    Program = pv.Program ?? string.Empty,
-                    Manager = pv.Manager,
-                    Customer = pv.Customer ?? string.Empty,
-                    Contract = pv.Contract ?? string.Empty,
-                    Disease = pv.Disease ?? string.Empty,
-                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
-                    ProjectGroup = pv.ProjectGroup,
-                    BudgetCvl = pv.BudgetCvl,
-                    CustIncome = pv.CustIncome ?? 0,
-                    TransferIncome = pv.TransferIncome ?? 0,
-                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,
-                    IsDefraProject = pv.IsDefraProject ?? 0,
-                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
-                }).AsQueryable();
+                .Select(pv => MapToProject(pv)).AsQueryable();
 
             projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
@@ -106,22 +78,52 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query)
         {
-            var queryable = _dbContext.Projects.AsNoTracking().AsQueryable();
+            var projectQuery = _dbContext.ProjectViews
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId))
+                .Select(pv => new Project
+                {
+                    ParentProject = pv.ParentProject ?? string.Empty,
+                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
+                    Program = pv.Program ?? string.Empty,
+                    Customer = pv.Customer ?? string.Empty,
+                    Contract = pv.Contract ?? string.Empty,
+                    Disease = pv.Disease ?? string.Empty,
+                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                    CostCentre = pv.CostCentre,
+                    OracleProjectCode = pv.OracleProjectCode,
+                    SubAccountCode = pv.SubAccountCode,
+                    IsDefraProject = pv.IsDefraProject ?? 0,
+                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
+                }).AsQueryable();
+
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+        
+        public async Task<PagedData<ProjectView>> GetPagedProjectsByUserAsync(PaginationParameters<string> query)
+        {
+            var queryable = _dbContext.ProjectViews
+                .AsNoTracking()
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId))
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(query.Search))
             {
-                var search = query.Search.ToLower();
+                var search = query.Search;
                 queryable = queryable.Where(p =>
                     EF.Functions.ILike(p.ParentProject!, $"%{search}%") ||
                     EF.Functions.ILike(p.ProjectTitle!, $"%{search}%"));
             }
 
-            queryable = query.SortBy?.ToLower() switch
+            queryable = query.SortBy switch
             {
-                "parentproject" => query.Descending
+                string s when s.Equals("parentproject", StringComparison.OrdinalIgnoreCase) => query.Descending
                     ? queryable.OrderByDescending(p => p.ParentProject)
                     : queryable.OrderBy(p => p.ParentProject),
-                "projecttitle" => query.Descending
+                string s when s.Equals("projecttitle", StringComparison.OrdinalIgnoreCase) => query.Descending
                     ? queryable.OrderByDescending(p => p.ProjectTitle)
                     : queryable.OrderBy(p => p.ProjectTitle),
                 _ => queryable.OrderBy(p => p.ParentProject)
@@ -205,6 +207,29 @@ namespace Apha.FPS.DataAccess.Repositories
             });
             return project;
         }
+
+        private static Project MapToProject(ProjectView pv) => new()
+        {
+            ParentProject     = pv.ParentProject     ?? string.Empty,
+            ProjectTitle      = pv.ProjectTitle      ?? string.Empty,
+            Program           = pv.Program           ?? string.Empty,
+            Manager           = pv.Manager,
+            Customer          = pv.Customer          ?? string.Empty,
+            Contract          = pv.Contract          ?? string.Empty,
+            Disease           = pv.Disease           ?? string.Empty,
+            ProjectStatus     = pv.ProjectStatus     ?? string.Empty,
+            ProjectGroup      = pv.ProjectGroup,
+            BudgetCvl         = pv.BudgetCvl,
+            CustIncome        = pv.CustIncome        ?? 0,
+            TransferIncome    = pv.TransferIncome    ?? 0,
+            PlanCaseWorkDebit = pv.PlanCaseWorkDebit,
+            IsDefraProject    = pv.IsDefraProject    ?? 0,
+            IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
+        };
+
+        private static List<T> SortList<T, TKey>(List<T> list, Func<T, TKey> keySelector, bool descending)
+            => descending ? list.OrderByDescending(keySelector).ToList()
+                          : list.OrderBy(keySelector).ToList();
 
         private static void NormalizeDateTimesToUnspecified(Project p)
         {
@@ -401,6 +426,16 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("Manager", out var manager) && manager != null)
                 query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
 
+            if (dict.TryGetValue("OracleProjectCode", out var oracleProjectCode) && oracleProjectCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.OracleProjectCode!, $"%{oracleProjectCode}%"));
+
+            if (dict.TryGetValue("SubAccountCode", out var subAccountCode) && subAccountCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.SubAccountCode!, $"%{subAccountCode}%"));
+
+            if (dict.TryGetValue("CostCentre", out var costCentre) && costCentre != null
+                && double.TryParse(costCentre.ToString(), out var costCentreValue))
+                query = query.Where(x => x.CostCentre.HasValue && Math.Abs(x.CostCentre.Value - costCentreValue) < 1e-9);
+
             return query;
         }
 
@@ -442,6 +477,9 @@ namespace Apha.FPS.DataAccess.Repositories
                 "program" => ApplyOrder(query, p => p.Program, descending),
                 "manager" => ApplyOrder(query, p => p.Manager, descending),
                 "budgetcvl" => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "costcentre" => ApplyOrder(query, p => p.CostCentre, descending),
+                "oracleprojectcode" => ApplyOrder(query, p => p.OracleProjectCode, descending),
+                "subaccountcode" => ApplyOrder(query, p => p.SubAccountCode, descending),
                 _ => query.OrderBy(p => p.ParentProject)
             };
         }
@@ -490,7 +528,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return property switch
             {
                 "parentproject" => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
-                "projecttitle" => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
+                "projecttitle"  => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
                 _ => query.OrderBy(e => e.ParentProject)
             };
         }
@@ -500,7 +538,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        // ── ProgrammeNewProject operations ──────────────────────────────────
+        // -- ProgrammeNewProject operations ----------------------------------
 
         /// <summary>
         /// Checks whether a project code already exists — derived from qryProjectCheck.
@@ -522,7 +560,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(s => s.Contract == oldProject);
         }
 
-        // ── Delete pre-condition checks (moved to service layer) ────────────
+        // -- Delete pre-condition checks (moved to service layer) ------------
 
         public async Task<bool> HasPlannedTestsAsync(string parentProject)
         {
@@ -572,371 +610,17 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var tx = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-                    // Copy project row and stage audit log in same unit of work
-                    var oldProject = await _dbContext.Projects
-                        .FirstOrDefaultAsync(p => p.ParentProject == oldCode)
-                        ?? throw new InvalidOperationException($"Project '{oldCode}' not found.");
-
-                    var newProject = new Project
-                    {
-                        ParentProject = newCode,
-                        ProjectTitle = oldProject.ProjectTitle,
-                        Program = oldProject.Program,
-                        Customer = oldProject.Customer,
-                        Manager = oldProject.Manager,
-                        TransferIncome = oldProject.TransferIncome,
-                        CustIncome = oldProject.CustIncome,
-                        WipEoy = oldProject.WipEoy,
-                        WipLimit = oldProject.WipLimit,
-                        WipCurrent = oldProject.WipCurrent,
-                        ProjectStatus = oldProject.ProjectStatus,
-                        CostBookNo = oldProject.CostBookNo,
-                        FecCost = oldProject.FecCost,
-                        Profit = oldProject.Profit,
-                        BudgetCvl = oldProject.BudgetCvl,
-                        DateCreated = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                        DateCosted = oldProject.DateCosted,
-                        Disease = oldProject.Disease,
-                        Contract = oldProject.Contract,
-                        ProjectParent = oldProject.ProjectParent,
-                        ShortTitle = oldProject.ShortTitle,
-                        CaseWorkSub = oldProject.CaseWorkSub,
-                        PvsIncome = oldProject.PvsIncome,
-                        PlanCaseWorkDebit = oldProject.PlanCaseWorkDebit,
-                        Finished = oldProject.Finished,
-                        OwningRc = oldProject.OwningRc,
-                        Comments = oldProject.Comments,
-                        CarryOver = oldProject.CarryOver,
-                        CarryOverSeed = oldProject.CarryOverSeed,
-                        IsDefraProject = oldProject.IsDefraProject,
-                        CostCentre = oldProject.CostCentre,
-                        OracleProjectCode = oldProject.OracleProjectCode,
-                        SubAccountCode = oldProject.SubAccountCode,
-                        ProjectGroup = oldProject.ProjectGroup,
-                        IncomeAccountCode = oldProject.IncomeAccountCode,
-                        FpsYear = oldProject.FpsYear
-                    };
-
-                    NormalizeDateTimesToUnspecified(newProject);
-
-                    await _dbContext.Projects.AddAsync(newProject);
-                    // Converted trigger logic — UITrig_tlkpProject FOR INSERT: stage audit log in same unit of work
-                    _dbContext.ProjectLogs.Add(MapProjectToLog(newProject, "I", _requestContext.UserEmailId));
-                    await _dbContext.SaveChangesAsync();
-
-                    // INSERT new JobCode rows
-                    var jobCodesToCopy = await _dbContext.JobCodes
-                        .Where(jc => jc.ParentProject == oldCode)
-                        .AsNoTracking()
-                        .ToListAsync();
-                    var newJobCodes = jobCodesToCopy.Select(jc => new JobCode
-                    {
-                        JobCodeId = jc.JobCodeId == oldCode ? newCode : jc.JobCodeId,
-                        ParentProject = newCode,
-                        JobCodeWorkGroup = jc.JobCodeWorkGroup,
-                        NewProg = jc.NewProg,
-                        Type = jc.Type,
-                        JobCodeName = jc.JobCodeName,
-                        FpsYear = jc.FpsYear
-                    }).ToList();
-                    if (newJobCodes.Count > 0)
-                    {
-                        await _dbContext.JobCodes.AddRangeAsync(newJobCodes);
-                        await _dbContext.SaveChangesAsync();
-                    }
-
-                    // UPDATE tlkpTestCapability.planportfolio
-                    await _dbContext.TestCapabilities
-                        .Where(tc => tc.PlanPortfolio == oldCode)
-                        .ExecuteUpdateAsync(s => s.SetProperty<string>(x => x.PlanPortfolio, newCode));
-
-                    // sp_Insert_tcv: copy TimeCodeValid rows with code substitution
-                    var tcvToCopy = await _dbContext.TimeCodeValids
-                        .Where(tcv => tcv.ParentProject == oldCode || tcv.Portfolio == oldCode)
-                        .AsNoTracking()
-                        .ToListAsync();
-                    var newTcvs = tcvToCopy
-                        .Select(tcv => new TimeCodeValid
-                        {
-                            WorkGroup = tcv.WorkGroup,
-                            TimeCode = tcv.TimeCode == oldCode ? newCode : tcv.TimeCode,
-                            ParentProject = tcv.ParentProject == oldCode ? newCode : tcv.ParentProject,
-                            TestCode = tcv.TestCode,
-                            JobCode = tcv.JobCode == oldCode ? newCode : tcv.JobCode,
-                            Portfolio = tcv.Portfolio == oldCode ? newCode : tcv.Portfolio,
-                            Active = tcv.Active,
-                            FpsYear = tcv.FpsYear
-                        })
-                        .DistinctBy(tcv => new { tcv.WorkGroup, tcv.TimeCode, tcv.ParentProject })
-                        .ToList();
-                    if (newTcvs.Count > 0)
-                    {
-                        await _dbContext.TimeCodeValids.AddRangeAsync(newTcvs);
-                        await _dbContext.SaveChangesAsync();
-                    }
-
-                    // sp_Insert_tr: copy tlkpTestReqmt rows with new buyer code
-                    var testReqsToCopy = await _dbContext.TestRequirements
-                        .Where(tr => tr.ProjectBuyerCode == oldCode)
-                        .AsNoTracking()
-                        .ToListAsync();
-                    var newTestReqs = testReqsToCopy.Select(tr => new TestRequirement
-                    {
-                        TestCode = tr.TestCode,
-                        Buyer = newCode,
-                        UnitPrice = tr.UnitPrice,
-                        NoRequired = tr.NoRequired,
-                        ProjectBuyerCode = newCode,
-                        TestBuyerCode = tr.TestBuyerCode,
-                        DateCreated = tr.DateCreated,
-                        Active = tr.Active,
-                        FpsYear = tr.FpsYear
-                    }).ToList();
-                    if (newTestReqs.Count > 0)
-                    {
-                        await _dbContext.TestRequirements.AddRangeAsync(newTestReqs);
-                        await _dbContext.SaveChangesAsync();
-
-                        // Derived from UITrig_tlkpTestReqmt: log inserted rows to TestReq_LOG
-                        _dbContext.TestRequirementLogs.AddRange(newTestReqs.Select(tr => new TestRequirementLog
-                        {
-                            TestCode = tr.TestCode,
-                            Buyer = tr.Buyer,
-                            UnitPrice = tr.UnitPrice,
-                            NoRequired = tr.NoRequired,
-                            ProjectBuyerCode = tr.ProjectBuyerCode,
-                            TestBuyerCode = tr.TestBuyerCode,
-                            Active = tr.Active,
-                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId = _requestContext.UserEmailId,
-                            InsertDelete = "I",
-                            FpsYear = tr.FpsYear
-                        }));
-                        await _dbContext.SaveChangesAsync();
-                    }
-
-                    // UPDATE remaining child tables
-
-                    // Derived from MT_LOG_UTrig: log old state (UD) and new state (UI) before update
-                    var mtToLog = await _dbContext.MonthlyTimes
-                        .Where(mt => mt.ParentProject == oldCode)
-                        .AsNoTracking()
-                        .ToListAsync();
-                    if (mtToLog.Count > 0)
-                    {
-                        _dbContext.MonthlyTimeLogs.AddRange(mtToLog.Select(mt => new MonthlyTimeLog
-                        {
-                            PactStaffId = mt.PactStaffId,
-                            TimeCode = mt.TimeCode,
-                            Month = mt.Month,
-                            ParentProject = mt.ParentProject,
-                            WorkGroup = mt.WorkGroup,
-                            Hours = mt.Hours,
-                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId = _requestContext.UserEmailId,
-                            InsertDelete = "UD",
-                            FpsYear = mt.FpsYear ?? _requestContext.FpsYear
-                        }));
-                        _dbContext.MonthlyTimeLogs.AddRange(mtToLog.Select(mt => new MonthlyTimeLog
-                        {
-                            PactStaffId = mt.PactStaffId,
-                            TimeCode = mt.TimeCode == oldCode ? newCode : mt.TimeCode,
-                            Month = mt.Month,
-                            ParentProject = newCode,
-                            WorkGroup = mt.WorkGroup,
-                            Hours = mt.Hours,
-                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId = _requestContext.UserEmailId,
-                            InsertDelete = "UI",
-                            FpsYear = mt.FpsYear ?? _requestContext.FpsYear
-                        }));
-                        await _dbContext.SaveChangesAsync();
-                    }
-                    await _dbContext.MonthlyTimes
-                        .Where(mt => mt.ParentProject == oldCode)
-                        .ExecuteUpdateAsync(s => s
-                            .SetProperty(x => x.ParentProject, newCode)
-                            .SetProperty(x => x.TimeCode, x => x.TimeCode == oldCode ? newCode : x.TimeCode));
-
-                    // Derived from MO_LOG_UTrig: log old state (UD) and new state (UI) before update
-                    var moToLog = await _dbContext.MonthlyOutputs
-                        .Where(mo => mo.Buyer == oldCode)
-                        .AsNoTracking()
-                        .ToListAsync();
-                    if (moToLog.Count > 0)
-                    {
-                        _dbContext.MonthlyOutputLogs.AddRange(moToLog.Select(mo => new MonthlyOutputLog
-                        {
-                            TestCode = mo.TestCode,
-                            Buyer = mo.Buyer,
-                            Month = mo.Month,
-                            WorkGroup = mo.WorkGroup,
-                            Volume = mo.Volume,
-                            WgBuyer = mo.WgBuyer,
-                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId = _requestContext.UserEmailId,
-                            InsertDelete = "UD",
-                            FpsYear = mo.FpsYear
-                        }));
-                        _dbContext.MonthlyOutputLogs.AddRange(moToLog.Select(mo => new MonthlyOutputLog
-                        {
-                            TestCode = mo.TestCode,
-                            Buyer = newCode,
-                            Month = mo.Month,
-                            WorkGroup = mo.WorkGroup,
-                            Volume = mo.Volume,
-                            WgBuyer = mo.WgBuyer,
-                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId = _requestContext.UserEmailId,
-                            InsertDelete = "UI",
-                            FpsYear = mo.FpsYear
-                        }));
-                        await _dbContext.SaveChangesAsync();
-                    }
-                    await _dbContext.MonthlyOutputs
-                        .Where(mo => mo.Buyer == oldCode)
-                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.Buyer, newCode));
-
-                    // Derived from UITrig_tblAdditionalCosts: log new state ('I') before update
-                    var acToLog = await _dbContext.AdditionalCosts
-                        .Where(ac => ac.JobCode == oldCode)
-                        .AsNoTracking()
-                        .ToListAsync();
-                    if (acToLog.Count > 0)
-                    {
-                        _dbContext.AdditionalCostLogs.AddRange(acToLog.Select(ac => new AdditionalCostLog
-                        {
-                            JobCode = newCode,
-                            Account = ac.Account,
-                            Description = ac.Description,
-                            ItemCost = ac.ItemCost,
-                            Freq = ac.Freq,
-                            Supplier = ac.Supplier,
-                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId = _requestContext.UserEmailId,
-                            InsertDelete = "I",
-                            FpsYear = ac.FpsYear ?? _requestContext.FpsYear
-                        }));
-                        await _dbContext.SaveChangesAsync();
-                    }
-                    await _dbContext.AdditionalCosts
-                        .Where(ac => ac.JobCode == oldCode)
-                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
-
-                    await _dbContext.ProjectInvoices
-                        .Where(pi => pi.ProjectParent == oldCode)
-                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.ProjectParent, newCode));
-                    await _dbContext.ProjectSubContracts
-                        .Where(ps => ps.Project == oldCode)
-                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
-                    await _dbContext.TimeCostCalcs
-                        .Where(tc => tc.Project == oldCode)
-                        .ExecuteUpdateAsync(s => s
-                            .SetProperty(x => x.Project, newCode)
-                            .SetProperty(x => x.JobCode, x => x.JobCode == oldCode ? newCode : x.JobCode));
-                    await _dbContext.ProjectMonths
-                        .Where(pm => pm.Project == oldCode)
-                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
-
-                    // Derived from UITrig_tblAnimalReq: log new state ('I') before update
-                    var arToLog = await _dbContext.AnimalRequests
-                        .Where(ar => ar.JobCode == oldCode)
-                        .AsNoTracking()
-                        .ToListAsync();
-                    if (arToLog.Count > 0)
-                    {
-                        _dbContext.AnimalRequestLogs.AddRange(arToLog.Select(ar => new AnimalRequestLog
-                        {
-                            JobCode = newCode,
-                            AnimalType = ar.AnimalType,
-                            NumberOfDays = ar.NumberOfDays,
-                            NumberOfAnimals = ar.NumberOfAnimals,
-                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId = _requestContext.UserEmailId,
-                            InsertDelete = "I",
-                            FpsYear = ar.FpsYear ?? _requestContext.FpsYear
-                        }));
-                        await _dbContext.SaveChangesAsync();
-                    }
-                    await _dbContext.AnimalRequests
-                        .Where(ar => ar.JobCode == oldCode)
-                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
-
-                    await _dbContext.Milestones
-                        .Where(m => m.Project == oldCode)
-                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
-
-                    // Derived from UITrig_tblStaffJob: log new state ('I') before update
-                    var sjToLog = await _dbContext.StaffJobs
-                        .Where(sj => sj.JobCode == oldCode)
-                        .AsNoTracking()
-                        .ToListAsync();
-                    if (sjToLog.Count > 0)
-                    {
-                        _dbContext.StaffJobLogs.AddRange(sjToLog.Select(sj => new StaffJobLog
-                        {
-                            StaffId = sj.StaffId,
-                            JobCode = newCode,
-                            PlannedHours = sj.PlannedHours,
-                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId = _requestContext.UserEmailId,
-                            InsertDelete = "I",
-                            FpsYear = sj.FpsYear ?? _requestContext.FpsYear
-                        }));
-                        await _dbContext.SaveChangesAsync();
-                    }
-                    await _dbContext.StaffJobs
-                        .Where(sj => sj.JobCode == oldCode)
-                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
-
-                    await _dbContext.ProjectMonthFinals
-                        .Where(pmf => pmf.Project == oldCode)
-                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
-
-                    // sp_Delete_tr, sp_Delete_tcv, sp_Delete_jc, sp_Delete_pp
-
-                    // Derived from DTrig_tlkpTestReqmt: log deleted rows to TestReq_LOG before delete
-                    var trToDelete = await _dbContext.TestRequirements
-                        .Where(tr => tr.ProjectBuyerCode == oldCode)
-                        .AsNoTracking()
-                        .ToListAsync();
-                    if (trToDelete.Count > 0)
-                    {
-                        _dbContext.TestRequirementLogs.AddRange(trToDelete.Select(tr => new TestRequirementLog
-                        {
-                            TestCode = tr.TestCode,
-                            Buyer = tr.Buyer,
-                            UnitPrice = tr.UnitPrice,
-                            NoRequired = tr.NoRequired,
-                            ProjectBuyerCode = tr.ProjectBuyerCode,
-                            TestBuyerCode = tr.TestBuyerCode,
-                            Active = tr.Active,
-                            DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                            UserId = _requestContext.UserEmailId,
-                            InsertDelete = "D",
-                            FpsYear = tr.FpsYear
-                        }));
-                        await _dbContext.SaveChangesAsync();
-                    }
-                    await _dbContext.TestRequirements
-                        .Where(tr => tr.ProjectBuyerCode == oldCode)
-                        .ExecuteDeleteAsync();
-                    await _dbContext.TimeCodeValids
-                        .Where(tcv => tcv.ParentProject == oldCode || tcv.Portfolio == oldCode)
-                        .ExecuteDeleteAsync();
-                    await _dbContext.JobCodes
-                        .Where(jc => jc.ParentProject == oldCode)
-                        .ExecuteDeleteAsync();
-                    // Stage "D" audit log for the old project before deleting
-                    var projectToDelete = await _dbContext.Projects
-                        .FirstOrDefaultAsync(p => p.ParentProject == oldCode);
-                    if (projectToDelete != null)
-                    {
-                        NormalizeDateTimesToUnspecified(projectToDelete);
-                        _dbContext.ProjectLogs.Add(MapProjectToLog(projectToDelete, "D", _requestContext.UserEmailId));
-                        _dbContext.Projects.Remove(projectToDelete);
-                        await _dbContext.SaveChangesAsync();
-                    }
+                    await CopyProjectRowAsync(oldCode, newCode);
+                    await CopyJobCodesAsync(oldCode, newCode);
+                    await CopyTimeCodeValidsAsync(oldCode, newCode);
+                    await CopyTestRequirementsAsync(oldCode, newCode);
+                    await UpdateMonthlyTimesAsync(oldCode, newCode);
+                    await UpdateMonthlyOutputsAsync(oldCode, newCode);
+                    await UpdateAdditionalCostsAsync(oldCode, newCode);
+                    await UpdateSimpleChildTablesAsync(oldCode, newCode);
+                    await UpdateAnimalRequestsAsync(oldCode, newCode);
+                    await UpdateStaffJobsAsync(oldCode, newCode);
+                    await DeleteOldCodeRowsAsync(oldCode);
 
                     await tx.CommitAsync();
                 }
@@ -947,6 +631,414 @@ namespace Apha.FPS.DataAccess.Repositories
                 }
             });
         }
+
+        private async Task CopyProjectRowAsync(string oldCode, string newCode)
+        {
+            var oldProject = await _dbContext.Projects
+                .FirstOrDefaultAsync(p => p.ParentProject == oldCode)
+                ?? throw new InvalidOperationException($"Project '{oldCode}' not found.");
+
+            var newProject = new Project
+            {
+                ParentProject     = newCode,
+                ProjectTitle      = oldProject.ProjectTitle,
+                Program           = oldProject.Program,
+                Customer          = oldProject.Customer,
+                Manager           = oldProject.Manager,
+                TransferIncome    = oldProject.TransferIncome,
+                CustIncome        = oldProject.CustIncome,
+                WipEoy            = oldProject.WipEoy,
+                WipLimit          = oldProject.WipLimit,
+                WipCurrent        = oldProject.WipCurrent,
+                ProjectStatus     = oldProject.ProjectStatus,
+                CostBookNo        = oldProject.CostBookNo,
+                FecCost           = oldProject.FecCost,
+                Profit            = oldProject.Profit,
+                BudgetCvl         = oldProject.BudgetCvl,
+                DateCreated       = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                DateCosted        = oldProject.DateCosted,
+                Disease           = oldProject.Disease,
+                Contract          = oldProject.Contract,
+                ProjectParent     = oldProject.ProjectParent,
+                ShortTitle        = oldProject.ShortTitle,
+                CaseWorkSub       = oldProject.CaseWorkSub,
+                PvsIncome         = oldProject.PvsIncome,
+                PlanCaseWorkDebit = oldProject.PlanCaseWorkDebit,
+                Finished          = oldProject.Finished,
+                OwningRc          = oldProject.OwningRc,
+                Comments          = oldProject.Comments,
+                CarryOver         = oldProject.CarryOver,
+                CarryOverSeed     = oldProject.CarryOverSeed,
+                IsDefraProject    = oldProject.IsDefraProject,
+                CostCentre        = oldProject.CostCentre,
+                OracleProjectCode = oldProject.OracleProjectCode,
+                SubAccountCode    = oldProject.SubAccountCode,
+                ProjectGroup      = oldProject.ProjectGroup,
+                IncomeAccountCode = oldProject.IncomeAccountCode,
+                FpsYear           = oldProject.FpsYear
+            };
+
+            NormalizeDateTimesToUnspecified(newProject);
+            await _dbContext.Projects.AddAsync(newProject);
+            _dbContext.ProjectLogs.Add(MapProjectToLog(newProject, "I", _requestContext.UserEmailId));
+            await _dbContext.SaveChangesAsync();
+        }
+
+        private async Task CopyJobCodesAsync(string oldCode, string newCode)
+        {
+            var jobCodesToCopy = await _dbContext.JobCodes
+                .Where(jc => jc.ParentProject == oldCode)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (jobCodesToCopy.Count == 0) return;
+
+            var newJobCodes = jobCodesToCopy.Select(jc => new JobCode
+            {
+                JobCodeId       = jc.JobCodeId == oldCode ? newCode : jc.JobCodeId,
+                ParentProject   = newCode,
+                JobCodeWorkGroup = jc.JobCodeWorkGroup,
+                NewProg         = jc.NewProg,
+                Type            = jc.Type,
+                JobCodeName     = jc.JobCodeName,
+                FpsYear         = jc.FpsYear
+            }).ToList();
+
+            await _dbContext.JobCodes.AddRangeAsync(newJobCodes);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        private async Task CopyTimeCodeValidsAsync(string oldCode, string newCode)
+        {
+            await _dbContext.TestCapabilities
+                .Where(tc => tc.PlanPortfolio == oldCode)
+                .ExecuteUpdateAsync(s => s.SetProperty<string>(x => x.PlanPortfolio, newCode));
+
+            var tcvToCopy = await _dbContext.TimeCodeValids
+                .Where(tcv => tcv.ParentProject == oldCode || tcv.Portfolio == oldCode)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (tcvToCopy.Count == 0) return;
+
+            var newTcvs = tcvToCopy
+                .Select(tcv => new TimeCodeValid
+                {
+                    WorkGroup     = tcv.WorkGroup,
+                    TimeCode      = tcv.TimeCode      == oldCode ? newCode : tcv.TimeCode,
+                    ParentProject = tcv.ParentProject == oldCode ? newCode : tcv.ParentProject,
+                    TestCode      = tcv.TestCode,
+                    JobCode       = tcv.JobCode       == oldCode ? newCode : tcv.JobCode,
+                    Portfolio     = tcv.Portfolio     == oldCode ? newCode : tcv.Portfolio,
+                    Active        = tcv.Active,
+                    FpsYear       = tcv.FpsYear
+                })
+                .DistinctBy(tcv => new { tcv.WorkGroup, tcv.TimeCode, tcv.ParentProject })
+                .ToList();
+
+            await _dbContext.TimeCodeValids.AddRangeAsync(newTcvs);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        private async Task CopyTestRequirementsAsync(string oldCode, string newCode)
+        {
+            var testReqsToCopy = await _dbContext.TestRequirements
+                .Where(tr => tr.ProjectBuyerCode == oldCode)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (testReqsToCopy.Count == 0) return;
+
+            var newTestReqs = testReqsToCopy.Select(tr => new TestRequirement
+            {
+                TestCode        = tr.TestCode,
+                Buyer           = newCode,
+                UnitPrice       = tr.UnitPrice,
+                NoRequired      = tr.NoRequired,
+                ProjectBuyerCode = newCode,
+                TestBuyerCode   = tr.TestBuyerCode,
+                DateCreated     = tr.DateCreated,
+                Active          = tr.Active,
+                FpsYear         = tr.FpsYear
+            }).ToList();
+
+            await _dbContext.TestRequirements.AddRangeAsync(newTestReqs);
+            await _dbContext.SaveChangesAsync();
+
+            // Derived from UITrig_tlkpTestReqmt: log inserted rows to TestReq_LOG
+            _dbContext.TestRequirementLogs.AddRange(newTestReqs.Select(tr => new TestRequirementLog
+            {
+                TestCode        = tr.TestCode,
+                Buyer           = tr.Buyer,
+                UnitPrice       = tr.UnitPrice,
+                NoRequired      = tr.NoRequired,
+                ProjectBuyerCode = tr.ProjectBuyerCode,
+                TestBuyerCode   = tr.TestBuyerCode,
+                Active          = tr.Active,
+                DateTime        = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                UserId          = _requestContext.UserEmailId,
+                InsertDelete    = "I",
+                FpsYear         = tr.FpsYear
+            }));
+            await _dbContext.SaveChangesAsync();
+        }
+
+        private async Task UpdateMonthlyTimesAsync(string oldCode, string newCode)
+        {
+            var mtToLog = await _dbContext.MonthlyTimes
+                .Where(mt => mt.ParentProject == oldCode)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (mtToLog.Count > 0)
+            {
+                // Derived from MT_LOG_UTrig: log old state (UD) then new state (UI) before update
+                _dbContext.MonthlyTimeLogs.AddRange(mtToLog.Select(mt => new MonthlyTimeLog
+                {
+                    PactStaffId   = mt.PactStaffId,
+                    TimeCode      = mt.TimeCode,
+                    Month         = mt.Month,
+                    ParentProject = mt.ParentProject,
+                    WorkGroup     = mt.WorkGroup,
+                    Hours         = mt.Hours,
+                    DateTime      = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId        = _requestContext.UserEmailId,
+                    InsertDelete  = "UD",
+                    FpsYear       = mt.FpsYear ?? _requestContext.FpsYear
+                }));
+                _dbContext.MonthlyTimeLogs.AddRange(mtToLog.Select(mt => new MonthlyTimeLog
+                {
+                    PactStaffId   = mt.PactStaffId,
+                    TimeCode      = mt.TimeCode == oldCode ? newCode : mt.TimeCode,
+                    Month         = mt.Month,
+                    ParentProject = newCode,
+                    WorkGroup     = mt.WorkGroup,
+                    Hours         = mt.Hours,
+                    DateTime      = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId        = _requestContext.UserEmailId,
+                    InsertDelete  = "UI",
+                    FpsYear       = mt.FpsYear ?? _requestContext.FpsYear
+                }));
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await _dbContext.MonthlyTimes
+                .Where(mt => mt.ParentProject == oldCode)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.ParentProject, newCode)
+                    .SetProperty(x => x.TimeCode, x => x.TimeCode == oldCode ? newCode : x.TimeCode));
+        }
+
+        private async Task UpdateMonthlyOutputsAsync(string oldCode, string newCode)
+        {
+            var moToLog = await _dbContext.MonthlyOutputs
+                .Where(mo => mo.Buyer == oldCode)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (moToLog.Count > 0)
+            {
+                // Derived from MO_LOG_UTrig: log old state (UD) then new state (UI) before update
+                _dbContext.MonthlyOutputLogs.AddRange(moToLog.Select(mo => new MonthlyOutputLog
+                {
+                    TestCode     = mo.TestCode,
+                    Buyer        = mo.Buyer,
+                    Month        = mo.Month,
+                    WorkGroup    = mo.WorkGroup,
+                    Volume       = mo.Volume,
+                    WgBuyer      = mo.WgBuyer,
+                    DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId       = _requestContext.UserEmailId,
+                    InsertDelete = "UD",
+                    FpsYear      = mo.FpsYear
+                }));
+                _dbContext.MonthlyOutputLogs.AddRange(moToLog.Select(mo => new MonthlyOutputLog
+                {
+                    TestCode     = mo.TestCode,
+                    Buyer        = newCode,
+                    Month        = mo.Month,
+                    WorkGroup    = mo.WorkGroup,
+                    Volume       = mo.Volume,
+                    WgBuyer      = mo.WgBuyer,
+                    DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId       = _requestContext.UserEmailId,
+                    InsertDelete = "UI",
+                    FpsYear      = mo.FpsYear
+                }));
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await _dbContext.MonthlyOutputs
+                .Where(mo => mo.Buyer == oldCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Buyer, newCode));
+        }
+
+        private async Task UpdateAdditionalCostsAsync(string oldCode, string newCode)
+        {
+            var acToLog = await _dbContext.AdditionalCosts
+                .Where(ac => ac.JobCode == oldCode)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (acToLog.Count > 0)
+            {
+                // Derived from UITrig_tblAdditionalCosts: log new state ('I') before update
+                _dbContext.AdditionalCostLogs.AddRange(acToLog.Select(ac => new AdditionalCostLog
+                {
+                    JobCode      = newCode,
+                    Account      = ac.Account,
+                    Description  = ac.Description,
+                    ItemCost     = ac.ItemCost,
+                    Freq         = ac.Freq,
+                    Supplier     = ac.Supplier,
+                    DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId       = _requestContext.UserEmailId,
+                    InsertDelete = "I",
+                    FpsYear      = ac.FpsYear ?? _requestContext.FpsYear
+                }));
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await _dbContext.AdditionalCosts
+                .Where(ac => ac.JobCode == oldCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
+        }
+
+        private async Task UpdateSimpleChildTablesAsync(string oldCode, string newCode)
+        {
+            await _dbContext.ProjectInvoices
+                .Where(pi => pi.ProjectParent == oldCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.ProjectParent, newCode));
+            await _dbContext.ProjectSubContracts
+                .Where(ps => ps.Project == oldCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
+            await _dbContext.TimeCostCalcs
+                .Where(tc => tc.Project == oldCode)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.Project, newCode)
+                    .SetProperty(x => x.JobCode, x => x.JobCode == oldCode ? newCode : x.JobCode));
+            await _dbContext.ProjectMonths
+                .Where(pm => pm.Project == oldCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
+        }
+
+        private async Task UpdateAnimalRequestsAsync(string oldCode, string newCode)
+        {
+            var arToLog = await _dbContext.AnimalRequests
+                .Where(ar => ar.JobCode == oldCode)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (arToLog.Count > 0)
+            {
+                // Derived from UITrig_tblAnimalReq: log new state ('I') before update
+                _dbContext.AnimalRequestLogs.AddRange(arToLog.Select(ar => new AnimalRequestLog
+                {
+                    JobCode         = newCode,
+                    AnimalType      = ar.AnimalType,
+                    NumberOfDays    = ar.NumberOfDays,
+                    NumberOfAnimals = ar.NumberOfAnimals,
+                    DateTime        = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId          = _requestContext.UserEmailId,
+                    InsertDelete    = "I",
+                    FpsYear         = ar.FpsYear ?? _requestContext.FpsYear
+                }));
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await _dbContext.AnimalRequests
+                .Where(ar => ar.JobCode == oldCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
+
+            await _dbContext.Milestones
+                .Where(m => m.Project == oldCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
+        }
+
+        private async Task UpdateStaffJobsAsync(string oldCode, string newCode)
+        {
+            var sjToLog = await _dbContext.StaffJobs
+                .Where(sj => sj.JobCode == oldCode)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (sjToLog.Count > 0)
+            {
+                // Derived from UITrig_tblStaffJob: log new state ('I') before update
+                _dbContext.StaffJobLogs.AddRange(sjToLog.Select(sj => new StaffJobLog
+                {
+                    StaffId      = sj.StaffId,
+                    JobCode      = newCode,
+                    PlannedHours = sj.PlannedHours,
+                    DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId       = _requestContext.UserEmailId,
+                    InsertDelete = "I",
+                    FpsYear      = sj.FpsYear ?? _requestContext.FpsYear
+                }));
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await _dbContext.StaffJobs
+                .Where(sj => sj.JobCode == oldCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.JobCode, newCode));
+
+            await _dbContext.ProjectMonthFinals
+                .Where(pmf => pmf.Project == oldCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, newCode));
+        }
+
+        private async Task DeleteOldCodeRowsAsync(string oldCode)
+        {
+            // sp_Delete_tr, sp_Delete_tcv, sp_Delete_jc, sp_Delete_pp
+
+            // Derived from DTrig_tlkpTestReqmt: log deleted rows before delete
+            var trToDelete = await _dbContext.TestRequirements
+                .Where(tr => tr.ProjectBuyerCode == oldCode)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (trToDelete.Count > 0)
+            {
+                _dbContext.TestRequirementLogs.AddRange(trToDelete.Select(tr => new TestRequirementLog
+                {
+                    TestCode        = tr.TestCode,
+                    Buyer           = tr.Buyer,
+                    UnitPrice       = tr.UnitPrice,
+                    NoRequired      = tr.NoRequired,
+                    ProjectBuyerCode = tr.ProjectBuyerCode,
+                    TestBuyerCode   = tr.TestBuyerCode,
+                    Active          = tr.Active,
+                    DateTime        = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId          = _requestContext.UserEmailId,
+                    InsertDelete    = "D",
+                    FpsYear         = tr.FpsYear
+                }));
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await _dbContext.TestRequirements
+                .Where(tr => tr.ProjectBuyerCode == oldCode)
+                .ExecuteDeleteAsync();
+            await _dbContext.TimeCodeValids
+                .Where(tcv => tcv.ParentProject == oldCode || tcv.Portfolio == oldCode)
+                .ExecuteDeleteAsync();
+            await _dbContext.JobCodes
+                .Where(jc => jc.ParentProject == oldCode)
+                .ExecuteDeleteAsync();
+
+            // Stage "D" audit log for the old project before deleting
+            var projectToDelete = await _dbContext.Projects
+                .FirstOrDefaultAsync(p => p.ParentProject == oldCode);
+
+            if (projectToDelete != null)
+            {
+                NormalizeDateTimesToUnspecified(projectToDelete);
+                _dbContext.ProjectLogs.Add(MapProjectToLog(projectToDelete, "D", _requestContext.UserEmailId));
+                _dbContext.Projects.Remove(projectToDelete);
+                await _dbContext.SaveChangesAsync();
+            }
+        }
+
 
         /// <summary>
         /// Deletes a project and all dependent child records — derived from usp_Delete_Project.
@@ -961,131 +1053,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 await using var tx = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-                    // Converted trigger logic — DTrig_tlkpProject FOR DELETE: stage audit log before delete
-                    var project = await _dbContext.Projects
-                        .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
-                    if (project != null)
-                    {
-                        NormalizeDateTimesToUnspecified(project);
-                        _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
-                        await _dbContext.SaveChangesAsync();
-
-                        // sp_Delete_tcv
-                        await _dbContext.TimeCodeValids
-                            .Where(tcv => tcv.ParentProject == parentProject || tcv.Portfolio == parentProject)
-                            .ExecuteDeleteAsync();
-
-                        // sp_Delete_JC
-                        await _dbContext.JobCodes
-                            .Where(jc => jc.ParentProject == parentProject)
-                            .ExecuteDeleteAsync();
-
-                        // sp_delete_tr — Derived from DTrig_tlkpTestReqmt: log before delete
-                        var trToDelete = await _dbContext.TestRequirements
-                            .Where(tr => tr.ProjectBuyerCode == parentProject)
-                            .AsNoTracking()
-                            .ToListAsync();
-                        if (trToDelete.Count > 0)
-                        {
-                            _dbContext.TestRequirementLogs.AddRange(trToDelete.Select(tr => new TestRequirementLog
-                            {
-                                TestCode = tr.TestCode,
-                                Buyer = tr.Buyer,
-                                UnitPrice = tr.UnitPrice,
-                                NoRequired = tr.NoRequired,
-                                ProjectBuyerCode = tr.ProjectBuyerCode,
-                                TestBuyerCode = tr.TestBuyerCode,
-                                Active = tr.Active,
-                                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                                UserId = _requestContext.UserEmailId,
-                                InsertDelete = "D",
-                                FpsYear = tr.FpsYear
-                            }));
-                            await _dbContext.SaveChangesAsync();
-                        }
-                        await _dbContext.TestRequirements
-                            .Where(tr => tr.ProjectBuyerCode == parentProject)
-                            .ExecuteDeleteAsync();
-
-                        // sp_Delete_ar — Derived from DTrig_tblAnimalReq: log before delete
-                        var arToDelete = await _dbContext.AnimalRequests
-                            .Where(ar => ar.JobCode == parentProject)
-                            .AsNoTracking()
-                            .ToListAsync();
-                        if (arToDelete.Count > 0)
-                        {
-                            _dbContext.AnimalRequestLogs.AddRange(arToDelete.Select(ar => new AnimalRequestLog
-                            {
-                                JobCode = ar.JobCode,
-                                AnimalType = ar.AnimalType,
-                                NumberOfDays = ar.NumberOfDays,
-                                NumberOfAnimals = ar.NumberOfAnimals,
-                                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                                UserId = _requestContext.UserEmailId,
-                                InsertDelete = "D",
-                                FpsYear = ar.FpsYear ?? _requestContext.FpsYear
-                            }));
-                            await _dbContext.SaveChangesAsync();
-                        }
-                        await _dbContext.AnimalRequests
-                            .Where(ar => ar.JobCode == parentProject)
-                            .ExecuteDeleteAsync();
-
-                        // sp_Delete_sj — Derived from DTrig_tblStaffJob: log before delete
-                        var sjToDelete = await _dbContext.StaffJobs
-                            .Where(sj => sj.JobCode == parentProject)
-                            .AsNoTracking()
-                            .ToListAsync();
-                        if (sjToDelete.Count > 0)
-                        {
-                            _dbContext.StaffJobLogs.AddRange(sjToDelete.Select(sj => new StaffJobLog
-                            {
-                                StaffId = sj.StaffId,
-                                JobCode = sj.JobCode,
-                                PlannedHours = sj.PlannedHours,
-                                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                                UserId = _requestContext.UserEmailId,
-                                InsertDelete = "D",
-                                FpsYear = sj.FpsYear ?? _requestContext.FpsYear
-                            }));
-                            await _dbContext.SaveChangesAsync();
-                        }
-                        await _dbContext.StaffJobs
-                            .Where(sj => sj.JobCode == parentProject)
-                            .ExecuteDeleteAsync();
-
-                        // sp_Delete_ac — Derived from DTrig_tblAdditionalCosts: log before delete
-                        var acToDelete = await _dbContext.AdditionalCosts
-                            .Where(ac => ac.JobCode == parentProject)
-                            .AsNoTracking()
-                            .ToListAsync();
-                        if (acToDelete.Count > 0)
-                        {
-                            _dbContext.AdditionalCostLogs.AddRange(acToDelete.Select(ac => new AdditionalCostLog
-                            {
-                                JobCode = ac.JobCode,
-                                Account = ac.Account,
-                                Description = ac.Description,
-                                ItemCost = ac.ItemCost,
-                                Freq = ac.Freq,
-                                Supplier = ac.Supplier,
-                                DateTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                                UserId = _requestContext.UserEmailId,
-                                InsertDelete = "D",
-                                FpsYear = ac.FpsYear ?? _requestContext.FpsYear
-                            }));
-                            await _dbContext.SaveChangesAsync();
-                        }
-                        await _dbContext.AdditionalCosts
-                            .Where(ac => ac.JobCode == parentProject)
-                            .ExecuteDeleteAsync();
-
-                        // sp_Delete_pp
-                        await _dbContext.Projects
-                            .Where(p => p.ParentProject == parentProject)
-                            .ExecuteDeleteAsync();
-                    }
-
+                    await DeleteProjectCoreAsync(parentProject);
                     await tx.CommitAsync();
                 }
                 catch
@@ -1096,7 +1064,164 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        // ── Private helpers ────────────────────────────────────────────────
+        private async Task DeleteProjectCoreAsync(string parentProject)
+        {
+            // Converted trigger logic — DTrig_tlkpProject FOR DELETE: stage audit log before delete
+            var project = await _dbContext.Projects
+                .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
+
+            if (project == null) return;
+
+            NormalizeDateTimesToUnspecified(project);
+            _dbContext.ProjectLogs.Add(MapProjectToLog(project, "D", _requestContext.UserEmailId));
+            await _dbContext.SaveChangesAsync();
+
+            // sp_Delete_tcv
+            await _dbContext.TimeCodeValids
+                .Where(tcv => tcv.ParentProject == parentProject || tcv.Portfolio == parentProject)
+                .ExecuteDeleteAsync();
+
+            // sp_Delete_JC
+            await _dbContext.JobCodes
+                .Where(jc => jc.ParentProject == parentProject)
+                .ExecuteDeleteAsync();
+
+            // sp_delete_tr — Derived from DTrig_tlkpTestReqmt: log before delete
+            await LogAndDeleteTestRequirementsAsync(parentProject);
+
+            // sp_Delete_ar — Derived from DTrig_tblAnimalReq: log before delete
+            await LogAndDeleteAnimalRequestsAsync(parentProject);
+
+            // sp_Delete_sj — Derived from DTrig_tblStaffJob: log before delete
+            await LogAndDeleteStaffJobsAsync(parentProject);
+
+            // sp_Delete_ac — Derived from DTrig_tblAdditionalCosts: log before delete
+            await LogAndDeleteAdditionalCostsAsync(parentProject);
+
+            // sp_Delete_pp
+            await _dbContext.Projects
+                .Where(p => p.ParentProject == parentProject)
+                .ExecuteDeleteAsync();
+        }
+
+        private async Task LogAndDeleteTestRequirementsAsync(string parentProject)
+        {
+            var trToDelete = await _dbContext.TestRequirements
+                .Where(tr => tr.ProjectBuyerCode == parentProject)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (trToDelete.Count > 0)
+            {
+                _dbContext.TestRequirementLogs.AddRange(trToDelete.Select(tr => new TestRequirementLog
+                {
+                    TestCode         = tr.TestCode,
+                    Buyer            = tr.Buyer,
+                    UnitPrice        = tr.UnitPrice,
+                    NoRequired       = tr.NoRequired,
+                    ProjectBuyerCode = tr.ProjectBuyerCode,
+                    TestBuyerCode    = tr.TestBuyerCode,
+                    Active           = tr.Active,
+                    DateTime         = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId           = _requestContext.UserEmailId,
+                    InsertDelete     = "D",
+                    FpsYear          = tr.FpsYear
+                }));
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await _dbContext.TestRequirements
+                .Where(tr => tr.ProjectBuyerCode == parentProject)
+                .ExecuteDeleteAsync();
+        }
+
+        private async Task LogAndDeleteAnimalRequestsAsync(string parentProject)
+        {
+            var arToDelete = await _dbContext.AnimalRequests
+                .Where(ar => ar.JobCode == parentProject)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (arToDelete.Count > 0)
+            {
+                _dbContext.AnimalRequestLogs.AddRange(arToDelete.Select(ar => new AnimalRequestLog
+                {
+                    JobCode         = ar.JobCode,
+                    AnimalType      = ar.AnimalType,
+                    NumberOfDays    = ar.NumberOfDays,
+                    NumberOfAnimals = ar.NumberOfAnimals,
+                    DateTime        = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId          = _requestContext.UserEmailId,
+                    InsertDelete    = "D",
+                    FpsYear         = ar.FpsYear ?? _requestContext.FpsYear
+                }));
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await _dbContext.AnimalRequests
+                .Where(ar => ar.JobCode == parentProject)
+                .ExecuteDeleteAsync();
+        }
+
+        private async Task LogAndDeleteStaffJobsAsync(string parentProject)
+        {
+            var sjToDelete = await _dbContext.StaffJobs
+                .Where(sj => sj.JobCode == parentProject)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (sjToDelete.Count > 0)
+            {
+                _dbContext.StaffJobLogs.AddRange(sjToDelete.Select(sj => new StaffJobLog
+                {
+                    StaffId      = sj.StaffId,
+                    JobCode      = sj.JobCode,
+                    PlannedHours = sj.PlannedHours,
+                    DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId       = _requestContext.UserEmailId,
+                    InsertDelete = "D",
+                    FpsYear      = sj.FpsYear ?? _requestContext.FpsYear
+                }));
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await _dbContext.StaffJobs
+                .Where(sj => sj.JobCode == parentProject)
+                .ExecuteDeleteAsync();
+        }
+
+        private async Task LogAndDeleteAdditionalCostsAsync(string parentProject)
+        {
+            var acToDelete = await _dbContext.AdditionalCosts
+                .Where(ac => ac.JobCode == parentProject)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (acToDelete.Count > 0)
+            {
+                _dbContext.AdditionalCostLogs.AddRange(acToDelete.Select(ac => new AdditionalCostLog
+                {
+                    JobCode      = ac.JobCode,
+                    Account      = ac.Account,
+                    Description  = ac.Description,
+                    ItemCost     = ac.ItemCost,
+                    Freq         = ac.Freq,
+                    Supplier     = ac.Supplier,
+                    DateTime     = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UserId       = _requestContext.UserEmailId,
+                    InsertDelete = "D",
+                    FpsYear      = ac.FpsYear ?? _requestContext.FpsYear
+                }));
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await _dbContext.AdditionalCosts
+                .Where(ac => ac.JobCode == parentProject)
+                .ExecuteDeleteAsync();
+        }
+
+
+        // -- Private helpers ------------------------------------------------
 
         private static ProjectLog MapProjectToLog(Project p, string operation, string userId) => new()
         {
@@ -1148,6 +1273,15 @@ namespace Apha.FPS.DataAccess.Repositories
             decimal? Profit,
             string? ProjectStatus,
             string? Program);
+
+        private record VlaProjectEntry(
+            string? ParentProject,
+            decimal? BudgetCvl,
+            string? ProjectStatus,
+            string? Program,
+            string? Customer,
+            string? Manager,
+            decimal? ProgrammeTarget);
 
         /// <summary>
         /// Returns paginated project profitability data for a given programme.
@@ -1234,6 +1368,40 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToDictionaryAsync(pg => pg.ProgramNo!, pg => pg.Target);
 
             return await ComputeProfitabilityAsync(query, projects, programmeTargetMap);
+        }
+
+        private static ProjectProfitabilityView BuildProfitabilityRow(
+            ProjectProfitabilityEntry p,
+            Dictionary<string, decimal> staffMap,
+            Dictionary<string, decimal> additionalMap,
+            Dictionary<string, decimal> testMap,
+            Dictionary<string, decimal> animalCostByJob,
+            Dictionary<string, decimal?> programmeTargetMap)
+        {
+            var staff      = staffMap.TryGetValue(p.ParentProject!, out var s)  ? s  : 0m;
+            var additional = additionalMap.TryGetValue(p.ParentProject!, out var a) ? a : 0m;
+            var test       = testMap.TryGetValue(p.ParentProject!, out var t)   ? t  : 0m;
+            var animal     = animalCostByJob.TryGetValue(p.ParentProject!, out var an) ? an : 0m;
+            var total      = staff + additional + test + animal;
+            var profit     = p.Profit ?? 0m;
+            var jcProfit   = (p.BudgetCvl ?? 0m) - total;
+
+            return new ProjectProfitabilityView
+            {
+                JobCode                = p.ParentProject!,
+                JcTotalStaffCosts      = staff,
+                JcTotalTestCosts       = test,
+                JcTotalAnimalCosts     = animal,
+                JcTotalAdditionalCosts = additional,
+                TotalCosts             = total,
+                BudgetCvl              = p.BudgetCvl,
+                JcProfit               = jcProfit,
+                TargetProfit           = profit,
+                OffTarget              = jcProfit - profit,
+                ProgramNo              = p.Program,
+                ProgrammeTarget        = p.Program != null && programmeTargetMap.TryGetValue(p.Program, out var tgt) ? tgt : null,
+                ProjectStatus          = p.ProjectStatus
+            };
         }
 
         private async Task<PagedData<ProjectProfitabilityView>> ComputeProfitabilityAsync(
@@ -1325,52 +1493,237 @@ namespace Apha.FPS.DataAccess.Repositories
             var additionalMap = additionalCosts.ToDictionary(x => x.JobCode, x => x.TotalAdditional);
             var testMap = testCosts.ToDictionary(x => x.JobCode, x => x.TotalTest);
 
-            var results = projects.Select(p =>
-            {
-                var staff = staffMap.TryGetValue(p.ParentProject!, out var s) ? s : 0m;
-                var additional = additionalMap.TryGetValue(p.ParentProject!, out var a) ? a : 0m;
-                var test = testMap.TryGetValue(p.ParentProject!, out var t) ? t : 0m;
-                var animal = animalCostByJob.TryGetValue(p.ParentProject!, out var an) ? an : 0m;
-                var total = staff + additional + test + animal;
-                var budget = p.BudgetCvl ?? 0m;
-                var profit = p.Profit ?? 0m;
-                var jcProfit = budget - total;
-                return new ProjectProfitabilityView
-                {
-                    JobCode = p.ParentProject!,
-                    JcTotalStaffCosts = staff,
-                    JcTotalTestCosts = test,
-                    JcTotalAnimalCosts = animal,
-                    JcTotalAdditionalCosts = additional,
-                    TotalCosts = total,
-                    BudgetCvl = p.BudgetCvl,
-                    JcProfit = jcProfit,
-                    TargetProfit = profit,
-                    OffTarget = jcProfit - profit,
-                    ProgramNo = p.Program,
-                    ProgrammeTarget = p.Program != null && programmeTargetMap.TryGetValue(p.Program, out var tgt) ? tgt : null,
-                    ProjectStatus = p.ProjectStatus
-                };
-            }).ToList();
+            var results = projects
+                .Select(p => BuildProfitabilityRow(p, staffMap, additionalMap, testMap, animalCostByJob, programmeTargetMap))
+                .ToList();
 
             // Apply sorting
             results = query.SortBy?.ToLower() switch
             {
-                "jobcode" => query.Descending ? results.OrderByDescending(r => r.JobCode).ToList() : results.OrderBy(r => r.JobCode).ToList(),
-                "totalcosts" => query.Descending ? results.OrderByDescending(r => r.TotalCosts).ToList() : results.OrderBy(r => r.TotalCosts).ToList(),
-                "budgetcvl" => query.Descending ? results.OrderByDescending(r => r.BudgetCvl).ToList() : results.OrderBy(r => r.BudgetCvl).ToList(),
-                "jcprofit" => query.Descending ? results.OrderByDescending(r => r.JcProfit).ToList() : results.OrderBy(r => r.JcProfit).ToList(),
-                "offtarget" => query.Descending ? results.OrderByDescending(r => r.OffTarget).ToList() : results.OrderBy(r => r.OffTarget).ToList(),
-                "projectstatus" => query.Descending ? results.OrderByDescending(r => r.ProjectStatus).ToList() : results.OrderBy(r => r.ProjectStatus).ToList(),
-                "jctotalstaffcosts" => query.Descending ? results.OrderByDescending(r => r.JcTotalStaffCosts).ToList() : results.OrderBy(r => r.JcTotalStaffCosts).ToList(),
-                "jctotaltestcosts" => query.Descending ? results.OrderByDescending(r => r.JcTotalTestCosts).ToList() : results.OrderBy(r => r.JcTotalTestCosts).ToList(),
-                "jctotalanimalcosts" => query.Descending ? results.OrderByDescending(r => r.JcTotalAnimalCosts).ToList() : results.OrderBy(r => r.JcTotalAnimalCosts).ToList(),
-                "jctotaladditionalcosts" => query.Descending ? results.OrderByDescending(r => r.JcTotalAdditionalCosts).ToList() : results.OrderBy(r => r.JcTotalAdditionalCosts).ToList(),
-                "targetprofit" => query.Descending ? results.OrderByDescending(r => r.TargetProfit).ToList() : results.OrderBy(r => r.TargetProfit).ToList(),
-                _ => results.OrderBy(r => r.JobCode).ToList()
+                "jobcode"               => SortList(results, r => r.JobCode,                 query.Descending),
+                "totalcosts"            => SortList(results, r => r.TotalCosts,              query.Descending),
+                "budgetcvl"             => SortList(results, r => r.BudgetCvl,               query.Descending),
+                "jcprofit"              => SortList(results, r => r.JcProfit,                query.Descending),
+                "offtarget"             => SortList(results, r => r.OffTarget,               query.Descending),
+                "projectstatus"         => SortList(results, r => r.ProjectStatus,           query.Descending),
+                "jctotalstaffcosts"     => SortList(results, r => r.JcTotalStaffCosts,       query.Descending),
+                "jctotaltestcosts"      => SortList(results, r => r.JcTotalTestCosts,        query.Descending),
+                "jctotalanimalcosts"    => SortList(results, r => r.JcTotalAnimalCosts,      query.Descending),
+                "jctotaladditionalcosts"=> SortList(results, r => r.JcTotalAdditionalCosts,  query.Descending),
+                "targetprofit"          => SortList(results, r => r.TargetProfit,            query.Descending),
+                _                       => results.OrderBy(r => r.JobCode).ToList()
             };
 
             return ApplyPaging(results, query.Page, query.PageSize);
+        }
+
+        // ── VLA Project Profitability ──────────────────────────────────────────
+
+        /// <summary>
+        /// Returns paginated project profitability data for the VLA view.
+        /// Filter dimensions (all optional, case-insensitive):
+        ///   projectStatus, programNo, manager, customer.
+        /// </summary>
+        public async Task<PagedData<ProjectProfitabilityVlaView>> GetProjectProfitabilityVlaAsync(
+            PaginationParameters<string> query,
+            string? projectStatus = null,
+            string? programNo = null,
+            string? manager = null,
+            string? customer = null)
+        {
+            // Use an anonymous projection so EF Core can translate all Where predicates.
+            // Projecting directly to a named record type (VlaProjectEntry) and then composing
+            // Where clauses on it produces untranslatable expressions like new VlaProjectEntry(...).Program.
+            var rawQuery = (from p in _dbContext.Projects.AsNoTracking()
+                            join pg in _dbContext.Programs on p.Program equals pg.ProgramNo into pgJoin
+                            from pg in pgJoin.DefaultIfEmpty()
+                            select new { p, pg }).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(projectStatus))
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ProjectStatus!, $"%{projectStatus}%"));
+
+            if (!string.IsNullOrWhiteSpace(programNo))
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Program!, $"%{programNo}%"));
+
+            if (!string.IsNullOrWhiteSpace(manager))
+                rawQuery = rawQuery.Where(x => x.pg != null && EF.Functions.ILike(x.pg.Manager!, $"%{manager}%"));
+
+            if (!string.IsNullOrWhiteSpace(customer))
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.Customer!, $"%{customer}%"));
+
+            if (!string.IsNullOrWhiteSpace(query.Search))
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{query.Search}%"));
+
+            var filterDict = ParseFilterDict(query.Filter);
+            if (filterDict.TryGetValue("JobCode", out var jobCode))
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{jobCode}%"));
+            if (filterDict.TryGetValue("ParentProject", out var parentProject))
+                rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{parentProject}%"));
+
+            var projects = await rawQuery
+                .Select(x => new VlaProjectEntry(
+                    x.p.ParentProject,
+                    x.p.BudgetCvl,
+                    x.p.ProjectStatus,
+                    x.p.Program,
+                    x.p.Customer,
+                    x.pg == null ? null : x.pg.Manager,
+                    x.pg == null ? (decimal?)null : x.pg.Target))
+                .ToListAsync();
+
+            if (projects.Count == 0)
+                return ApplyPaging(new List<ProjectProfitabilityVlaView>(), query.Page, query.PageSize);
+
+            return await ComputeProfitabilityForVlaAsync(query, projects);
+        }
+
+        private static IDictionary<string, object> ParseFilterDict(string? filter)
+        {
+            if (string.IsNullOrEmpty(filter)) return new Dictionary<string, object>();
+            dynamic? model = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            return model is IDictionary<string, object> dict ? dict : new Dictionary<string, object>();
+        }
+
+        private static List<ProjectProfitabilityVlaView> ApplyVlaSorting(
+            List<ProjectProfitabilityVlaView> results, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "jobcode"         => SortList(results, v => v.JobCode,          descending),
+                "program"         => SortList(results, v => v.Program,          descending),
+                "customer"        => SortList(results, v => v.Customer,         descending),
+                "manager"         => SortList(results, v => v.Manager,          descending),
+                "status"          => SortList(results, v => v.Status,           descending),
+                "staffcosts"      => SortList(results, v => v.StaffCosts,       descending),
+                "testcost"        => SortList(results, v => v.TestCost,         descending),
+                "animalcosts"     => SortList(results, v => v.AnimalCosts,      descending),
+                "additionalcosts" => SortList(results, v => v.AdditionalCosts,  descending),
+                "totalcosts"      => SortList(results, v => v.TotalCosts,       descending),
+                "budget"          => SortList(results, v => v.Budget,           descending),
+                "profit"          => SortList(results, v => v.Profit,           descending),
+                "targetprofit"    => SortList(results, v => v.TargetProfit,     descending),
+                "offtarget"       => SortList(results, v => v.OffTarget,        descending),
+                _                 => results.OrderBy(v => v.JobCode).ToList()
+            };
+        }
+
+        private async Task<PagedData<ProjectProfitabilityVlaView>> ComputeProfitabilityForVlaAsync(
+            PaginationParameters<string> query,
+            List<VlaProjectEntry> projects)
+        {
+            var projectCodes = projects.Select(p => p.ParentProject).ToList();
+
+            var staffCosts = await (
+                from sj in _dbContext.StaffJobs
+                join wge in _dbContext.WorkGroupEmployees on sj.StaffId equals wge.PactId
+                join wgg in _dbContext.WorkgroupGrades on wge.WorkGroupGrade equals wgg.WgGrade
+                join pcg in _dbContext.ProfitCentreGrades on wgg.ProfitCentreGrade equals pcg.PcGrade
+                join p in _dbContext.Projects on sj.JobCode equals p.ParentProject
+                join pg in _dbContext.Programs on p.Program equals pg.ProgramNo
+                where projectCodes.Contains(sj.JobCode)
+                    && pg != null
+                    && EF.Functions.ILike(pg.SectorName!, "%charge%")
+                select new
+                {
+                    sectorCharge = (pg.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m,
+                    JobCode = sj.JobCode,
+                    PlannedHours = sj.PlannedHours,
+                    ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate
+                })
+                .ToListAsync();
+
+            var additionalCosts = await _dbContext.AdditionalCosts
+                .AsNoTracking()
+                .Where(ac => projectCodes.Contains(ac.JobCode))
+                .GroupBy(ac => ac.JobCode)
+                .Select(g => new { JobCode = g.Key, TotalAdditional = g.Sum(x => x.ItemCost) })
+                .ToListAsync();
+
+            var testCostsRaw = await _dbContext.TestRequirements
+                .AsNoTracking()
+                .Where(tr => projectCodes.Contains(tr.Buyer))
+                .Select(tr => new
+                {
+                    tr.Buyer,
+                    NoRequired = Convert.ToDecimal(tr.NoRequired ?? 0d),
+                    UnitPrice = Convert.ToDecimal(tr.UnitPrice ?? 0m)
+                })
+                .ToListAsync();
+
+            var testCosts = testCostsRaw
+                .GroupBy(tr => tr.Buyer)
+                .Select(g => new { JobCode = g.Key, TotalTest = g.Sum(x => x.NoRequired * x.UnitPrice) })
+                .ToList();
+
+            var animalCostsRaw = await (
+                from ar in _dbContext.AnimalRequests
+                join p in _dbContext.Projects on ar.JobCode equals p.ParentProject
+                join a in _dbContext.Animals on ar.AnimalType equals a.AnimalType
+                where projectCodes.Contains(ar.JobCode)
+                select new
+                {
+                    ar.JobCode,
+                    ar.NumberOfAnimals,
+                    ar.NumberOfDays,
+                    Cost = p.IsDefraProject == 0 ? a.DailyRate : a.DefraDailyRate
+                })
+                .ToListAsync();
+
+            var animalCostByJob = animalCostsRaw
+                .GroupBy(x => x.JobCode)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(x => (decimal)(x.NumberOfAnimals * x.NumberOfDays) * (x.Cost ?? 0m)));
+
+            var staffMap = staffCosts
+                .Where(e => e.sectorCharge == 1m)
+                .GroupBy(x => x.JobCode)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(x => (decimal)x.PlannedHours * (x.ChargeRate ?? 0m) * x.sectorCharge));
+            var additionalMap = additionalCosts.ToDictionary(x => x.JobCode, x => x.TotalAdditional);
+            var testMap = testCosts.ToDictionary(x => x.JobCode, x => x.TotalTest);
+
+            var results = projects.Select(p =>
+                BuildVlaProfitabilityRow(p, staffMap, additionalMap, testMap, animalCostByJob)).ToList();
+
+            results = ApplyVlaSorting(results, query.SortBy, query.Descending);
+
+            return ApplyPaging(results, query.Page, query.PageSize);
+        }
+
+        private static ProjectProfitabilityVlaView BuildVlaProfitabilityRow(
+            VlaProjectEntry p,
+            Dictionary<string, decimal> staffMap,
+            Dictionary<string, decimal> additionalMap,
+            Dictionary<string, decimal> testMap,
+            Dictionary<string, decimal> animalCostByJob)
+        {
+            var staff      = staffMap.TryGetValue(p.ParentProject!, out var s)  ? s  : 0m;
+            var additional = additionalMap.TryGetValue(p.ParentProject!, out var a) ? a : 0m;
+            var test       = testMap.TryGetValue(p.ParentProject!, out var t)   ? t  : 0m;
+            var animal     = animalCostByJob.TryGetValue(p.ParentProject!, out var an) ? an : 0m;
+            var total      = staff + additional + test + animal;
+            var budget     = p.BudgetCvl ?? 0m;
+            var profit     = budget - total;
+            var targetProfit = p.ProgrammeTarget ?? 0m;
+            return new ProjectProfitabilityVlaView
+            {
+                JobCode       = p.ParentProject!,
+                Program       = p.Program,
+                Customer      = p.Customer,
+                Manager       = p.Manager,
+                Status        = p.ProjectStatus,
+                StaffCosts    = staff,
+                TestCost      = test,
+                AnimalCosts   = animal,
+                AdditionalCosts = additional,
+                TotalCosts    = total,
+                Budget        = p.BudgetCvl,
+                Profit        = profit,
+                TargetProfit  = targetProfit,
+                OffTarget     = profit - targetProfit
+            };
         }
     }
 }

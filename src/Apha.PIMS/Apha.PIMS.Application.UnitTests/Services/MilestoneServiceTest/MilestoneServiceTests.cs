@@ -1,4 +1,4 @@
-ï»¿using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Dtos;
 using Apha.PIMS.Application.Pagination;
 using Apha.PIMS.Application.Services;
 using Apha.PIMS.Application.Validation;
@@ -299,7 +299,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
         #endregion
 
-        #region SaveMilestoneAsync â€” validation
+        #region SaveMilestoneAsync — validation
 
         [Fact]
         public async Task SaveMilestoneAsync_ThrowsBusinessValidationError_WhenProjectIsEmpty()
@@ -395,7 +395,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
         [Fact]
         public async Task SaveMilestoneAsync_CollectsAllValidationErrors_WhenAllFieldsInvalid()
         {
-            // Arrange â€” every validated field is invalid at once
+            // Arrange — every validated field is invalid at once
             var dto = new MilestoneDto
             {
                 Project       = string.Empty,
@@ -429,7 +429,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             // Assert
             await _mockRepository.DidNotReceive().GetMilestoneAsync(Arg.Any<string>(), Arg.Any<string>());
-            await _mockRepository.DidNotReceive().AddMilestoneAsync(Arg.Any<Milestone>());
+            await _mockRepository.DidNotReceive().AddMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>());
         }
 
         [Fact]
@@ -447,17 +447,17 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             // Assert
             ex.Errors.Should().ContainSingle(e => e.Code == "NUMBER_EXISTS");
-            await _mockRepository.DidNotReceive().AddMilestoneAsync(Arg.Any<Milestone>());
+            await _mockRepository.DidNotReceive().AddMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>());
         }
 
         #endregion
 
-        #region SaveMilestoneAsync â€” mutual exclusions (ApplyMutualExclusions)
+        #region SaveMilestoneAsync — mutual exclusions (ApplyMutualExclusions)
 
         [Fact]
         public async Task SaveMilestoneAsync_WhenDateCompletedIsSet_ClearsOnTargetAndUnderSdReview()
         {
-            // Arrange â€” ApplyMutualExclusions mutates dto in place, so we inspect dto after the call.
+            // Arrange — ApplyMutualExclusions mutates dto in place, so we inspect dto after the call.
             var dto = ValidMilestoneDto();
             dto.DateCompleted = DateTime.Today.AddDays(-1);
             dto.OnTarget      = 1;
@@ -465,7 +465,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             _mockRepository.GetMilestoneAsync(dto.Project, dto.Number).Returns((Milestone?)null);
             _mockMapper.Map<Milestone>(Arg.Any<object>()).Returns(new Milestone());
-            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>()).Returns(new Milestone());
+            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>()).Returns(new Milestone());
             _mockMapper.Map<MilestoneDto>(Arg.Any<Milestone>()).Returns(new MilestoneDto { Project = "PP001", Number = "M1", DateDue = DateTime.Today.AddDays(30) });
 
             // Act
@@ -480,7 +480,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
         [Fact]
         public async Task SaveMilestoneAsync_WhenOnTargetIsSet_ClearsUnderSdReviewAndDateCompleted()
         {
-            // Arrange â€” no DateCompleted so the first exclusion block does not fire first.
+            // Arrange — no DateCompleted so the first exclusion block does not fire first.
             var dto = ValidMilestoneDto();
             dto.OnTarget      = 1;
             dto.UnderSdReview = 1;
@@ -488,7 +488,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             _mockRepository.GetMilestoneAsync(dto.Project, dto.Number).Returns((Milestone?)null);
             _mockMapper.Map<Milestone>(Arg.Any<object>()).Returns(new Milestone());
-            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>()).Returns(new Milestone());
+            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>()).Returns(new Milestone());
             _mockMapper.Map<MilestoneDto>(Arg.Any<Milestone>()).Returns(new MilestoneDto { Project = "PP001", Number = "M1", DateDue = DateTime.Today.AddDays(30) });
 
             // Act
@@ -502,7 +502,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
         [Fact]
         public async Task SaveMilestoneAsync_WhenUnderSdReviewIsSet_ClearsOnTargetAndDateCompleted()
         {
-            // Arrange â€” OnTarget is 0 so the second exclusion block does not fire.
+            // Arrange — OnTarget is 0 so the second exclusion block does not fire.
             var dto = ValidMilestoneDto();
             dto.UnderSdReview = 1;
             dto.OnTarget      = 0;
@@ -510,7 +510,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             _mockRepository.GetMilestoneAsync(dto.Project, dto.Number).Returns((Milestone?)null);
             _mockMapper.Map<Milestone>(Arg.Any<object>()).Returns(new Milestone());
-            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>()).Returns(new Milestone());
+            _mockRepository.AddMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>()).Returns(new Milestone());
             _mockMapper.Map<MilestoneDto>(Arg.Any<Milestone>()).Returns(new MilestoneDto { Project = "PP001", Number = "M1", DateDue = DateTime.Today.AddDays(30) });
 
             // Act
@@ -523,7 +523,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
         #endregion
 
-        #region SaveMilestoneAsync â€” happy path
+        #region SaveMilestoneAsync — happy path
 
         [Fact]
         public async Task SaveMilestoneAsync_CallsAddAndReturnsMappedDto_WhenValid()
@@ -536,7 +536,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             _mockRepository.GetMilestoneAsync(dto.Project, dto.Number).Returns((Milestone?)null);
             _mockMapper.Map<Milestone>(Arg.Any<object>()).Returns(entity);
-            _mockRepository.AddMilestoneAsync(entity).Returns(created);
+            _mockRepository.AddMilestoneAsync(entity, Arg.Any<string?>()).Returns(created);
             _mockMapper.Map<MilestoneDto>(created).Returns(resultDto);
 
             // Act
@@ -546,12 +546,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             result.Should().NotBeNull();
             result.Project.Should().Be("PP001");
             result.Number.Should().Be("M1");
-            await _mockRepository.Received(1).AddMilestoneAsync(entity);
+            await _mockRepository.Received(1).AddMilestoneAsync(entity, Arg.Any<string?>());
         }
 
         #endregion
 
-        #region UpdateMilestoneAsync â€” validation
+        #region UpdateMilestoneAsync — validation
 
         [Fact]
         public async Task UpdateMilestoneAsync_ThrowsBusinessValidationError_WhenProjectIsEmpty()
@@ -656,7 +656,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             // Assert
             await _mockRepository.DidNotReceive().GetMilestoneAsync(Arg.Any<string>(), Arg.Any<string>());
-            await _mockRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<Milestone>());
+            await _mockRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>());
         }
 
         [Fact]
@@ -672,12 +672,12 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
             // Assert
             ex.Errors.Should().ContainSingle(e => e.Code == "NOT_FOUND");
-            await _mockRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<Milestone>());
+            await _mockRepository.DidNotReceive().UpdateMilestoneAsync(Arg.Any<Milestone>(), Arg.Any<string?>());
         }
 
         #endregion
 
-        #region UpdateMilestoneAsync â€” happy path
+        #region UpdateMilestoneAsync — happy path
 
         [Fact]
         public async Task UpdateMilestoneAsync_CallsUpdateAndReturnsMappedDto_WhenValid()
@@ -689,7 +689,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             var resultDto = new MilestoneDto { Project = dto.Project, Number = dto.Number };
 
             _mockRepository.GetMilestoneAsync(dto.Project, dto.Number).Returns(existing);
-            _mockRepository.UpdateMilestoneAsync(existing).Returns(updated);
+            _mockRepository.UpdateMilestoneAsync(existing, Arg.Any<string?>()).Returns(updated);
             _mockMapper.Map<MilestoneDto>(updated).Returns(resultDto);
 
             // Act
@@ -699,7 +699,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
             result.Should().NotBeNull();
             result.Project.Should().Be("PP001");
             result.Number.Should().Be("M1");
-            await _mockRepository.Received(1).UpdateMilestoneAsync(existing);
+            await _mockRepository.Received(1).UpdateMilestoneAsync(existing, Arg.Any<string?>());
         }
 
         #endregion
@@ -957,7 +957,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
         #endregion
 
-        #region SaveMilestoneFormDatesAsync â€” validation
+        #region SaveMilestoneFormDatesAsync — validation
 
         [Fact]
         public async Task SaveMilestoneFormDatesAsync_ThrowsBusinessValidationError_WhenParentProjectIsEmpty()
@@ -1006,7 +1006,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
 
         #endregion
 
-        #region SaveMilestoneFormDatesAsync â€” add vs update
+        #region SaveMilestoneFormDatesAsync — add vs update
 
         [Fact]
         public async Task SaveMilestoneFormDatesAsync_CallsAdd_WhenNoExistingRecord()
@@ -1089,5 +1089,149 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
         }
 
         #endregion
+
+        #region GetLogMilestonesAsync
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WithAllParams_ReturnsMappedPaginatedResult()
+        {
+            // Arrange
+            var query            = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+            const string project = "PP001";
+            const string part1   = "M";
+            const string part2   = "1";
+
+            var entities = new List<LogMilestone>
+            {
+                new() { Project = project, Number = "M1", Description = "Log Entry 1" },
+                new() { Project = project, Number = "M2", Description = "Log Entry 2" }
+            };
+            var paginationData = new PaginationData { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 };
+            var pagedData      = new PagedData<LogMilestone>(entities, paginationData);
+
+            var dtos          = new List<LogMilestoneDto>
+            {
+                new() { Project = project, Number = "M1", Description = "Log Entry 1" },
+                new() { Project = project, Number = "M2", Description = "Log Entry 2" }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetLogMilestonesAsync(paginationParams, project, part1, part2).Returns(pagedData);
+            _mockMapper.Map<List<LogMilestoneDto>>(pagedData.Data).Returns(dtos);
+            _mockMapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+            // Act
+            var result = await _sut.GetLogMilestonesAsync(query, project, part1, part2);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().HaveCount(2);
+            result.Data.First().Number.Should().Be("M1");
+            result.PaginationData.TotalRecords.Should().Be(2);
+
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
+            await _mockRepository.Received(1).GetLogMilestonesAsync(paginationParams, project, part1, part2);
+            _mockMapper.Received(1).Map<List<LogMilestoneDto>>(pagedData.Data);
+            _mockMapper.Received(1).Map<PaginationDto>(pagedData.PaginationData);
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WithNullOptionalParams_PassesNullsToRepository()
+        {
+            // Arrange
+            var query            = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var pagedData     = new PagedData<LogMilestone>(new List<LogMilestone>(), new PaginationData());
+            var emptyDtos     = new List<LogMilestoneDto>();
+            var paginationDto = new PaginationDto();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetLogMilestonesAsync(paginationParams, null, null, null).Returns(pagedData);
+            _mockMapper.Map<List<LogMilestoneDto>>(pagedData.Data).Returns(emptyDtos);
+            _mockMapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+            // Act
+            await _sut.GetLogMilestonesAsync(query, null, null, null);
+
+            // Assert
+            await _mockRepository.Received(1).GetLogMilestonesAsync(
+                paginationParams,
+                Arg.Is<string?>(p  => p  == null),
+                Arg.Is<string?>(n1 => n1 == null),
+                Arg.Is<string?>(n2 => n2 == null));
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WithEmptyData_ReturnsMappedEmptyResult()
+        {
+            // Arrange
+            var query            = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var pagedData     = new PagedData<LogMilestone>(new List<LogMilestone>(), new PaginationData { TotalRecords = 0 });
+            var emptyDtos     = new List<LogMilestoneDto>();
+            var paginationDto = new PaginationDto { TotalRecords = 0 };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetLogMilestonesAsync(paginationParams, null, null, null).Returns(pagedData);
+            _mockMapper.Map<List<LogMilestoneDto>>(pagedData.Data).Returns(emptyDtos);
+            _mockMapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+            // Act
+            var result = await _sut.GetLogMilestonesAsync(query, null, null, null);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().BeEmpty();
+            result.PaginationData.TotalRecords.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_MapsQueryParametersToPaginationParameters()
+        {
+            // Arrange
+            var query            = new QueryParameters<string> { Page = 3, PageSize = 25 };
+            var paginationParams = new PaginationParameters<string>(page: 3, pageSize: 25);
+
+            var pagedData     = new PagedData<LogMilestone>(new List<LogMilestone>(), new PaginationData());
+            var emptyDtos     = new List<LogMilestoneDto>();
+            var paginationDto = new PaginationDto();
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetLogMilestonesAsync(paginationParams, null, null, null).Returns(pagedData);
+            _mockMapper.Map<List<LogMilestoneDto>>(pagedData.Data).Returns(emptyDtos);
+            _mockMapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+            // Act
+            await _sut.GetLogMilestonesAsync(query, null, null, null);
+
+            // Assert
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(
+                Arg.Is<QueryParameters<string>>(q => q.Page == 3 && q.PageSize == 25));
+        }
+
+        [Fact]
+        public async Task GetLogMilestonesAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var query            = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetLogMilestonesAsync(paginationParams, null, null, null)
+                .Returns(Task.FromException<PagedData<LogMilestone>>(new Exception("DB error")));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetLogMilestonesAsync(query, null, null, null));
+
+            exception.Message.Should().Be("DB error");
+        }
+
+        #endregion
     }
 }
+

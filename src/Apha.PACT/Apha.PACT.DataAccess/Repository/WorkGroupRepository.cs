@@ -9,10 +9,11 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class WorkGroupRepository : BaseRepository, IWorkGroupRepository
     {
+        private readonly IFpsRequestContext _requestContext;
 
-        public WorkGroupRepository(FpsDbContext context) : base(context)
+        public WorkGroupRepository(FpsDbContext context, IFpsRequestContext requestContext) : base(context)
         {
-
+            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
         private const string WorkGroupColumn     = "WorkGroup";
@@ -29,6 +30,15 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.WorkGroups
                 .AsNoTracking()
                 .OrderBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetAllWorkGroupNamesAsync()
+        {
+            return await _context.WorkGroups
+                .AsNoTracking()
+                .Select(w => w.WorkGroupName)
+                .OrderBy(x => x)
                 .ToListAsync();
         }
 
@@ -94,8 +104,7 @@ namespace Apha.PACT.DataAccess.Repository
             else
                 baseQuery = baseQuery.OrderBy(e => e.Name);
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<PagedData<WorkGroupValidTimeCode>> GetWorkGroupValidTimeCodeAsync(
@@ -137,8 +146,7 @@ namespace Apha.PACT.DataAccess.Repository
             else
                 baseQuery = baseQuery.OrderBy(e => e.ParentProject);
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<IEnumerable<WgSummarisedStaffTimeUsageView>> GetWgSummarisedStaffTimeUsageAsync(
@@ -164,6 +172,35 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(w => w.ProfitCentre == profitCentre && w.SendEmail == 1)
                 .OrderBy(w => w.WorkGroupName)
                 .ToListAsync();
+        }
+
+        public async Task<List<WorkGroupView>> GetWorkGroupsByProfitCentreForBudgetAsync(string profitCentre)
+        {
+            return await _context.WorkGroupViews
+                .AsNoTracking()
+                .Where(w => w.ProfitCentre == profitCentre
+                         && w.UserEmail != null && w.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Distinct()
+                .OrderBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<PagedData<WorkGroupView>> GetWorkGroupsByProfitCentreForBudgetPagedAsync(
+            PaginationParameters<string> query, string profitCentre)
+        {
+            var q = _context.WorkGroupViews
+                .AsNoTracking()
+                .Where(w => w.ProfitCentre == profitCentre
+                         && w.UserEmail != null && w.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Distinct()
+                .AsQueryable();
+
+            q = ApplyWorkGroupViewFilter(q, query.Filter);
+            q = ApplyWorkGroupViewSort(q, query.SortBy, query.Descending);
+
+            var pageNumber = query.Page     > 0 ? query.Page     : 1;
+            var pageSize   = query.PageSize > 0 ? query.PageSize : 5;
+            return await ApplyPaging<WorkGroupView>(q, pageNumber, pageSize);
         }
 
         public async Task<IEnumerable<TimeSheetTemplateRow>> GetTimeSheetTemplateAsync(
@@ -275,8 +312,7 @@ namespace Apha.PACT.DataAccess.Repository
                 ? baseQuery.OrderByDescending(e => EF.Property<object>(e, sortBy))
                 : baseQuery.OrderBy(e => EF.Property<object>(e, sortBy));
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<bool> SetSendEmailForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
@@ -376,6 +412,45 @@ namespace Apha.PACT.DataAccess.Repository
                 query = query.Where(e => EF.Functions.ILike(e.TimeCode, $"%{timeCode}%"));
 
             return query;
+        }
+
+        private static IQueryable<WorkGroupView> ApplyWorkGroupViewFilter(
+            IQueryable<WorkGroupView> query, string? filterJson)
+        {
+            if (string.IsNullOrWhiteSpace(filterJson)) return query;
+
+            var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
+            if (filters is null) return query;
+
+            if (filters.TryGetValue("WorkGroupName", out var wgName) && !string.IsNullOrWhiteSpace(wgName))
+                query = query.Where(w => EF.Functions.ILike(w.WorkGroupName, $"%{wgName}%"));
+
+            if (filters.TryGetValue("WorkGroup", out var wgName2) && !string.IsNullOrWhiteSpace(wgName2))
+                query = query.Where(w => EF.Functions.ILike(w.WorkGroupName, $"%{wgName2}%"));
+
+            if (filters.TryGetValue("ProfitCentre", out var pc) && !string.IsNullOrWhiteSpace(pc))
+                query = query.Where(w => EF.Functions.ILike(w.ProfitCentre, $"%{pc}%"));
+
+            if (filters.TryGetValue("Owner", out var owner) && !string.IsNullOrWhiteSpace(owner))
+                query = query.Where(w => EF.Functions.ILike(w.Owner!, $"%{owner}%"));
+
+            if (filters.TryGetValue("Description", out var desc) && !string.IsNullOrWhiteSpace(desc))
+                query = query.Where(w => EF.Functions.ILike(w.Description!, $"%{desc}%"));
+
+            return query;
+        }
+
+        private static IQueryable<WorkGroupView> ApplyWorkGroupViewSort(
+            IQueryable<WorkGroupView> query, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "workgroupname" => descending ? query.OrderByDescending(w => w.WorkGroupName) : query.OrderBy(w => w.WorkGroupName),
+                "profitcentre"  => descending ? query.OrderByDescending(w => w.ProfitCentre)  : query.OrderBy(w => w.ProfitCentre),
+                "owner"         => descending ? query.OrderByDescending(w => w.Owner)         : query.OrderBy(w => w.Owner),
+                "description"   => descending ? query.OrderByDescending(w => w.Description)   : query.OrderBy(w => w.Description),
+                _               => query.OrderBy(w => w.WorkGroupName)
+            };
         }
     }
 }

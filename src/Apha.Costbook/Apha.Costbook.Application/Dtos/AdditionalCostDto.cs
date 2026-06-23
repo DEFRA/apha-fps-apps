@@ -13,8 +13,7 @@ public class AdditionalCostDto
     public string AccountCat { get; set; } = null!;
     [Required(ErrorMessage = "Description is required.")]
     public string Description { get; set; } = null!;
-    public double? ItemCost { get; set; }
-    [Required(ErrorMessage = "Cost is required.")]
+    public double? ItemCost { get; set; }    
     public double CostEntered { get; set; }
     public string? Freq { get; set; }
 }

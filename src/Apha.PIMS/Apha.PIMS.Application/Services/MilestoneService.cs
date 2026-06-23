@@ -43,7 +43,7 @@ namespace Apha.PIMS.Application.Services
             return dto;
         }
 
-        public async Task<MilestoneDto> SaveMilestoneAsync(MilestoneDto dto)
+        public async Task<MilestoneDto> SaveMilestoneAsync(MilestoneDto dto, string? changedBy = null)
         {
             var errors = new List<BusinessValidationError>();
 
@@ -72,11 +72,11 @@ namespace Apha.PIMS.Application.Services
             ApplyMutualExclusions(dto);
 
             Milestone newEntity = _mapper.Map<Milestone>(dto);
-            Milestone created = await _repository.AddMilestoneAsync(newEntity);
+            Milestone created = await _repository.AddMilestoneAsync(newEntity, changedBy);
             return _mapper.Map<MilestoneDto>(created);
         }
 
-        public async Task<MilestoneDto> UpdateMilestoneAsync(MilestoneDto dto)
+        public async Task<MilestoneDto> UpdateMilestoneAsync(MilestoneDto dto, string? changedBy = null)
         {
             var errors = new List<BusinessValidationError>();
 
@@ -102,7 +102,7 @@ namespace Apha.PIMS.Application.Services
             ApplyMutualExclusions(dto);
 
             _mapper.Map(dto, existing);
-            Milestone updated = await _repository.UpdateMilestoneAsync(existing);
+            Milestone updated = await _repository.UpdateMilestoneAsync(existing, changedBy);
             return _mapper.Map<MilestoneDto>(updated);
         }
 
@@ -178,5 +178,16 @@ namespace Apha.PIMS.Application.Services
 
         public async Task<bool> DeleteMilestoneFormDatesAsync(short year, string parentProject)
             => await _repository.DeleteMilestoneFormDatesAsync(year, parentProject);
+
+        public async Task<PaginatedResult<LogMilestoneDto>> GetLogMilestonesAsync(QueryParameters<string> parameters,string? project,string? numberPart1,string? numberPart2)
+        {
+            PaginationParameters<string> paginationParams = _mapper.Map<PaginationParameters<string>>(parameters);
+            PagedData<LogMilestone> pagedData = await _repository.GetLogMilestonesAsync(paginationParams, project, numberPart1, numberPart2);
+            return new PaginatedResult<LogMilestoneDto>
+            {
+                Data = _mapper.Map<List<LogMilestoneDto>>(pagedData.Data),
+                PaginationData = _mapper.Map<PaginationDto>(pagedData.PaginationData)
+            };
+        }
     }
 }
