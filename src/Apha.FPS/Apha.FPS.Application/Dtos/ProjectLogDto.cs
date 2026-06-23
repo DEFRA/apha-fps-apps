@@ -1,25 +1,26 @@
 /*
- * TRANSFORMENGINE MIGRATION — ProjectLog.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 2 — Core Layer - Entities + Repository Interfaces + Pagination
+ * TRANSFORMENGINE MIGRATION — ProjectLogDto.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
  * Migrated : 2026-06-22
  *
  * CHANGED:
- *   - JobCode nullability corrected: string? → string = null! (DDL: jobcode character varying(20) NOT NULL)
- *   - FpsYear nullability corrected: int? → int (DDL: fpsyear integer NOT NULL; matches all other *Log entities)
+ *   - New file — DTO mirroring ProjectLog entity for service-layer contracts
+ *   - All 41 fields from ProjectLog entity exposed as DTO properties for API surface
+ *   - Used as input/output contract between service layer and API controller
  *
  * PRESERVED:
- *   - All 41 column mappings from fps.project_log DDL (sequenceno through fpsyear)
- *   - All decimal/money field types (transferincome, custincome, wip_eoy, etc.)
- *   - All nullable reference-type fields exactly as specified in DDL
- *   - partial class declaration for EF configuration split
+ *   - All property names, types, and nullability exactly matching ProjectLog entity
+ *   - decimal fields preserved as decimal (no lossy conversion)
+ *   - FpsYear as int (NOT NULL in entity, matching DDL NOT NULL constraint)
  *
  * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify EF map (ProjectLogMap.cs) handles the composite PK (sequenceno, fpsyear) correctly after FpsYear nullability fix
- *   - TRANSFORMENGINE TODO: fpsyear partition pruning — ensure FilterFpsYear in FpsDbContext is applied at query time
+ *   - TRANSFORMENGINE TODO: Verify that CostCentre (double?) is acceptable in DTO surface or should be decimal?
+ *   - TRANSFORMENGINE TODO: Finished and IsDefraProject (short?) may need bool representation at API boundary
  */
-namespace Apha.FPS.Core.Entities
+namespace Apha.FPS.Application.Dtos
 {
-    public partial class ProjectLog
+    // TRANSFORMENGINE: DTO mirroring fps.project_log table — all 41 columns surfaced for audit trail display
+    public class ProjectLogDto
     {
         public int SequenceNo { get; set; }
         public string ParentProject { get; set; } = null!;
@@ -54,7 +55,6 @@ namespace Apha.FPS.Core.Entities
         public DateTime? DateTime { get; set; }
         public string? UserId { get; set; }
         public string? InsertDelete { get; set; }
-        // TRANSFORMENGINE: JobCode corrected from string? to string = null! — DDL: jobcode character varying(20) NOT NULL
         public string JobCode { get; set; } = null!;
         public short? IsDefraProject { get; set; }
         public double? CostCentre { get; set; }
@@ -62,7 +62,6 @@ namespace Apha.FPS.Core.Entities
         public string? SubAccountCode { get; set; }
         public string? ProjectGroup { get; set; }
         public string? IncomeAccountCode { get; set; }
-        // TRANSFORMENGINE: FpsYear corrected from int? to int — DDL: fpsyear integer NOT NULL; consistent with StaffJobLog, AnimalRequestLog, AdditionalCostLog, TestRequirementLog
         public int FpsYear { get; set; }
     }
 }

@@ -1,3 +1,24 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
+ * Migrated : 2026-06-22
+ *
+ * CHANGED:
+ *   - Added IProjectAuditTrailService / ProjectAuditTrailService registration in AddServices()
+ *   - Added IProjectAuditTrailRepository / ProjectAuditTrailRepository registration in AddRepositories()
+ *   - Both registered with Scoped lifetime consistent with all other service/repository pairs
+ *
+ * PRESERVED:
+ *   - All pre-existing service registrations (AppState, ExcelExport, StaffJob, FpsSetting, Animal,
+ *     Employee, Program, Project, Status, Disease, Customer, Contract, YearMaster, ProjectGroup,
+ *     TimeCostCalcs, Division, Agency, AdditionalCost, AccountCategory, MonthlyOutput, AccountCode,
+ *     SubAccount, ProfitCentre, ProfitCentreGrade, WorkGroupGrade, WorkGroupEmployee, DivisionGrade,
+ *     ProjectStaffPlan, Grade, ProjectGroupStaffPlan, BudgetBids, Purchases)
+ *   - All pre-existing repository registrations including IFpsRequestContext
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: none — fully automated DI registration for ProjectAuditTrail pair
+ */
 using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;
@@ -53,6 +74,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
+            // TRANSFORMENGINE: IProjectAuditTrailService/ProjectAuditTrailService registered — Phase 5 frmProjectChangesLog migration
+            services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -91,6 +114,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectGroupStaffPlanRepository, ProjectGroupStaffPlanRepository>();
             services.AddScoped<IBudgetBidsRepository, BudgetBidsRepository>();
             services.AddScoped<IPurchasesRepository, PurchasesRepository>();
+            // TRANSFORMENGINE: IProjectAuditTrailRepository/ProjectAuditTrailRepository registered — Phase 5 frmProjectChangesLog migration
+            services.AddScoped<IProjectAuditTrailRepository, ProjectAuditTrailRepository>();
             return services;
 
         }

@@ -1,25 +1,29 @@
 /*
- * TRANSFORMENGINE MIGRATION — ProjectLog.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 2 — Core Layer - Entities + Repository Interfaces + Pagination
+ * TRANSFORMENGINE MIGRATION — ProjectLogDto.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 7 — Frontend DTOs + API Client Interfaces (Steps 10-11)
  * Migrated : 2026-06-22
  *
  * CHANGED:
- *   - JobCode nullability corrected: string? → string = null! (DDL: jobcode character varying(20) NOT NULL)
- *   - FpsYear nullability corrected: int? → int (DDL: fpsyear integer NOT NULL; matches all other *Log entities)
+ *   - New file — frontend DTO mirroring Apha.FPS.Application.Dtos.ProjectLogDto (backend Phase 3 artefact)
+ *   - Namespace changed to Apha.FPSApps.Application.Dtos.FPS for frontend application layer consumption
+ *   - All 41 properties copied verbatim to preserve exact name/type/nullability parity with backend DTO
  *
  * PRESERVED:
- *   - All 41 column mappings from fps.project_log DDL (sequenceno through fpsyear)
- *   - All decimal/money field types (transferincome, custincome, wip_eoy, etc.)
- *   - All nullable reference-type fields exactly as specified in DDL
- *   - partial class declaration for EF configuration split
+ *   - All property names, types, and nullability exactly matching backend ProjectLogDto
+ *   - decimal fields preserved as decimal (no lossy conversion)
+ *   - FpsYear as int (NOT NULL in backend entity, matching DDL NOT NULL constraint)
+ *   - short? for Finished and IsDefraProject (pending backend decision on bool representation)
+ *   - double? for CostCentre (pending backend decision on decimal representation)
  *
  * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify EF map (ProjectLogMap.cs) handles the composite PK (sequenceno, fpsyear) correctly after FpsYear nullability fix
- *   - TRANSFORMENGINE TODO: fpsyear partition pruning — ensure FilterFpsYear in FpsDbContext is applied at query time
+ *   - TRANSFORMENGINE TODO: CostCentre (double?) — verify acceptable in API surface or should be decimal?
+ *   - TRANSFORMENGINE TODO: Finished and IsDefraProject (short?) may need bool representation at API boundary
  */
-namespace Apha.FPS.Core.Entities
+namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public partial class ProjectLog
+    // TRANSFORMENGINE: Frontend DTO mirroring backend Apha.FPS.Application.Dtos.ProjectLogDto
+    // Same shape as backend DTO — all 41 columns from fps.project_log audit trail table
+    public class ProjectLogDto
     {
         public int SequenceNo { get; set; }
         public string ParentProject { get; set; } = null!;
@@ -54,7 +58,6 @@ namespace Apha.FPS.Core.Entities
         public DateTime? DateTime { get; set; }
         public string? UserId { get; set; }
         public string? InsertDelete { get; set; }
-        // TRANSFORMENGINE: JobCode corrected from string? to string = null! — DDL: jobcode character varying(20) NOT NULL
         public string JobCode { get; set; } = null!;
         public short? IsDefraProject { get; set; }
         public double? CostCentre { get; set; }
@@ -62,7 +65,6 @@ namespace Apha.FPS.Core.Entities
         public string? SubAccountCode { get; set; }
         public string? ProjectGroup { get; set; }
         public string? IncomeAccountCode { get; set; }
-        // TRANSFORMENGINE: FpsYear corrected from int? to int — DDL: fpsyear integer NOT NULL; consistent with StaffJobLog, AnimalRequestLog, AdditionalCostLog, TestRequirementLog
         public int FpsYear { get; set; }
     }
 }

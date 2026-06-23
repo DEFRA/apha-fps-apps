@@ -4,6 +4,29 @@ using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
 
+/*
+ * TRANSFORMENGINE MIGRATION — EntityMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
+ * Migrated : 2026-06-22
+ *
+ * CHANGED:
+ *   - Added 5 new CreateMap entries for ProjectAuditTrail log entity-to-DTO mappings:
+ *       ProjectLog → ProjectLogDto
+ *       StaffJobLog → StaffJobLogDto
+ *       TestRequirementLog → TestRequirementLogDto
+ *       AnimalRequestLog → AnimalRequestLogDto
+ *       AdditionalCostLog → AdditionalCostLogDto
+ *   - All mappings use .ReverseMap() for bidirectional support
+ *   - All property names are aligned between entity and DTO; no ForMember overrides needed
+ *
+ * PRESERVED:
+ *   - All pre-existing CreateMap entries unchanged
+ *   - File structure and namespace unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - none — fully automated for these 5 log mappings
+ */
+
 namespace Apha.FPS.Application.Mappings
 {
     public class EntityMapper : Profile
@@ -88,6 +111,16 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
+
+            // TRANSFORMENGINE: ProjectAuditTrail log entity → DTO mappings (Phase 3)
+            //   All 5 log entities from fps schema partitioned tables.
+            //   Property names are fully aligned between entity and DTO; no ForMember overrides needed.
+            //   Covers all columns: sequenceno, parentproject/jobcode/testcode, date range, user tracking fields, fpsyear.
+            CreateMap<ProjectLog, ProjectLogDto>().ReverseMap();
+            CreateMap<StaffJobLog, StaffJobLogDto>().ReverseMap();
+            CreateMap<TestRequirementLog, TestRequirementLogDto>().ReverseMap();
+            CreateMap<AnimalRequestLog, AnimalRequestLogDto>().ReverseMap();
+            CreateMap<AdditionalCostLog, AdditionalCostLogDto>().ReverseMap();
         }
     }
 }

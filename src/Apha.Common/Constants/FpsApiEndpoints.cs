@@ -214,6 +214,14 @@ namespace Apha.Common.Constants
         public const string DeleteBudgetBid = "api/v1/budgetbids?WorkGroupName={0}&account={1}";
         public const string GetBudgetBidsAccounts = "api/v1/budgetbids/accounts";
 
+        // Project Audit Trail (frmProjectChangesLog → api/v1/projectaudittrail)
+        // TRANSFORMENGINE: ProjectAuditTrail endpoint constants added — IFpsProjectAuditTrailApiClient binds to these routes
+        public const string GetProjectLogs = "api/v1/projectaudittrail/projectlogs";
+        public const string GetStaffJobLogs = "api/v1/projectaudittrail/staffjoblogs";
+        public const string GetTestRequirementLogs = "api/v1/projectaudittrail/testrequirementlogs";
+        public const string GetAnimalRequestLogs = "api/v1/projectaudittrail/animalrequestlogs";
+        public const string GetAdditionalCostLogs = "api/v1/projectaudittrail/additionalcostlogs";
+
         // Generic Bid — Purchases
         public const string GetGenericPurchases = "api/v1/purchases?WorkGroupName={0}&account={1}";
         public const string GetGenericPurchasesPaged = "api/v1/purchases/paged";

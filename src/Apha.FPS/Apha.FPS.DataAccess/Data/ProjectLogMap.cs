@@ -1,3 +1,26 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ProjectLogMap.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
+ * Migrated : 2026-06-22
+ *
+ * CHANGED:
+ *   - FIXED: HasKey changed from single-column (SequenceNo) to composite (SequenceNo, FpsYear)
+ *     — DDL defines CONSTRAINT pk_project_log PRIMARY KEY (sequenceno, fpsyear); partition key must be part of PK
+ *   - FIXED: SequenceNo.ValueGeneratedOnAdd() added — DDL: sequenceno GENERATED ALWAYS AS IDENTITY
+ *   - FIXED: InsertDelete IsFixedLength() added — DDL: insert_delete character(2) (fixed-length char, not varchar)
+ *   - Added migration annotation header
+ *
+ * PRESERVED:
+ *   - All 41 column HasColumnName() mappings (lowercase) verified against DDL
+ *   - ToTable("project_log", "fps") — lowercase preserved
+ *   - All HasColumnType("timestamp without time zone") declarations
+ *   - All HasMaxLength() declarations
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: caseworksub is numeric(5,4) in DDL — verify decimal precision is handled correctly by EF default
+ *   - TRANSFORMENGINE TODO: transferincome, custincome, wip_eoy etc. are PostgreSQL money type — verify EF handles
+ *     money → decimal conversion without precision loss (HasColumnType("money") may be required)
+ */
 using Apha.FPS.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,19 +31,16 @@ namespace Apha.FPS.DataAccess.Data
     {
         public void Configure(EntityTypeBuilder<ProjectLog> entity)
         {
-            entity.HasKey(e => e.SequenceNo).HasName("pk_project_log");
+            // TRANSFORMENGINE: composite PK fixed — DDL CONSTRAINT pk_project_log PRIMARY KEY (sequenceno, fpsyear)
+            entity.HasKey(e => new { e.SequenceNo, e.FpsYear }).HasName("pk_project_log");
 
             entity.ToTable("project_log", "fps");
 
-            entity.Property(e => e.SequenceNo).HasColumnName("sequenceno");
+            // TRANSFORMENGINE: ValueGeneratedOnAdd added — DDL: sequenceno GENERATED ALWAYS AS IDENTITY
+            entity.Property(e => e.SequenceNo)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("sequenceno");
             entity.Property(e => e.ParentProject).HasMaxLength(20).HasColumnName("parentproject");
-            entity.Property(e => e.InsertDelete).HasMaxLength(2).HasColumnName("insert_delete");
-            entity.Property(e => e.DateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("date_time");
-            entity.Property(e => e.UserId).HasMaxLength(255).HasColumnName("user_id");
-            entity.Property(e => e.JobCode).HasMaxLength(20).HasColumnName("jobcode");
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.ProjectTitle).HasColumnName("projecttitle");
             entity.Property(e => e.Program).HasColumnName("program");
             entity.Property(e => e.Customer).HasColumnName("customer");
@@ -53,12 +73,23 @@ namespace Apha.FPS.DataAccess.Data
             entity.Property(e => e.Comments).HasColumnName("comments");
             entity.Property(e => e.CarryOver).HasColumnName("carryover");
             entity.Property(e => e.CarryOverSeed).HasColumnName("carryoverseed");
+            entity.Property(e => e.DateTime)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("date_time");
+            entity.Property(e => e.UserId).HasMaxLength(255).HasColumnName("user_id");
+            // TRANSFORMENGINE: IsFixedLength added — DDL: insert_delete character(2) (char not varchar)
+            entity.Property(e => e.InsertDelete)
+                .HasMaxLength(2)
+                .IsFixedLength()
+                .HasColumnName("insert_delete");
+            entity.Property(e => e.JobCode).HasMaxLength(20).HasColumnName("jobcode");
             entity.Property(e => e.IsDefraProject).HasColumnName("isdefraproject");
             entity.Property(e => e.CostCentre).HasColumnName("costcentre");
             entity.Property(e => e.OracleProjectCode).HasColumnName("oracleprojectcode");
             entity.Property(e => e.SubAccountCode).HasColumnName("subaccountcode");
             entity.Property(e => e.ProjectGroup).HasColumnName("projectgroup");
             entity.Property(e => e.IncomeAccountCode).HasColumnName("incomeaccountcode");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }

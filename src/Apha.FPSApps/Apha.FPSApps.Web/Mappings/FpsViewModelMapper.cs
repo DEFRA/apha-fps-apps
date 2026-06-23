@@ -1,3 +1,27 @@
+/*
+ * TRANSFORMENGINE MIGRATION — FpsViewModelMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-22
+ *
+ * CHANGED:
+ *   - Added 5 commented-out CreateMap stubs for ProjectAuditTrail Dto↔*LogItem pairs.
+ *     These are deferred to Phase 11 when the *LogItem models are created.
+ *     Stubs are placed at the end of the constructor and marked with TRANSFORMENGINE TODO.
+ *
+ * PRESERVED:
+ *   - All existing CreateMap entries unchanged
+ *   - All existing ForMember configurations
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO (Phase 11): Uncomment the 5 ProjectAuditTrail Dto↔*LogItem
+ *     CreateMap entries below once ProjectLogItem, StaffJobLogItem, TestRequirementLogItem,
+ *     AnimalRequestLogItem, and AdditionalCostLogItem are created in Phase 11.
+ *   - TRANSFORMENGINE TODO: StaffJobLogRes.Name (staff display name) is not in StaffJobLogDto;
+ *     decide in Phase 11 whether StaffJobLogItem.Name is populated via a separate lookup
+ *     or sourced from a dedicated view DTO that includes Name.
+ *   - TRANSFORMENGINE TODO: TestRequirementLogDto.UnitPrice is decimal? but the grid display
+ *     column may format as double — confirm Item property type in Phase 11.
+ */
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -105,6 +129,37 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.OracleProjectCode, o => o.MapFrom(s => s.OracleProjectCode))
                 .ForMember(d => d.SubAccountCode, o => o.MapFrom(s => s.SubAccountCode))
                 .ReverseMap();
+
+            // TRANSFORMENGINE (Phase 11): ProjectAuditTrail *LogItem CreateMap entries — activated now that
+            // all 5 *LogItem ViewModel types are created in Phase 11.
+            // Audit log items are read-only grid rows — .ReverseMap() is intentionally omitted.
+
+            // TRANSFORMENGINE: ProjectAuditTrail — ProjectLogItem: 33 display columns from ProjectLogDto.
+            // UserEmail is NOT in ProjectLogDto (requires backend UserId→email resolution); Ignore() it.
+            CreateMap<ProjectLogDto, ProjectLogItem>()
+                .ForMember(d => d.UserEmail, o => o.Ignore());
+
+            // TRANSFORMENGINE: ProjectAuditTrail — StaffJobLogItem: 8 display columns from StaffJobLogDto.
+            // Name is NOT in StaffJobLogDto (requires staff lookup join); Ignore() it.
+            // UserEmail is NOT in StaffJobLogDto (requires UserId→email resolution); Ignore() it.
+            CreateMap<StaffJobLogDto, StaffJobLogItem>()
+                .ForMember(d => d.Name, o => o.Ignore())
+                .ForMember(d => d.UserEmail, o => o.Ignore());
+
+            // TRANSFORMENGINE: ProjectAuditTrail — TestRequirementLogItem: 11 display columns from TestRequirementLogDto.
+            // UserEmail is NOT in TestRequirementLogDto (requires UserId→email resolution); Ignore() it.
+            CreateMap<TestRequirementLogDto, TestRequirementLogItem>()
+                .ForMember(d => d.UserEmail, o => o.Ignore());
+
+            // TRANSFORMENGINE: ProjectAuditTrail — AnimalRequestLogItem: 8 display columns from AnimalRequestLogDto.
+            // UserEmail is NOT in AnimalRequestLogDto (requires UserId→email resolution); Ignore() it.
+            CreateMap<AnimalRequestLogDto, AnimalRequestLogItem>()
+                .ForMember(d => d.UserEmail, o => o.Ignore());
+
+            // TRANSFORMENGINE: ProjectAuditTrail — AdditionalCostLogItem: 10 display columns from AdditionalCostLogDto.
+            // UserEmail is NOT in AdditionalCostLogDto (requires UserId→email resolution); Ignore() it.
+            CreateMap<AdditionalCostLogDto, AdditionalCostLogItem>()
+                .ForMember(d => d.UserEmail, o => o.Ignore());
         }
     }
 }
