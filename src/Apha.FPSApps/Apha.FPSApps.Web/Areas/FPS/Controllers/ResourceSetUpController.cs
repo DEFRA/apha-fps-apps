@@ -368,7 +368,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var dto = new WorkGroupEmployeeDto
             {
                 PactId         = item.PactId,
-                SpNumber       = item.SpNumber,
+                SpNumber       = item.SpNumber ?? string.Empty,
                 WorkGroupGrade = string.Empty,
                 HrsPaid        = item.HrsPaid,
                 Leave          = item.Leave,
