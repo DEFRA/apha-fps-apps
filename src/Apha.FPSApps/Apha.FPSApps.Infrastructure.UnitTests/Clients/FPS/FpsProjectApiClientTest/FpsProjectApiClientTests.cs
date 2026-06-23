@@ -302,6 +302,66 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectApiClientT
 
         #endregion
 
+        #region GetPagedProjectsByUserAsync Tests
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_WithSuccessResponse_ReturnsMappedProjects()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projectList = new List<ProjectRes> { new() { ParentProject = "PP001", ProjectTitle = "Alpha" } };
+            var apiResponse = new ApiResponse<List<ProjectRes>>
+            {
+                Success = true,
+                Data = projectList,
+                Pagination = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+            var expectedDto = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                new List<ProjectDto> { new() { ParentProject = "PP001" } },
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            );
+
+            _http.GetAsync<List<ProjectRes>>(Arg.Is<string>(url => url.Contains("api/v1/project/paged/by-user"))).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetPagedProjectsByUserAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _http.Received(1).GetAsync<List<ProjectRes>>(Arg.Is<string>(url => url.Contains("api/v1/project/paged/by-user")));
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiError> { new() { Message = "Not Found", Code = "NOT_FOUND" } };
+            var apiResponse = new ApiResponse<List<ProjectRes>> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<List<ProjectDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Not Found", Code = "NOT_FOUND" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ProjectRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ProjectDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetPagedProjectsByUserAsync(query);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
         #region GetPagedPactProjectsAsync Tests
 
         [Fact]

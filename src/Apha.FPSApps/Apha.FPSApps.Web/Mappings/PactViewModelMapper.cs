@@ -47,7 +47,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<TestorProductDto, TestOrProductViewModel>().ReverseMap();
 
             CreateMap<ProjectMonthItem, ProjectMonthDto>().ReverseMap();
-            CreateMap<WorkGroupStaffDto, WorkGroupPeopleItem>().ReverseMap();
+            CreateMap<PactStaffDto, WorkGroupPeopleItem>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPerson>().ReverseMap();
             CreateMap<MonthlyOutputLogDto, MonthlyOutputLogItem>().ReverseMap();

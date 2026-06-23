@@ -68,6 +68,14 @@ namespace Apha.FPS.Api.Mappings
                 .ForMember(d => d.BudgetExt, o => o.MapFrom(s => s.CustIncome)).ReverseMap()
                 .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt));
 
+            // TRANSFORMENGINE: VLA profitability mappings — frmJobcodeTotalsVLA Phase 5
+            //   JobCode (DTO natural key) -> Project (response display column per HTML prototype)
+            //   Id is int? in DTO (nullable ROW_NUMBER) -> int in Res (non-nullable contract property)
+            CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.GetValueOrDefault(0)))
+                .ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode));
+            CreateMap<PaginatedResult<ProjectProfitabilityVlaDto>, PaginationRes<ProjectProfitabilityVlaRes>>();
+
             CreateMap<ContractDto, ContractRes>()
                 .ForMember(d => d.ContractNo, o => o.MapFrom(s => s.Contractno))
                 .ForMember(d => d.Category, o => o.MapFrom(s => s.Category));
@@ -94,7 +102,6 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<AccountCategoryDto, AccountCategoryRes>().ReverseMap();
             CreateMap<MonthlyOutputDto, MonthlyOutputRes>().ReverseMap();
             CreateMap<CostCentreWorkgroup, CostCentreWorkgroupRes>().ReverseMap();
-            CreateMap<WorkGroupStaffDto, WorkGroupStaffRes>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
 
             // ResourceSetUp

@@ -1,17 +1,20 @@
-using Apha.FPS.Core.Entities;
+﻿using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 
 namespace Apha.FPS.Core.Interfaces
 {
     public interface IProjectRepository
     {
-        // ProjectProfitability � project profitability query
+        // ProjectProfitability — project profitability query
         Task<PagedData<ProjectProfitabilityView>> GetProjectProfitabilityAsync(PaginationParameters<string> query, string programNo, string workTypeFilter);
         Task<PagedData<ProjectProfitabilityView>> GetProjectGroupProfitabilityAsync(PaginationParameters<string> query, string projectGroup, string workTypeFilter);
+
+        Task<PagedData<ProjectProfitabilityVlaView>> GetProjectProfitabilityVlaAsync(PaginationParameters<string> query, string? projectStatus = null, string? programNo = null, string? manager = null, string? customer = null);
         Task<IEnumerable<ProjectView>> GetAllProjectsAsync();
         Task<IEnumerable<Project>> GetAllProjectsForAllUsersAsync();
         Task<IEnumerable<PactProjectView>> GetAllPactProjectsAsync();
         Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query);
+        Task<PagedData<ProjectView>> GetPagedProjectsByUserAsync(PaginationParameters<string> query);
         Task<PagedData<PactProjectView>> GetPagedPactProjectsAsync(PaginationParameters<string> query);
         Task<Project?> GetProjectByIdAsync(string parentProject);
         Task<Project> CreateProjectAsync(Project project);
