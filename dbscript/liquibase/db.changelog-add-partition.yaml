@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: partitions/001_add_partition.sql
+      relativeToChangelogFile: true
+      errorIfMissingOrEmpty: false

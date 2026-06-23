@@ -1,7 +1,5 @@
 databaseChangeLog:
-  - includeAll:
-      path: partitions
-      endsWithFilter: .sql
+  - include:
+      file: partitions/001_drop_partition.sql
       relativeToChangelogFile: true
       errorIfMissingOrEmpty: false
-
