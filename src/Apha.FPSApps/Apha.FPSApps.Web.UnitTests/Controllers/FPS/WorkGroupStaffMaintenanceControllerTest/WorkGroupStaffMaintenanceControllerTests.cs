@@ -102,6 +102,102 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
         }
 
         [Fact]
+        public async Task LoadWGStaffGrid_WithStaffNameAndWgGradeFilters_MapsApiFilterKeysForQuery()
+        {
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(callInfo =>
+                {
+                    var request = callInfo.Arg<PaginationFilter<string>>();
+                    return new QueryParameters<string>
+                    {
+                        Page = request.Page,
+                        PageSize = request.PageSize,
+                        SortBy = request.SortBy,
+                        Descending = request.Descending,
+                        Filter = request.Filter
+                    };
+                });
+
+            _workGroupEmployeeService.GetWorkGroupEmployeeAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
+                .Returns(ApiResponseDto<List<WorkGroupEmployeeDto>>.SuccessResponse(
+                    new List<WorkGroupEmployeeDto>(),
+                    new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }));
+
+            _mapper.Map<List<WorkGroupEmployeeItem>>(Arg.Any<List<WorkGroupEmployeeDto>>())
+                .Returns(new List<WorkGroupEmployeeItem>());
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel { PageNumber = 1, PageSize = 10, TotalRecords = 0 });
+
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"StaffName\":\"Alice\",\"WgGrade\":\"WG01\"}"
+            };
+
+            var result = await _controller.LoadWGStaffGrid(request);
+
+            Assert.IsType<PartialViewResult>(result);
+            await _workGroupEmployeeService.Received(1).GetWorkGroupEmployeeAsync(
+                Arg.Is<QueryParameters<string>>(q =>
+                    q.Filter != null
+                    && q.Filter.Contains("\"Name\":\"Alice\"")
+                    && q.Filter.Contains("\"WorkGroupGrade\":\"WG01\"")),
+                string.Empty);
+        }
+
+        [Theory]
+        [InlineData("StaffName", "Name")]
+        [InlineData("WgGrade", "WorkGroupGrade")]
+        public async Task LoadWGStaffGrid_WithUiSortColumn_MapsSortForApiAndPreservesUiSortOnGrid(string uiSortBy, string apiSortBy)
+        {
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+                .Returns(callInfo =>
+                {
+                    var request = callInfo.Arg<PaginationFilter<string>>();
+                    return new QueryParameters<string>
+                    {
+                        Page = request.Page,
+                        PageSize = request.PageSize,
+                        SortBy = request.SortBy,
+                        Descending = request.Descending,
+                        Filter = request.Filter
+                    };
+                });
+
+            _workGroupEmployeeService.GetWorkGroupEmployeeAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
+                .Returns(ApiResponseDto<List<WorkGroupEmployeeDto>>.SuccessResponse(
+                    new List<WorkGroupEmployeeDto>(),
+                    new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }));
+
+            _mapper.Map<List<WorkGroupEmployeeItem>>(Arg.Any<List<WorkGroupEmployeeDto>>())
+                .Returns(new List<WorkGroupEmployeeItem>());
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
+                .Returns(new PaginationModel { PageNumber = 1, PageSize = 10, TotalRecords = 0 });
+
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = uiSortBy,
+                Descending = true,
+                Filter = "{}"
+            };
+
+            var result = await _controller.LoadWGStaffGrid(request);
+
+            var partialViewResult = Assert.IsType<PartialViewResult>(result);
+            var model = Assert.IsType<DataGridConfig<WorkGroupEmployeeItem>>(partialViewResult.Model);
+
+            await _workGroupEmployeeService.Received(1).GetWorkGroupEmployeeAsync(
+                Arg.Is<QueryParameters<string>>(q => q.SortBy == apiSortBy && q.Descending),
+                string.Empty);
+
+            Assert.Equal(uiSortBy, model.Pagination.SortColumn);
+            Assert.True(model.Pagination.SortDirection);
+        }
+
+        [Fact]
         public async Task Create_Get_ReturnsPartialView_WithLookupOptionsPopulated()
         {
             var employeeResponse = ApiResponseDto<List<EmployeeDto>>.SuccessResponse(

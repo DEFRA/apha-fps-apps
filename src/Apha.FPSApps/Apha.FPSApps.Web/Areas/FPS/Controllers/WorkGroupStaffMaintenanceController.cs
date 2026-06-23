@@ -57,12 +57,43 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var filterDict = !string.IsNullOrEmpty(request.Filter)
+            var uiFilterDict = !string.IsNullOrEmpty(request.Filter)
                 ? JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter)
                 : null;
 
+            var apiFilterDict = uiFilterDict != null
+                ? new Dictionary<string, string>(uiFilterDict, StringComparer.OrdinalIgnoreCase)
+                : null;
+
+            if (apiFilterDict != null)
+            {
+                if (apiFilterDict.TryGetValue("StaffName", out var staffNameValue) && !string.IsNullOrWhiteSpace(staffNameValue))
+                {
+                    apiFilterDict["Name"] = staffNameValue;
+                }
+
+                if (apiFilterDict.TryGetValue("WgGrade", out var wgGradeValue) && !string.IsNullOrWhiteSpace(wgGradeValue))
+                {
+                    apiFilterDict["WorkGroupGrade"] = wgGradeValue;
+                }
+
+                request.Filter = JsonConvert.SerializeObject(apiFilterDict);
+            }
+
+            var uiSortBy = request.SortBy;
+            request.SortBy = request.SortBy switch
+            {
+                "StaffName" => "Name",
+                "WgGrade" => "WorkGroupGrade",
+                _ => request.SortBy
+            };
+
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var gridConfig = await GetWorkGroupStaffGridConfigAsync(queryParameters, filterDict);
+            var gridConfig = await GetWorkGroupStaffGridConfigAsync(queryParameters, uiFilterDict);
+            if (gridConfig.Pagination != null)
+            {
+                gridConfig.Pagination.SortColumn = uiSortBy;
+            }
 
             return PartialView("_DataGrid", gridConfig);
         }
