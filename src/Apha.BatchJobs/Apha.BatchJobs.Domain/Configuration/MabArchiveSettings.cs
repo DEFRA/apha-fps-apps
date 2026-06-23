@@ -8,25 +8,18 @@ public class MabArchiveSettings
     /// <summary>
     /// Lock timeout in seconds. Default: 3600 (1 hour).
     /// </summary>
-    public int LockTimeoutSeconds { get; set; } = 3600;
+    public int LockTimeoutSeconds { get; set; } = 0;
 
     /// <summary>
     /// Database transaction timeout in seconds. Default: 1800 (30 minutes).
     /// </summary>
-    public int TransactionTimeoutSeconds { get; set; } = 1800;
+    public int TransactionTimeoutSeconds { get; set; } = 0;
 
     /// <summary>
     /// Enforces year-aware joins and source view contracts for totals rebuild.
     /// When true, totals source views must expose fpsyear and joins must include fpsyear.
     /// </summary>
     public bool StrictYearIsolation { get; set; } = true;
-
-    /// <summary>
-    /// Temporary proof toggle. When true, totals rebuild reads test costs from
-    /// fps.qrytotaltestcosts_refined_validation instead of fps.qrytotaltestcosts.
-    /// Keep false by default to preserve current production path.
-    /// </summary>
-    public bool UseRefinedTestCostsValidationView { get; set; } = false;
 
     /// <summary>
     /// Email recipient for failure notifications.

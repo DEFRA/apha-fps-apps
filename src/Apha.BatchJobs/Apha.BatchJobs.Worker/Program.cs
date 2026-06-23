@@ -536,13 +536,13 @@ static string GetExceptionTypePrefix(Exception ex, IConfiguration? config = null
 static int ResolveIntSetting(IConfiguration configuration, string configKey, string envVarName, int defaultValue)
 {
     var envValue = Environment.GetEnvironmentVariable(envVarName);
-    if (!string.IsNullOrWhiteSpace(envValue) && int.TryParse(envValue, out var parsedEnv) && parsedEnv > 0)
+    if (!string.IsNullOrWhiteSpace(envValue) && int.TryParse(envValue, out var parsedEnv) && parsedEnv >= 0)
     {
         return parsedEnv;
     }
 
     var configValue = configuration.GetValue<int?>(configKey);
-    if (configValue.HasValue && configValue.Value > 0)
+    if (configValue.HasValue && configValue.Value >= 0)
     {
         return configValue.Value;
     }

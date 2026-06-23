@@ -145,20 +145,8 @@ SELECT EXISTS(
             await DeleteWithYearAsync(_context.MaDstMyFpsYearTotals.Where(x => x.Year == targetYear), "mabarchive.my_fpsyeartotals");
             await DeleteWithYearAsync(_context.MaDstTlkpYear.Where(x => x.Year == targetYear), "mabarchive.tlkpyear");
 
-            // Special handling for G_tlkpProject: project-based delete matching FPS source projects
-            // (not year-based, but included in baseline scope per sp_DeleteYearsFPSData)
-            _logger.LogInformation("Deleting table mabarchive.g_tlkpproject using project keys for year {Year}", targetYear);
-            var yearProjectKeys = _context.MaSrcTlkpProject
-                .Where(p => p.FpsYear == targetYear)
-                .Select(p => p.ParentProject)
-                .Distinct();
-
-            var projectDeleteCount = await _context.MaDstGTlkpProject
-                .Where(p => yearProjectKeys.Contains(p.ParentProject))
-                .ExecuteDeleteAsync(cancellationToken);
-
-            totalRowsAffected += projectDeleteCount;
-            _logger.LogInformation("Deleted {RowCount} rows from mabarchive.g_tlkpproject (project-based delete for year {Year})", projectDeleteCount, targetYear);
+            // Guard: g_tlkpproject is a global/master reference table shared across years.
+            // Never delete it as part of year-scoped cleanup.
 
             _logger.LogInformation("Deleted {TotalRowCount} total rows from archive tables for year {Year} (baseline parity scope)", totalRowsAffected, targetYear);
             return totalRowsAffected;

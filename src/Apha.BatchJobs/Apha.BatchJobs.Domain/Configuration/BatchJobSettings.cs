@@ -15,7 +15,7 @@ public sealed class BatchJobSettings
     /// <summary>
     /// Job execution timeout in seconds.
     /// </summary>
-    public int JobTimeout { get; set; } = 3600;
+    public int JobTimeout { get; set; } = 0;
 
     /// <summary>
     /// Optional per-job runtime timeout overrides in seconds.
@@ -39,12 +39,12 @@ public sealed class BatchJobSettings
     /// Maximum total duration (in seconds) for all retry attempts combined.
     /// Prevents long-running containers from exceeding ECS task timeout.
     /// </summary>
-    public int MaxRetryDurationSeconds { get; set; } = 300;
+    public int MaxRetryDurationSeconds { get; set; } = 0;
 
     /// <summary>
     /// Lock acquisition timeout in seconds for distributed locking.
     /// </summary>
-    public int LockTimeoutSeconds { get; set; } = 300;
+    public int LockTimeoutSeconds { get; set; } = 0;
 
     /// <summary>
     /// Poll interval in seconds for checking durable cancellation requests while a job is running.

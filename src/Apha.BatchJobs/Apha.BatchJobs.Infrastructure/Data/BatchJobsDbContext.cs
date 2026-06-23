@@ -90,7 +90,6 @@ public class BatchJobsDbContext : DbContext
     internal DbSet<RsQryTotalAnimalCostsView> RsQryTotalAnimalCosts { get; set; }
     internal DbSet<RsQryTotalStaffCostsView> RsQryTotalStaffCosts { get; set; }
     internal DbSet<RsQryTotalTestCostsView> RsQryTotalTestCosts { get; set; }
-    internal DbSet<RsQryTotalTestCostsRefinedValidationView> RsQryTotalTestCostsRefinedValidation { get; set; }
     internal DbSet<RsProjectMonthTable> RsProjectMonth { get; set; }
     internal DbSet<RsTimeCostCalcsTable> RsTimeCostCalcs { get; set; }
     internal DbSet<RsProjectMonthCaseworkTable> RsProjectMonthCasework { get; set; }
@@ -928,13 +927,13 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<MaDstMyTblAnimalReq>(entity =>
         {
             entity.ToTable("my_tblanimalreq", schema: "mabarchive");
-            entity.HasKey(e => new { e.Year, e.ArCounter });
+            entity.HasKey(e => e.ArCounter);
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
             entity.Property(e => e.AnimalType).HasColumnName("animaltype");
             entity.Property(e => e.NumberOfDays).HasColumnName("numberofdays");
             entity.Property(e => e.NumberOfAnimals).HasColumnName("numberofanimals");
-            entity.Property(e => e.ArCounter).HasColumnName("ar_counter");
+            entity.Property(e => e.ArCounter).HasColumnName("ar_counter").ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<MaSrcTblContract>(entity =>
@@ -1763,15 +1762,6 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsQryTotalTestCostsView>(entity =>
         {
             entity.ToView("qrytotaltestcosts", schema: "fps");
-            entity.HasNoKey();
-            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
-            entity.Property(e => e.JobCode).HasColumnName("jobcode");
-            entity.Property(e => e.TotalTestCosts).HasColumnName("totaltestcosts");
-        });
-
-        modelBuilder.Entity<RsQryTotalTestCostsRefinedValidationView>(entity =>
-        {
-            entity.ToView("qrytotaltestcosts_refined_validation", schema: "fps");
             entity.HasNoKey();
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");

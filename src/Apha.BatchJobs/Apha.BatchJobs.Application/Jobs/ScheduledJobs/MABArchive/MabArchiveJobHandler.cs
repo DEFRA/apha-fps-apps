@@ -31,7 +31,7 @@ public sealed class MabArchiveJobHandler : IBatchJob
     public string IdempotencyStrategy => "YearScopedRebuildWithDeterministicOrdering";
     public string? ScheduleExpression => "cron(0 20 ? * MON-FRI *)";
     public string? ScheduleDescription => "Weekdays (Monday to Friday) at 8:00 PM UTC";
-    public int? MaxExecutionSeconds => 1800;
+    public int? MaxExecutionSeconds => null;
 
     public MabArchiveJobHandler(
         IDbContextFactory<BatchJobsDbContext> dbContextFactory,

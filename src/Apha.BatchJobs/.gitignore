@@ -32,5 +32,12 @@ appsettings.local.json
 appsettings.Local.json
 **/appsettings.Local.json
 
+# Local docs notes
+docs/
+
+# Local DB verification/investigation scripts (may contain hardcoded credentials)
+verify_cloud_db.csx
+query_db.sql
+
 # Rider
 .idea/

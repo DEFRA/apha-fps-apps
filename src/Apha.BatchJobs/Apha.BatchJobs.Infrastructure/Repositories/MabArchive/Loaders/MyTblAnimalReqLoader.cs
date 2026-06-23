@@ -11,6 +11,11 @@ internal sealed class MyTblAnimalReqLoader : MabArchiveExecutionLoaderBase
 
     protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
+        // Ensure loader-level idempotency if orchestration retries resume after a partial load.
+        await context.MaDstMyTblAnimalReq
+            .Where(x => x.Year == year)
+            .ExecuteDeleteAsync(cancellationToken);
+
         // Keep source insertion order so explicit ar_counter values match SQL loader behavior.
         var sourceRows = await context.MaSrcTblAnimalReq
             .AsNoTracking()
@@ -23,64 +28,24 @@ internal sealed class MyTblAnimalReqLoader : MabArchiveExecutionLoaderBase
             return 0;
         }
 
-        var firstCounter = await GetNextArCounterAsync(context, cancellationToken);
+        // Align sequence with live table state to avoid duplicate ar_counter keys.
+        await context.Database.ExecuteSqlRawAsync(
+            "SELECT setval(pg_get_serial_sequence('mabarchive.my_tblanimalreq', 'ar_counter'), COALESCE((SELECT MAX(ar_counter) FROM mabarchive.my_tblanimalreq), 0) + 1, false)",
+            cancellationToken);
 
         var rows = sourceRows
-            .Select((a, index) => new MaDstMyTblAnimalReq
+            .Select(a => new MaDstMyTblAnimalReq
             {
                 Year = year,
                 JobCode = a.JobCode,
                 AnimalType = a.AnimalType,
                 NumberOfDays = a.NumberOfDays,
-                NumberOfAnimals = a.NumberOfAnimals,
-                ArCounter = firstCounter + index
+                NumberOfAnimals = a.NumberOfAnimals
             })
             .ToList();
 
         await context.MaDstMyTblAnimalReq.AddRangeAsync(rows, cancellationToken);
-        var affectedRows = await context.SaveChangesAsync(cancellationToken);
-
-        var lastCounter = firstCounter + rows.Count - 1;
-        await context.Database.ExecuteSqlInterpolatedAsync(
-            $"SELECT setval('mabarchive.my_tblanimalreq_ar_counter_seq', {lastCounter}, true)",
-            cancellationToken);
-
-        return affectedRows;
-    }
-
-    private static async Task<int> GetNextArCounterAsync(BatchJobsDbContext context, CancellationToken cancellationToken)
-    {
-        var connection = context.Database.GetDbConnection();
-        var closeAfter = connection.State != System.Data.ConnectionState.Open;
-
-        if (closeAfter)
-        {
-            await connection.OpenAsync(cancellationToken);
-        }
-
-        try
-        {
-            await using var command = connection.CreateCommand();
-            command.CommandText = "SELECT last_value, is_called FROM mabarchive.my_tblanimalreq_ar_counter_seq";
-
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            if (!await reader.ReadAsync(cancellationToken))
-            {
-                throw new InvalidOperationException("Could not read sequence state for my_tblanimalreq ar_counter.");
-            }
-
-            var lastValue = reader.GetInt64(0);
-            var isCalled = reader.GetBoolean(1);
-            var nextValue = isCalled ? lastValue + 1 : lastValue;
-            return checked((int)nextValue);
-        }
-        finally
-        {
-            if (closeAfter)
-            {
-                await connection.CloseAsync();
-            }
-        }
+        return await context.SaveChangesAsync(cancellationToken);
     }
 }
 

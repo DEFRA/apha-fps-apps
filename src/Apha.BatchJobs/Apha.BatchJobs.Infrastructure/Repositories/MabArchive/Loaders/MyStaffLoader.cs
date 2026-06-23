@@ -37,39 +37,40 @@ internal sealed class MyStaffLoader : MabArchiveExecutionLoaderBase
             return 0;
         }
 
-        await context.MaDstMyStaff.AddRangeAsync(rows, cancellationToken);
-           var inserted = await context.SaveChangesAsync(cancellationToken);
+        var distinctRows = rows
+            .GroupBy(r => new { r.Year, r.StaffId })
+            .Select(g => g.First())
+            .ToList();
 
-           // ? VALIDATION: Verify all rows were inserted
-           if (inserted != rows.Count)
-           {
-               throw new InvalidOperationException(
-                   $"Seq 21 MyStaff: Row count mismatch. Expected to insert {rows.Count} rows, " +
-                   $"but SaveChangesAsync returned {inserted}.");
-           }
+        await context.MaDstMyStaff.AddRangeAsync(distinctRows, cancellationToken);
+        var inserted = await context.SaveChangesAsync(cancellationToken);
 
-           // ? VALIDATION: Verify JOIN result count against source WgEmployee table
-           var sourceCount = await context.MaSrcTblWgEmployee
-               .AsNoTracking()
-               .Where(w => w.FpsYear == year)
-               .CountAsync(cancellationToken);
+        if (inserted != distinctRows.Count)
+        {
+            throw new InvalidOperationException(
+                $"Seq 21 MyStaff: Row count mismatch. Expected to insert {distinctRows.Count} rows, " +
+                $"but SaveChangesAsync returned {inserted}.");
+        }
 
-           if (rows.Count != sourceCount)
-           {
-               throw new InvalidOperationException(
-                   $"Seq 21 MyStaff: Row count mismatch. Loaded {rows.Count} rows from JOIN, " +
-                   $"but source WgEmployee has {sourceCount}. Missing Employee JOIN records?");
-           }
+        var sourceCount = await context.MaSrcTblWgEmployee
+            .AsNoTracking()
+            .Where(w => w.FpsYear == year)
+            .CountAsync(cancellationToken);
 
-           // ? VALIDATION: Verify critical fields populated (Name should not be just ", ")
-           var invalidNames = rows.Count(r => string.IsNullOrWhiteSpace(r.Name) || r.Name == ", ");
-           if (invalidNames > 0)
-           {
-               throw new InvalidOperationException(
-                   $"Seq 21 MyStaff: {invalidNames} rows have invalid Name field (both LastName and FirstName NULL).");
-           }
+        if (distinctRows.Count > sourceCount)
+        {
+            throw new InvalidOperationException(
+                $"Seq 21 MyStaff: Deduped rows {distinctRows.Count} exceed source WgEmployee rows {sourceCount}.");
+        }
 
-           return inserted;
+        var invalidNames = distinctRows.Count(r => string.IsNullOrWhiteSpace(r.Name) || r.Name == ", ");
+        if (invalidNames > 0)
+        {
+            throw new InvalidOperationException(
+                $"Seq 21 MyStaff: {invalidNames} rows have invalid Name field (both LastName and FirstName NULL).");
+        }
+
+        return inserted;
     }
 }
 

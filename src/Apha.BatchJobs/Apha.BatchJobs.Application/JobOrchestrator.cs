@@ -4,7 +4,6 @@ using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -32,10 +31,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly Dictionary<string, int> _jobTimeoutOverridesSeconds;
 
     /// <summary>Default lock timeout in seconds when configuration is missing/invalid.</summary>
-    private const int DefaultLockTimeoutSeconds = 3600;
+    private const int DefaultLockTimeoutSeconds = 0;
 
     /// <summary>Default maximum retry duration in seconds.</summary>
-    private const int DefaultMaxRetryDurationSeconds = 300;
+    private const int DefaultMaxRetryDurationSeconds = 0;
 
     /// <summary>Default cancellation monitor poll interval in seconds.</summary>
     private const int DefaultCancellationPollIntervalSeconds = 2;
@@ -55,7 +54,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _lockRepository = lockRepository ?? throw new ArgumentNullException(nameof(lockRepository));
         _executionRepository = executionRepository ?? throw new ArgumentNullException(nameof(executionRepository));
         _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
-        _lockTimeoutSeconds = settings?.Value.LockTimeoutSeconds > 0
+        _lockTimeoutSeconds = settings?.Value.LockTimeoutSeconds >= 0
             ? settings.Value.LockTimeoutSeconds
             : DefaultLockTimeoutSeconds;
         _retryAttempts = settings?.Value.RetryAttempts >= 0
@@ -64,10 +63,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _retryDelaySeconds = settings?.Value.RetryDelaySeconds >= 0
             ? settings.Value.RetryDelaySeconds
             : 1;
-        _maxRetryDurationSeconds = settings?.Value.MaxRetryDurationSeconds > 0
+        _maxRetryDurationSeconds = settings?.Value.MaxRetryDurationSeconds >= 0
             ? settings.Value.MaxRetryDurationSeconds
             : DefaultMaxRetryDurationSeconds;
-        _defaultJobTimeoutSeconds = settings?.Value.JobTimeout > 0
+        _defaultJobTimeoutSeconds = settings?.Value.JobTimeout >= 0
             ? settings.Value.JobTimeout
             : DefaultLockTimeoutSeconds;
         _cancellationPollIntervalSeconds = settings?.Value.CancellationPollIntervalSeconds > 0
@@ -359,7 +358,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
                     // Check if total retry duration would be exceeded
                     var elapsedRetrySeconds = (DateTime.UtcNow - retryStartedAt).TotalSeconds;
-                    if (elapsedRetrySeconds >= _maxRetryDurationSeconds)
+                    if (_maxRetryDurationSeconds > 0 && elapsedRetrySeconds >= _maxRetryDurationSeconds)
                     {
                         _logger.LogError(ex,
                             "Job '{JobName}' retry duration capped | Attempt={Attempt}/{TotalAttempts} | ElapsedRetrySeconds={ElapsedSeconds} | MaxRetrySeconds={MaxSeconds} | JobQueueId={JobQueueId}",
@@ -582,46 +581,10 @@ public sealed class JobOrchestrator : IJobOrchestrator
         HttpRequestException => true,                  // Network/HTTP transient error
         System.Net.Sockets.SocketException => true,   // Network socket failure
         IOException => true,                           // Transient I/O error
-
-        // EF execution strategy exhausted retries. Retry only when root cause is transient infra.
-        RetryLimitExceededException retryLimitExceededException
-            => HasTransientInfrastructureCause(retryLimitExceededException.InnerException),
-
-        // Wrapper exception: allow retry when an inner transient infra cause is present.
-        AggregateException aggregateException
-            => aggregateException.InnerExceptions.Any(HasTransientInfrastructureCause),
         
-        // Default: do NOT retry unless an inner transient infra cause is present.
-        _ => HasTransientInfrastructureCause(ex.InnerException)
+        // Default: do NOT retry (fail-safe: assume permanent unless proven transient)
+        _ => false
     };
-
-    private static bool HasTransientInfrastructureCause(Exception? ex)
-    {
-        if (ex is null)
-        {
-            return false;
-        }
-
-        if (ex is AggregateException aggregateException)
-        {
-            return aggregateException.InnerExceptions.Any(HasTransientInfrastructureCause);
-        }
-
-        for (var current = ex; current is not null; current = current.InnerException)
-        {
-            if (current is TimeoutException
-                or NpgsqlException
-                or DbUpdateException
-                or HttpRequestException
-                or System.Net.Sockets.SocketException
-                or IOException)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     private int? ResolveRuntimeTimeoutSeconds(IBatchJob job)
     {

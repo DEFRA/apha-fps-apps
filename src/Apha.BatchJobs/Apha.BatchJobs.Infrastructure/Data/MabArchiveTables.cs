@@ -232,7 +232,7 @@ internal sealed class MaSrcProjSubContract
     public int SubContCounter { get; set; }
     public required string Project { get; set; }
     public string? TestJob { get; set; }
-    public double Month { get; set; }
+    public double? Month { get; set; }
     public decimal? Amount { get; set; }
     public string? WorkGroup { get; set; }
     public string? AcctCode { get; set; }
@@ -249,7 +249,7 @@ internal sealed class MaDstMyProjSubContract
     public int SubContCounter { get; set; }
     public required string Project { get; set; }
     public string? TestJob { get; set; }
-    public double Month { get; set; }
+    public double? Month { get; set; }
     public decimal? Amount { get; set; }
     public string? WorkGroup { get; set; }
     public string? AcctCode { get; set; }

@@ -320,4 +320,52 @@ public sealed class EfCoreMappingTests
         var dateCreated = projectAll.FindProperty("DateCreated")!;
         Assert.Equal("date", dateCreated.GetColumnType());
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // single-db / schema guardrails
+    // ─────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void All_Mapped_Store_Objects_Should_Use_Only_Fps_Or_Mabarchive_Schema()
+    {
+        using var ctx = new BatchJobsDbContext(_options);
+
+        var invalid = ctx.Model.GetEntityTypes()
+            .Where(e => e.GetTableName() is not null || e.GetViewName() is not null)
+            .Select(e => new
+            {
+                Entity = e.Name,
+                Schema = e.GetSchema()
+            })
+            .Where(x => x.Schema is not null && x.Schema != "fps" && x.Schema != "mabarchive")
+            .ToList();
+
+        Assert.True(
+            invalid.Count == 0,
+            $"Unexpected schema mappings found: {string.Join(", ", invalid.Select(i => $"{i.Entity}:{i.Schema}"))}");
+    }
+
+    [Fact]
+    public void Mabarchive_Tables_Should_Be_Year_Scoped_Except_Approved_Global_Master_Tables()
+    {
+        using var ctx = new BatchJobsDbContext(_options);
+
+        var approvedGlobalMasterTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "g_tlkpproject"
+        };
+
+        var invalid = ctx.Model.GetEntityTypes()
+            .Where(e => string.Equals(e.GetSchema(), "mabarchive", StringComparison.OrdinalIgnoreCase))
+            .Where(e => e.GetTableName() is not null)
+            .Where(e => !approvedGlobalMasterTables.Contains(e.GetTableName()!))
+            .Where(e => e.FindProperty("Year") is null)
+            .Select(e => e.GetTableName()!)
+            .OrderBy(n => n)
+            .ToList();
+
+        Assert.True(
+            invalid.Count == 0,
+            $"Mabarchive tables missing required Year column mapping: {string.Join(", ", invalid)}");
+    }
 }

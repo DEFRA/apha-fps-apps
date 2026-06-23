@@ -50,9 +50,13 @@ public class BatchLockRepository : IBatchLockRepository
         // Attempt atomic insert without raising an error on contention.
         // With uq_job_lock_job_name_active (partial unique on active rows),
         // this returns 1 when lock is acquired and 0 when already held.
+        var expiresAt = timeoutSeconds > 0
+            ? now.AddSeconds(timeoutSeconds)
+            : DateTime.MaxValue;
+
         var insertedRows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
             INSERT INTO fps.job_lock (acquired_at, expires_at, job_name, jobqueueid, is_active)
-            VALUES ({now}, {now.AddSeconds(timeoutSeconds)}, {jobName}, {jobQueueId}, TRUE)
+            VALUES ({now}, {expiresAt}, {jobName}, {jobQueueId}, TRUE)
             ON CONFLICT DO NOTHING;", cancellationToken);
 
         if (insertedRows > 0)
