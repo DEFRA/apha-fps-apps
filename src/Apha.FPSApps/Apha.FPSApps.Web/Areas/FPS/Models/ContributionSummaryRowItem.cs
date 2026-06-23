@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 6, Width = 85, Type = GridColumnType.DoubleNumber)]
         public double? Hrs { get; set; }
 
-        [Display(Name = "FEC (£)")]
+        [Display(Name = "FEC")]
         [GridColumn(Order = 7, Width = 100, Type = GridColumnType.GbpValue)]
         public decimal? Fec { get; set; }
 
@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Order = 9, Width = 85, Type = GridColumnType.DoubleNumber)]
         public double? AppHours { get; set; }
 
-        [Display(Name = "App FEC (£)")]
+        [Display(Name = "App FEC")]
         [GridColumn(Order = 10, Width = 100, Type = GridColumnType.GbpValue)]
         public decimal? AppFec { get; set; }
 

@@ -28,5 +28,4 @@ CREATE OR REPLACE VIEW fps.vqryfrmtimesellerpc AS
      JOIN fps.tblwgemployee ON (((workgroupgrade.wggrade)::text = (tblwgemployee.workgroupgrade)::text) AND (workgroupgrade.fpsyear = tblwgemployee.fpsyear))
      LEFT JOIN fps.vapphours ON (((workgroupgrade.wggrade)::text = (vapphours.workgroupgrade)::text) AND (workgroupgrade.fpsyear = vapphours.fpsyear))
      LEFT JOIN fps.vstaffjobhours ON (((tblwgemployee.pactid)::text = (vstaffjobhours.staffid)::text) AND (tblwgemployee.fpsyear = vstaffjobhours.fpsyear))
-  WHERE ((tblusers.dt2username)::text = CURRENT_USER)
   GROUP BY tblkpprofitcentre.conttarget, profitcentregrade.profitcentre, profitcentregrade.chargerate, profitcentregrade.ohr, vqrytbidsum.sumofgenbid, workgroupgrade.workgroup, workgroupgrade.profitcentregrade, workgroupgrade.wggrade, vapphours.sumofplannedhours, tblwgemployee.fpsyear, tblusers.user_id, tblusers.dt2username, tblusers.useremail;
