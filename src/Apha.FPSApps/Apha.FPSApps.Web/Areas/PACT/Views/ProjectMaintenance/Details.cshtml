@@ -379,14 +379,14 @@
                     // Only validate editable fields (skip BudgetCvl as it's readonly)
                     if (editableDecimalFields.indexOf(key) !== -1 && !isNaN(parsed)) {
                         if (parsed < 0 || parsed > maxMoney) {
-                            validationError = key + ' must be between £0 and £92,233,720,368,547,758.07.';
+                            validationError = key + '  value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.';
                             return;
                         }
 
                         // Check decimal places
                         var decimalPart = parsed.toString().split('.')[1];
                         if (decimalPart && decimalPart.length > 2) {
-                            validationError = key + ' must have at most 2 decimal places.';
+        validationError = key + '  value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.';
                             return;
                         }
                     }

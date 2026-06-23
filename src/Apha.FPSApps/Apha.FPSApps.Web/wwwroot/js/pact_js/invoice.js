@@ -115,6 +115,38 @@ function saveInvoice() {
         if (data[f] === '' || data[f] === undefined) data[f] = null;
     });
 
+    // Validate money fields against PostgreSQL money limits
+    var moneyFields = ['Amount', 'CostOfWork', 'Wip', 'ProfitLoss'];
+    var maxMoney = 92233720368547758.07;
+
+    for (var i = 0; i < moneyFields.length; i++) {
+        var fieldName = moneyFields[i];
+        var fieldValue = data[fieldName];
+
+        if (fieldValue !== null && fieldValue !== undefined) {
+            var parsedValue = parseFloat(fieldValue);
+
+            if (isNaN(parsedValue)) {
+                showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+                return;
+            }
+            if (parsedValue < 0 || parsedValue > maxMoney) {
+                showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+                return;
+            }
+
+            // Check decimal places
+            var decimalPart = parsedValue.toString().split('.')[1];
+            if (decimalPart && decimalPart.length > 2) {
+                showGovukAlert(fieldName.replace(/([A-Z])/g, ' $1').trim() + ' must have at most 2 decimal places.');
+                return;
+            }
+
+            // Ensure we send a proper decimal, not scientific notation
+            data[fieldName] = parsedValue;
+        }
+    }
+
     $.ajax({
         url: '/PACT/Invoice/SaveInvoice',
         type: 'POST',

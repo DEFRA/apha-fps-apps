@@ -173,11 +173,11 @@
                 var maxMoney = 92233720368547758.07;
 
                 if (isNaN(unitPrice)) {
-                    showGovukAlert('Unit Price must be a valid number.');
+        showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
                     return;
                 }
                 if (unitPrice < 0 || unitPrice > maxMoney) {
-                    showGovukAlert('Unit Price must be between £0 and £92,233,720,368,547,758.07.');
+                    showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
                     return;
                 }
 
