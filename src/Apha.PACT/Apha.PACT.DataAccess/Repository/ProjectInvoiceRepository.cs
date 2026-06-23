@@ -24,7 +24,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             if (!string.IsNullOrEmpty(parentProject))
             {
-                queryInvoices = queryInvoices.Where(i => EF.Functions.ILike(i.ProjectParent, parentProject));
+                queryInvoices = queryInvoices.Where(x => x.ProjectParent != null && x.ProjectParent.ToLower() == parentProject.ToLower());
             }
 
             queryInvoices = ApplyInvoiceFilter(queryInvoices, query.Filter);
@@ -37,7 +37,7 @@ namespace Apha.PACT.DataAccess.Repository
         {
             IQueryable<ProjectInvoice> query = _context.ProjectInvoices.AsNoTracking();
             if (!string.IsNullOrEmpty(parentProject))
-                query = query.Where(i => EF.Functions.ILike(i.ProjectParent, parentProject));
+                query = query.Where(i => i.ProjectParent == parentProject);
             return (await query.SumAsync(i => i.Amount)) ?? 0m;
         }
 

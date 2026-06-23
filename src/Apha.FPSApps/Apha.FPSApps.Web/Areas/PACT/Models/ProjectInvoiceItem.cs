@@ -5,12 +5,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
     public class ProjectInvoiceItem
     {
-        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
-        public int InvoiceCounter { get; set; }
-
         [Required(ErrorMessage = "Project is required")]
         [Display(Name = "Project")]
-        [GridColumn(Order = 1, Width = 289, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 1, Width = 289, Type = GridColumnType.Text)]
         public string ProjectParent { get; set; } = null!;
 
         [Required(ErrorMessage = "Month is required")]
@@ -36,6 +33,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         [Display(Name = "Invoice Counter")]
         [GridColumn(Order = 8, Width = 159, Type = GridColumnType.Number)]
-        public int Counter { get; set; }
+        public int InvoiceCounter { get; set; }
     }
 }

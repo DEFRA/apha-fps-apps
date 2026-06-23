@@ -45,7 +45,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _mapper.Map<List<ProjectInvoiceItem>>(Arg.Any<List<ProjectInvoiceDto>>())
+            _mapper.Map<List<InvoiceItem>>(Arg.Any<List<ProjectInvoiceDto>>())
                 .Returns([]);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
@@ -80,7 +80,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             {
                 new() { ProjectParent = parentProject, Month = month, Amount = 1000m }
             };
-            var invoiceItems = new List<ProjectInvoiceItem>
+            var invoiceItems = new List<InvoiceItem>
             {
                 new() { ProjectParent = parentProject, Month = month, Amount = 1000m }
             };
@@ -91,7 +91,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             SetupMonthsList([]);
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(new QueryParameters<string>());
-            _mapper.Map<List<ProjectInvoiceItem>>(invoices)
+            _mapper.Map<List<InvoiceItem>>(invoices)
                 .Returns(invoiceItems);
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel());
@@ -180,7 +180,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partial.ViewName);
-            Assert.IsType<DataGridConfig<ProjectInvoiceItem>>(partial.Model);
+            Assert.IsType<DataGridConfig<InvoiceItem>>(partial.Model);
         }
 
         [Fact]
@@ -252,7 +252,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditInvoice", partial.ViewName);
-            var model = Assert.IsType<ProjectInvoiceItem>(partial.Model);
+            var model = Assert.IsType<InvoiceItem>(partial.Model);
             Assert.Equal(parentProject, model.ProjectParent);
             Assert.Equal(0, model.InvoiceCounter);
         }
@@ -268,7 +268,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<ProjectInvoiceItem>(partial.Model);
+            var model = Assert.IsType<InvoiceItem>(partial.Model);
             Assert.Equal(string.Empty, model.ProjectParent);
         }
 
@@ -284,7 +284,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
                 Month = 4,
                 Amount = 2500m
             };
-            var viewModel = new ProjectInvoiceItem
+            var viewModel = new InvoiceItem
             {
                 InvoiceCounter = invoiceId,
                 ProjectParent = "PRJ001",
@@ -294,7 +294,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
 
             _invoiceService.GetByIdAsync(invoiceId)
                 .Returns(ApiResponseDto<ProjectInvoiceDto>.SuccessResponse(dto));
-            _mapper.Map<ProjectInvoiceItem>(dto).Returns(viewModel);
+            _mapper.Map<InvoiceItem>(dto).Returns(viewModel);
             SetupProjectsList([]);
 
             // Act
@@ -303,7 +303,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_AddEditInvoice", partial.ViewName);
-            var model = Assert.IsType<ProjectInvoiceItem>(partial.Model);
+            var model = Assert.IsType<InvoiceItem>(partial.Model);
             Assert.Equal(invoiceId, model.InvoiceCounter);
             Assert.Equal("PRJ001", model.ProjectParent);
         }
@@ -360,7 +360,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
         public async Task SaveInvoice_CounterIsZero_CallsCreateService_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new ProjectInvoiceItem
+            var model = new InvoiceItem
             {
                 InvoiceCounter = 0,
                 ProjectParent = "PRJ001",
@@ -392,7 +392,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
         public async Task SaveInvoice_CounterIsNonZero_CallsUpdateService_ReturnsSuccessJson()
         {
             // Arrange
-            var model = new ProjectInvoiceItem
+            var model = new InvoiceItem
             {
                 InvoiceCounter = 10,
                 ProjectParent = "PRJ002",
@@ -421,7 +421,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
         public async Task SaveInvoice_ServiceReturnsFailure_ReturnsFailureJson()
         {
             // Arrange
-            var model = new ProjectInvoiceItem { InvoiceCounter = 0, ProjectParent = "PRJ001", Month = 1 };
+            var model = new InvoiceItem { InvoiceCounter = 0, ProjectParent = "PRJ001", Month = 1 };
             var dto = new ProjectInvoiceDto();
             var errors = new List<ApiErrorDto>
             {
@@ -450,7 +450,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             _controller.ModelState.AddModelError("Amount", "Amount must be positive");
 
             // Act
-            var result = await _controller.SaveInvoice(new ProjectInvoiceItem());
+            var result = await _controller.SaveInvoice(new InvoiceItem());
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -468,7 +468,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.InvoiceControllerTest
             _controller.ModelState.AddModelError("Month", "Month is required");
 
             // Act
-            var result = await _controller.SaveInvoice(new ProjectInvoiceItem());
+            var result = await _controller.SaveInvoice(new InvoiceItem());
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);

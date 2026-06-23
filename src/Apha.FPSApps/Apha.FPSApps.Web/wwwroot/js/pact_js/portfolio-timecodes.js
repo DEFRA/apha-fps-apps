@@ -37,7 +37,7 @@ function onPortfolioChange(parentProject) {
 
 function addJobCode() {
     if (!currentParentProject) {
-        alert('Please select a portfolio first.');
+        showGovukAlert('Please select a portfolio first.');
         return;
     }
 
@@ -47,7 +47,7 @@ function addJobCode() {
             $('#modalPopup').addClass('show');
         })
         .fail(function (xhr, status, error) {
-            alert('Failed to load add job code form.');
+            showGovukAlert('Failed to load add job code form.');
         });
 }
 
@@ -59,7 +59,7 @@ function editJobCode(btn) {
             $('#modalPopup').addClass('show');
         })
         .fail(function () {
-            alert('Failed to load edit job code form.');
+            showGovukAlert('Failed to load edit job code form.');
         });
 }
 
@@ -119,14 +119,18 @@ function saveJobCode() {
         success: function (response) {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
-                showGovukAlert(response.message || 'Job code saved successfully.');
+                if (isEdit) {
+                    showGovukAlert(response.message || 'Job code updated successfully.');
+                } else {
+                    showGovukAlert(response.message || 'Job code saved successfully.');
+                }
                 refreshJobCodeGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#jobCodeForm');
             }
         },
         error: function () {
-            alert('Failed to save job code.');
+            showGovukAlert('Failed to save job code.');
         }
     });
 }
@@ -135,7 +139,7 @@ function selectJobCode(row) {
     var jobCodeId = $(row).data('id');
 
     if (!jobCodeId) {
-        alert('Error: Could not get Job Code ID from selected row');
+        showGovukAlert('Error: Could not get Job Code ID from selected row');
         return;
     }
 
@@ -158,7 +162,7 @@ function selectTimeCode(row) {
 
 function addTimeCode() {
     if (!currentParentProject) {
-        alert('Please select a portfolio first.');
+        showGovukAlert('Please select a portfolio first.');
         return;
     }
 
@@ -171,7 +175,7 @@ function addTimeCode() {
             $('#modalPopup').addClass('show');
         })
         .fail(function () {
-            alert('Failed to load add time code form.');
+            showGovukAlert('Failed to load add time code form.');
         });
 }
 
@@ -181,17 +185,17 @@ function editTimeCode(btn) {
     var workGroup = $row.find('[data-property="WorkGroup"]').text().trim();
 
     if (!timeCode) {
-        alert('Error: Could not get Time Code from button');
+        showGovukAlert('Error: Could not get Time Code from button');
         return;
     }
 
     if (!workGroup) {
-        alert('Error: Could not get Work Group from row. Please ensure the grid has loaded correctly.');
+        showGovukAlert('Error: Could not get Work Group from row. Please ensure the grid has loaded correctly.');
         return;
     }
 
     if (!currentParentProject) {
-        alert('Error: Parent project is not set.');
+        showGovukAlert('Error: Parent project is not set.');
         return;
     }
 
@@ -220,7 +224,7 @@ function editTimeCode(btn) {
                 errorMessage = 'Error: ' + xhr.responseText;
             }
 
-            alert(errorMessage);
+            showGovukAlert(errorMessage);
         });
 }
 
@@ -290,14 +294,18 @@ function saveTimeCode() {
         success: function (response) {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
-                showGovukAlert(response.message || 'Time code saved successfully.');
+                if (isEdit) {
+                    showGovukAlert(response.message || 'Time code updated successfully.');
+                } else { 
+                    showGovukAlert(response.message || 'Time code saved successfully.');
+                }
                 refreshTimeCodeGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#timeCodeForm');
             }
         },
         error: function () {
-            alert('Failed to save time code.');
+            showGovukAlert('Failed to save time code.');
         }
     });
 }
