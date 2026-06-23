@@ -1,3 +1,24 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - Added AddScoped<IWorkgroupMaintenanceService, WorkgroupMaintenanceService>() to AddServices()
+ *   - Registration placed alphabetically near other WorkGroup* service registrations
+ *   - IWorkgroupMaintenanceService is in Apha.FPSApps.Application.Interfaces.FPS namespace
+ *   - WorkgroupMaintenanceService is in Apha.FPSApps.Application.Services.FPS namespace
+ *   - DISTINCT from IWorkGroupService (PACT namespace, read-only) — FPS WorkGroup Maintenance CRUD only
+ *
+ * PRESERVED:
+ *   - All existing service registrations unchanged
+ *   - Fully-qualified PACT IWorkGroupService disambiguation unchanged (line 81 original)
+ *   - AddRepositories() empty stub unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: none — fully automated registration.
+ */
+
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -78,6 +99,9 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectMonthService, ProjectMonthService>();
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<IWorkGroupReportEmailService, WorkGroupReportEmailService>();
+            // TRANSFORMENGINE: IWorkgroupMaintenanceService registered — Phase 10 (Step 15c)
+            // FPS CRUD maintenance service for frmMaintWorkGroup2 (distinct from PACT IWorkGroupService read-only lookup)
+            services.AddScoped<IWorkgroupMaintenanceService, WorkgroupMaintenanceService>();
             services.AddScoped<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService, Apha.FPSApps.Application.Services.PACT.WorkGroupService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();

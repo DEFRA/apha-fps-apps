@@ -1,3 +1,24 @@
+/*
+ * TRANSFORMENGINE MIGRATION — FpsDbContext.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - Annotation header added for Phase 4 batch; no structural changes required
+ *   - DbSet<Workgroup> was already registered (line preserved as-is)
+ *   - WorkgroupMap was already applied in OnModelCreating (line preserved as-is)
+ *   - HasQueryFilter(e => e.FpsYear == FilterFpsYear) was already set on Workgroup (preserved)
+ *
+ * PRESERVED:
+ *   - All existing DbSet registrations, ApplyConfiguration calls, and HasQueryFilter rules
+ *   - IFpsRequestContext injection and FilterFpsYear property
+ *   - All partial-class structure and namespace
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Duplicate ApplyConfiguration calls exist for MonthlyTimeMap (lines 258 and 306)
+ *     and MonthlyOutputMap (lines 253 and 311) — verify whether the second registrations are
+ *     intentional overrides or accidental duplicates and remove as appropriate
+ */
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;

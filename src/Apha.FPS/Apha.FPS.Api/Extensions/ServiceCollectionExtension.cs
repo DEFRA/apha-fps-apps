@@ -1,3 +1,21 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - Registered IWorkgroupService / WorkgroupService (scoped) in AddServices()
+ *   - Registered IWorkgroupRepository / WorkgroupRepository (scoped) in AddRepositories()
+ *   - Both registrations required for WorkgroupController (frmMaintWorkGroup2 migration)
+ *
+ * PRESERVED:
+ *   - All pre-existing service and repository registrations unchanged
+ *   - Extension method signatures and return types unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - none — fully automated for this phase
+ */
+
 using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;
@@ -53,6 +71,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
+            // TRANSFORMENGINE: IWorkgroupService/WorkgroupService registered — Phase 5 frmMaintWorkGroup2 migration
+            services.AddScoped<IWorkgroupService, WorkgroupService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -91,6 +111,8 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectGroupStaffPlanRepository, ProjectGroupStaffPlanRepository>();
             services.AddScoped<IBudgetBidsRepository, BudgetBidsRepository>();
             services.AddScoped<IPurchasesRepository, PurchasesRepository>();
+            // TRANSFORMENGINE: IWorkgroupRepository/WorkgroupRepository registered — Phase 5 frmMaintWorkGroup2 migration
+            services.AddScoped<IWorkgroupRepository, WorkgroupRepository>();
             return services;
 
         }

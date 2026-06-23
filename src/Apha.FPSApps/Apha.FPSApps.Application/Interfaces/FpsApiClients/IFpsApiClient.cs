@@ -29,5 +29,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsPurchasesApiClient FpsPurchases { get; }
         // TRANSFORMENGINE: FpsGrade added
         IFpsGradeApiClient FpsGrade { get; }
+        // TRANSFORMENGINE: FpsWorkgroupMaintenance added — Phase 7; WorkGroup Maintenance CRUD + lookups (frmMaintWorkGroup2)
+        IFpsWorkgroupApiClient FpsWorkgroupMaintenance { get; }
     }
 }

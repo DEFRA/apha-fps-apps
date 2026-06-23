@@ -1,3 +1,22 @@
+/*
+ * TRANSFORMENGINE MIGRATION — FpsApiClient.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - UPDATED FILE: FpsWorkgroupMaintenance property null! stub replaced with real FpsWorkgroupApiClient instance
+ *   - FpsWorkgroupMaintenance constructor assignment added (FpsWorkgroupApiClient for frmMaintWorkGroup2 → api/v1/workgroup)
+ *   - TODO STUB comment removed; property no longer carries = null! initializer
+ *
+ * PRESERVED:
+ *   - All existing property declarations and constructor assignments unchanged
+ *   - Aggregate client pattern: single IFpsHttpExecutor + IMapper passed to every sub-client
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: FpsWorkgroupGrade and FpsWorkGroupGrade both assigned FpsWorkGroupGradeApiClient —
+ *     confirm this duplication is intentional (two interface properties, same implementation) and not a copy-paste error
+ */
+
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
@@ -35,8 +54,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         public IFpsPurchasesApiClient FpsPurchases { get; }
 
-        // TRANSFORMENGINE: FpsGrade added � Phase 9 (FpsGradeApiClient for frmMaintGrade ? api/v1/Grade)
+        // TRANSFORMENGINE: FpsGrade added � Phase 9 (FpsGradeApiClient for frmMaintGrade ? api/v1/Grade)
         public IFpsGradeApiClient FpsGrade { get; }
+
+        // TRANSFORMENGINE: FpsWorkgroupMaintenance wired — Phase 9 (FpsWorkgroupApiClient for frmMaintWorkGroup2 → api/v1/workgroup)
+        public IFpsWorkgroupApiClient FpsWorkgroupMaintenance { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -68,6 +90,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
             // TRANSFORMENGINE: FpsGrade wired
             FpsGrade = new FpsGradeApiClient(http, mapper);
+            // TRANSFORMENGINE: FpsWorkgroupMaintenance wired — Phase 9 (replaces null! stub added in Phase 7)
+            FpsWorkgroupMaintenance = new FpsWorkgroupApiClient(http, mapper);
         }
     }
 }

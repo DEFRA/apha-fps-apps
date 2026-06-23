@@ -1,0 +1,333 @@
+<!-- TRANSFORMENGINE MIGRATION — _AddEditWorkgroup.cshtml (WorkgroupMaintenance)
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-06-23
+     CHANGED:
+       - NEW FILE: Add/Edit modal partial for WorkGroup Maintenance (frmMaintWorkGroup2)
+       - @@model WorkgroupMaintenanceItem (Phase 11 item class)
+       - isEditMode detected via !string.IsNullOrWhiteSpace(Model?.WorkGroupName) (string PK)
+       - Modal fields derived from HTML prototype formTblWG form + JS wgValidationFields:
+           WorkGroupName (text input, required, editable in Add / editable in Edit = rename support)
+           ProfitCentre  (select, required, AJAX-loaded via GetProfitCentres on modal open)
+           CostCentre    (select, optional, AJAX cascading via GetCostCentres(profitCentre))
+           Owner         (select, optional, AJAX-loaded via GetOwners on modal open)
+           Description   (text input, optional)
+           CentralOverhead (£-prefixed text input, optional, decimal? type)
+       - ResourceCentre label in HTML maps to ProfitCentre property (matches field mapping table)
+       - Selects populated via AJAX on modal open (not asp-items — options loaded dynamically client-side)
+       - CostCentre cascades on ProfitCentre change event
+       - hdnOriginalWorkGroupName carries the original WorkGroupName for Edit rename support
+       - Two separate form ids: addWorkgroupForm (Add mode) / editWorkgroupForm (Edit mode)
+       - Save button calls saveWorkgroup() (Index.cshtml @@section Scripts); Update calls updateWorkgroup()
+       - @@Html.AntiForgeryToken() included in every form
+       - disabled (not readonly) for non-editable fields per GOV.UK styling rule
+       - Phase 14 security fix: @@Html.Raw() in JS modal-init block replaced with @@Json.Serialize()
+         (ProfitCentre, CostCentre, Owner values are now JSON-encoded before inline JS injection,
+         preventing XSS if any DB-sourced lookup value contains quote or script characters)
+     PRESERVED:
+       - HTML prototype modal DOM layout: cc-modal-form-grid, govuk-grid-row sup_padding_right_left_10,
+         govuk-grid-column-one-half columns (2-up layout), govuk-input__wrapper with £ prefix
+       - Field order from HTML prototype: WorkGroup | ResourceCentre, CostCentre | Owner, Description | CentralOverhead
+       - Error span IDs match HTML prototype: err-modal-wg-name, err-modal-wg-rc, err-modal-wg-cc, etc.
+       - aria-required and aria-describedby attributes from HTML prototype preserved
+     DEFERRED / REQUIRES HUMAN REVIEW:
+       - TRANSFORMENGINE TODO: CostCentre is double? — GetCostCentres returns { value: double, display: string };
+         verify the AJAX handler correctly sets the selected option value after cascade reload
+       - TRANSFORMENGINE TODO: Confirm AJAX lookup URLs match deployed route prefix if area prefix changes -->
+
+@model Apha.FPSApps.Web.Areas.FPS.Models.WorkgroupMaintenanceItem
+
+@{
+    // TRANSFORMENGINE: isEditMode based on string PK WorkGroupName (non-null/non-empty = edit)
+    var isEditMode = !string.IsNullOrWhiteSpace(Model?.WorkGroupName);
+    var title = isEditMode ? "Edit WorkGroup" : "Add WorkGroup";
+    var formId = isEditMode ? "editWorkgroupForm" : "addWorkgroupForm";
+    var saveLabel = isEditMode ? "Update" : "Save";
+    var saveAction = isEditMode ? "updateWorkgroup()" : "saveWorkgroup()";
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title govuk-heading-s" style="margin: 0;">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()" aria-label="Close">X</button>
+</div>
+
+<div class="modal-body cc-modal-body">
+
+    <div class="govuk-error-summary"
+         aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">
+            There is a problem
+        </h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+            </ul>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <form id="@formId">
+            @Html.AntiForgeryToken()
+
+            @* TRANSFORMENGINE: hidden fields — original WorkGroupName preserved for Edit rename detection;
+               hdnOriginalWorkGroupName used by updateWorkgroup() in Index.cshtml @section Scripts *@
+            <input type="hidden" id="hdnOriginalWorkGroupName" value="@(Model?.WorkGroupName ?? string.Empty)" />
+            <input type="hidden" id="hdnIsEdit" value="@isEditMode.ToString().ToLower()" />
+
+            <div class="cc-modal-form-grid">
+
+                @* Row 1: WorkGroup | ResourceCentre *@
+                <div class="govuk-grid-row sup_padding_right_left_10">
+
+                    <div class="govuk-grid-column-one-half">
+                        <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-name">
+                            @* TRANSFORMENGINE: WorkGroupName — editable in both Add and Edit modes
+                               (rename is supported; original name tracked by hdnOriginalWorkGroupName)
+                               Required validation matches JS wgValidationFields[0] *@
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="WorkGroupName">
+                                WorkGroup:<span class="app-required sup_color_red" aria-hidden="true">*</span>
+                            </label>
+                            <input class="govuk-input govuk-!-font-size-16"
+                                   id="WorkGroupName"
+                                   name="WorkGroupName"
+                                   type="text"
+                                   required
+                                   maxlength="100"
+                                   aria-required="true"
+                                   aria-describedby="err-modal-wg-name"
+                                   value="@(Model?.WorkGroupName ?? string.Empty)" />
+                            <span data-valmsg-for="WorkGroupName" class="govuk-error-message field-validation-valid" id="err-modal-wg-name" style="display:none;"></span>
+                        </div>
+                    </div>
+
+                    <div class="govuk-grid-column-one-half">
+                        @* TRANSFORMENGINE: ProfitCentre — labelled "ResourceCentre" in HTML prototype (field mapping confirmed)
+                           Required validation matches JS wgValidationFields[1] (type:'select')
+                           Options loaded via AJAX GET /FPS/WorkgroupMaintenance/GetProfitCentres on modal open *@
+                        <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-rc">
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="ProfitCentre">
+                                ResourceCentre:<span class="app-required sup_color_red" aria-hidden="true">*</span>
+                            </label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="ProfitCentre"
+                                    name="ProfitCentre"
+                                    aria-required="true"
+                                    aria-label="Select resource centre"
+                                    aria-describedby="err-modal-wg-rc">
+                                <option value="">-- Select --</option>
+                                @* Options populated by AJAX loadProfitCentreOptions() below *@
+                            </select>
+                            <span data-valmsg-for="ProfitCentre" class="govuk-error-message field-validation-valid" id="err-modal-wg-rc" style="display:none;"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                @* Row 2: CostCentre | Owner *@
+                <div class="govuk-grid-row sup_padding_right_left_10">
+
+                    <div class="govuk-grid-column-one-half">
+                        @* TRANSFORMENGINE: CostCentre (double?, optional) — cascading select filtered by ProfitCentre
+                           Options loaded via AJAX GET /FPS/WorkgroupMaintenance/GetCostCentres?profitCentre={val}
+                           triggered by ProfitCentre change event *@
+                        <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-cc">
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="CostCentre">
+                                CostCentre:
+                            </label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="CostCentre"
+                                    name="CostCentre"
+                                    aria-label="Select cost centre"
+                                    aria-describedby="err-modal-wg-cc">
+                                <option value="">-- Select --</option>
+                                @* Options populated by AJAX loadCostCentreOptions() below after ProfitCentre selected *@
+                            </select>
+                            <span data-valmsg-for="CostCentre" class="govuk-error-message field-validation-valid" id="err-modal-wg-cc" style="display:none;"></span>
+                        </div>
+                    </div>
+
+                    <div class="govuk-grid-column-one-half">
+                        @* TRANSFORMENGINE: Owner (string?, optional) — select; options loaded via AJAX
+                           GET /FPS/WorkgroupMaintenance/GetOwners → ManagerDto.Name *@
+                        <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-owner">
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="Owner">
+                                Owner:
+                            </label>
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                                    id="Owner"
+                                    name="Owner"
+                                    aria-label="Select owner"
+                                    aria-describedby="err-modal-wg-owner">
+                                <option value="">-- Select --</option>
+                                @* Options populated by AJAX loadOwnerOptions() below *@
+                            </select>
+                            <span data-valmsg-for="Owner" class="govuk-error-message field-validation-valid" id="err-modal-wg-owner" style="display:none;"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                @* Row 3: Description | CentralOverhead *@
+                <div class="govuk-grid-row sup_padding_right_left_10">
+
+                    <div class="govuk-grid-column-one-half">
+                        @* TRANSFORMENGINE: Description (string?, optional, max 45 chars per DB schema) *@
+                        <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-desc">
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="Description">
+                                Description:
+                            </label>
+                            <input class="govuk-input govuk-!-font-size-16"
+                                   id="Description"
+                                   name="Description"
+                                   type="text"
+                                   maxlength="45"
+                                   aria-describedby="err-modal-wg-desc"
+                                   value="@(Model?.Description ?? string.Empty)" />
+                            <span data-valmsg-for="Description" class="govuk-error-message field-validation-valid" id="err-modal-wg-desc" style="display:none;"></span>
+                        </div>
+                    </div>
+
+                    <div class="govuk-grid-column-one-half">
+                        @* TRANSFORMENGINE: CentralOverhead (decimal?, optional) — £-prefixed input
+                           Matches HTML prototype govuk-input__wrapper with govuk-input__prefix "£"
+                           and class "wg-overhead-input"; inputmode="decimal" preserved from prototype
+                           Value rendered as numeric string (strip £ prefix on POST in updateWorkgroup/saveWorkgroup) *@
+                        <div class="govuk-form-group sup_margin_bottom_10" id="fg-modal-wg-overhead">
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="CentralOverhead">
+                                CentralOverhead:
+                            </label>
+                            <div class="govuk-input__wrapper">
+                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                                <input class="govuk-input govuk-!-font-size-16 wg-overhead-input"
+                                       id="CentralOverhead"
+                                       name="CentralOverhead"
+                                       type="text"
+                                       inputmode="decimal"
+                                       aria-describedby="err-modal-wg-overhead"
+                                       value="@(Model?.CentralOverhead.HasValue == true ? Model.CentralOverhead.Value.ToString("F2") : string.Empty)" />
+                            </div>
+                            <span data-valmsg-for="CentralOverhead" class="govuk-error-message field-validation-valid" id="err-modal-wg-overhead" style="display:none;"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<div class="modal-footer cc-modal-footer sup_flex_space_center">
+    <button type="button"
+            class="govuk-button govuk-button--secondary sup_margin_0"
+            data-module="govuk-button"
+            onclick="closeModal()">
+        Cancel
+    </button>
+    <button type="button"
+            class="govuk-button sup_margin_0"
+            data-module="govuk-button"
+            onclick="@saveAction">
+        @saveLabel
+    </button>
+</div>
+
+@section Scripts {
+    <script>
+        // TRANSFORMENGINE: Modal initialisation — load lookup data on partial load
+        // ProfitCentres and Owners loaded immediately; CostCentres loaded after ProfitCentre is set
+        // TRANSFORMENGINE (Phase 14 security fix): @@Html.Raw() replaced with @@Json.Serialize() for all
+        //   DB-sourced string values injected into JS context. Json.Serialize() produces a properly
+        //   JSON-encoded, double-quoted string literal (including null), safe against XSS regardless of
+        //   DB content. The surrounding single-quote delimiters have been removed; JSON.parse() handles
+        //   the decoded value correctly in every JS runtime context.
+
+        (function initWorkgroupModal() {
+            var currentProfitCentre = @Json.Serialize(Model?.ProfitCentre ?? string.Empty);
+            var currentCostCentre = @Json.Serialize(Model?.CostCentre.HasValue == true ? Model.CostCentre.Value.ToString() : string.Empty);
+            var currentOwner = @Json.Serialize(Model?.Owner ?? string.Empty);
+
+            // Load ProfitCentres (ResourceCentres) first, then cascade CostCentres if editing
+            loadProfitCentreOptions(currentProfitCentre, function () {
+                if (currentProfitCentre) {
+                    loadCostCentreOptions(currentProfitCentre, currentCostCentre);
+                }
+            });
+
+            loadOwnerOptions(currentOwner);
+
+            // TRANSFORMENGINE: ProfitCentre change triggers CostCentre cascade reload
+            document.getElementById('ProfitCentre').addEventListener('change', function () {
+                loadCostCentreOptions(this.value, '');
+            });
+        })();
+
+        // TRANSFORMENGINE: loadProfitCentreOptions — AJAX GET /FPS/WorkgroupMaintenance/GetProfitCentres
+        // Returns { success: true, data: string[] }; selectedValue restored after load
+        function loadProfitCentreOptions(selectedValue, callback) {
+            $.getJSON('/FPS/WorkgroupMaintenance/GetProfitCentres', function (response) {
+                var select = document.getElementById('ProfitCentre');
+                // Preserve blank default option
+                select.innerHTML = '<option value="">-- Select --</option>';
+
+                if (response.success && response.data) {
+                    response.data.forEach(function (item) {
+                        var opt = document.createElement('option');
+                        opt.value = item;
+                        opt.textContent = item;
+                        if (item === selectedValue) { opt.selected = true; }
+                        select.appendChild(opt);
+                    });
+                }
+
+                if (typeof callback === 'function') { callback(); }
+            }).fail(function () {
+                console.warn('Failed to load profit centres for WorkGroup modal');
+            });
+        }
+
+        // TRANSFORMENGINE: loadCostCentreOptions — AJAX GET /FPS/WorkgroupMaintenance/GetCostCentres?profitCentre={pc}
+        // Returns { success: true, data: [{ value: double, display: string }] }
+        // selectedValue is a string representation of the numeric cost centre value
+        function loadCostCentreOptions(profitCentre, selectedValue) {
+            var select = document.getElementById('CostCentre');
+            select.innerHTML = '<option value="">-- Select --</option>';
+
+            if (!profitCentre) { return; }
+
+            $.getJSON('/FPS/WorkgroupMaintenance/GetCostCentres', { profitCentre: profitCentre }, function (response) {
+                if (response.success && response.data) {
+                    response.data.forEach(function (item) {
+                        var opt = document.createElement('option');
+                        opt.value = item.value;
+                        opt.textContent = item.display;
+                        if (String(item.value) === String(selectedValue)) { opt.selected = true; }
+                        select.appendChild(opt);
+                    });
+                }
+            }).fail(function () {
+                console.warn('Failed to load cost centres for WorkGroup modal');
+            });
+        }
+
+        // TRANSFORMENGINE: loadOwnerOptions — AJAX GET /FPS/WorkgroupMaintenance/GetOwners
+        // Returns { success: true, data: [{ name: string }] }; ordered by name server-side
+        function loadOwnerOptions(selectedValue) {
+            $.getJSON('/FPS/WorkgroupMaintenance/GetOwners', function (response) {
+                var select = document.getElementById('Owner');
+                select.innerHTML = '<option value="">-- Select --</option>';
+
+                if (response.success && response.data) {
+                    response.data.forEach(function (item) {
+                        var opt = document.createElement('option');
+                        opt.value = item.name;
+                        opt.textContent = item.name;
+                        if (item.name === selectedValue) { opt.selected = true; }
+                        select.appendChild(opt);
+                    });
+                }
+            }).fail(function () {
+                console.warn('Failed to load owners for WorkGroup modal');
+            });
+        }
+    </script>
+}

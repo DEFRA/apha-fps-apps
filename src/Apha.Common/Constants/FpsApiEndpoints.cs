@@ -221,5 +221,17 @@ namespace Apha.Common.Constants
         public const string CreateGenericPurchase = "api/v1/purchases";
         public const string UpdateGenericPurchase = "api/v1/purchases";
         public const string DeleteGenericPurchase = "api/v1/purchases?WorkGroupName={0}&account={1}&itemDescription={2}";
+
+        // TRANSFORMENGINE: WorkgroupMaintenance (frmMaintWorkGroup2 — fps.workgroup) — added Phase 6
+        // CRUD endpoints
+        public const string GetPagedWorkgroups = "api/v1/workgroup/paged";
+        public const string GetWorkgroupByName = "api/v1/workgroup/{0}";
+        public const string CreateWorkgroup = "api/v1/workgroup";
+        public const string UpdateWorkgroup = "api/v1/workgroup/{0}";
+        public const string DeleteWorkgroup = "api/v1/workgroup/{0}";
+        // Lookup endpoints (separate from CRUD resource family)
+        public const string GetWorkgroupProfitCentres = "api/v1/workgroup/profitcentres";
+        public const string GetWorkgroupOwners = "api/v1/workgroup/owners";
+        public const string GetWorkgroupCostCentres = "api/v1/workgroup/costcentres?profitCentre={0}";
     }
 }

@@ -1,3 +1,27 @@
+/*
+ * TRANSFORMENGINE MIGRATION — FpsApiDtoMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - Added WorkgroupMaintenanceDto <-> WorkgroupMaintenanceReq mapping (POST/PUT request bodies)
+ *   - Added WorkgroupMaintenanceDto <-> WorkgroupMaintenanceRes mapping (GET/POST/PUT responses)
+ *   - Mappings support FpsWorkgroupApiClient CRUD + lookup flows for frmMaintWorkGroup2
+ *   - WorkgroupMaintenanceRes.Id (synthetic) is unmapped on reverse (auto-ignored by convention)
+ *   - WorkgroupMaintenanceDto.CostCentreOld is unmapped on forward (not present in Req/Res contracts)
+ *   - ManagerRes <-> ManagerDto (used by GetOwnersAsync lookup) was already present — no duplicate added
+ *
+ * PRESERVED:
+ *   - All existing CreateMap entries unchanged
+ *   - Namespace and using directives unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: WorkgroupMaintenanceRes.Id is synthetic (int); AutoMapper ignores it on
+ *     Res->Dto reverse map. Confirm service layer populates Id before grid renders.
+ *   - TRANSFORMENGINE TODO: WorkgroupMaintenanceDto.CostCentreOld has no mapping to Req or Res;
+ *     confirm it is intentionally excluded from the CRUD surface.
+ */
+
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
@@ -75,7 +99,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
-            // TRANSFORMENGINE: Grade mappings added � Phase 10 (Step 15a)
+            // TRANSFORMENGINE: Grade mappings added � Phase 10 (Step 15a)
             // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
             CreateMap<GradeDto, GradeReq>().ReverseMap();
             CreateMap<GradeDto, GradeRes>().ReverseMap();
@@ -148,6 +172,15 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
+            // TRANSFORMENGINE: WorkgroupMaintenance mappings added — Phase 10 (Step 15a)
+            // CRUD DTO <-> Req: WorkgroupMaintenanceDto -> WorkgroupMaintenanceReq for POST/PUT request bodies
+            // CRUD DTO <-> Res: WorkgroupMaintenanceDto -> WorkgroupMaintenanceRes for GET/POST/PUT responses
+            // WorkgroupMaintenanceRes.Id (synthetic int) is NOT on WorkgroupMaintenanceDto; AutoMapper
+            //   ignores unmapped destination properties on .ReverseMap() by convention — no ForMember needed.
+            // WorkgroupMaintenanceDto.CostCentreOld is NOT on Req/Res; ignored on forward map by convention.
+            // ManagerRes <-> ManagerDto (owners lookup) already registered above — no duplicate added.
+            CreateMap<WorkgroupMaintenanceDto, WorkgroupMaintenanceReq>().ReverseMap();
+            CreateMap<WorkgroupMaintenanceDto, WorkgroupMaintenanceRes>().ReverseMap();
 
         }
     }
