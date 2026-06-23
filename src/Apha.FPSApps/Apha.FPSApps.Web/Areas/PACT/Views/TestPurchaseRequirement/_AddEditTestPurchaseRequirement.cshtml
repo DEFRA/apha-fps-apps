@@ -97,7 +97,7 @@
                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
                 <input class="govuk-input govuk-!-font-size-16" asp-for="UnitPrice"
                        type="number" step="0.01" min="0" max="92233720368547758.07"
-                       placeholder="e.g., 23.80" required />
+                       placeholder="e.g., 23.80" required  onkeydown="if(['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();"/>
             </div>     
             <span data-valmsg-for="UnitPrice"
                   class="govuk-error-message field-validation-valid" style="display:none;"></span>
