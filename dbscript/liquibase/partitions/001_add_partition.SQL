@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset repo-admin:001_add_partition labels:ddl context:all
+--changeset repo-admin:001_add_partition labels:ddl context:all runAlways:true
 
 DO $$
 DECLARE
@@ -55,4 +55,4 @@ BEGIN
     END LOOP;
 END $$;
 
---rollback ;
+--rollback empty ;
