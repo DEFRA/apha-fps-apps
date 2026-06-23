@@ -1,3 +1,7 @@
+--liquibase formatted sql
+
+--changeset repo-admin:002_seed_data_tblyearmaster labels:ddl context:all
+
 INSERT INTO fps.tblyearmaster (
     fpsyear,
     fpsyearcode,
@@ -20,3 +24,5 @@ VALUES
 (2025, '2025-26', 'Open',    'year 2025', true, '2026-04-02 09:19:05.673347+00', 'SP'),
 (2026, '2026-27', 'Planned', 'year 2026', true, '2026-04-02 09:13:48.740172+00', 'SP')
 ON CONFLICT (fpsyear) DO NOTHING;
+
+--rollback ;

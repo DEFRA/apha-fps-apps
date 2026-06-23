@@ -1,3 +1,7 @@
+--liquibase formatted sql
+
+--changeset repo-admin:001_re_seed_identity_sequences labels:ddl context:all
+
 DO $$ 
 DECLARE 
     row record;
@@ -37,3 +41,4 @@ BEGIN
     
     RAISE NOTICE 'Synchronization complete.';
 END $$;
+--rollback ;
