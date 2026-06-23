@@ -18,7 +18,7 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<List<VQryFrmTimeSellerPcView>> GetBySellingPcAsync(
+        public async Task<List<TimeSellerPcView>> GetBySellingPcAsync(
             string sellingPc,
             CancellationToken cancellationToken = default)
         {

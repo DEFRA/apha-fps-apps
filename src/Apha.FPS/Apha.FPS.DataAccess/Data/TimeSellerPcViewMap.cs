@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.FPS.DataAccess.Data
 {
-    public class VQryFrmTimeSellerPcViewMap : IEntityTypeConfiguration<VQryFrmTimeSellerPcView>
+    public class TimeSellerPcViewMap : IEntityTypeConfiguration<TimeSellerPcView>
     {
-        public void Configure(EntityTypeBuilder<VQryFrmTimeSellerPcView> entity)
+        public void Configure(EntityTypeBuilder<TimeSellerPcView> entity)
         {
             entity
                 .HasNoKey()

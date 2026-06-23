@@ -8,6 +8,6 @@ namespace Apha.FPS.Core.Interfaces
         /// Returns all time-seller rows for the given selling profit centre,
         /// scoped to the current FPS year via the global query filter.
         /// </summary>
-        Task<List<VQryFrmTimeSellerPcView>> GetBySellingPcAsync(string sellingPc, CancellationToken cancellationToken = default);
+        Task<List<TimeSellerPcView>> GetBySellingPcAsync(string sellingPc, CancellationToken cancellationToken = default);
     }
 }

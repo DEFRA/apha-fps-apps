@@ -1,6 +1,6 @@
 namespace Apha.FPS.Core.Entities
 {
-    public partial class VQryFrmTimeSellerPcView
+    public partial class TimeSellerPcView
     {
         public decimal? ContTarget { get; set; }
 
