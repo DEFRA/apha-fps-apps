@@ -46,21 +46,34 @@ function addSubContractRms() {
         return;
     }
 
-    $.get('/PACT/SubContractRms/GetSubContractRms', { id: 0, month: currentRmsMonth }, function (html) {
-        $('#modaPopupBody').html(html);
-        $('#modalPopup').addClass('show');
-    }).fail(function () {
-        showGovukAlert('Error loading form.');
+    $.ajax({
+        url: '/PACT/SubContractRms/GetSubContractRms',
+        type: 'GET',
+        data: { id: 0, month: currentRmsMonth },
+        success: function (html) {
+            $('#modaPopupBody').html(html);
+            $('#modalPopup').addClass('show');
+        },
+        error: function () {
+            showGovukAlert('Error loading form.');
+        }
     });
 }
 
 function editSubContractRms(btn) {
     const id = $(btn).data('id');
-    $.get('/PACT/SubContractRms/GetSubContractRms', { id: id, month: currentRmsMonth }, function (html) {
-        $('#modaPopupBody').html(html);
-        $('#modalPopup').addClass('show');
-    }).fail(function () {
-        showGovukAlert('Error loading form.');
+
+    $.ajax({
+        url: '/PACT/SubContractRms/GetSubContractRms',
+        type: 'GET',
+        data: { id: id, month: currentRmsMonth },
+        success: function (html) {
+            $('#modaPopupBody').html(html);
+            $('#modalPopup').addClass('show');
+        },
+        error: function () {
+            showGovukAlert('Error loading form.');
+        }
     });
 }
 
@@ -211,11 +224,18 @@ function deleteAllFailedSubContractRms() {
 
 function editFailedSubContractRms(btn) {
     const id = $(btn).data('id');
-    $.get('/PACT/SubContractRms/GetFailedSubContractRms', { id: id }, function (html) {
-        $('#modaPopupBody').html(html);
-        $('#modalPopup').addClass('show');
-    }).fail(function () {
-        showGovukAlert('Error loading form.');
+
+    $.ajax({
+        url: '/PACT/SubContractRms/GetFailedSubContractRms',
+        type: 'GET',
+        data: { id: id },
+        success: function (html) {
+            $('#modaPopupBody').html(html);
+            $('#modalPopup').addClass('show');
+        },
+        error: function () {
+            showGovukAlert('Error loading form.');
+        }
     });
 }
 
@@ -293,15 +313,33 @@ function exportFailedSubContractRms() {
         return;
     }
 
-    var params = {
-        filter: JSON.stringify(gridManager.getFilterModel())
-    };
+    $.ajax({
+        url: exportUrl,
+        type: 'GET',
+        data: {
+            filter: JSON.stringify(gridManager.getFilterModel())
+        },
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (blob, status, xhr) {
+            const disposition = xhr.getResponseHeader('Content-Disposition') || '';
+            const fileNameMatch = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+            const fileName = decodeURIComponent(fileNameMatch?.[1] || fileNameMatch?.[2] || 'SubContractRMS_failed.xlsx');
 
-    var query = Object.keys(params)
-        .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
-        .join('&');
-
-    window.location.href = exportUrl + '?' + query;
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        },
+        error: function () {
+            showGovukAlert('Failed to export failed records.');
+        }
+    });
 }
 
 $(document).ready(function () {
