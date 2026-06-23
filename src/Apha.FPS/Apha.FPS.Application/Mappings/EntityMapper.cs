@@ -1,29 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — EntityMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services
- * Migrated : 2026-06-11
- *
- * CHANGED:
- *   - Phase 3 VERIFY: Confirmed WorkGroupEmployee <-> WorkGroupEmployeeDto and
- *     WorkGroupEmployeeView <-> WorkGroupEmployeeDto mappings (lines 68-69) are present
- *     and use ReverseMap(). These generic mappings automatically cover the four new DTO
- *     fields (TimeRecorder, StartDate, EndDate, HoursPerWeek) added in this phase because
- *     property names match exactly between entity and DTO — no explicit ForMember needed.
- *   - Added inline annotation comment at WorkGroupEmployee mapping lines for traceability.
- *
- * PRESERVED:
- *   - All existing CreateMap entries unchanged
- *   - All ForMember overrides unchanged
- *   - Constructor structure unchanged
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: WorkGroupEmployeeView.Name is populated by LINQ join (not DB-mapped).
- *     Confirm that the EF configuration marks Name with .Ignore() so AutoMapper does not attempt
- *     to reverse-map it back to the view entity during write operations.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
@@ -67,8 +41,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<YearMaster, YearMasterDto>().ReverseMap();
             CreateMap<Division, DivisionDto>().ReverseMap();
             CreateMap<DivisionGrade, DivisionGradeDto>().ReverseMap();
-
-            // TRANSFORMENGINE: Grade <-> GradeDto — ForMember required: Grade.DescLong <-> GradeDto.Description (field rename)
+          
             CreateMap<Grade, GradeDto>()
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.DescLong))
                 .ReverseMap()
@@ -97,25 +70,21 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupGradeView, WorkgroupGradeDto>().ReverseMap();
-            // TRANSFORMENGINE: Phase 3 VERIFY — generic ReverseMap() automatically covers new DTO fields
-            // (TimeRecorder, StartDate, EndDate, HoursPerWeek) added in this phase; no ForMember needed.
+           
             CreateMap<WorkGroupEmployee, WorkGroupEmployeeDto>().ReverseMap();
             CreateMap<WorkGroupEmployeeView, WorkGroupEmployeeDto>().ReverseMap();
             CreateMap<PactStaff, PactStaffDto>().ReverseMap();
             CreateMap<ProjectProfitabilityView, ProjectProfitabilityDto>().ReverseMap();
             CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
 
-            // TRANSFORMENGINE: new mapping â€” frmJobcodeTotalsVLA migration (Phase 3)
-            //   Property names are aligned between entity and DTO; no ForMember overrides needed.
-            //   Covers: Id, JobCode, Program, Customer, Manager, Status, StaffCosts, TestCost,
-            //   AnimalCosts, AdditionalCosts, TotalCosts, Budget, Profit, TargetProfit, OffTarget.
+            //ProjectProfitabilityVlaView
             CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
               
-
             // BudgetResourceLevel
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
+
         }
     }
 }

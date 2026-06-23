@@ -174,13 +174,25 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("SpNumber", out var spNumber) && spNumber != null)
                 query = query.Where(x => x.SpNumber != null && EF.Functions.ILike(x.SpNumber, $"%{spNumber}%"));
 
-            if (dict.TryGetValue("Name", out var name) && name != null)
+            if (TryGetFilterValue(dict, "Name", "StaffName", out var name) && name != null)
                 query = query.Where(x => x.Name != null && EF.Functions.ILike(x.Name, $"%{name}%"));
 
-            if (dict.TryGetValue("WorkGroupGrade", out var workGroupGrade) && workGroupGrade != null)
+            if (TryGetFilterValue(dict, "WorkGroupGrade", "WgGrade", out var workGroupGrade) && workGroupGrade != null)
                 query = query.Where(x => x.WorkGroupGrade != null && EF.Functions.ILike(x.WorkGroupGrade, $"%{workGroupGrade}%"));
 
             return query;
+        }
+
+        private static bool TryGetFilterValue(IDictionary<string, object> dict, string primaryKey, string alternateKey, out object? value)
+        {
+            if (dict.TryGetValue(primaryKey, out value))
+                return true;
+
+            if (dict.TryGetValue(alternateKey, out value))
+                return true;
+
+            value = null;
+            return false;
         }
 
         private static IQueryable ApplySorting(IQueryable<WorkGroupEmployeeView> query, string? sortBy, bool descending)
@@ -199,8 +211,8 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 "pactid" => ApplyOrder(query, i => i.PactId, descending),
                 "spnumber" => ApplyOrder(query, i => i.SpNumber, descending),
-                "name" => ApplyOrder(query, i => i.Name, descending),
-                "workgroupgrade" => ApplyOrder(query, i => i.WorkGroupGrade, descending),
+                "name" or "staffname" => ApplyOrder(query, i => i.Name, descending),
+                "workgroupgrade" or "wggrade" => ApplyOrder(query, i => i.WorkGroupGrade, descending),
                 "personstatus" => ApplyOrder(query, i => i.PersonStatus, descending),
                 _ => query
             };

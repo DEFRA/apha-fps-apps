@@ -1,29 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — WorkGroupEmployeeServiceTests.cs (Backend)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-11
- *
- * CHANGED:
- *   - Phase 13 UPDATE: added #region CreateWorkGroupEmployeeAsync Tests covering the
- *     CreateWorkGroupEmployeeAsync method added to WorkGroupEmployeeService in Phase 3.
- *   - Three new test methods:
- *     CreateWorkGroupEmployeeAsync_WithValidDto_ReturnsMappedResult       — happy path
- *     CreateWorkGroupEmployeeAsync_WithNullDto_ThrowsArgumentNullException — null guard
- *     CreateWorkGroupEmployeeAsync_WithEmptyPactId_ThrowsArgumentException — whitespace guard
- *
- * PRESERVED:
- *   - All existing test regions: GetWorkGroupEmployeeAsync, GetWorkGroupEmployeeByIdAsync,
- *     UpdateWorkGroupEmployeeAsync, DeleteWorkGroupEmployeeAsync unchanged.
- *   - NSubstitute + FluentAssertions pattern unchanged.
- *   - Namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest unchanged.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: If the repository raises InvalidOperationException for duplicate PactId,
- *     add a PropagatesInvalidOperationException test to verify service behaviour.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
@@ -153,10 +127,6 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         #endregion
 
         #region CreateWorkGroupEmployeeAsync Tests
-
-        // TRANSFORMENGINE: tests for WorkGroupEmployeeService.CreateWorkGroupEmployeeAsync added — Phase 13.
-        // Mirrors the pattern used for UpdateWorkGroupEmployeeAsync:
-        //   Dto -> entity (mapper) -> repository -> entity (mapper) -> Dto.
 
         [Fact]
         public async Task CreateWorkGroupEmployeeAsync_WithValidDto_ReturnsMappedResult()

@@ -1,30 +1,3 @@
-// TRANSFORMENGINE: human_review — verify before running
-
-/*
- * TRANSFORMENGINE MIGRATION — WorkGroupEmployeeControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-11
- *
- * CHANGED:
- *   - Phase 13 UPDATE: added #region CreateWorkGroupEmployeeAsync Tests covering
- *     the [HttpPost] CreateWorkGroupEmployeeAsync action added in Phase 5/6.
- *   - Two new test methods:
- *     CreateWorkGroupEmployeeAsync_WithValidRequest_ReturnsOk               — happy path
- *     CreateWorkGroupEmployeeAsync_WhenServiceThrows_PropagatesException    — exception path
- *
- * PRESERVED:
- *   - All existing test regions unchanged: GetWorkGroupEmployeeAsync, GetWorkGroupEmployeeByIdAsync,
- *     UpdateWorkGroupEmployeeAsync, DeleteWorkGroupEmployeeAsync, Constructor Tests.
- *   - NSubstitute mock setup and FluentAssertions assertion style unchanged.
- *   - Namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest unchanged.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm IWorkGroupEmployeeService.CreateWorkGroupEmployeeAsync signature
- *     is stable (returns WorkGroupEmployeeDto, not Task<IActionResult>).
- *   - TRANSFORMENGINE TODO: Verify CreateWorkGroupEmployeeAsync response contract remains
- *     200 Ok with mapped payload expected by API clients.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
@@ -147,9 +120,6 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
         #endregion
 
         #region CreateWorkGroupEmployeeAsync Tests
-
-        // TRANSFORMENGINE: tests for [HttpPost] CreateWorkGroupEmployeeAsync added — Phase 13.
-        // Action returns 200 Ok with mapped response.
 
         [Fact]
         public async Task CreateWorkGroupEmployeeAsync_WithValidRequest_ReturnsOk()
