@@ -26,13 +26,13 @@ namespace Apha.Common.Utilities.ExcelImport
                 }
 
                 // Build header map from first row
-                var headerMap = BuildHeaderMap(usedRows.First());
+                var headerMap = BuildHeaderMap(usedRows[0]);
 
                 // Validate required headers if provided
                 if (requiredHeaders != null)
                 {
                     var missingHeaders = GetMissingRequiredHeaders(headerMap, requiredHeaders).ToList();
-                    if (missingHeaders.Any())
+                    if (missingHeaders.Count > 0)
                     {
                         result.IsSuccess = false;
                         result.MissingHeaders = missingHeaders;

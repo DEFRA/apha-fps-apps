@@ -292,9 +292,11 @@ namespace Apha.PACT.Application.Services
                     }
 
                     // Map display name to model property name for inline field validation
-                    var modelFieldName = !string.IsNullOrEmpty(displayFieldName) && fieldNameMap.ContainsKey(displayFieldName)
-                        ? fieldNameMap[displayFieldName]
-                        : displayFieldName;
+                    var modelFieldName = displayFieldName;
+                    if (!string.IsNullOrEmpty(displayFieldName) && fieldNameMap.TryGetValue(displayFieldName, out var mappedFieldName))
+                    {
+                        modelFieldName = mappedFieldName;
+                    }
 
                     // BusinessValidationError(message, code) - code is the field name
                     return new BusinessValidationError(message, modelFieldName);

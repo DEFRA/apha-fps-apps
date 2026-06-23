@@ -157,7 +157,7 @@ namespace Apha.PACT.DataAccess.Repository
             var latestImportedDate = await _context.ProjectSubcontractStagings
                 .AsNoTracking()
                 .Where(x => x.ImportedBy == importedBy && x.IsPassed == false)
-                .MaxAsync(x => (DateTime?)x.ImportedDate);
+                .MaxAsync(x => x.ImportedDate);
 
             if (!latestImportedDate.HasValue)
             {
