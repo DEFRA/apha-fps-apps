@@ -221,7 +221,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             var model = Assert.IsType<WorkGroupEmployeeItem>(partialView.Model);
             Assert.Contains("A_BAC1", model.WgGradeOptions);
             Assert.Contains(model.StaffLookupOptions, s => s.SpNumber == "SP001");
-            Assert.Equal(false, _controller.ViewData["IsEditMode"]);
+            var isEditMode = Assert.IsType<bool>(_controller.ViewData["IsEditMode"]);
+            Assert.False(isEditMode);
         }
 
         [Fact]
