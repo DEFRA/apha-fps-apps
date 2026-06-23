@@ -327,3 +327,13 @@
     background-color: #f3f2f1;
 }
 
+/* Truncate text with tooltip support */
+.grid-column-truncate-tooltip {
+    display: block;
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: help;
+}
+

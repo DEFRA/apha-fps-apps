@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.ExcelImport;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
@@ -12,14 +13,16 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.ProjectSubContractSer
     {
         private readonly IPactApiClient _pactClient;
         private readonly IPactProjectSubContractApiClient _pactProjectSubContractApiClient;
+        private readonly IExcelImportService _excelImportService;
         private readonly ProjectSubContractService _service;
 
         public ProjectSubContractServiceTests()
         {
             _pactClient = Substitute.For<IPactApiClient>();
             _pactProjectSubContractApiClient = Substitute.For<IPactProjectSubContractApiClient>();
+            _excelImportService = Substitute.For<IExcelImportService>();
             _pactClient.PactProjectSubContract.Returns(_pactProjectSubContractApiClient);
-            _service = new ProjectSubContractService(_pactClient);
+            _service = new ProjectSubContractService(_pactClient, _excelImportService);
         }
 
         #region GetPagedProjectSubContractsAsync Tests

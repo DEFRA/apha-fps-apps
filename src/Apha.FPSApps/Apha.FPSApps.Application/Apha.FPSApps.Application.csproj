@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Apha.Common\Apha.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Dtos\CostBook\" />
   </ItemGroup>
 

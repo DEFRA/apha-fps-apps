@@ -118,6 +118,33 @@ namespace Apha.PACT.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<SubContractRmsImportRowRes>>(result));
         }
 
+        [HttpGet("rms/failed/{id}")]
+        public async Task<IActionResult> GetFailedSubContractRmsById(int id)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var result = await _service.GetFailedSubContractRmsByIdAsync(id, importedBy);
+            if (result == null)
+                throw new KeyNotFoundException($"Failed Sub-Contract with ID {id} not found.");
+            return Ok(_mapper.Map<SubContractRmsImportRowRes>(result));
+        }
+
+        [HttpPut("rms/failed/{id}")]
+        public async Task<IActionResult> SaveFailedSubContractRms(int id, [FromBody] SubContractRmsImportRowReq request)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var dto = _mapper.Map<SubContractRmsImportRowDto>(request);
+            var movedToSubContract = await _service.SaveFailedSubContractRmsAsync(id, dto, importedBy);
+            return Ok(movedToSubContract);
+        }
+
+        [HttpDelete("rms/failed/{id}")]
+        public async Task<IActionResult> DeleteFailedSubContractRmsById(int id)
+        {
+            var importedBy = _currentUserContext.UserId;
+            var deleted = await _service.DeleteFailedSubContractRmsByIdAsync(id, importedBy);
+            return Ok(deleted);
+        }
+
         [HttpDelete("rms/failed/user")]
         public async Task<IActionResult> DeleteFailedSubContractRmsByUser()
         {

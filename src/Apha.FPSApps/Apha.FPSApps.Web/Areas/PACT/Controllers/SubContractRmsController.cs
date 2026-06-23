@@ -64,12 +64,21 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             ViewBag.Projects = projectsList;
             ViewBag.Months = monthsList;
 
+            var failedRequest = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "Id",
+                Descending = false
+            };
+
             return View(new SubContractRmsViewModel
             {
                 Month = month,
                 FilterMonths = monthsList,
                 Projects = projectsList,
-                SubContractsGrid = await BuildRmsSubContractGridAsync(defaultRequest, month)
+                SubContractsGrid = await BuildRmsSubContractGridAsync(defaultRequest, month),
+                FailedSubContractsGrid = await BuildFailedSubContractRmsGridAsync(failedRequest)
             });
         }
 
@@ -216,21 +225,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> ViewFailedSubContractRms()
-        {
-            var request = new PaginationFilter<string>
-            {
-                Page = 1,
-                PageSize = 10,
-                SortBy = "Id",
-                Descending = false
-            };
-
-            var grid = await BuildFailedSubContractRmsGridAsync(request);
-            return PartialView("_FailedSubContractRms", grid);
-        }
-
         [HttpPost]
         public async Task<IActionResult> LoadFailedSubContractRmsGrid(PaginationFilter<string> request)
         {
@@ -270,6 +264,74 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 return Json(new { success = result.Data });
 
             return Json(new { success = false, message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete records." });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFailedSubContractRms(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _subContractService.GetFailedSubContractRmsByIdAsync(id);
+            if (!result.Success || result.Data == null) 
+                return NotFound();
+
+            var item = _mapper.Map<SubContractRmsFailedItem>(result.Data);
+            return PartialView("_EditFailedSubContractRms", item);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveFailedSubContractRms([FromBody] SubContractRmsFailedItem model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new
+                {
+                    success = false,
+                    message = "Please correct the errors below.",
+                    errors = ModelState
+                        .Where(kvp => kvp.Value!.Errors.Any() && kvp.Key != "$")
+                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
+                        {
+                            field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
+                            message = e.ErrorMessage
+                        }))
+                });
+
+            var dto = _mapper.Map<SubContractRmsImportRowDto>(model);
+            var result = await _subContractService.SaveFailedSubContractRmsAsync(model.Id, dto);
+
+            if (result.Success)
+            {
+                var movedToSubContract = result.Data;
+                var message = movedToSubContract
+                    ? "Record successfully validated and is now live."
+                    : "Failed record updated successfully.";
+                return Json(new { success = true, message, movedToSubContract });
+            }
+
+            return Json(new
+            {
+                success = false,
+                message = "Validation failed. Please correct the errors below.",
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new
+                {
+                    field = e.Code ?? string.Empty,
+                    message = e.Message ?? "An unexpected error occurred."
+                })
+            });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteFailedSubContractRms(int id)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _subContractService.DeleteFailedSubContractRmsByIdAsync(id);
+            if (result.Success)
+                return Json(new { success = true });
+
+            return Json(new { success = false, message = "Failed to delete failed record." });
         }
 
         // ── PRIVATE GRID BUILDERS ─────────────────────────────────────────────
@@ -344,18 +406,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             {
                 GridId = "rmsFailedSubContractsGrid",
                 Title = "Failed records",
-                KeyProperty = "Project",
+                KeyProperty = "Id",
+                EditFunction = "editFailedSubContractRms",
+                DeleteFunction = "deleteFailedSubContractRms",
                 BindGridUrl = "/PACT/SubContractRms/LoadFailedSubContractRmsGrid",
-                ExportUrl = "/PACT/SubContractRms/ExportFailedSubContractRms",
-                BulkDeleteFunction = "deleteAllFailedSubContractRms",
                 AllowAdd = false,
-                AllowEdit = false,
-                AllowDelete = false,
-                AllowCopy = false,
-                AllowView = false,
-                AllowExport = true,
-                AllowBulkDelete = true,
-                BulkCopyButtonText = string.Empty,
+                AllowEdit = true,
+                AllowDelete = true, 
                 Data = items,
                 Columns = GridDataProvider.GetColumnsDefination<SubContractRmsFailedItem>(),
                 Pagination = pagination,

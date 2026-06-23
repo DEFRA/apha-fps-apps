@@ -15,7 +15,7 @@
                         <label class="govuk-label sup_visually_hidden sup_label_width_10" for="dpSelectmonth">Select month</label>
                         <div class="m-0 p-0" style="display: flex;  align-items: center;justify-content: flex-start;">
                             <select class="govuk-select govuk-!-font-size-16" name="dpSelectmonth" id="dpSelectmonth">
-                                <option value="">--select month--</option>
+                                <option value="">-- select month --</option>
                                 @foreach (var month in Model.FilterMonths)
                                 {
                                     if (month.Value == Model.Month?.ToString())
@@ -31,17 +31,23 @@
                         </div>
                     </div>
                     <label class="sup_visually_hidden sup_label_width_10" for="txtSelectedMonth">Selected month</label>
-                    <input type="text" id="txtSelectedMonth" class="govuk-input govuk-!-font-size-16 sup_text_center govuk-input--width-2"
+                    <input hidden type="text" id="txtSelectedMonth" class="govuk-input govuk-!-font-size-16 sup_text_center govuk-input--width-2"
                            readonly value="@(Model.Month.HasValue ? Model.FilterMonths.FirstOrDefault(m => m.Value == Model.Month.Value.ToString())?.Text ?? string.Empty : string.Empty)" />
                 </div>
             </h1>
         </div>
     </div>
 
+    <div class="sup_margin_left_right_0 sup_margin_bottom_10 sup_margin_top_10">
+        <div id="gridContainer_@Model.SubContractsGrid.GridId">
+            @await Html.PartialAsync("_DataGrid", Model.SubContractsGrid)
+        </div>
+    </div>
+
     <div class="sup_margin_left_right_0 sup_margin_bottom_10 sup_margin_top_10" style="display:flex; align-items:flex-start; gap:10px;">
         <div style="flex:1; min-width:0;">
-            <div id="gridContainer_@Model.SubContractsGrid.GridId">
-                @await Html.PartialAsync("_DataGrid", Model.SubContractsGrid)
+            <div id="gridContainer_@Model.FailedSubContractsGrid.GridId">
+                @await Html.PartialAsync("_DataGrid", Model.FailedSubContractsGrid)
             </div>
         </div>
 
@@ -58,8 +64,12 @@
                     </label>
                 </div>
 
-                <button class="govuk-button sup_margin_0 sup_failed_color sup_flex sup_width_140" id="viewFailedBtn" type="button">
-                    <img src="~/images/circle-xmark-regular-full.svg" width="16" alt="icon for failed records">&nbsp; View Failed
+                <button class="govuk-button govuk-button--secondary sup_gov_blue_bg sup_margin_0 sup_flex sup_width_140" id="exportFailedBtn" type="button" title="Export failed records to Excel">
+                    <img src="~/images/file-export-solid-full.svg" width="16" alt="icon for export data into excel file">&nbsp; Excel Export
+                </button>
+
+                <button class="govuk-button govuk-button--warning sup_margin_0 sup_flex sup_width_140" id="deleteAllFailedBtn" type="button" title="Delete all failed records">
+                    <img src="~/images/trash-can-regular-full-white.svg" width="16" alt="Delete all failed records">&nbsp; Delete All
                 </button>
             </div>
         </div>
@@ -71,6 +81,7 @@
     <script>
         var initialRmsMonth = '@(Model.Month?.ToString() ?? "")';
         var rmsSubContractsGridId = '@Model.SubContractsGrid.GridId';
+        var rmsFailedSubContractsGridId = '@Model.FailedSubContractsGrid.GridId';
     </script>
     <script src="~/js/pact_js/subcontract-rms.js"></script>
 }

@@ -42,6 +42,8 @@ namespace Apha.Common.Utilities.ExcelExport
             var allCellsRange = worksheet.Range(1, 1, lastDataRow, lastDataColumn);
             allCellsRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             allCellsRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+            // Auto-fit all used columns
+            worksheet.Columns().AdjustToContents();
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);

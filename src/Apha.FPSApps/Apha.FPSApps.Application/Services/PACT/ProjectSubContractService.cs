@@ -3,6 +3,7 @@ using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
+using Apha.Common.Utilities.ExcelImport;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Http;
 
@@ -11,10 +12,12 @@ namespace Apha.FPSApps.Application.Services.PACT
     public class ProjectSubContractService : IProjectSubContractService
     {
         private readonly IPactApiClient _pactClient;
+        private readonly IExcelImportService _excelImportService;
 
-        public ProjectSubContractService(IPactApiClient pactClient)
+        public ProjectSubContractService(IPactApiClient pactClient, IExcelImportService excelImportService)
         {
             _pactClient = pactClient;
+            _excelImportService = excelImportService;
         }
 
         public async Task<ApiResponseDto<List<ProjectSubContractDto>>> GetPagedProjectSubContractsAsync(QueryParameters<string> query, string? project)
@@ -50,139 +53,81 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<List<SubContractRmsImportRowDto>>> GetFailedSubContractRmsAsync(QueryParameters<string> query)
             => await _pactClient.PactProjectSubContract.GetFailedSubContractRmsAsync(query);
 
+        public async Task<ApiResponseDto<SubContractRmsImportRowDto>> GetFailedSubContractRmsByIdAsync(int id)
+            => await _pactClient.PactProjectSubContract.GetFailedSubContractRmsByIdAsync(id);
+
+        public async Task<ApiResponseDto<bool>> SaveFailedSubContractRmsAsync(int id, SubContractRmsImportRowDto dto)
+            => await _pactClient.PactProjectSubContract.SaveFailedSubContractRmsAsync(id, dto);
+
+        public async Task<ApiResponseDto<bool>> DeleteFailedSubContractRmsByIdAsync(int id)
+            => await _pactClient.PactProjectSubContract.DeleteFailedSubContractRmsByIdAsync(id);
+
         public async Task<ApiResponseDto<SubContractRmsImportResultDto>> ImportSubContractRmsAsync(IFormFile file)
         {
             using var stream = file.OpenReadStream();
             using var workbook = new XLWorkbook(stream);
-            var worksheet = workbook.Worksheet(1);
-            var usedRows = worksheet.RangeUsed()?.RowsUsed().ToList() ?? new List<IXLRangeRow>();
 
-            if (usedRows.Count <= 1)
+            var requiredHeaders = new[]
             {
-                return ApiResponseDto<SubContractRmsImportResultDto>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Code = "EMPTY_FILE", Message = "No data rows found in the uploaded Excel file." } },
-                    new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
-            }
-
-            var request = new SubContractRmsImportReqDto
-            {
-                FileName = file.FileName
+                "Project",
+                "Test Job",
+                "Month",
+                "Amount",
+                "Account Code",
+                "Supplier",
+                "Description",
+                "Supplier Number",
+                "Daily Rate",
+                "Animal Days"
             };
 
-            var headerMap = BuildHeaderMap(usedRows.First());
-            var hasMissingHeaders = GetMissingRequiredHeaders(headerMap).Any();
-            if (hasMissingHeaders)
+            var importResult = _excelImportService.ReadExcel(
+                workbook,
+                MapRowToDto,
+                requiredHeaders,
+                worksheetIndex: 1);
+
+            if (!importResult.IsSuccess)
             {
                 return ApiResponseDto<SubContractRmsImportResultDto>.FailureResponse(
                     new List<ApiErrorDto>
                     {
                         new ApiErrorDto
                         {
-                            Code = "INVALID_TEMPLATE",
-                            Message = "The uploaded Excel file format is not correct please use the correct template."
+                            Code = importResult.MissingHeaders.Any() ? "INVALID_TEMPLATE" : "EMPTY_FILE",
+                            Message = importResult.ErrorMessage ?? "Import failed."
                         }
                     },
                     new ApiMetaDto { CorrelationId = Guid.NewGuid().ToString(), TimestampUtc = DateTime.UtcNow });
             }
 
-            var colProject = headerMap[NormalizeHeader("Project")];
-            var colTestJob = headerMap[NormalizeHeader("Test Job")];
-            var colMonth = headerMap[NormalizeHeader("Month")];
-            var colAmount = headerMap[NormalizeHeader("Amount")];
-            //var colWorkGroup = headerMap[NormalizeHeader("Work Group")];
-            var colAccountCode = headerMap[NormalizeHeader("Account Code")];
-            var colSupplier = headerMap[NormalizeHeader("Supplier")];
-            var colDescription = headerMap[NormalizeHeader("Description")];
-            var colSupplierNumber = headerMap[NormalizeHeader("Supplier Number")];
-            var colDailyRate = headerMap[NormalizeHeader("Daily Rate")];
-            var colAnimalDays = headerMap[NormalizeHeader("Animal Days")];
-
-            request.Rows = new List<SubContractRmsImportRowDto>(Math.Max(usedRows.Count - 1, 0));
-
-            foreach (var row in usedRows.Skip(1))
+            var request = new SubContractRmsImportReqDto
             {
-                request.Rows.Add(new SubContractRmsImportRowDto
-                {
-                    Project = GetText(row.Cell(colProject)),
-                    TestJob = GetText(row.Cell(colTestJob)),
-                    Month = GetText(row.Cell(colMonth)),
-                    Amount = GetText(row.Cell(colAmount)),
-                    //WorkGroup = GetText(row.Cell(colWorkGroup)),
-                    AcctCode = GetText(row.Cell(colAccountCode)),
-                    Supplier = GetText(row.Cell(colSupplier)),
-                    Description = GetText(row.Cell(colDescription)),
-                    SupplierNumber = GetText(row.Cell(colSupplierNumber)),
-                    DailyRate = GetText(row.Cell(colDailyRate)),
-                    AnimalDays = GetText(row.Cell(colAnimalDays))
-                });
-            }
+                FileName = file.FileName,
+                Rows = importResult.Rows
+            };
 
             return await _pactClient.PactProjectSubContract.ImportSubContractRmsAsync(request);
         }
 
+        private SubContractRmsImportRowDto MapRowToDto(IXLRangeRow row, Dictionary<string, int> headerMap)
+        {
+            return new SubContractRmsImportRowDto
+            {
+                Project = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Project")])),
+                TestJob = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Test Job")])),
+                Month = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Month")])),
+                Amount = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Amount")])),
+                AcctCode = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Account Code")])),
+                Supplier = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Supplier")])),
+                Description = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Description")])),
+                SupplierNumber = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Supplier Number")])),
+                DailyRate = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Daily Rate")])),
+                AnimalDays = _excelImportService.GetText(row.Cell(headerMap[_excelImportService.NormalizeHeader("Animal Days")]))
+            };
+        }
+
         public async Task<ApiResponseDto<bool>> DeleteFailedSubContractRmsByUserAsync()
             => await _pactClient.PactProjectSubContract.DeleteFailedSubContractRmsByUserAsync();
-
-        private static Dictionary<string, int> BuildHeaderMap(IXLRangeRow headerRow)
-        {
-            var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            foreach (var cell in headerRow.CellsUsed())
-            {
-                var header = NormalizeHeader(cell.GetString());
-                if (!string.IsNullOrWhiteSpace(header) && !map.ContainsKey(header))
-                    map[header] = cell.Address.ColumnNumber;
-            }
-            return map;
-        }
-
-        private static IXLCell GetCell(IXLRangeRow row, Dictionary<string, int> headerMap, params string[] headerNames)
-        {
-            foreach (var headerName in headerNames)
-            {
-                var key = NormalizeHeader(headerName);
-                if (headerMap.TryGetValue(key, out var col))
-                    return row.Cell(col);
-            }
-
-            return row.Cell(1);
-        }       
-
-        private static string? GetText(IXLCell cell)
-        {
-            if (cell == null || cell.IsEmpty()) return null;
-            var text = cell.GetString()?.Trim();
-            return string.IsNullOrWhiteSpace(text) ? null : text;
-        }
-
-        private static string NormalizeHeader(string value)
-        {
-            return new string((value ?? string.Empty).Where(char.IsLetterOrDigit).ToArray());
-        }
-
-        private static readonly string[] TemplateHeaders =
-        {
-            "Project",
-            "Test Job",
-            "Month",
-            "Amount",
-            //"Work Group",
-            "Account Code",
-            "Supplier",
-            "Description",
-            "Supplier Number",
-            "Daily Rate",
-            "Animal Days"
-        };
-
-        private static IEnumerable<string> GetMissingRequiredHeaders(Dictionary<string, int> headerMap)
-        {
-            foreach (var header in TemplateHeaders)
-            {
-                if (!headerMap.ContainsKey(NormalizeHeader(header)))
-                    yield return header;
-            }
-        }
-
-
     }
 }

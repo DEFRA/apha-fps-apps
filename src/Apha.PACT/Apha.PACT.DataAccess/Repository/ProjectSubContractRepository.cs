@@ -16,10 +16,7 @@ namespace Apha.PACT.DataAccess.Repository
         public ProjectSubContractRepository(FpsDbContext context, IFpsRequestContext fpsRequestContext) : base(context)
         {
             _fpsRequestContext = fpsRequestContext;
-        }
-
-        private static readonly HashSet<string> RequiredFields =
-            new(StringComparer.OrdinalIgnoreCase) { "Project", "Month", "Amount" };
+        }       
 
         public async Task<PagedData<ProjectSubContract>> GetPagedProjectSubContractsAsync(PaginationParameters<string> query, string? project)
         {
@@ -143,7 +140,7 @@ namespace Apha.PACT.DataAccess.Repository
                 .ToListAsync();
         }
 
-        public async Task<HashSet<string>> GetValidProjectsForCurrentFpsYearAsync()
+        public async Task<HashSet<string>> GetValidProjectsAsync()
         {
             var fpsYear = _fpsRequestContext.FpsYear;
             return await _context.Projects
@@ -244,6 +241,23 @@ namespace Apha.PACT.DataAccess.Repository
                 PassedCount = passedRows.Count,
                 FailedCount = failedRows.Count
             };
+        }
+
+        public async Task<ProjectSubcontractStaging?> GetFailedSubContractRmsByIdAsync(int id, string importedBy)
+        {
+            return await _context.ProjectSubcontractStagings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == id && s.ImportedBy == importedBy);
+        }
+
+        public async Task<bool> DeleteFailedSubContractRmsByIdAsync(int id, string importedBy)
+        {
+            var entity = await _context.ProjectSubcontractStagings
+                .FirstOrDefaultAsync(s => s.Id == id && s.ImportedBy == importedBy);
+            if (entity == null) return false;
+            _context.ProjectSubcontractStagings.Remove(entity);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         private static IQueryable<ProjectSubContract> ApplySubContractFilter(IQueryable<ProjectSubContract> query, string? filter)
@@ -392,7 +406,7 @@ namespace Apha.PACT.DataAccess.Repository
                 "importeddate" => ApplyFailedOrder(query, s => s.ImportedDate, descending),
                 _ => query.OrderBy(x => x.Id)
             };
-        }
+        }        
 
         private static IQueryable ApplyOrder<T>(IQueryable<ProjectSubContract> query, Expression<Func<ProjectSubContract, T>> keySelector, bool descending)
         {

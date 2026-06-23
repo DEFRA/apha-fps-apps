@@ -5,8 +5,8 @@ using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
+using Apha.Common.Utilities.ExcelImport;
 using AutoMapper;
-using System.Globalization;
 
 namespace Apha.PACT.Application.Services
 {
@@ -153,7 +153,7 @@ namespace Apha.PACT.Application.Services
 
         public async Task<SubContractRmsImportResultDto> ImportSubContractRmsAsync(SubContractRmsImportDto request, string importedBy)
         {
-            var validProjects = await _repository.GetValidProjectsForCurrentFpsYearAsync();
+            var validProjects = await _repository.GetValidProjectsAsync();
             var fpsYear = _repository.GetCurrentFpsYear();
             var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
             var fileName = request.FileName ?? "SubContractRMS-Import.xlsx";
@@ -165,11 +165,11 @@ namespace Apha.PACT.Application.Services
             {
                 var failures = ValidateImportRow(source, validProjects);
 
-                var parsedMonth = TryParseDouble(source.Month);
-                var parsedAmount = TryParseDecimal(source.Amount);
-                var parsedSupplierNumber = TryParseInt(source.SupplierNumber);
-                var parsedDailyRate = TryParseDecimal(source.DailyRate);
-                var parsedAnimalDays = TryParseInt(source.AnimalDays);
+                var parsedMonth = ExcelParseHelper.TryParseDouble(source.Month);
+                var parsedAmount = ExcelParseHelper.TryParseDecimal(source.Amount);
+                var parsedSupplierNumber = ExcelParseHelper.TryParseInt(source.SupplierNumber);
+                var parsedDailyRate = ExcelParseHelper.TryParseDecimal(source.DailyRate);
+                var parsedAnimalDays = ExcelParseHelper.TryParseInt(source.AnimalDays);
 
                 if (failures.Count == 0)
                 {
@@ -220,8 +220,8 @@ namespace Apha.PACT.Application.Services
             return new SubContractRmsImportResultDto
             {
                 PassedCount = result.PassedCount,
-                FailedCount = result.FailedCount,
-                Message = $"Import completed successfully. Passed records: {result.PassedCount} out of {totalCount}."
+                FailedCount = result.FailedCount,                
+                Message = $"Import completed successfully. {result.PassedCount} out of {totalCount} records successfully validated and is now live."
             };
         }
 
@@ -229,119 +229,112 @@ namespace Apha.PACT.Application.Services
         {
             var failures = new List<string>();
 
-            if (string.IsNullOrWhiteSpace(row.Project))
-                failures.Add("Project is required.");
-            else if (!validProjects.Contains(row.Project))
-                failures.Add($"Project '{row.Project}' does not exist.");
-
-            ValidateRequiredDecimal(row.Amount, "Amount", failures);
-            ValidateMonth(row.Month, failures);
-            ValidateNonNegativeInteger(row.SupplierNumber, "Supplier Number", failures, required: false);
-            ValidateNonNegativeDecimal(row.DailyRate, "Daily Rate", failures, required: false);
-            ValidateNonNegativeInteger(row.AnimalDays, "Animal Days", failures, required: false);
+            ExcelValidationHelper.ValidateStringInSet(row.Project, validProjects, "Project", failures);
+            ExcelValidationHelper.ValidateRequiredDecimal(row.Amount, "Amount", failures);
+            ExcelValidationHelper.ValidateMonth(row.Month, failures);
+            ExcelValidationHelper.ValidateNonNegativeInteger(row.SupplierNumber, "Supplier Number", failures, required: false);
+            ExcelValidationHelper.ValidateNonNegativeDecimal(row.DailyRate, "Daily Rate", failures, required: false);
+            ExcelValidationHelper.ValidateNonNegativeInteger(row.AnimalDays, "Animal Days", failures, required: false);
 
             return failures;
         }
 
-        private static void ValidateMonth(string? value, List<string> failures)
+        public async Task<SubContractRmsImportRowDto?> GetFailedSubContractRmsByIdAsync(int id, string importedBy)
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                failures.Add("Month is required.");
-                return;
-            }
-
-            var month = TryParseDouble(value);
-            if (!month.HasValue)
-            {
-                failures.Add("Month must be a valid number.");
-                return;
-            }
-
-            if (month.Value < 1 || month.Value > 12)
-                failures.Add("Month must be between 1 and 12.");
+            var entity = await _repository.GetFailedSubContractRmsByIdAsync(id, importedBy);
+            return entity == null ? null : _mapper.Map<SubContractRmsImportRowDto>(entity);
         }
 
-        private static void ValidateRequiredDecimal(string? value, string fieldName, List<string> failures)
+        public async Task<bool> SaveFailedSubContractRmsAsync(int id, SubContractRmsImportRowDto dto, string importedBy)
         {
-            if (string.IsNullOrWhiteSpace(value))
+            var validProjects = await _repository.GetValidProjectsAsync();
+            var fpsYear = _repository.GetCurrentFpsYear();
+
+            var failures = ValidateImportRow(dto, validProjects);
+
+            if (failures.Count > 0)
             {
-                failures.Add($"{fieldName} is required.");
-                return;
+                // Map display field names to model property names for inline validation
+                var fieldNameMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    { "Project", "Project" },
+                    { "Amount", "Amount" },
+                    { "Month", "Month" },
+                    { "Supplier Number", "SupplierNumber" },
+                    { "Daily Rate", "DailyRate" },
+                    { "Animal Days", "AnimalDays" }
+                };
+
+                // Convert validation failures to BusinessValidationError format
+                var validationErrors = failures.Select(failure =>
+                {
+                    // Extract field name from error message (format: "FieldName message")
+                    // Try to match multi-word field names first (longest match wins)
+                    var displayFieldName = string.Empty;
+                    var message = failure;
+
+                    // Sort by length descending to match longest field names first
+                    foreach (var fieldKey in fieldNameMap.Keys.OrderByDescending(k => k.Length))
+                    {
+                        if (failure.StartsWith(fieldKey + " ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            displayFieldName = fieldKey;
+                            message = failure.Substring(fieldKey.Length + 1).Trim();
+                            break;
+                        }
+                    }
+
+                    // Check if this is a "does not exist" error - show in summary only
+                    if (message.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // For summary-only errors, use the full message and empty code
+                        return new BusinessValidationError(failure, string.Empty);
+                    }
+
+                    // Map display name to model property name for inline field validation
+                    var modelFieldName = !string.IsNullOrEmpty(displayFieldName) && fieldNameMap.ContainsKey(displayFieldName)
+                        ? fieldNameMap[displayFieldName]
+                        : displayFieldName;
+
+                    // BusinessValidationError(message, code) - code is the field name
+                    return new BusinessValidationError(message, modelFieldName);
+                }).ToList();
+
+                throw new BusinessValidationErrorException(validationErrors);
             }
 
-            if (!TryParseDecimal(value).HasValue)
-                failures.Add($"{fieldName} must be a valid decimal number.");
-        }
+            var parsedMonth = ExcelParseHelper.TryParseDouble(dto.Month);
+            var parsedAmount = ExcelParseHelper.TryParseDecimal(dto.Amount);
+            var parsedSupplierNumber = ExcelParseHelper.TryParseInt(dto.SupplierNumber);
+            var parsedDailyRate = ExcelParseHelper.TryParseDecimal(dto.DailyRate);
+            var parsedAnimalDays = ExcelParseHelper.TryParseInt(dto.AnimalDays);
 
-        private static void ValidateNonNegativeInteger(string? value, string fieldName, List<string> failures, bool required)
-        {
-            if (string.IsNullOrWhiteSpace(value))
+            // Record is valid - move to ProjectSubContract
+            var subContract = new ProjectSubContract
             {
-                if (required)
-                    failures.Add($"{fieldName} is required.");
-                return;
-            }
+                Project = dto.Project,
+                TestJob = dto.TestJob,
+                Month = parsedMonth,
+                Amount = parsedAmount,
+                WorkGroup = dto.WorkGroup,
+                AcctCode = dto.AcctCode,
+                Supplier = dto.Supplier,
+                Description = dto.Description,
+                SupplierNumber = parsedSupplierNumber,
+                DailyRate = parsedDailyRate,
+                AnimalDays = parsedAnimalDays,
+                FpsYear = fpsYear
+            };
 
-            var parsed = TryParseInt(value);
-            if (!parsed.HasValue)
-            {
-                failures.Add($"{fieldName} must be a valid whole number.");
-                return;
-            }
+            await _repository.CreateAsync(subContract);
+            await _repository.DeleteFailedSubContractRmsByIdAsync(id, importedBy);
 
-            if (parsed.Value < 0)
-                failures.Add($"{fieldName} cannot be negative.");
+            return true; // Successfully moved to SubContract
         }
 
-        private static void ValidateNonNegativeDecimal(string? value, string fieldName, List<string> failures, bool required)
+        public async Task<bool> DeleteFailedSubContractRmsByIdAsync(int id, string importedBy)
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                if (required)
-                    failures.Add($"{fieldName} is required.");
-                return;
-            }
-
-            var parsed = TryParseDecimal(value);
-            if (!parsed.HasValue)
-            {
-                failures.Add($"{fieldName} must be a valid decimal number.");
-                return;
-            }
-
-            if (parsed.Value < 0)
-                failures.Add($"{fieldName} cannot be negative.");
-        }
-
-        private static double? TryParseDouble(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
-
-            return double.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed)
-                ? parsed
-                : null;
-        }
-
-        private static decimal? TryParseDecimal(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
-
-            return decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed)
-                ? parsed
-                : null;
-        }
-
-        private static int? TryParseInt(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
-
-            return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
-                ? parsed
-                : null;
+            return await _repository.DeleteFailedSubContractRmsByIdAsync(id, importedBy);
         }
 
         private static IEnumerable<MonthlySubContractsSummaryDto> SortPivotRows(
