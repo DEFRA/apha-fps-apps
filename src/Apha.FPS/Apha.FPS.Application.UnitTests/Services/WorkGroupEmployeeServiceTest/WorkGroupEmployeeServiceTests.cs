@@ -81,17 +81,24 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task GetWorkGroupEmployeeAsync_WithNullOrWhitespaceWgGrade_ThrowsArgumentException(string wgGrade)
+        public async Task GetWorkGroupEmployeeAsync_WithNullOrWhitespaceWgGrade_PassesValueToRepository(string wgGrade)
         {
             // Arrange
-            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var query        = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var pagedData    = new PagedData<WorkGroupEmployeeView>();
+            var expected     = new PaginatedResult<WorkGroupEmployeeDto>();
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.GetWorkGroupEmployeeAsync(query, wgGrade));
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _mockRepository.GetWorkGroupEmployeeAsync(mappedParams, wgGrade).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<WorkGroupEmployeeDto>>(pagedData).Returns(expected);
 
-            await _mockRepository.DidNotReceive()
-                .GetWorkGroupEmployeeAsync(Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
+            // Act
+            var result = await _sut.GetWorkGroupEmployeeAsync(query, wgGrade);
+
+            // Assert
+            result.Should().Be(expected);
+            await _mockRepository.Received(1).GetWorkGroupEmployeeAsync(mappedParams, wgGrade);
         }
 
         #endregion
@@ -155,7 +162,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         public async Task CreateWorkGroupEmployeeAsync_WithValidDto_ReturnsMappedResult()
         {
             // Arrange
-            var dto     = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade, HrsPaid = 40.0 };
+            var dto     = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade, HrsPaid = 40.0, Leave = 5.0, SickSpecial = 2.0 };
             var entity  = new WorkGroupEmployee    { PactId = DefaultPactId };
             var created = new WorkGroupEmployee    { PactId = DefaultPactId, HrsPaid = 40.0 };
             var expected = new WorkGroupEmployeeDto { PactId = DefaultPactId };
@@ -222,11 +229,13 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         public async Task UpdateWorkGroupEmployeeAsync_WithValidDto_ReturnsMappedResult()
         {
             // Arrange
-            var dto     = new WorkGroupEmployeeDto { PactId = DefaultPactId, HrsPaid = 40.0 };
-            var entity  = new WorkGroupEmployee    { PactId = DefaultPactId };
-            var updated = new WorkGroupEmployee    { PactId = DefaultPactId, HrsPaid = 40.0 };
+            var dto      = new WorkGroupEmployeeDto { PactId = DefaultPactId, HrsPaid = 40.0, Leave = 3.0, SickSpecial = 4.0 };
+            var existing = new WorkGroupEmployeeView { PactId = DefaultPactId };
+            var entity   = new WorkGroupEmployee    { PactId = DefaultPactId };
+            var updated  = new WorkGroupEmployee    { PactId = DefaultPactId, HrsPaid = 40.0 };
             var expected = new WorkGroupEmployeeDto { PactId = DefaultPactId };
 
+            _mockRepository.GetWorkGroupEmployeeByIdAsync(DefaultPactId).Returns(existing);
             _mockMapper.Map<WorkGroupEmployee>(dto).Returns(entity);
             _mockRepository.UpdateWorkGroupEmployeeAsync(entity).Returns(updated);
             _mockMapper.Map<WorkGroupEmployeeDto>(updated).Returns(expected);
@@ -273,6 +282,8 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         public async Task DeleteWorkGroupEmployeeAsync_WithValidPactId_ReturnsTrue()
         {
             // Arrange
+            var entity = new WorkGroupEmployeeView { PactId = DefaultPactId };
+            _mockRepository.GetWorkGroupEmployeeByIdAsync(DefaultPactId).Returns(entity);
             _mockRepository.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(true);
 
             // Act

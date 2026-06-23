@@ -19,11 +19,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IWorkGroupEmployeeService _workGroupEmployeeService;
+        private readonly IEmployeeService _employeeService;
+        private readonly IWorkGroupGradeService _workGroupGradeService;
 
-        public WorkGroupStaffMaintenanceController(IMapper mapper, IWorkGroupEmployeeService workGroupEmployeeService)
+        public WorkGroupStaffMaintenanceController(
+            IMapper mapper,
+            IWorkGroupEmployeeService workGroupEmployeeService,
+            IEmployeeService employeeService,
+            IWorkGroupGradeService workGroupGradeService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _workGroupEmployeeService = workGroupEmployeeService ?? throw new ArgumentNullException(nameof(workGroupEmployeeService));
+            _employeeService = employeeService ?? throw new ArgumentNullException(nameof(employeeService));
+            _workGroupGradeService = workGroupGradeService ?? throw new ArgumentNullException(nameof(workGroupGradeService));
         }
 
         public async Task<IActionResult> Index()
@@ -60,16 +68,22 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             var model = new WorkGroupEmployeeItem
             {
                 PactId = string.Empty,
                 StaffName = string.Empty,
                 WgGrade = string.Empty,
-                PersonStatus = string.Empty
+                PersonStatus = string.Empty,
+                HrsPaid = 0,
+                Leave = 0,
+                SickSpecial = 0,
+                HrsAvail = 0
             };
 
+            ViewData["IsEditMode"] = false;
+            await PopulateLookupDataAsync(model);
             return PartialView("~/Areas/FPS/Views/WorkGroupStaffMaintenance/_AddEditWorkGroupStaff.cshtml", model);
         }
 
@@ -118,6 +132,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return NotFound();
 
             var model = _mapper.Map<WorkGroupEmployeeItem>(response.Data);
+            ViewData["IsEditMode"] = true;
+            await PopulateLookupDataAsync(model);
             return PartialView("~/Areas/FPS/Views/WorkGroupStaffMaintenance/_AddEditWorkGroupStaff.cshtml", model);
         }
 
@@ -222,6 +238,103 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
             };
+        }
+
+        private async Task PopulateLookupDataAsync(WorkGroupEmployeeItem model)
+        {
+            var lookupQuery = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 5000
+            };
+
+            var employeeResponse = await _employeeService.GetFilteredEmployeesAsync(lookupQuery, 0);
+            var employees = employeeResponse.Success && employeeResponse.Data != null
+                ? employeeResponse.Data
+                : [];
+
+            model.StaffLookupOptions = employees
+                .Select(e => new WorkGroupStaffLookupItem
+                {
+                    PactId = string.Empty,
+                    Name = ResolveEmployeeName(e),
+                    SpNumber = ResolveEmployeeSpNumber(e)
+                })
+                .Where(s => !string.IsNullOrWhiteSpace(s.Name) && !string.IsNullOrWhiteSpace(s.SpNumber))
+                .GroupBy(s => s.SpNumber, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .OrderBy(s => s.Name)
+                .ToList();
+
+            var workGroupGradeQuery = new QueryParameters<string>
+            {
+                Page = 1,
+                PageSize = 5000
+            };
+
+            var workGroupGradeResponse = await _workGroupGradeService.GetAllWorkgroupGradesPagedAsync(workGroupGradeQuery);
+            var workGroupGradeSourceData = workGroupGradeResponse.Success && workGroupGradeResponse.Data != null
+                ? workGroupGradeResponse.Data
+                : [];
+
+            model.WgGradeOptions = workGroupGradeSourceData
+                .Select(g => g.WgGrade)
+                .Where(g => !string.IsNullOrWhiteSpace(g))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(g => g)
+                .ToList();
+
+            if (!string.IsNullOrWhiteSpace(model.StaffName) && !string.IsNullOrWhiteSpace(model.SpNumber)
+                && !model.StaffLookupOptions.Any(s => string.Equals(s.SpNumber, model.SpNumber, StringComparison.OrdinalIgnoreCase)))
+            {
+                model.StaffLookupOptions.Add(new WorkGroupStaffLookupItem
+                {
+                    PactId = model.PactId ?? string.Empty,
+                    Name = model.StaffName,
+                    SpNumber = model.SpNumber
+                });
+
+                model.StaffLookupOptions = model.StaffLookupOptions
+                    .OrderBy(s => s.Name)
+                    .ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.WgGrade) && !model.WgGradeOptions.Any(g => string.Equals(g, model.WgGrade, StringComparison.OrdinalIgnoreCase)))
+            {
+                model.WgGradeOptions.Add(model.WgGrade);
+                model.WgGradeOptions = model.WgGradeOptions
+                    .OrderBy(g => g)
+                    .ToList();
+            }
+        }
+
+        private static string ResolveEmployeeName(EmployeeDto employee)
+        {
+            var directName = GetEmployeePropertyValue(employee, "Name", "FullName");
+            if (!string.IsNullOrWhiteSpace(directName))
+                return directName;
+
+            var firstName = GetEmployeePropertyValue(employee, "FirstName");
+            var lastName = GetEmployeePropertyValue(employee, "LastName");
+            return $"{firstName} {lastName}".Trim();
+        }
+
+        private static string ResolveEmployeeSpNumber(EmployeeDto employee)
+        {
+            return GetEmployeePropertyValue(employee, "SPNumber", "SpNumber", "EmployeeNumber", "StaffNumber");
+        }
+
+        private static string GetEmployeePropertyValue(EmployeeDto employee, params string[] propertyNames)
+        {
+            foreach (var propertyName in propertyNames)
+            {
+                var prop = employee.GetType().GetProperty(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+                var value = prop?.GetValue(employee)?.ToString();
+                if (!string.IsNullOrWhiteSpace(value))
+                    return value.Trim();
+            }
+
+            return string.Empty;
         }
     }
 }

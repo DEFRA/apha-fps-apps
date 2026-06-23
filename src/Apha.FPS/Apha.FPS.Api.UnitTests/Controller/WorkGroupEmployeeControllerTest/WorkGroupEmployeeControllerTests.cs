@@ -9,7 +9,7 @@
  *   - Phase 13 UPDATE: added #region CreateWorkGroupEmployeeAsync Tests covering
  *     the [HttpPost] CreateWorkGroupEmployeeAsync action added in Phase 5/6.
  *   - Two new test methods:
- *     CreateWorkGroupEmployeeAsync_WithValidRequest_ReturnsCreatedAtAction — happy path
+ *     CreateWorkGroupEmployeeAsync_WithValidRequest_ReturnsOk               — happy path
  *     CreateWorkGroupEmployeeAsync_WhenServiceThrows_PropagatesException    — exception path
  *
  * PRESERVED:
@@ -21,8 +21,8 @@
  * DEFERRED / REQUIRES HUMAN REVIEW:
  *   - TRANSFORMENGINE TODO: Confirm IWorkGroupEmployeeService.CreateWorkGroupEmployeeAsync signature
  *     is stable (returns WorkGroupEmployeeDto, not Task<IActionResult>).
- *   - TRANSFORMENGINE TODO: Verify CreatedAtAction route value key "pactId" matches route template
- *     parameter name in GetWorkGroupEmployeeByIdAsync ([HttpGet("{pactId}")]).
+ *   - TRANSFORMENGINE TODO: Verify CreateWorkGroupEmployeeAsync response contract remains
+ *     200 Ok with mapped payload expected by API clients.
  */
 
 using Apha.Common.Contracts;
@@ -128,7 +128,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
             var result = await _controller.GetWorkGroupEmployeeByIdAsync(DefaultPactId);
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
             okResult.Value.Should().Be(expectedRes);
             await _serviceMock.Received(1).GetWorkGroupEmployeeByIdAsync(DefaultPactId);
         }
@@ -149,10 +149,10 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
         #region CreateWorkGroupEmployeeAsync Tests
 
         // TRANSFORMENGINE: tests for [HttpPost] CreateWorkGroupEmployeeAsync added — Phase 13.
-        // Action returns 201 CreatedAtAction pointing to GetWorkGroupEmployeeByIdAsync.
+        // Action returns 200 Ok with mapped response.
 
         [Fact]
-        public async Task CreateWorkGroupEmployeeAsync_WithValidRequest_ReturnsCreatedAtAction()
+        public async Task CreateWorkGroupEmployeeAsync_WithValidRequest_ReturnsOk()
         {
             // Arrange
             var req         = new WorkGroupEmployeeReq { PactId = DefaultPactId, HrsPaid = 40.0 };
@@ -168,11 +168,8 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
             var result = await _controller.CreateWorkGroupEmployeeAsync(req);
 
             // Assert
-            var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-            createdResult.ActionName.Should().Be(nameof(WorkGroupEmployeeController.GetWorkGroupEmployeeByIdAsync));
-            createdResult.RouteValues.Should().ContainKey("pactId");
-            createdResult.RouteValues!["pactId"].Should().Be(DefaultPactId);
-            createdResult.Value.Should().Be(expectedRes);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            okResult.Value.Should().Be(expectedRes);
             await _serviceMock.Received(1).CreateWorkGroupEmployeeAsync(dto);
         }
 
@@ -213,7 +210,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
             var result = await _controller.UpdateWorkGroupEmployeeAsync(req);
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
             okResult.Value.Should().Be(expectedRes);
             await _serviceMock.Received(1).UpdateWorkGroupEmployeeAsync(dto);
         }

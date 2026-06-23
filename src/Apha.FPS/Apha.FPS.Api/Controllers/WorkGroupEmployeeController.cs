@@ -43,7 +43,7 @@ namespace Apha.FPS.Api.Controllers
             var result = await _workGroupEmployeeService.GetWorkGroupEmployeeByIdAsync(pactId);
             if (result == null)
             {
-                throw new ArgumentException($"WorkGroupEmployee with PACT Id '{pactId}' not found.");
+                throw new KeyNotFoundException($"WorkGroupEmployee with PACT Id '{pactId}' not found.");
             }
 
             return Ok(_mapper.Map<WorkGroupEmployeeRes>(result));
@@ -74,7 +74,7 @@ namespace Apha.FPS.Api.Controllers
             var isDeleted = await _workGroupEmployeeService.DeleteWorkGroupEmployeeAsync(pactId);
             if (!isDeleted)
             {
-                throw new ArgumentException($"WorkGroupEmployee with PACT Id '{pactId}' not found.");
+                throw new KeyNotFoundException($"WorkGroupEmployee with PACT Id '{pactId}' not found.");
             }
 
             return Ok(isDeleted);

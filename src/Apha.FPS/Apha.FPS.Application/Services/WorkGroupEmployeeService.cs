@@ -24,7 +24,7 @@ namespace Apha.FPS.Application.Services
             ArgumentNullException.ThrowIfNull(query);
 
             var filter = _mapper.Map<PaginationParameters<string>>(query);
-            var pagedData = await _repository.GetWorkGroupEmployeeAsync(filter, wgGrade ?? string.Empty);
+            var pagedData = await _repository.GetWorkGroupEmployeeAsync(filter, wgGrade);
             return _mapper.Map<PaginatedResult<WorkGroupEmployeeDto>>(pagedData);
         }
 
@@ -99,5 +99,6 @@ namespace Apha.FPS.Application.Services
 
             return await _repository.DeleteWorkGroupEmployeeAsync(pactId);
         }
+
     }
 }

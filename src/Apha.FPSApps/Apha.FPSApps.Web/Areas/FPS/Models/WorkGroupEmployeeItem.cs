@@ -42,6 +42,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double SickSpecial { get; set; }
 
         [Display(Name = "HrsAvail")]
+        [Required(ErrorMessage = "HrsAvail is required")]
         [GridColumn(Width = 90, Type = GridColumnType.ReadOnly, IsFilterable = false)]
         public double HrsAvail { get; set; }
 
@@ -68,5 +69,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [Display(Name = "SP No")]
         [GridColumn(Width = 100, Type = GridColumnType.ReadOnly, IsVisible = false, IsFilterable = false)]
         public string? SpNumber { get; set; }
+
+        [GridColumn(IsVisible = false)]
+        public List<WorkGroupStaffLookupItem> StaffLookupOptions { get; set; } = [];
+
+        [GridColumn(IsVisible = false)]
+        public List<string> WgGradeOptions { get; set; } = [];
+    }
+
+    public class WorkGroupStaffLookupItem
+    {
+        public string PactId { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string SpNumber { get; set; } = string.Empty;
     }
 }

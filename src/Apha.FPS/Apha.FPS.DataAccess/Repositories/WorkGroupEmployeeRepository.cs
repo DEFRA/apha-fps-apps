@@ -24,7 +24,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             ArgumentNullException.ThrowIfNull(entity);
 
-            entity.HrsAvail = entity.HrsPaid - (entity.Leave + entity.SickSpecial);
+            entity.FpsYear = _requestContext.FpsYear;
 
             await _dbContext.WorkGroupEmployees.AddAsync(entity);
             await _dbContext.SaveChangesAsync(default);
@@ -77,7 +77,7 @@ namespace Apha.FPS.DataAccess.Repositories
             existing.HrsPaid = entity.HrsPaid;
             existing.Leave = entity.Leave;
             existing.SickSpecial = entity.SickSpecial;
-            existing.HrsAvail = entity.HrsPaid - (entity.Leave + entity.SickSpecial);
+            existing.HrsAvail = entity.HrsAvail;
             existing.PersonStatus = entity.PersonStatus;
             existing.PersonClass = entity.PersonClass;
             existing.MakeAvailable = entity.MakeAvailable;
@@ -155,6 +155,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return await _dbContext.WorkGroupEmployees
                 .AnyAsync(e => e.WorkGroupGrade == wgGrade);
         }
+
 
         private static IQueryable<WorkGroupEmployeeView> ApplyWorkGroupEmployeeFilter(IQueryable<WorkGroupEmployeeView> query, string? filter)
         {

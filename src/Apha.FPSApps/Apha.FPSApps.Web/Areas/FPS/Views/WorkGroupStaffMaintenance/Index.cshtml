@@ -139,6 +139,10 @@
 
             var isEdit = $('#hdnIsEdit').val() === 'true';
 
+            var hrsPaid = parseFloat($('#HrsPaid').val()) || 0;
+            var leave = parseFloat($('#Leave').val()) || 0;
+            var sickSpecial = parseFloat($('#SickSpecial').val()) || 0;
+
             var dto = {
                 PactId:          $('#PactId').val(),
                 SpNumber:        $('#SpNumber').val() || '',
@@ -146,12 +150,12 @@
                 WorkGroupGrade:  $('#WgGrade').val(),
                 PersonStatus:    $('#PersonStatus').val(),
                 PersonClass:     $('#PersonClass').val() || null,
-                HrsPaid:         parseFloat($('#HrsPaid').val()) || 0,
-                Leave:           parseFloat($('#Leave').val()) || 0,
-                SickSpecial:     parseFloat($('#SickSpecial').val()) || 0,
+                HrsPaid:         hrsPaid,
+                Leave:           leave,
+                SickSpecial:     sickSpecial,
                 HrsAvail:        parseFloat($('#HrsAvail').val()) || 0,
-                MakeAvailable:   $('#MakeAvailable').val() === 'true' ? 1 : 0,
-                TimeRecorder:    $('#TimeRecorder').val() === 'true' ? 1 : 0,
+                MakeAvailable:   $('#MakeAvailable').is(':checked') ? 1 : 0,
+                TimeRecorder:    $('#TimeRecorder').is(':checked') ? 1 : 0,
                 StartDate:       $('#StartDate').val() || null,
                 EndDate:         $('#EndDate').val() || null,
                 HoursPerWeek:    $('#HoursPerWeek').val() !== '' ? parseFloat($('#HoursPerWeek').val()) : null
