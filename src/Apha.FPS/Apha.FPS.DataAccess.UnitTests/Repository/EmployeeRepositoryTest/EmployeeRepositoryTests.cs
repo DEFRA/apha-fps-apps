@@ -1284,7 +1284,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         // ── Helpers for WorkGroupStaff tests ─────────────────────────────────
 
         private static EmployeeRepository CreateRepositoryForWorkGroupStaff(
-            IEnumerable<WorkGroupStaff> WorkGroupStaff,
+            IEnumerable<PactStaff> WorkGroupStaff,
             IEnumerable<WorkgroupGrade>? workgroupGrades = null,
             IEnumerable<Workgroup>? workgroups = null,
             IEnumerable<PactWorkGroupGradeView>? pactWorkGroupGradeViews = null,
@@ -1303,7 +1303,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
 
             // WorkGroupStaffs DbSet
             var wgPeopleMockSet = RepositoryTestHelper.CreateMockDbSet(WorkGroupStaff);
-            mockContext.Setup(x => x.WorkGroupStaffs).Returns(wgPeopleMockSet.Object);
+            mockContext.Setup(x => x.PactStaffs).Returns(wgPeopleMockSet.Object);
 
             // WorkgroupGrades DbSet
             var gradesMockSet = RepositoryTestHelper.CreateMockDbSet(workgroupGrades ?? Enumerable.Empty<WorkgroupGrade>());
@@ -1326,7 +1326,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetAllPersonAsync_ReturnsPersonsJoinedWithWorkgroupGrades()
         {
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2" }
@@ -1351,7 +1351,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetAllPersonAsync_ReturnsOrderedByName()
         {
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Charlie", WorkGroupGrade = "WG1" },
                 new() { Name = "Alice",   WorkGroupGrade = "WG2" },
@@ -1380,7 +1380,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         {
             // Arrange
             var repo = CreateRepositoryForWorkGroupStaff(
-                new List<WorkGroupStaff>(),
+                new List<PactStaff>(),
                 new List<WorkgroupGrade>());
 
             // Act
@@ -1395,7 +1395,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetAllPersonAsync_ExcludesPeopleWithNoMatchingGrade()
         {
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG_NOMATCH" }
@@ -1419,7 +1419,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetAllPersonAsync_SetsWorkGroupFromGradeJoin()
         {
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" }
             };
@@ -1447,7 +1447,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetWorkGroupStaffAsync_NoFilter_ReturnsAllPeopleOrderedByName()
         {
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Charlie", WorkGroupGrade = "WG1", PactId = "P003" },
                 new() { Name = "Alice",   WorkGroupGrade = "WG1", PactId = "P001" },
@@ -1473,16 +1473,16 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetWorkGroupStaffAsync_FilterByWorkGroup_ReturnsMatchingPeople()
         {
             // Arrange
-            // GetWorkGroupStaffAsync joins: Workgroups → PactWorkGroupGradeViews → WorkGroupStaffs
-            var people = new List<WorkGroupStaff>
+            // GetWorkGroupStaffAsync joins: Workgroups → PactWorkGroupGradeViews → PactStaffs
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2" }
             };
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "Group A" },
-                new() { WorkgroupName = "Group B" }
+                new() { WorkGroupName = "Group A" },
+                new() { WorkGroupName = "Group B" }
             };
             var pactGrades = new List<PactWorkGroupGradeView>
             {
@@ -1511,7 +1511,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             // correctly with in-memory mock DbSets.
 
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", Leave = 50.0 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2", Leave = 120.0 }
@@ -1545,7 +1545,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             // works correctly with in-memory mock DbSets.
 
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", SickSpecial = 10.0 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2", SickSpecial = 99.5 }
@@ -1574,7 +1574,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetWorkGroupStaffAsync_NumericFilter_HrsPaid_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 100.5 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG2", HrsPaid = 200.0 }
@@ -1603,7 +1603,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetWorkGroupStaffAsync_NumericFilter_HrsAvail_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsAvail = 30.0 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsAvail = 40.0 }
@@ -1629,7 +1629,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         {
             // Covers HrsPaid + Leave + SickSpecial + HrsAvail applied together
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 37.5, Leave = 5.0, SickSpecial = 1.0, HrsAvail = 31.5 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsPaid = 20.0, Leave = 5.0, SickSpecial = 1.0, HrsAvail = 14.0 }
@@ -1656,7 +1656,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetWorkGroupStaffAsync_NumericFilter_HighPrecisionFloats_ReturnsMatchingPeople()
         {
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1", HrsPaid = 100.12345 },
                 new() { Name = "Bob",   WorkGroupGrade = "WG1", HrsPaid = 200.67891 }
@@ -1682,7 +1682,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         {
             // Arrange
             var people = Enumerable.Range(1, 15)
-                .Select(i => new WorkGroupStaff { Name = $"Person{i:D2}", WorkGroupGrade = "WG1" })
+                .Select(i => new PactStaff { Name = $"Person{i:D2}", WorkGroupGrade = "WG1" })
                 .ToList();
             var grades = new List<WorkgroupGrade> { new() { WgGrade = "WG1", Workgroup = "Group A" } };
             var repo = CreateRepositoryForWorkGroupStaff(people, grades);
@@ -1700,7 +1700,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         public async Task GetWorkGroupStaffAsync_SortByName_Descending_ReturnsSortedResults()
         {
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" },
                 new() { Name = "Charlie", WorkGroupGrade = "WG1" },
@@ -1733,7 +1733,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         {
             // Arrange
             var repo = CreateRepositoryForWorkGroupStaff(
-                new List<WorkGroupStaff>(),
+                new List<PactStaff>(),
                 new List<WorkgroupGrade>());
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
 
@@ -1773,7 +1773,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
             string sortBy, bool descending, string expectedFirstName)
         {
             // Arrange
-            var people = new List<WorkGroupStaff>
+            var people = new List<PactStaff>
             {
                 new() { Name = "Bob",     WorkGroupGrade = "WG2", PactId = "P002", SpNumber = "SP002",
                         Title = "Developer", PersonStatus = "OnLeave",

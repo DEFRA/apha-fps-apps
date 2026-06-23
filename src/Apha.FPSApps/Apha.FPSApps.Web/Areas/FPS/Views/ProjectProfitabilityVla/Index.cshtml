@@ -1,0 +1,389 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.ProjectProfitabilityVlaViewModel
+
+@{
+    ViewData["Title"] = "FPS : Project Profitability for VLA";
+}
+
+<main class="govuk-main-wrapper govuk-!-padding-top-0 asu-main-content" id="main-content" role="main">
+    <div class="container-fluid">
+
+        @* ── Page title ──────────────────────────────────────────────────────── *@
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+                    Project Profitability for VLA
+                </h1>
+            </div>
+        </div>
+
+        @* ── Filter dropdowns ────────────────────────────────────────────────── *@
+        <div class="govuk-grid-row sup_margin_left_right_10">
+
+            @* Filter 1: Project Status — static options matching HTML prototype *@
+            <div class="govuk-grid-column-one-quarter govuk-!-padding-left-0" style="width: 20%;">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           for="filterProjectStatus">Project Status Filter</label>
+                    @* TRANSFORMENGINE: static Status options rendered with manual <option> elements
+                           matching HTML prototype. asp-for binds to SelectedStatus for round-trip state. *@
+                    <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                            id="filterProjectStatus"
+                            asp-for="SelectedStatus"
+                            onchange="reloadProjectProfitabilityVlaGrid()">
+                        @* TRANSFORMENGINE: safe Razor option rendering — no @(...) in attribute area *@
+                        @if (Model.SelectedStatus == "Approved")
+                        {
+                            <option value="">All statuses</option>
+                            <option value="Approved" selected>Approved</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Not Approved">Not Approved</option>
+                        }
+                        else if (Model.SelectedStatus == "Completed")
+                        {
+                            <option value="">All statuses</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Completed" selected>Completed</option>
+                            <option value="Not Approved">Not Approved</option>
+                        }
+                        else if (Model.SelectedStatus == "Not Approved")
+                        {
+                            <option value="">All statuses</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Not Approved" selected>Not Approved</option>
+                        }
+                        else
+                        {
+                            <option value="" selected>All statuses</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Not Approved">Not Approved</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            @* Filter 2: Program — dynamic, populated from IProgramService *@
+            <div class="govuk-grid-column-one-quarter" style="width: 20%;">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           for="filterProgram">Program Filter</label>
+                    @* TRANSFORMENGINE: dynamic program dropdown — asp-items bound to Model.ProgramList *@
+                    <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                            id="filterProgram"
+                            asp-for="SelectedProgram"
+                            asp-items="Model.ProgramList"
+                            onchange="reloadProjectProfitabilityVlaGrid()">
+                        <option value="">All programs</option>
+                    </select>
+                </div>
+            </div>
+
+            @* Filter 3: Manager — dynamic, populated from IProjectService.GetManagersAsync() *@
+            <div class="govuk-grid-column-one-quarter" style="width: 20%;">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           for="filterManager">Manager Filter</label>
+                    @* TRANSFORMENGINE: dynamic manager dropdown — asp-items bound to Model.ManagerList *@
+                    <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                            id="filterManager"
+                            asp-for="SelectedManager"
+                            asp-items="Model.ManagerList"
+                            onchange="reloadProjectProfitabilityVlaGrid()">
+                        <option value="">All managers</option>
+                    </select>
+                </div>
+            </div>
+
+            @* Filter 4: Customer — dynamic, populated from IProjectService.GetAllCustomersAsync() *@
+            <div class="govuk-grid-column-one-quarter" style="width: 20%;">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                           for="filterCustomer">Project Customer Filter</label>
+                    @* TRANSFORMENGINE: dynamic customer dropdown — asp-items bound to Model.CustomerList *@
+                    <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                            id="filterCustomer"
+                            asp-for="SelectedCustomer"
+                            asp-items="Model.CustomerList"
+                            onchange="reloadProjectProfitabilityVlaGrid()">
+                        <option value="">All customers</option>
+                    </select>
+                </div>
+            </div>
+
+            @* Clear button — resets all 4 filters and reloads grid *@
+            <div class="govuk-grid-column-one-quarter govuk-!-text-align-right"
+                 style="width: 20%; display: flex; align-items: flex-end; justify-content: flex-start;">
+                <button type="button"
+                        class="govuk-button govuk-!-margin-bottom-2 govuk-!-margin-top-5"
+                        data-module="govuk-button"
+                        id="clearProjectProfitabilityFilters"
+                        aria-label="Clear all filters"
+                        onclick="clearProjectProfitabilityVlaFilters()">Clear</button>
+            </div>
+        </div>
+
+        @* ── DataGrid ────────────────────────────────────────────────────────── *@
+        @* TRANSFORMENGINE: DataGrid rendered via shared _DataGrid partial.
+               GridId = "projectProfitabilityVlaGrid" (from controller DataGridConfig).
+               AllowAdd/Edit/Delete = false — JS showAddButton:false; no edit/delete buttons.
+               ExtraFilterMethod = "getProjectProfitabilityVlaExtraFilters" merges 4 filter values
+               into each AJAX POST to LoadProjectProfitabilityVlaGrid.
+               gm.reloadGrid({ page: 1 }) used — NOT gm.reload() (does not exist). *@
+        <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+            <div class="govuk-grid-column-full sup_p_0">
+                <div id="gridContainer_projectProfitabilityVlaGrid">
+                    @await Html.PartialAsync("_DataGrid", Model.ProfitabilityVlaGrid)
+                </div>
+            </div>
+        </div>
+
+        @* ── Summary totals bar ──────────────────────────────────────────────── *@
+        @* TRANSFORMENGINE: 9 read-only currency inputs matching HTML prototype ppf-total-* elements.
+               Populated via AJAX call to GetProjectProfitabilityVlaSummary after grid reload.
+               fps-profit-offtarget CSS class toggled on ppf-total-off-target when value is negative
+               (mirrors JS: classList.toggle('fps-profit-offtarget', totals.offTarget < 0)). *@
+        <div id="projectProfitabilitySummary"
+             class="sup_margin_left_right_10 financial-summary govuk-!-margin-bottom-2">
+            <div class="summary-row ppf-total-summary-row govuk-!-margin-top-0 govuk-!-margin-bottom-0">
+
+                @* Staff Costs *@
+                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                           for="ppf-total-staff-costs">Staff Costs</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input text-AlignRight pva-input-185"
+                               id="ppf-total-staff-costs"
+                               type="text"
+                               value="@(Model.TotalStaffCosts.HasValue ? Model.TotalStaffCosts.Value.ToString("N0") : "0")"
+                               readonly />
+                    </div>
+                </div>
+
+                @* Test Cost *@
+                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                           for="ppf-total-test-cost">Test Cost</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input text-AlignRight pva-input-185"
+                               id="ppf-total-test-cost"
+                               type="text"
+                               value="@(Model.TotalTestCost.HasValue ? Model.TotalTestCost.Value.ToString("N0") : "0")"
+                               readonly />
+                    </div>
+                </div>
+
+                @* Animal *@
+                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                           for="ppf-total-animal">Animal</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input text-AlignRight pva-input-185"
+                               id="ppf-total-animal"
+                               type="text"
+                               value="@(Model.TotalAnimalCosts.HasValue ? Model.TotalAnimalCosts.Value.ToString("N0") : "0")"
+                               readonly />
+                    </div>
+                </div>
+
+                @* Add Costs *@
+                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                           for="ppf-total-add-costs">Add Costs</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input text-AlignRight pva-input-185"
+                               id="ppf-total-add-costs"
+                               type="text"
+                               value="@(Model.TotalAdditionalCosts.HasValue ? Model.TotalAdditionalCosts.Value.ToString("N0") : "0")"
+                               readonly />
+                    </div>
+                </div>
+
+                @* Total Costs *@
+                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                           for="ppf-total-total-costs">Total Costs</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input text-AlignRight pva-input-185"
+                               id="ppf-total-total-costs"
+                               type="text"
+                               value="@(Model.TotalTotalCosts.HasValue ? Model.TotalTotalCosts.Value.ToString("N0") : "0")"
+                               readonly />
+                    </div>
+                </div>
+
+                @* Budget *@
+                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                           for="ppf-total-budget">Budget</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input text-AlignRight pva-input-185"
+                               id="ppf-total-budget"
+                               type="text"
+                               value="@(Model.TotalBudget.HasValue ? Model.TotalBudget.Value.ToString("N0") : "0")"
+                               readonly />
+                    </div>
+                </div>
+
+                @* Profit *@
+                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                           for="ppf-total-profit">Profit</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input text-AlignRight pva-input-185"
+                               id="ppf-total-profit"
+                               type="text"
+                               value="@(Model.TotalProfit.HasValue ? Model.TotalProfit.Value.ToString("N0") : "0")"
+                               readonly />
+                    </div>
+                </div>
+
+                @* Target Profit *@
+                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                           for="ppf-total-target-profit">Target Profit</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        <input class="govuk-input text-AlignRight pva-input-185"
+                               id="ppf-total-target-profit"
+                               type="text"
+                               value="@(Model.TotalTargetProfit.HasValue ? Model.TotalTargetProfit.Value.ToString("N0") : "0")"
+                               readonly />
+                    </div>
+                </div>
+
+                @* Off-Target — fps-profit-offtarget CSS class applied when value is negative *@
+                @* TRANSFORMENGINE: negative-value red highlight toggled via JS after AJAX summary reload;
+                       initial server-side render also applies the class if TotalOffTarget < 0. *@
+                <div class="govuk-form-group ppf-total-summary-item govuk-!-margin-bottom-0 govuk-!-margin-left-2">
+                    <label class="govuk-label govuk-!-font-weight-bold sup_margin_0"
+                           for="ppf-total-off-target">Off-Target</label>
+                    <div class="govuk-input__wrapper">
+                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                        @if (Model.TotalOffTarget.HasValue && Model.TotalOffTarget.Value < 0)
+                        {
+                            <input class="govuk-input text-AlignRight pva-input-185 fps-profit-offtarget"
+                                   id="ppf-total-off-target"
+                                   type="text"
+                                   value="@Model.TotalOffTarget.Value.ToString("N0")"
+                                   readonly />
+                        }
+                        else
+                        {
+                            <input class="govuk-input text-AlignRight pva-input-185"
+                                   id="ppf-total-off-target"
+                                   type="text"
+                                   value="@(Model.TotalOffTarget.HasValue ? Model.TotalOffTarget.Value.ToString("N0") : "0")"
+                                   readonly />
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        // ── Grid reload ──────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: gm.reloadGrid({ page: 1 }) — NOT gm.reload() (does not exist).
+        //   GridId = "projectProfitabilityVlaGrid" (matches controller DataGridConfig).
+        function reloadProjectProfitabilityVlaGrid() {
+            var gm = window['gridManager_projectProfitabilityVlaGrid'];
+            if (gm) {
+                gm.reloadGrid({ page: 1 });
+            }
+        }
+
+        // ── Extra filter method ──────────────────────────────────────────────────
+        // TRANSFORMENGINE: called automatically by _DataGrid on every reload (ExtraFilterMethod).
+        //   Returns the 4 filter values as query params to merge into the DataGrid AJAX POST body.
+        //   Parameter names match controller LoadProjectProfitabilityVlaGrid action params exactly:
+        //   projectStatus, programNo, manager, customer.
+        function getProjectProfitabilityVlaExtraFilters() {
+            return {
+                projectStatus: document.getElementById('filterProjectStatus')?.value || '',
+                programNo:     document.getElementById('filterProgram')?.value || '',
+                manager:       document.getElementById('filterManager')?.value || '',
+                customer:      document.getElementById('filterCustomer')?.value || ''
+            };
+        }
+
+        // ── Clear filters ────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: resets all 4 filter dropdowns and triggers grid reload.
+        //   Mirrors projectprofitability_vla.js clearFilters() behaviour.
+        function clearProjectProfitabilityVlaFilters() {
+            ['filterProjectStatus', 'filterProgram', 'filterManager', 'filterCustomer'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) { el.value = ''; }
+            });
+            reloadProjectProfitabilityVlaGrid();
+        }
+
+        // ── Summary totals update ────────────────────────────────────────────────
+        // TRANSFORMENGINE: fetches aggregate totals from GetProjectProfitabilityVlaSummary AJAX endpoint
+        //   and updates the 9 ppf-total-* readonly inputs.
+        //   Mirrors projectprofitability_vla.js updateSummary() + formatCurrency() behaviour.
+        //   Called on page load and after every grid reload.
+        function formatSummaryValue(value) {
+            var numeric = Number(value) || 0;
+            var absolute = Math.abs(numeric).toLocaleString('en-GB', { maximumFractionDigits: 0 });
+            return numeric < 0 ? '-' + absolute : absolute;
+        }
+
+        function updateProjectProfitabilityVlaSummary() {
+            var qs = new URLSearchParams({
+                projectStatus: document.getElementById('filterProjectStatus')?.value || '',
+                programNo:     document.getElementById('filterProgram')?.value || '',
+                manager:       document.getElementById('filterManager')?.value || '',
+                customer:      document.getElementById('filterCustomer')?.value || ''
+            }).toString();
+
+            $.getJSON('/FPS/ProjectProfitabilityVla/GetProjectProfitabilityVlaSummary?' + qs, function (data) {
+                document.getElementById('ppf-total-staff-costs').value   = formatSummaryValue(data.totalStaffCosts);
+                document.getElementById('ppf-total-test-cost').value     = formatSummaryValue(data.totalTestCost);
+                document.getElementById('ppf-total-animal').value        = formatSummaryValue(data.totalAnimalCosts);
+                document.getElementById('ppf-total-add-costs').value     = formatSummaryValue(data.totalAdditionalCosts);
+                document.getElementById('ppf-total-total-costs').value   = formatSummaryValue(data.totalTotalCosts);
+                document.getElementById('ppf-total-budget').value        = formatSummaryValue(data.totalBudget);
+                document.getElementById('ppf-total-profit').value        = formatSummaryValue(data.totalProfit);
+                document.getElementById('ppf-total-target-profit').value = formatSummaryValue(data.totalTargetProfit);
+                document.getElementById('ppf-total-off-target').value    = formatSummaryValue(data.totalOffTarget);
+
+                // TRANSFORMENGINE: toggle fps-profit-offtarget CSS class when off-target is negative
+                //   mirrors: classList.toggle('fps-profit-offtarget', totals.offTarget < 0)
+                var offTargetEl = document.getElementById('ppf-total-off-target');
+                if (offTargetEl) {
+                    offTargetEl.classList.toggle('fps-profit-offtarget', (Number(data.totalOffTarget) || 0) < 0);
+                }
+            });
+        }
+
+        // ── Initialise on page load ──────────────────────────────────────────────
+        $(document).ready(function () {
+            // Trigger initial grid data load via AJAX (Index() returns empty Data; grid
+            // must fetch its first page through the LoadProjectProfitabilityVlaGrid endpoint).
+            reloadProjectProfitabilityVlaGrid();
+
+            // Fetch initial summary totals in parallel with the grid load.
+            updateProjectProfitabilityVlaSummary();
+
+            // Refresh summary totals after every DataGrid reload.
+            // _DataGrid dispatches 'gridReloaded' on document itself (not on a child element),
+            // so the listener must be a direct document handler — NOT a delegated selector.
+            $(document).on('gridReloaded', function () {
+                updateProjectProfitabilityVlaSummary();
+            });
+        });
+    </script>
+}

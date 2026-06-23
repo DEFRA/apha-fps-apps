@@ -14,7 +14,6 @@ public class AdditionalCostItem
     public string Description { get; set; } = null!;
 
     [Display(Name = "Cost No")]
-    [Required(ErrorMessage = "Cost is required.")]
     [GridColumn(Order = 2, Width = 110, Type = GridColumnType.GbpValue)]
     public double CostEntered { get; set; }
 

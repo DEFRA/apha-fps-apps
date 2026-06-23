@@ -542,7 +542,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
         {
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" }
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC01" }
             };
             var repo = CreateRepository(profitCentres: [BuildEntity("PC01")], workgroups: workgroups);
             var result = await repo.HasLinkedWorkgroupsAsync("PC01");
@@ -849,8 +849,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
             const short monthNumber = 1;
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG1", ProfitCentre = "PC01" },
-                new() { WorkgroupName = "WG2", ProfitCentre = "PC02" }
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC01" },
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC02" }
             };
             var timeCostCalcs = new List<TimeCostCalcs>
             {

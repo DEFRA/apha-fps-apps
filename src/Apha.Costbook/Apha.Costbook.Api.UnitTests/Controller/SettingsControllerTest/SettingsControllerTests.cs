@@ -78,9 +78,9 @@ namespace Apha.Costbook.Api.UnitTests.Controller.SettingsControllerTest
         [Fact]
         public async Task GetSettingValueByIdAsync_HandlesNullId()
         {
-            // Arrange
+            // Arrange — controller converts null to string.Empty before calling the service
             string? settingId = null;
-            _settingsService.GetSettingValueByIdAsync(settingId!).Returns((string?)null);
+            _settingsService.GetSettingValueByIdAsync(string.Empty).Returns((string?)null);
 
             // Act
             var result = await _controller.GetSettingValueByIdAsync(settingId);
@@ -90,6 +90,7 @@ namespace Apha.Costbook.Api.UnitTests.Controller.SettingsControllerTest
             var response = Assert.IsType<ApiResponse<string>>(okResult.Value);
             Assert.True(response.Success);
             Assert.Null(response.Data);
+            await _settingsService.Received(1).GetSettingValueByIdAsync(string.Empty);
         }
 
         [Fact]

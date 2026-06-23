@@ -22,6 +22,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<TimeCodeValidReq, TimeCodeValidDto>().ReverseMap();
             CreateMap<TimeCodeValidRes, TimeCodeValidDto>().ReverseMap();
             CreateMap<WorkGroupRes, WorkGroupDto>().ReverseMap();
+            CreateMap<WorkGroupViewRes, WorkGroupViewDto>().ReverseMap();
             CreateMap<MonthRes, MonthDto>().ReverseMap();
             CreateMap<CalenderMonthRes, CalenderMonthDto>().ReverseMap();
             CreateMap<ProjectInvoiceReq, ProjectInvoiceDto>().ReverseMap();
@@ -62,6 +63,8 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<RecreateSummaryLogRes, RecreateSummaryLogDto>().ReverseMap();
             CreateMap<ReleasePeriodRes, ReleasePeriodDto>().ReverseMap();
             CreateMap<ReleaseSummaryDto, ReleaseSummaryRes>();
+            CreateMap<TestPriceCheckDto, TestPriceCheckRes>().ReverseMap();            
+            CreateMap<TestPriceCheckReq, TestPriceCheckDto>().ReverseMap();
         }
     }
 }
