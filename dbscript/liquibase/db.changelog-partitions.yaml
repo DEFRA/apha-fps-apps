@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - includeAll:
+      path: partitions
+      endsWithFilter: .sql
+      relativeToChangelogFile: true
+      errorIfMissingOrEmpty: false
+

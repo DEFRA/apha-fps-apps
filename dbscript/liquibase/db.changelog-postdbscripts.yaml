@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - includeAll:
+      path: postdbscripts
+      endsWithFilter: .sql
+      relativeToChangelogFile: true
+      errorIfMissingOrEmpty: false
+
