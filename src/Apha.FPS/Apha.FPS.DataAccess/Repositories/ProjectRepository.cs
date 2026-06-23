@@ -73,7 +73,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Projects
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => EF.Functions.ILike(p.ParentProject, parentProject));
+                .FirstOrDefaultAsync(p => p.ParentProject == parentProject);
         }
 
         public async Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query)
