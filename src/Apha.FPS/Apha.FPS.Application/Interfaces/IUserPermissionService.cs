@@ -7,6 +7,7 @@ namespace Apha.FPS.Application.Interfaces
     {
         Task<IEnumerable<UserDto>> GetAllUsersAsync();
         Task<PaginatedResult<UserDto>> GetAllUsersPagedAsync(QueryParameters<string> query);
+        Task<PaginatedResult<UserDto>> GetNonSuperUsersPagedAsync(QueryParameters<string> query);
         Task<UserDto?> GetUserByIdAsync(int userId);
         Task<UserDto> AddUserAsync(UserDto userDto);
         Task<UserDto> UpdateUserAsync(UserDto userDto);

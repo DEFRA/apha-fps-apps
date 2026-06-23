@@ -8,12 +8,12 @@ using System.Dynamic;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
-    public class UserPermissionRepository : BaseRepository, IUserPermissionRepository
+    public class UserRepository : BaseRepository, IUserRepository
     {
         private readonly FpsDbContext _dbContext;
         private readonly IFpsRequestContext _requestContext;
 
-        public UserPermissionRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
+        public UserRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext;
             _requestContext = requestContext;
@@ -33,6 +33,25 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var usersQuery = _dbContext.Users
                 .AsNoTracking()
+                .AsQueryable();
+
+            usersQuery = ApplyUserFilter(usersQuery, query.Filter);
+
+            usersQuery = ApplyUserSorting(usersQuery, query.SortBy, query.Descending);
+
+            var users = await usersQuery.ToListAsync();
+            return ApplyPaging(users, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedData<User>> GetNonSuperUsersPagedAsync(PaginationParameters<string> query)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+
+            var superUserId = (int)Core.Enums.SuperUser.SuperUserId;
+
+            var usersQuery = _dbContext.Users
+                .AsNoTracking()
+                .Where(u => u.UserId != superUserId)
                 .AsQueryable();
 
             usersQuery = ApplyUserFilter(usersQuery, query.Filter);

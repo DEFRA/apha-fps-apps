@@ -14,15 +14,15 @@ namespace Apha.FPS.Api.Controllers
     /// API controller for managing User Permissions (Maintain User Permissions form).
     /// </summary>
     [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
-    [Route("api/v{version:apiVersion}/userpermission")]
+    [Route("api/v{version:apiVersion}/user")]
     [ApiController]
     [ApiVersion("1.0")]
-    public class UserPermissionController : ControllerBase
+    public class UserController : ControllerBase
     {
         private readonly IUserPermissionService _service;
         private readonly IMapper _mapper;
 
-        public UserPermissionController(IUserPermissionService service, IMapper mapper)
+        public UserController(IUserPermissionService service, IMapper mapper)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -36,11 +36,19 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<List<UserRes>>(users));
         }
 
-        /// <summary>Gets a paged list of users.</summary>
+        /// <summary>Gets a paged list of all users.</summary>
         [HttpGet("users/paged")]
         public async Task<ActionResult> GetAllUsersPagedAsync([FromQuery] QueryParameters<string> query)
         {
             var paged = await _service.GetAllUsersPagedAsync(query);
+            return Ok(_mapper.Map<PaginationRes<UserRes>>(paged));
+        }
+
+        /// <summary>Gets a paged list of users excluding the SuperUser.</summary>
+        [HttpGet("users/paged/nonsuperusers")]
+        public async Task<ActionResult> GetNonSuperUsersPagedAsync([FromQuery] QueryParameters<string> query)
+        {
+            var paged = await _service.GetNonSuperUsersPagedAsync(query);
             return Ok(_mapper.Map<PaginationRes<UserRes>>(paged));
         }
 

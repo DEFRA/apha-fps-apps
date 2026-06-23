@@ -203,7 +203,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             QueryParameters<string>? query = null,
             Dictionary<string, string>? filterDict = null)
         {
-            var response = await _userPermissionService.GetAllUsersPagedAsync(query ?? new QueryParameters<string>());
+            var response = await _userPermissionService.GetNonSuperUsersPagedAsync(query ?? new QueryParameters<string>());
             var items = new List<UserPermissionViewModel>();
             if (response.Data != null)
                 items = _mapper.Map<List<UserPermissionViewModel>>(response.Data.ToList());

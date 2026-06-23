@@ -11,19 +11,19 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace Apha.FPS.Api.UnitTests.Controller.UserPermissionControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.UserControllerTest
 {
-    public class UserPermissionControllerTests
+    public class UserControllerTests
     {
         private readonly IUserPermissionService _serviceMock;
         private readonly IMapper _mapperMock;
-        private readonly UserPermissionController _controller;
+        private readonly UserController _controller;
 
-        public UserPermissionControllerTests()
+        public UserControllerTests()
         {
             _serviceMock = Substitute.For<IUserPermissionService>();
             _mapperMock = Substitute.For<IMapper>();
-            _controller = new UserPermissionController(_serviceMock, _mapperMock);
+            _controller = new UserController(_serviceMock, _mapperMock);
         }
 
         private static UserDto BuildDto(int userId = 1) =>
@@ -41,14 +41,14 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserPermissionControllerTest
         public void Constructor_ThrowsArgumentNullException_WhenServiceIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new UserPermissionController(null!, _mapperMock));
+                new UserController(null!, _mapperMock));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new UserPermissionController(_serviceMock, null!));
+                new UserController(_serviceMock, null!));
         }
 
         #endregion
@@ -58,7 +58,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserPermissionControllerTest
         [Fact]
         public void Controller_HasAuthorizeAttribute_WithExpectedRoles()
         {
-            var attrs = typeof(UserPermissionController)
+            var attrs = typeof(UserController)
                 .GetCustomAttributes(typeof(AuthorizeAttribute), true);
             Assert.NotEmpty(attrs);
             var auth = (AuthorizeAttribute)attrs[0];
@@ -68,7 +68,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserPermissionControllerTest
         [Fact]
         public void GetAllUsersAsync_HasHttpGetAttribute()
         {
-            var method = typeof(UserPermissionController).GetMethod(nameof(UserPermissionController.GetAllUsersAsync));
+            var method = typeof(UserController).GetMethod(nameof(UserController.GetAllUsersAsync));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpGetAttribute), true);
             Assert.NotEmpty(attr);
@@ -77,7 +77,16 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserPermissionControllerTest
         [Fact]
         public void GetAllUsersPagedAsync_HasHttpGetAttribute()
         {
-            var method = typeof(UserPermissionController).GetMethod(nameof(UserPermissionController.GetAllUsersPagedAsync));
+            var method = typeof(UserController).GetMethod(nameof(UserController.GetAllUsersPagedAsync));
+            Assert.NotNull(method);
+            var attr = method!.GetCustomAttributes(typeof(HttpGetAttribute), true);
+            Assert.NotEmpty(attr);
+        }
+
+        [Fact]
+        public void GetNonSuperUsersPagedAsync_HasHttpGetAttribute()
+        {
+            var method = typeof(UserController).GetMethod(nameof(UserController.GetNonSuperUsersPagedAsync));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpGetAttribute), true);
             Assert.NotEmpty(attr);
@@ -86,7 +95,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserPermissionControllerTest
         [Fact]
         public void CreateUser_HasHttpPostAttribute()
         {
-            var method = typeof(UserPermissionController).GetMethod(nameof(UserPermissionController.CreateUser));
+            var method = typeof(UserController).GetMethod(nameof(UserController.CreateUser));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpPostAttribute), true);
             Assert.NotEmpty(attr);
@@ -95,7 +104,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserPermissionControllerTest
         [Fact]
         public void UpdateUser_HasHttpPutAttribute()
         {
-            var method = typeof(UserPermissionController).GetMethod(nameof(UserPermissionController.UpdateUser));
+            var method = typeof(UserController).GetMethod(nameof(UserController.UpdateUser));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpPutAttribute), true);
             Assert.NotEmpty(attr);
@@ -104,7 +113,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserPermissionControllerTest
         [Fact]
         public void DeleteUser_HasHttpDeleteAttribute()
         {
-            var method = typeof(UserPermissionController).GetMethod(nameof(UserPermissionController.DeleteUser));
+            var method = typeof(UserController).GetMethod(nameof(UserController.DeleteUser));
             Assert.NotNull(method);
             var attr = method!.GetCustomAttributes(typeof(HttpDeleteAttribute), true);
             Assert.NotEmpty(attr);
@@ -178,6 +187,35 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserPermissionControllerTest
             var ok = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(expected, ok.Value);
             await _serviceMock.Received(1).GetAllUsersPagedAsync(query);
+        }
+
+        #endregion
+
+        #region GetNonSuperUsersPagedAsync Tests
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_ReturnsOk_WithPagedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paged = new PaginatedResult<UserDto>
+            {
+                Data = [BuildDto()],
+                PaginationData = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+            var expected = new PaginationRes<UserRes>
+            {
+                Data = [BuildRes()],
+                PaginationData = new Pagination { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+
+            _serviceMock.GetNonSuperUsersPagedAsync(query).Returns(paged);
+            _mapperMock.Map<PaginationRes<UserRes>>(paged).Returns(expected);
+
+            var result = await _controller.GetNonSuperUsersPagedAsync(query);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(expected, ok.Value);
+            await _serviceMock.Received(1).GetNonSuperUsersPagedAsync(query);
         }
 
         #endregion

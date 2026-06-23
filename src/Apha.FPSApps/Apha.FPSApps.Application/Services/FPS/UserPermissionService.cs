@@ -25,6 +25,11 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsApiClient.FpsUserPermission.GetAllUsersPagedAsync(query);
         }
 
+        public async Task<ApiResponseDto<List<UserPermissionDto>>> GetNonSuperUsersPagedAsync(QueryParameters<string> query)
+        {
+            return await _fpsApiClient.FpsUserPermission.GetNonSuperUsersPagedAsync(query);
+        }
+
         public async Task<ApiResponseDto<UserPermissionDto?>> GetUserByIdAsync(int userId)
         {
             return await _fpsApiClient.FpsUserPermission.GetUserByIdAsync(userId);

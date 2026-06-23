@@ -108,7 +108,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserPermissionApi
             var expected = ApiResponseDto<List<UserPermissionDto>>.SuccessResponse(dtos,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
-            _http.GetAsync<List<UserPermissionDto>>(Arg.Is<string>(u => u.Contains("userpermission/users/paged")))
+            _http.GetAsync<List<UserPermissionDto>>(Arg.Is<string>(u => u.Contains("user/users/paged")))
                 .Returns(apiResponse);
             _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(apiResponse).Returns(expected);
 
@@ -135,6 +135,50 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserPermissionApi
             _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(apiResponse).Returns(failDto);
 
             var result = await _client.GetAllUsersPagedAsync(query);
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetNonSuperUsersPagedAsync Tests
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_WithSuccessResponse_ReturnsMappedList()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<UserPermissionDto> { BuildDto() };
+            var apiResponse = SuccessApiResponse(dtos);
+            var expected = ApiResponseDto<List<UserPermissionDto>>.SuccessResponse(dtos,
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+
+            _http.GetAsync<List<UserPermissionDto>>(Arg.Is<string>(u => u.Contains("nonsuperusers")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(apiResponse).Returns(expected);
+
+            var result = await _client.GetNonSuperUsersPagedAsync(query);
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = FailureApiResponse<List<UserPermissionDto>>();
+            var failDto = new ApiResponseDto<List<UserPermissionDto>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Error", Code = "ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<UserPermissionDto>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(apiResponse).Returns(failDto);
+
+            var result = await _client.GetNonSuperUsersPagedAsync(query);
 
             Assert.False(result.Success);
         }

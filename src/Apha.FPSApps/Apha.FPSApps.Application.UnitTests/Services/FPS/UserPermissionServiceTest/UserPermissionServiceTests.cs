@@ -118,6 +118,40 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
 
         #endregion
 
+        #region GetNonSuperUsersPagedAsync Tests
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_ReturnsApiResponse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<UserPermissionDto> { BuildDto() };
+            var pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
+            var response = ApiResponseDto<List<UserPermissionDto>>.SuccessResponse(dtos, pagination);
+            _mockApiClient.GetNonSuperUsersPagedAsync(query).Returns(response);
+
+            var result = await _sut.GetNonSuperUsersPagedAsync(query);
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _mockApiClient.Received(1).GetNonSuperUsersPagedAsync(query);
+        }
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_PropagatesApiErrors()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
+            var response = ApiResponseDto<List<UserPermissionDto>>.FailureResponse(errors, new ApiMetaDto());
+            _mockApiClient.GetNonSuperUsersPagedAsync(query).Returns(response);
+
+            var result = await _sut.GetNonSuperUsersPagedAsync(query);
+
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
         #region GetUserByIdAsync Tests
 
         [Fact]

@@ -41,6 +41,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<UserPermissionDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<UserPermissionDto>>> GetNonSuperUsersPagedAsync(QueryParameters<string> query)
+        {
+            var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedNonSuperUsers, query);
+            var response = await _http.GetAsync<List<UserPermissionDto>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(response);
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(response);
+            return ApiResponseDto<List<UserPermissionDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
         public async Task<ApiResponseDto<UserPermissionDto?>> GetUserByIdAsync(int userId)
         {
             var response = await _http.GetAsync<UserPermissionDto>(string.Format(FpsApiEndpoints.GetUserById, userId));

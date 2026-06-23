@@ -3,10 +3,11 @@ using Apha.FPS.Core.Pagination;
 
 namespace Apha.FPS.Core.Interfaces
 {
-    public interface IUserPermissionRepository
+    public interface IUserRepository
     {
         Task<IEnumerable<User>> GetAllUsersAsync();
         Task<PagedData<User>> GetAllUsersPagedAsync(PaginationParameters<string> query);
+        Task<PagedData<User>> GetNonSuperUsersPagedAsync(PaginationParameters<string> query);
         Task<User?> GetUserByIdAsync(int userId);
         Task<User?> GetUserByUsernameAsync(string username);
         Task<User?> GetUserByEmailAsync(string email);

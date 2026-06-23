@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
-namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
+namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
 {
-    public class UserPermissionRepositoryTests
+    public class UserRepositoryTests
     {
         private const int DefaultFpsYear = 2025;
         private const string DefaultUserEmail = "test@example.com";
@@ -40,7 +40,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
             return mock;
         }
 
-        private static UserPermissionRepository CreateRepository(IEnumerable<User>? users = null)
+        private static UserRepository CreateRepository(IEnumerable<User>? users = null)
         {
             var requestCtx = CreateRequestContextMock();
             var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
@@ -53,10 +53,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
             }
 
             RepositoryTestHelper.SetupSaveChanges(dbContext);
-            return new UserPermissionRepository(dbContext.Object, requestCtx.Object);
+            return new UserRepository(dbContext.Object, requestCtx.Object);
         }
 
-        private static (UserPermissionRepository Repo, Mock<FpsDbContext> Context, Mock<DbSet<User>> DbSet)
+        private static (UserRepository Repo, Mock<FpsDbContext> Context, Mock<DbSet<User>> DbSet)
             CreateRepositoryWithMocks(IEnumerable<User>? users = null)
         {
             var requestCtx = CreateRequestContextMock();
@@ -67,7 +67,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
             dbContext.Setup(x => x.Users).Returns(dbSet.Object);
 
             RepositoryTestHelper.SetupSaveChanges(dbContext);
-            return (new UserPermissionRepository(dbContext.Object, requestCtx.Object), dbContext, dbSet);
+            return (new UserRepository(dbContext.Object, requestCtx.Object), dbContext, dbSet);
         }
 
         #endregion
@@ -78,7 +78,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
         public void Constructor_ThrowsArgumentNullException_WhenDbContextIsNull()
         {
             var ctx = CreateRequestContextMock();
-            Assert.Throws<ArgumentNullException>(() => new UserPermissionRepository(null!, ctx.Object));
+            Assert.Throws<ArgumentNullException>(() => new UserRepository(null!, ctx.Object));
         }
 
         [Fact]
@@ -89,7 +89,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
             dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
-            var repo = new UserPermissionRepository(dbContext.Object, requestCtx.Object);
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
 
             Assert.NotNull(repo);
         }
@@ -179,6 +179,51 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
 
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "username", Descending = true };
             var result = await repo.GetAllUsersPagedAsync(query);
+
+            var list = result.Data.ToList();
+            Assert.Equal("beta", list[0].Username);
+            Assert.Equal("alpha", list[1].Username);
+        }
+
+        #endregion
+
+        #region GetNonSuperUsersPagedAsync Tests
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_ThrowsArgumentNullException_WhenQueryIsNull()
+        {
+            var repo = CreateRepository([]);
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                repo.GetNonSuperUsersPagedAsync(null!));
+        }
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_ReturnsPagedData()
+        {
+            var users = Enumerable.Range(1, 20).Select(i =>
+                BuildUser(i, $"user{i}", $"User {i}")).ToList();
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var result = await repo.GetNonSuperUsersPagedAsync(query);
+
+            Assert.NotNull(result);
+            Assert.Equal(10, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_AppliesSorting_Descending()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, "alpha", "Alpha"),
+                BuildUser(2, "beta", "Beta")
+            };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "username", Descending = true };
+            var result = await repo.GetNonSuperUsersPagedAsync(query);
 
             var list = result.Data.ToList();
             Assert.Equal("beta", list[0].Username);
@@ -323,7 +368,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
             dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
-            var repo = new UserPermissionRepository(dbContext.Object, requestCtx.Object);
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
 
             var result = await repo.GetUserProfitCentresAsync(1);
 
@@ -349,7 +394,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
             dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
-            var repo = new UserPermissionRepository(dbContext.Object, requestCtx.Object);
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
 
             var result = await repo.GetUserProgramsAsync(1);
 
@@ -373,7 +418,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
             dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
-            var repo = new UserPermissionRepository(dbContext.Object, requestCtx.Object);
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
 
             var result = await repo.GetUserCategoriesAsync(1);
 
@@ -397,7 +442,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
             dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
-            var repo = new UserPermissionRepository(dbContext.Object, requestCtx.Object);
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
 
             var result = await repo.GetUserTestOwnersAsync(1);
 
@@ -421,7 +466,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserPermissionRepositoryTest
             dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
             RepositoryTestHelper.SetupSaveChanges(dbContext);
 
-            var repo = new UserPermissionRepository(dbContext.Object, requestCtx.Object);
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
 
             var result = await repo.GetUserProjectGroupsAsync(1);
 

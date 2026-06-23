@@ -53,7 +53,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
             var dtoList = data?.ToList() ?? new List<UserPermissionDto> { BuildDto() };
             var response = BuildPagedResponse(dtoList);
             _userPermissionService
-                .GetAllUsersPagedAsync(Arg.Any<QueryParameters<string>>())
+                .GetNonSuperUsersPagedAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(response);
             _mapper.Map<List<UserPermissionViewModel>>(Arg.Any<List<UserPermissionDto>>())
                 .Returns(dtoList.Select(d => BuildViewModel(d.UserId)).ToList());
@@ -249,7 +249,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
             await _controller.LoadUserGrid(request);
 
             await _userPermissionService.Received(1)
-                .GetAllUsersPagedAsync(Arg.Any<QueryParameters<string>>());
+                .GetNonSuperUsersPagedAsync(Arg.Any<QueryParameters<string>>());
         }
 
         #endregion

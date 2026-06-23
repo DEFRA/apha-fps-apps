@@ -8,6 +8,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
     {
         Task<ApiResponseDto<IEnumerable<UserPermissionDto>>> GetAllUsersAsync();
         Task<ApiResponseDto<List<UserPermissionDto>>> GetAllUsersPagedAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<UserPermissionDto>>> GetNonSuperUsersPagedAsync(QueryParameters<string> query);
         Task<ApiResponseDto<UserPermissionDto?>> GetUserByIdAsync(int userId);
         Task<ApiResponseDto<UserPermissionDto>> AddUserAsync(UserPermissionDto dto);
         Task<ApiResponseDto<UserPermissionDto>> UpdateUserAsync(UserPermissionDto dto);

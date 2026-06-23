@@ -219,14 +219,15 @@ namespace Apha.Common.Constants
         public const string DeleteGenericPurchase = "api/v1/purchases?WorkGroupName={0}&account={1}&itemDescription={2}";
 
         // User Permission
-        public const string GetAllUsers = "api/v1/userpermission/users";
-        public const string GetPagedUsers = "api/v1/userpermission/users/paged";
-        public const string GetUserById = "api/v1/userpermission/users/{0}";
-        public const string CreateUser = "api/v1/userpermission/users";
-        public const string UpdateUser = "api/v1/userpermission/users";
-        public const string DeleteUser = "api/v1/userpermission/users/{0}";
-        public const string GetUserPermissions = "api/v1/userpermission/{0}/permissions";
-        public const string SaveUserPermissions = "api/v1/userpermission/{0}/permissions";
-        public const string GetPermissionOptions = "api/v1/userpermission/options";
+        public const string GetAllUsers = "api/v1/user/users";
+        public const string GetPagedUsers = "api/v1/user/users/paged";
+        public const string GetPagedNonSuperUsers = "api/v1/user/users/paged/nonsuperusers";
+        public const string GetUserById = "api/v1/user/users/{0}";
+        public const string CreateUser = "api/v1/user/users";
+        public const string UpdateUser = "api/v1/user/users";
+        public const string DeleteUser = "api/v1/user/users/{0}";
+        public const string GetUserPermissions = "api/v1/user/{0}/permissions";
+        public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
+        public const string GetPermissionOptions = "api/v1/user/options";
     }
 }

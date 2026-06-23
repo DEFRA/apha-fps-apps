@@ -13,13 +13,13 @@ namespace Apha.FPS.Application.UnitTests.Services.UserPermissionServiceTest
 {
     public class UserPermissionServiceTests
     {
-        private readonly IUserPermissionRepository _mockRepository;
+        private readonly IUserRepository _mockRepository;
         private readonly IMapper _mockMapper;
         private readonly UserPermissionService _sut;
 
         public UserPermissionServiceTests()
         {
-            _mockRepository = Substitute.For<IUserPermissionRepository>();
+            _mockRepository = Substitute.For<IUserRepository>();
             _mockMapper = Substitute.For<IMapper>();
             _sut = new UserPermissionService(_mockRepository, _mockMapper);
         }
@@ -128,6 +128,53 @@ namespace Apha.FPS.Application.UnitTests.Services.UserPermissionServiceTest
                 .ThrowsAsync(new Exception("DB error"));
 
             await Assert.ThrowsAsync<Exception>(() => _sut.GetAllUsersPagedAsync(query));
+        }
+
+        #endregion
+
+        #region GetNonSuperUsersPagedAsync Tests
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_ThrowsArgumentNullException_WhenQueryIsNull()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.GetNonSuperUsersPagedAsync(null!));
+        }
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_ReturnsPaginatedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var pagedData = new PagedData<User>
+            {
+                Data = [BuildEntity()],
+                PaginationData = new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+            var expected = new PaginatedResult<UserDto>
+            {
+                Data = [BuildDto()],
+                PaginationData = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 }
+            };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetNonSuperUsersPagedAsync(paginationParams).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<UserDto>>(pagedData).Returns(expected);
+
+            var result = await _sut.GetNonSuperUsersPagedAsync(query);
+
+            result.Should().NotBeNull();
+            result.Data.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_ThrowsException_WhenRepositoryThrows()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(new PaginationParameters<string>());
+            _mockRepository.GetNonSuperUsersPagedAsync(Arg.Any<PaginationParameters<string>>())
+                .ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetNonSuperUsersPagedAsync(query));
         }
 
         #endregion

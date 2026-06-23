@@ -10,10 +10,10 @@ namespace Apha.FPS.Application.Services
 {
     public class UserPermissionService : IUserPermissionService
     {
-        private readonly IUserPermissionRepository _repository;
+        private readonly IUserRepository _repository;
         private readonly IMapper _mapper;
 
-        public UserPermissionService(IUserPermissionRepository repository, IMapper mapper)
+        public UserPermissionService(IUserRepository repository, IMapper mapper)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -30,6 +30,14 @@ namespace Apha.FPS.Application.Services
             ArgumentNullException.ThrowIfNull(query);
             var queryParams = _mapper.Map<PaginationParameters<string>>(query);
             var pagedResult = await _repository.GetAllUsersPagedAsync(queryParams);
+            return _mapper.Map<PaginatedResult<UserDto>>(pagedResult);
+        }
+
+        public async Task<PaginatedResult<UserDto>> GetNonSuperUsersPagedAsync(QueryParameters<string> query)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            var queryParams = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedResult = await _repository.GetNonSuperUsersPagedAsync(queryParams);
             return _mapper.Map<PaginatedResult<UserDto>>(pagedResult);
         }
 
