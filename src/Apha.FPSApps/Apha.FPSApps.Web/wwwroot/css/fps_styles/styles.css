@@ -3931,6 +3931,89 @@ body,
     user-select: none;
 }
 
+/* Free-text entry for permission panels */
+.fps-mup-freetext-container {
+    padding: 6px 8px;
+    border-top: 1px solid #b1b4b6;
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+}
+
+.fps-mup-freetext-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fps-mup-freetext-input {
+    flex: 1;
+    height: 30px;
+    font-size: 14px;
+    padding: 4px 8px;
+    border: 1px solid #b1b4b6;
+    text-transform: uppercase;
+}
+
+.fps-mup-freetext-add-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background-color: #00703c;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+    .fps-mup-freetext-add-btn:hover {
+        background-color: #005a30;
+    }
+
+.fps-mup-freetext-entry-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.fps-mup-freetext-entry-input {
+    flex: 1;
+    height: 28px;
+    font-size: 14px;
+    padding: 4px 8px;
+    border: 1px solid #b1b4b6;
+    background-color: #f3f2f1;
+    text-transform: uppercase;
+}
+
+.fps-mup-freetext-remove-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background-color: #d4351c;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+    .fps-mup-freetext-remove-btn:hover {
+        background-color: #942514;
+    }
+
 @media (max-width: 1200px) {
     .fps-mup-permissions-grid {
         grid-template-columns: repeat(3, minmax(180px, 1fr));

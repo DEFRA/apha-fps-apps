@@ -71,7 +71,8 @@
                                             {
                                                 { "PanelId", "testOwners" },
                                                 { "PanelTitle", "Test Owner Permissions" },
-                                                { "Options", options.TestOwners }
+                                                { "Options", new List<string>() },
+                                                { "AllowFreeText", true }
                                             })
 
                                             @await Html.PartialAsync("_PermissionPanel", new ViewDataDictionary(ViewData)
@@ -178,11 +179,30 @@
         function applyPermissions(data) {
             // Uncheck all first
             $('.permission-item').prop('checked', false);
-            // Check assigned ones
+            // Clear any free-text entries
+            $('#testOwners_newEntries').empty();
+            $('#testOwners_newEntry').val('');
+            // For testOwners: clear existing checkboxes and rebuild with only assigned values
+            $('#panel_testOwners .fps-mup-checkbox-label').remove();
+            var assignedTestOwners = data.testOwners || [];
+            assignedTestOwners.forEach(function (val) {
+                var cbId = 'cb_testOwners_' + val.replace(/ /g, '_');
+                var label = '<label class="fps-mup-checkbox-label" for="' + cbId + '">' +
+                    '<input type="checkbox" id="' + cbId + '" class="fps-mup-checkbox permission-item" value="' + val + '" checked />' +
+                    '<span class="fps-mup-checkbox-text">' + val + '</span>' +
+                    '</label>';
+                // Insert before the free-text container
+                var $freeTextContainer = $('#testOwners_freeTextContainer');
+                if ($freeTextContainer.length) {
+                    $freeTextContainer.before(label);
+                } else {
+                    $('#panel_testOwners').append(label);
+                }
+            });
+            // Check assigned ones for other panels
             checkItems('profitCentres', data.profitCentres || []);
             checkItems('programs', data.programs || []);
             checkItems('categories', data.categories || []);
-            checkItems('testOwners', data.testOwners || []);
             checkItems('projectGroups', data.projectGroups || []);
             // Update all counts
             updateAllCounts();
@@ -202,6 +222,20 @@
             $('#panel_' + panelId + ' input[type="checkbox"].permission-item:checked').each(function () {
                 values.push($(this).val());
             });
+            // Include free-text new entries for testOwners
+            if (panelId === 'testOwners') {
+                $('#testOwners_newEntries .fps-mup-freetext-entry-input').each(function () {
+                    var val = $(this).val().trim().toUpperCase();
+                    if (val && values.indexOf(val) === -1) {
+                        values.push(val);
+                    }
+                });
+                // Also include the value in the active text box even if "+" was not clicked
+                var pendingVal = $('#testOwners_newEntry').val().trim().toUpperCase();
+                if (pendingVal && pendingVal.length <= 2 && values.indexOf(pendingVal) === -1) {
+                    values.push(pendingVal);
+                }
+            }
             return values;
         }
 
@@ -227,7 +261,9 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message || 'Permissions saved successfully.');
+                        showGovukAlert(result.message || 'Permissions saved successfully.').then(function () {
+                            loadPermissions(selectedUserId);
+                        });
                     } else {
                         showGovukAlert(result.message || 'Failed to save permissions.');
                     }
@@ -415,6 +451,12 @@
 
         function updateCount(panelId) {
             var count = $('#panel_' + panelId + ' input.permission-item:checked').length;
+            // Include free-text entries in count for testOwners
+            if (panelId === 'testOwners') {
+                count += $('#testOwners_newEntries .fps-mup-freetext-entry-input').filter(function () {
+                    return $(this).val().trim() !== '';
+                }).length;
+            }
             $('#' + panelId + 'Count').text(count + ' selected');
         }
 
@@ -426,11 +468,92 @@
             updateCount('projectGroups');
         }
 
+        // --- Free-text entry for Test Owner Permissions ---
+        function addFreeTextEntry(panelId) {
+            var $input = $('#' + panelId + '_newEntry');
+            var value = $input.val().trim().toUpperCase();
+
+            if (!value) {
+                return;
+            }
+
+            if (value.length > 2) {
+                showGovukAlert('Test owner code must be a maximum of 2 characters.');
+                return;
+            }
+
+            // Check for duplicates in existing checkboxes
+            var existsInCheckboxes = false;
+            $('#panel_' + panelId + ' input[type="checkbox"].permission-item').each(function () {
+                if ($(this).val().toUpperCase() === value) {
+                    existsInCheckboxes = true;
+                    return false;
+                }
+            });
+            if (existsInCheckboxes) {
+                showGovukAlert('This test owner code already exists in the list.');
+                return;
+            }
+
+            // Check for duplicates in already added free-text entries
+            var existsInNewEntries = false;
+            $('#' + panelId + '_newEntries .fps-mup-freetext-entry-input').each(function () {
+                if ($(this).val().trim().toUpperCase() === value) {
+                    existsInNewEntries = true;
+                    return false;
+                }
+            });
+            if (existsInNewEntries) {
+                showGovukAlert('This test owner code has already been added.');
+                return;
+            }
+
+            // Add new entry row
+            var entryHtml = '<div class="fps-mup-freetext-entry-row">' +
+                '<input type="text" class="govuk-input fps-mup-freetext-entry-input" value="' + value + '" maxlength="2" readonly />' +
+                '<button type="button" class="fps-mup-freetext-remove-btn" onclick="removeFreeTextEntry(this, \'' + panelId + '\')" title="Remove" aria-label="Remove entry">&times;</button>' +
+                '</div>';
+            $('#' + panelId + '_newEntries').append(entryHtml);
+
+            // Clear input and add a new empty text box
+            $input.val('');
+            $input.focus();
+
+            // Update count and save button state
+            updateCount(panelId);
+            updateSaveButtonState();
+        }
+
+        function removeFreeTextEntry(btn, panelId) {
+            $(btn).closest('.fps-mup-freetext-entry-row').remove();
+            updateCount(panelId);
+            updateSaveButtonState();
+        }
+
         // Update counts and Save button state when checkboxes change
         $(document).on('change', '.permission-item', function () {
             var panelId = $(this).closest('[id^="panel_"]').attr('id').replace('panel_', '');
             updateCount(panelId);
             updateSaveButtonState();
+        });
+
+        // Allow Enter key to add free-text entry
+        $(document).on('keypress', '.fps-mup-freetext-input', function (e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                var panelId = $(this).attr('id').replace('_newEntry', '');
+                addFreeTextEntry(panelId);
+            }
+        });
+
+        // Enable Save button when user types in the free-text input
+        $(document).on('input', '.fps-mup-freetext-input', function () {
+            var val = $(this).val().trim();
+            if (val) {
+                $('#mupSaveBtn').prop('disabled', false);
+            } else {
+                updateSaveButtonState();
+            }
         });
 
         // --- Auto-select first row on grid load/reload ---

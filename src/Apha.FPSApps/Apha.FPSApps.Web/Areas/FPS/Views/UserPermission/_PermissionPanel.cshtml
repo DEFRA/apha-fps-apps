@@ -2,6 +2,7 @@
     var panelId = ViewData["PanelId"] as string ?? "panel";
     var panelTitle = ViewData["PanelTitle"] as string ?? "Permissions";
     var options = ViewData["Options"] as List<string> ?? new List<string>();
+    var allowFreeText = ViewData["AllowFreeText"] as bool? ?? false;
 }
 
 <section class="fps-mup-list-panel" aria-labelledby="@(panelId)Heading">
@@ -9,12 +10,19 @@
         @panelTitle
     </h3>
     <div class="fps-mup-panel-actions sup_border sup_border_t_0">
-        <button type="button" class="govuk-link mup-select-action" onclick="selectAll('@panelId')">Select all</button>
+        @if (!allowFreeText)
+        {
+            <button type="button" class="govuk-link mup-select-action" onclick="selectAll('@panelId')">Select all</button>
+        }
+        else
+        {
+            <span class="mup-select-action" style="visibility:hidden;">Select all</span>
+        }
         <button type="button" class="govuk-link mup-select-action" onclick="clearAll('@panelId')">Clear</button>
         <span id="@(panelId)Count" class="govuk-hint govuk-!-margin-bottom-0">0 selected</span>
     </div>
     <div id="panel_@panelId" class="fps-mup-checkbox-list sup_border" role="group" aria-label="@panelTitle">
-        @if (options.Count == 0)
+        @if (options.Count == 0 && !allowFreeText)
         {
             <p class="govuk-body-s" style="color:#666; padding: 8px;">No options available.</p>
         }
@@ -28,6 +36,18 @@
                     <span class="fps-mup-checkbox-text">@opt</span>
                 </label>
             }
+        }
+        @if (allowFreeText)
+        {
+            <div id="@(panelId)_freeTextContainer" class="fps-mup-freetext-container">
+                <div id="@(panelId)_newEntries"></div>
+                <div class="fps-mup-freetext-row">
+                    <input type="text" class="govuk-input fps-mup-freetext-input" id="@(panelId)_newEntry"
+                           maxlength="2" placeholder="Enter code" aria-label="New test owner code" />
+                    <button type="button" class="fps-mup-freetext-add-btn" onclick="addFreeTextEntry('@panelId')"
+                            title="Add new entry" aria-label="Add new entry">+</button>
+                </div>
+            </div>
         }
     </div>
 </section>
