@@ -1,3 +1,7 @@
+--liquibase formatted sql
+
+--changeset repo-admin:001_add_partition labels:ddl context:all
+
 DO $$
 DECLARE
     v_part_name  TEXT;
@@ -50,3 +54,5 @@ BEGIN
          END IF;
     END LOOP;
 END $$;
+
+--rollback ;

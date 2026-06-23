@@ -1,3 +1,7 @@
+--liquibase formatted sql
+
+--changeset repo-admin:002_drop_partition labels:ddl context:all
+
 DO $$
 DECLARE
     v_part_name TEXT;
@@ -32,3 +36,5 @@ BEGIN
         );
     END LOOP;
 END $$;
+
+--rollback ;
