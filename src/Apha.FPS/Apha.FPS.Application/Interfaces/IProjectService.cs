@@ -1,4 +1,4 @@
-using Apha.FPS.Application.Dtos;
+﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 
 namespace Apha.FPS.Application.Interfaces
@@ -9,6 +9,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<IEnumerable<ProjectDto>> GetAllProjectsForAllUsersAsync();
         Task<IEnumerable<ProjectDto>> GetAllPactProjectsAsync();
         Task<PaginatedResult<ProjectDto>> GetPagedProjectsAsync(QueryParameters<string> query);
+        Task<PaginatedResult<ProjectDto>> GetPagedProjectsByUserAsync(QueryParameters<string> query);
         Task<PaginatedResult<ProjectDto>> GetPagedPactProjectsAsync(QueryParameters<string> query);
         Task<ProjectDto?> GetProjectByIdAsync(string parentProject);
         Task<ProjectDto> CreateProjectAsync(ProjectDto projectDto);
@@ -28,5 +29,6 @@ namespace Apha.FPS.Application.Interfaces
 
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
+        Task<PaginatedResult<ProjectProfitabilityVlaDto>> GetProjectProfitabilityVlaAsync(QueryParameters<string> query, string? projectStatus = null, string? programNo = null, string? manager = null, string? customer = null);
     }
 }

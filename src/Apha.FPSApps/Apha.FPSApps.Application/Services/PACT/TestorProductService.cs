@@ -35,6 +35,16 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<List<string>>> GetOwnersAsync()
             => await _apiClient.PactTestList.GetOwnersAsync();
+
+        public async Task<ApiResponseDto<List<TestPriceCheckDto>>> GetTestPriceCheckPagedAsync(
+            QueryParameters<string> query, string priceFilter, string? owner)
+            => await _apiClient.PactTestList.GetTestPriceCheckPagedAsync(query, priceFilter, owner);
+
+        public async Task<ApiResponseDto<TestPriceCheckDto>> GetTestPriceCheckByKeyAsync(string testCode, string jobCode)
+            => await _apiClient.PactTestList.GetTestPriceCheckByKeyAsync(testCode, jobCode);
+
+        public async Task<ApiResponseDto<bool>> UpdateTestPriceCheckByKeyAsync(string testCode, string jobCode, TestPriceCheckDto dto)
+            => await _apiClient.PactTestList.UpdateTestPriceCheckByKeyAsync(testCode, jobCode, dto);
     }
 }
 

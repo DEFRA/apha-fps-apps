@@ -1,4 +1,4 @@
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
@@ -244,8 +244,26 @@ namespace Apha.FPS.Api.Controllers
             var result = await _projectService.GetProjectGroupProfitabilityAsync(filter, projectGroup, workTypeFilter);
             return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityRes>>(result));
         }
+
+        [HttpGet("paged/by-user")]
+        public async Task<IActionResult> GetPagedProjectsByUserAsync([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _projectService.GetPagedProjectsByUserAsync(query);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
+        [HttpGet("profitability-vla")]
+        public async Task<IActionResult> GetProjectProfitabilityVlaAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string? projectStatus = null,
+            [FromQuery] string? programNo = null,
+            [FromQuery] string? manager = null,
+            [FromQuery] string? customer = null)
+        {
+            var result = await _projectService.GetProjectProfitabilityVlaAsync(query, projectStatus, programNo, manager, customer);
+            return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityVlaRes>>(result));
+        }
     }
 
     public record ChangeProjectCodeReq(string OldCode, string NewCode);
 }
-

@@ -1,4 +1,4 @@
-using Apha.FPS.Application.Dtos;
+﻿using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Validation;
@@ -41,6 +41,13 @@ namespace Apha.FPS.Application.Services
         public async Task<PaginatedResult<ProjectDto>> GetPagedProjectsAsync(QueryParameters<string> query)
         {
             var pagedProjects = await _projectRepository.GetPagedProjectsAsync(
+                _mapper.Map<PaginationParameters<string>>(query));
+            return _mapper.Map<PaginatedResult<ProjectDto>>(pagedProjects);
+        }
+
+        public async Task<PaginatedResult<ProjectDto>> GetPagedProjectsByUserAsync(QueryParameters<string> query)
+        {
+            var pagedProjects = await _projectRepository.GetPagedProjectsByUserAsync(
                 _mapper.Map<PaginationParameters<string>>(query));
             return _mapper.Map<PaginatedResult<ProjectDto>>(pagedProjects);
         }
@@ -254,6 +261,15 @@ namespace Apha.FPS.Application.Services
             var pagedResult = await _projectRepository.GetProjectGroupProfitabilityAsync(
                 _mapper.Map<PaginationParameters<string>>(query), projectGroup, workTypeFilter);
             return _mapper.Map<PaginatedResult<ProjectProfitabilityDto>>(pagedResult);
+        }
+
+        public async Task<PaginatedResult<ProjectProfitabilityVlaDto>> GetProjectProfitabilityVlaAsync(
+            QueryParameters<string> query, string? projectStatus = null, string? programNo = null, string? manager = null, string? customer = null)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            var pagedResult = await _projectRepository.GetProjectProfitabilityVlaAsync(
+                _mapper.Map<PaginationParameters<string>>(query), projectStatus, programNo, manager, customer);
+            return _mapper.Map<PaginatedResult<ProjectProfitabilityVlaDto>>(pagedResult);
         }
     }
 }
