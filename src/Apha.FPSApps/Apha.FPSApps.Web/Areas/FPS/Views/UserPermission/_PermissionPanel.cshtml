@@ -21,7 +21,7 @@
         <button type="button" class="govuk-link mup-select-action" onclick="clearAll('@panelId')">Clear</button>
         <span id="@(panelId)Count" class="govuk-hint govuk-!-margin-bottom-0">0 selected</span>
     </div>
-    <div id="panel_@panelId" class="fps-mup-checkbox-list sup_border" role="group" aria-label="@panelTitle">
+    <fieldset id="panel_@panelId" class="fps-mup-checkbox-list sup_border" aria-label="@panelTitle">
         @if (options.Count == 0 && !allowFreeText)
         {
             <p class="govuk-body-s" style="color:#666; padding: 8px;">No options available.</p>
@@ -49,7 +49,7 @@
                 </div>
             </div>
         }
-    </div>
+    </fieldset>
 </section>
 
 <script>
