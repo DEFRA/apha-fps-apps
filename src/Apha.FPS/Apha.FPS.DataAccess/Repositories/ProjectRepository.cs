@@ -11,6 +11,8 @@ namespace Apha.FPS.DataAccess.Repositories
 {
     public class ProjectRepository : BaseRepository, IProjectRepository
     {
+        private const string FilterKeyParentProject = "ParentProject";
+
         private readonly FpsDbContext _dbContext;
         private readonly IFpsRequestContext _requestContext;
 
@@ -479,7 +481,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+            if (dict.TryGetValue(FilterKeyParentProject, out var parentProject) && parentProject != null)
                 query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
 
             if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
@@ -496,7 +498,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             if (dict.TryGetValue("CostCentre", out var costCentre) && costCentre != null
                 && double.TryParse(costCentre.ToString(), out var costCentreValue))
-                query = query.Where(x => x.CostCentre == costCentreValue);
+                query = query.Where(x => x.CostCentre.HasValue && Math.Abs(x.CostCentre.Value - costCentreValue) < 1e-9);
 
             return query;
         }
@@ -512,7 +514,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+            if (dict.TryGetValue(FilterKeyParentProject, out var parentProject) && parentProject != null)
                 query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
 
             if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
@@ -603,7 +605,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+            if (dict.TryGetValue(FilterKeyParentProject, out var parentProject) && parentProject != null)
             {
                 queryProjects = queryProjects.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
             }
@@ -1370,14 +1372,14 @@ namespace Apha.FPS.DataAccess.Repositories
             UserId = userId
         };
 
-        private record ProjectProfitabilityEntry(
+        private sealed record ProjectProfitabilityEntry(
             string? ParentProject,
             decimal? BudgetCvl,
             decimal? Profit,
             string? ProjectStatus,
             string? Program);
 
-        private record VlaProjectEntry(
+        private sealed record VlaProjectEntry(
             string? ParentProject,
             decimal? BudgetCvl,
             string? ProjectStatus,
@@ -1532,7 +1534,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     && EF.Functions.ILike(pg.SectorName!, "%charge%")
                 select new
                 {                    
-                    sectorCharge = (pg.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m,
+                    sectorCharge = string.Equals((pg.SectorName ?? "").Trim(), "charge", StringComparison.OrdinalIgnoreCase) ? 1m : 0m,
                     JobCode = sj.JobCode,                    
                     PlannedHours = sj.PlannedHours,
                     ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate
@@ -1660,7 +1662,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var filterDict = ParseFilterDict(query.Filter);
             if (filterDict.TryGetValue("JobCode", out var jobCode))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{jobCode}%"));
-            if (filterDict.TryGetValue("ParentProject", out var parentProject))
+            if (filterDict.TryGetValue(FilterKeyParentProject, out var parentProject))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{parentProject}%"));
 
             var projects = await rawQuery
@@ -1728,7 +1730,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     && EF.Functions.ILike(pg.SectorName!, "%charge%")
                 select new
                 {
-                    sectorCharge = (pg.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m,
+                    sectorCharge = string.Equals((pg.SectorName ?? "").Trim(), "charge", StringComparison.OrdinalIgnoreCase) ? 1m : 0m,
                     JobCode = sj.JobCode,
                     PlannedHours = sj.PlannedHours,
                     ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate
