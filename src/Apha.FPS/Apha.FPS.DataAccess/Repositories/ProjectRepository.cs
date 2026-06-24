@@ -567,14 +567,22 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return property switch
             {
-                "parentproject" => ApplyOrder(query, p => p.ParentProject, descending),
-                "projecttitle" => ApplyOrder(query, p => p.ProjectTitle, descending),
-                "program" => ApplyOrder(query, p => p.Program, descending),
-                "manager" => ApplyOrder(query, p => p.Manager, descending),
-                "budgetcvl" => ApplyOrder(query, p => p.BudgetCvl, descending),
-                "costcentre" => ApplyOrder(query, p => p.CostCentre, descending),
-                "oracleprojectcode" => ApplyOrder(query, p => p.OracleProjectCode, descending),
-                "subaccountcode" => ApplyOrder(query, p => p.SubAccountCode, descending),
+                "parentproject"    => ApplyOrder(query, p => p.ParentProject, descending),
+                "projecttitle"     => ApplyOrder(query, p => p.ProjectTitle, descending),
+                "program"          => ApplyOrder(query, p => p.Program, descending),
+                "manager"          => ApplyOrder(query, p => p.Manager, descending),
+                "projectgroup"     => ApplyOrder(query, p => p.ProjectGroup, descending),
+                "customer"         => ApplyOrder(query, p => p.Customer, descending),
+                "contract"         => ApplyOrder(query, p => p.Contract, descending),
+                "disease"          => ApplyOrder(query, p => p.Disease, descending),
+                "projectstatus"    => ApplyOrder(query, p => p.ProjectStatus, descending),
+                "budgetcvl"        => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "budgetext"        => ApplyOrder(query, p => p.CustIncome, descending),
+                "transferincome"   => ApplyOrder(query, p => p.TransferIncome, descending),
+                "plancaseworkdebit"=> ApplyOrder(query, p => p.PlanCaseWorkDebit, descending),
+                "costcentre"       => ApplyOrder(query, p => p.CostCentre, descending),
+                "oracleprojectcode"=> ApplyOrder(query, p => p.OracleProjectCode, descending),
+                "subaccountcode"   => ApplyOrder(query, p => p.SubAccountCode, descending),
                 _ => query.OrderBy(p => p.ParentProject)
             };
         }
