@@ -425,14 +425,11 @@ namespace Apha.PACT.DataAccess.Repository
                 from job in jobJoin.DefaultIfEmpty()
                 join top in _context.TestorProducts.AsNoTracking() on tcv.TimeCode equals top.ItemCode into topJoin
                 from top in topJoin.DefaultIfEmpty()
-                where //wgGrade.Cos90 == 1
-                      //&& wg.ProfitCentre == profitCentre
-                      //&& 
-                        tcv.Active
+                where tcv.Active 
                       && staff.PersonStatus != "I"
                 select new WorkGroupCos90sExportRow
                 {
-                    ProfitCentre = "",//wg.ProfitCentre,
+                    ProfitCentre = "",
                     WorkGroupName = wgGrade.WorkGroup ?? string.Empty,
                     PactId = staff.PactId ?? string.Empty,
                     StaffName = staff.Name ?? string.Empty,

@@ -249,6 +249,7 @@ $(function () {
 
     // ── Excel COS90s ────────────────────────────────────────────────────
     $('#btn-excel-cos90').on('click', function () {
+        // Clear any previous validation errors
         clearValidationErrors();
 
         var payload = {
@@ -258,18 +259,25 @@ $(function () {
             pactId: $('#dpWgMemberList').val() || ''
         };
 
+        // Client-side validation - show as popup alerts
         if (!payload.selectedProfitCentre) {
-            displayServerValidationErrors({ SelectedProfitCentre: 'Profit Centre is required.' }, 'There is a problem');
+            window.showGovukAlert('Please select a Profit Centre.');
             return;
         }
 
         if (!payload.selectedMonthNumber) {
-            displayServerValidationErrors({ SelectedMonthNumber: 'For Period is required.' }, 'There is a problem');
+            window.showGovukAlert('Please select a Period.');
             return;
         }
 
         if (!payload.selectedYear) {
-            displayServerValidationErrors({ SelectedYear: 'In Year is required.' }, 'There is a problem');
+            window.showGovukAlert('Please select a Year.');
+            return;
+        }
+
+        // Skip backend call if no person is selected
+        if (!payload.pactId) {
+            window.showGovukAlert('Please select a Person or leave blank to use Work Groups above.');
             return;
         }
 
@@ -300,27 +308,31 @@ $(function () {
             error: function (xhr) {
                 var contentType = xhr.getResponseHeader('Content-Type') || '';
 
+                // Server-side validation errors - show using displayServerValidationErrors
                 if (contentType.indexOf('application/json') >= 0 && xhr.response) {
                     var reader = new FileReader();
                     reader.onload = function () {
                         try {
                             var result = JSON.parse(reader.result);
                             var errors = result && result.errors ? result.errors : null;
+                            var message = result && result.message ? result.message : 'There is a problem';
 
                             if (errors) {
-                                displayServerValidationErrors(errors, 'There is a problem');
+                                displayServerValidationErrors(errors, message);
                                 return;
                             }
-                        } catch (_e) {
-                        }
 
-                        alert('Failed to generate COS90 Excel.');
+                            // If no errors array, show generic message as alert
+                            window.showGovukAlert(message);
+                        } catch (_e) {
+                            window.showGovukAlert('Failed to generate COS90 Excel.');
+                        }
                     };
                     reader.readAsText(xhr.response);
                     return;
                 }
 
-                alert('Failed to generate COS90 Excel.');
+                window.showGovukAlert('Failed to generate COS90 Excel.');
             }
         });
     });

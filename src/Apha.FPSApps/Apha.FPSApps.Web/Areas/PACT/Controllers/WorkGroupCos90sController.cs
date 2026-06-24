@@ -270,7 +270,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     success = false,
                     message = "Please correct the errors below.",
                     errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any() && kvp.Key != "$")
+                        .Where(kvp => kvp.Value!.Errors.Count > 0 && kvp.Key != "$")
                         .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
                         {
                             field = kvp.Key.StartsWith("$.") ? kvp.Key[2..] : kvp.Key,
@@ -285,14 +285,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 pactId);
 
             if (!response.Success || response.Data == null || response.Data.Content == null || response.Data.Content.Length == 0)
-                return StatusCode(500, new
+                return BadRequest(new
                 {
                     success = false,
-                    message = "Failed to generate COS90 Excel.",
-                    errors = new[]
-                    {
-                        new { field = string.Empty, message = "Failed to generate COS90 Excel." }
-                    }
+                    message = "Failed to generate COS90 Excel."
                 });
 
             var contentType = string.IsNullOrWhiteSpace(response.Data.ContentType)
