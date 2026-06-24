@@ -1,4 +1,24 @@
-﻿using Apha.Common.Contracts;
+﻿/*
+ * TRANSFORMENGINE MIGRATION — RequestMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - Added CapsStaffDto <-> CapsStaffReq / CapsStaffRes mappings (Tab 5 CAPS Staff)
+ *   - Added AccountGroupDto <-> AccountGroupReq / AccountGroupRes mappings (Tab 3 CSG7 Inflation Options)
+ *   - Added MaintenanceSettingsDto <-> MaintenanceSettingsReq / MaintenanceSettingsRes mappings (Tabs 1 + 4)
+ *   - Added AccountCategoryMaintenanceDto <-> AccountCategoryMaintenanceReq / AccountCategoryMaintenanceRes mappings (Tab 2)
+ *
+ * PRESERVED:
+ *   - All existing pagination, Project, lookup, and yearly-details mappings unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: AccountCategoryMaintenanceReq only carries Csg7Group; the UpdateCsg7GroupAsync service
+ *     method accepts csg7Group directly from controller — no DTO mapping needed on the request path,
+ *     but the Req->Dto mapping is registered here for completeness and frontend use.
+ */
+
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.Costbook;
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Pagination;
@@ -72,5 +92,25 @@ public class RequestMapper : Profile
         CreateMap<ProjectCostsRowDto, ProjectCostsRowRes>().ReverseMap();
         CreateMap<ProjectCostsPivotDto, ProjectCostsPivotRes>().ReverseMap();
         CreateMap<ProjectYearCostSummaryDto, ProjectYearCostSummaryRes>().ReverseMap();
+
+        // ── Maintenance: CapsStaff (Tab 5) ───────────────────────────────────────
+        // TRANSFORMENGINE: CapsStaffDto <-> CapsStaffReq/Res — added Phase 5 for CapsStaffController
+        CreateMap<CapsStaffDto, CapsStaffRes>().ReverseMap();
+        CreateMap<CapsStaffDto, CapsStaffReq>().ReverseMap();
+
+        // ── Maintenance: AccountGroup / CSG7 (Tab 3) ────────────────────────────
+        // TRANSFORMENGINE: AccountGroupDto <-> AccountGroupReq/Res — added Phase 5 for AccountGroupController
+        CreateMap<AccountGroupDto, AccountGroupRes>().ReverseMap();
+        CreateMap<AccountGroupDto, AccountGroupReq>().ReverseMap();
+
+        // ── Maintenance: Settings (Tabs 1 + 4) ──────────────────────────────────
+        // TRANSFORMENGINE: MaintenanceSettingsDto <-> MaintenanceSettingsReq/Res — added Phase 5 for MaintenanceController
+        CreateMap<MaintenanceSettingsDto, MaintenanceSettingsRes>().ReverseMap();
+        CreateMap<MaintenanceSettingsDto, MaintenanceSettingsReq>().ReverseMap();
+
+        // ── Maintenance: AccountCategory (Tab 2) ─────────────────────────────────
+        // TRANSFORMENGINE: AccountCategoryMaintenanceDto <-> AccountCategoryMaintenanceReq/Res — added Phase 5 for MaintenanceController
+        CreateMap<AccountCategoryMaintenanceDto, AccountCategoryMaintenanceRes>().ReverseMap();
+        CreateMap<AccountCategoryMaintenanceDto, AccountCategoryMaintenanceReq>().ReverseMap();
     }
 }

@@ -1,4 +1,25 @@
-﻿using Apha.Common.Contracts;
+﻿/*
+ * TRANSFORMENGINE MIGRATION — CostbookApiDtoMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - Added Phase 10 CreateMap entries for frmMaintainance Maintenance screen contracts ↔ frontend DTOs:
+ *       MaintenanceSettingsRes / MaintenanceSettingsReq ↔ MaintenanceSettingsDto
+ *       CapsStaffRes / CapsStaffReq ↔ CapsStaffDto
+ *       AccountGroupRes / AccountGroupReq ↔ AccountGroupDto
+ *       AccountCategoryMaintenanceRes / AccountCategoryMaintenanceReq ↔ AccountCategoryMaintenanceDto
+ *
+ * PRESERVED:
+ *   - All existing Phase 7/9 CreateMap entries for Project, Customer, Disease, Program, Staff, Contract,
+ *     YearlyDetails, Pivot/Summary, and all lookup types — unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Confirm whether AccountCategoryMaintenanceReq only carries Csg7Group (1 field) —
+ *     the current mapping relies on AutoMapper convention; mismatch will throw Missing type map configuration
+ */
+
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.Costbook;
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.CostBook;
@@ -46,6 +67,26 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectCostsRowRes, ProjectCostsRowDto>().ReverseMap();
             CreateMap<ProjectCostsPivotRes, ProjectCostsPivotDto>().ReverseMap();
             CreateMap<ProjectYearCostSummaryRes, ProjectYearCostSummaryDto>().ReverseMap();
+
+            // ── Phase 10: Maintenance screen — Res/Req ↔ Dto ─────────────────
+
+            // TRANSFORMENGINE: MaintenanceSettings — GET /api/v1/Maintenance/settings (Tab 1 + Tab 4)
+            CreateMap<MaintenanceSettingsRes, MaintenanceSettingsDto>().ReverseMap();
+            CreateMap<MaintenanceSettingsDto, MaintenanceSettingsReq>().ReverseMap();
+
+            // TRANSFORMENGINE: CapsStaff — CRUD endpoints GET/POST/PUT/DELETE /api/v1/CapsStaff (Tab 5)
+            CreateMap<CapsStaffRes, CapsStaffDto>().ReverseMap();
+            CreateMap<CapsStaffDto, CapsStaffReq>().ReverseMap();
+
+            // TRANSFORMENGINE: AccountGroup (CSG7) — CRUD endpoints GET/POST/PUT/DELETE /api/v1/AccountGroup (Tab 3)
+            //   Also used as lookup DTO for CSG7 group dropdown in AccountCategory maintenance modal (Tab 2)
+            CreateMap<AccountGroupRes, AccountGroupDto>().ReverseMap();
+            CreateMap<AccountGroupDto, AccountGroupReq>().ReverseMap();
+
+            // TRANSFORMENGINE: AccountCategoryMaintenance — GET /api/v1/Maintenance/account-categories (Tab 2 grid)
+            //   and PUT /api/v1/Maintenance/account-categories/{accShortName}
+            CreateMap<AccountCategoryMaintenanceRes, AccountCategoryMaintenanceDto>().ReverseMap();
+            CreateMap<AccountCategoryMaintenanceDto, AccountCategoryMaintenanceReq>().ReverseMap();
         }
     }
 }

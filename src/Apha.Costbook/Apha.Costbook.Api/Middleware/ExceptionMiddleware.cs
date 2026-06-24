@@ -1,4 +1,26 @@
-﻿using Apha.Common.Contracts;
+﻿/*
+ * TRANSFORMENGINE MIGRATION — ExceptionMiddleware.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 14 — Pre-Build Security Review Gate
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - Phase 14 security fix: pgEx.MessageText removed from ApiError.Details in PostgresException handler
+ *     PostgreSQL MessageText can expose internal schema detail (column names, table names, constraint names)
+ *     to API callers; replaced with a generic "See server logs for detail." string.
+ *     Full pgEx.MessageText is still written to the server-side log via LogException().
+ *
+ * PRESERVED:
+ *   - All exception branch handling (UnauthorizedAccessException, BusinessValidationErrorException,
+ *     ArgumentException, KeyNotFoundException, PostgresException, NpgsqlException, default)
+ *   - LogException writes full exception detail server-side
+ *   - CorrelationId propagation from X-Correlation-ID header
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Confirm ApiError.Details field is never exposed in production Swagger UI
+ *     or in error responses consumed by non-admin callers; consider stripping Details from 500 responses
+ *     in a production environment middleware filter.
+ */
+using Apha.Common.Contracts;
 using Apha.Costbook.Application.Validation;
 using Microsoft.AspNetCore.Authentication;
 using Npgsql;
@@ -95,11 +117,14 @@ namespace Apha.Costbook.Api.Middleware
                     break;
                 case PostgresException pgEx:
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    // TRANSFORMENGINE: Phase 14 security fix — pgEx.MessageText removed from response.
+                    // PostgreSQL MessageText can expose table/column/constraint names to callers.
+                    // Full detail is logged server-side by LogException(); only a generic message is returned.
                     apiResponse.Errors.Add(new ApiError
                     {
                         Code = "DB_POSTGRES_ERROR",
                         Message = "A database error occurred.",
-                        Details = pgEx.MessageText
+                        Details = "See server logs for detail."
                     });
                     errorType = _configuration["ExceptionTypes:Database"];
                     break;

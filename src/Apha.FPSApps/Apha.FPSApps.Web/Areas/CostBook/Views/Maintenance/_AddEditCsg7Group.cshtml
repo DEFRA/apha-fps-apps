@@ -1,0 +1,144 @@
+<!-- TRANSFORMENGINE MIGRATION — _AddEditCsg7Group.cshtml (CostBook/Maintenance)
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-06-23
+     CHANGED:
+       - tblCsg7Modal HTML prototype modal converted to ASP.NET Core Razor partial
+       - Loaded via $.get() into #modaPopupBody / #modalPopup in Index.cshtml
+       - Model: Csg7GroupItem (Csg7Group PK string, UseInflation bool)
+       - Add mode: Csg7Group input is editable; hdnCsg7IsEdit = "false"
+       - Edit mode: Csg7Group input is disabled (PK cannot change on PUT); hdnCsg7IsEdit = "true"
+       - UseInflation: govuk-checkboxes checkbox, checked/unchecked from model
+       - Hidden input hdnCsg7Original carries original Csg7Group value for edit AJAX URL
+       - @@Html.AntiForgeryToken() included for security compliance
+       - Save / Update button visibility driven by isEditMode Razor flag
+       - Save button calls saveCsg7Group() defined in Index.cshtml @@section Scripts
+     PRESERVED:
+       - Field IDs from HTML prototype: modal-csg7-group, modal-csg7-useinflation
+       - Form group IDs: fg-csg7-group
+       - Error message element IDs preserved
+       - Modal header title text (Add CSG7 Group / Edit CSG7 Group) determined by isEditMode
+       - tblCsg7SaveBtn, tblCsg7UpdateBtn IDs matching HTML prototype button IDs
+       - govuk-checkboxes--small + govuk-checkboxes__item structure from HTML prototype
+       - maint-dlg-* CSS class names from HTML prototype modal structure
+     DEFERRED / REQUIRES HUMAN REVIEW:
+       - TRANSFORMENGINE TODO: Confirm Csg7Group max length (varchar 15) — add maxlength="15" client-side -->
+@model Apha.FPSApps.Web.Areas.CostBook.Models.Csg7GroupItem
+
+@{
+    @* TRANSFORMENGINE: Determine Add vs Edit mode
+       Edit mode: Csg7Group is non-empty (populated by EditCsg7Group GET action)
+       Add mode:  Csg7Group is null/empty (CreateCsg7Group GET returns new Csg7GroupItem()) *@
+    var isEditMode = !string.IsNullOrEmpty(Model?.Csg7Group);
+    var modalTitle  = isEditMode ? "Edit CSG7 Group" : "Add CSG7 Group";
+}
+
+<div class="govuk-modal__header maint-modal-header">
+    <h2 class="maint-modal-title maint-dlg-title" id="tblCsg7ModalLabel">
+        @modalTitle
+    </h2>
+    <button type="button" class="govuk-modal__close maint-modal-close"
+            onclick="closeModal()" aria-label="Close">&#x2715;</button>
+</div>
+<div class="maint-dlg-body">
+    <p class="app-mandatory-note">
+        <span aria-hidden="true" class="app-required">*</span> Mandatory fields
+    </p>
+    <form class="govuk-grid-column-full" id="formTblCsg7" novalidate>
+        @Html.AntiForgeryToken()
+
+        @* TRANSFORMENGINE: Hidden fields for Add/Edit state detection in saveCsg7Group()
+           hdnCsg7IsEdit — "true" for edit, "false" for add
+           hdnCsg7Original — original Csg7Group value used in PUT URL during edit *@
+        <input type="hidden" id="hdnCsg7IsEdit" value="@isEditMode.ToString().ToLower()" />
+        <input type="hidden" id="hdnCsg7Original" value="@Model?.Csg7Group" />
+
+        @* DB / server error banner *@
+        <div id="formTblCsg7-db-error" class="govuk-error-summary maint-db-error" role="alert"
+             aria-labelledby="formTblCsg7-db-error-title" hidden>
+            <h2 class="govuk-error-summary__title" id="formTblCsg7-db-error-title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <p id="formTblCsg7-db-error-msg" class="govuk-body"></p>
+            </div>
+        </div>
+
+        @* TRANSFORMENGINE: modal-csg7-group — Csg7Group (PK varchar 15)
+           In Edit mode: disabled — PK cannot be changed via PUT endpoint
+           In Add mode:  editable — new group name entered by user
+           Use disabled (not readonly) per GOV.UK grey background styling rule *@
+        <div class="govuk-form-group sup_margin_bottom_10" id="fg-csg7-group">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                   for="modal-csg7-group">
+                CSG7 Group:
+                <span aria-hidden="true" class="app-required">*</span>
+            </label>
+            @if (isEditMode)
+            {
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="modal-csg7-group"
+                       name="csg7Group"
+                       type="text"
+                       value="@Model!.Csg7Group"
+                       maxlength="15"
+                       disabled
+                       aria-describedby="modal-csg7-group-error" />
+            }
+            else
+            {
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="modal-csg7-group"
+                       name="csg7Group"
+                       type="text"
+                       value=""
+                       maxlength="15"
+                       required aria-required="true"
+                       aria-describedby="modal-csg7-group-error" />
+            }
+            <p id="modal-csg7-group-error" class="govuk-error-message" hidden>
+                <span class="govuk-visually-hidden">Error:</span> Enter a CSG7 group name
+            </p>
+        </div>
+
+        @* TRANSFORMENGINE: modal-csg7-useinflation — UseInflation (bool checkbox)
+           govuk-checkboxes--small structure preserved from HTML prototype
+           Checked state set from Model.UseInflation (populated by EditCsg7Group GET action) *@
+        <div class="govuk-form-group sup_margin_bottom_10">
+            <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input govuk-!-font-size-16"
+                           id="modal-csg7-useinflation"
+                           name="useInflation"
+                           type="checkbox"
+                           @(Model != null && Model.UseInflation ? "checked" : "") />
+                    <label class="govuk-label govuk-checkboxes__label govuk-!-font-size-16 sup_label_auto_width"
+                           for="modal-csg7-useinflation">
+                        Use Inflation?
+                    </label>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+<div class="maint-modal-footer maint-dlg-footer">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <div>
+        @* TRANSFORMENGINE: Save/Update button — Razor-controlled visibility (not JS show/hide)
+           tblCsg7SaveBtn shown for Add mode, tblCsg7UpdateBtn shown for Edit mode
+           Both call saveCsg7Group() which reads hdnCsg7IsEdit to determine POST vs PUT *@
+        @if (!isEditMode)
+        {
+            <button type="button" class="govuk-button sup_margin_0"
+                    data-module="govuk-button"
+                    id="tblCsg7SaveBtn"
+                    onclick="saveCsg7Group()">Save</button>
+        }
+        else
+        {
+            <button type="button" class="govuk-button sup_margin_0"
+                    data-module="govuk-button"
+                    id="tblCsg7UpdateBtn"
+                    onclick="saveCsg7Group()">Update</button>
+        }
+    </div>
+</div>

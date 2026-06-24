@@ -1,0 +1,972 @@
+<!-- TRANSFORMENGINE MIGRATION — Index.cshtml (CostBook/Maintenance)
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-06-23
+     CHANGED:
+       - frmMaintainance MS Access form converted to ASP.NET Core 10 MVC Razor view
+       - 5-tab GOV.UK tabs structure replicated from HTML prototype (frmMaintainance.html)
+       - Tab 1 (Inflation): static form bound to MaintenanceViewModel scalar properties via asp-for
+       - Tab 2 (Account Categories): _DataGrid partial bound to Model.AccountCategoryGrid
+       - Tab 3 (CSG7 Inflation Options): _DataGrid partial bound to Model.Csg7GroupGrid
+       - Tab 4 (Profit Margins): static form bound to MaintenanceViewModel scalar properties via asp-for
+       - Tab 5 (CAPS Staff): _DataGrid partial bound to Model.CapsStaffGrid
+       - AJAX modal load: $.get() to partial action, loaded into #modaPopupBody / #modalPopup
+       - govuk-tabs CSS + JS added via @@section Styles / @@section Scripts (not in _Layout.cshtml)
+       - Inline modals from HTML prototype NOT replicated; shared #modalPopup host used instead
+       - Both forms use @@Html.AntiForgeryToken() with AJAX POST (application/json)
+     PRESERVED:
+       - All 7 inflation field IDs and 4 profit field IDs from HTML prototype
+       - DB error banners: formInflation-db-error, formProfitMargins-db-error
+       - All CSS class names and inline styles from HTML prototype
+       - btnInflationCancel, btnProfitMarginsCancel button IDs
+       - Grid container IDs: gridContainer_accCat, gridContainer_csg7, gridContainer_capsStaff
+       - Tab IDs, tab link IDs and aria attributes from govuk-tabs structure
+       - Footnote text below Tab 2 and Tab 3 grids
+       - Grid CRUD function names matching DataGridConfig: editAccountCategory, addCsg7Group,
+         editCsg7Group, deleteCsg7Group, addCapsStaff, editCapsStaff, deleteCapsStaff
+     DEFERRED / REQUIRES HUMAN REVIEW:
+       - TRANSFORMENGINE TODO: Confirm SaveInflationSettings / SaveProfitMargins AJAX endpoints
+         align with anti-forgery token header handling (RequestVerificationToken)
+       - TRANSFORMENGINE TODO: Confirm numeric input pattern validation acceptable for decimal fields -->
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.CostBook.Models.MaintenanceViewModel
+
+@{
+    ViewData["Title"] = "Costbook : Maintenance Screen";
+}
+
+@section Styles {
+    @* TRANSFORMENGINE: govuk_tabs.css added here (not in _Layout.cshtml) — only this view uses tabs *@
+    <link rel="stylesheet" href="~/css/common/_govuk_tabs.css" />
+}
+
+<div class="govuk-template__body govuk-frontend-supported project-requirement-page">
+
+    @* Page heading bar *@
+    <div class="govuk-grid-row sup_margin_left_right_0">
+        <div class="govuk-grid-column-full sup_border-bottom">
+            <h1 class="govuk-heading-s sup_margin_0 govuk-grid-row govuk-!-padding-top-2">
+                Maintenance Screen
+                <a asp-area="CostBook" asp-controller="Home" asp-action="Index"
+                   class="govuk-back-link sup_align_right">Back</a>
+            </h1>
+        </div>
+    </div>
+
+    <div class="sup_flex">
+        <div class="govuk-grid-row sup_margin_left_right_0">
+            <div class="govuk-grid-column-full sup_p_0">
+                <div class="main-content-cs">
+
+                    @* TRANSFORMENGINE: GOV.UK tabs — Tab 1=Inflation, 2=Account Categories,
+                       3=CSG7 Inflation Options, 4=Profit Margins, 5=CAPS Staff
+                       _govuk_tabs.js (added below in @section Scripts) handles tab activation *@
+                    <div class="govuk-tabs" data-module="govuk-tabs">
+                        <ul class="govuk-tabs__list" role="tablist" aria-label="Costbook Maintainance tabs">
+
+                            <li class="govuk-tabs__list-item govuk-tabs__list-item--selected" role="presentation">
+                                <a class="govuk-tabs__tab" href="#tab-inflation" id="tab-link-inflation"
+                                   role="tab" aria-controls="tab-inflation" aria-selected="true" tabindex="0">
+                                    Inflation
+                                </a>
+                            </li>
+
+                            <li class="govuk-tabs__list-item" role="presentation">
+                                <a class="govuk-tabs__tab" href="#tab-account-categories"
+                                   id="tab-link-account-categories" role="tab"
+                                   aria-controls="tab-account-categories" aria-selected="false" tabindex="-1">
+                                    Account Categories
+                                </a>
+                            </li>
+
+                            <li class="govuk-tabs__list-item" role="presentation">
+                                <a class="govuk-tabs__tab" href="#tab-csg7" id="tab-link-csg7"
+                                   role="tab" aria-controls="tab-csg7" aria-selected="false" tabindex="-1">
+                                    CSG7 Inflation Options
+                                </a>
+                            </li>
+
+                            <li class="govuk-tabs__list-item" role="presentation">
+                                <a class="govuk-tabs__tab" href="#tab-profit-margins" id="tab-link-profit-margins"
+                                   role="tab" aria-controls="tab-profit-margins" aria-selected="false" tabindex="-1">
+                                    Profit Margins
+                                </a>
+                            </li>
+
+                            <li class="govuk-tabs__list-item" role="presentation">
+                                <a class="govuk-tabs__tab" href="#tab-caps-staff" id="tab-link-caps-staff"
+                                   role="tab" aria-controls="tab-caps-staff" aria-selected="false" tabindex="-1">
+                                    CAPS Staff
+                                </a>
+                            </li>
+
+                        </ul>
+
+                        @* ── TAB 1 — Inflation ──────────────────────────────────────────────── *@
+                        <section id="tab-inflation" class="govuk-tabs__panel active" role="tabpanel"
+                                 aria-labelledby="tab-link-inflation">
+
+                            @* TRANSFORMENGINE: formInflation — AJAX POST to SaveInflationSettings
+                               novalidate — JS handles field-level numeric validation *@
+                            <form id="formInflation" novalidate>
+                                @Html.AntiForgeryToken()
+
+                                @* DB / server error banner *@
+                                <div id="formInflation-db-error" class="govuk-error-summary" role="alert"
+                                     aria-labelledby="formInflation-db-error-title" hidden>
+                                    <h2 class="govuk-error-summary__title" id="formInflation-db-error-title">
+                                        There is a problem</h2>
+                                    <div class="govuk-error-summary__body">
+                                        <p id="formInflation-db-error-msg" class="govuk-body"></p>
+                                    </div>
+                                </div>
+
+                                <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 maint-intro-text">
+                                    Set Inflation figures etc.
+                                </p>
+
+                                <div class="govuk-grid-row">
+
+                                    @* % Inflation Figures panel *@
+                                    <div class="govuk-grid-column-one-half govuk-!-static-padding-right-0">
+                                        <div class="maint-panel">
+                                            <p class="govuk-!-font-size-16 govuk-!-font-weight-bold maint-panel-subheading">
+                                                % Inflation Figures
+                                            </p>
+                                            <p class="govuk-body maint-hint-text">(to set inflation at 2.5% enter 2.5)</p>
+
+                                            @* TRANSFORMENGINE: inflAnimals → asp-for="InflationAnimals" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-inflAnimals">
+                                                <div class="maint-field-row">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="inflAnimals">
+                                                        Animals <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="InflationAnimals"
+                                                           id="inflAnimals" name="inflAnimals" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="inflAnimals-error" />
+                                                </div>
+                                                <p id="inflAnimals-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter a value for Animals
+                                                </p>
+                                            </div>
+
+                                            @* TRANSFORMENGINE: inflExceptionalCosts → asp-for="InflationExceptionalCosts" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-inflExceptionalCosts">
+                                                <div class="maint-field-row">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="inflExceptionalCosts">
+                                                        Exceptional Costs <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="InflationExceptionalCosts"
+                                                           id="inflExceptionalCosts" name="inflExceptionalCosts" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="inflExceptionalCosts-error" />
+                                                </div>
+                                                <p id="inflExceptionalCosts-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter a value for Exceptional Costs
+                                                </p>
+                                            </div>
+
+                                            @* TRANSFORMENGINE: inflStaff → asp-for="InflationStaff" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-inflStaff">
+                                                <div class="maint-field-row">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="inflStaff">
+                                                        Staff <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="InflationStaff"
+                                                           id="inflStaff" name="inflStaff" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="inflStaff-error" />
+                                                </div>
+                                                <p id="inflStaff-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter a value for Staff
+                                                </p>
+                                            </div>
+
+                                            @* TRANSFORMENGINE: inflTests → asp-for="InflationTests" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-inflTests">
+                                                <div class="maint-field-row">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="inflTests">
+                                                        Tests <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="InflationTests"
+                                                           id="inflTests" name="inflTests" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="inflTests-error" />
+                                                </div>
+                                                <p id="inflTests-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter a value for Tests
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @* Other Figures panel *@
+                                    <div class="govuk-grid-column-one-half">
+                                        <div class="maint-panel">
+                                            <p class="govuk-!-font-size-16 govuk-!-font-weight-bold">
+                                                Other Figures
+                                            </p>
+
+                                            @* TRANSFORMENGINE: inflCurrentFinancialYear → asp-for="CurrentFinancialYear" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-inflCurrentFinancialYear">
+                                                <div class="maint-field-row maint-field-row--top-spaced">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="inflCurrentFinancialYear">
+                                                        Current Financial Year <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="CurrentFinancialYear"
+                                                           id="inflCurrentFinancialYear" name="inflCurrentFinancialYear" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="inflCurrentFinancialYear-error" />
+                                                </div>
+                                                <p id="inflCurrentFinancialYear-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter the current financial year
+                                                </p>
+                                            </div>
+
+                                            <p class="govuk-body maint-hint-text">
+                                                Changing this figure, links the lookup tables to the relevant
+                                                version of FPS. Do not attempt to use on versions of FPS before 2001.
+                                            </p>
+
+                                            @* TRANSFORMENGINE: inflWorkingHoursInDay → asp-for="WorkingHoursInDay" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-inflWorkingHoursInDay">
+                                                <div class="maint-field-row">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="inflWorkingHoursInDay">
+                                                        Working Hours in Day <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="WorkingHoursInDay"
+                                                           id="inflWorkingHoursInDay" name="inflWorkingHoursInDay" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="inflWorkingHoursInDay-error" />
+                                                </div>
+                                                <p id="inflWorkingHoursInDay-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter working hours in a day
+                                                </p>
+                                            </div>
+
+                                            @* TRANSFORMENGINE: inflWorkingDaysInYear → asp-for="WorkingDaysInYear" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-inflWorkingDaysInYear">
+                                                <div class="maint-field-row">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="inflWorkingDaysInYear">
+                                                        Working Days in Year <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="WorkingDaysInYear"
+                                                           id="inflWorkingDaysInYear" name="inflWorkingDaysInYear" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="inflWorkingDaysInYear-error" />
+                                                </div>
+                                                <p id="inflWorkingDaysInYear-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter working days in a year
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>@* /govuk-grid-row *@
+
+                                <div class="maint-btn-group-end">
+                                    <button type="button" class="govuk-button govuk-button--secondary"
+                                            data-module="govuk-button" id="btnInflationCancel">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" class="govuk-button" data-module="govuk-button">
+                                        Save
+                                    </button>
+                                </div>
+                            </form>
+
+                        </section>
+                        @* END TAB 1 *@
+
+                        @* ── TAB 2 — Account Categories ──────────────────────────────────────── *@
+                        @* TRANSFORMENGINE: Tab 2 — Account Categories grid (AllowAdd=false, AllowDelete=false)
+                           Grid container ID matches JS: gridContainer_accCat
+                           _DataGrid partial renders the grid; AJAX edit via editAccountCategory() *@
+                        <section id="tab-account-categories" class="govuk-tabs__panel" role="tabpanel"
+                                 aria-labelledby="tab-link-account-categories">
+
+                            <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+                                <div class="govuk-grid-column-full sup_p_0">
+                                    <div id="gridContainer_accCat">
+                                        @await Html.PartialAsync("_DataGrid", Model.AccountCategoryGrid)
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="govuk-body maint-grid-footnote">
+                                These are linked to the FPS, but the groups can be modified here.
+                            </p>
+
+                        </section>
+                        @* END TAB 2 *@
+
+                        @* ── TAB 3 — CSG7 Inflation Options ─────────────────────────────────── *@
+                        @* TRANSFORMENGINE: Tab 3 — CSG7 Groups grid (full CRUD)
+                           Grid container ID matches JS: gridContainer_csg7
+                           _DataGrid partial renders the grid; CRUD via addCsg7Group/editCsg7Group/deleteCsg7Group *@
+                        <section id="tab-csg7" class="govuk-tabs__panel" role="tabpanel"
+                                 aria-labelledby="tab-link-csg7">
+
+                            <div>
+                                <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+                                    <div class="govuk-grid-column-full sup_p_0">
+                                        <div id="gridContainer_csg7">
+                                            @await Html.PartialAsync("_DataGrid", Model.Csg7GroupGrid)
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="govuk-body maint-grid-footnote">
+                                    If inflation is set on for a CSG7 group, it will only take effect if
+                                    inflation is set on for that project.
+                                </p>
+                            </div>
+
+                        </section>
+                        @* END TAB 3 *@
+
+                        @* ── TAB 4 — Profit Margins ──────────────────────────────────────────── *@
+                        <section id="tab-profit-margins" class="govuk-tabs__panel" role="tabpanel"
+                                 aria-labelledby="tab-link-profit-margins">
+
+                            @* TRANSFORMENGINE: formProfitMargins — AJAX POST to SaveProfitMargins
+                               fields: ProfitAnimals, ProfitExceptionalCosts, ProfitStaff, ProfitTests *@
+                            <form id="formProfitMargins" novalidate>
+                                @Html.AntiForgeryToken()
+
+                                @* DB / server error banner *@
+                                <div id="formProfitMargins-db-error" class="govuk-error-summary" role="alert"
+                                     aria-labelledby="formProfitMargins-db-error-title" hidden>
+                                    <h2 class="govuk-error-summary__title" id="formProfitMargins-db-error-title">
+                                        There is a problem</h2>
+                                    <div class="govuk-error-summary__body">
+                                        <p id="formProfitMargins-db-error-msg" class="govuk-body"></p>
+                                    </div>
+                                </div>
+
+                                <p class="govuk-body govuk-!-font-weight-bold govuk-!-font-size-16 maint-intro-text">
+                                    These apply only to commercial programme projects.
+                                </p>
+
+                                <div class="govuk-grid-row">
+                                    <div class="govuk-grid-column-full">
+                                        <div class="maint-panel">
+                                            <h2 class="govuk-heading-s">% Profit Figures</h2>
+                                            <p class="govuk-body govuk-!-font-size-16">(to set profit at 2.5% enter 2.5)</p>
+
+                                            @* TRANSFORMENGINE: profitAnimals → asp-for="ProfitAnimals" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-profitAnimals">
+                                                <div class="maint-field-row">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="profitAnimals">
+                                                        Animals <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="ProfitAnimals"
+                                                           id="profitAnimals" name="profitAnimals" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="profitAnimals-error" />
+                                                </div>
+                                                <p id="profitAnimals-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter a profit figure for Animals
+                                                </p>
+                                            </div>
+
+                                            @* TRANSFORMENGINE: profitExceptionalCosts → asp-for="ProfitExceptionalCosts" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-profitExceptionalCosts">
+                                                <div class="maint-field-row">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="profitExceptionalCosts">
+                                                        Exceptional Costs <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="ProfitExceptionalCosts"
+                                                           id="profitExceptionalCosts" name="profitExceptionalCosts" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="profitExceptionalCosts-error" />
+                                                </div>
+                                                <p id="profitExceptionalCosts-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter a profit figure for Exceptional Costs
+                                                </p>
+                                            </div>
+
+                                            @* TRANSFORMENGINE: profitStaff → asp-for="ProfitStaff" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-profitStaff">
+                                                <div class="maint-field-row">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="profitStaff">
+                                                        Staff <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="ProfitStaff"
+                                                           id="profitStaff" name="profitStaff" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="profitStaff-error" />
+                                                </div>
+                                                <p id="profitStaff-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter a profit figure for Staff
+                                                </p>
+                                            </div>
+
+                                            @* TRANSFORMENGINE: profitTests → asp-for="ProfitTests" *@
+                                            <div class="govuk-form-group maint-inline-form-group" id="fg-profitTests">
+                                                <div class="maint-field-row">
+                                                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 maint-field-label"
+                                                           for="profitTests">
+                                                        Tests <span aria-hidden="true" class="app-required">*</span>
+                                                    </label>
+                                                    <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
+                                                           asp-for="ProfitTests"
+                                                           id="profitTests" name="profitTests" type="text"
+                                                           required aria-required="true"
+                                                           aria-describedby="profitTests-error" />
+                                                </div>
+                                                <p id="profitTests-error" class="govuk-error-message" hidden>
+                                                    <span class="govuk-visually-hidden">Error:</span>
+                                                    Enter a profit figure for Tests
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div class="maint-btn-group-end">
+                                            <button type="button" class="govuk-button govuk-button--secondary"
+                                                    data-module="govuk-button" id="btnProfitMarginsCancel">
+                                                Cancel
+                                            </button>
+                                            <button type="submit" class="govuk-button" data-module="govuk-button">
+                                                Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </form>
+
+                        </section>
+                        @* END TAB 4 *@
+
+                        @* ── TAB 5 — CAPS Staff ───────────────────────────────────────────────── *@
+                        @* TRANSFORMENGINE: Tab 5 — CAPS Staff grid (full CRUD, paginated)
+                           Grid container ID matches JS: gridContainer_capsStaff
+                           CRUD via addCapsStaff/editCapsStaff/deleteCapsStaff *@
+                        <section id="tab-caps-staff" class="govuk-tabs__panel" role="tabpanel"
+                                 aria-labelledby="tab-link-caps-staff">
+
+                            <div>
+                                <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_bottom_10">
+                                    <div class="govuk-grid-column-full sup_p_0">
+                                        <div id="gridContainer_capsStaff">
+                                            @await Html.PartialAsync("_DataGrid", Model.CapsStaffGrid)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </section>
+                        @* END TAB 5 *@
+
+                    </div>@* /govuk-tabs *@
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @* TRANSFORMENGINE: _govuk_tabs.js added here — NOT in _Layout.cshtml
+       Handles all tab switching, panel show/hide, aria-selected toggling
+       Do NOT add inline tab-switching logic — _govuk_tabs.js handles it entirely *@
+    <script src="~/js/common/_govuk_tabs.js"></script>
+
+    <script>
+        // ── TRANSFORMENGINE: Maintenance screen JS ─────────────────────────────────
+        //    Tabs 1 & 4: static form numeric validation + AJAX POST (json)
+        //    Tabs 2, 3, 5: DataGrid CRUD via shared modal (#modalPopup / #modaPopupBody)
+        // ──────────────────────────────────────────────────────────────────────────
+
+        // ── Helpers ──────────────────────────────────────────────────────────────
+
+        function isNumericValue(value) {
+            return value !== '' && !isNaN(parseFloat(value)) && isFinite(value);
+        }
+
+        function getAntiForgeryToken() {
+            var t = document.querySelector('input[name="__RequestVerificationToken"]');
+            return t ? t.value : '';
+        }
+
+        function showDbError(formId, message) {
+            var errDiv = document.getElementById(formId + '-db-error');
+            var errMsg = document.getElementById(formId + '-db-error-msg');
+            if (errDiv && errMsg) {
+                errMsg.textContent = message;
+                errDiv.removeAttribute('hidden');
+            }
+        }
+
+        function hideDbError(formId) {
+            var errDiv = document.getElementById(formId + '-db-error');
+            if (errDiv) { errDiv.setAttribute('hidden', ''); }
+        }
+
+        function showFieldError(fieldId, errorId, wrapId) {
+            var field = document.getElementById(fieldId);
+            var error = document.getElementById(errorId);
+            var wrap  = document.getElementById(wrapId);
+            if (field)  { field.classList.add('govuk-input--error'); }
+            if (error)  { error.removeAttribute('hidden'); }
+            if (wrap)   { wrap.classList.add('govuk-form-group--error'); }
+        }
+
+        function clearFieldError(fieldId, errorId, wrapId) {
+            var field = document.getElementById(fieldId);
+            var error = document.getElementById(errorId);
+            var wrap  = document.getElementById(wrapId);
+            if (field)  { field.classList.remove('govuk-input--error'); }
+            if (error)  { error.setAttribute('hidden', ''); }
+            if (wrap)   { wrap.classList.remove('govuk-form-group--error'); }
+        }
+
+        function clearFormErrors(formId) {
+            var form = document.getElementById(formId);
+            if (!form) return;
+            form.querySelectorAll('.govuk-input--error').forEach(function (el) {
+                el.classList.remove('govuk-input--error');
+            });
+            form.querySelectorAll('.govuk-error-message').forEach(function (el) {
+                el.setAttribute('hidden', '');
+            });
+            form.querySelectorAll('.govuk-form-group--error').forEach(function (el) {
+                el.classList.remove('govuk-form-group--error');
+            });
+            hideDbError(formId);
+        }
+
+        // ── Modal helpers ────────────────────────────────────────────────────────
+
+        function closeModal() {
+            $('#modaPopupBody').html('');
+            $('#modalPopup').removeClass('show');
+        }
+
+        // ── Tab 2: Account Categories — AJAX modal ───────────────────────────────
+
+        // TRANSFORMENGINE: editAccountCategory — called by DataGrid edit button
+        //   (EditFunction="editAccountCategory" in DataGridConfig)
+        function editAccountCategory(btn) {
+            var accShortName = $(btn).data('id');
+            $.get('@Url.Action("EditAccountCategory", "Maintenance", new { area = "CostBook" })',
+                { accShortName: accShortName },
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                }
+            ).fail(function () {
+                alert('Unable to load account category for editing.');
+            });
+        }
+
+        // TRANSFORMENGINE: saveAccountCategory — called from _AddEditAccountCategory partial
+        //   POST to EditAccountCategory (which dispatches PUT /api/v1/maintenance/account-categories/{accShortName})
+        function saveAccountCategory() {
+            var accShortName = $('#hdnAccShortName').val();
+            var csg7Group    = $('#modal-acccat-csg7group').val();
+
+            if (!csg7Group) {
+                alert('Please select a CSG7 Group.');
+                return;
+            }
+
+            var dto = { csg7Group: csg7Group };
+            $.ajax({
+                url: '@Url.Action("EditAccountCategory", "Maintenance", new { area = "CostBook" })?accShortName=' + encodeURIComponent(accShortName),
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(dto),
+                headers: { 'RequestVerificationToken': getAntiForgeryToken() },
+                success: function (data) {
+                    if (data.success) {
+                        closeModal();
+                        reloadAccCatGrid();
+                    } else {
+                        var msg = (data.errors && data.errors.length) ? data.errors.join('; ') : (data.message || 'Save failed.');
+                        alert('Error: ' + msg);
+                    }
+                },
+                error: function () { alert('An error occurred while saving.'); }
+            });
+        }
+
+        // TRANSFORMENGINE: reloadAccCatGrid — gm.reloadGrid({ page: 1 }) on accCatGrid manager
+        function reloadAccCatGrid() {
+            var gm = window['gridManager_accCatGrid'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }
+
+        // ── Tab 3: CSG7 Groups — AJAX modal ─────────────────────────────────────
+
+        // TRANSFORMENGINE: addCsg7Group — called by DataGrid Add button (AddFunction="addCsg7Group")
+        function addCsg7Group() {
+            $.get('@Url.Action("CreateCsg7Group", "Maintenance", new { area = "CostBook" })',
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                }
+            ).fail(function () {
+                alert('Unable to load add CSG7 Group form.');
+            });
+        }
+
+        // TRANSFORMENGINE: editCsg7Group — called by DataGrid edit button (EditFunction="editCsg7Group")
+        function editCsg7Group(btn) {
+            var csg7Group = $(btn).data('id');
+            $.get('@Url.Action("EditCsg7Group", "Maintenance", new { area = "CostBook" })',
+                { csg7Group: csg7Group },
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                }
+            ).fail(function () {
+                alert('Unable to load CSG7 Group for editing.');
+            });
+        }
+
+        // TRANSFORMENGINE: deleteCsg7Group — DataGrid delete (DeleteFunction="deleteCsg7Group")
+        //   JS confirm() only — no delete partial modal (DataGrid delete rule)
+        function deleteCsg7Group(btn) {
+            var csg7Group = $(btn).data('id');
+            if (confirm('Are you sure you want to delete this CSG7 group?')) {
+                $.ajax({
+                    url: '@Url.Action("DeleteCsg7Group", "Maintenance", new { area = "CostBook" })?csg7Group=' + encodeURIComponent(csg7Group),
+                    type: 'DELETE',
+                    headers: { 'RequestVerificationToken': getAntiForgeryToken() },
+                    success: function (data) {
+                        if (data.success) {
+                            alert('CSG7 group deleted successfully.');
+                            reloadCsg7Grid();
+                        } else {
+                            var msg = (data.errors && data.errors.length) ? data.errors.join('; ') : (data.message || 'Delete failed.');
+                            alert('Error: ' + msg);
+                        }
+                    },
+                    error: function () { alert('An error occurred while deleting.'); }
+                });
+            }
+        }
+
+        // TRANSFORMENGINE: saveCsg7Group — called from _AddEditCsg7Group partial
+        function saveCsg7Group() {
+            var isEdit    = $('#hdnCsg7IsEdit').val() === 'true';
+            var csg7Group = $('#modal-csg7-group').val();
+            var useInfl   = $('#modal-csg7-useinflation').is(':checked');
+
+            if (!csg7Group || csg7Group.trim() === '') {
+                alert('Please enter a CSG7 Group name.');
+                return;
+            }
+
+            var dto = { csg7Group: csg7Group, useInflation: useInfl };
+            var url = isEdit
+                ? '@Url.Action("EditCsg7Group", "Maintenance", new { area = "CostBook" })?csg7Group=' + encodeURIComponent($('#hdnCsg7Original').val())
+                : '@Url.Action("CreateCsg7Group", "Maintenance", new { area = "CostBook" })';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(dto),
+                headers: { 'RequestVerificationToken': getAntiForgeryToken() },
+                success: function (data) {
+                    if (data.success) {
+                        closeModal();
+                        reloadCsg7Grid();
+                    } else {
+                        var msg = (data.errors && data.errors.length) ? data.errors.join('; ') : (data.message || 'Save failed.');
+                        alert('Error: ' + msg);
+                    }
+                },
+                error: function () { alert('An error occurred while saving.'); }
+            });
+        }
+
+        function reloadCsg7Grid() {
+            var gm = window['gridManager_csg7Grid'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }
+
+        // ── Tab 5: CAPS Staff — AJAX modal ──────────────────────────────────────
+
+        // TRANSFORMENGINE: addCapsStaff — called by DataGrid Add button (AddFunction="addCapsStaff")
+        function addCapsStaff() {
+            $.get('@Url.Action("CreateCapsStaff", "Maintenance", new { area = "CostBook" })',
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                }
+            ).fail(function () {
+                alert('Unable to load add staff member form.');
+            });
+        }
+
+        // TRANSFORMENGINE: editCapsStaff — called by DataGrid edit button (EditFunction="editCapsStaff")
+        function editCapsStaff(btn) {
+            var mNumber = $(btn).data('id');
+            $.get('@Url.Action("EditCapsStaff", "Maintenance", new { area = "CostBook" })',
+                { mNumber: mNumber },
+                function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                }
+            ).fail(function () {
+                alert('Unable to load staff member for editing.');
+            });
+        }
+
+        // TRANSFORMENGINE: deleteCapsStaff — DataGrid delete (DeleteFunction="deleteCapsStaff")
+        //   JS confirm() only — no delete partial modal (DataGrid delete rule)
+        function deleteCapsStaff(btn) {
+            var mNumber = $(btn).data('id');
+            if (confirm('Are you sure you want to delete this staff member?')) {
+                $.ajax({
+                    url: '@Url.Action("DeleteCapsStaff", "Maintenance", new { area = "CostBook" })?mNumber=' + encodeURIComponent(mNumber),
+                    type: 'DELETE',
+                    headers: { 'RequestVerificationToken': getAntiForgeryToken() },
+                    success: function (data) {
+                        if (data.success) {
+                            alert('Staff member deleted successfully.');
+                            reloadCapsStaffGrid();
+                        } else {
+                            var msg = (data.errors && data.errors.length) ? data.errors.join('; ') : (data.message || 'Delete failed.');
+                            alert('Error: ' + msg);
+                        }
+                    },
+                    error: function () { alert('An error occurred while deleting.'); }
+                });
+            }
+        }
+
+        // TRANSFORMENGINE: saveCapsStaff — called from _AddEditCapsStaff partial
+        function saveCapsStaff() {
+            var isEdit  = $('#hdnCapsStaffIsEdit').val() === 'true';
+            var mNumber = $('#modal-capsstaff-mnumber').val();
+            var name    = $('#modal-capsstaff-name').val();
+
+            if (!mNumber || mNumber.trim() === '') {
+                alert('Please enter an mNumber.');
+                return;
+            }
+            if (!name || name.trim() === '') {
+                alert('Please enter a Name.');
+                return;
+            }
+
+            var dto = { mNumber: mNumber, name: name };
+            var url = isEdit
+                ? '@Url.Action("EditCapsStaff", "Maintenance", new { area = "CostBook" })?mNumber=' + encodeURIComponent($('#hdnCapsStaffOriginal').val())
+                : '@Url.Action("CreateCapsStaff", "Maintenance", new { area = "CostBook" })';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(dto),
+                headers: { 'RequestVerificationToken': getAntiForgeryToken() },
+                success: function (data) {
+                    if (data.success) {
+                        closeModal();
+                        reloadCapsStaffGrid();
+                    } else {
+                        var msg = (data.errors && data.errors.length) ? data.errors.join('; ') : (data.message || 'Save failed.');
+                        alert('Error: ' + msg);
+                    }
+                },
+                error: function () { alert('An error occurred while saving.'); }
+            });
+        }
+
+        function reloadCapsStaffGrid() {
+            var gm = window['gridManager_capsStaffGrid'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }
+
+        // ── Tab 1: Inflation form ────────────────────────────────────────────────
+
+        // TRANSFORMENGINE: formInflation submit handler — numeric validation + AJAX POST
+        (function () {
+            var inflFields = [
+                { id: 'inflAnimals',              errId: 'inflAnimals-error',              wrapId: 'fg-inflAnimals' },
+                { id: 'inflExceptionalCosts',     errId: 'inflExceptionalCosts-error',     wrapId: 'fg-inflExceptionalCosts' },
+                { id: 'inflStaff',                errId: 'inflStaff-error',                wrapId: 'fg-inflStaff' },
+                { id: 'inflTests',                errId: 'inflTests-error',                wrapId: 'fg-inflTests' },
+                { id: 'inflCurrentFinancialYear', errId: 'inflCurrentFinancialYear-error', wrapId: 'fg-inflCurrentFinancialYear' },
+                { id: 'inflWorkingHoursInDay',    errId: 'inflWorkingHoursInDay-error',    wrapId: 'fg-inflWorkingHoursInDay' },
+                { id: 'inflWorkingDaysInYear',    errId: 'inflWorkingDaysInYear-error',    wrapId: 'fg-inflWorkingDaysInYear' }
+            ];
+
+            inflFields.forEach(function (fc) {
+                var el = document.getElementById(fc.id);
+                if (!el) return;
+                el.addEventListener('input', function () {
+                    if (isNumericValue(el.value.trim())) {
+                        clearFieldError(fc.id, fc.errId, fc.wrapId);
+                    }
+                });
+            });
+
+            var cancelBtn = document.getElementById('btnInflationCancel');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function () {
+                    clearFormErrors('formInflation');
+                    document.getElementById('formInflation').reset();
+                });
+            }
+
+            var form = document.getElementById('formInflation');
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    clearFormErrors('formInflation');
+
+                    var isValid = true;
+                    inflFields.forEach(function (fc) {
+                        var val = (document.getElementById(fc.id).value || '').trim();
+                        if (!isNumericValue(val)) {
+                            showFieldError(fc.id, fc.errId, fc.wrapId);
+                            isValid = false;
+                        }
+                    });
+                    if (!isValid) return;
+
+                    var dto = {
+                        inflationAnimals:          parseFloat(document.getElementById('inflAnimals').value),
+                        inflationExceptionalCosts: parseFloat(document.getElementById('inflExceptionalCosts').value),
+                        inflationStaff:            parseFloat(document.getElementById('inflStaff').value),
+                        inflationTests:            parseFloat(document.getElementById('inflTests').value),
+                        currentFinancialYear:       parseInt(document.getElementById('inflCurrentFinancialYear').value, 10),
+                        workingHoursInDay:          parseFloat(document.getElementById('inflWorkingHoursInDay').value),
+                        workingDaysInYear:          parseFloat(document.getElementById('inflWorkingDaysInYear').value)
+                    };
+
+                    $.ajax({
+                        url: '@Url.Action("SaveInflationSettings", "Maintenance", new { area = "CostBook" })',
+                        type: 'POST',
+                        contentType: 'application/json; charset=utf-8',
+                        data: JSON.stringify(dto),
+                        headers: { 'RequestVerificationToken': getAntiForgeryToken() },
+                        success: function (data) {
+                            if (data.success) {
+                                alert(data.message || 'Inflation values saved successfully.');
+                            } else {
+                                var msg = (data.errors && data.errors.length) ? data.errors.join('; ') : (data.message || 'Save failed.');
+                                showDbError('formInflation', msg);
+                            }
+                        },
+                        error: function () {
+                            showDbError('formInflation', 'An error occurred while saving inflation values.');
+                        }
+                    });
+                });
+            }
+        })();
+
+        // ── Tab 4: Profit Margins form ───────────────────────────────────────────
+
+        // TRANSFORMENGINE: formProfitMargins submit handler — numeric validation + AJAX POST
+        (function () {
+            var profitFields = [
+                { id: 'profitAnimals',          errId: 'profitAnimals-error',          wrapId: 'fg-profitAnimals' },
+                { id: 'profitExceptionalCosts', errId: 'profitExceptionalCosts-error', wrapId: 'fg-profitExceptionalCosts' },
+                { id: 'profitStaff',            errId: 'profitStaff-error',            wrapId: 'fg-profitStaff' },
+                { id: 'profitTests',            errId: 'profitTests-error',            wrapId: 'fg-profitTests' }
+            ];
+
+            profitFields.forEach(function (fc) {
+                var el = document.getElementById(fc.id);
+                if (!el) return;
+                el.addEventListener('input', function () {
+                    if (isNumericValue(el.value.trim())) {
+                        clearFieldError(fc.id, fc.errId, fc.wrapId);
+                    }
+                });
+            });
+
+            var cancelBtn = document.getElementById('btnProfitMarginsCancel');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function () {
+                    clearFormErrors('formProfitMargins');
+                    document.getElementById('formProfitMargins').reset();
+                });
+            }
+
+            var form = document.getElementById('formProfitMargins');
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    clearFormErrors('formProfitMargins');
+
+                    var isValid = true;
+                    profitFields.forEach(function (fc) {
+                        var val = (document.getElementById(fc.id).value || '').trim();
+                        if (!isNumericValue(val)) {
+                            showFieldError(fc.id, fc.errId, fc.wrapId);
+                            isValid = false;
+                        }
+                    });
+                    if (!isValid) return;
+
+                    var dto = {
+                        profitAnimals:          parseFloat(document.getElementById('profitAnimals').value),
+                        profitExceptionalCosts: parseFloat(document.getElementById('profitExceptionalCosts').value),
+                        profitStaff:            parseFloat(document.getElementById('profitStaff').value),
+                        profitTests:            parseFloat(document.getElementById('profitTests').value)
+                    };
+
+                    $.ajax({
+                        url: '@Url.Action("SaveProfitMargins", "Maintenance", new { area = "CostBook" })',
+                        type: 'POST',
+                        contentType: 'application/json; charset=utf-8',
+                        data: JSON.stringify(dto),
+                        headers: { 'RequestVerificationToken': getAntiForgeryToken() },
+                        success: function (data) {
+                            if (data.success) {
+                                alert(data.message || 'Profit margins saved successfully.');
+                            } else {
+                                var msg = (data.errors && data.errors.length) ? data.errors.join('; ') : (data.message || 'Save failed.');
+                                showDbError('formProfitMargins', msg);
+                            }
+                        },
+                        error: function () {
+                            showDbError('formProfitMargins', 'An error occurred while saving profit margins.');
+                        }
+                    });
+                });
+            }
+        })();
+    </script>
+}

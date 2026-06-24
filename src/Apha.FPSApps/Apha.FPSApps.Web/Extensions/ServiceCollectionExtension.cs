@@ -1,3 +1,25 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - Phase 10: Added DI registrations for frmMaintainance frontend services:
+ *       ICostBookAccountGroupService  → CostBookAccountGroupService
+ *       ICostBookCapsStaffService     → CostBookCapsStaffService
+ *       ICostBookMaintenanceService   → CostBookMaintenanceService
+ *     Inserted alphabetically among the existing CostBook service registrations.
+ *
+ * PRESERVED:
+ *   - All existing service registrations (FPS, PIMS, PACT, existing CostBook) unchanged
+ *   - AddScoped lifetime used consistently with all other frontend services
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Verify that ApiClientExtension.cs (Phase 10 row 4) also registers
+ *     the matching CostBookMaintenanceApiClient, CostBookCapsStaffApiClient, CostBookAccountGroupApiClient
+ *     HTTP clients — the service registrations here only cover the service layer.
+ */
+
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -34,15 +56,19 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IAnimalPlanService, AnimalPlanService>();
             services.AddScoped<ISettingService, SettingService>();
             // CostBook services - Following FPS pattern
-            services.AddScoped<ICostBookProjectService, CostBookProjectService>();
+            // TRANSFORMENGINE: Phase 10 — frmMaintainance maintenance services registered below (AccountGroup, CapsStaff, Maintenance)
+            services.AddScoped<ICostBookAccountGroupService, CostBookAccountGroupService>();
+            services.AddScoped<ICostBookCapsStaffService, CostBookCapsStaffService>();
+            services.AddScoped<ICostBookContractService, CostBookContractService>();
             services.AddScoped<ICostBookCustomerService, CostBookCustomerService>();
             services.AddScoped<ICostBookDiseaseService, CostBookDiseaseService>();
+            services.AddScoped<ICostBookMaintenanceService, CostBookMaintenanceService>();
             services.AddScoped<ICostBookProgramService, CostBookProgramService>();
-            services.AddScoped<ICostBookStaffService, CostBookStaffService>();
-            services.AddScoped<ICostBookContractService, CostBookContractService>();
-            services.AddScoped<ICostBookYearlyDetailsService, CostBookYearlyDetailsService>();
+            services.AddScoped<ICostBookProjectService, CostBookProjectService>();
             services.AddScoped<ICostBookProjectSummaryService, CostBookProjectSummaryService>();
             services.AddScoped<ICostBookSettingsService, CostBookSettingsService>();
+            services.AddScoped<ICostBookStaffService, CostBookStaffService>();
+            services.AddScoped<ICostBookYearlyDetailsService, CostBookYearlyDetailsService>();
             services.AddScoped<IGradeService, GradeService>();
             services.AddScoped<IYearMasterService, YearMasterService>();
             services.AddScoped<IDivisionService, DivisionService>();

@@ -1,0 +1,60 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ICostBookCapsStaffService.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 8 — Frontend Service Interface + Implementation (Steps 12-13)
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - New frontend service interface created for frmMaintainance Tab 5 (CAPS Staff)
+ *   - Mirrors ICostBookCapsStaffApiClient signatures exactly (thin delegate pattern)
+ *   - GetAllCapsStaffAsync()           → delegates to CostbookCapsStaff.GetAllCapsStaffAsync()
+ *   - GetPaginatedCapsStaffAsync()     → delegates to CostbookCapsStaff.GetPaginatedCapsStaffAsync()
+ *   - GetCapsStaffByMNumberAsync()     → delegates to CostbookCapsStaff.GetCapsStaffByMNumberAsync()
+ *   - AddCapsStaffAsync()              → delegates to CostbookCapsStaff.AddCapsStaffAsync()
+ *   - UpdateCapsStaffAsync()           → delegates to CostbookCapsStaff.UpdateCapsStaffAsync()
+ *   - DeleteCapsStaffAsync()           → delegates to CostbookCapsStaff.DeleteCapsStaffAsync()
+ *
+ * PRESERVED:
+ *   - All return types and parameter signatures match ICostBookCapsStaffApiClient exactly
+ *   - MNumber string PK used for route-based lookups, updates, and deletes
+ *   - Paginated endpoint included to match backend GetPaginatedCapsStaff action
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Confirm whether Dt2Number is surfaced in the maintenance form modal — currently not in HTML prototype
+ */
+
+using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.CostBook;
+using Apha.FPSApps.Application.Pagination;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Apha.FPSApps.Application.Interfaces.Costbook
+{
+    // TRANSFORMENGINE: Service interface for frmMaintainance Tab 5 (CAPS Staff) full CRUD — thin delegate pattern, mirrors ICostBookCapsStaffApiClient
+    public interface ICostBookCapsStaffService
+    {
+        // TRANSFORMENGINE: GET /api/v1/capsstaff → returns full list for Tab 5 grid
+        /// <summary>Returns all CAPS staff members ordered by MNumber.</summary>
+        Task<ApiResponseDto<List<CapsStaffDto>>> GetAllCapsStaffAsync();
+
+        // TRANSFORMENGINE: GET /api/v1/capsstaff/paginated → paginated list for Tab 5 grid
+        /// <summary>Returns a paginated list of CAPS staff members.</summary>
+        Task<ApiResponseDto<List<CapsStaffDto>>> GetPaginatedCapsStaffAsync(QueryParameters<string> query);
+
+        // TRANSFORMENGINE: GET /api/v1/capsstaff/{mNumber} → single record lookup
+        /// <summary>Returns a single CAPS staff member by MNumber.</summary>
+        Task<ApiResponseDto<CapsStaffDto>> GetCapsStaffByMNumberAsync(string mNumber);
+
+        // TRANSFORMENGINE: POST /api/v1/capsstaff → create from Tab 5 modal (formTblCapsStaff)
+        /// <summary>Creates a new CAPS staff member. MNumber must be unique.</summary>
+        Task<ApiResponseDto<CapsStaffDto>> AddCapsStaffAsync(CapsStaffDto dto);
+
+        // TRANSFORMENGINE: PUT /api/v1/capsstaff/{mNumber} → update from Tab 5 edit modal
+        /// <summary>Updates an existing CAPS staff member.</summary>
+        Task<ApiResponseDto<CapsStaffDto>> UpdateCapsStaffAsync(string mNumber, CapsStaffDto dto);
+
+        // TRANSFORMENGINE: DELETE /api/v1/capsstaff/{mNumber} → delete from Tab 5 confirm modal
+        /// <summary>Deletes the CAPS staff member identified by MNumber.</summary>
+        Task<ApiResponseDto<bool>> DeleteCapsStaffAsync(string mNumber);
+    }
+}

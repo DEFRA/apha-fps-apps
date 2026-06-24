@@ -1,0 +1,139 @@
+<!-- TRANSFORMENGINE MIGRATION — _AddEditAccountCategory.cshtml (CostBook/Maintenance)
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-06-23
+     CHANGED:
+       - tblAccCatModal HTML prototype modal converted to ASP.NET Core Razor partial
+       - Loaded via $.get() into #modaPopupBody / #modalPopup in Index.cshtml
+       - Model: AccountCategoryItem (AccShortName PK, AccountDescription ReadOnly, Csg7Group Dropdown)
+       - AccShortName: disabled input (read-only — backend PUT only updates Csg7Group)
+       - AccountDescription: disabled input (backend does not expose description edit)
+       - Csg7Group: asp-items select bound to ViewBag.Csg7GroupList (populated by controller)
+       - Hidden input hdnAccShortName carries AccShortName for saveAccountCategory() AJAX call
+       - @@Html.AntiForgeryToken() included for security compliance
+       - Modal header title always "Edit Account Category" (no Add mode — AllowAdd=false)
+       - Save button calls saveAccountCategory() defined in Index.cshtml @@section Scripts
+     PRESERVED:
+       - Field IDs from HTML prototype: modal-acccat-shortname, modal-acccat-description,
+         modal-acccat-csg7group
+       - Form group IDs: fg-acccat-shortname, fg-acccat-description, fg-acccat-csg7group
+       - Error message element IDs preserved for potential JS error display
+       - Mandatory fields note (* Mandatory fields)
+       - Cancel / Update button layout matching HTML prototype
+       - maint-dlg-* CSS class names from HTML prototype modal structure
+     DEFERRED / REQUIRES HUMAN REVIEW:
+       - TRANSFORMENGINE TODO: Confirm Csg7GroupList is populated in ViewBag by EditAccountCategory GET action
+       - TRANSFORMENGINE TODO: Confirm AccountDescription read-only at API level (no edit path needed) -->
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model Apha.FPSApps.Web.Areas.CostBook.Models.AccountCategoryItem
+
+@{
+    @* TRANSFORMENGINE: AccountCategory modal — Edit only (AllowAdd=false in DataGridConfig)
+       AccShortName is the route key for PUT /maintenance/account-categories/{accShortName}
+       Only Csg7Group is writable; AccShortName and AccountDescription are disabled (read-only) *@
+    var csg7GroupList = ViewBag.Csg7GroupList as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<div class="govuk-modal__header maint-modal-header">
+    <h2 class="maint-modal-title maint-dlg-title" id="tblAccCatModalLabel">
+        Edit Account Category
+    </h2>
+    <button type="button" class="govuk-modal__close maint-modal-close"
+            onclick="closeModal()" aria-label="Close">&#x2715;</button>
+</div>
+<div class="maint-dlg-body">
+    <p class="app-mandatory-note">
+        <span aria-hidden="true" class="app-required">*</span> Mandatory fields
+    </p>
+    <form class="govuk-grid-column-full" id="formTblAccCat" novalidate>
+        @Html.AntiForgeryToken()
+
+        @* TRANSFORMENGINE: hdnAccShortName — carries PK for saveAccountCategory() AJAX URL
+           AccShortName is disabled below so it does not auto-submit; hidden input is used instead *@
+        <input type="hidden" id="hdnAccShortName" value="@Model.AccShortName" />
+
+        @* DB / server error banner *@
+        <div id="formTblAccCat-db-error" class="govuk-error-summary maint-db-error" role="alert"
+             aria-labelledby="formTblAccCat-db-error-title" hidden>
+            <h2 class="govuk-error-summary__title" id="formTblAccCat-db-error-title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <p id="formTblAccCat-db-error-msg" class="govuk-body"></p>
+            </div>
+        </div>
+
+        @* TRANSFORMENGINE: modal-acccat-shortname — AccShortName (PK, read-only in edit mode)
+           disabled because backend PUT does not allow changing the key
+           Use disabled (not readonly) per GOV.UK grey background styling rule *@
+        <div class="govuk-form-group sup_margin_bottom_10" id="fg-acccat-shortname">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                   for="modal-acccat-shortname">
+                Account Short Name:
+                <span aria-hidden="true" class="app-required">*</span>
+            </label>
+            <input class="govuk-input govuk-!-font-size-16"
+                   id="modal-acccat-shortname"
+                   name="accountShortName"
+                   type="text"
+                   value="@Model.AccShortName"
+                   disabled
+                   aria-describedby="modal-acccat-shortname-error" />
+            <p id="modal-acccat-shortname-error" class="govuk-error-message" hidden>
+                <span class="govuk-visually-hidden">Error:</span> Enter an account short name
+            </p>
+        </div>
+
+        @* TRANSFORMENGINE: modal-acccat-description — AccountDescription (read-only)
+           Backend does not expose edit for description; shown as disabled display field *@
+        <div class="govuk-form-group sup_margin_bottom_10" id="fg-acccat-description">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                   for="modal-acccat-description">
+                Description:
+                <span aria-hidden="true" class="app-required">*</span>
+            </label>
+            <input class="govuk-input govuk-!-font-size-16"
+                   id="modal-acccat-description"
+                   name="description"
+                   type="text"
+                   value="@Model.AccountDescription"
+                   disabled
+                   aria-describedby="modal-acccat-description-error" />
+            <p id="modal-acccat-description-error" class="govuk-error-message" hidden>
+                <span class="govuk-visually-hidden">Error:</span> Enter a description
+            </p>
+        </div>
+
+        @* TRANSFORMENGINE: modal-acccat-csg7group — Csg7Group (the ONLY writable field on PUT endpoint)
+           asp-for binds selected value; asp-items drives option list from ViewBag.Csg7GroupList
+           (populated by ICostBookAccountGroupService in EditAccountCategory GET action) *@
+        <div class="govuk-form-group sup_margin_bottom_10" id="fg-acccat-csg7group">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                   for="modal-acccat-csg7group">
+                CSG7 Group:
+                <span aria-hidden="true" class="app-required">*</span>
+            </label>
+            <select class="govuk-select govuk-!-font-size-16 govuk-!-width-full"
+                    id="modal-acccat-csg7group"
+                    name="csg7Group"
+                    asp-for="Csg7Group"
+                    asp-items="csg7GroupList"
+                    required aria-required="true"
+                    aria-describedby="modal-acccat-csg7group-error">
+                <option value="">-- Select --</option>
+            </select>
+            <p id="modal-acccat-csg7group-error" class="govuk-error-message" hidden>
+                <span class="govuk-visually-hidden">Error:</span> Select a CSG7 group
+            </p>
+        </div>
+
+    </form>
+</div>
+<div class="maint-modal-footer maint-dlg-footer">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <div>
+        @* TRANSFORMENGINE: Update button only — no Save (Add) button because AllowAdd=false *@
+        <button type="button" class="govuk-button sup_margin_0"
+                data-module="govuk-button"
+                id="tblAccCatUpdateBtn"
+                onclick="saveAccountCategory()">Update</button>
+    </div>
+</div>

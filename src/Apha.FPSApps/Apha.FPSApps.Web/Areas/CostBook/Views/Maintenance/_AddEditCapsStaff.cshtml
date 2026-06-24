@@ -1,0 +1,151 @@
+<!-- TRANSFORMENGINE MIGRATION — _AddEditCapsStaff.cshtml (CostBook/Maintenance)
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-06-23
+     CHANGED:
+       - tblCapsStaffModal HTML prototype modal converted to ASP.NET Core Razor partial
+       - Loaded via $.get() into #modaPopupBody / #modalPopup in Index.cshtml
+       - Model: CapsStaffItem (MNumber PK, Name editable; Dt2Number hidden/not shown)
+       - Add mode: MNumber input is editable; hdnCapsStaffIsEdit = "false"
+       - Edit mode: MNumber input is disabled (PK cannot change on PUT); hdnCapsStaffIsEdit = "true"
+       - Name: editable in both Add and Edit modes
+       - Hidden input hdnCapsStaffOriginal carries original MNumber for edit AJAX URL
+       - @@Html.AntiForgeryToken() included for security compliance
+       - Save / Update button visibility driven by isEditMode Razor flag
+       - Save button calls saveCapsStaff() defined in Index.cshtml @@section Scripts
+     PRESERVED:
+       - Field IDs from HTML prototype: modal-capsstaff-mnumber, modal-capsstaff-name
+       - Form group IDs: fg-capsstaff-mnumber, fg-capsstaff-name
+       - Error message element IDs preserved
+       - Modal header title text (Add Staff Member / Edit Staff Member) per prototype
+       - tblCapsStaffSaveBtn, tblCapsStaffUpdateBtn IDs matching HTML prototype
+       - maint-dlg-* CSS class names from HTML prototype modal structure
+       - Dt2Number NOT shown (not in JS grid columns array, not in HTML prototype modal)
+     DEFERRED / REQUIRES HUMAN REVIEW:
+       - TRANSFORMENGINE TODO: Confirm whether Dt2Number should be surfaced in add/edit modal
+       - TRANSFORMENGINE TODO: Confirm MNumber max length (varchar 50) — add maxlength="50" client-side -->
+@model Apha.FPSApps.Web.Areas.CostBook.Models.CapsStaffItem
+
+@{
+    @* TRANSFORMENGINE: Determine Add vs Edit mode
+       Edit mode: MNumber is non-empty (populated by EditCapsStaff GET action)
+       Add mode:  MNumber is null/empty (CreateCapsStaff GET returns new CapsStaffItem()) *@
+    var isEditMode = !string.IsNullOrEmpty(Model?.MNumber);
+    var modalTitle  = isEditMode ? "Edit Staff Member" : "Add Staff Member";
+}
+
+<div class="govuk-modal__header maint-modal-header">
+    <h2 class="maint-modal-title maint-dlg-title" id="tblCapsStaffModalLabel">
+        @modalTitle
+    </h2>
+    <button type="button" class="govuk-modal__close maint-modal-close"
+            onclick="closeModal()" aria-label="Close">&#x2715;</button>
+</div>
+<div class="maint-dlg-body">
+    <p class="app-mandatory-note">
+        <span aria-hidden="true" class="app-required">*</span> Mandatory fields
+    </p>
+    <form class="govuk-grid-column-full" id="formTblCapsStaff" novalidate>
+        @Html.AntiForgeryToken()
+
+        @* TRANSFORMENGINE: Hidden fields for Add/Edit state detection in saveCapsStaff()
+           hdnCapsStaffIsEdit — "true" for edit, "false" for add
+           hdnCapsStaffOriginal — original MNumber value used in PUT URL during edit *@
+        <input type="hidden" id="hdnCapsStaffIsEdit" value="@isEditMode.ToString().ToLower()" />
+        <input type="hidden" id="hdnCapsStaffOriginal" value="@Model?.MNumber" />
+
+        @* DB / server error banner *@
+        <div id="formTblCapsStaff-db-error" class="govuk-error-summary maint-db-error" role="alert"
+             aria-labelledby="formTblCapsStaff-db-error-title" hidden>
+            <h2 class="govuk-error-summary__title" id="formTblCapsStaff-db-error-title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <p id="formTblCapsStaff-db-error-msg" class="govuk-body"></p>
+            </div>
+        </div>
+
+        @* TRANSFORMENGINE: modal-capsstaff-mnumber — MNumber (PK varchar 50)
+           In Edit mode: disabled — PK cannot be changed via PUT endpoint
+           In Add mode:  editable — new mNumber entered by user
+           Use disabled (not readonly) per GOV.UK grey background styling rule *@
+        <div class="govuk-form-group sup_margin_bottom_10" id="fg-capsstaff-mnumber">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                   for="modal-capsstaff-mnumber">
+                mNumber:
+                <span aria-hidden="true" class="app-required">*</span>
+            </label>
+            @if (isEditMode)
+            {
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="modal-capsstaff-mnumber"
+                       name="mNumber"
+                       type="text"
+                       value="@Model!.MNumber"
+                       maxlength="50"
+                       disabled
+                       aria-describedby="modal-capsstaff-mnumber-error" />
+            }
+            else
+            {
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="modal-capsstaff-mnumber"
+                       name="mNumber"
+                       type="text"
+                       value=""
+                       maxlength="50"
+                       required aria-required="true"
+                       aria-describedby="modal-capsstaff-mnumber-error" />
+            }
+            <p id="modal-capsstaff-mnumber-error" class="govuk-error-message" hidden>
+                <span class="govuk-visually-hidden">Error:</span> Enter an mNumber
+            </p>
+        </div>
+
+        @* TRANSFORMENGINE: modal-capsstaff-name — Name (varchar 50, NOT NULL)
+           Editable in both Add and Edit modes *@
+        <div class="govuk-form-group sup_margin_bottom_10" id="fg-capsstaff-name">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
+                   for="modal-capsstaff-name">
+                Name:
+                <span aria-hidden="true" class="app-required">*</span>
+            </label>
+            <input class="govuk-input govuk-!-font-size-16"
+                   id="modal-capsstaff-name"
+                   name="name"
+                   type="text"
+                   value="@Model?.Name"
+                   maxlength="50"
+                   required aria-required="true"
+                   aria-describedby="modal-capsstaff-name-error" />
+            <p id="modal-capsstaff-name-error" class="govuk-error-message" hidden>
+                <span class="govuk-visually-hidden">Error:</span> Enter a name
+            </p>
+        </div>
+
+        @* TRANSFORMENGINE: Dt2Number NOT shown — not in JS grid columns array, not in HTML prototype modal
+           Preserved as hidden field for DTO round-trip mapping only *@
+        <input type="hidden" name="dt2Number" value="@Model?.Dt2Number" />
+
+    </form>
+</div>
+<div class="maint-modal-footer maint-dlg-footer">
+    <button type="button" class="govuk-button govuk-button--secondary sup_margin_0"
+            data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <div>
+        @* TRANSFORMENGINE: Save/Update button — Razor-controlled visibility (not JS show/hide)
+           tblCapsStaffSaveBtn shown for Add mode, tblCapsStaffUpdateBtn shown for Edit mode
+           Both call saveCapsStaff() which reads hdnCapsStaffIsEdit to determine POST vs PUT *@
+        @if (!isEditMode)
+        {
+            <button type="button" class="govuk-button sup_margin_0"
+                    data-module="govuk-button"
+                    id="tblCapsStaffSaveBtn"
+                    onclick="saveCapsStaff()">Save</button>
+        }
+        else
+        {
+            <button type="button" class="govuk-button sup_margin_0"
+                    data-module="govuk-button"
+                    id="tblCapsStaffUpdateBtn"
+                    onclick="saveCapsStaff()">Update</button>
+        }
+    </div>
+</div>

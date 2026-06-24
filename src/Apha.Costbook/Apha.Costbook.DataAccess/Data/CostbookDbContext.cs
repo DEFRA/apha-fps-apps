@@ -1,3 +1,22 @@
+/*
+ * TRANSFORMENGINE MIGRATION — CostbookDbContext.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
+ * Migrated : 2026-06-23
+ *
+ * CHANGED:
+ *   - Added DbSet<CapsStaff> CapsStaffs property for mabarchive.tblcapsstaff
+ *   - Registered CapsStaffMap via ApplyConfiguration in OnModelCreating
+ *   - All other DbSet and map registrations preserved unchanged
+ *
+ * PRESERVED:
+ *   - All existing DbSet properties and HasQueryFilter registrations
+ *   - IFPSYearContext injection for year-scoped entity filters
+ *   - All other ApplyConfiguration calls
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: CapsStaff has no FpsYear column — no HasQueryFilter applied (correct per DDL)
+ */
+
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
 using Apha.Costbook.DataAccess;
@@ -49,6 +68,10 @@ public partial class CostbookDbContext : DbContext
     public virtual DbSet<EuGradeConversion> EuGradeConversions { get; set; }
 
     public virtual DbSet<YearMaster> YearMasters { get; set; }
+
+    // TRANSFORMENGINE: Added — DbSet for mabarchive.tblcapsstaff (CapsStaff CAPS Staff Tab)
+    public virtual DbSet<CapsStaff> CapsStaffs { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new DiseaseMap());
@@ -91,6 +114,9 @@ public partial class CostbookDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SettingsMap());
         modelBuilder.ApplyConfiguration(new ProjectYearMap());
         modelBuilder.ApplyConfiguration(new YearMasterMap());
+
+        // TRANSFORMENGINE: Added — CapsStaffMap registration for mabarchive.tblcapsstaff (no year filter — no fpsyear column)
+        modelBuilder.ApplyConfiguration(new CapsStaffMap());
 
     }
 }
