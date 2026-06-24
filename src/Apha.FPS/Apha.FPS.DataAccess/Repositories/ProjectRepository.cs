@@ -43,12 +43,44 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<Project>> GetProjectsByProjectGroupAsync(PaginationParameters<string> query, string projectGroup)
         {
             var projectQuery = (from pg in _dbContext.ProjectGroupViews
+                                join pv in _dbContext.Projects on
+                                new { pg.ProjectGroupName } equals new { ProjectGroupName = pv.ProjectGroup }
+                                where EF.Functions.ILike(pg.UserEmail!, _requestContext.UserEmailId) && pg.ProjectGroupName == projectGroup
+                                select (new Project
+                                {
+                                    ParentProject = pv.ParentProject ?? string.Empty,
+                                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
+                                    Program = pv.Program ?? string.Empty,
+                                    Manager = pv.Manager,
+                                    Customer = pv.Customer ?? string.Empty,
+                                    Contract = pv.Contract ?? string.Empty,
+                                    Disease = pv.Disease ?? string.Empty,
+                                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                                    ProjectGroup = pv.ProjectGroup,
+                                    BudgetCvl = pv.BudgetCvl,
+                                    CustIncome = pv.CustIncome,
+                                    TransferIncome = pv.TransferIncome,
+                                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,
+                                    IsDefraProject = pv.IsDefraProject,
+                                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
+                                })).AsQueryable();
+
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedData<Project>> GetProjectsByProjectGroupProjectProfitabilityVLAAsync(PaginationParameters<string> query, string projectGroup)
+        {
+            var projectQuery = (from pg in _dbContext.ProjectGroupViews
                                join pv in _dbContext.Projects on
                                new { pg.ProjectGroupName } equals new { ProjectGroupName = pv.ProjectGroup }
                                where EF.Functions.ILike(pg.UserEmail!, _requestContext.UserEmailId) && pg.ProjectGroupName == projectGroup
                                select pv).AsQueryable();
 
-            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = ApplyProjectFilterProjectProfitabilityVLA(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
 
             var result = await projectQuery.ToListAsync();
@@ -60,9 +92,40 @@ namespace Apha.FPS.DataAccess.Repositories
             var projectQuery = _dbContext.ProjectViews
                 .AsNoTracking()
                 .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.Program == programNo)
-                .Select(pv => MapToProject(pv)).AsQueryable();
+                .Select(pv => new Project
+                {
+                    ParentProject = pv.ParentProject ?? string.Empty,
+                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
+                    Program = pv.Program ?? string.Empty,
+                    Manager = pv.Manager,
+                    Customer = pv.Customer ?? string.Empty,
+                    Contract = pv.Contract ?? string.Empty,
+                    Disease = pv.Disease ?? string.Empty,
+                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                    ProjectGroup = pv.ProjectGroup,
+                    BudgetCvl = pv.BudgetCvl,
+                    CustIncome = pv.CustIncome ?? 0,
+                    TransferIncome = pv.TransferIncome ?? 0,
+                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,
+                    IsDefraProject = pv.IsDefraProject ?? 0,
+                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
+                }).AsQueryable();
 
             projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedData<Project>> GetProjectsByProgramProjectProfitabilityVLAAsync(PaginationParameters<string> query, string programNo)
+        {
+            var projectQuery = _dbContext.ProjectViews
+                .AsNoTracking()
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.Program == programNo)
+                .Select(pv => MapToProject(pv)).AsQueryable();
+
+            projectQuery = ApplyProjectFilterProjectProfitabilityVLA(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
 
             var result = await projectQuery.ToListAsync();
@@ -96,7 +159,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
                 }).AsQueryable();
 
-            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = ApplyProjectFilterProjectProfitabilityVLA(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
 
             var result = await projectQuery.ToListAsync();
@@ -405,8 +468,40 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-
         private static IQueryable<Project> ApplyProjectFilter(IQueryable<Project> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+                query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
+
+            if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
+                query = query.Where(x => EF.Functions.ILike(x.ProjectTitle, $"%{projectTitle}%"));
+
+            if (dict.TryGetValue("Manager", out var manager) && manager != null)
+                query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
+
+            if (dict.TryGetValue("OracleProjectCode", out var oracleProjectCode) && oracleProjectCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.OracleProjectCode!, $"%{oracleProjectCode}%"));
+
+            if (dict.TryGetValue("SubAccountCode", out var subAccountCode) && subAccountCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.SubAccountCode!, $"%{subAccountCode}%"));
+
+            if (dict.TryGetValue("CostCentre", out var costCentre) && costCentre != null
+                && double.TryParse(costCentre.ToString(), out var costCentreValue))
+                query = query.Where(x => x.CostCentre == costCentreValue);
+
+            return query;
+        }
+
+        private static IQueryable<Project> ApplyProjectFilterProjectProfitabilityVLA(IQueryable<Project> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return query;

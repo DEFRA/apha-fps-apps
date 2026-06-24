@@ -177,6 +177,23 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<ProjectDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramProjectProfitabilityVLAAsync(
+            QueryParameters<string> query, string programNo)
+        {
+            var url = QueryStringHelper.AddQueryString(
+                string.Format(FpsApiEndpoints.GetProjectsByProgramVla, Uri.EscapeDataString(programNo)), query);
+
+            var response = await _http.GetAsync<List<ProjectRes>>(url);
+
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            }
+
+            var responseDto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
         public async Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project)
         {
             var req = _mapper.Map<ProjectReq>(project);
