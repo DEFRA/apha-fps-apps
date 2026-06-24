@@ -326,7 +326,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserControllerTest
             var result = await _controller.DeleteUser(1);
 
             var ok = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(true, ok.Value);
+            Assert.True((bool)ok.Value!);
         }
 
         [Fact]
@@ -388,7 +388,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserControllerTest
             var result = await _controller.SaveUserPermissionsAsync(1, req);
 
             var ok = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(true, ok.Value);
+            Assert.True((bool)ok.Value!);
             await _serviceMock.Received(1).SaveUserPermissionsAsync(
                 Arg.Is<UserPermissionDto>(d => d.UserId == 1));
         }
