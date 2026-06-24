@@ -78,6 +78,12 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup)
             => await _fpsClient.FpsProjectGroup.GetProjectsByProjectGroupAsync(query, projectGroup);
 
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProgramProjectProfitabilityVLAAsync(QueryParameters<string> query, string programNo)
+            => await _fpsClient.FpsProject.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProjectGroupProjectProfitabilityVLAAsync(QueryParameters<string> query, string projectGroup)
+            => await _fpsClient.FpsProjectGroup.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup);
+
         public async Task<ApiResponseDto<List<ProjectGroupDto>>> GetAllProjectGroupsAsync()
             => await _fpsClient.FpsLookup.GetAllProjectGroupsAsync();
 

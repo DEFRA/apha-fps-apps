@@ -181,5 +181,263 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
         }
 
         #endregion
+
+        #region GetProjectsByProgramProjectProfitabilityVLAAsync
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var projectDtos = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Project" }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 };
+            var serviceResult = new PaginatedResult<ProjectDto>(projectDtos, paginationDto);
+            var mappedResult = new PaginationRes<ProjectRes>
+            {
+                Data = new List<ProjectRes>
+                {
+                    new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" },
+                    new() { ParentProject = "PP002", ProjectTitle = "Beta Project" }
+                }
+            };
+
+            _projectService.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo)
+                .Returns(serviceResult);
+            _mapper.Map<PaginationRes<ProjectRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().Be(mappedResult);
+            await _projectService.Received(1).GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_WhenProgramNoIsNull_ReturnsBadRequest()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await _controller.GetProjectsByProgramProjectProfitabilityVLAAsync(query, null!);
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("programNo is required.", badRequest.Value);
+            await _projectService.DidNotReceive().GetProjectsByProgramProjectProfitabilityVLAAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_WhenProgramNoIsWhitespace_ReturnsBadRequest(string programNo)
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await _controller.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+            await _projectService.DidNotReceive().GetProjectsByProgramProjectProfitabilityVLAAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_EmptyProjectList_ReturnsOkWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var emptyResult = new PaginatedResult<ProjectDto>(
+                Enumerable.Empty<ProjectDto>(),
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 0, TotalRecords = 0 });
+            var mappedResult = new PaginationRes<ProjectRes> { Data = new List<ProjectRes>() };
+
+            _projectService.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo).Returns(emptyResult);
+            _mapper.Map<PaginationRes<ProjectRes>>(emptyResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().Be(mappedResult);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_MapperMapsServiceResultToResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var serviceResult = new PaginatedResult<ProjectDto>(
+                new List<ProjectDto> { new() { ParentProject = "PP001" } },
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+            var mappedResult = new PaginationRes<ProjectRes>();
+
+            _projectService.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo).Returns(serviceResult);
+            _mapper.Map<PaginationRes<ProjectRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            await _controller.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+
+            // Assert
+            _mapper.Received(1).Map<PaginationRes<ProjectRes>>(serviceResult);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            _projectService.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo)
+                .ThrowsAsync(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo));
+        }
+
+        #endregion
+
+        #region GetProjectsByProjectGroupProjectProfitabilityVLAAsync
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projectGroup = "GRP1";
+            var projectDtos = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project", ProjectGroup = "GRP1" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Project",  ProjectGroup = "GRP1" }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 };
+            var serviceResult = new PaginatedResult<ProjectDto>(projectDtos, paginationDto);
+            var mappedResult = new PaginationRes<ProjectRes>
+            {
+                Data = new List<ProjectRes>
+                {
+                    new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" },
+                    new() { ParentProject = "PP002", ProjectTitle = "Beta Project" }
+                }
+            };
+
+            _projectService.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup)
+                .Returns(serviceResult);
+            _mapper.Map<PaginationRes<ProjectRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().Be(mappedResult);
+            await _projectService.Received(1).GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_WhenProjectGroupIsNull_ReturnsBadRequest()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await _controller.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, null!);
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("projectGroup is required.", badRequest.Value);
+            await _projectService.DidNotReceive().GetProjectsByProjectGroupProjectProfitabilityVLAAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_WhenProjectGroupIsWhitespace_ReturnsBadRequest(string projectGroup)
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await _controller.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+            await _projectService.DidNotReceive().GetProjectsByProjectGroupProjectProfitabilityVLAAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_EmptyProjectList_ReturnsOkWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projectGroup = "GRP1";
+            var emptyResult = new PaginatedResult<ProjectDto>(
+                Enumerable.Empty<ProjectDto>(),
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 0, TotalRecords = 0 });
+            var mappedResult = new PaginationRes<ProjectRes> { Data = new List<ProjectRes>() };
+
+            _projectService.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup).Returns(emptyResult);
+            _mapper.Map<PaginationRes<ProjectRes>>(emptyResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().Be(mappedResult);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_MapperMapsServiceResultToResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projectGroup = "GRP1";
+            var serviceResult = new PaginatedResult<ProjectDto>(
+                new List<ProjectDto> { new() { ParentProject = "PP001", ProjectGroup = "GRP1" } },
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
+            var mappedResult = new PaginationRes<ProjectRes>();
+
+            _projectService.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup).Returns(serviceResult);
+            _mapper.Map<PaginationRes<ProjectRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            await _controller.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup);
+
+            // Assert
+            _mapper.Received(1).Map<PaginationRes<ProjectRes>>(serviceResult);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projectGroup = "GRP1";
+            _projectService.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup)
+                .ThrowsAsync(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() =>
+                _controller.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup));
+        }
+
+        #endregion
     }
 }
