@@ -474,6 +474,54 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
             Assert.Contains("PG1", result);
         }
 
+        [Fact]
+        public async Task GetAllCategoryOptionsAsync_ReturnsDistinctOrderedCategories()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var data = new List<Category>
+            {
+                new() { CategoryName = "Zebra" },
+                new() { CategoryName = "Alpha" },
+                new() { CategoryName = "Alpha" },
+                new() { CategoryName = "Beta" }
+            };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.Categories).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetAllCategoryOptionsAsync();
+
+            Assert.Equal(3, result.Count);
+            Assert.Equal("Alpha", result[0]);
+            Assert.Equal("Beta", result[1]);
+            Assert.Equal("Zebra", result[2]);
+        }
+
+        [Fact]
+        public async Task GetAllCategoryOptionsAsync_ReturnsEmpty_WhenNoCategories()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<Category>());
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.Categories).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetAllCategoryOptionsAsync();
+
+            Assert.Empty(result);
+        }
+
         #endregion
     }
 }
