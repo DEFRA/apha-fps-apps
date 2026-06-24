@@ -12,5 +12,13 @@ namespace Apha.PACT.Application.Interfaces
         Task<TestorProductDto> UpdateTestorProductAsync(TestorProductDto dto);
         Task<bool> DeleteTestorProductAsync(string itemCode);
         Task<IEnumerable<string>> GetOwnersAsync();
+
+        // TestPriceCheck (frmTestPriceCheck — qryTestPriceZero)
+        Task<PaginatedResult<TestPriceCheckDto>> GetTestPriceCheckPagedAsync(
+            QueryParameters<string> query,
+            string priceFilter,
+            string? owner);
+        Task<TestPriceCheckDto?> GetTestPriceCheckByKeyAsync(string testCode, string jobCode);
+        Task<bool> UpdateTestPriceCheckAsync(string testCode, string jobCode, TestPriceCheckDto dto);
     }
 }

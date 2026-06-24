@@ -860,15 +860,15 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             // Arrange
             var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var repoResult = new PagedData<WorkGroupStaff>
+            var repoResult = new PagedData<PactStaff>
             {
-                Data = new List<WorkGroupStaff>
+                Data = new List<PactStaff>
                 {
                     new() { Name = "Alice", WorkGroupGrade = "WG1" }
                 },
                 PaginationData = new PaginationData { TotalRecords = 1, PageNumber = 1, PageSize = 10 }
             };
-            var expectedDto = new PaginatedResult<WorkGroupStaffDto>
+            var expectedDto = new PaginatedResult<PactStaffDto>
             {
                 Data = [new() { Name = "Alice", WorkGroupGrade = "WG1" }],
                 PaginationData = new PaginationDto { TotalRecords = 1 }
@@ -876,7 +876,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
 
             _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedParams);
             _mockRepository.GetWorkGroupStaffAsync(mappedParams, null).Returns(repoResult);
-            _mockMapper.Map<PaginatedResult<WorkGroupStaffDto>>(repoResult).Returns(expectedDto);
+            _mockMapper.Map<PaginatedResult<PactStaffDto>>(repoResult).Returns(expectedDto);
 
             // Act
             var result = await _sut.GetWorkGroupStaffAsync(queryFilter);
@@ -887,7 +887,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             result.Data.First().Name.Should().Be("Alice");
 
             await _mockRepository.Received(1).GetWorkGroupStaffAsync(mappedParams, null);
-            _mockMapper.Received(1).Map<PaginatedResult<WorkGroupStaffDto>>(repoResult);
+            _mockMapper.Received(1).Map<PaginatedResult<PactStaffDto>>(repoResult);
         }
 
         [Fact]
@@ -896,12 +896,12 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             // Arrange
             var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var repoResult = new PagedData<WorkGroupStaff>
+            var repoResult = new PagedData<PactStaff>
             {
-                Data = new List<WorkGroupStaff> { new() { Name = "Alice" } },
+                Data = new List<PactStaff> { new() { Name = "Alice" } },
                 PaginationData = new PaginationData { TotalRecords = 1 }
             };
-            var expectedDto = new PaginatedResult<WorkGroupStaffDto>
+            var expectedDto = new PaginatedResult<PactStaffDto>
             {
                 Data = [new() { Name = "Alice" }],
                 PaginationData = new PaginationDto { TotalRecords = 1 }
@@ -909,7 +909,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
 
             _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedParams);
             _mockRepository.GetWorkGroupStaffAsync(mappedParams, "WG1").Returns(repoResult);
-            _mockMapper.Map<PaginatedResult<WorkGroupStaffDto>>(repoResult).Returns(expectedDto);
+            _mockMapper.Map<PaginatedResult<PactStaffDto>>(repoResult).Returns(expectedDto);
 
             // Act
             var result = await _sut.GetWorkGroupStaffAsync(queryFilter, "WG1");
@@ -925,12 +925,12 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             // Arrange
             var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var repoResult = new PagedData<WorkGroupStaff>
+            var repoResult = new PagedData<PactStaff>
             {
-                Data = new List<WorkGroupStaff>(),
+                Data = new List<PactStaff>(),
                 PaginationData = new PaginationData { TotalRecords = 0, PageNumber = 1, PageSize = 10 }
             };
-            var expectedDto = new PaginatedResult<WorkGroupStaffDto>
+            var expectedDto = new PaginatedResult<PactStaffDto>
             {
                 Data = [],
                 PaginationData = new PaginationDto { TotalRecords = 0 }
@@ -938,7 +938,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
 
             _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedParams);
             _mockRepository.GetWorkGroupStaffAsync(mappedParams, null).Returns(repoResult);
-            _mockMapper.Map<PaginatedResult<WorkGroupStaffDto>>(repoResult).Returns(expectedDto);
+            _mockMapper.Map<PaginatedResult<PactStaffDto>>(repoResult).Returns(expectedDto);
 
             // Act
             var result = await _sut.GetWorkGroupStaffAsync(queryFilter);
