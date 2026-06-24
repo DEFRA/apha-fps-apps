@@ -290,11 +290,11 @@ namespace Apha.FPS.DataAccess.Repositories
 
         public async Task<List<string>> GetAllCategoryOptionsAsync()
         {
-            return await _dbContext.Divisions
+            return await _dbContext.Categories
                 .AsNoTracking()
-                .Select(d => d.DivName)
+                .Select(c => c.CategoryName)
                 .Distinct()
-                .OrderBy(d => d)
+                .OrderBy(c => c)
                 .ToListAsync();
         }
 
@@ -330,6 +330,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "username" => descending ? query.OrderByDescending(u => u.Username) : query.OrderBy(u => u.Username),
                 "comments" => descending ? query.OrderByDescending(u => u.Comments) : query.OrderBy(u => u.Comments),
                 "useremail" => descending ? query.OrderByDescending(u => u.UserEmail) : query.OrderBy(u => u.UserEmail),
+                "userid" => descending ? query.OrderByDescending(u => u.UserId) : query.OrderBy(u => u.UserId),
                 _ => query.OrderBy(u => u.Comments)
             };
         }
