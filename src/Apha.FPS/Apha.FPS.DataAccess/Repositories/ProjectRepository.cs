@@ -159,7 +159,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
                 }).AsQueryable();
 
-            projectQuery = ApplyProjectFilterProjectProfitabilityVLA(projectQuery, query.Filter);
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
 
             var result = await projectQuery.ToListAsync();
