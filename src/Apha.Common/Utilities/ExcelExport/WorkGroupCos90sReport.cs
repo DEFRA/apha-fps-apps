@@ -15,7 +15,7 @@ namespace Apha.Common.Utilities.ExcelExport
             var data = rows.ToList();
 
             var groupedByPerson = data.GroupBy(r => r.PactId).ToList();
-            if (!groupedByPerson.Any())
+            if (groupedByPerson.Count == 0)
                 groupedByPerson = new List<IGrouping<string, WorkGroupCos90sExportRow>>
                 {
                     new[]

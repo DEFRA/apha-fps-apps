@@ -51,7 +51,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectTitleLookupRes, SummarisedWgTimeProjectTitleLookupItem>().ReverseMap();
             CreateMap<ApiResponse<SummarisedWgTimePivotRes>, ApiResponseDto<SummarisedWgTimeViewDto>>();
             CreateMap<WorkGroupReportEmailResultDto, WorkGroupReportEmailResultRes>().ReverseMap();
-            CreateMap<WorkGroupCos90sExportResultDto, WorkGroupCos90sExportRes>().ReverseMap();
+            CreateMap<WorkGroupCos90SExportResultDto, WorkGroupCos90sExportRes>().ReverseMap();
             CreateMap<Cos90WorkGroupDto, Cos90WorkGroupRes>().ReverseMap();
             CreateMap<MonthHourDto, MonthHourRes>().ReverseMap();
             CreateMap<StaffPickerItemDto, StaffPickerItemRes>().ReverseMap();

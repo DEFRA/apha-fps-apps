@@ -49,7 +49,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             if (response.Success)
                 return new ApiResponseDto<List<short>> { Data = response.Data, Success = true };
 
-            return ApiResponseDto<List<short>>.FailureResponse([], null);
+            return ApiResponseDto<List<short>>.FailureResponse([], new ApiMetaDto
+            {
+                CorrelationId = response.Meta?.CorrelationId ?? Guid.NewGuid().ToString(),
+                TimestampUtc = DateTime.UtcNow
+            });
         }
     }
 }

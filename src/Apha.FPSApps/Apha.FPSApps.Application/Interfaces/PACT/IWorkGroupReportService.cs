@@ -6,6 +6,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
     public interface IWorkGroupReportService
     {
         Task<ApiResponseDto<List<WorkGroupReportEmailResultDto>>> SendEmailsAsync(string profitCentre, short monthNumber);
-        Task<ApiResponseDto<WorkGroupCos90sExportResultDto>> ExportCos90sAsync(string profitCentre, short monthNumber, short year, string? pactId);
+        Task<ApiResponseDto<WorkGroupCos90SExportResultDto>> ExportCos90sAsync(string profitCentre, short monthNumber, short year, string? pactId);
     }
 }

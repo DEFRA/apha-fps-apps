@@ -243,7 +243,7 @@ $(function () {
         });
     });
 
-    $('#closeWorkingHoursModalBtn, #closeWorkingHoursBtn').on('click', function () {
+    $('#closeWorkingHoursModalBtn').on('click', function () {
         $('#workingHoursModal').removeClass('show');
     });
 
