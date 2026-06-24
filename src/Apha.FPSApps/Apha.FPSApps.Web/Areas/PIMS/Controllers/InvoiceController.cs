@@ -189,7 +189,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
         // ── Add / Edit modal partial ─────────────────────────────────────────────
         [HttpGet]
-        public async Task<IActionResult> GetAddEditInvoicePartial(int? id = null)
+        public async Task<IActionResult> GetAddEditInvoicePartial(int? id = null, string? project = null, string? contract = null)
         {
             InvoiceItem model = new();
 
@@ -198,6 +198,13 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 ApiResponseDto<RadTrackInvoiceDto> result = await _invoiceService.GetByIdAsync(id.Value);
                 if (result is { Success: true, Data: not null })
                     model = _mapper.Map<InvoiceItem>(result.Data);
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(project))
+                    model.Project = project;
+                if (!string.IsNullOrWhiteSpace(contract))
+                    model.Contract = contract;
             }
             ViewBag.ProjectList  = await GetProjectSelectListAsync();
             ViewBag.ContractList = await GetContractSelectListAsync();
