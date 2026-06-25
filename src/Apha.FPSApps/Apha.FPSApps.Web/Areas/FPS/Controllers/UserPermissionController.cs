@@ -18,9 +18,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class UserPermissionController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IUserPermissionService _userPermissionService;
+        private readonly IUserService _userPermissionService;
 
-        public UserPermissionController(IMapper mapper, IUserPermissionService userPermissionService)
+        public UserPermissionController(IMapper mapper, IUserService userPermissionService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _userPermissionService = userPermissionService ?? throw new ArgumentNullException(nameof(userPermissionService));

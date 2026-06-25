@@ -11,17 +11,17 @@ using NSubstitute.ExceptionExtensions;
 
 namespace Apha.FPS.Application.UnitTests.Services.UserPermissionServiceTest
 {
-    public class UserPermissionServiceTests
+    public class UserServiceTests
     {
         private readonly IUserRepository _mockRepository;
         private readonly IMapper _mockMapper;
-        private readonly UserPermissionService _sut;
+        private readonly UserService _sut;
 
-        public UserPermissionServiceTests()
+        public UserServiceTests()
         {
             _mockRepository = Substitute.For<IUserRepository>();
             _mockMapper = Substitute.For<IMapper>();
-            _sut = new UserPermissionService(_mockRepository, _mockMapper);
+            _sut = new UserService(_mockRepository, _mockMapper);
         }
 
         private static UserDto BuildDto(int userId = 1) =>
@@ -35,13 +35,13 @@ namespace Apha.FPS.Application.UnitTests.Services.UserPermissionServiceTest
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenRepositoryIsNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new UserPermissionService(null!, _mockMapper));
+            Assert.Throws<ArgumentNullException>(() => new UserService(null!, _mockMapper));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new UserPermissionService(_mockRepository, null!));
+            Assert.Throws<ArgumentNullException>(() => new UserService(_mockRepository, null!));
         }
 
         #endregion

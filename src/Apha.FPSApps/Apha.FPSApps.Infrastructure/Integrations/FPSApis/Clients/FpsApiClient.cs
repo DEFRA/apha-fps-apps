@@ -34,7 +34,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsWorkGroupGradeApiClient FpsWorkgroupGrade { get; }
         public IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         public IFpsPurchasesApiClient FpsPurchases { get; }
-        public IFpsUserPermissionApiClient FpsUserPermission { get; }
+        public IFpsUserApiClient FpsUserPermission { get; }
 
         // TRANSFORMENGINE: FpsGrade added
         public IFpsGradeApiClient FpsGrade { get; }
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsWorkgroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
             FpsBudgetBids = new FpsBudgetBidsApiClient(http, mapper);
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
-            FpsUserPermission = new FpsUserPermissionApiClient(http, mapper);
+            FpsUserPermission = new FpsUserApiClient(http, mapper);
             // TRANSFORMENGINE: FpsGrade wired
             FpsGrade = new FpsGradeApiClient(http, mapper);
         }

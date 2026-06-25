@@ -4,7 +4,7 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
-    public interface IFpsUserPermissionApiClient
+    public interface IFpsUserApiClient
     {
         Task<ApiResponseDto<IEnumerable<UserPermissionDto>>> GetAllUsersAsync();
         Task<ApiResponseDto<List<UserPermissionDto>>> GetAllUsersPagedAsync(QueryParameters<string> query);

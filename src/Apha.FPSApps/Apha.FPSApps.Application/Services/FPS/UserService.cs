@@ -6,11 +6,11 @@ using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.FPS
 {
-    public class UserPermissionService : IUserPermissionService
+    public class UserService : IUserService
     {
         private readonly IFpsApiClient _fpsApiClient;
 
-        public UserPermissionService(IFpsApiClient fpsApiClient)
+        public UserService(IFpsApiClient fpsApiClient)
         {
             _fpsApiClient = fpsApiClient ?? throw new ArgumentNullException(nameof(fpsApiClient));
         }

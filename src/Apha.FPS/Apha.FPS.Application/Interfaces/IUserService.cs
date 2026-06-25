@@ -3,7 +3,7 @@ using Apha.FPS.Application.Pagination;
 
 namespace Apha.FPS.Application.Interfaces
 {
-    public interface IUserPermissionService
+    public interface IUserService
     {
         Task<IEnumerable<UserDto>> GetAllUsersAsync();
         Task<PaginatedResult<UserDto>> GetAllUsersPagedAsync(QueryParameters<string> query);

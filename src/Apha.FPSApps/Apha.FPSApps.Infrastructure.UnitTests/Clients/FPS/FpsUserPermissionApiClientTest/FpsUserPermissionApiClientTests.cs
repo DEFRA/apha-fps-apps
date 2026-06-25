@@ -9,19 +9,19 @@ using AutoMapper;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserPermissionApiClientTest
+namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
 {
-    public class FpsUserPermissionApiClientTests
+    public class FpsUserApiClientTests
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
-        private readonly FpsUserPermissionApiClient _client;
+        private readonly FpsUserApiClient _client;
 
-        public FpsUserPermissionApiClientTests()
+        public FpsUserApiClientTests()
         {
             _http = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new FpsUserPermissionApiClient(_http, _mapper);
+            _client = new FpsUserApiClient(_http, _mapper);
         }
 
         private static UserPermissionDto BuildDto(int userId = 1) =>
@@ -43,14 +43,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserPermissionApi
         public void Constructor_ThrowsArgumentNullException_WhenHttpIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new FpsUserPermissionApiClient(null!, _mapper));
+                new FpsUserApiClient(null!, _mapper));
         }
 
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenMapperIsNull()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new FpsUserPermissionApiClient(_http, null!));
+                new FpsUserApiClient(_http, null!));
         }
 
         #endregion

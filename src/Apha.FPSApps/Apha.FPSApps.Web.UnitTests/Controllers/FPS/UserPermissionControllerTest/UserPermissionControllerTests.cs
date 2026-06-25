@@ -18,13 +18,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
     public class UserPermissionControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly IUserPermissionService _userPermissionService;
+        private readonly IUserService _userPermissionService;
         private readonly UserPermissionController _controller;
 
         public UserPermissionControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _userPermissionService = Substitute.For<IUserPermissionService>();
+            _userPermissionService = Substitute.For<IUserService>();
             _controller = new UserPermissionController(_mapper, _userPermissionService);
         }
 

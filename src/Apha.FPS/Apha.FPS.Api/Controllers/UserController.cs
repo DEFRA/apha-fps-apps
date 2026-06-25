@@ -19,10 +19,10 @@ namespace Apha.FPS.Api.Controllers
     [ApiVersion("1.0")]
     public class UserController : ControllerBase
     {
-        private readonly IUserPermissionService _service;
+        private readonly IUserService _service;
         private readonly IMapper _mapper;
 
-        public UserController(IUserPermissionService service, IMapper mapper)
+        public UserController(IUserService service, IMapper mapper)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));

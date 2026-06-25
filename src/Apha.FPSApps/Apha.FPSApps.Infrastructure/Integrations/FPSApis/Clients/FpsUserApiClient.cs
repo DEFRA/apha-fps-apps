@@ -9,12 +9,12 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
-    public class FpsUserPermissionApiClient : IFpsUserPermissionApiClient
+    public class FpsUserApiClient : IFpsUserApiClient
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        public FpsUserPermissionApiClient(IFpsHttpExecutor http, IMapper mapper)
+        public FpsUserApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http ?? throw new ArgumentNullException(nameof(http));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));

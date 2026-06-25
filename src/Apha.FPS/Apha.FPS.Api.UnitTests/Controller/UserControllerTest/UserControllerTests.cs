@@ -15,13 +15,13 @@ namespace Apha.FPS.Api.UnitTests.Controller.UserControllerTest
 {
     public class UserControllerTests
     {
-        private readonly IUserPermissionService _serviceMock;
+        private readonly IUserService _serviceMock;
         private readonly IMapper _mapperMock;
         private readonly UserController _controller;
 
         public UserControllerTests()
         {
-            _serviceMock = Substitute.For<IUserPermissionService>();
+            _serviceMock = Substitute.For<IUserService>();
             _mapperMock = Substitute.For<IMapper>();
             _controller = new UserController(_serviceMock, _mapperMock);
         }

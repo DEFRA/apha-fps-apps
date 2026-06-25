@@ -8,12 +8,12 @@ using AutoMapper;
 
 namespace Apha.FPS.Application.Services
 {
-    public class UserPermissionService : IUserPermissionService
+    public class UserService : IUserService
     {
         private readonly IUserRepository _repository;
         private readonly IMapper _mapper;
 
-        public UserPermissionService(IUserRepository repository, IMapper mapper)
+        public UserService(IUserRepository repository, IMapper mapper)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));

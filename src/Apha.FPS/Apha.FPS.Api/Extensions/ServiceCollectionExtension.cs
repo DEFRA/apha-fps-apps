@@ -53,7 +53,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
-            services.AddScoped<IUserPermissionService, UserPermissionService>();
+            services.AddScoped<IUserService, UserService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

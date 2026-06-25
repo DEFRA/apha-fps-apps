@@ -8,18 +8,18 @@ using Xunit;
 
 namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceTest
 {
-    public class UserPermissionServiceTests
+    public class UserServiceTests
     {
         private readonly IFpsApiClient _mockFpsClient;
-        private readonly IFpsUserPermissionApiClient _mockApiClient;
-        private readonly UserPermissionService _sut;
+        private readonly IFpsUserApiClient _mockApiClient;
+        private readonly UserService _sut;
 
-        public UserPermissionServiceTests()
+        public UserServiceTests()
         {
             _mockFpsClient = Substitute.For<IFpsApiClient>();
-            _mockApiClient = Substitute.For<IFpsUserPermissionApiClient>();
+            _mockApiClient = Substitute.For<IFpsUserApiClient>();
             _mockFpsClient.FpsUserPermission.Returns(_mockApiClient);
-            _sut = new UserPermissionService(_mockFpsClient);
+            _sut = new UserService(_mockFpsClient);
         }
 
         private static UserPermissionDto BuildDto(int userId = 1) =>
@@ -30,7 +30,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         [Fact]
         public void Constructor_ThrowsArgumentNullException_WhenFpsClientIsNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new UserPermissionService(null!));
+            Assert.Throws<ArgumentNullException>(() => new UserService(null!));
         }
 
         #endregion
