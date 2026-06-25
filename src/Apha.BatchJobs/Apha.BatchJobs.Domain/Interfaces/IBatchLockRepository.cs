@@ -26,6 +26,16 @@ public interface IBatchLockRepository
     Task ReleaseLockAsync(string jobName, Guid jobQueueId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Renews a held lock for finite-timeout policies.
+    /// </summary>
+    /// <param name="jobName">The name of the job.</param>
+    /// <param name="jobQueueId">The job queue UUID holding the lock.</param>
+    /// <param name="timeoutSeconds">New timeout window in seconds.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True when a lock row was renewed or lock timeout is unlimited; false if the lock row is missing.</returns>
+    Task<bool> TryRenewLockAsync(string jobName, Guid jobQueueId, int timeoutSeconds, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets the current lock for a job, if one exists.
     /// </summary>
     /// <param name="jobName">The name of the job.</param>

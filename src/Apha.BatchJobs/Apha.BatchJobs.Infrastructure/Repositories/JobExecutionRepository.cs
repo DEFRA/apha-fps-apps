@@ -326,6 +326,48 @@ public class JobExecutionRepository : IJobExecutionRepository
         return jobQueueId;
     }
 
+    /// <inheritdoc />
+    public async Task<bool> TouchRunningExecutionAsync(Guid jobQueueId, CancellationToken cancellationToken = default)
+    {
+        if (jobQueueId == Guid.Empty)
+            throw new ArgumentException("Job queue ID cannot be empty.", nameof(jobQueueId));
+
+        var runningStatusId = await (
+            from q in _context.TblJobQueue
+            join s in _context.TblJobStatus on q.StatusId equals s.StatusId
+            where q.JobQueueId == jobQueueId && s.Status == nameof(JobStatus.Running)
+            select q.StatusId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (runningStatusId == 0)
+        {
+            return false;
+        }
+
+        var updatedRows = await _context.TblJobQueue
+            .Where(q => q.JobQueueId == jobQueueId && q.StatusId == runningStatusId)
+            .ExecuteUpdateAsync(
+                updates => updates
+                    .SetProperty(q => q.UpdatedAt, _ => DateTime.UtcNow),
+                cancellationToken);
+
+        return updatedRows > 0;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> IsExecutionMarkedFailedAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
+    {
+        if (jobExecutionId == Guid.Empty)
+            throw new ArgumentException("Job execution ID cannot be empty.", nameof(jobExecutionId));
+
+        return await (
+            from q in _context.TblJobQueue
+            join s in _context.TblJobStatus on q.StatusId equals s.StatusId
+            where q.JobExecutionId == jobExecutionId && s.Status == nameof(JobStatus.Failed)
+            select q.JobQueueId)
+            .AnyAsync(cancellationToken);
+    }
+
     private async Task<int> EnsureJobMasterAsync(string jobName, CancellationToken cancellationToken)
     {
         var existing = await _context.TblJobMaster

@@ -46,4 +46,9 @@ public sealed class BatchJobSettings
     /// </summary>
     public int LockTimeoutSeconds { get; set; } = 0;
 
+    /// <summary>
+    /// Heartbeat update interval in seconds while a job is running.
+    /// </summary>
+    public int HeartbeatIntervalSeconds { get; set; } = 30;
+
 }

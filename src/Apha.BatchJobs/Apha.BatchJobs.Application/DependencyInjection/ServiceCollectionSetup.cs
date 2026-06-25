@@ -129,7 +129,6 @@ public static class ServiceCollectionSetup
         services.AddScoped<IRecreateSummariesContext, RecreateSummariesContext>();
         // SQL-backed step catalogs are retired; LINQ is the only active implementation.
         services.AddScoped<IRecreateSummariesStepCatalog>(_ => new RecreateSummariesStepCatalog());
-        services.AddScoped<RecreateSummariesOrchestrator>();
     }
 
     private static void RegisterMabArchiveLoaders(IServiceCollection services)

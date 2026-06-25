@@ -70,6 +70,10 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
         var orchestrator = new RecreateSummariesOrchestrator(
             context,
             catalog,
+            null,
+            null,
+            Guid.Empty,
+            "RecreateSummary",
             NullLogger<RecreateSummariesOrchestrator>.Instance);
 
         var results = await orchestrator.ExecuteAsync("corr-1", 6, 2026, "unit-test-user");
@@ -106,6 +110,10 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
         var orchestrator = new RecreateSummariesOrchestrator(
             context,
             catalog,
+            null,
+            null,
+            Guid.Empty,
+            "RecreateSummary",
             NullLogger<RecreateSummariesOrchestrator>.Instance);
 
         var results = await orchestrator.ExecuteAsync("corr-2", 7, 2026, "unit-test-user");
@@ -147,6 +155,10 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
         var orchestrator = new RecreateSummariesOrchestrator(
             context,
             catalog,
+            null,
+            null,
+            Guid.Empty,
+            "RecreateSummary",
             NullLogger<RecreateSummariesOrchestrator>.Instance);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -180,6 +192,10 @@ public sealed class RecreateSummariesOrchestratorIntegrationTests : IAsyncLifeti
         var orchestrator = new RecreateSummariesOrchestrator(
             context,
             catalog,
+            null,
+            null,
+            Guid.Empty,
+            "RecreateSummary",
             NullLogger<RecreateSummariesOrchestrator>.Instance);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(

@@ -1,6 +1,8 @@
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.RecreateSummaries;
+using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 
@@ -17,6 +19,10 @@ public sealed class RecreateSummariesOrchestrator
 {
     private readonly BatchJobsDbContext _dbContext;
     private readonly IRecreateSummariesStepCatalog _stepCatalog;
+    private readonly IJobExecutionRepository? _jobExecutionRepository;
+    private readonly IBatchLockRepository? _lockRepository;
+    private readonly Guid _jobQueueId;
+    private readonly string _jobName;
     private readonly ILogger<RecreateSummariesOrchestrator> _logger;
 
     /// <summary>
@@ -25,10 +31,18 @@ public sealed class RecreateSummariesOrchestrator
     public RecreateSummariesOrchestrator(
         BatchJobsDbContext dbContext,
         IRecreateSummariesStepCatalog stepCatalog,
+        IJobExecutionRepository? jobExecutionRepository,
+        IBatchLockRepository? lockRepository,
+        Guid jobQueueId,
+        string jobName,
         ILogger<RecreateSummariesOrchestrator> logger)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _stepCatalog = stepCatalog ?? throw new ArgumentNullException(nameof(stepCatalog));
+        _jobExecutionRepository = jobExecutionRepository;
+        _lockRepository = lockRepository;
+        _jobQueueId = jobQueueId;
+        _jobName = jobName ?? throw new ArgumentNullException(nameof(jobName));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -75,16 +89,28 @@ public sealed class RecreateSummariesOrchestrator
 
                 foreach (var step in mandatorySteps)
                 {
+                    // Step-based heartbeat: touch execution and renew lock before starting step
+                    await TouchHeartbeatAsync(correlationId, cancellationToken);
+
                     _logger.LogInformation(
                         "[{CorrelationId}] Executing step: {StepName}", correlationId, step.StepName);
 
                     var result = await step.ExecuteAsync(executionContext, cancellationToken);
                     results.Add(result);
 
+                    var stepDurationMs = (int)(result.EndTime - result.StartTime).TotalMilliseconds;
                     _logger.LogInformation(
                         "[{CorrelationId}] Step {StepName} -> {Status} | RowsAffected={Rows} | Duration={Ms}ms",
                         correlationId, result.StepName, result.Status, result.RowsAffected,
-                        (int)(result.EndTime - result.StartTime).TotalMilliseconds);
+                        stepDurationMs);
+
+                    // Warn if step exceeded 2 minutes (slow-step detection)
+                    if (stepDurationMs > 120_000)
+                    {
+                        _logger.LogWarning(
+                            "[{CorrelationId}] SLOW STEP DETECTED | StepName={StepName} | Duration={Ms}ms | RowsAffected={Rows}",
+                            correlationId, result.StepName, stepDurationMs, result.RowsAffected);
+                    }
 
                     if (result.Status == Domain.Enums.StepStatus.Failed)
                     {
@@ -92,7 +118,7 @@ public sealed class RecreateSummariesOrchestrator
                             "[{CorrelationId}] Step {StepName} failed: {Error}. Rolling back.",
                             correlationId, result.StepName, result.ErrorMessage);
 
-                        await transaction.RollbackAsync(cancellationToken);
+                        await SafeRollbackAsync(transaction, correlationId);
                         _dbContext.ChangeTracker.Clear();
                         throw new InvalidOperationException(
                             $"RecreateSummaries step '{result.StepName}' failed: {result.ErrorMessage}");
@@ -113,16 +139,28 @@ public sealed class RecreateSummariesOrchestrator
 
                     foreach (var step in refreshSteps)
                     {
+                        // Step-based heartbeat: touch execution and renew lock before starting step
+                        await TouchHeartbeatAsync(correlationId, cancellationToken);
+
                         _logger.LogInformation(
                             "[{CorrelationId}] Executing refresh step: {StepName}", correlationId, step.StepName);
 
                         var result = await step.ExecuteAsync(executionContext, cancellationToken);
                         results.Add(result);
 
+                        var stepDurationMs = (int)(result.EndTime - result.StartTime).TotalMilliseconds;
                         _logger.LogInformation(
                             "[{CorrelationId}] Step {StepName} -> {Status} | RowsAffected={Rows} | Duration={Ms}ms",
                             correlationId, result.StepName, result.Status, result.RowsAffected,
-                            (int)(result.EndTime - result.StartTime).TotalMilliseconds);
+                            stepDurationMs);
+
+                        // Warn if step exceeded 2 minutes (slow-step detection)
+                        if (stepDurationMs > 120_000)
+                        {
+                            _logger.LogWarning(
+                                "[{CorrelationId}] SLOW STEP DETECTED | StepName={StepName} | Duration={Ms}ms | RowsAffected={Rows}",
+                                correlationId, result.StepName, stepDurationMs, result.RowsAffected);
+                        }
 
                         if (result.Status == Domain.Enums.StepStatus.Failed)
                         {
@@ -130,7 +168,7 @@ public sealed class RecreateSummariesOrchestrator
                                 "[{CorrelationId}] Refresh step {StepName} failed: {Error}. Rolling back.",
                                 correlationId, result.StepName, result.ErrorMessage);
 
-                            await transaction.RollbackAsync(cancellationToken);
+                            await SafeRollbackAsync(transaction, correlationId);
                             _dbContext.ChangeTracker.Clear();
                             throw new InvalidOperationException(
                                 $"RecreateSummaries refresh step '{result.StepName}' failed: {result.ErrorMessage}");
@@ -149,6 +187,18 @@ public sealed class RecreateSummariesOrchestrator
                     }
                 }
 
+                if (_jobExecutionRepository is not null
+                    && Guid.TryParse(correlationId, out var jobExecutionId)
+                    && await _jobExecutionRepository.IsExecutionMarkedFailedAsync(jobExecutionId, cancellationToken))
+                {
+                    _logger.LogWarning(
+                        "[{CorrelationId}] Execution row already marked Failed before commit. Rolling back to prevent inconsistent state.",
+                        correlationId);
+                    await SafeRollbackAsync(transaction, correlationId);
+                    _dbContext.ChangeTracker.Clear();
+                    throw new InvalidOperationException("Execution was marked Failed before commit. Transaction rolled back.");
+                }
+
                 await transaction.CommitAsync(cancellationToken);
                 _dbContext.ChangeTracker.Clear();
 
@@ -159,11 +209,7 @@ public sealed class RecreateSummariesOrchestrator
                                     results[^1].Status != Domain.Enums.StepStatus.Failed)
             {
                 // Unexpected exception outside a step failure — attempt rollback
-                try { await transaction.RollbackAsync(CancellationToken.None); }
-                catch (Exception rollbackEx)
-                {
-                    _logger.LogError(rollbackEx, "[{CorrelationId}] Rollback failed.", correlationId);
-                }
+                await SafeRollbackAsync(transaction, correlationId);
 
                 // Prevent replay of tracked Added/Modified entities by other repositories sharing this scoped context.
                 _dbContext.ChangeTracker.Clear();
@@ -187,6 +233,77 @@ public sealed class RecreateSummariesOrchestrator
             .FirstOrDefaultAsync(cancellationToken);
 
         return periodLocked ?? 1;
+    }
+
+    private async Task SafeRollbackAsync(IDbContextTransaction transaction, string correlationId)
+    {
+        try
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+        }
+        catch (Exception rollbackEx)
+        {
+            _logger.LogError(rollbackEx, "[{CorrelationId}] Rollback failed.", correlationId);
+        }
+    }
+
+    /// <summary>
+    /// Step-based heartbeat: touches execution metadata and renews lock before each step.
+    /// Logs success/failure to correlate with step execution for timeout debugging.
+    /// </summary>
+    private async Task TouchHeartbeatAsync(string correlationId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (_jobExecutionRepository is not null)
+            {
+                var touched = await _jobExecutionRepository.TouchRunningExecutionAsync(
+                    Guid.Parse(correlationId), cancellationToken);
+                
+                if (!touched)
+                {
+                    _logger.LogWarning(
+                        "[{CorrelationId}] Heartbeat: execution touch failed (not in Running state) | JobName={JobName} | JobQueueId={JobQueueId}",
+                        correlationId, _jobName, _jobQueueId);
+                    return;
+                }
+            }
+
+            if (_lockRepository is not null)
+            {
+                // Unlimited timeout (0 seconds) means lock does not expire
+                var renewalTimeoutSeconds = 0;
+                var renewed = await _lockRepository.TryRenewLockAsync(
+                    _jobName, _jobQueueId, renewalTimeoutSeconds, cancellationToken);
+                
+                if (!renewed)
+                {
+                    _logger.LogWarning(
+                        "[{CorrelationId}] Heartbeat: lock renewal returned false | JobName={JobName} | JobQueueId={JobQueueId}",
+                        correlationId, _jobName, _jobQueueId);
+                }
+                else
+                {
+                    _logger.LogDebug(
+                        "[{CorrelationId}] Heartbeat: execution touched & lock renewed | JobName={JobName} | JobQueueId={JobQueueId}",
+                        correlationId, _jobName, _jobQueueId);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancellation during heartbeat is expected during shutdown
+            _logger.LogInformation(
+                "[{CorrelationId}] Heartbeat cancelled | JobName={JobName} | JobQueueId={JobQueueId}",
+                correlationId, _jobName, _jobQueueId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "[{CorrelationId}] Heartbeat exception (non-critical) | JobName={JobName} | JobQueueId={JobQueueId} | ExceptionType={ExceptionType}",
+                correlationId, _jobName, _jobQueueId, ex.GetType().Name);
+        }
     }
 
 }

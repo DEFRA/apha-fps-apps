@@ -25,6 +25,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly int _retryDelaySeconds;
     private readonly int _maxRetryDurationSeconds;
     private readonly int _defaultJobTimeoutSeconds;
+    private readonly int _heartbeatIntervalSeconds;
     private readonly Dictionary<string, int> _jobTimeoutOverridesSeconds;
 
     /// <summary>Default lock timeout in seconds when configuration is missing/invalid.</summary>
@@ -61,6 +62,9 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _defaultJobTimeoutSeconds = settings?.Value.JobTimeout >= 0
             ? settings.Value.JobTimeout
             : DefaultLockTimeoutSeconds;
+        _heartbeatIntervalSeconds = settings?.Value.HeartbeatIntervalSeconds > 0
+            ? settings.Value.HeartbeatIntervalSeconds
+            : 30;
         _jobTimeoutOverridesSeconds = settings?.Value.JobTimeoutOverridesSeconds is { Count: > 0 }
             ? settings.Value.JobTimeoutOverridesSeconds
                 .Where(kv => !string.IsNullOrWhiteSpace(kv.Key) && kv.Value > 0)
@@ -119,7 +123,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 };
 
                 _logger.LogWarning(
-                    "Initiated record was missing for scheduled MABArchive run. Created fallback Initiated row in worker | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode}",
+                    "Initiated record was missing for scheduled MABArchive run. Created worker-managed Initiated row in worker | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode}",
                     jobName,
                     jobExecutionId,
                     createdJobQueueId,
@@ -135,7 +139,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 }
 
                 _logger.LogInformation(
-                    "Initiated record appeared concurrently while creating fallback. Proceeding with existing row | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode}",
+                    "Initiated record appeared concurrently while creating worker-managed row. Proceeding with existing row | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode}",
                     jobName,
                     jobExecutionId,
                     existingExecution.JobQueueId,
@@ -246,6 +250,12 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 }
 
                 var attemptToken = attemptCts.Token;
+
+                // Heartbeat is now handled at job/step entry points (step-based strategy)
+                // instead of background loop, providing better observability and step correlation.
+                _logger.LogInformation(
+                    "Heartbeat strategy: step-based checks (not background loop) | JobName={JobName} | JobQueueId={JobQueueId}",
+                    jobName, jobQueueId);
 
                 try
                 {
@@ -368,6 +378,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 }
                 finally
                 {
+                    // No background heartbeat task to cancel (step-based strategy in place)
                     attemptCts.Cancel();
                 }
             }
@@ -486,5 +497,48 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
 
         return _defaultJobTimeoutSeconds > 0 ? _defaultJobTimeoutSeconds : null;
+    }
+
+    private async Task RunHeartbeatLoopAsync(string jobName, Guid jobQueueId, CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(_heartbeatIntervalSeconds), cancellationToken);
+
+                var heartbeatWritten = await _executionRepository.TouchRunningExecutionAsync(jobQueueId, cancellationToken);
+                if (!heartbeatWritten)
+                {
+                    return;
+                }
+
+                var lockRenewed = await _lockRepository.TryRenewLockAsync(
+                    jobName,
+                    jobQueueId,
+                    _lockTimeoutSeconds,
+                    cancellationToken);
+
+                if (!lockRenewed)
+                {
+                    _logger.LogWarning(
+                        "Heartbeat wrote execution metadata but lock renewal failed | JobName={JobName} | JobQueueId={JobQueueId}",
+                        jobName,
+                        jobQueueId);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Heartbeat loop iteration failed | JobName={JobName} | JobQueueId={JobQueueId}",
+                    jobName,
+                    jobQueueId);
+            }
+        }
     }
 }

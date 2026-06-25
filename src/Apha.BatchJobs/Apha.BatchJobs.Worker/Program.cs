@@ -192,32 +192,33 @@ try
             $"BATCH_REQUESTED_BY resolved to template placeholder '{userId}'. Provide a real requester identity.");
     }
 
-    if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
+    var correlationSource = "IncomingJobExecutionId";
+    if (isWorkerManagedMabArchiveScheduledRun)
     {
-        if (!isWorkerManagedMabArchiveScheduledRun)
+        if (!string.IsNullOrWhiteSpace(jobExecutionIdEnv) && Guid.TryParse(jobExecutionIdEnv, out var providedScheduledExecutionId))
         {
-            throw new InvalidOperationException(
-                "BATCH_JOB_EXECUTION_ID is required. Only Scheduled MABArchive runs may be worker-managed.");
+            jobExecutionId = providedScheduledExecutionId;
+            correlationSource = "IncomingJobExecutionId";
         }
+        else
+        {
+            jobExecutionId = Guid.NewGuid();
+            correlationSource = "WorkerManagedScheduledRun";
 
-        jobExecutionId = Guid.NewGuid();
-        logger.LogWarning(
-            "BATCH_JOB_EXECUTION_ID was missing. Generated fallback execution id | GeneratedJobExecutionId={GeneratedJobExecutionId}",
-            jobExecutionId);
+            logger.LogInformation(
+                "Worker-managed Scheduled MABArchive run generated execution id | GeneratedJobExecutionId={GeneratedJobExecutionId}",
+                jobExecutionId);
+        }
+    }
+    else if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
+    {
+        throw new InvalidOperationException(
+            "BATCH_JOB_EXECUTION_ID is required for non-worker-managed runs.");
     }
     else if (!Guid.TryParse(jobExecutionIdEnv, out jobExecutionId))
     {
-        if (!isWorkerManagedMabArchiveScheduledRun)
-        {
-            throw new InvalidOperationException(
-                "BATCH_JOB_EXECUTION_ID must be a valid GUID. Only Scheduled MABArchive runs may be worker-managed.");
-        }
-
-        jobExecutionId = Guid.NewGuid();
-        logger.LogWarning(
-            "BATCH_JOB_EXECUTION_ID was invalid. Generated fallback execution id | ProvidedValue={ProvidedJobExecutionId} | GeneratedJobExecutionId={GeneratedJobExecutionId}",
-            jobExecutionIdEnv,
-            jobExecutionId);
+        throw new InvalidOperationException(
+            "BATCH_JOB_EXECUTION_ID must be a valid GUID for non-worker-managed runs.");
     }
 
     var correlationService = serviceProvider.GetRequiredService<ICorrelationService>();
@@ -227,7 +228,7 @@ try
     logger.LogInformation(
         "Correlation context initialized | CorrelationId={CorrelationId} | Source={CorrelationSource}",
         jobExecutionId,
-        !string.IsNullOrWhiteSpace(jobExecutionIdEnv) && Guid.TryParse(jobExecutionIdEnv, out _) ? "IncomingJobExecutionId" : "WorkerGeneratedFallback");
+        correlationSource);
 
     requestedJobName = jobName;
     requestedRunMode = runMode.ToString();
@@ -341,7 +342,13 @@ catch (Exception ex)
 {
     var logger = loggerFactory?.CreateLogger("BatchJobs.Error");
     var exceptionPrefix = GetExceptionTypePrefix(ex, builder.Configuration);
-    if (IsDependencyOutage(ex))
+    if (IsTimeoutFailure(ex))
+    {
+        logger?.LogError(ex, "{ExceptionType} Runtime timeout detected: {ErrorMessage}", exceptionPrefix, ex.Message);
+        exitCode = ExitCodeDependencyOutage;
+        failureCategory = "Timeout";
+    }
+    else if (IsDependencyOutage(ex))
     {
         logger?.LogError(ex, "{ExceptionType} Dependency outage detected: {ErrorMessage}", exceptionPrefix, ex.Message);
         exitCode = ExitCodeDependencyOutage;
@@ -526,6 +533,7 @@ static string GenerateHumanReadableMessage(string outcome, string failureCategor
     {
         ("Succeeded", _) => "Job completed successfully within the graceful shutdown window.",
         ("Failed", "Cancellation") => "Job execution was interrupted due to host shutdown or timeout.",
+        ("Failed", "Timeout") => "Job failed because execution exceeded the configured runtime timeout.",
         ("Failed", "ConfigurationError") => "Job failed due to configuration error (job not registered, invalid settings, etc.).",
         ("Failed", "BusinessFailure") => "Job failed with a business or runtime exception.",
         ("Failed", "DependencyOutage") => "Job failed due to dependency outage (database unavailable, network timeout, etc.).",
@@ -533,11 +541,22 @@ static string GenerateHumanReadableMessage(string outcome, string failureCategor
     };
 }
 
+static bool IsTimeoutFailure(Exception ex)
+{
+    for (Exception? current = ex; current != null; current = current.InnerException)
+    {
+        if (current is TimeoutException)
+            return true;
+    }
+
+    return false;
+}
+
 static bool IsDependencyOutage(Exception ex)
 {
     for (Exception? current = ex; current != null; current = current.InnerException)
     {
-        if (current is NpgsqlException || current is TimeoutException || current is DbUpdateException)
+        if (current is NpgsqlException || current is DbUpdateException)
             return true;
     }
 

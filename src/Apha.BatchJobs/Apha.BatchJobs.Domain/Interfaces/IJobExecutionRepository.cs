@@ -59,4 +59,19 @@ public interface IJobExecutionRepository
         CancellationToken cancellationToken = default,
         int? fpsYear = null);
 
+    /// <summary>
+    /// Updates heartbeat metadata while the execution remains in Running status.
+    /// </summary>
+    /// <param name="jobQueueId">Current job queue identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True when heartbeat was written; false when the row is not in Running status.</returns>
+    Task<bool> TouchRunningExecutionAsync(Guid jobQueueId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns true when the execution row has already transitioned to Failed.
+    /// </summary>
+    /// <param name="jobExecutionId">External job execution identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<bool> IsExecutionMarkedFailedAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
+
 }

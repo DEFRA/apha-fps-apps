@@ -99,6 +99,32 @@ public class BatchLockRepository : IBatchLockRepository
     }
 
     /// <inheritdoc />
+    public async Task<bool> TryRenewLockAsync(string jobName, Guid jobQueueId, int timeoutSeconds, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(jobName))
+            throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
+
+        if (jobQueueId == Guid.Empty)
+            throw new ArgumentException("Job queue ID cannot be empty.", nameof(jobQueueId));
+
+        // Unlimited timeout uses a non-expiring lease marker and does not require periodic renewal.
+        if (timeoutSeconds <= 0)
+        {
+            return true;
+        }
+
+        var nextExpiresAt = DateTime.UtcNow.AddSeconds(timeoutSeconds);
+        var updatedRows = await _context.BatchLocks
+            .Where(l => l.JobName == jobName && l.JobQueueId == jobQueueId && l.IsActive)
+            .ExecuteUpdateAsync(
+                updates => updates
+                    .SetProperty(l => l.ExpiresAt, _ => nextExpiresAt),
+                cancellationToken);
+
+        return updatedRows > 0;
+    }
+
+    /// <inheritdoc />
     public async Task<BatchLock?> GetActiveLockAsync(string jobName, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(jobName))
