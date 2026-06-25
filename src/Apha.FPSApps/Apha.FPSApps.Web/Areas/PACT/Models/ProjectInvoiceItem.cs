@@ -15,7 +15,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public int? Month { get; set; }
 
         [Required(ErrorMessage = "Amount is required")]
-        [GridColumn(Order = 3, Width = 89, Type = GridColumnType.UsdValue)]
+        [GridColumn(Order = 3, Width = 89, Type = GridColumnType.GbpValue)]
         public decimal? Amount { get; set; }
 
         [GridColumn(Order = 4, Width = 129, Type = GridColumnType.GbpValue)]
