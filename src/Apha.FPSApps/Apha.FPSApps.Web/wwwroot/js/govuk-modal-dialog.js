@@ -3,6 +3,15 @@
         return;
     }
 
+    var AlertType = Object.freeze({
+        ERROR: "E",
+        INFO: "I",
+        SUCCESS: "S",
+        WARNING: "W"
+    });
+
+    window.AlertType = AlertType;
+
     var pending = Promise.resolve();
 
     function getFocusable(container) {
@@ -19,9 +28,29 @@
         var titleId = "govuk-dialog-title-" + Date.now() + "-" + Math.random().toString(16).slice(2);
         var descId = "govuk-dialog-desc-" + Date.now() + "-" + Math.random().toString(16).slice(2);
         var modalclassName = "";
+        var modalTextHeader = "";
 
-        if (options.type === "confirm") {
-            modalclassName = "isInfo";
+        switch (options.type) {
+            case "confirm":
+                modalclassName = "isInfo";
+                modalTextHeader = "Please confirm";
+                break;
+            case AlertType.ERROR:
+                modalclassName = "isDanger";
+                modalTextHeader = "Error";
+                break;
+            case AlertType.INFO:
+                modalclassName = "isInfo";
+                modalTextHeader = "Information";
+                break;
+            case AlertType.SUCCESS:
+                modalclassName = "isSuccess";
+                modalTextHeader = "Message";
+                break;
+            case AlertType.WARNING:
+                modalclassName = "isWarning";
+                modalTextHeader = "Warning";
+                break;
         }
 
         var backdrop = document.createElement("div");
@@ -54,7 +83,7 @@
         var heading = document.createElement("h2");
         heading.id = titleId;
         heading.className = "govuk-heading-m govuk-!-margin-bottom-3";
-        heading.textContent = options.title || (options.type === "confirm" ? "Please confirm" : "Information");
+        heading.textContent = options.title || modalTextHeader;
 
         var message = document.createElement("p");
         message.id = descId;
@@ -98,222 +127,229 @@
         };
     }
 
-  function openDialog(options) {
-    return new Promise(function (resolve) {
-      var previousActive = document.activeElement;
-      var previousOverflow = document.body.style.overflow;
-      var closed = false;
-      var parts = buildDialog(options);
+    function openDialog(options) {
+        return new Promise(function (resolve) {
+            var previousActive = document.activeElement;
+            var previousOverflow = document.body.style.overflow;
+            var closed = false;
+            var parts = buildDialog(options);
 
-      function cleanup(result) {
-        if (closed) {
-          return;
-        }
-        closed = true;
+            function cleanup(result) {
+                if (closed) {
+                    return;
+                }
+                closed = true;
 
-        document.removeEventListener("keydown", onKeyDown, true);
-        if (parts.backdrop.parentNode) {
-          parts.backdrop.parentNode.removeChild(parts.backdrop);
-        }
+                document.removeEventListener("keydown", onKeyDown, true);
+                if (parts.backdrop.parentNode) {
+                    parts.backdrop.parentNode.removeChild(parts.backdrop);
+                }
 
-        document.body.style.overflow = previousOverflow;
+                document.body.style.overflow = previousOverflow;
 
-        if (previousActive && typeof previousActive.focus === "function") {
-          previousActive.focus();
-        }
+                if (previousActive && typeof previousActive.focus === "function") {
+                    previousActive.focus();
+                }
 
-        resolve(result);
-      }
+                resolve(result);
+            }
 
-      function onKeyDown(event) {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          cleanup(options.type === "confirm" ? false : true);
-          return;
-        }
+            function onKeyDown(event) {
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    cleanup(options.type === "confirm" ? false : true);
+                    return;
+                }
 
-        if (event.key === "Tab") {
-          var focusable = getFocusable(parts.dialog);
-          if (!focusable.length) {
-            event.preventDefault();
-            parts.dialog.focus();
-            return;
-          }
+                if (event.key === "Tab") {
+                    var focusable = getFocusable(parts.dialog);
+                    if (!focusable.length) {
+                        event.preventDefault();
+                        parts.dialog.focus();
+                        return;
+                    }
 
-          var first = focusable[0];
-          var last = focusable[focusable.length - 1];
+                    var first = focusable[0];
+                    var last = focusable[focusable.length - 1];
 
-          if (event.shiftKey && document.activeElement === first) {
-            event.preventDefault();
-            last.focus();
-          } else if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
-          }
-        }
-      }
+                    if (event.shiftKey && document.activeElement === first) {
+                        event.preventDefault();
+                        last.focus();
+                    } else if (!event.shiftKey && document.activeElement === last) {
+                        event.preventDefault();
+                        first.focus();
+                    }
+                }
+            }
 
-      parts.okButton.addEventListener("click", function () {
-        cleanup(true);
-      });
+            parts.okButton.addEventListener("click", function () {
+                cleanup(true);
+            });
 
-      if (parts.cancelButton) {
-        parts.cancelButton.addEventListener("click", function () {
-          cleanup(false);
+            if (parts.cancelButton) {
+                parts.cancelButton.addEventListener("click", function () {
+                    cleanup(false);
+                });
+            }
+
+            document.body.appendChild(parts.backdrop);
+            document.body.style.overflow = "hidden";
+
+            document.addEventListener("keydown", onKeyDown, true);
+            parts.okButton.focus();
         });
-      }
-
-      document.body.appendChild(parts.backdrop);
-      document.body.style.overflow = "hidden";
-
-      document.addEventListener("keydown", onKeyDown, true);
-      parts.okButton.focus();
-    });
-  }
-
-  function stopPropagation(event) {
-    event.stopPropagation();
-  }
-
-  function applySafeBootstrapConfig(modalElement) {
-    if (!modalElement) {
-      return;
     }
 
-    modalElement.setAttribute("data-bs-backdrop", "static");
-    modalElement.setAttribute("data-bs-keyboard", "false");
-
-    if (window.bootstrap && window.bootstrap.Modal) {
-      var instance = window.bootstrap.Modal.getInstance(modalElement);
-      if (instance && instance._config) {
-        instance._config.backdrop = "static";
-        instance._config.keyboard = false;
-      }
+    function stopPropagation(event) {
+        event.stopPropagation();
     }
-  }
 
-  function initializeSafeModal(modalOrId) {
-    var modalElement = null;
+    function applySafeBootstrapConfig(modalElement) {
+        if (!modalElement) {
+            return;
+        }
 
-    if (typeof modalOrId === "string") {
-      var id = modalOrId.charAt(0) === "#" ? modalOrId.slice(1) : modalOrId;
-      modalElement = document.getElementById(id);
+        modalElement.setAttribute("data-bs-backdrop", "static");
+        modalElement.setAttribute("data-bs-keyboard", "false");
+
+        if (window.bootstrap && window.bootstrap.Modal) {
+            var instance = window.bootstrap.Modal.getInstance(modalElement);
+            if (instance && instance._config) {
+                instance._config.backdrop = "static";
+                instance._config.keyboard = false;
+            }
+        }
+    }
+
+    function initializeSafeModal(modalOrId) {
+        var modalElement = null;
+
+        if (typeof modalOrId === "string") {
+            var id = modalOrId.charAt(0) === "#" ? modalOrId.slice(1) : modalOrId;
+            modalElement = document.getElementById(id);
+        } else {
+            modalElement = modalOrId;
+        }
+
+        if (!modalElement || !modalElement.classList || !modalElement.classList.contains("modal")) {
+            return;
+        }
+
+        if (modalElement.dataset.safeModalInit === "true") {
+            applySafeBootstrapConfig(modalElement);
+            return;
+        }
+
+        modalElement.dataset.safeModalInit = "true";
+        applySafeBootstrapConfig(modalElement);
+
+        modalElement.addEventListener("show.bs.modal", function () {
+            applySafeBootstrapConfig(modalElement);
+        });
+
+        var modalContent = modalElement.querySelector(".modal-content");
+        if (modalContent) {
+            ["click", "mousedown", "mouseup"].forEach(function (eventName) {
+                modalContent.addEventListener(eventName, stopPropagation);
+            });
+        }
+
+        var fields = modalElement.querySelectorAll("input, textarea, select, button");
+        fields.forEach(function (field) {
+            ["click", "keydown"].forEach(function (eventName) {
+                field.addEventListener(eventName, stopPropagation);
+            });
+        });
+    }
+
+    function initializeAllSafeModals() {
+        var modals = document.querySelectorAll(".modal");
+        modals.forEach(function (modalElement) {
+            initializeSafeModal(modalElement);
+        });
+    }
+
+    function watchDynamicModals() {
+        if (!window.MutationObserver || !document.body) {
+            return;
+        }
+
+        var observer = new MutationObserver(function (mutations) {
+            var hasChanges = mutations.some(function (mutation) {
+                return mutation.type === "childList" && (mutation.addedNodes && mutation.addedNodes.length > 0);
+            });
+
+            if (hasChanges) {
+                initializeAllSafeModals();
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () {
+            initializeAllSafeModals();
+            watchDynamicModals();
+        });
     } else {
-      modalElement = modalOrId;
-    }
-
-    if (!modalElement || !modalElement.classList || !modalElement.classList.contains("modal")) {
-      return;
-    }
-
-    if (modalElement.dataset.safeModalInit === "true") {
-      applySafeBootstrapConfig(modalElement);
-      return;
-    }
-
-    modalElement.dataset.safeModalInit = "true";
-    applySafeBootstrapConfig(modalElement);
-
-    modalElement.addEventListener("show.bs.modal", function () {
-      applySafeBootstrapConfig(modalElement);
-    });
-
-    var modalContent = modalElement.querySelector(".modal-content");
-    if (modalContent) {
-      ["click", "mousedown", "mouseup"].forEach(function (eventName) {
-        modalContent.addEventListener(eventName, stopPropagation);
-      });
-    }
-
-    var fields = modalElement.querySelectorAll("input, textarea, select, button");
-    fields.forEach(function (field) {
-      ["click", "keydown"].forEach(function (eventName) {
-        field.addEventListener(eventName, stopPropagation);
-      });
-    });
-  }
-
-  function initializeAllSafeModals() {
-    var modals = document.querySelectorAll(".modal");
-    modals.forEach(function (modalElement) {
-      initializeSafeModal(modalElement);
-    });
-  }
-
-  function watchDynamicModals() {
-    if (!window.MutationObserver || !document.body) {
-      return;
-    }
-
-    var observer = new MutationObserver(function (mutations) {
-      var hasChanges = mutations.some(function (mutation) {
-        return mutation.type === "childList" && (mutation.addedNodes && mutation.addedNodes.length > 0);
-      });
-
-      if (hasChanges) {
         initializeAllSafeModals();
-      }
-    });
+        watchDynamicModals();
+    }
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-  }
+    window.initializeSafeModal = initializeSafeModal;
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
-      initializeAllSafeModals();
-      watchDynamicModals();
-    });
-  } else {
-    initializeAllSafeModals();
-    watchDynamicModals();
-  }
+    window.showGovukAlert = function (message, type) {
 
-  window.initializeSafeModal = initializeSafeModal;
+        var validTypes = Object.values(AlertType);
+        var resolvedType = type || AlertType.INFO;
 
-  window.showGovukAlert = function (message) {
-    pending = pending.then(function () {
-      return openDialog({
-        type: "alert",
-        message: message,
-        okText: "OK"
-      });
-    });
+        if (validTypes.indexOf(resolvedType) === -1) {
+            resolvedType = AlertType.INFO;
+        }
+        pending = pending.then(function () {
+            return openDialog({
+                type: resolvedType,
+                message: message,
+                okText: "OK"
+            });
+        });
 
-    return pending.then(function () {
-      return undefined;
-    });
-  };
-
-  window.showGovukConfirm = function (message) {
-    pending = pending.then(function () {
-      return openDialog({
-        type: "confirm",
-        message: message,
-        okText: "OK",
-        cancelText: "Cancel"
-      });
-    });
-
-    return pending.then(function (result) {
-      return result;
-    });
+        return pending.then(function () {
+            return undefined;
+        });
     };
 
-  window.showGovukYesNo = function (message) {
-    pending = pending.then(function () {
-      return openDialog({
-        type: "confirm",
-        message: message,
-        okText: "Yes",
-        cancelText: "No"
-      });
-    });
+    window.showGovukConfirm = function (message) {
+        pending = pending.then(function () {
+            return openDialog({
+                type: "confirm",
+                message: message,
+                okText: "OK",
+                cancelText: "Cancel"
+            });
+        });
 
-    return pending.then(function (result) {
-      return result;
-    });
-  };
+        return pending.then(function (result) {
+            return result;
+        });
+    };
+
+    window.showGovukYesNo = function (message) {
+        pending = pending.then(function () {
+            return openDialog({
+                type: "confirm",
+                message: message,
+                okText: "Yes",
+                cancelText: "No"
+            });
+        });
+
+        return pending.then(function (result) {
+            return result;
+        });
+    };
 })();
