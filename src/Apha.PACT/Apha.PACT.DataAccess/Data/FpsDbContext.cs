@@ -1,6 +1,7 @@
 ﻿using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks.Dataflow;
 
 namespace Apha.PACT.DataAccess.Data
 {
@@ -40,7 +41,7 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<PactWorkGroupGradeView> PactWorkGroupGradeViews { get; set; }
         public virtual DbSet<WorkGroupStaffView> WorkGroupStaffViews { get; set; }
         public virtual DbSet<WgSummarisedStaffTimeUsageView> WgSummarisedStaffTimeUsageViews { get; set; }
-        public virtual DbSet<WorkGroupStaffView> PactStaffViews { get; set; }        
+        public virtual DbSet<WorkGroupStaffView> PactStaffViews { get; set; }
         public virtual DbSet<PactProfitCentreView> PactProfitCentreViews { get; set; }
         public virtual DbSet<ProfitCentre> ProfitCentres { get; set; }
         public virtual DbSet<WorkGroupView> WorkGroupViews { get; set; }
@@ -49,6 +50,10 @@ namespace Apha.PACT.DataAccess.Data
         public virtual DbSet<Settings> Settings { get; set; }
         public virtual DbSet<ReleasePeriod> ReleasePeriods { get; set; }
         public virtual DbSet<ProjectView> ProjectViews { get; set; }
+
+        public virtual DbSet<BatchJobMaster> BatchJobs { get; set; }
+        public virtual DbSet<BatchJobQueue> BatchJobQueues { get; set; }
+        public virtual DbSet<BatchJobStatus> BatchJobStatuses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -122,10 +127,10 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.Entity<WgSummarisedStaffTimeUsageView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new SummarisedWgTimeViewMap());
-            modelBuilder.Entity<SummarisedWgTimeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);            
+            modelBuilder.Entity<SummarisedWgTimeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PactProfitCentreViewMap());
-                      
+
             modelBuilder.ApplyConfiguration(new WorkGroupViewMap());
             modelBuilder.Entity<WorkGroupView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -144,6 +149,9 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.ApplyConfiguration(new ProjectViewMap());
             modelBuilder.Entity<ProjectView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new BatchJobMasterMap());
+            modelBuilder.ApplyConfiguration(new BatchJobQueueMap());
+            modelBuilder.ApplyConfiguration(new BatchJobStatusMap());
         }
     }
 }

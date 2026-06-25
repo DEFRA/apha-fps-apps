@@ -63,6 +63,8 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<RecreateSummaryLogRes, RecreateSummaryLogDto>().ReverseMap();
             CreateMap<ReleasePeriodRes, ReleasePeriodDto>().ReverseMap();
             CreateMap<ReleaseSummaryDto, ReleaseSummaryRes>();
+            CreateMap<BatchJobHistoryRes, BatchJobHistoryDto>().ReverseMap();
+            CreateMap<BatchJobQueueRes, BatchJobQueueDto>().ReverseMap();
         }
     }
 }

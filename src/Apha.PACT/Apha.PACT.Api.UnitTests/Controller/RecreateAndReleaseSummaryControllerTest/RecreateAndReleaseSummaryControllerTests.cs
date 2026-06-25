@@ -4,6 +4,7 @@ using Apha.PACT.Api.Controllers;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Core.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -13,6 +14,8 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
     public class RecreateAndReleaseSummaryControllerTests
     {
         private readonly IRecreateAndReleaseSummaryService _mockService;
+        private readonly IBatchJobService _mockBatchJobService;
+        private readonly IFpsRequestContext _mockfpsRequestContext;
         private readonly IMapper _mockMapper;
         private readonly RecreateAndReleaseSummaryController _controller;
 
@@ -22,8 +25,10 @@ namespace Apha.PACT.Api.UnitTests.Controller.RecreateAndReleaseSummaryController
         public RecreateAndReleaseSummaryControllerTests()
         {
             _mockService = Substitute.For<IRecreateAndReleaseSummaryService>();
+            _mockBatchJobService = Substitute.For<IBatchJobService>();
+            _mockfpsRequestContext = Substitute.For<IFpsRequestContext>();
             _mockMapper = Substitute.For<IMapper>();
-            _controller = new RecreateAndReleaseSummaryController(_mockService, _mockMapper);
+            _controller = new RecreateAndReleaseSummaryController(_mockService, _mockBatchJobService, _mockfpsRequestContext, _mockMapper);
         }
 
         #region GetRecreateSummariesLogs
