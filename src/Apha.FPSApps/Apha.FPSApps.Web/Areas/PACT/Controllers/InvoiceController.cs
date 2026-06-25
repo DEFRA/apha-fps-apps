@@ -127,7 +127,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             if (id == 0)
             {
-                return PartialView("_AddEditInvoice", new ProjectInvoiceItem
+                return PartialView("_AddEditInvoice", new InvoiceItem
                 {
                     ProjectParent = parentProject ?? string.Empty
                 });
@@ -136,20 +136,20 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var result = await _invoiceService.GetByIdAsync(id);
             if (!result.Success || result.Data == null) return NotFound();
 
-            var item = _mapper.Map<ProjectInvoiceItem>(result.Data);
+            var item = _mapper.Map<InvoiceItem>(result.Data);
             return PartialView("_AddEditInvoice", item);
         }
 
         /// <summary>
         /// Creates or updates an invoice record based on the submitted model.
-        /// A new invoice is created when <see cref="ProjectInvoiceItem.InvoiceCounter"/> is <c>0</c>; otherwise the existing record is updated.
+        /// A new invoice is created when <see cref="InvoiceItem.InvoiceCounter"/> is <c>0</c>; otherwise the existing record is updated.
         /// </summary>
         /// <param name="model">The invoice data submitted from the add/edit modal form.</param>
         /// <returns>
         /// A JSON response indicating success or failure. On validation failure, field-level error details are included.
         /// </returns>
         [HttpPost]
-        public async Task<IActionResult> SaveInvoice([FromBody] ProjectInvoiceItem model)
+        public async Task<IActionResult> SaveInvoice([FromBody] InvoiceItem model)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -224,7 +224,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         /// <param name="parentProject">Optional parent project code used to scope the invoice query.</param>
         /// <param name="month">Optional month number injected into the filter when not already present.</param>
         /// <returns>A fully configured <see cref="DataGridConfig{T}"/> ready for rendering.</returns>
-        private async Task<DataGridConfig<ProjectInvoiceItem>> BuildInvoiceManualGridAsync(
+        private async Task<DataGridConfig<InvoiceItem>> BuildInvoiceManualGridAsync(
             PaginationFilter<string> request, string? parentProject, int? month = null)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
@@ -241,8 +241,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _invoiceService.GetPagedProjectInvoiceManualAsync(query, parentProject);
 
             var items = response.Data != null
-                ? _mapper.Map<List<ProjectInvoiceItem>>(response.Data)
-                : new List<ProjectInvoiceItem>();
+                ? _mapper.Map<List<InvoiceItem>>(response.Data)
+                : new List<InvoiceItem>();
 
             var pagination = response.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)
@@ -258,7 +258,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             string queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
 
-            return new DataGridConfig<ProjectInvoiceItem>
+            return new DataGridConfig<InvoiceItem>
             {
                 GridId = "invoicesGrid",
                 Title = "Invoice Record",
@@ -268,7 +268,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 DeleteFunction = "deleteInvoice",
                 BindGridUrl = $"/PACT/Invoice/LoadInvoicesGrid{queryString}",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<ProjectInvoiceItem>(),
+                Columns = GridDataProvider.GetColumnsDefination<InvoiceItem>(),
                 Pagination = pagination,
                 CurrentFilters = filterDict
             };
