@@ -48,39 +48,6 @@
 
 <main id="main-content">
     <div class="container-fluid">
-        <!-- Breadcrumb -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div class="row fps-sr-breadcrumb-row align-items-center">
-                        <div class="col-md-6">
-                            <nav class="govuk-breadcrumbs govuk-!-padding-left-3" aria-label="Breadcrumb">
-                                <ol class="govuk-breadcrumbs__list">
-                                    <li class="govuk-breadcrumbs__list-item">
-                                        <a class="govuk-breadcrumbs__link" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a>
-                                    </li>
-                                    <li class="govuk-breadcrumbs__list-item">Resource Management</li>
-                                    <li class="govuk-breadcrumbs__list-item" aria-current="page">Setup Resource</li>
-                                </ol>
-                            </nav>
-                        </div>
-                        <div style="display: flex; justify-content: flex-end;" class="col-md-6">
-                            <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get" style="display: flex; align-items: center;">
-                                <input type="hidden" name="year" value="@FpsYearContext.Year" />
-                                <label class="fw-bold mt-2" for="profitCentreSelect">Resource Centre:</label>
-                                <select id="profitCentreSelect"
-                                        name="profitCentre"
-                                        asp-items="Model.ProfitCentreList"
-                                        class="govuk-select govuk-!-font-size-16"
-                                        style="width: auto; min-width: 260px;"
-                                        onchange="this.form.submit()">
-                                    <option value="">-- Select Resource Centre --</option>
-                                </select>
-                            </form>
-                        </div>
-                    </div>
-            </div>
-        </div>
-
         <!-- Page Title -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
