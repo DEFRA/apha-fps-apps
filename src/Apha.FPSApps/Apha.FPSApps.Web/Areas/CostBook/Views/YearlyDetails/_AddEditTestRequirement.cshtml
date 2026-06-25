@@ -63,22 +63,23 @@
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="UnitPrice" class="govuk-label">
-                Unit Price <span class="sup_color_red">*</span>
+                Unit Price
             </label>
             <input asp-for="UnitPrice" type="text" readonly class="govuk-input" />
             <span asp-validation-for="UnitPrice" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="NumberOfTests" class="govuk-label">
-                No <span class="sup_color_red">*</span>
+                No 
             </label>
             <input asp-for="NumberOfTests" type="number" step="0.01" class="govuk-input"
-                   value="@(Model.NumberOfTests ?? 0)" />
+                   value="@(Model.NumberOfTests ?? 0)"
+                   onblur="if(this.value==='')this.value='0';" />
             <span asp-validation-for="NumberOfTests" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="TestCost" class="govuk-label">
-                Cost <span class="sup_color_red">*</span>
+                Cost
             </label>
             <input asp-for="TestCost" type="text" readonly class="govuk-input" />
             <span asp-validation-for="TestCost" class="govuk-error-message" style="display:none;"></span>
