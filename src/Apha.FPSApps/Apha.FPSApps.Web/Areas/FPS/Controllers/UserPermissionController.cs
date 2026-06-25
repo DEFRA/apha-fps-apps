@@ -86,7 +86,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var dto = _mapper.Map<UserPermissionDto>(model);
+            var dto = _mapper.Map<UserDto>(model);
             var response = await _userPermissionService.AddUserAsync(dto);
             if (response.Success)
                 return Json(new { success = true, data = response.Data, message = "User created successfully." });
@@ -133,7 +133,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var dto = _mapper.Map<UserPermissionDto>(model);
+            var dto = _mapper.Map<UserDto>(model);
             var response = await _userPermissionService.UpdateUserAsync(dto);
             if (response.Success)
                 return Json(new { success = true, message = "User updated successfully.", data = response.Data });

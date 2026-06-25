@@ -20,66 +20,66 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<ApiResponseDto<IEnumerable<UserPermissionDto>>> GetAllUsersAsync()
+        public async Task<ApiResponseDto<IEnumerable<UserDto>>> GetAllUsersAsync()
         {
-            var response = await _http.GetAsync<IEnumerable<UserPermissionDto>>(FpsApiEndpoints.GetAllUsers);
+            var response = await _http.GetAsync<IEnumerable<UserDto>>(FpsApiEndpoints.GetAllUsers);
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<IEnumerable<UserPermissionDto>>>(response);
+                return _mapper.Map<ApiResponseDto<IEnumerable<UserDto>>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<UserPermissionDto>>>(response);
-            return ApiResponseDto<IEnumerable<UserPermissionDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<UserDto>>>(response);
+            return ApiResponseDto<IEnumerable<UserDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<UserPermissionDto>>> GetAllUsersPagedAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<UserDto>>> GetAllUsersPagedAsync(QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedUsers, query);
-            var response = await _http.GetAsync<List<UserPermissionDto>>(url);
+            var response = await _http.GetAsync<List<UserDto>>(url);
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(response);
+                return _mapper.Map<ApiResponseDto<List<UserDto>>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(response);
-            return ApiResponseDto<List<UserPermissionDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            var responseDto = _mapper.Map<ApiResponseDto<List<UserDto>>>(response);
+            return ApiResponseDto<List<UserDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<List<UserPermissionDto>>> GetNonSuperUsersPagedAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<UserDto>>> GetNonSuperUsersPagedAsync(QueryParameters<string> query)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetPagedNonSuperUsers, query);
-            var response = await _http.GetAsync<List<UserPermissionDto>>(url);
+            var response = await _http.GetAsync<List<UserDto>>(url);
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(response);
+                return _mapper.Map<ApiResponseDto<List<UserDto>>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(response);
-            return ApiResponseDto<List<UserPermissionDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            var responseDto = _mapper.Map<ApiResponseDto<List<UserDto>>>(response);
+            return ApiResponseDto<List<UserDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<UserPermissionDto?>> GetUserByIdAsync(int userId)
+        public async Task<ApiResponseDto<UserDto?>> GetUserByIdAsync(int userId)
         {
-            var response = await _http.GetAsync<UserPermissionDto>(string.Format(FpsApiEndpoints.GetUserById, userId));
+            var response = await _http.GetAsync<UserDto>(string.Format(FpsApiEndpoints.GetUserById, userId));
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<UserPermissionDto?>>(response);
+                return _mapper.Map<ApiResponseDto<UserDto?>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<UserPermissionDto?>>(response);
-            return ApiResponseDto<UserPermissionDto?>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            var responseDto = _mapper.Map<ApiResponseDto<UserDto?>>(response);
+            return ApiResponseDto<UserDto?>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<UserPermissionDto>> AddUserAsync(UserPermissionDto dto)
+        public async Task<ApiResponseDto<UserDto>> AddUserAsync(UserDto dto)
         {
-            var response = await _http.PostAsync<UserPermissionDto, UserPermissionDto>(FpsApiEndpoints.CreateUser, dto);
+            var response = await _http.PostAsync<UserDto, UserDto>(FpsApiEndpoints.CreateUser, dto);
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<UserPermissionDto>>(response);
+                return _mapper.Map<ApiResponseDto<UserDto>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<UserPermissionDto>>(response);
-            return ApiResponseDto<UserPermissionDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            var responseDto = _mapper.Map<ApiResponseDto<UserDto>>(response);
+            return ApiResponseDto<UserDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
-        public async Task<ApiResponseDto<UserPermissionDto>> UpdateUserAsync(UserPermissionDto dto)
+        public async Task<ApiResponseDto<UserDto>> UpdateUserAsync(UserDto dto)
         {
-            var response = await _http.PutAsync<UserPermissionDto, UserPermissionDto>(FpsApiEndpoints.UpdateUser, dto);
+            var response = await _http.PutAsync<UserDto, UserDto>(FpsApiEndpoints.UpdateUser, dto);
             if (response.Success)
-                return _mapper.Map<ApiResponseDto<UserPermissionDto>>(response);
+                return _mapper.Map<ApiResponseDto<UserDto>>(response);
 
-            var responseDto = _mapper.Map<ApiResponseDto<UserPermissionDto>>(response);
-            return ApiResponseDto<UserPermissionDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            var responseDto = _mapper.Map<ApiResponseDto<UserDto>>(response);
+            return ApiResponseDto<UserDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<bool>> DeleteUserAsync(int userId)

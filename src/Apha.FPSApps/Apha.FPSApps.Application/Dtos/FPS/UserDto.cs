@@ -1,6 +1,6 @@
 namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public class UserPermissionDto
+    public class UserDto
     {
         public int UserId { get; set; }
         public string? Username { get; set; }

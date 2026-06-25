@@ -15,32 +15,32 @@ namespace Apha.FPSApps.Application.Services.FPS
             _fpsApiClient = fpsApiClient ?? throw new ArgumentNullException(nameof(fpsApiClient));
         }
 
-        public async Task<ApiResponseDto<IEnumerable<UserPermissionDto>>> GetAllUsersAsync()
+        public async Task<ApiResponseDto<IEnumerable<UserDto>>> GetAllUsersAsync()
         {
             return await _fpsApiClient.FpsUserPermission.GetAllUsersAsync();
         }
 
-        public async Task<ApiResponseDto<List<UserPermissionDto>>> GetAllUsersPagedAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<UserDto>>> GetAllUsersPagedAsync(QueryParameters<string> query)
         {
             return await _fpsApiClient.FpsUserPermission.GetAllUsersPagedAsync(query);
         }
 
-        public async Task<ApiResponseDto<List<UserPermissionDto>>> GetNonSuperUsersPagedAsync(QueryParameters<string> query)
+        public async Task<ApiResponseDto<List<UserDto>>> GetNonSuperUsersPagedAsync(QueryParameters<string> query)
         {
             return await _fpsApiClient.FpsUserPermission.GetNonSuperUsersPagedAsync(query);
         }
 
-        public async Task<ApiResponseDto<UserPermissionDto?>> GetUserByIdAsync(int userId)
+        public async Task<ApiResponseDto<UserDto?>> GetUserByIdAsync(int userId)
         {
             return await _fpsApiClient.FpsUserPermission.GetUserByIdAsync(userId);
         }
 
-        public async Task<ApiResponseDto<UserPermissionDto>> AddUserAsync(UserPermissionDto dto)
+        public async Task<ApiResponseDto<UserDto>> AddUserAsync(UserDto dto)
         {
             return await _fpsApiClient.FpsUserPermission.AddUserAsync(dto);
         }
 
-        public async Task<ApiResponseDto<UserPermissionDto>> UpdateUserAsync(UserPermissionDto dto)
+        public async Task<ApiResponseDto<UserDto>> UpdateUserAsync(UserDto dto)
         {
             return await _fpsApiClient.FpsUserPermission.UpdateUserAsync(dto);
         }

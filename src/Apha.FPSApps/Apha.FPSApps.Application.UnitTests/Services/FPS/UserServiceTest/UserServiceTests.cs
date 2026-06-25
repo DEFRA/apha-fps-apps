@@ -22,7 +22,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
             _sut = new UserService(_mockFpsClient);
         }
 
-        private static UserPermissionDto BuildDto(int userId = 1) =>
+        private static UserDto BuildDto(int userId = 1) =>
             new() { UserId = userId, Username = "testuser", Comments = "Test User", UserEmail = "test@example.com", Dt2Username = "dt2user" };
 
         #region Constructor Tests
@@ -40,8 +40,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         [Fact]
         public async Task GetAllUsersAsync_ReturnsApiResponse()
         {
-            var dtos = new List<UserPermissionDto> { BuildDto() };
-            var response = ApiResponseDto<IEnumerable<UserPermissionDto>>.SuccessResponse(dtos);
+            var dtos = new List<UserDto> { BuildDto() };
+            var response = ApiResponseDto<IEnumerable<UserDto>>.SuccessResponse(dtos);
             _mockApiClient.GetAllUsersAsync().Returns(response);
 
             var result = await _sut.GetAllUsersAsync();
@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         public async Task GetAllUsersAsync_PropagatesApiErrors()
         {
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
-            var response = ApiResponseDto<IEnumerable<UserPermissionDto>>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<IEnumerable<UserDto>>.FailureResponse(errors, new ApiMetaDto());
             _mockApiClient.GetAllUsersAsync().Returns(response);
 
             var result = await _sut.GetAllUsersAsync();
@@ -73,9 +73,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         public async Task GetAllUsersPagedAsync_ReturnsApiResponse()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dtos = new List<UserPermissionDto> { BuildDto() };
+            var dtos = new List<UserDto> { BuildDto() };
             var pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
-            var response = ApiResponseDto<List<UserPermissionDto>>.SuccessResponse(dtos, pagination);
+            var response = ApiResponseDto<List<UserDto>>.SuccessResponse(dtos, pagination);
             _mockApiClient.GetAllUsersPagedAsync(query).Returns(response);
 
             var result = await _sut.GetAllUsersPagedAsync(query);
@@ -91,7 +91,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
-            var response = ApiResponseDto<List<UserPermissionDto>>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<List<UserDto>>.FailureResponse(errors, new ApiMetaDto());
             _mockApiClient.GetAllUsersPagedAsync(query).Returns(response);
 
             var result = await _sut.GetAllUsersPagedAsync(query);
@@ -107,7 +107,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
                 Page = 2, PageSize = 5, SortBy = "Username", Descending = true,
                 Filter = "{\"Username\":\"test\"}"
             };
-            var response = ApiResponseDto<List<UserPermissionDto>>.SuccessResponse([]);
+            var response = ApiResponseDto<List<UserDto>>.SuccessResponse([]);
             _mockApiClient.GetAllUsersPagedAsync(query).Returns(response);
 
             await _sut.GetAllUsersPagedAsync(query);
@@ -124,9 +124,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         public async Task GetNonSuperUsersPagedAsync_ReturnsApiResponse()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dtos = new List<UserPermissionDto> { BuildDto() };
+            var dtos = new List<UserDto> { BuildDto() };
             var pagination = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 };
-            var response = ApiResponseDto<List<UserPermissionDto>>.SuccessResponse(dtos, pagination);
+            var response = ApiResponseDto<List<UserDto>>.SuccessResponse(dtos, pagination);
             _mockApiClient.GetNonSuperUsersPagedAsync(query).Returns(response);
 
             var result = await _sut.GetNonSuperUsersPagedAsync(query);
@@ -142,7 +142,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var errors = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } };
-            var response = ApiResponseDto<List<UserPermissionDto>>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<List<UserDto>>.FailureResponse(errors, new ApiMetaDto());
             _mockApiClient.GetNonSuperUsersPagedAsync(query).Returns(response);
 
             var result = await _sut.GetNonSuperUsersPagedAsync(query);
@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         public async Task GetUserByIdAsync_ReturnsApiResponse()
         {
             var dto = BuildDto();
-            var response = ApiResponseDto<UserPermissionDto?>.SuccessResponse(dto);
+            var response = ApiResponseDto<UserDto?>.SuccessResponse(dto);
             _mockApiClient.GetUserByIdAsync(1).Returns(response);
 
             var result = await _sut.GetUserByIdAsync(1);
@@ -173,7 +173,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         public async Task GetUserByIdAsync_PropagatesApiErrors()
         {
             var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "404" } };
-            var response = ApiResponseDto<UserPermissionDto?>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<UserDto?>.FailureResponse(errors, new ApiMetaDto());
             _mockApiClient.GetUserByIdAsync(999).Returns(response);
 
             var result = await _sut.GetUserByIdAsync(999);
@@ -189,7 +189,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         public async Task AddUserAsync_ReturnsApiResponse()
         {
             var dto = BuildDto();
-            var response = ApiResponseDto<UserPermissionDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<UserDto>.SuccessResponse(dto);
             _mockApiClient.AddUserAsync(dto).Returns(response);
 
             var result = await _sut.AddUserAsync(dto);
@@ -204,7 +204,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         {
             var dto = BuildDto();
             var errors = new List<ApiErrorDto> { new() { Message = "Username exists", Code = "400" } };
-            var response = ApiResponseDto<UserPermissionDto>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<UserDto>.FailureResponse(errors, new ApiMetaDto());
             _mockApiClient.AddUserAsync(dto).Returns(response);
 
             var result = await _sut.AddUserAsync(dto);
@@ -221,7 +221,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         public async Task UpdateUserAsync_ReturnsApiResponse()
         {
             var dto = BuildDto();
-            var response = ApiResponseDto<UserPermissionDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<UserDto>.SuccessResponse(dto);
             _mockApiClient.UpdateUserAsync(dto).Returns(response);
 
             var result = await _sut.UpdateUserAsync(dto);
@@ -236,7 +236,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.UserPermissionServiceT
         {
             var dto = BuildDto();
             var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "404" } };
-            var response = ApiResponseDto<UserPermissionDto>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<UserDto>.FailureResponse(errors, new ApiMetaDto());
             _mockApiClient.UpdateUserAsync(dto).Returns(response);
 
             var result = await _sut.UpdateUserAsync(dto);

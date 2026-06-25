@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
             _client = new FpsUserApiClient(_http, _mapper);
         }
 
-        private static UserPermissionDto BuildDto(int userId = 1) =>
+        private static UserDto BuildDto(int userId = 1) =>
             new() { UserId = userId, Username = "testuser", Comments = "Test User", UserEmail = "test@example.com", Dt2Username = "dt2user" };
 
         private static ApiResponse<T> SuccessApiResponse<T>(T data) =>
@@ -60,34 +60,34 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
         [Fact]
         public async Task GetAllUsersAsync_WithSuccessResponse_ReturnsMappedList()
         {
-            var dtos = new List<UserPermissionDto> { BuildDto() };
-            var apiResponse = SuccessApiResponse<IEnumerable<UserPermissionDto>>(dtos);
-            var expected = ApiResponseDto<IEnumerable<UserPermissionDto>>.SuccessResponse(dtos);
+            var dtos = new List<UserDto> { BuildDto() };
+            var apiResponse = SuccessApiResponse<IEnumerable<UserDto>>(dtos);
+            var expected = ApiResponseDto<IEnumerable<UserDto>>.SuccessResponse(dtos);
 
-            _http.GetAsync<IEnumerable<UserPermissionDto>>(FpsApiEndpoints.GetAllUsers).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<IEnumerable<UserPermissionDto>>>(apiResponse).Returns(expected);
+            _http.GetAsync<IEnumerable<UserDto>>(FpsApiEndpoints.GetAllUsers).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<IEnumerable<UserDto>>>(apiResponse).Returns(expected);
 
             var result = await _client.GetAllUsersAsync();
 
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
-            await _http.Received(1).GetAsync<IEnumerable<UserPermissionDto>>(FpsApiEndpoints.GetAllUsers);
+            await _http.Received(1).GetAsync<IEnumerable<UserDto>>(FpsApiEndpoints.GetAllUsers);
         }
 
         [Fact]
         public async Task GetAllUsersAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
-            var apiResponse = FailureApiResponse<IEnumerable<UserPermissionDto>>();
-            var failDto = new ApiResponseDto<IEnumerable<UserPermissionDto>>
+            var apiResponse = FailureApiResponse<IEnumerable<UserDto>>();
+            var failDto = new ApiResponseDto<IEnumerable<UserDto>>
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error", Code = "ERROR" }],
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<IEnumerable<UserPermissionDto>>(FpsApiEndpoints.GetAllUsers).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<IEnumerable<UserPermissionDto>>>(apiResponse).Returns(failDto);
+            _http.GetAsync<IEnumerable<UserDto>>(FpsApiEndpoints.GetAllUsers).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<IEnumerable<UserDto>>>(apiResponse).Returns(failDto);
 
             var result = await _client.GetAllUsersAsync();
 
@@ -103,14 +103,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
         public async Task GetAllUsersPagedAsync_WithSuccessResponse_ReturnsMappedList()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dtos = new List<UserPermissionDto> { BuildDto() };
+            var dtos = new List<UserDto> { BuildDto() };
             var apiResponse = SuccessApiResponse(dtos);
-            var expected = ApiResponseDto<List<UserPermissionDto>>.SuccessResponse(dtos,
+            var expected = ApiResponseDto<List<UserDto>>.SuccessResponse(dtos,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
-            _http.GetAsync<List<UserPermissionDto>>(Arg.Is<string>(u => u.Contains("user/users/paged")))
+            _http.GetAsync<List<UserDto>>(Arg.Is<string>(u => u.Contains("user/users/paged")))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(apiResponse).Returns(expected);
+            _mapper.Map<ApiResponseDto<List<UserDto>>>(apiResponse).Returns(expected);
 
             var result = await _client.GetAllUsersPagedAsync(query);
 
@@ -123,16 +123,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
         public async Task GetAllUsersPagedAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = FailureApiResponse<List<UserPermissionDto>>();
-            var failDto = new ApiResponseDto<List<UserPermissionDto>>
+            var apiResponse = FailureApiResponse<List<UserDto>>();
+            var failDto = new ApiResponseDto<List<UserDto>>
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error", Code = "ERROR" }],
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<List<UserPermissionDto>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(apiResponse).Returns(failDto);
+            _http.GetAsync<List<UserDto>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<UserDto>>>(apiResponse).Returns(failDto);
 
             var result = await _client.GetAllUsersPagedAsync(query);
 
@@ -147,14 +147,14 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
         public async Task GetNonSuperUsersPagedAsync_WithSuccessResponse_ReturnsMappedList()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var dtos = new List<UserPermissionDto> { BuildDto() };
+            var dtos = new List<UserDto> { BuildDto() };
             var apiResponse = SuccessApiResponse(dtos);
-            var expected = ApiResponseDto<List<UserPermissionDto>>.SuccessResponse(dtos,
+            var expected = ApiResponseDto<List<UserDto>>.SuccessResponse(dtos,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
-            _http.GetAsync<List<UserPermissionDto>>(Arg.Is<string>(u => u.Contains("nonsuperusers")))
+            _http.GetAsync<List<UserDto>>(Arg.Is<string>(u => u.Contains("nonsuperusers")))
                 .Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(apiResponse).Returns(expected);
+            _mapper.Map<ApiResponseDto<List<UserDto>>>(apiResponse).Returns(expected);
 
             var result = await _client.GetNonSuperUsersPagedAsync(query);
 
@@ -167,16 +167,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
         public async Task GetNonSuperUsersPagedAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var apiResponse = FailureApiResponse<List<UserPermissionDto>>();
-            var failDto = new ApiResponseDto<List<UserPermissionDto>>
+            var apiResponse = FailureApiResponse<List<UserDto>>();
+            var failDto = new ApiResponseDto<List<UserDto>>
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error", Code = "ERROR" }],
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<List<UserPermissionDto>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<UserPermissionDto>>>(apiResponse).Returns(failDto);
+            _http.GetAsync<List<UserDto>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<UserDto>>>(apiResponse).Returns(failDto);
 
             var result = await _client.GetNonSuperUsersPagedAsync(query);
 
@@ -192,10 +192,10 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
         {
             var dto = BuildDto();
             var apiResponse = SuccessApiResponse(dto);
-            var expected = ApiResponseDto<UserPermissionDto?>.SuccessResponse(dto);
+            var expected = ApiResponseDto<UserDto?>.SuccessResponse(dto);
 
-            _http.GetAsync<UserPermissionDto>(string.Format(FpsApiEndpoints.GetUserById, 1)).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<UserPermissionDto?>>(apiResponse).Returns(expected);
+            _http.GetAsync<UserDto>(string.Format(FpsApiEndpoints.GetUserById, 1)).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<UserDto?>>(apiResponse).Returns(expected);
 
             var result = await _client.GetUserByIdAsync(1);
 
@@ -207,16 +207,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
         [Fact]
         public async Task GetUserByIdAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
-            var apiResponse = FailureApiResponse<UserPermissionDto>();
-            var failDto = new ApiResponseDto<UserPermissionDto?>
+            var apiResponse = FailureApiResponse<UserDto>();
+            var failDto = new ApiResponseDto<UserDto?>
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Not found", Code = "404" }],
                 Meta = new ApiMetaDto()
             };
 
-            _http.GetAsync<UserPermissionDto>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<UserPermissionDto?>>(apiResponse).Returns(failDto);
+            _http.GetAsync<UserDto>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<UserDto?>>(apiResponse).Returns(failDto);
 
             var result = await _client.GetUserByIdAsync(999);
 
@@ -232,32 +232,32 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
         {
             var dto = BuildDto();
             var apiResponse = SuccessApiResponse(dto);
-            var expected = ApiResponseDto<UserPermissionDto>.SuccessResponse(dto);
+            var expected = ApiResponseDto<UserDto>.SuccessResponse(dto);
 
-            _http.PostAsync<UserPermissionDto, UserPermissionDto>(FpsApiEndpoints.CreateUser, dto).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<UserPermissionDto>>(apiResponse).Returns(expected);
+            _http.PostAsync<UserDto, UserDto>(FpsApiEndpoints.CreateUser, dto).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<UserDto>>(apiResponse).Returns(expected);
 
             var result = await _client.AddUserAsync(dto);
 
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).PostAsync<UserPermissionDto, UserPermissionDto>(FpsApiEndpoints.CreateUser, dto);
+            await _http.Received(1).PostAsync<UserDto, UserDto>(FpsApiEndpoints.CreateUser, dto);
         }
 
         [Fact]
         public async Task AddUserAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             var dto = BuildDto();
-            var apiResponse = FailureApiResponse<UserPermissionDto>();
-            var failDto = new ApiResponseDto<UserPermissionDto>
+            var apiResponse = FailureApiResponse<UserDto>();
+            var failDto = new ApiResponseDto<UserDto>
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error", Code = "400" }],
                 Meta = new ApiMetaDto()
             };
 
-            _http.PostAsync<UserPermissionDto, UserPermissionDto>(FpsApiEndpoints.CreateUser, dto).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<UserPermissionDto>>(apiResponse).Returns(failDto);
+            _http.PostAsync<UserDto, UserDto>(FpsApiEndpoints.CreateUser, dto).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<UserDto>>(apiResponse).Returns(failDto);
 
             var result = await _client.AddUserAsync(dto);
 
@@ -273,32 +273,32 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsUserApiClientTest
         {
             var dto = BuildDto();
             var apiResponse = SuccessApiResponse(dto);
-            var expected = ApiResponseDto<UserPermissionDto>.SuccessResponse(dto);
+            var expected = ApiResponseDto<UserDto>.SuccessResponse(dto);
 
-            _http.PutAsync<UserPermissionDto, UserPermissionDto>(FpsApiEndpoints.UpdateUser, dto).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<UserPermissionDto>>(apiResponse).Returns(expected);
+            _http.PutAsync<UserDto, UserDto>(FpsApiEndpoints.UpdateUser, dto).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<UserDto>>(apiResponse).Returns(expected);
 
             var result = await _client.UpdateUserAsync(dto);
 
             Assert.NotNull(result);
             Assert.True(result.Success);
-            await _http.Received(1).PutAsync<UserPermissionDto, UserPermissionDto>(FpsApiEndpoints.UpdateUser, dto);
+            await _http.Received(1).PutAsync<UserDto, UserDto>(FpsApiEndpoints.UpdateUser, dto);
         }
 
         [Fact]
         public async Task UpdateUserAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
         {
             var dto = BuildDto();
-            var apiResponse = FailureApiResponse<UserPermissionDto>();
-            var failDto = new ApiResponseDto<UserPermissionDto>
+            var apiResponse = FailureApiResponse<UserDto>();
+            var failDto = new ApiResponseDto<UserDto>
             {
                 Success = false,
                 Errors = [new ApiErrorDto { Message = "Error", Code = "400" }],
                 Meta = new ApiMetaDto()
             };
 
-            _http.PutAsync<UserPermissionDto, UserPermissionDto>(FpsApiEndpoints.UpdateUser, dto).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<UserPermissionDto>>(apiResponse).Returns(failDto);
+            _http.PutAsync<UserDto, UserDto>(FpsApiEndpoints.UpdateUser, dto).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<UserDto>>(apiResponse).Returns(failDto);
 
             var result = await _client.UpdateUserAsync(dto);
 

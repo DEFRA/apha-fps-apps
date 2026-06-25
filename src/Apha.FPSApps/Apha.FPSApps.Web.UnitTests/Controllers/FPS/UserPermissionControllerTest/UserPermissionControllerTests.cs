@@ -34,28 +34,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
             return JsonSerializer.Deserialize<T>(json);
         }
 
-        private static UserPermissionDto BuildDto(int userId = 1) =>
+        private static UserDto BuildDto(int userId = 1) =>
             new() { UserId = userId, Username = "testuser", Comments = "Test User", UserEmail = "test@example.com", Dt2Username = "dt2user" };
 
         private static UserPermissionViewModel BuildViewModel(int userId = 0) =>
             new() { UserId = userId, Username = "testuser", Comments = "Test User", UserEmail = "test@example.com", Dt2Username = "dt2user" };
 
-        private static ApiResponseDto<List<UserPermissionDto>> BuildPagedResponse(
-            IEnumerable<UserPermissionDto>? data = null) =>
-            ApiResponseDto<List<UserPermissionDto>>.SuccessResponse(
+        private static ApiResponseDto<List<UserDto>> BuildPagedResponse(
+            IEnumerable<UserDto>? data = null) =>
+            ApiResponseDto<List<UserDto>>.SuccessResponse(
                 data?.ToList() ?? [],
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
         private record JsonResponse(bool success, string? message);
 
-        private void SetupPagedService(IEnumerable<UserPermissionDto>? data = null)
+        private void SetupPagedService(IEnumerable<UserDto>? data = null)
         {
-            var dtoList = data?.ToList() ?? new List<UserPermissionDto> { BuildDto() };
+            var dtoList = data?.ToList() ?? new List<UserDto> { BuildDto() };
             var response = BuildPagedResponse(dtoList);
             _userPermissionService
                 .GetNonSuperUsersPagedAsync(Arg.Any<QueryParameters<string>>())
                 .Returns(response);
-            _mapper.Map<List<UserPermissionViewModel>>(Arg.Any<List<UserPermissionDto>>())
+            _mapper.Map<List<UserPermissionViewModel>>(Arg.Any<List<UserDto>>())
                 .Returns(dtoList.Select(d => BuildViewModel(d.UserId)).ToList());
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
@@ -290,9 +290,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
         {
             var model = BuildViewModel();
             var dto = BuildDto();
-            var response = ApiResponseDto<UserPermissionDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<UserDto>.SuccessResponse(dto);
 
-            _mapper.Map<UserPermissionDto>(model).Returns(dto);
+            _mapper.Map<UserDto>(model).Returns(dto);
             _userPermissionService.AddUserAsync(dto).Returns(response);
 
             var result = await _controller.Create(model);
@@ -310,9 +310,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
             var model = BuildViewModel();
             var dto = BuildDto();
             var errors = new List<ApiErrorDto> { new() { Message = "Creation failed", Code = "400" } };
-            var response = ApiResponseDto<UserPermissionDto>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<UserDto>.FailureResponse(errors, new ApiMetaDto());
 
-            _mapper.Map<UserPermissionDto>(model).Returns(dto);
+            _mapper.Map<UserDto>(model).Returns(dto);
             _userPermissionService.AddUserAsync(dto).Returns(response);
 
             var result = await _controller.Create(model);
@@ -332,7 +332,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
         {
             var dto = BuildDto();
             var viewModel = BuildViewModel(1);
-            var response = ApiResponseDto<UserPermissionDto?>.SuccessResponse(dto);
+            var response = ApiResponseDto<UserDto?>.SuccessResponse(dto);
 
             _userPermissionService.GetUserByIdAsync(1).Returns(response);
             _mapper.Map<UserPermissionViewModel>(dto).Returns(viewModel);
@@ -348,7 +348,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
         public async Task Edit_Get_WhenNotFound_ReturnsNotFound()
         {
             var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "404" } };
-            var response = ApiResponseDto<UserPermissionDto?>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<UserDto?>.FailureResponse(errors, new ApiMetaDto());
             _userPermissionService.GetUserByIdAsync(999).Returns(response);
 
             var result = await _controller.Edit(999);
@@ -359,7 +359,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
         [Fact]
         public async Task Edit_Get_WhenDataIsNull_ReturnsNotFound()
         {
-            var response = ApiResponseDto<UserPermissionDto?>.SuccessResponse(null);
+            var response = ApiResponseDto<UserDto?>.SuccessResponse(null);
             _userPermissionService.GetUserByIdAsync(1).Returns(response);
 
             var result = await _controller.Edit(1);
@@ -390,9 +390,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
         {
             var model = BuildViewModel(1);
             var dto = BuildDto();
-            var response = ApiResponseDto<UserPermissionDto>.SuccessResponse(dto);
+            var response = ApiResponseDto<UserDto>.SuccessResponse(dto);
 
-            _mapper.Map<UserPermissionDto>(model).Returns(dto);
+            _mapper.Map<UserDto>(model).Returns(dto);
             _userPermissionService.UpdateUserAsync(dto).Returns(response);
 
             var result = await _controller.Edit(model);
@@ -410,9 +410,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.UserPermissionControllerTes
             var model = BuildViewModel(1);
             var dto = BuildDto();
             var errors = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "400" } };
-            var response = ApiResponseDto<UserPermissionDto>.FailureResponse(errors, new ApiMetaDto());
+            var response = ApiResponseDto<UserDto>.FailureResponse(errors, new ApiMetaDto());
 
-            _mapper.Map<UserPermissionDto>(model).Returns(dto);
+            _mapper.Map<UserDto>(model).Returns(dto);
             _userPermissionService.UpdateUserAsync(dto).Returns(response);
 
             var result = await _controller.Edit(model);

@@ -6,12 +6,12 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
     public interface IFpsUserApiClient
     {
-        Task<ApiResponseDto<IEnumerable<UserPermissionDto>>> GetAllUsersAsync();
-        Task<ApiResponseDto<List<UserPermissionDto>>> GetAllUsersPagedAsync(QueryParameters<string> query);
-        Task<ApiResponseDto<List<UserPermissionDto>>> GetNonSuperUsersPagedAsync(QueryParameters<string> query);
-        Task<ApiResponseDto<UserPermissionDto?>> GetUserByIdAsync(int userId);
-        Task<ApiResponseDto<UserPermissionDto>> AddUserAsync(UserPermissionDto dto);
-        Task<ApiResponseDto<UserPermissionDto>> UpdateUserAsync(UserPermissionDto dto);
+        Task<ApiResponseDto<IEnumerable<UserDto>>> GetAllUsersAsync();
+        Task<ApiResponseDto<List<UserDto>>> GetAllUsersPagedAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<UserDto>>> GetNonSuperUsersPagedAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<UserDto?>> GetUserByIdAsync(int userId);
+        Task<ApiResponseDto<UserDto>> AddUserAsync(UserDto dto);
+        Task<ApiResponseDto<UserDto>> UpdateUserAsync(UserDto dto);
         Task<ApiResponseDto<bool>> DeleteUserAsync(int userId);
         Task<ApiResponseDto<UserPermissionDataDto>> GetUserPermissionsAsync(int userId);
         Task<ApiResponseDto<bool>> SaveUserPermissionsAsync(int userId, UserPermissionDataDto dto);
