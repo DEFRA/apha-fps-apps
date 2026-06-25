@@ -51,8 +51,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadData(PaginationFilter<string> request, string sellingPc)
         {
-            if (string.IsNullOrWhiteSpace(sellingPc))
-                return BadRequest("Selling PC is required.");
+            if (IsSellingPcMissing(sellingPc, out var badRequest))
+                return badRequest!;
 
             var gridConfig = await BuildRowGridAsync(request, sellingPc);
             return PartialView("_DataGrid", gridConfig);
@@ -65,15 +65,26 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> LoadTotals(string sellingPc)
         {
-            if (string.IsNullOrWhiteSpace(sellingPc))
-                return BadRequest("Selling PC is required.");
+            if (IsSellingPcMissing(sellingPc, out var badRequest))
+                return badRequest!;
 
             var totalsResult = await _service.GetTotalsAsync(sellingPc);
             var totals = totalsResult.Success ? totalsResult.Data : null;
             return PartialView("_ContributionSummaryTotals", totals);
         }
 
-        // ?? Private helpers ???????????????????????????????????????????????????
+        // ── Private helpers ──────────────────────────────────────────────────────
+
+        private bool IsSellingPcMissing(string sellingPc, out IActionResult? result)
+        {
+            if (string.IsNullOrWhiteSpace(sellingPc))
+            {
+                result = BadRequest("Selling PC is required.");
+                return true;
+            }
+            result = null;
+            return false;
+        }
 
         private async Task<DataGridConfig<ContributionSummaryRowItem>> BuildRowGridAsync(
             PaginationFilter<string> request, string sellingPc)

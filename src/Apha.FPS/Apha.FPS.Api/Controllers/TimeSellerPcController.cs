@@ -37,8 +37,7 @@ namespace Apha.FPS.Api.Controllers
             string sellingPc,
             CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(sellingPc))
-                throw new ArgumentException("sellingPc is required.", nameof(sellingPc));
+            ValidateSellingPc(sellingPc);
 
             var result = await _service.GetRowsAsync(sellingPc, cancellationToken);
             return Ok(_mapper.Map<List<TimeSellerPcRowRes>>(result));
@@ -55,11 +54,16 @@ namespace Apha.FPS.Api.Controllers
             string sellingPc,
             CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(sellingPc))
-                throw new ArgumentException("sellingPc is required.", nameof(sellingPc));
+            ValidateSellingPc(sellingPc);
 
             var result = await _service.GetTotalsAsync(sellingPc, cancellationToken);
             return Ok(_mapper.Map<TimeSellerPcTotalsRes>(result));
+        }
+
+        private static void ValidateSellingPc(string sellingPc)
+        {
+            if (string.IsNullOrWhiteSpace(sellingPc))
+                throw new ArgumentException("sellingPc is required.", nameof(sellingPc));
         }
     }
 }
