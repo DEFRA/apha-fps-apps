@@ -356,7 +356,9 @@ function saveAnimal() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadAnimalGrid(); }
+        if (d.success) {
+            showGovukAlert(d.message).then(function () { closeModal(); loadAnimalGrid(); });
+        }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
         else { showGovukAlert(d.message || 'Failed to save animal requirement.'); }
     })
@@ -370,7 +372,10 @@ function deleteAnimal(pid, year, arIdentity) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadAnimalGrid(); });
+        .then(function (d) {
+            if (d.success) { showGovukAlert(d.message).then(function () { loadAnimalGrid(); }); }
+            else { showGovukAlert(d.message || 'Failed to delete animal entry.'); }
+        });
     });
 }
 

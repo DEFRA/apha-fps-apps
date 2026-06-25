@@ -10,8 +10,7 @@ public class TestRequirementItem
     [GridColumn(Order = 1, Width = 100, Type = GridColumnType.Text, IsFilterable = false)]
     public string TestCode { get; set; } = null!;
 
-    [Display(Name = "Unit Price")]
-    [Required(ErrorMessage = "Unit Price is required.")]
+    [Display(Name = "Unit Price")]    
     [GridColumn(Order = 2, Width = 100, Type = GridColumnType.GbpValue)]
     public double? UnitPrice { get; set; }
 
@@ -19,8 +18,7 @@ public class TestRequirementItem
     [GridColumn(Order = 3, Width = 70, Type = GridColumnType.DecimalNumber)]
     public double? NumberOfTests { get; set; }
 
-    [Display(Name = "Cost")]
-    [Required(ErrorMessage = "Test Cost is required.")]
+    [Display(Name = "Cost")]    
     [GridColumn(Order = 4, Width = 100, Type = GridColumnType.GbpValue)]
     public double? TestCost { get; set; }
 

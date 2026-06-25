@@ -45,93 +45,135 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px;">
                     <div class="govuk-form-group">
                         <label class="govuk-label font-size-16" asp-for="Jun">Jun</label>
-                        <div style="position:relative; display:block;">
+                        <div style="position:relative; display:flex; align-items:center;">
                             <input type="text" id="JunDisplay" class="govuk-input govuk-input--width-20"
                                    value="@Model.Jun?.ToString("dd/MM/yyyy")"
-                                   autocomplete="off" onclick="openDatePicker('JunPicker')"
-                                   style="cursor:pointer;" readonly>
+                                   placeholder="dd/mm/yyyy" maxlength="10"
+                                   autocomplete="off"
+                                   oninput="formatDateInput(this)"
+                                   onblur="validateAndSyncDate('JunDisplay', 'JunBinding', 'JunError')"
+                                   style="flex:1;">
+                            <button type="button" onclick="openDatePicker('JunPicker')"
+                                    style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                    aria-label="Open date picker for Jun">&#128197;</button>
                             <input type="hidden" name="Jun" id="JunBinding"
                                    value="@(Model.Jun.HasValue ? Model.Jun.Value.ToString("yyyy-MM-dd") : string.Empty)">
                             <input type="date" id="JunPicker"
                                    value="@(Model.Jun.HasValue ? Model.Jun.Value.ToString("yyyy-MM-dd") : string.Empty)"
                                    style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                   onchange="syncDateToText('JunPicker', 'JunDisplay', 'JunBinding')">
+                                   onchange="syncDateToText('JunPicker', 'JunDisplay', 'JunBinding', 'JunError')">
                         </div>
+                        <span id="JunError" class="govuk-error-message" style="display:none;"></span>
                     </div>
                     <div class="govuk-form-group">
                         <label class="govuk-label font-size-16" asp-for="Sep">Sep</label>
-                        <div style="position:relative; display:block;">
+                        <div style="position:relative; display:flex; align-items:center;">
                             <input type="text" id="SepDisplay" class="govuk-input govuk-input--width-20"
                                    value="@Model.Sep?.ToString("dd/MM/yyyy")"
-                                   autocomplete="off" onclick="openDatePicker('SepPicker')"
-                                   style="cursor:pointer;" readonly>
+                                   placeholder="dd/mm/yyyy" maxlength="10"
+                                   autocomplete="off"
+                                   oninput="formatDateInput(this)"
+                                   onblur="validateAndSyncDate('SepDisplay', 'SepBinding', 'SepError')"
+                                   style="flex:1;">
+                            <button type="button" onclick="openDatePicker('SepPicker')"
+                                    style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                    aria-label="Open date picker for Sep">&#128197;</button>
                             <input type="hidden" name="Sep" id="SepBinding"
                                    value="@(Model.Sep.HasValue ? Model.Sep.Value.ToString("yyyy-MM-dd") : string.Empty)">
                             <input type="date" id="SepPicker"
                                    value="@(Model.Sep.HasValue ? Model.Sep.Value.ToString("yyyy-MM-dd") : string.Empty)"
                                    style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                   onchange="syncDateToText('SepPicker', 'SepDisplay', 'SepBinding')">
+                                   onchange="syncDateToText('SepPicker', 'SepDisplay', 'SepBinding', 'SepError')">
                         </div>
+                        <span id="SepError" class="govuk-error-message" style="display:none;"></span>
                     </div>
                     <div class="govuk-form-group">
                         <label class="govuk-label font-size-16" asp-for="Dec">Dec</label>
-                        <div style="position:relative; display:block;">
+                        <div style="position:relative; display:flex; align-items:center;">
                             <input type="text" id="DecDisplay" class="govuk-input govuk-input--width-20"
                                    value="@Model.Dec?.ToString("dd/MM/yyyy")"
-                                   autocomplete="off" onclick="openDatePicker('DecPicker')"
-                                   style="cursor:pointer;" readonly>
+                                   placeholder="dd/mm/yyyy" maxlength="10"
+                                   autocomplete="off"
+                                   oninput="formatDateInput(this)"
+                                   onblur="validateAndSyncDate('DecDisplay', 'DecBinding', 'DecError')"
+                                   style="flex:1;">
+                            <button type="button" onclick="openDatePicker('DecPicker')"
+                                    style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                    aria-label="Open date picker for Dec">&#128197;</button>
                             <input type="hidden" name="Dec" id="DecBinding"
                                    value="@(Model.Dec.HasValue ? Model.Dec.Value.ToString("yyyy-MM-dd") : string.Empty)">
                             <input type="date" id="DecPicker"
                                    value="@(Model.Dec.HasValue ? Model.Dec.Value.ToString("yyyy-MM-dd") : string.Empty)"
                                    style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                   onchange="syncDateToText('DecPicker', 'DecDisplay', 'DecBinding')">
+                                   onchange="syncDateToText('DecPicker', 'DecDisplay', 'DecBinding', 'DecError')">
                         </div>
+                        <span id="DecError" class="govuk-error-message" style="display:none;"></span>
                     </div>
                     <div class="govuk-form-group">
                         <label class="govuk-label font-size-16" asp-for="Jan">Jan</label>
-                        <div style="position:relative; display:block;">
+                        <div style="position:relative; display:flex; align-items:center;">
                             <input type="text" id="JanDisplay" class="govuk-input govuk-input--width-20"
                                    value="@Model.Jan?.ToString("dd/MM/yyyy")"
-                                   autocomplete="off" onclick="openDatePicker('JanPicker')"
-                                   style="cursor:pointer;" readonly>
+                                   placeholder="dd/mm/yyyy" maxlength="10"
+                                   autocomplete="off"
+                                   oninput="formatDateInput(this)"
+                                   onblur="validateAndSyncDate('JanDisplay', 'JanBinding', 'JanError')"
+                                   style="flex:1;">
+                            <button type="button" onclick="openDatePicker('JanPicker')"
+                                    style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                    aria-label="Open date picker for Jan">&#128197;</button>
                             <input type="hidden" name="Jan" id="JanBinding"
                                    value="@(Model.Jan.HasValue ? Model.Jan.Value.ToString("yyyy-MM-dd") : string.Empty)">
                             <input type="date" id="JanPicker"
                                    value="@(Model.Jan.HasValue ? Model.Jan.Value.ToString("yyyy-MM-dd") : string.Empty)"
                                    style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                   onchange="syncDateToText('JanPicker', 'JanDisplay', 'JanBinding')">
+                                   onchange="syncDateToText('JanPicker', 'JanDisplay', 'JanBinding', 'JanError')">
                         </div>
+                        <span id="JanError" class="govuk-error-message" style="display:none;"></span>
                     </div>
                     <div class="govuk-form-group">
                         <label class="govuk-label font-size-16" asp-for="Feb">Feb</label>
-                        <div style="position:relative; display:block;">
+                        <div style="position:relative; display:flex; align-items:center;">
                             <input type="text" id="FebDisplay" class="govuk-input govuk-input--width-20"
                                    value="@Model.Feb?.ToString("dd/MM/yyyy")"
-                                   autocomplete="off" onclick="openDatePicker('FebPicker')"
-                                   style="cursor:pointer;" readonly>
+                                   placeholder="dd/mm/yyyy" maxlength="10"
+                                   autocomplete="off"
+                                   oninput="formatDateInput(this)"
+                                   onblur="validateAndSyncDate('FebDisplay', 'FebBinding', 'FebError')"
+                                   style="flex:1;">
+                            <button type="button" onclick="openDatePicker('FebPicker')"
+                                    style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                    aria-label="Open date picker for Feb">&#128197;</button>
                             <input type="hidden" name="Feb" id="FebBinding"
                                    value="@(Model.Feb.HasValue ? Model.Feb.Value.ToString("yyyy-MM-dd") : string.Empty)">
                             <input type="date" id="FebPicker"
                                    value="@(Model.Feb.HasValue ? Model.Feb.Value.ToString("yyyy-MM-dd") : string.Empty)"
                                    style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                   onchange="syncDateToText('FebPicker', 'FebDisplay', 'FebBinding')">
+                                   onchange="syncDateToText('FebPicker', 'FebDisplay', 'FebBinding', 'FebError')">
                         </div>
+                        <span id="FebError" class="govuk-error-message" style="display:none;"></span>
                     </div>
                     <div class="govuk-form-group">
                         <label class="govuk-label font-size-16" asp-for="Mar">Mar</label>
-                        <div style="position:relative; display:block;">
+                        <div style="position:relative; display:flex; align-items:center;">
                             <input type="text" id="MarDisplay" class="govuk-input govuk-input--width-20"
                                    value="@Model.Mar?.ToString("dd/MM/yyyy")"
-                                   autocomplete="off" onclick="openDatePicker('MarPicker')"
-                                   style="cursor:pointer;" readonly>
+                                   placeholder="dd/mm/yyyy" maxlength="10"
+                                   autocomplete="off"
+                                   oninput="formatDateInput(this)"
+                                   onblur="validateAndSyncDate('MarDisplay', 'MarBinding', 'MarError')"
+                                   style="flex:1;">
+                            <button type="button" onclick="openDatePicker('MarPicker')"
+                                    style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                    aria-label="Open date picker for Mar">&#128197;</button>
                             <input type="hidden" name="Mar" id="MarBinding"
                                    value="@(Model.Mar.HasValue ? Model.Mar.Value.ToString("yyyy-MM-dd") : string.Empty)">
                             <input type="date" id="MarPicker"
                                    value="@(Model.Mar.HasValue ? Model.Mar.Value.ToString("yyyy-MM-dd") : string.Empty)"
                                    style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                   onchange="syncDateToText('MarPicker', 'MarDisplay', 'MarBinding')">
+                                   onchange="syncDateToText('MarPicker', 'MarDisplay', 'MarBinding', 'MarError')">
                         </div>
+                        <span id="MarError" class="govuk-error-message" style="display:none;"></span>
                     </div>
                 </div>
             </form>
@@ -160,7 +202,7 @@
         }
     }
 
-    function syncDateToText(pickerId, displayId, hiddenId) {
+    function syncDateToText(pickerId, displayId, hiddenId, errorId) {
         var picker = document.getElementById(pickerId);
         if (picker.value) {
             var parts = picker.value.split('-');
@@ -170,5 +212,70 @@
             document.getElementById(displayId).value = '';
             document.getElementById(hiddenId).value = '';
         }
+        if (errorId) {
+            var err = document.getElementById(errorId);
+            if (err) { err.style.display = 'none'; err.textContent = ''; }
+        }
+    }
+
+    function formatDateInput(input) {
+        var val = input.value.replace(/[^\d\/\-]/g, '');
+        if (val.length > 10) val = val.substring(0, 10);
+        input.value = val;
+    }
+
+    function validateAndSyncDate(displayId, hiddenId, errorId) {
+        var display = document.getElementById(displayId);
+        var hidden  = document.getElementById(hiddenId);
+        var errorEl = document.getElementById(errorId);
+        var val = display.value.trim();
+
+        if (!val) {
+            hidden.value = '';
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+            return;
+        }
+
+        if (/^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(val)) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not yyyy/mm/dd';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var usMatch = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (usMatch && parseInt(usMatch[2], 10) > 12) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not mm/dd/yyyy';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!match) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var day   = parseInt(match[1], 10);
+        var month = parseInt(match[2], 10);
+        var year  = parseInt(match[3], 10);
+        var date  = new Date(year, month - 1, day);
+
+        if (date.getFullYear() !== year || date.getMonth() !== (month - 1) || date.getDate() !== day) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter a valid date in dd/mm/yyyy format';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var mm = String(month).padStart(2, '0');
+        var dd = String(day).padStart(2, '0');
+        hidden.value = year + '-' + mm + '-' + dd;
+        errorEl.style.display = 'none';
+        errorEl.textContent = '';
     }
 </script>
