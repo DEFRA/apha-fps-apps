@@ -575,6 +575,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "costcentre" => ApplyOrder(query, p => p.CostCentre, descending),
                 "oracleprojectcode" => ApplyOrder(query, p => p.OracleProjectCode, descending),
                 "subaccountcode" => ApplyOrder(query, p => p.SubAccountCode, descending),
+                "projectstatus" => ApplyOrder(query, p => p.ProjectStatus, descending),
                 _ => query.OrderBy(p => p.ParentProject)
             };
         }
