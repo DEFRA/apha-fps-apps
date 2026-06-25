@@ -90,6 +90,8 @@ namespace Apha.Common.Constants
         public const string DeleteProject = "api/v1/project/{0}";
         public const string GetProjectsByProgram = "api/v1/project/paged?programNo={0}";
         public const string GetProjectsByProjectGroup = "api/v1/project/paged/by-project-group?projectGroup={0}";
+        public const string GetProjectsByProgramVla = "api/v1/project/paged-vla?programNo={0}";
+        public const string GetProjectsByProjectGroupVla = "api/v1/project/paged-vla/by-project-group?projectGroup={0}";
 
         // Project Group
         public const string GetAllProjectGroups = "api/v1/projectgroup";
