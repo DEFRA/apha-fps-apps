@@ -24,7 +24,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             if (!string.IsNullOrEmpty(parentProject))
             {
-                queryInvoices = queryInvoices.Where(i => i.ProjectParent == parentProject);
+                queryInvoices = queryInvoices.Where(x => x.ProjectParent != null && x.ProjectParent.ToLower() == parentProject.ToLower());
             }
 
             queryInvoices = ApplyInvoiceFilter(queryInvoices, query.Filter);
