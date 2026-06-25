@@ -55,6 +55,10 @@ namespace Apha.Common.Constants
         public const string UpdateGrade = "api/v1/Grade/{0}";
         public const string DeleteGrade = "api/v1/Grade/{0}";
 
+        // Total Business Overheads (frmMaintTotalBusinessOverheads)
+        public const string GetTotalBusinessOverheads = "api/v1/totalbusinessoverheads";
+        public const string UpdateTotalBusinessOverheads = "api/v1/totalbusinessoverheads";
+
         // Division Grade
         public const string GetPagedDivisionGrades = "api/v1/DivisionGrade/paged";
         public const string GetDivisionGradeById = "api/v1/DivisionGrade/{0}";

@@ -102,6 +102,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Bid> Bids { get; set; }
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
+        public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -313,6 +314,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new GradeMap());
             modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TotalBusinessOverheadsMap());
+            modelBuilder.Entity<TotalBusinessOverheads>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

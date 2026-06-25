@@ -37,6 +37,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         // TRANSFORMENGINE: FpsGrade added — Phase 9 (FpsGradeApiClient for frmMaintGrade ? api/v1/Grade)
         public IFpsGradeApiClient FpsGrade { get; }
+        public IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
@@ -68,6 +69,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
             // TRANSFORMENGINE: FpsGrade wired
             FpsGrade = new FpsGradeApiClient(http, mapper);
+            FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
         }
     }
 }
