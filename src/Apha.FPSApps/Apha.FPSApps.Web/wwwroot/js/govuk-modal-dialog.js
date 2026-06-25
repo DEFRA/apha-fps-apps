@@ -1,97 +1,102 @@
 (function () {
-  if (window.showGovukAlert && window.showGovukConfirm) {
-    return;
-  }
-
-  var pending = Promise.resolve();
-
-  function getFocusable(container) {
-    return Array.prototype.slice.call(
-      container.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
-    ).filter(function (el) {
-      return !el.hasAttribute("disabled") && el.getAttribute("aria-hidden") !== "true";
-    });
-  }
-
-  function buildDialog(options) {
-    var titleId = "govuk-dialog-title-" + Date.now() + "-" + Math.random().toString(16).slice(2);
-    var descId = "govuk-dialog-desc-" + Date.now() + "-" + Math.random().toString(16).slice(2);
-
-    var backdrop = document.createElement("div");
-    backdrop.setAttribute("data-govuk-modal", "backdrop");
-    backdrop.style.position = "fixed";
-    backdrop.style.inset = "0";
-    backdrop.style.zIndex = "2000";
-    backdrop.style.display = "flex";
-    backdrop.style.alignItems = "center";
-    backdrop.style.justifyContent = "center";
-    backdrop.style.backgroundColor = "rgba(11, 12, 12, 0.6)";
-    backdrop.style.padding = "20px";
-
-    var dialog = document.createElement("div");
-    dialog.setAttribute("role", "dialog");
-    dialog.setAttribute("aria-modal", "true");
-    dialog.setAttribute("aria-labelledby", titleId);
-    dialog.setAttribute("aria-describedby", descId);
-    dialog.setAttribute("tabindex", "-1");
-    dialog.className = "govuk-body";
-    dialog.style.backgroundColor = "#ffffff";
-    dialog.style.maxWidth = "620px";
-    dialog.style.width = "100%";
-    dialog.style.maxHeight = "calc(100vh - 40px)";
-    dialog.style.overflowY = "auto";
-    dialog.style.padding = "30px";
-    dialog.style.boxShadow = "0 8px 24px rgba(11, 12, 12, 0.3)";
-    dialog.style.border = "2px solid #0b0c0c";
-
-    var heading = document.createElement("h2");
-    heading.id = titleId;
-    heading.className = "govuk-heading-m govuk-!-margin-bottom-3";
-    heading.textContent = options.title || (options.type === "confirm" ? "Please confirm" : "Information");
-
-    var message = document.createElement("p");
-    message.id = descId;
-    message.className = "govuk-body govuk-!-margin-bottom-5";
-    message.textContent = String(options.message || "");
-
-    var buttonGroup = document.createElement("div");
-    buttonGroup.className = "govuk-button-group govuk-!-margin-bottom-0";
-    buttonGroup.style.display = "flex";
-    buttonGroup.style.justifyContent = "flex-end";
-    buttonGroup.style.width = "100%";
-
-    var okButton = document.createElement("button");
-    okButton.type = "button";
-    okButton.className = "govuk-button";
-    okButton.setAttribute("data-module", "govuk-button");
-    okButton.textContent = options.okText || "OK";
-
-    buttonGroup.appendChild(okButton);
-
-    var cancelButton = null;
-    if (options.type === "confirm") {
-      cancelButton = document.createElement("button");
-      cancelButton.type = "button";
-      cancelButton.className = "govuk-button govuk-button--secondary";
-      cancelButton.setAttribute("data-module", "govuk-button");
-      cancelButton.textContent = options.cancelText || "Cancel";
-      buttonGroup.appendChild(cancelButton);
+    if (window.showGovukAlert && window.showGovukConfirm) {
+        return;
     }
 
-    dialog.appendChild(heading);
-    dialog.appendChild(message);
-    dialog.appendChild(buttonGroup);
-    backdrop.appendChild(dialog);
+    var pending = Promise.resolve();
 
-    return {
-      backdrop: backdrop,
-      dialog: dialog,
-      okButton: okButton,
-      cancelButton: cancelButton
-    };
-  }
+    function getFocusable(container) {
+        return Array.prototype.slice.call(
+            container.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            )
+        ).filter(function (el) {
+            return !el.hasAttribute("disabled") && el.getAttribute("aria-hidden") !== "true";
+        });
+    }
+
+    function buildDialog(options) {
+        var titleId = "govuk-dialog-title-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+        var descId = "govuk-dialog-desc-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+        var modalclassName = "";
+
+        if (options.type === "confirm") {
+            modalclassName = "isInfo";
+        }
+
+        var backdrop = document.createElement("div");
+        backdrop.setAttribute("data-govuk-modal", "backdrop");
+        backdrop.style.position = "fixed";
+        backdrop.style.inset = "0";
+        backdrop.style.zIndex = "2000";
+        backdrop.style.display = "flex";
+        backdrop.style.alignItems = "center";
+        backdrop.style.justifyContent = "center";
+        backdrop.style.backgroundColor = "rgba(11, 12, 12, 0.6)";
+        backdrop.style.padding = "20px";
+
+        var dialog = document.createElement("div");
+        dialog.setAttribute("role", "dialog");
+        dialog.setAttribute("aria-modal", "true");
+        dialog.setAttribute("aria-labelledby", titleId);
+        dialog.setAttribute("aria-describedby", descId);
+        dialog.setAttribute("tabindex", "-1");
+        dialog.className = "govuk-body " + modalclassName + "";
+        dialog.style.backgroundColor = "#ffffff";
+        dialog.style.maxWidth = "620px";
+        dialog.style.width = "100%";
+        dialog.style.maxHeight = "calc(100vh - 40px)";
+        dialog.style.overflowY = "auto";
+        dialog.style.padding = "30px";
+        dialog.style.boxShadow = "0 8px 24px rgba(11, 12, 12, 0.3)";
+        dialog.style.border = "2px solid #0b0c0c";
+
+        var heading = document.createElement("h2");
+        heading.id = titleId;
+        heading.className = "govuk-heading-m govuk-!-margin-bottom-3";
+        heading.textContent = options.title || (options.type === "confirm" ? "Please confirm" : "Information");
+
+        var message = document.createElement("p");
+        message.id = descId;
+        message.className = "govuk-body govuk-!-margin-bottom-5";
+        message.textContent = String(options.message || "");
+
+        var buttonGroup = document.createElement("div");
+        buttonGroup.className = "govuk-button-group govuk-!-margin-bottom-0";
+        buttonGroup.style.display = "flex";
+        buttonGroup.style.justifyContent = "flex-end";
+        buttonGroup.style.width = "100%";
+
+        var okButton = document.createElement("button");
+        okButton.type = "button";
+        okButton.className = "govuk-button";
+        okButton.setAttribute("data-module", "govuk-button");
+        okButton.textContent = options.okText || "OK";
+
+        buttonGroup.appendChild(okButton);
+
+        var cancelButton = null;
+        if (options.type === "confirm") {
+            cancelButton = document.createElement("button");
+            cancelButton.type = "button";
+            cancelButton.className = "govuk-button govuk-button--secondary";
+            cancelButton.setAttribute("data-module", "govuk-button");
+            cancelButton.textContent = options.cancelText || "Cancel";
+            buttonGroup.appendChild(cancelButton);
+        }
+
+        dialog.appendChild(heading);
+        dialog.appendChild(message);
+        dialog.appendChild(buttonGroup);
+        backdrop.appendChild(dialog);
+
+        return {
+            backdrop: backdrop,
+            dialog: dialog,
+            okButton: okButton,
+            cancelButton: cancelButton
+        };
+    }
 
   function openDialog(options) {
     return new Promise(function (resolve) {
@@ -295,7 +300,7 @@
     return pending.then(function (result) {
       return result;
     });
-  };
+    };
 
   window.showGovukYesNo = function (message) {
     pending = pending.then(function () {
