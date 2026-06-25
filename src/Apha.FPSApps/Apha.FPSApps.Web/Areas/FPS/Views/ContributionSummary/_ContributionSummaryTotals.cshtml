@@ -8,6 +8,15 @@
     string GbpD(decimal v) => v.ToString("C2");
 }
 
+@* ── Grid total row: pinned directly below the data grid ── *@
+<div id="cs-grid-total-row" class="fps-cs-grid-total-row sup_border"
+     aria-label="Contribution summary total count">
+    <div class="fps-cs-grid-total-cell fps-cs-grid-total-spacer" aria-hidden="true"></div>
+    <div class="fps-cs-grid-total-cell fps-cs-grid-total-label">Total Cont</div>
+    <div class="fps-cs-grid-total-cell fps-cs-grid-total-value text-AlignRight"
+         id="cs-grid-total-cont">@GbpD(t.TotalContribution)</div>
+</div>
+
 <div id="cs-summary-grid" class="fps-cs-summary-grid govuk-!-margin-top-2">
 
     @* ── Box 1: Budget / Target / Recover ── *@
