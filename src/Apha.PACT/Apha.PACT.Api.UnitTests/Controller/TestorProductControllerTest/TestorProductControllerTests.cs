@@ -28,6 +28,51 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
             _controller = new TestorProductController(_serviceMock, _mapperMock);
         }
 
+        #region GetAllTestorProductsAsync
+
+        [Fact]
+        public async Task GetAllTestorProducts_ReturnsOkWithMappedList()
+        {
+            var dtos = new List<TestorProductDto>
+            {
+                new() { ItemCode = "T001", ItemDescription = "Test One", DefraUnitPrice = 50m },
+                new() { ItemCode = "T002", ItemDescription = "Test Two", DefraUnitPrice = 100m }
+            };
+            _serviceMock.GetAllTestorProductsAsync().Returns(dtos);
+
+            var result = await _controller.GetAllTestorProductsAsync();
+
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var list = Assert.IsType<List<TestorProductRes>>(ok.Value, exactMatch: false);
+            Assert.Equal(2, list.Count);
+            Assert.Equal("T001", list[0].ItemCode);
+            Assert.Equal("T002", list[1].ItemCode);
+        }
+
+        [Fact]
+        public async Task GetAllTestorProducts_EmptyList_ReturnsOkWithEmptyList()
+        {
+            _serviceMock.GetAllTestorProductsAsync().Returns(new List<TestorProductDto>());
+
+            var result = await _controller.GetAllTestorProductsAsync();
+
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var list = Assert.IsType<List<TestorProductRes>>(ok.Value, exactMatch: false);
+            Assert.Empty(list);
+        }
+
+        [Fact]
+        public async Task GetAllTestorProducts_ServiceThrows_PropagatesException()
+        {
+            _serviceMock.GetAllTestorProductsAsync()
+                .ThrowsAsync(new InvalidOperationException("DB error"));
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _controller.GetAllTestorProductsAsync());
+        }
+
+        #endregion
+
         #region GetPaged
 
         [Fact]
@@ -345,7 +390,7 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestorProductControllerTest
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var resultList = Assert.IsAssignableFrom<IEnumerable<string>>(okResult.Value);
+            var resultList = Assert.IsType<List<string>>(okResult.Value, exactMatch: false);
             Assert.Empty(resultList);
         }
 

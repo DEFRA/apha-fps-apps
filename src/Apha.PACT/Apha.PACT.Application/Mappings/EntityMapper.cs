@@ -45,6 +45,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<ReleasePeriod, ReleasePeriodDto>().ReverseMap();
             CreateMap<ReleaseSummary, ReleaseSummaryDto>();
             CreateMap<JobCodeZtLookup, JobCodeZtDto>().ReverseMap();
+            CreateMap<TestPriceCheckView, TestPriceCheckDto>().ReverseMap();
             CreateMap<TimePurchaseProject, TimePurchaseProjectDto>();
             CreateMap<TimeSaleProfitCentre, TimeSaleProfitCentreDto>();
             CreateMap<TestSaleSellingWorkgroup, TestSaleSellingWorkgroupDto>();

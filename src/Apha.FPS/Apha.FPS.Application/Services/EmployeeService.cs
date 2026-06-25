@@ -118,11 +118,11 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<WorkGroupPersonDto>>(items);
         }
 
-        public async Task<PaginatedResult<WorkGroupStaffDto>> GetWorkGroupStaffAsync(QueryParameters<string> queryFilter, string? workGroup = null)
+        public async Task<PaginatedResult<PactStaffDto>> GetWorkGroupStaffAsync(QueryParameters<string> queryFilter, string? workGroup = null)
         {
             var filter = _mapper.Map<PaginationParameters<string>>(queryFilter);
             var items = await _employeeRepository.GetWorkGroupStaffAsync(filter, workGroup);
-            return _mapper.Map<PaginatedResult<WorkGroupStaffDto>>(items);
+            return _mapper.Map<PaginatedResult<PactStaffDto>>(items);
         }
 
         public async Task<IEnumerable<PactStaffDto>> GetPactStaffAsync()

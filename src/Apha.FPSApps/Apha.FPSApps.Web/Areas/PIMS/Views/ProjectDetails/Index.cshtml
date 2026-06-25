@@ -359,16 +359,21 @@
                                             <label class="govuk-label govuk-!-font-size-16" for="StartDateDisplay">
                                                 Start Date
                                             </label>
-                                            <div style="position:relative; display:inline-block; width:stretch;">
+                                            <div style="position:relative; display:flex; align-items:center; width:100%;">
                                                 <input type="text"
                                                        id="StartDateDisplay"
                                                        class="govuk-input govuk-!-font-size-16"
                                                        value="@(Model.ProjectDetails?.StartDate?.ToString("dd/MM/yyyy") ?? string.Empty)"
                                                        placeholder="dd/mm/yyyy"
+                                                       maxlength="10"
                                                        autocomplete="off"
-                                                       onclick="openDatePicker('StartDatePicker')"
-                                                       style="cursor:pointer; width:stretch;"
-                                                       readonly>
+                                                       oninput="formatDateInput(this)"
+                                                       onblur="validateAndSyncDate('StartDateDisplay', 'StartDateBinding', 'StartDateError')"
+                                                       style="flex:1;">
+                                                <button type="button"
+                                                        onclick="openDatePicker('StartDatePicker')"
+                                                        style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                                        aria-label="Open date picker for Start Date">&#128197;</button>
                                                 <input type="hidden"
                                                        name="ProjectDetails.StartDate"
                                                        id="StartDateBinding"
@@ -377,23 +382,29 @@
                                                        id="StartDatePicker"
                                                        value="@(Model.ProjectDetails?.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                                       onchange="onStartDateChanged('StartDatePicker', 'StartDateDisplay', 'StartDateBinding')">
+                                                       onchange="onStartDateChanged('StartDatePicker', 'StartDateDisplay', 'StartDateBinding', 'StartDateError')">
                                             </div>
+                                            <span id="StartDateError" class="govuk-error-message" style="display:none;"></span>
                                         </div>
                                         <div class="govuk-form-group">
                                             <label class="govuk-label govuk-!-font-size-16" for="EndDateDisplay">
                                                 End Date
                                             </label>
-                                            <div style="position:relative; display:inline-block; width:stretch;">
+                                            <div style="position:relative; display:flex; align-items:center; width:100%;">
                                                 <input type="text"
                                                        id="EndDateDisplay"
                                                        class="govuk-input govuk-!-font-size-16"
                                                        value="@(Model.ProjectDetails?.EndDate?.ToString("dd/MM/yyyy") ?? string.Empty)"
                                                        placeholder="dd/mm/yyyy"
+                                                       maxlength="10"
                                                        autocomplete="off"
-                                                       onclick="openDatePicker('EndDatePicker')"
-                                                       style="cursor:pointer; width:stretch;"
-                                                       readonly>
+                                                       oninput="formatDateInput(this)"
+                                                       onblur="validateAndSyncDate('EndDateDisplay', 'EndDateBinding', 'EndDateError')"
+                                                       style="flex:1;">
+                                                <button type="button"
+                                                        onclick="openDatePicker('EndDatePicker')"
+                                                        style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                                        aria-label="Open date picker for End Date">&#128197;</button>
                                                 <input type="hidden"
                                                        name="ProjectDetails.EndDate"
                                                        id="EndDateBinding"
@@ -403,8 +414,9 @@
                                                        id="EndDatePicker"
                                                        value="@(Model.ProjectDetails?.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                                       onchange="onEndDateChanged('EndDatePicker', 'EndDateDisplay', 'EndDateBinding')">
+                                                       onchange="onEndDateChanged('EndDatePicker', 'EndDateDisplay', 'EndDateBinding', 'EndDateError')">
                                             </div>
+                                            <span id="EndDateError" class="govuk-error-message" style="display:none;"></span>
                                         </div>
                                     </div>
                                     <!-- Right sub-column -->
@@ -447,16 +459,21 @@
                                         <div class="govuk-form-group" style="margin-top: 18px;">
                                             <label class="govuk-label govuk-!-font-size-16"
                                                    for="RevisedEndDateDisplay">Revised End Date</label>
-                                            <div style="position:relative; display:inline-block; width:stretch;">
+                                            <div style="position:relative; display:flex; align-items:center; width:100%;">
                                                 <input type="text"
                                                        id="RevisedEndDateDisplay"
                                                        class="govuk-input govuk-!-font-size-16"
                                                        value="@(Model.ProjectDetails?.RevisedEndDate?.ToString("dd/MM/yyyy") ?? string.Empty)"
                                                        placeholder="dd/mm/yyyy"
+                                                       maxlength="10"
                                                        autocomplete="off"
-                                                       onclick="openDatePicker('RevisedEndDatePicker')"
-                                                       style="cursor:pointer; width:stretch;"
-                                                       readonly>
+                                                       oninput="formatDateInput(this)"
+                                                       onblur="validateAndSyncDate('RevisedEndDateDisplay', 'RevisedEndDateBinding', 'RevisedEndDateError')"
+                                                       style="flex:1;">
+                                                <button type="button"
+                                                        onclick="openDatePicker('RevisedEndDatePicker')"
+                                                        style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                                        aria-label="Open date picker for Revised End Date">&#128197;</button>
                                                 <input type="hidden"
                                                        name="ProjectDetails.RevisedEndDate"
                                                        id="RevisedEndDateBinding"
@@ -466,23 +483,29 @@
                                                        id="RevisedEndDatePicker"
                                                        value="@(Model.ProjectDetails?.RevisedEndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                                       onchange="onRevisedEndDateChanged('RevisedEndDatePicker', 'RevisedEndDateDisplay', 'RevisedEndDateBinding')">
+                                                       onchange="onRevisedEndDateChanged('RevisedEndDatePicker', 'RevisedEndDateDisplay', 'RevisedEndDateBinding', 'RevisedEndDateError')">
                                             </div>
+                                            <span id="RevisedEndDateError" class="govuk-error-message" style="display:none;"></span>
                                         </div>
                                         <div class="govuk-form-group">
                                             <label class="govuk-label govuk-!-font-size-16" for="ClosedDateDisplay">
                                                 Closed Date
                                             </label>
-                                            <div style="position:relative; display:inline-block; width:stretch;">
+                                            <div style="position:relative; display:flex; align-items:center; width:100%;">
                                                 <input type="text"
                                                        id="ClosedDateDisplay"
                                                        class="govuk-input govuk-!-font-size-16"
                                                        value="@(Model.ProjectDetails?.ClosedDate?.ToString("dd/MM/yyyy") ?? string.Empty)"
                                                        placeholder="dd/mm/yyyy"
+                                                       maxlength="10"
                                                        autocomplete="off"
-                                                       onclick="openDatePicker('ClosedDatePicker')"
-                                                       style="cursor:pointer; width:stretch;"
-                                                       readonly>
+                                                       oninput="formatDateInput(this)"
+                                                       onblur="validateAndSyncDate('ClosedDateDisplay', 'ClosedDateBinding', 'ClosedDateError')"
+                                                       style="flex:1;">
+                                                <button type="button"
+                                                        onclick="openDatePicker('ClosedDatePicker')"
+                                                        style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                                        aria-label="Open date picker for Closed Date">&#128197;</button>
                                                 <input type="hidden"
                                                        name="ProjectDetails.ClosedDate"
                                                        id="ClosedDateBinding"
@@ -491,8 +514,9 @@
                                                        id="ClosedDatePicker"
                                                        value="@(Model.ProjectDetails?.ClosedDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
                                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                                       onchange="syncDateToText('ClosedDatePicker', 'ClosedDateDisplay', 'ClosedDateBinding')">
+                                                       onchange="syncDateToText('ClosedDatePicker', 'ClosedDateDisplay', 'ClosedDateBinding', 'ClosedDateError')">
                                             </div>
+                                            <span id="ClosedDateError" class="govuk-error-message" style="display:none;"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -566,7 +590,7 @@
             }
         }
 
-        function syncDateToText(pickerId, displayId, hiddenId) {
+        function syncDateToText(pickerId, displayId, hiddenId, errorId) {
             var picker = document.getElementById(pickerId);
             if (picker.value) {
                 var parts = picker.value.split('-');
@@ -576,6 +600,71 @@
                 document.getElementById(displayId).value = '';
                 document.getElementById(hiddenId).value = '';
             }
+            if (errorId) {
+                var err = document.getElementById(errorId);
+                if (err) { err.style.display = 'none'; err.textContent = ''; }
+            }
+        }
+
+        function formatDateInput(input) {
+            var val = input.value.replace(/[^\d\/\-]/g, '');
+            if (val.length > 10) val = val.substring(0, 10);
+            input.value = val;
+        }
+
+        function validateAndSyncDate(displayId, hiddenId, errorId) {
+            var display = document.getElementById(displayId);
+            var hidden  = document.getElementById(hiddenId);
+            var errorEl = document.getElementById(errorId);
+            var val = display.value.trim();
+
+            if (!val) {
+                hidden.value = '';
+                errorEl.style.display = 'none';
+                errorEl.textContent = '';
+                return;
+            }
+
+            if (/^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(val)) {
+                hidden.value = '';
+                errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not yyyy/mm/dd';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            var usMatch = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (usMatch && parseInt(usMatch[2], 10) > 12) {
+                hidden.value = '';
+                errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not mm/dd/yyyy';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            var match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (!match) {
+                hidden.value = '';
+                errorEl.textContent = 'Enter the date in dd/mm/yyyy format';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            var day   = parseInt(match[1], 10);
+            var month = parseInt(match[2], 10);
+            var year  = parseInt(match[3], 10);
+            var date  = new Date(year, month - 1, day);
+
+            if (date.getFullYear() !== year || date.getMonth() !== (month - 1) || date.getDate() !== day) {
+                hidden.value = '';
+                errorEl.textContent = 'Enter a valid date in dd/mm/yyyy format';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            var mm = String(month).padStart(2, '0');
+            var dd = String(day).padStart(2, '0');
+            hidden.value = year + '-' + mm + '-' + dd;
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
         }
 
         var commentsGridId   = '@Model.CommentsGrid.GridId';
@@ -646,7 +735,7 @@
         }
 
         // ── VBA: EndDate_BeforeUpdate — Yes/No confirm when changing an existing end date ──
-        function onEndDateChanged(pickerId, displayId, bindingId) {
+        function onEndDateChanged(pickerId, displayId, bindingId, errorId) {
             var picker   = document.getElementById(pickerId);
             var binding  = document.getElementById(bindingId);
             var display  = document.getElementById(displayId);
@@ -660,7 +749,7 @@
                     'Do you want to change the date in this field?'
                 ).then(function (confirmed) {
                     if (confirmed) {
-                        syncDateToText(pickerId, displayId, bindingId);
+                        syncDateToText(pickerId, displayId, bindingId, errorId);
                     } else {
                         // VBA: Cancel = True / Me.Undo — revert field to original
                         picker.value  = original;
@@ -670,13 +759,13 @@
                     }
                 });
             } else {
-                syncDateToText(pickerId, displayId, bindingId);
+                syncDateToText(pickerId, displayId, bindingId, errorId);
             }
         }
 
         // ── VBA: StartDate_AfterUpdate — informational message, no cancel ──
-        function onStartDateChanged(pickerId, displayId, bindingId) {
-            syncDateToText(pickerId, displayId, bindingId);
+        function onStartDateChanged(pickerId, displayId, bindingId, errorId) {
+            syncDateToText(pickerId, displayId, bindingId, errorId);
             var picker = document.getElementById(pickerId);
             if (picker.value) {
                 var day = new Date(picker.value).getDate();
@@ -687,8 +776,8 @@
         }
 
         // ── VBA: RevisedEndDate_AfterUpdate — save then show informational message ──
-        function onRevisedEndDateChanged(pickerId, displayId, bindingId) {
-            syncDateToText(pickerId, displayId, bindingId);
+        function onRevisedEndDateChanged(pickerId, displayId, bindingId, errorId) {
+            syncDateToText(pickerId, displayId, bindingId, errorId);
             var picker   = document.getElementById(pickerId);
             var original = document.getElementById(bindingId).getAttribute('data-original-value') || '';
             if (picker.value && picker.value !== original) {

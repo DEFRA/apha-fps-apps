@@ -111,6 +111,7 @@ namespace Apha.PACT.DataAccess.Data
             modelBuilder.Entity<ProjectMonth>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new PeriodMonthMap());
+            modelBuilder.Entity<PeriodMonth>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new CalenderMonthMap());
 

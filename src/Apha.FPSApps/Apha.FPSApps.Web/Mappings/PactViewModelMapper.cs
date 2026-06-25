@@ -22,6 +22,7 @@ namespace Apha.FPSApps.Web.Mappings
                 .ReverseMap()
                 .ForMember(dest => dest.ParentProject, opt => opt.MapFrom(src => src.ParentProject));
             CreateMap<ProjectInvoiceItem, ProjectInvoiceDto>().ReverseMap();
+            CreateMap<InvoiceItem, ProjectInvoiceDto>().ReverseMap();
             CreateMap<ProjectSubContractItem, ProjectSubContractDto>()
                 .ForMember(dest => dest.SubContCounter, opt => opt.MapFrom(src => src.Counter))
                 .ReverseMap()
@@ -50,7 +51,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<TestorProductDto, TestOrProductViewModel>().ReverseMap();
 
             CreateMap<ProjectMonthItem, ProjectMonthDto>().ReverseMap();
-            CreateMap<WorkGroupStaffDto, WorkGroupPeopleItem>().ReverseMap();
+            CreateMap<PactStaffDto, WorkGroupPeopleItem>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPerson>().ReverseMap();
             CreateMap<MonthlyOutputLogDto, MonthlyOutputLogItem>().ReverseMap();
