@@ -18,9 +18,7 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<List<TimeSellerPcView>> GetBySellingPcAsync(
-            string sellingPc,
-            CancellationToken cancellationToken = default)
+        public async Task<List<TimeSellerPcView>> GetBySellingPcAsync(string sellingPc)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(sellingPc);
 
@@ -29,7 +27,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(x => x.SellingPc == sellingPc)
                 .OrderBy(x => x.WorkGroup)
                 .ThenBy(x => x.WgGrade)
-                .ToListAsync(cancellationToken);
+                .ToListAsync();
         }
     }
 }

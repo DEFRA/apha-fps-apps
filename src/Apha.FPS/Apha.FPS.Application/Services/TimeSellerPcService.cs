@@ -29,7 +29,7 @@ namespace Apha.FPS.Application.Services
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(sellingPc);
 
-            var rows = await _repository.GetBySellingPcAsync(sellingPc, cancellationToken);
+            var rows = await _repository.GetBySellingPcAsync(sellingPc);
 
             return rows.Select(r => new TimeSellerPcRowDto
             {
@@ -62,9 +62,9 @@ namespace Apha.FPS.Application.Services
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(sellingPc);
 
-            var rows = await _repository.GetBySellingPcAsync(sellingPc, cancellationToken);
+            var rows = await _repository.GetBySellingPcAsync(sellingPc);
 
-            // ContTarget and SumOfGenBid are the same on every row for a given SellingPC
+            // ContTarget and SumOfGenBid are the same on every row
             var firstRow = rows.FirstOrDefault();
             var contTarget = firstRow?.ContTarget ?? 0m;
             var sumOfGenBid = firstRow?.SumOfGenBid ?? 0m;
