@@ -110,6 +110,14 @@ public sealed class EfCoreMappingTests
     }
 
     [Fact]
+    public void TblJobQueue_FpsYear_ColumnName_Is_fpsyear()
+    {
+        using var ctx = new BatchJobsDbContext(_options);
+        var prop = GetEntityByTable(ctx, "job_queue").FindProperty("FpsYear")!;
+        Assert.Equal("fpsyear", prop.GetColumnName(StoreObjectIdentifier.Table("job_queue", "fps")));
+    }
+
+    [Fact]
     public void TblJobQueue_HasForeignKey_To_TblJobMaster_Restrict()
     {
         using var ctx = new BatchJobsDbContext(_options);

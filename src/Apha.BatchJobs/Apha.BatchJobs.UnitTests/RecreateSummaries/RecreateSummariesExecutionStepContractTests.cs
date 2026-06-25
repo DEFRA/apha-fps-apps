@@ -65,7 +65,7 @@ public sealed class RecreateSummariesExecutionStepContractTests
             ("DeleteProjectMonth3Step", [], "DeleteProjectMonth3"),
             ("CreateProjectMonthCumulativeStep", [], "CreateProjectMonthCumulative"),
             ("CreateProjectMonthFinalStep", [6], "CreateProjectMonthFinal"),
-            ("LogRecreateSummariesStep", [6, "unit-test-user"], "LogRecreateSummaries"),
+            ("LogRecreateSummariesStep", [6, 2026, "unit-test-user"], "LogRecreateSummaries"),
             ("RefreshPeriodMoStep", [6], "RefreshPeriodMo"),
             ("RefreshPeriodPscStep", [6], "RefreshPeriodPsc"),
             ("RefreshPeriodTccStep", [6], "RefreshPeriodTcc")

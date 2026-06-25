@@ -4,7 +4,6 @@ using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -20,14 +19,12 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly IBatchJobFactory _factory;
     private readonly IBatchLockRepository _lockRepository;
     private readonly IJobExecutionRepository _executionRepository;
-    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<JobOrchestrator> _logger;
     private readonly int _lockTimeoutSeconds;
     private readonly int _retryAttempts;
     private readonly int _retryDelaySeconds;
     private readonly int _maxRetryDurationSeconds;
     private readonly int _defaultJobTimeoutSeconds;
-    private readonly int _cancellationPollIntervalSeconds;
     private readonly Dictionary<string, int> _jobTimeoutOverridesSeconds;
 
     /// <summary>Default lock timeout in seconds when configuration is missing/invalid.</summary>
@@ -36,9 +33,6 @@ public sealed class JobOrchestrator : IJobOrchestrator
     /// <summary>Default maximum retry duration in seconds.</summary>
     private const int DefaultMaxRetryDurationSeconds = 0;
 
-    /// <summary>Default cancellation monitor poll interval in seconds.</summary>
-    private const int DefaultCancellationPollIntervalSeconds = 2;
-
     /// <summary>
     /// Initializes a new instance of <see cref="JobOrchestrator"/>.
     /// </summary>
@@ -46,14 +40,12 @@ public sealed class JobOrchestrator : IJobOrchestrator
         IBatchJobFactory factory,
         IBatchLockRepository lockRepository,
         IJobExecutionRepository executionRepository,
-        IServiceScopeFactory scopeFactory,
         IOptions<BatchJobSettings> settings,
         ILogger<JobOrchestrator> logger)
     {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _lockRepository = lockRepository ?? throw new ArgumentNullException(nameof(lockRepository));
         _executionRepository = executionRepository ?? throw new ArgumentNullException(nameof(executionRepository));
-        _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         _lockTimeoutSeconds = settings?.Value.LockTimeoutSeconds >= 0
             ? settings.Value.LockTimeoutSeconds
             : DefaultLockTimeoutSeconds;
@@ -69,9 +61,6 @@ public sealed class JobOrchestrator : IJobOrchestrator
         _defaultJobTimeoutSeconds = settings?.Value.JobTimeout >= 0
             ? settings.Value.JobTimeout
             : DefaultLockTimeoutSeconds;
-        _cancellationPollIntervalSeconds = settings?.Value.CancellationPollIntervalSeconds > 0
-            ? settings.Value.CancellationPollIntervalSeconds
-            : DefaultCancellationPollIntervalSeconds;
         _jobTimeoutOverridesSeconds = settings?.Value.JobTimeoutOverridesSeconds is { Count: > 0 }
             ? settings.Value.JobTimeoutOverridesSeconds
                 .Where(kv => !string.IsNullOrWhiteSpace(kv.Key) && kv.Value > 0)
@@ -87,7 +76,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
         Guid jobExecutionId,
         string userId,
         DateTime? requestedAtUtc = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? fpsYear = null)
     {
         var startedAt = DateTime.UtcNow;
 
@@ -110,7 +100,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     userId,
                     initiatedRequestedAtUtc,
                     runMode,
-                    cancellationToken);
+                    cancellationToken,
+                    fpsYear);
 
                 existingExecution = new JobExecutionRecord
                 {
@@ -123,6 +114,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     RunMode = runMode,
                     Status = JobStatus.Initiated,
                     RequestedAtUtc = initiatedRequestedAtUtc,
+                    FpsYear = fpsYear,
                     StartedAt = initiatedRequestedAtUtc
                 };
 
@@ -201,7 +193,8 @@ public sealed class JobOrchestrator : IJobOrchestrator
             RunMode = runMode,
             Status = JobStatus.Running,
             StartedAt = startedAt,
-            RequestedAtUtc = requestedAtUtc
+            RequestedAtUtc = requestedAtUtc,
+            FpsYear = fpsYear
         };
 
         int executionId = 0;
@@ -252,22 +245,11 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     attemptCts.CancelAfter(TimeSpan.FromSeconds(runtimeTimeoutSeconds.Value));
                 }
 
-                var cancellationObserved = false;
-                var monitorTask = MonitorCancellationAsync(
-                    jobExecutionId,
-                    jobName,
-                    userId,
-                    attempt,
-                    totalAttempts,
-                    attemptCts,
-                    () => cancellationObserved = true,
-                    cancellationToken);
-
                 var attemptToken = attemptCts.Token;
 
                 try
                 {
-                    await ThrowIfCancellationRequestedAsync(jobExecutionId, jobName, attempt, totalAttempts, cancellationToken);
+                    cancellationToken.ThrowIfCancellationRequested();
 
                     _logger.LogInformation(
                         "Executing job '{JobName}' | Attempt={Attempt}/{TotalAttempts}",
@@ -287,17 +269,6 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 }
                 catch (OperationCanceledException ex)
                 {
-                    if (cancellationObserved)
-                    {
-                        jobException = ex;
-                        _logger.LogWarning(ex,
-                            "Job '{JobName}' was cancelled via durable request | Attempt={Attempt}/{TotalAttempts}",
-                            jobName,
-                            attempt,
-                            totalAttempts);
-                        break;
-                    }
-
                     if (attemptCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
                     {
                         var timeoutException = new TimeoutException(
@@ -315,7 +286,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
                     jobException = ex;
                     _logger.LogWarning(ex,
-                        "Job '{JobName}' was cancelled | Attempt={Attempt}/{TotalAttempts}",
+                        "Job '{JobName}' execution was interrupted by cancellation token | Attempt={Attempt}/{TotalAttempts}",
                         jobName,
                         attempt,
                         totalAttempts);
@@ -353,8 +324,6 @@ public sealed class JobOrchestrator : IJobOrchestrator
                             jobName, attempt, totalAttempts, ex.GetType().Name, ex.Message, jobQueueId);
                         break;
                     }
-
-                    await ThrowIfCancellationRequestedAsync(jobExecutionId, jobName, attempt, totalAttempts, cancellationToken);
 
                     // Check if total retry duration would be exceeded
                     var elapsedRetrySeconds = (DateTime.UtcNow - retryStartedAt).TotalSeconds;
@@ -400,21 +369,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
                 finally
                 {
                     attemptCts.Cancel();
-                    try
-                    {
-                        await monitorTask;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        // Expected when attempt lifecycle ends.
-                    }
                 }
             }
         }
         catch (Exception ex)
         {
             // Capture failures raised before/around ExecuteAsync (for example factory resolution)
-            // so execution state is persisted correctly as Failed/Cancelled.
+            // so execution state is persisted correctly as Failed.
             jobException = ex;
         }
         finally
@@ -427,7 +388,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
             var finalStatus = jobException switch
             {
                 null => JobStatus.Completed,
-                OperationCanceledException => JobStatus.Cancelled,
+                OperationCanceledException => JobStatus.Failed,
                 _ => JobStatus.Failed
             };
 
@@ -466,7 +427,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
         var status = jobException switch
         {
             null => JobStatus.Completed,
-            OperationCanceledException => JobStatus.Cancelled,
+            OperationCanceledException => JobStatus.Failed,
             _ => JobStatus.Failed
         };
 
@@ -482,80 +443,6 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         return new JobExecutionResult(jobQueueId, jobName, status, finalDuration, executionId);
     }
-
-    private async Task ThrowIfCancellationRequestedAsync(
-        Guid jobExecutionId,
-        string jobName,
-        int attempt,
-        int totalAttempts,
-        CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        await using var scope = _scopeFactory.CreateAsyncScope();
-        var repo = scope.ServiceProvider.GetRequiredService<IJobExecutionRepository>();
-
-        var cancellationRequested = await repo.IsCancellationRequestedAsync(jobExecutionId, cancellationToken);
-        if (!cancellationRequested)
-            return;
-
-        await repo.MarkCancellationConsumedAsync(jobExecutionId, "orchestrator-checkpoint", CancellationToken.None);
-
-        _logger.LogWarning(
-            "Cancellation checkpoint consumed | JobName={JobName} | JobExecutionId={JobExecutionId} | Attempt={Attempt}/{TotalAttempts}",
-            jobName,
-            jobExecutionId,
-            attempt,
-            totalAttempts);
-
-        throw new OperationCanceledException(
-            $"Cancellation requested for job execution '{jobExecutionId}'.",
-            cancellationToken);
-    }
-
-    private async Task MonitorCancellationAsync(
-        Guid jobExecutionId,
-        string jobName,
-        string userId,
-        int attempt,
-        int totalAttempts,
-        CancellationTokenSource attemptCts,
-        Action onCancellationObserved,
-        CancellationToken orchestratorCancellationToken)
-    {
-        var pollDelay = TimeSpan.FromSeconds(_cancellationPollIntervalSeconds);
-
-        while (!attemptCts.IsCancellationRequested && !orchestratorCancellationToken.IsCancellationRequested)
-        {
-            bool requested;
-            await using (var scope = _scopeFactory.CreateAsyncScope())
-            {
-                var repo = scope.ServiceProvider.GetRequiredService<IJobExecutionRepository>();
-                requested = await repo.IsCancellationRequestedAsync(jobExecutionId, orchestratorCancellationToken);
-                if (requested)
-                    await repo.MarkCancellationConsumedAsync(jobExecutionId, "orchestrator-monitor", CancellationToken.None);
-            }
-
-            if (requested)
-            {
-                onCancellationObserved();
-
-                _logger.LogWarning(
-                    "Cancellation monitor observed request | JobName={JobName} | JobExecutionId={JobExecutionId} | Attempt={Attempt}/{TotalAttempts} | UserId={UserId}",
-                    jobName,
-                    jobExecutionId,
-                    attempt,
-                    totalAttempts,
-                    userId);
-
-                attemptCts.Cancel();
-                return;
-            }
-
-            await Task.Delay(pollDelay, orchestratorCancellationToken);
-        }
-    }
-
 
     /// <summary>
     /// Returns false for exceptions that must never be retried:

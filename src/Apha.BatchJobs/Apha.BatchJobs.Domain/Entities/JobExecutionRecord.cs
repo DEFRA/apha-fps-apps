@@ -58,6 +58,11 @@ public sealed class JobExecutionRecord
     public DateTime? RequestedAtUtc { get; set; }
 
     /// <summary>
+    /// FPS year associated with this execution when applicable (for example RecreateSummaries).
+    /// </summary>
+    public int? FpsYear { get; set; }
+
+    /// <summary>
     /// Timestamp when execution completed.
     /// </summary>
     public DateTime? CompletedAt { get; set; }

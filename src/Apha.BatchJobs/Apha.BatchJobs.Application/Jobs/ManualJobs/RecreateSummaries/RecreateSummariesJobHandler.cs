@@ -27,7 +27,7 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
     private readonly ILogger<RecreateSummariesJobHandler> _logger;
 
     /// <summary>Canonical job name.</summary>
-    public string Name => "RecreateSummaries";
+    public string Name => "RecreateSummary";
 
     /// <summary>
     /// Idempotency strategy: full delete-and-rebuild per month with a single wrapping transaction.
@@ -103,7 +103,7 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
         }
         catch (OperationCanceledException ex)
         {
-            _logger.LogWarning(ex, "RecreateSummaries job was cancelled | CorrelationId={CorrelationId}", correlationId);
+            _logger.LogWarning(ex, "RecreateSummaries job execution was interrupted | CorrelationId={CorrelationId}", correlationId);
             throw;
         }
         catch (Exception ex)

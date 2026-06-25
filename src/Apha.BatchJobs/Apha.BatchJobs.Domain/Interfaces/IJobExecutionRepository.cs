@@ -48,6 +48,7 @@ public interface IJobExecutionRepository
     /// <param name="requestedAtUtc">UTC timestamp when the API accepted the request.</param>
     /// <param name="runMode">Manual or Scheduled.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="fpsYear">Optional FPS year context for year-scoped jobs.</param>
     /// <returns>The JobQueueId of the newly created record.</returns>
     Task<Guid> CreateInitiatedRecordAsync(
         string jobName,
@@ -55,60 +56,7 @@ public interface IJobExecutionRepository
         string requestedBy,
         DateTime requestedAtUtc,
         RunMode runMode,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        int? fpsYear = null);
 
-    /// <summary>
-    /// Ensures baseline status rows exist in fps.job_status for all known jobs in fps.job_master.
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    Task EnsureJobStatusCatalogAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Tries to persist an idempotent cancellation request keyed by job execution id.
-    /// </summary>
-    /// <param name="jobExecutionId">External job execution id.</param>
-    /// <param name="requestedBy">Identity that requested cancellation.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>
-    /// True when cancellation is newly requested; false when an existing request is already stored.
-    /// </returns>
-    Task<bool> TryRequestCancellationAsync(Guid jobExecutionId, string requestedBy, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Creates a durable cancellation request when none exists.
-    /// </summary>
-    /// <param name="jobExecutionId">External job execution id.</param>
-    /// <param name="requestedBy">Identity that requested cancellation.</param>
-    /// <param name="source">Optional source channel (UI/API/system).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>
-    /// True when request is newly persisted; false when request already exists.
-    /// </returns>
-    Task<bool> UpsertCancellationRequestAsync(
-        Guid jobExecutionId,
-        string requestedBy,
-        string? source = null,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets durable cancellation request details for a given execution id.
-    /// </summary>
-    /// <param name="jobExecutionId">External job execution id.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    Task<CancellationRequestRecord?> GetCancellationRequestAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Marks a durable cancellation request as consumed by a worker.
-    /// </summary>
-    /// <param name="jobExecutionId">External job execution id.</param>
-    /// <param name="consumedBy">Worker identity consuming the request.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    Task MarkCancellationConsumedAsync(Guid jobExecutionId, string consumedBy, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Returns true when a cancellation request exists for the given execution id.
-    /// </summary>
-    /// <param name="jobExecutionId">External job execution id.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    Task<bool> IsCancellationRequestedAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
 }

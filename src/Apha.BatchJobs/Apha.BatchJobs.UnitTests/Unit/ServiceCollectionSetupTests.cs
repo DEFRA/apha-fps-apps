@@ -49,7 +49,7 @@ public sealed class ServiceCollectionSetupTests
 
         var jobs = serviceProvider.GetServices<IBatchJob>().ToList();
 
-        var manualJobNames = new[] { "HealthCheck", "FECProcess", "RecreateSummaries" };
+        var manualJobNames = new[] { "HealthCheck", "FECProcess", "RecreateSummary" };
         foreach (var jobName in manualJobNames)
         {
             var matchingJobs = jobs.Where(j => string.Equals(j.Name, jobName, StringComparison.OrdinalIgnoreCase)).ToList();

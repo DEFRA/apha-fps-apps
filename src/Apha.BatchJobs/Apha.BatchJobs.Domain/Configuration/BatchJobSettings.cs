@@ -46,9 +46,4 @@ public sealed class BatchJobSettings
     /// </summary>
     public int LockTimeoutSeconds { get; set; } = 0;
 
-    /// <summary>
-    /// Poll interval in seconds for checking durable cancellation requests while a job is running.
-    /// </summary>
-    public int CancellationPollIntervalSeconds { get; set; } = 2;
-
 }

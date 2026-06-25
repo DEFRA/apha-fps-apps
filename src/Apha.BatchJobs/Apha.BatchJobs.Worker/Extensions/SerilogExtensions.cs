@@ -23,11 +23,14 @@ public static class SerilogExtensions
         this LoggerConfiguration loggerConfiguration,
         IConfiguration? configuration = null)
     {
+        var logStreamPrefix = ResolveLogStreamPrefix(configuration);
+
         // Enrich logs with context information
         loggerConfiguration = loggerConfiguration
             .Enrich.FromLogContext()
             .Enrich.WithProperty("ApplicationName", "Apha.BatchJobs")
-            .Enrich.WithProperty("Environment", GetEnvironment());
+            .Enrich.WithProperty("Environment", GetEnvironment())
+            .Enrich.WithProperty("LogStreamPrefix", logStreamPrefix);
 
         // Use readable console format for Demo/Development, JSON for Production
         var environment = GetEnvironment();
@@ -37,7 +40,7 @@ public static class SerilogExtensions
             // Human-readable format for local testing
             loggerConfiguration = loggerConfiguration
                 .WriteTo.Console(
-                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}");
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{LogStreamPrefix}] {Message:lj} {Properties:j}{NewLine}{Exception}");
         }
         else
         {
@@ -70,5 +73,26 @@ public static class SerilogExtensions
     private static string GetEnvironment()
     {
         return Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+    }
+
+    /// <summary>
+    /// Resolves a stable prefix that appears on each log event.
+    /// Precedence: env var BATCH_LOG_STREAM_PREFIX, config Logging:LogStreamPrefix, default value.
+    /// </summary>
+    private static string ResolveLogStreamPrefix(IConfiguration? configuration)
+    {
+        var envPrefix = Environment.GetEnvironmentVariable("BATCH_LOG_STREAM_PREFIX");
+        if (!string.IsNullOrWhiteSpace(envPrefix))
+        {
+            return envPrefix.Trim();
+        }
+
+        var configPrefix = configuration?["Logging:LogStreamPrefix"];
+        if (!string.IsNullOrWhiteSpace(configPrefix))
+        {
+            return configPrefix.Trim();
+        }
+
+        return "apha-batch";
     }
 }

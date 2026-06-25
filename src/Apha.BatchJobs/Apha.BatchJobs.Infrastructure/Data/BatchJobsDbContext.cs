@@ -41,11 +41,6 @@ public class BatchJobsDbContext : DbContext
     /// </summary>
     internal DbSet<TblJobQueueLog> TblJobQueueLog { get; set; }
 
-    /// <summary>
-    /// Gets or sets durable cancellation requests keyed by job execution id.
-    /// </summary>
-    internal DbSet<TblJobCancellationRequest> JobCancellationRequests { get; set; }
-
 
     /// <summary>
     /// Gets or sets scheduled load run lifecycle rows.
@@ -239,6 +234,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.StatusId).HasColumnName("statusid").IsRequired();
             entity.Property(e => e.RequestedBy).HasColumnName("requestedby").IsRequired().HasMaxLength(100);
             entity.Property(e => e.RequestedAtUtc).HasColumnName("requested_at_utc");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
             entity.Property(e => e.StartDateTime).HasColumnName("startdatetime").IsRequired();
             entity.Property(e => e.EndDateTime).HasColumnName("enddatetime");
             entity.Property(e => e.ErrorMessage).HasColumnName("errormessage").HasMaxLength(1000);
@@ -279,23 +275,6 @@ public class BatchJobsDbContext : DbContext
                   .HasForeignKey(e => e.StatusId)
                   .HasConstraintName("fk_job_queue_log_statusid")
                   .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        // Configure durable cancellation request table — mirrors fps.job_cancellation_request
-        modelBuilder.Entity<TblJobCancellationRequest>(entity =>
-        {
-            entity.ToTable("job_cancellation_request", schema: "fps");
-            entity.HasKey(e => e.JobExecutionId);
-            entity.Property(e => e.JobExecutionId).HasColumnName("jobexecutionid").IsRequired();
-            entity.Property(e => e.RequestedBy).HasColumnName("requested_by").IsRequired().HasMaxLength(256);
-            entity.Property(e => e.RequestedAtUtc).HasColumnName("requested_at_utc").IsRequired();
-            entity.Property(e => e.Status).HasColumnName("status").IsRequired().HasMaxLength(50);
-            entity.Property(e => e.Source).HasColumnName("source").HasMaxLength(100);
-            entity.Property(e => e.ConsumedAtUtc).HasColumnName("consumed_at_utc");
-            entity.Property(e => e.ConsumedBy).HasColumnName("consumed_by").HasMaxLength(256);
-            entity.Property(e => e.TerminalizedAtUtc).HasColumnName("terminalized_at_utc");
-            entity.HasIndex(e => e.RequestedAtUtc).HasDatabaseName("idx_job_cancel_requested_at");
-            entity.HasIndex(e => e.Status).HasDatabaseName("idx_job_cancel_status");
         });
 
         // Configure scheduled load run table — mirrors fps.scheduled_load_run

@@ -5,7 +5,6 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Npgsql;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories;
 
@@ -16,13 +15,6 @@ public class JobExecutionRepository : IJobExecutionRepository
 {
     private readonly BatchJobsDbContext _context;
     private readonly ILogger<JobExecutionRepository> _logger;
-    private const int DefaultTimeToLiveSeconds = 3600;
-    private const string CancellationRequestedStatus = "CancelRequested";
-    private const string CancellationRequestedNotePrefix = "Cancellation requested";
-    private const string CancellationPendingState = "Pending";
-    private const string CancellationConsumedState = "Consumed";
-    private const string CancellationTerminalizedState = "Terminalized";
-    private const string UndefinedTableSqlState = "42P01";
 
     /// <summary>
     /// Initializes a new instance of the JobExecutionRepository.
@@ -43,12 +35,13 @@ public class JobExecutionRepository : IJobExecutionRepository
 
         var now = DateTime.UtcNow;
         _logger.LogInformation(
-            "Create execution record requested | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
+            "Create execution record requested | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status} | FpsYear={FpsYear}",
             record.JobName,
             record.JobExecutionId,
             record.JobQueueId,
             record.UserId,
-            record.Status);
+            record.Status,
+            record.FpsYear);
 
         // Check if an Initiated row already exists for this jobExecutionId (manual job path)
         var existingRow = await _context.TblJobQueue
@@ -62,6 +55,10 @@ public class JobExecutionRepository : IJobExecutionRepository
             existingRow.StatusId = statusId;
             existingRow.StartDateTime = record.StartedAt;
             existingRow.RequestedBy = record.UserId;
+            if (record.FpsYear.HasValue)
+            {
+                existingRow.FpsYear = record.FpsYear.Value;
+            }
             existingRow.UpdatedAt = now;
 
             // Ensure the record's JobQueueId matches the persisted row
@@ -148,11 +145,6 @@ public class JobExecutionRepository : IJobExecutionRepository
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        if (record.Status == JobStatus.Cancelled)
-        {
-            await TryMarkCancellationTerminalizedAsync(record.JobExecutionId, cancellationToken);
-        }
-
         _logger.LogInformation(
             "Execution record updated | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | UserId={UserId} | Status={Status}",
             record.JobName,
@@ -181,6 +173,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.JobQueueId,
                 q.RequestedBy,
                 q.RequestedAtUtc,
+                q.FpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -206,6 +199,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             RunMode = RunMode.Manual,
             Status = parsedStatus,
             RequestedAtUtc = last.RequestedAtUtc,
+            FpsYear = last.FpsYear,
             StartedAt = last.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = last.EndDateTime,
             DurationSeconds = last.EndDateTime.HasValue && last.StartDateTime.HasValue
@@ -232,6 +226,7 @@ public class JobExecutionRepository : IJobExecutionRepository
                 q.JobQueueId,
                 q.RequestedBy,
                 q.RequestedAtUtc,
+                q.FpsYear,
                 q.StartDateTime,
                 q.EndDateTime,
                 s.Status,
@@ -263,6 +258,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             RunMode = RunMode.Manual,
             Status = status,
             RequestedAtUtc = execution.RequestedAtUtc,
+            FpsYear = execution.FpsYear,
             StartedAt = execution.StartDateTime ?? DateTime.UtcNow,
             CompletedAt = execution.EndDateTime,
             DurationSeconds = execution.EndDateTime.HasValue && execution.StartDateTime.HasValue
@@ -280,7 +276,8 @@ public class JobExecutionRepository : IJobExecutionRepository
         string requestedBy,
         DateTime requestedAtUtc,
         RunMode runMode,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? fpsYear = null)
     {
         if (string.IsNullOrWhiteSpace(jobName))
             throw new ArgumentException("Job name is required.", nameof(jobName));
@@ -301,6 +298,7 @@ public class JobExecutionRepository : IJobExecutionRepository
             StatusId = statusId,
             RequestedBy = requestedBy,
             RequestedAtUtc = requestedAtUtc,
+            FpsYear = fpsYear,
             // Keep compatibility with environments where startdatetime is still NOT NULL.
             // Status remains Initiated; worker updates the value when transitioning to Running.
             StartDateTime = requestedAtUtc,
@@ -322,289 +320,10 @@ public class JobExecutionRepository : IJobExecutionRepository
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "[API → DB] ✓ Initiated record created | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode} | RequestedBy={RequestedBy} | RequestedAtUtc={RequestedAtUtc}",
-            jobName, jobExecutionId, jobQueueId, runMode, requestedBy, requestedAtUtc);
+            "[API → DB] ✓ Initiated record created | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | RunMode={RunMode} | RequestedBy={RequestedBy} | RequestedAtUtc={RequestedAtUtc} | FpsYear={FpsYear}",
+            jobName, jobExecutionId, jobQueueId, runMode, requestedBy, requestedAtUtc, fpsYear);
 
         return jobQueueId;
-    }
-
-    /// <inheritdoc />
-    public async Task EnsureJobStatusCatalogAsync(CancellationToken cancellationToken = default)
-    {
-        var jobIds = await _context.TblJobMaster
-            .Select(j => j.JobId)
-            .ToListAsync(cancellationToken);
-
-        if (jobIds.Count == 0)
-            return;
-
-        var baselineStatuses = new[]
-        {
-            nameof(JobStatus.Initiated),
-            nameof(JobStatus.Running),
-            nameof(JobStatus.Completed),
-            nameof(JobStatus.Failed),
-            nameof(JobStatus.Cancelled)
-        };
-
-        var existing = await _context.TblJobStatus
-            .Where(s => jobIds.Contains(s.JobId) && baselineStatuses.Contains(s.Status))
-            .Select(s => new { s.JobId, s.Status })
-            .ToListAsync(cancellationToken);
-
-        var existingSet = existing
-            .Select(s => (s.JobId, s.Status))
-            .ToHashSet();
-
-        var now = DateTime.UtcNow;
-        var toInsert = new List<TblJobStatus>();
-
-        foreach (var jobId in jobIds)
-        {
-            foreach (var status in baselineStatuses)
-            {
-                if (existingSet.Contains((jobId, status)))
-                    continue;
-
-                toInsert.Add(new TblJobStatus
-                {
-                    JobId = jobId,
-                    Status = status,
-                    CreatedAt = now
-                });
-            }
-        }
-
-        if (toInsert.Count == 0)
-            return;
-
-        _context.TblJobStatus.AddRange(toInsert);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation(
-            "Seeded baseline job statuses | Jobs={JobCount} | RowsInserted={RowsInserted}",
-            jobIds.Count,
-            toInsert.Count);
-    }
-
-    /// <inheritdoc />
-    public async Task<bool> TryRequestCancellationAsync(Guid jobExecutionId, string requestedBy, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(requestedBy))
-            throw new ArgumentException("RequestedBy cannot be null or empty.", nameof(requestedBy));
-
-        var created = await UpsertCancellationRequestAsync(jobExecutionId, requestedBy, "pact.api", cancellationToken);
-        if (!created)
-        {
-            _logger.LogInformation(
-                "Cancellation request already exists | JobExecutionId={JobExecutionId} | RequestedBy={RequestedBy}",
-                jobExecutionId,
-                requestedBy);
-            return false;
-        }
-
-        var queueProjection = await _context.TblJobQueue
-            .Where(q => q.JobExecutionId == jobExecutionId)
-            .Select(q => new { q.JobQueueId, q.JobId })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (queueProjection is null)
-        {
-            _logger.LogInformation(
-                "Cancellation request persisted before execution row exists | JobExecutionId={JobExecutionId} | RequestedBy={RequestedBy}",
-                jobExecutionId,
-                requestedBy);
-            return true;
-        }
-
-        var now = DateTime.UtcNow;
-        var cancellationRequestedStatusId = await EnsureStatusAsync(
-            queueProjection.JobId,
-            CancellationRequestedStatus,
-            cancellationToken);
-
-        _context.TblJobQueueLog.Add(new TblJobQueueLog
-        {
-            JobQueueId = queueProjection.JobQueueId,
-            StatusId = cancellationRequestedStatusId,
-            PerformedBy = requestedBy.Trim(),
-            LogTime = now,
-            Note = $"{CancellationRequestedNotePrefix} by {requestedBy.Trim()}"
-        });
-
-        await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation(
-            "Cancellation request stored in queue log | JobExecutionId={JobExecutionId} | RequestedBy={RequestedBy}",
-            jobExecutionId,
-            requestedBy);
-        return true;
-    }
-
-    /// <inheritdoc />
-    public async Task<bool> UpsertCancellationRequestAsync(
-        Guid jobExecutionId,
-        string requestedBy,
-        string? source = null,
-        CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(requestedBy))
-            throw new ArgumentException("RequestedBy cannot be null or empty.", nameof(requestedBy));
-
-        try
-        {
-            var now = DateTime.UtcNow;
-            var inserted = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-INSERT INTO fps.job_cancellation_request (jobexecutionid, requested_by, requested_at_utc, status, source)
-VALUES ({jobExecutionId}, {requestedBy.Trim()}, {now}, {CancellationPendingState}, {source})
-ON CONFLICT (jobexecutionid) DO NOTHING;", cancellationToken);
-
-            return inserted > 0;
-        }
-        catch (PostgresException ex) when (ex.SqlState == UndefinedTableSqlState)
-        {
-            // Temporary fallback while waiting for DBA table rollout.
-            return await LegacyTryRequestCancellationInQueueLogAsync(jobExecutionId, requestedBy, cancellationToken);
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<CancellationRequestRecord?> GetCancellationRequestAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var row = await _context.Set<TblJobCancellationRequest>()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.JobExecutionId == jobExecutionId, cancellationToken);
-
-            if (row is null)
-                return null;
-
-            return new CancellationRequestRecord
-            {
-                JobExecutionId = row.JobExecutionId,
-                RequestedBy = row.RequestedBy,
-                RequestedAtUtc = row.RequestedAtUtc,
-                Status = row.Status,
-                ConsumedAtUtc = row.ConsumedAtUtc,
-                ConsumedBy = row.ConsumedBy,
-                TerminalizedAtUtc = row.TerminalizedAtUtc
-            };
-        }
-        catch (PostgresException ex) when (ex.SqlState == UndefinedTableSqlState)
-        {
-            return null;
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task MarkCancellationConsumedAsync(Guid jobExecutionId, string consumedBy, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(consumedBy))
-            throw new ArgumentException("ConsumedBy cannot be null or empty.", nameof(consumedBy));
-
-        try
-        {
-            var row = await _context.Set<TblJobCancellationRequest>()
-                .FirstOrDefaultAsync(c => c.JobExecutionId == jobExecutionId, cancellationToken);
-
-            if (row is null)
-                return;
-
-            row.Status = CancellationConsumedState;
-            row.ConsumedBy = consumedBy.Trim();
-            row.ConsumedAtUtc = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-        catch (PostgresException ex) when (ex.SqlState == UndefinedTableSqlState)
-        {
-            // No-op until DBA table exists.
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<bool> IsCancellationRequestedAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            return await _context.Set<TblJobCancellationRequest>()
-                .AsNoTracking()
-                .AnyAsync(c => c.JobExecutionId == jobExecutionId, cancellationToken);
-        }
-        catch (PostgresException ex) when (ex.SqlState == UndefinedTableSqlState)
-        {
-            return await LegacyIsCancellationRequestedAsync(jobExecutionId, cancellationToken);
-        }
-    }
-
-    private Task<bool> LegacyIsCancellationRequestedAsync(Guid jobExecutionId, CancellationToken cancellationToken)
-        => (
-            from q in _context.TblJobQueue
-            join l in _context.TblJobQueueLog on q.JobQueueId equals l.JobQueueId
-            join s in _context.TblJobStatus on l.StatusId equals s.StatusId
-            where q.JobExecutionId == jobExecutionId
-                && (
-                    s.Status == CancellationRequestedStatus
-                    || (l.Note != null && EF.Functions.ILike(l.Note, $"{CancellationRequestedNotePrefix}%"))
-                )
-            select l.JobQueueLogId
-        ).AnyAsync(cancellationToken);
-
-    private async Task<bool> LegacyTryRequestCancellationInQueueLogAsync(Guid jobExecutionId, string requestedBy, CancellationToken cancellationToken)
-    {
-        var queueProjection = await _context.TblJobQueue
-            .Where(q => q.JobExecutionId == jobExecutionId)
-            .Select(q => new { q.JobQueueId, q.JobId })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (queueProjection is null)
-            return false;
-
-        var alreadyRequested = await _context.TblJobQueueLog
-            .AnyAsync(l => l.JobQueueId == queueProjection.JobQueueId
-                && l.Note != null
-                && EF.Functions.ILike(l.Note, $"{CancellationRequestedNotePrefix}%"),
-                cancellationToken);
-
-        if (alreadyRequested)
-            return false;
-
-        var cancellationRequestedStatusId = await EnsureStatusAsync(
-            queueProjection.JobId,
-            CancellationRequestedStatus,
-            cancellationToken);
-
-        _context.TblJobQueueLog.Add(new TblJobQueueLog
-        {
-            JobQueueId = queueProjection.JobQueueId,
-            StatusId = cancellationRequestedStatusId,
-            PerformedBy = requestedBy.Trim(),
-            LogTime = DateTime.UtcNow,
-            Note = $"{CancellationRequestedNotePrefix} by {requestedBy.Trim()}"
-        });
-
-        await _context.SaveChangesAsync(cancellationToken);
-        return true;
-    }
-
-    private async Task TryMarkCancellationTerminalizedAsync(Guid jobExecutionId, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var row = await _context.Set<TblJobCancellationRequest>()
-                .FirstOrDefaultAsync(c => c.JobExecutionId == jobExecutionId, cancellationToken);
-
-            if (row is null)
-                return;
-
-            row.Status = CancellationTerminalizedState;
-            row.TerminalizedAtUtc = DateTime.UtcNow;
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-        catch (PostgresException ex) when (ex.SqlState == UndefinedTableSqlState)
-        {
-            // No-op until DBA table exists.
-        }
     }
 
     private async Task<int> EnsureJobMasterAsync(string jobName, CancellationToken cancellationToken)
@@ -628,17 +347,9 @@ ON CONFLICT (jobexecutionid) DO NOTHING;", cancellationToken);
         if (existing != null)
             return existing.StatusId;
 
-        var row = new TblJobStatus
-        {
-            JobId = jobId,
-            Status = status,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.TblJobStatus.Add(row);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return row.StatusId;
+        throw new InvalidOperationException(
+            $"Job status row not found for JobId '{jobId}' and Status '{status}'. " +
+            "Status catalog must be provisioned via approved DBA migration/CR scripts before worker execution.");
     }
 
     private static string BuildStatusNote(JobStatus status) => status switch

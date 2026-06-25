@@ -107,7 +107,7 @@ public sealed class MabArchiveJobHandler : IBatchJob
         }
         catch (OperationCanceledException ex)
         {
-            _logger.LogWarning(ex, "MABArchive job was cancelled | CorrelationId={CorrelationId}", correlationId);
+            _logger.LogWarning(ex, "MABArchive job execution was interrupted | CorrelationId={CorrelationId}", correlationId);
             throw;
         }
         catch (Exception ex)

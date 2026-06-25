@@ -17,7 +17,7 @@ public sealed class TriggerAttemptStoreTests
             memoryCache,
             Options.Create(new TriggerStoreOptions { EntryTtlMinutes = 60 }));
 
-        var record = CreateRecord("11111111-1111-1111-1111-111111111111", "RecreateSummaries");
+        var record = CreateRecord("11111111-1111-1111-1111-111111111111", "RecreateSummary");
 
         await store.SaveAsync(record);
         var loaded = await store.GetByJobExecutionIdAsync(record.JobExecutionId);
@@ -36,13 +36,13 @@ public sealed class TriggerAttemptStoreTests
             memoryCache,
             Options.Create(new TriggerStoreOptions { EntryTtlMinutes = 60 }));
 
-        var first = CreateRecord("11111111-1111-1111-1111-111111111111", "RecreateSummaries");
-        var second = CreateRecord("22222222-2222-2222-2222-222222222222", "RecreateSummaries");
+        var first = CreateRecord("11111111-1111-1111-1111-111111111111", "RecreateSummary");
+        var second = CreateRecord("22222222-2222-2222-2222-222222222222", "RecreateSummary");
 
         await store.SaveAsync(first);
         await store.SaveAsync(second);
 
-        var latest = await store.GetLatestByJobNameAsync("RecreateSummaries");
+        var latest = await store.GetLatestByJobNameAsync("RecreateSummary");
 
         Assert.NotNull(latest);
         Assert.Equal(second.JobExecutionId, latest!.JobExecutionId);
@@ -57,7 +57,7 @@ public sealed class TriggerAttemptStoreTests
             Options.Create(new TriggerStoreOptions { EntryTtlMinutes = 60 }),
             NullLogger<RedisTriggerAttemptStore>.Instance);
 
-        var record = CreateRecord("33333333-3333-3333-3333-333333333333", "RecreateSummaries");
+        var record = CreateRecord("33333333-3333-3333-3333-333333333333", "RecreateSummary");
 
         await store.SaveAsync(record);
         var loaded = await store.GetByJobExecutionIdAsync(record.JobExecutionId);
@@ -77,13 +77,13 @@ public sealed class TriggerAttemptStoreTests
             Options.Create(new TriggerStoreOptions { EntryTtlMinutes = 60 }),
             NullLogger<RedisTriggerAttemptStore>.Instance);
 
-        var first = CreateRecord("44444444-4444-4444-4444-444444444444", "RecreateSummaries");
-        var second = CreateRecord("55555555-5555-5555-5555-555555555555", "RecreateSummaries");
+        var first = CreateRecord("44444444-4444-4444-4444-444444444444", "RecreateSummary");
+        var second = CreateRecord("55555555-5555-5555-5555-555555555555", "RecreateSummary");
 
         await store.SaveAsync(first);
         await store.SaveAsync(second);
 
-        var latest = await store.GetLatestByJobNameAsync("RecreateSummaries");
+        var latest = await store.GetLatestByJobNameAsync("RecreateSummary");
 
         Assert.NotNull(latest);
         Assert.Equal(second.JobExecutionId, latest!.JobExecutionId);

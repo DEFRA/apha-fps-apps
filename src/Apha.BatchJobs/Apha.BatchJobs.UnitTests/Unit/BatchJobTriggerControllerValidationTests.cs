@@ -20,7 +20,7 @@ public sealed class BatchJobTriggerControllerValidationTests
         var result = await controller.Trigger(
             new BatchTriggerRequest
             {
-                JobName = "RecreateSummaries",
+                JobName = "RecreateSummary",
                 RequestedBy = null!
             },
             CancellationToken.None);
@@ -36,7 +36,7 @@ public sealed class BatchJobTriggerControllerValidationTests
         var result = await controller.Trigger(
             new BatchTriggerRequest
             {
-                JobName = "RecreateSummaries",
+                JobName = "RecreateSummary",
                 RequestedBy = "   "
             },
             CancellationToken.None);
@@ -50,7 +50,7 @@ public sealed class BatchJobTriggerControllerValidationTests
         var controller = CreateController();
 
         var result = await controller.Cancel(
-            "RecreateSummaries",
+            "RecreateSummary",
             new BatchCancelRequest
             {
                 JobExecutionId = Guid.NewGuid().ToString(),
@@ -67,7 +67,7 @@ public sealed class BatchJobTriggerControllerValidationTests
         var controller = CreateController();
 
         var result = await controller.Cancel(
-            "RecreateSummaries",
+            "RecreateSummary",
             new BatchCancelRequest
             {
                 JobExecutionId = Guid.NewGuid().ToString(),

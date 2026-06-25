@@ -18,7 +18,8 @@ var requestedJobArg = args.Length > 0
 
 // HealthCheck is a pure process liveness probe — no DB, no orchestrator, no execution contract.
 // The API must never create an Initiated record for HealthCheck invocations.
-if (string.Equals(requestedJobArg, "HealthCheck", StringComparison.OrdinalIgnoreCase))
+if (string.IsNullOrWhiteSpace(requestedJobArg)
+    || string.Equals(requestedJobArg, "HealthCheck", StringComparison.OrdinalIgnoreCase))
 {
     Console.WriteLine("HealthCheck OK");
     return 0;
@@ -50,9 +51,18 @@ if (builder.Environment.IsEnvironment("local"))
 {
     string srvpath = builder.Configuration.GetValue<string>("LogsPath") ?? string.Empty;
     string logpath = $"{(builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("local") ? "Logs" : srvpath)}\\Logsample.log";
+    var logStreamPrefix = ResolveLogStreamPrefix(builder.Configuration);
     Log.Logger = new LoggerConfiguration()
-        .WriteTo.Console()
-        .WriteTo.File(logpath, Serilog.Events.LogEventLevel.Verbose, rollingInterval: RollingInterval.Day)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("ApplicationName", "Apha.BatchJobs")
+        .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+        .Enrich.WithProperty("LogStreamPrefix", logStreamPrefix)
+        .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{LogStreamPrefix}] {Message:lj} {Properties:j}{NewLine}{Exception}")
+        .WriteTo.File(
+            path: logpath,
+            restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Verbose,
+            rollingInterval: RollingInterval.Day,
+            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] [{LogStreamPrefix}] {Message:lj} {Properties:j}{NewLine}{Exception}")
         .CreateLogger();
 }
 else
@@ -60,10 +70,26 @@ else
     Serilog.Debugging.SelfLog.Enable(Console.Error);
     Log.Logger = new LoggerConfiguration()
         .ReadFrom.Configuration(builder.Configuration)
-        .UseStructuredConsoleLogging()
+        .UseStructuredConsoleLogging(builder.Configuration)
         .CreateLogger();
 }
 
+static string ResolveLogStreamPrefix(IConfiguration configuration)
+{
+    var envPrefix = Environment.GetEnvironmentVariable("BATCH_LOG_STREAM_PREFIX");
+    if (!string.IsNullOrWhiteSpace(envPrefix))
+    {
+        return envPrefix.Trim();
+    }
+
+    var configPrefix = configuration["Logging:LogStreamPrefix"];
+    if (!string.IsNullOrWhiteSpace(configPrefix))
+    {
+        return configPrefix.Trim();
+    }
+
+    return "apha-batch";
+}
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(Log.Logger);
 builder.ConfigureServices();
@@ -233,6 +259,16 @@ try
         // Run through orchestrator (handles lock, execution records, and job execution)
         await using var executionScope = serviceProvider.CreateAsyncScope();
         var executionRepository = executionScope.ServiceProvider.GetRequiredService<IJobExecutionRepository>();
+        int? fpsYear = null;
+
+        if (string.Equals(jobName, "RecreateSummary", StringComparison.OrdinalIgnoreCase))
+        {
+            var recreateContext = executionScope.ServiceProvider.GetService<IRecreateSummariesContext>();
+            if (recreateContext is not null)
+            {
+                fpsYear = recreateContext.Year;
+            }
+        }
 
         if (!isWorkerManagedMabArchiveScheduledRun)
         {
@@ -252,7 +288,14 @@ try
         }
 
         var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
-        var result = await orchestrator.RunAsync(jobName, runMode, jobExecutionId, userId, requestedAtUtc, linkedCts.Token);
+        var result = await orchestrator.RunAsync(
+            jobName,
+            runMode,
+            jobExecutionId,
+            userId,
+            requestedAtUtc,
+            linkedCts.Token,
+            fpsYear);
 
         capturedJobQueueId = result.JobQueueId.ToString();
         capturedExecutionId = result.ExecutionId;
@@ -283,16 +326,16 @@ catch (OperationCanceledException ex)
     var logger = loggerFactory?.CreateLogger("BatchJobs.Error");
     var remainingWindowMs = Math.Max(0, (int)(gracefulShutdownWindowSeconds * 1000 - (DateTime.UtcNow - startedAt).TotalMilliseconds));
     logger?.LogWarning(ex,
-        "Job was cancelled | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | RemainingShutdownWindowMs={RemainingWindowMs}",
+        "Job execution was interrupted by cancellation token | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | RemainingShutdownWindowMs={RemainingWindowMs}",
         requestedJobName ?? "Unknown", capturedJobQueueId ?? "N/A", capturedJobExecutionId ?? "N/A", remainingWindowMs);
-    Console.Error.WriteLine($"CANCELLED: Job execution was cancelled");
+    Console.Error.WriteLine("INTERRUPTED: Job execution was interrupted");
     
     // Mark as forced cancellation if we ran out of graceful window (remainingWindowMs near 0)
     gracefulShutdownCompleted = remainingWindowMs > 100; // Allow 100ms buffer
     
-    exitCode = ExitCodeCancelled;
+    exitCode = ExitCodeBusinessFailure;
     failureCategory = "Cancellation";
-    runOutcome = "Cancelled";
+    runOutcome = "Failed";
 }
 catch (Exception ex)
 {
@@ -482,7 +525,7 @@ static string GenerateHumanReadableMessage(string outcome, string failureCategor
     return (outcome, failureCategory) switch
     {
         ("Succeeded", _) => "Job completed successfully within the graceful shutdown window.",
-        ("Cancelled", "Cancellation") => "Job execution was cancelled due to host shutdown or timeout.",
+        ("Failed", "Cancellation") => "Job execution was interrupted due to host shutdown or timeout.",
         ("Failed", "ConfigurationError") => "Job failed due to configuration error (job not registered, invalid settings, etc.).",
         ("Failed", "BusinessFailure") => "Job failed with a business or runtime exception.",
         ("Failed", "DependencyOutage") => "Job failed due to dependency outage (database unavailable, network timeout, etc.).",
@@ -636,6 +679,6 @@ static async Task ValidatePreCreatedInitiatedRecordAsync(
     }
 
     throw new InvalidOperationException(
-        $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is in an unexpected status '{existingExecution.Status}' (JobQueueId={existingExecution.JobQueueId}). Expected: Initiated, Running, Completed, Failed, or Cancelled.");
+        $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is in an unexpected status '{existingExecution.Status}' (JobQueueId={existingExecution.JobQueueId}). Expected: Initiated, Running, Completed, or Failed.");
 }
 

@@ -4,7 +4,6 @@ using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -21,23 +20,16 @@ public sealed class JobOrchestratorTests
     private readonly IBatchLockRepository _lockRepo = Substitute.For<IBatchLockRepository>();
     private readonly IJobExecutionRepository _execRepo = Substitute.For<IJobExecutionRepository>();
     private readonly IOptions<BatchJobSettings> _settings = Options.Create(new BatchJobSettings { JobTimeout = 3600 });
-    private readonly IServiceScopeFactory _scopeFactory;
     private readonly JobOrchestrator _orchestrator;
 
     public JobOrchestratorTests()
     {
-        _scopeFactory = CreateScopeFactory(_execRepo);
-
         _orchestrator = new JobOrchestrator(
             _factory,
             _lockRepo,
             _execRepo,
-            _scopeFactory,
             _settings,
             NullLogger<JobOrchestrator>.Instance);
-
-        _execRepo.IsCancellationRequestedAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(false));
         
         // Mock GetExecutionByJobExecutionIdAsync to return pre-created Initiated record
         _execRepo.GetExecutionByJobExecutionIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
@@ -58,19 +50,6 @@ public sealed class JobOrchestratorTests
                     RetryAttempts = 0
                 });
             });
-    }
-
-    private static IServiceScopeFactory CreateScopeFactory(IJobExecutionRepository execRepo)
-    {
-        var sp = Substitute.For<IServiceProvider>();
-        sp.GetService(typeof(IJobExecutionRepository)).Returns(execRepo);
-
-        var scope = Substitute.For<IServiceScope>();
-        scope.ServiceProvider.Returns(sp);
-
-        var factory = Substitute.For<IServiceScopeFactory>();
-        factory.CreateScope().Returns(scope);
-        return factory;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -231,7 +210,7 @@ public sealed class JobOrchestratorTests
 
         // Act / Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _orchestrator.RunAsync("RecreateSummaries", RunMode.Scheduled, jobExecutionId, "scheduler-user"));
+            () => _orchestrator.RunAsync("RecreateSummary", RunMode.Scheduled, jobExecutionId, "scheduler-user"));
 
         // Assert
         await _execRepo.DidNotReceive().CreateInitiatedRecordAsync(
@@ -340,12 +319,8 @@ public sealed class JobOrchestratorTests
         await _lockRepo.Received(1).ReleaseLockAsync("MissingJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Cancellation — record written as Cancelled, lock released
-    // ─────────────────────────────────────────────────────────────
-
     [Fact]
-    public async Task RunAsync_WhenCancelled_WritesCancelledRecordAndReleasesLock()
+    public async Task RunAsync_WhenInterruptedByCancellationToken_WritesFailedRecordAndReleasesLock()
     {
         // Arrange
         var capturedUpdateStatus = new List<JobStatus>();
@@ -370,45 +345,12 @@ public sealed class JobOrchestratorTests
         await Assert.ThrowsAsync<OperationCanceledException>(
             () => _orchestrator.RunAsync("CancellableJob", RunMode.Manual, jobExecutionId, "test-user"));
 
-        // Assert — cancelled record written
+        // Assert — interrupted execution is persisted as failed in the 4-state model
         Assert.Single(capturedUpdateStatus);
-        Assert.Equal(JobStatus.Cancelled, capturedUpdateStatus[0]);
+        Assert.Equal(JobStatus.Failed, capturedUpdateStatus[0]);
 
         // Assert — lock released
         await _lockRepo.Received(1).ReleaseLockAsync("CancellableJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task RunAsync_WhenCancellationCheckpointRequested_PersistsCancelledAndSkipsExecution()
-    {
-        // Arrange
-        var capturedUpdateStatus = new List<JobStatus>();
-        var jobExecutionId = Guid.NewGuid();
-
-        var job = Substitute.For<IBatchJob>();
-        job.Name.Returns("CheckpointJob");
-
-        _factory.Create("CheckpointJob").Returns(job);
-        _lockRepo.TryAcquireLockAsync("CheckpointJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(true);
-        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
-            .Returns(101);
-        _execRepo.IsCancellationRequestedAsync(Arg.Is<Guid>(id => id == jobExecutionId), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(true));
-        _execRepo.UpdateExecutionRecordAsync(
-                Arg.Do<JobExecutionRecord>(r => capturedUpdateStatus.Add(r.Status)),
-                Arg.Any<CancellationToken>())
-            .Returns(Task.CompletedTask);
-
-        // Act
-        await Assert.ThrowsAsync<OperationCanceledException>(
-            () => _orchestrator.RunAsync("CheckpointJob", RunMode.Manual, jobExecutionId, "test-user"));
-
-        // Assert
-        await job.DidNotReceive().ExecuteAsync(Arg.Any<CancellationToken>());
-        Assert.Single(capturedUpdateStatus);
-        Assert.Equal(JobStatus.Cancelled, capturedUpdateStatus[0]);
-        await _lockRepo.Received(1).ReleaseLockAsync("CheckpointJob", Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -540,7 +482,6 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
-            _scopeFactory,
             retrySettings,
             NullLogger<JobOrchestrator>.Instance);
 
@@ -582,7 +523,6 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
-            _scopeFactory,
             retrySettings,
             NullLogger<JobOrchestrator>.Instance);
 
@@ -630,7 +570,6 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
-            _scopeFactory,
             retrySettings,
             NullLogger<JobOrchestrator>.Instance);
 
@@ -682,7 +621,6 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
-            _scopeFactory,
             timeoutSettings,
             NullLogger<JobOrchestrator>.Instance);
 
@@ -691,7 +629,7 @@ public sealed class JobOrchestratorTests
 
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("RuntimeTimeoutJob");
-        job.MaxExecutionSeconds.Returns((int?)null);
+        job.MaxExecutionSeconds.Returns(1);
         job.ExecuteAsync(Arg.Any<CancellationToken>())
             .Returns(ci => Task.Delay(TimeSpan.FromSeconds(3), ci.Arg<CancellationToken>()));
 
@@ -738,7 +676,6 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
-            _scopeFactory,
             timeoutSettings,
             NullLogger<JobOrchestrator>.Instance);
 
@@ -773,7 +710,6 @@ public sealed class JobOrchestratorTests
             _factory,
             _lockRepo,
             _execRepo,
-            _scopeFactory,
             timeoutSettings,
             NullLogger<JobOrchestrator>.Instance);
 

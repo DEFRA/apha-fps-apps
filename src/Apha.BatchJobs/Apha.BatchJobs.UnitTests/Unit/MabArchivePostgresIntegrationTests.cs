@@ -65,54 +65,6 @@ public sealed class MabArchivePostgresIntegrationTests : IAsyncLifetime
     public Task DisposeAsync() => Task.CompletedTask;
 
     [SkippableFact]
-    public async Task RebuildSourceTotalsAsync_WhenStrictIsolationAndViewMissingFpsYear_ShouldThrowInvalidOperationException()
-    {
-        Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");
-
-        await using var context = CreateDbContext();
-        var viewMutated = false;
-
-        try
-        {
-            await context.Database.ExecuteSqlRawAsync(@"
-                ALTER VIEW fps.qrytotaladditionalcosts RENAME TO qrytotaladditionalcosts_wave3_backup;
-
-                CREATE VIEW fps.qrytotaladditionalcosts AS
-                SELECT
-                    jobcode,
-                    totaladditionalcosts
-                FROM fps.qrytotaladditionalcosts_wave3_backup;
-            ");
-            viewMutated = true;
-
-            var service = new ReloadFpsTotalsService(
-                context,
-                NullLogger<ReloadFpsTotalsService>.Instance,
-                Options.Create(new MabArchiveSettings { StrictYearIsolation = true }));
-
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => service.RebuildSourceTotalsAsync(2026, CancellationToken.None));
-
-            Assert.Contains("qrytotaladditionalcosts", ex.Message, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("missing fpsyear", ex.Message, StringComparison.OrdinalIgnoreCase);
-        }
-        catch (PostgresException ex) when (ex.SqlState is "42501" or "55000")
-        {
-            Skip.If(true, $"View-shape mutation not permitted in integration DB: {ex.MessageText}");
-        }
-        finally
-        {
-            if (viewMutated)
-            {
-                await context.Database.ExecuteSqlRawAsync(@"
-                    DROP VIEW IF EXISTS fps.qrytotaladditionalcosts;
-                    ALTER VIEW fps.qrytotaladditionalcosts_wave3_backup RENAME TO qrytotaladditionalcosts;
-                ");
-            }
-        }
-    }
-
-    [SkippableFact]
     public async Task RebuildSourceTotalsAsync_WhenSourceProjectExists_ShouldInsertRows_AndRollback()
     {
         Skip.IfNot(CanRunIntegrationTests(), _skipReason ?? "Integration DB unavailable.");

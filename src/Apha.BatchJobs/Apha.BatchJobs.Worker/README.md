@@ -32,7 +32,7 @@ Worker-trigger requests are published to EventBridge using PutEvents with the fo
 	"detail-type": "BatchJobTriggerRequested",
 	"detail": {
 		"jobExecutionId": "7f9d2f2e-8d1b-4f7a-9d25-6d6e8a9f3c12",
-		"jobName": "RecreateSummaries",
+		"jobName": "RecreateSummary",
 		"runMode": "Manual",
 		"requestedBy": "user.name@defra.gov.uk",
 		"requestedAtUtc": "2026-06-09T13:41:27Z",
@@ -46,7 +46,7 @@ Worker-trigger requests are published to EventBridge using PutEvents with the fo
 - 0 success
 - 1 unhandled failure
 - 2 unknown job or factory error
-- 3 cancelled
+- 3 legacy/deprecated (historical cancelled mapping)
 
 ## Fast Troubleshooting
 
