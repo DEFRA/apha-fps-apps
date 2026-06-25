@@ -11,10 +11,12 @@ namespace Apha.FPS.DataAccess.Repositories
     public class TimeSellerPcRepository : ITimeSellerPcRepository
     {
         private readonly FpsDbContext _dbContext;
+        private readonly IFpsRequestContext _requestContext;
 
-        public TimeSellerPcRepository(FpsDbContext dbContext)
+        public TimeSellerPcRepository(FpsDbContext dbContext, IFpsRequestContext requestContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
         /// <inheritdoc/>
@@ -24,7 +26,9 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return await _dbContext.VQryFrmTimeSellerPcViews
                 .AsNoTracking()
-                .Where(x => x.SellingPc == sellingPc)
+                .Where(x => x.SellingPc == sellingPc
+                    && x.UserEmail != null
+                    && x.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .OrderBy(x => x.WorkGroup)
                 .ThenBy(x => x.WgGrade)
                 .ToListAsync();
