@@ -8,30 +8,30 @@
     string GbpD(decimal v) => v.ToString("C2");
 }
 
-<div class="fps-cs-summary-grid govuk-!-margin-top-2">
+<div id="cs-summary-grid" class="fps-cs-summary-grid govuk-!-margin-top-2">
 
     @* ── Box 1: Budget / Target / Recover ── *@
-    <div class="fps-cs-summary-box sup_border">
+    <div id="cs-summary-base-box" class="fps-cs-summary-box sup_border">
         <div class="fps-cs-summary-row">
             <span>Total Budget Bids</span>
-            <strong class="text-AlignRight">@Gbp(t.SumOfGenBid)</strong>
+            <strong id="cs-total-budget-bids" class="text-AlignRight">@Gbp(t.SumOfGenBid)</strong>
         </div>
         <div class="fps-cs-summary-row">
             <span>+ Contribution Target</span>
-            <strong class="text-AlignRight">@Gbp(t.ContTarget)</strong>
+            <strong id="cs-contribution-target" class="text-AlignRight">@Gbp(t.ContTarget)</strong>
         </div>
         <div class="fps-cs-summary-row fps-cs-summary-total">
             <span>= Total to Recover</span>
-            <strong class="text-AlignRight">@GbpD(t.TotalToRecover)</strong>
+            <strong id="cs-total-to-recover" class="text-AlignRight">@GbpD(t.TotalToRecover)</strong>
         </div>
     </div>
 
     @* ── Box 2: Total Time ── *@
-    <div class="fps-cs-summary-box sup_border">
+    <div id="cs-summary-total-time-box" class="fps-cs-summary-box sup_border">
         <div class="fps-cs-summary-box-title">Total Time</div>
         <div class="fps-cs-summary-row">
             <span>Total Time Fee from PlanHrs</span>
-            <strong class="text-AlignRight">@GbpD(t.TotalFec)</strong>
+            <strong id="cs-total-time-fee" class="text-AlignRight">@GbpD(t.TotalFec)</strong>
         </div>
         @if (t.IsAsuMode)
         {
@@ -42,20 +42,20 @@
         }
         <div class="fps-cs-summary-row fps-cs-summary-total @(t.Surplus < 0 ? "fps-cs-summary-shortfall" : "")">
             <span>Surplus/Shortfall</span>
-            <strong class="text-AlignRight">@GbpD(t.Surplus)</strong>
+            <strong id="cs-total-surplus" class="text-AlignRight">@GbpD(t.Surplus)</strong>
         </div>
     </div>
 
     @* ── Box 3: Assured Time Only ── *@
-    <div class="fps-cs-summary-box sup_border">
+    <div id="cs-summary-assured-time-box" class="fps-cs-summary-box sup_border">
         <div class="fps-cs-summary-box-title">Assured Time</div>
         <div class="fps-cs-summary-row">
             <span>Assured Time Only Fee from PlanHrs</span>
-            <strong class="text-AlignRight">@GbpD(t.TotalAppFec)</strong>
+            <strong id="cs-assured-time-fee" class="text-AlignRight">@GbpD(t.TotalAppFec)</strong>
         </div>
         <div class="fps-cs-summary-row fps-cs-summary-total @(t.AssuredSurplus < 0 ? "fps-cs-summary-shortfall" : "")">
             <span>Surplus/Shortfall</span>
-            <strong class="text-AlignRight">@GbpD(t.AssuredSurplus)</strong>
+            <strong id="cs-assured-surplus" class="text-AlignRight">@GbpD(t.AssuredSurplus)</strong>
         </div>
     </div>
 
