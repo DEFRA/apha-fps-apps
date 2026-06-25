@@ -58,6 +58,9 @@ namespace Apha.Common.Constants
         public const string DeleteTestOrProduct = "api/v1/testorproduct/{0}";
         public const string GetTestListOwners = "api/v1/testorproduct/owners";
         public const string GetAllTestorProducts = "api/v1/testorproduct";
+        public const string GetTestPriceCheckPaged  = "api/v1/testorproduct/testpricecheck";
+        public const string GetTestPriceCheckByKey    = "api/v1/testorproduct/testpricecheck/{0}/{1}";
+        public const string UpdateTestPriceCheckByKey  = "api/v1/testorproduct/testpricecheck/{0}/{1}";
 
         // Recreate Summaries Log
         public const string GetRecreateSummaryLog = "api/v1/recreatereleasesummary/recreatesummary/log";

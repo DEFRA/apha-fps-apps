@@ -14,6 +14,9 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap(typeof(PaginationFilter<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap<StaffJobItemViewModel, StaffJobViewDto>().ReverseMap();
             CreateMap<PaginationModel, PaginationDto>().ReverseMap();
+            CreateMap<TestPriceCheckDto, TestPriceCheckItem>()
+                .ForMember(d => d.IsDefraProjectList, o => o.Ignore());
+            CreateMap<TestPriceCheckItem, TestPriceCheckDto>();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
             CreateMap<UserPermissionViewModel, UserPermissionDto>().ReverseMap();
@@ -60,6 +63,14 @@ namespace Apha.FPSApps.Web.Mappings
 
             // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityItem>().ReverseMap();
+
+            // ProjectProfitabilityVla
+            // TRANSFORMENGINE: convention-mapped — all property names on ProjectProfitabilityVlaItem
+            //   are expected to match ProjectProfitabilityVlaDto exactly (JobCode, Program, Customer,
+            //   Manager, Status, StaffCosts, TestCost, AnimalCosts, AdditionalCosts, TotalCosts,
+            //   Budget, Profit, TargetProfit, OffTarget, Id).
+            //   ProjectProfitabilityVlaItem is defined in Phase 11; see DEFERRED note in file header.
+            CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaItem>().ReverseMap();
 
             // Staff Plan view
             CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();

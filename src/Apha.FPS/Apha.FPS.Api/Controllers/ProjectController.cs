@@ -1,4 +1,4 @@
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
@@ -104,6 +104,21 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves a paginated list of projects for a given programme (Project Profitability VLA).
+        /// </summary>
+        [HttpGet("paged-vla")]
+        public async Task<IActionResult> GetProjectsByProgramProjectProfitabilityVLAAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string programNo)
+        {
+            if (string.IsNullOrWhiteSpace(programNo))
+                return BadRequest("programNo is required.");
+
+            var result = await _projectService.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
+        /// <summary>
         /// Retrieves a paginated list of all projects.
         /// </summary>
         [HttpGet("paged/all")]
@@ -125,6 +140,21 @@ namespace Apha.FPS.Api.Controllers
                 return BadRequest("projectGroup is required.");
 
             var result = await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
+        /// <summary>
+        /// Retrieves a paginated list of projects for a given project group (Project Profitability VLA).
+        /// </summary>
+        [HttpGet("paged-vla/by-project-group")]
+        public async Task<IActionResult> GetProjectsByProjectGroupProjectProfitabilityVLAAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string projectGroup)
+        {
+            if (string.IsNullOrWhiteSpace(projectGroup))
+                return BadRequest("projectGroup is required.");
+
+            var result = await _projectService.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup);
             return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
         }
 
@@ -244,8 +274,26 @@ namespace Apha.FPS.Api.Controllers
             var result = await _projectService.GetProjectGroupProfitabilityAsync(filter, projectGroup, workTypeFilter);
             return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityRes>>(result));
         }
+
+        [HttpGet("paged/by-user")]
+        public async Task<IActionResult> GetPagedProjectsByUserAsync([FromQuery] QueryParameters<string> query)
+        {
+            var result = await _projectService.GetPagedProjectsByUserAsync(query);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
+        [HttpGet("profitability-vla")]
+        public async Task<IActionResult> GetProjectProfitabilityVlaAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string? projectStatus = null,
+            [FromQuery] string? programNo = null,
+            [FromQuery] string? manager = null,
+            [FromQuery] string? customer = null)
+        {
+            var result = await _projectService.GetProjectProfitabilityVlaAsync(query, projectStatus, programNo, manager, customer);
+            return Ok(_mapper.Map<PaginationRes<ProjectProfitabilityVlaRes>>(result));
+        }
     }
 
     public record ChangeProjectCodeReq(string OldCode, string NewCode);
 }
-
