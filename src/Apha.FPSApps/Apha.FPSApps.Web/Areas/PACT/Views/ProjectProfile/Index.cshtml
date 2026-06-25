@@ -24,8 +24,12 @@
     <div class="govuk-grid-row sup_margin_left_right_0">
         <div class="govuk-grid-column-full">
             <h1 class="heading_with_txtbox govuk-heading-s sup_border-bottom sup_margin_bottom_10">
-                Profile the Project Budget by Month:
-                <button type="button" onclick="goBack()" class="govuk-back-link">Back</button>
+                <div class="sup_flex_left_center">
+                    Profile the Project Budget by Month
+                </div>
+                <div>
+                    <a id="backlink" href="#" onclick="goBack(); return false;" class="govuk-back-link">Back</a>
+                </div>
             </h1>
         </div>
     </div>
@@ -60,12 +64,15 @@
                                 <div class="govuk-form-group sup_margin_bottom_10">
                                     <label asp-for="@Model.BudgetCvl"
                                            class="govuk-label govuk-!-font-weight-bold">
-                                        Budget_cy1:
+                                        Budget_cvl:
                                     </label>
+                                <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input type="text"
                                            asp-for="@Model.BudgetCvl"
                                            class="govuk-input govuk-!-font-size-16"
                                            readonly>
+                                           </div>
                                     </div>
                                 </div>
                             </div>

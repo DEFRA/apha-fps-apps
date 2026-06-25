@@ -39,8 +39,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 1, TotalCost = 500m },
-                new() { Project = "PRJ1", MonthNo = 2, TotalCost = 800m }
+                new() { Project = "PRJ1", MonthNo = 1, TotalCost = 500m, FpsYear = DefaultFpsYear },
+                new() { Project = "PRJ1", MonthNo = 2, TotalCost = 800m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -61,7 +61,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 3, TotalCost = 999m }
+                new() { Project = "PRJ1", MonthNo = 3, TotalCost = 999m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -83,9 +83,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 3, TotalCost = 300m },
-                new() { Project = "PRJ1", MonthNo = 1, TotalCost = 100m },
-                new() { Project = "PRJ1", MonthNo = 2, TotalCost = 200m }
+                new() { Project = "PRJ1", MonthNo = 3, TotalCost = 300m, FpsYear = DefaultFpsYear },
+                new() { Project = "PRJ1", MonthNo = 1, TotalCost = 100m, FpsYear = DefaultFpsYear },
+                new() { Project = "PRJ1", MonthNo = 2, TotalCost = 200m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -109,7 +109,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 1, TotalCost = 500m }
+                new() { Project = "PRJ1", MonthNo = 1, TotalCost = 500m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -128,7 +128,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 1, TotalCost = 500m }
+                new() { Project = "PRJ1", MonthNo = 1, TotalCost = 500m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -157,8 +157,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 1, TotalCost = 100m },
-                new() { Project = "PRJ2", MonthNo = 1, TotalCost = 999m }
+                new() { Project = "PRJ1", MonthNo = 1, TotalCost = 100m, FpsYear = DefaultFpsYear },
+                new() { Project = "PRJ2", MonthNo = 1, TotalCost = 999m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -180,7 +180,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 1, TotalCost = null }
+                new() { Project = "PRJ1", MonthNo = 1, TotalCost = null, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -205,8 +205,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 1, CumCost = 100m },
-                new() { Project = "PRJ1", MonthNo = 2, CumCost = 300m }
+                new() { Project = "PRJ1", MonthNo = 1, CumCost = 100m, FpsYear = DefaultFpsYear },
+                new() { Project = "PRJ1", MonthNo = 2, CumCost = 300m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -215,8 +215,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
             };
             var periodMonths = new List<PeriodMonth>
             {
-                new() { EndMonth = 1, MonthNo = 1 },
-                new() { EndMonth = 2, MonthNo = 2 }
+                new() { EndMonth = 1, MonthNo = 1, FpsYear = DefaultFpsYear },
+                new() { EndMonth = 2, MonthNo = 2, FpsYear = DefaultFpsYear }
             };
 
             var repo = CreateRepository(finals, months, periodMonths);
@@ -231,9 +231,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 3, CumCost = 300m },
-                new() { Project = "PRJ1", MonthNo = 1, CumCost = 100m },
-                new() { Project = "PRJ1", MonthNo = 2, CumCost = 200m }
+                new() { Project = "PRJ1", MonthNo = 3, CumCost = 300m, FpsYear = DefaultFpsYear },
+                new() { Project = "PRJ1", MonthNo = 1, CumCost = 100m, FpsYear = DefaultFpsYear },
+                new() { Project = "PRJ1", MonthNo = 2, CumCost = 200m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -243,9 +243,9 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
             };
             var periodMonths = new List<PeriodMonth>
             {
-                new() { EndMonth = 1, MonthNo = 1 },
-                new() { EndMonth = 2, MonthNo = 2 },
-                new() { EndMonth = 3, MonthNo = 3 }
+                new() { EndMonth = 1, MonthNo = 1, FpsYear = DefaultFpsYear },
+                new() { EndMonth = 2, MonthNo = 2, FpsYear = DefaultFpsYear },
+                new() { EndMonth = 3, MonthNo = 3, FpsYear = DefaultFpsYear }
             };
 
             var repo = CreateRepository(finals, months, periodMonths);
@@ -262,7 +262,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 1, CumCost = 100m }
+                new() { Project = "PRJ1", MonthNo = 1, CumCost = 100m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -270,7 +270,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
             };
             var periodMonths = new List<PeriodMonth>
             {
-                new() { EndMonth = 1, MonthNo = 1 }
+                new() { EndMonth = 1, MonthNo = 1, FpsYear = DefaultFpsYear }
             };
 
             var repo = CreateRepository(finals, months, periodMonths);
@@ -295,7 +295,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 1, CumCost = 100m }
+                new() { Project = "PRJ1", MonthNo = 1, CumCost = 100m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -316,7 +316,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
             // grouping should collapse them and sum their CostProfiles.
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 1, CumCost = 500m }
+                new() { Project = "PRJ1", MonthNo = 1, CumCost = 500m, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -325,8 +325,8 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
             };
             var periodMonths = new List<PeriodMonth>
             {
-                new() { EndMonth = 1, MonthNo = 1 },
-                new() { EndMonth = 1, MonthNo = 2 }
+                new() { EndMonth = 1, MonthNo = 1, FpsYear = DefaultFpsYear },
+                new() { EndMonth = 1, MonthNo = 2, FpsYear = DefaultFpsYear }
             };
 
             var repo = CreateRepository(finals, months, periodMonths);
@@ -343,7 +343,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
         {
             var finals = new List<ProjectMonthFinal>
             {
-                new() { Project = "PRJ1", MonthNo = 1, CumCost = null }
+                new() { Project = "PRJ1", MonthNo = 1, CumCost = null, FpsYear = DefaultFpsYear }
             };
             var months = new List<ProjectMonth>
             {
@@ -351,7 +351,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.ProjectProfileRepositoryTest
             };
             var periodMonths = new List<PeriodMonth>
             {
-                new() { EndMonth = 1, MonthNo = 1 }
+                new() { EndMonth = 1, MonthNo = 1, FpsYear = DefaultFpsYear }
             };
 
             var repo = CreateRepository(finals, months, periodMonths);
