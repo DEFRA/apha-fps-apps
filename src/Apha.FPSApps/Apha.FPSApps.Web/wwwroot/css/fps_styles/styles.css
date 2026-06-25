@@ -3782,14 +3782,6 @@ body,
     gap: 10px;
 }
 
-.fps-mup-top-strip {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 10px;
-}
-
 .fps-mup-help {
     margin-top: auto;
     margin-bottom: 0;
@@ -3817,16 +3809,6 @@ body,
 
     .fps-mup-toolbar-actions .govuk-button {
         padding: 8px 12px;
-    }
-
-.fps-mup-selected-user {
-    min-width: 220px;
-}
-
-    .fps-mup-selected-user .govuk-input {
-        height: 28px;
-        font-size: 16px;
-        text-align: left;
     }
 
 .fps-mup-users-panel {
@@ -3887,12 +3869,6 @@ body,
     gap: 0;
     margin-bottom: 0;
     background: #fff;
-}
-
-.fps-mup-checkbox-list--disabled {
-    opacity: 0.5;
-    pointer-events: none;
-    background: #f3f2f1;
 }
 
 .fps-mup-checkbox-label {
@@ -4024,11 +4000,6 @@ body,
         min-height: auto;
     }
 
-    .fps-mup-top-strip {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
     .fps-mup-toolbar-actions {
         flex-direction: column;
         align-items: stretch;
@@ -4036,11 +4007,6 @@ body,
 
     .fps-mup-permissions-grid {
         grid-template-columns: 1fr;
-    }
-
-    .fps-mup-selected-user {
-        min-width: 0;
-        width: 100%;
     }
 }
 
