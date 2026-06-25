@@ -76,7 +76,7 @@
                             }
                             @foreach (var group in Model.ColumnGroups)
                             {
-                                if (string.IsNullOrEmpty((string)group.Label))
+                                if (string.IsNullOrEmpty(Convert.ToString(group.Label)))
                                 {
                                     <th scope="col" colspan="@group.Span" class="grid-column-group-cell grid-column-group-cell--empty"></th>
                                 }
