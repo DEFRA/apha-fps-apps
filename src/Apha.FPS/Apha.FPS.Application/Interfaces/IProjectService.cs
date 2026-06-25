@@ -20,6 +20,8 @@ namespace Apha.FPS.Application.Interfaces
         Task<bool> DeleteProjectAsync(string parentProject);
         Task<PaginatedResult<ProjectDto>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);
         Task<PaginatedResult<ProjectDto>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup);
+        Task<PaginatedResult<ProjectDto>> GetProjectsByProgramProjectProfitabilityVLAAsync(QueryParameters<string> query, string programNo);
+        Task<PaginatedResult<ProjectDto>> GetProjectsByProjectGroupProjectProfitabilityVLAAsync(QueryParameters<string> query, string projectGroup);
 
         // ProgrammeNewProject operations
         Task<bool> CheckProjectExistsAsync(string newProject);

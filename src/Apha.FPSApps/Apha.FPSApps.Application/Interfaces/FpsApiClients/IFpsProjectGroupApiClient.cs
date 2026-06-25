@@ -9,5 +9,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<ProjectGroupDto>>> GetAllProjectGroupsAsync();
         Task<ApiResponseDto<List<ProjectGroupDto>>> GetProjectGroupsByUserAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup);
+        Task<ApiResponseDto<List<ProjectDto>>> GetProjectsByProjectGroupProjectProfitabilityVLAAsync(QueryParameters<string> query, string projectGroup);
     }
 }
