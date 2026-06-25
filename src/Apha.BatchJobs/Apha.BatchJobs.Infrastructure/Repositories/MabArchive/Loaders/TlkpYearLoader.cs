@@ -12,28 +12,44 @@ internal sealed class TlkpYearLoader : MabArchiveExecutionLoaderBase
 
     protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
+        // Ensure retries do not fail if a prior attempt inserted this year already.
+        await context.MaDstTlkpYear
+            .Where(x => x.Year == year)
+            .ExecuteDeleteAsync(cancellationToken);
+
         var monthValues = await context.MaSrcTblDbVariable
             .AsNoTracking()
             .Where(v => v.DbVarName == "month")
             .Select(v => v.DbVarValue)
             .ToListAsync(cancellationToken);
 
-        var rows = monthValues
+        var latestMonths = monthValues
             .Select(value => new MaDstTlkpYear
             {
-                Year = year,
                 LatestMonthReleased = value == null
                     ? null
                     : int.Parse(value, CultureInfo.InvariantCulture)
-            })
+            }.LatestMonthReleased)
+            .Distinct()
             .ToList();
 
-        if (rows.Count == 0)
+        if (latestMonths.Count == 0)
         {
             return 0;
         }
 
-        await context.MaDstTlkpYear.AddRangeAsync(rows, cancellationToken);
+        if (latestMonths.Count > 1)
+        {
+            throw new InvalidOperationException(
+                $"Seq 16 TlkpYear: Expected a single 'month' value, but found {latestMonths.Count} distinct values.");
+        }
+
+        await context.MaDstTlkpYear.AddAsync(new MaDstTlkpYear
+        {
+            Year = year,
+            LatestMonthReleased = latestMonths[0]
+        }, cancellationToken);
+
         return await context.SaveChangesAsync(cancellationToken);
     }
 }
