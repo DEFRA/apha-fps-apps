@@ -17,7 +17,7 @@
             <tbody class="govuk-table__body">
                 <tr class="govuk-table__row">
                     <td class="govuk-table__cell sup_border_0">
-                        <div class="period-dropdown" id="select-period-dropdown">
+                        <div class="period-dropdown" id="select-period-dropdown" style="width:260px;">
                             <label class="govuk-label govuk-!-margin-bottom-1 isFontBold" for="select-period-input">
                                 Select Summary Period:
                             </label>
@@ -26,7 +26,8 @@
                                    readonly />
                             <input type="hidden" id="select-period-value" value="" />
 
-                            <div class="dropdown-panel" id="select-period-panel" style="display:none;">
+                            <div class="dropdown-panel" id="select-period-panel"
+                                 style="display:none; position:absolute; top:100%; left:0; width:100%;">
                                 <label class="govuk-visually-hidden" for="select-period-search">
                                     Select Summary Period
                                 </label>
