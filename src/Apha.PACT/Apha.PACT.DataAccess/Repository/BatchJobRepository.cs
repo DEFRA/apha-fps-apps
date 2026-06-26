@@ -34,7 +34,7 @@ namespace Apha.PACT.DataAccess.Repository
                     Status = js.Status
                 };
 
-            jobHistoriesQuery = (IQueryable<BatchJobHistory>)ApplySorting(jobHistoriesQuery, query.SortBy, query.Descending);
+            jobHistoriesQuery = (IQueryable<BatchJobHistory>)ApplySorting(jobHistoriesQuery, query.SortBy?.ToLower(), query.Descending);
 
             return await ApplyPaging(jobHistoriesQuery, query.Page, query.PageSize);
         }
@@ -86,7 +86,8 @@ namespace Apha.PACT.DataAccess.Repository
         {
             if (string.IsNullOrEmpty(sortBy))
             {
-                return query.OrderBy(e => e.StartDateTime);
+                //return query.OrderBy(e => e.StartDateTime,);
+                return query.OrderByDescending(e => e.StartDateTime);
             }
             else
             {
