@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Recreate Summaries";
+    var btnDisabled = Model.CanRunJob ? (string?)null : "disabled";
 }
 
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
@@ -12,31 +13,47 @@
 
 <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
     <div class="govuk-grid-column-three-quarters govuk-!-padding-2">
-        <table class="govuk-table govuk-!-margin-bottom-0">
+        <table class="govuk-table govuk-!-margin-bottom-0 isCustomPivotGrid">
             <tbody class="govuk-table__body">
                 <tr class="govuk-table__row">
                     <td class="govuk-table__cell sup_border_0">
-                        <div class="govuk-form-group govuk-!-margin-bottom-0">
-                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-1" for="selectMonth">
+                        <div class="period-dropdown" id="select-period-dropdown">
+                            <label class="govuk-label govuk-!-margin-bottom-1 isFontBold" for="select-period-input">
                                 Select Summary Period:
                             </label>
-                            <select id="selectMonth" class="govuk-select govuk-!-font-size-16">
-                                <option value="">-- select --</option>
-                                @foreach (var month in Model.Months)
-                                {
-                                    <option value="@month.Value">@month.Text</option>
-                                }
-                            </select>
+                            <input type="text" id="select-period-input" value="--select--"
+                                   class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                                   readonly />
+                            <input type="hidden" id="select-period-value" value="" />
+
+                            <div class="dropdown-panel" id="select-period-panel" style="display:none;">
+                                <label class="govuk-visually-hidden" for="select-period-search">
+                                    Select Summary Period
+                                </label>
+                                <input type="text" class="search-box" id="select-period-search"
+                                       placeholder="Type to search and select period" />
+                                <table class="period-dropdown__table">
+                                    <thead>
+                                        <tr>
+                                            <th>Period</th>
+                                            <th>Month Name</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="select-period-body">
+                                        @* Populated by inline script below *@
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </td>
-                    <td class="govuk-table__cell sup_border_0 govuk-!-padding-left-3" style="vertical-align: bottom;">
+                    <td class="govuk-table__cell sup_border_0 govuk-!-padding-left-3 recreate-summaries__action-cell">
                         <div class="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-4">
                             <button type="button"
                                     id="btnCreateSummary"
                                     class="govuk-button govuk-!-margin-bottom-0"
                                     data-module="govuk-button"
                                     data-prevent-double-click="true"
-                                    disabled="@(!Model.CanRunJob)"
+                                    disabled="@btnDisabled"
                                     onclick="triggerCreateSummary()">
                                 Create Summary
                             </button>
@@ -50,7 +67,7 @@
 
 <div id="triggerNotification" class="govuk-!-margin-top-4" style="display:none;"></div>
 
-<div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-4">
+<div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-4" id="summary-history-section">
     <div class="govuk-grid-column-full govuk-!-padding-2">
         <div id="gridContainer_summaryHistoryGrid">
             @await Html.PartialAsync("_DataGrid", Model.HistoryGrid)
@@ -60,8 +77,57 @@
 
 @section Scripts {
 <script>
+    // ── Period dropdown data ──────────────────────────────────────────────
+    const periodData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.Months.Select(m => new {
+            value    = m.Value,
+            period   = m.Value,
+            monthName = m.Text.Contains(" - ") ? m.Text.Split(" - ", 2)[1] : m.Text
+        })
+    ));
+
+    // ── Populate tbody ────────────────────────────────────────────────────
+    (function populatePeriodRows(rows) {
+        const tbody = document.getElementById('select-period-body');
+        rows.forEach(function (item) {
+            const tr = document.createElement('tr');
+            tr.dataset.value    = item.value;
+            tr.dataset.display  = item.period + ' - ' + item.monthName;
+            tr.innerHTML = '<td>' + item.period + '</td><td>' + item.monthName + '</td>';
+            tr.addEventListener('click', function () {
+                document.getElementById('select-period-input').value = this.dataset.display;
+                document.getElementById('select-period-value').value = this.dataset.value;
+                document.getElementById('select-period-panel').style.display = 'none';
+            });
+            tbody.appendChild(tr);
+        });
+    })(periodData);
+
+    // ── Toggle panel on input click ───────────────────────────────────────
+    document.getElementById('select-period-input').addEventListener('click', function () {
+        const panel = document.getElementById('select-period-panel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // ── Live search ───────────────────────────────────────────────────────
+    document.getElementById('select-period-search').addEventListener('input', function () {
+        const term = this.value.toLowerCase();
+        document.querySelectorAll('#select-period-body tr').forEach(function (tr) {
+            tr.style.display = tr.textContent.toLowerCase().includes(term) ? '' : 'none';
+        });
+    });
+
+    // ── Close panel when clicking outside ────────────────────────────────
+    document.addEventListener('click', function (e) {
+        const container = document.getElementById('select-period-dropdown');
+        if (container && !container.contains(e.target)) {
+            document.getElementById('select-period-panel').style.display = 'none';
+        }
+    });
+
+    // ── Trigger job ───────────────────────────────────────────────────────
     function triggerCreateSummary() {
-        const monthVal = parseInt(document.getElementById('selectMonth').value, 10);
+        const monthVal = parseInt(document.getElementById('select-period-value').value, 10);
         if (!monthVal) {
             showNotification('Please select a summary period.', 'error');
             return;
@@ -94,10 +160,10 @@
         });
     }
 
+    // ── Refresh history grid ──────────────────────────────────────────────
     function refreshHistoryGrid() {
         const container = document.getElementById('gridContainer_summaryHistoryGrid');
         if (!container) return;
-
         fetch('/PACT/RecreateSummaries/LoadHistoryGrid', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -107,10 +173,11 @@
         .then(html => { container.innerHTML = html; });
     }
 
+    // ── Notification banner ───────────────────────────────────────────────
     function showNotification(message, type) {
         const el = document.getElementById('triggerNotification');
-        const cssClass = type === 'success' ? 'govuk-notification-banner--success' : '';
-        el.innerHTML = `<div class="govuk-notification-banner ${cssClass}" role="region" aria-label="Notice">
+        const successClass = type === 'success' ? 'govuk-notification-banner--success' : '';
+        el.innerHTML = `<div class="govuk-notification-banner ${successClass}" role="region" aria-label="Notice">
             <div class="govuk-notification-banner__content">
                 <p class="govuk-body">${message}</p>
             </div>
