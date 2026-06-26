@@ -2,11 +2,10 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Pagination;
 
-namespace Apha.FPSApps.Application.Interfaces.PACT
+namespace Apha.FPSApps.Application.Interfaces.PactApiClients
 {
-    public interface IRecreateAndReleaseSummaryService
+    public interface IPactBatchJobApiClient
     {
-        Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetRecreateSummaryLogAsync(QueryParameters<string> query);
         Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName);
         Task<ApiResponseDto<bool>> CanRunBatchJobAsync(string jobName);
         Task<ApiResponseDto<BatchJobQueueDto>> TriggerRecreateSummariesJobAsync(int month);

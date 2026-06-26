@@ -24,6 +24,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public IPactRecreateAndReleaseSummaryLogApiClient PactRecreateSummaryLog { get; }
         public IPactMonthlyTimeApiClient PactMonthlyTime { get; }
         public IPactReleaseSummaryApiClient PactReleaseSummary { get; }
+        public IPactBatchJobApiClient PactBatchJob { get; }
 
         public PactApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -45,6 +46,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             PactMonthlyTime = new PactMonthlyTimeApiClient(http, mapper);
             PactRecreateSummaryLog = new PactRecreateAndReleaseSummaryLogApiClient(http, mapper);
             PactReleaseSummary = new PactReleaseSummaryApiClient(http, mapper);
+            PactBatchJob = new PactBatchJobApiClient(http, mapper);
         }
     }
 }

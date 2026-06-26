@@ -17,5 +17,14 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetRecreateSummaryLogAsync(QueryParameters<string> query)
             => await _pactClient.PactRecreateSummaryLog.GetRecreateSummaryLogAsync(query);
+
+        public async Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
+            => await _pactClient.PactBatchJob.GetBatchJobHistoryAsync(query, jobName);
+
+        public async Task<ApiResponseDto<bool>> CanRunBatchJobAsync(string jobName)
+            => await _pactClient.PactBatchJob.CanRunBatchJobAsync(jobName);
+
+        public async Task<ApiResponseDto<BatchJobQueueDto>> TriggerRecreateSummariesJobAsync(int month)
+            => await _pactClient.PactBatchJob.TriggerRecreateSummariesJobAsync(month);
     }
 }

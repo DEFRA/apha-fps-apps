@@ -1,0 +1,126 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.RecreateSummariesViewModel
+
+@{
+    ViewData["Title"] = "Recreate Summaries";
+}
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+    <div class="govuk-grid-column-full sup_flex_center_start sup_border-bottom sup_margin_bottom_10">
+        <h1 class="govuk-heading-m sup_margin_bottom_10">Recreate Summaries</h1>
+    </div>
+</div>
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+    <div class="govuk-grid-column-three-quarters govuk-!-padding-2">
+        <table class="govuk-table govuk-!-margin-bottom-0">
+            <tbody class="govuk-table__body">
+                <tr class="govuk-table__row">
+                    <td class="govuk-table__cell sup_border_0">
+                        <div class="govuk-form-group govuk-!-margin-bottom-0">
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-1" for="selectMonth">
+                                Select Summary Period:
+                            </label>
+                            <select id="selectMonth" class="govuk-select govuk-!-font-size-16">
+                                <option value="">-- select --</option>
+                                @foreach (var month in Model.Months)
+                                {
+                                    <option value="@month.Value">@month.Text</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+                    <td class="govuk-table__cell sup_border_0 govuk-!-padding-left-3" style="vertical-align: bottom;">
+                        <div class="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-4">
+                            <button type="button"
+                                    id="btnCreateSummary"
+                                    class="govuk-button govuk-!-margin-bottom-0"
+                                    data-module="govuk-button"
+                                    data-prevent-double-click="true"
+                                    disabled="@(!Model.CanRunJob)"
+                                    onclick="triggerCreateSummary()">
+                                Create Summary
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="triggerNotification" class="govuk-!-margin-top-4" style="display:none;"></div>
+
+<div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-4">
+    <div class="govuk-grid-column-full govuk-!-padding-2">
+        <div id="gridContainer_summaryHistoryGrid">
+            @await Html.PartialAsync("_DataGrid", Model.HistoryGrid)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function triggerCreateSummary() {
+        const monthVal = parseInt(document.getElementById('selectMonth').value, 10);
+        if (!monthVal) {
+            showNotification('Please select a summary period.', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btnCreateSummary');
+        btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
+
+        fetch('/PACT/RecreateSummaries/TriggerJob', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ month: monthVal, __RequestVerificationToken: getAntiForgeryToken() })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Job triggered successfully. The history grid will refresh shortly.', 'success');
+                refreshHistoryGrid();
+            } else {
+                showNotification(data.message ?? 'Failed to trigger the job.', 'error');
+                btn.disabled = false;
+                btn.removeAttribute('aria-disabled');
+            }
+        })
+        .catch(() => {
+            showNotification('An unexpected error occurred.', 'error');
+            btn.disabled = false;
+            btn.removeAttribute('aria-disabled');
+        });
+    }
+
+    function refreshHistoryGrid() {
+        const container = document.getElementById('gridContainer_summaryHistoryGrid');
+        if (!container) return;
+
+        fetch('/PACT/RecreateSummaries/LoadHistoryGrid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ Filter: '{}', Page: 1, PageSize: 10, __RequestVerificationToken: getAntiForgeryToken() })
+        })
+        .then(r => r.text())
+        .then(html => { container.innerHTML = html; });
+    }
+
+    function showNotification(message, type) {
+        const el = document.getElementById('triggerNotification');
+        const cssClass = type === 'success' ? 'govuk-notification-banner--success' : '';
+        el.innerHTML = `<div class="govuk-notification-banner ${cssClass}" role="region" aria-label="Notice">
+            <div class="govuk-notification-banner__content">
+                <p class="govuk-body">${message}</p>
+            </div>
+        </div>`;
+        el.style.display = 'block';
+    }
+
+    function getAntiForgeryToken() {
+        const el = document.querySelector('input[name="__RequestVerificationToken"]');
+        return el ? el.value : '';
+    }
+</script>
+}
