@@ -46,7 +46,7 @@ namespace Apha.PACT.DataAccess.Repository
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-                where jm.JobName == jobName && js.Status == "Running"
+                where jm.JobName == jobName &&  (js.Status.ToLower() == "running" || js.Status.ToLower() == "initiated")
                 select jq.JobqueueId
             ).AnyAsync();
 
@@ -62,7 +62,7 @@ namespace Apha.PACT.DataAccess.Repository
 
             var runningStatus = await _context.BatchJobStatuses
                 .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.JobId == job.JobId && s.Status == "Running")
+                .FirstOrDefaultAsync(s => s.JobId == job.JobId && s.Status.ToLower() == "initiated")
                 ?? throw new KeyNotFoundException($"Status 'Running' not found for job '{jobName}'.");
 
             var entry = new BatchJobQueue

@@ -18,7 +18,7 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetRecreateSummaryLogAsync(QueryParameters<string> query)
             => await _pactClient.PactRecreateSummaryLog.GetRecreateSummaryLogAsync(query);
 
-        public async Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
+        public async Task<ApiResponseDto<List<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
             => await _pactClient.PactBatchJob.GetBatchJobHistoryAsync(query, jobName);
 
         public async Task<ApiResponseDto<bool>> CanRunBatchJobAsync(string jobName)

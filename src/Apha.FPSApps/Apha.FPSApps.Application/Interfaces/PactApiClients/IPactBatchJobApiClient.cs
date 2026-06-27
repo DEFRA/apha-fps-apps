@@ -6,7 +6,7 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
 {
     public interface IPactBatchJobApiClient
     {
-        Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName);
+        Task<ApiResponseDto<List<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName);
         Task<ApiResponseDto<bool>> CanRunBatchJobAsync(string jobName);
         Task<ApiResponseDto<BatchJobQueueDto>> TriggerRecreateSummariesJobAsync(int month);
     }

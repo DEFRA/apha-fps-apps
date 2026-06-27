@@ -21,7 +21,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
+        public async Task<ApiResponseDto<List<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetBatchJobHistory, query);
             url += $"&jobName={Uri.EscapeDataString(jobName)}";
@@ -29,18 +29,13 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
             if (response.Success)
             {
-                var dto = _mapper.Map<ApiResponseDto<List<BatchJobHistoryDto>>>(response);
-                var pagination = response.Pagination;
-                var result = new PaginatedResult<BatchJobHistoryDto>(
-                    dto.Data ?? [],
-                    pagination?.TotalRecords ?? 0,
-                    pagination?.PageNumber ?? query.Page,
-                    pagination?.PageSize ?? query.PageSize);
-                return ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>.SuccessResponse(result);
+                return _mapper.Map<ApiResponseDto<List<BatchJobHistoryDto>>>(response);
             }
-
-            var failDto = _mapper.Map<ApiResponseDto<List<BatchJobHistoryDto>>>(response);
-            return ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>.FailureResponse(failDto.Errors, failDto.Meta);
+            else
+            {
+                var failDto = _mapper.Map<ApiResponseDto<List<BatchJobHistoryDto>>>(response);
+                return ApiResponseDto<List<BatchJobHistoryDto>>.FailureResponse(failDto.Errors, failDto.Meta);
+            }
         }
 
         public async Task<ApiResponseDto<bool>> CanRunBatchJobAsync(string jobName)
@@ -62,7 +57,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 PactApiEndpoints.TriggerRecreateSummariesJob, request);
 
             if (response.Success && response.Data is not null)
-                return ApiResponseDto<BatchJobQueueDto>.SuccessResponse(_mapper.Map<BatchJobQueueDto>(response.Data));
+                return _mapper.Map<ApiResponseDto<BatchJobQueueDto>>(response);
 
             var failDto = _mapper.Map<ApiResponseDto<BatchJobQueueDto>>(response);
             return ApiResponseDto<BatchJobQueueDto>.FailureResponse(failDto.Errors, failDto.Meta);

@@ -1,13 +1,13 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
+using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Core.Interfaces;
 using Asp.Versioning;
 using AutoMapper;
-using DocumentFormat.OpenXml.InkML;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
@@ -29,7 +29,7 @@ namespace Apha.PACT.Api.Controllers
         /// </summary>
         /// <param name="service">Application service used to retrieve recreate summaries log and release summary data.</param>
         /// <param name="batchJobService">Application service used to retrieve batch job history and status.</param>
-        /// <param name="currentUserContext">Provides the identity of the currently authenticated user.</param>
+        /// <param name="fpsRequestContext">Provides the identity of the currently authenticated user.</param>
         /// <param name="mapper">AutoMapper instance used to project application DTOs to API response contracts.</param>
         public RecreateAndReleaseSummaryController(IRecreateAndReleaseSummaryService service, IBatchJobService batchJobService, IFpsRequestContext fpsRequestContext, IMapper mapper)
         {
@@ -124,7 +124,7 @@ namespace Apha.PACT.Api.Controllers
         public async Task<IActionResult> TriggerRecreateSummariesJob([FromBody] RecreateSummariesReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
             var result = await _batchJobService.TriggerRecreateSummariesJobAsync(request.Month, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
-            return Accepted(_mapper.Map<BatchJobQueueRes>(result));
+            return Ok(_mapper.Map<BatchJobQueueRes>(result));
         }
     }
 }

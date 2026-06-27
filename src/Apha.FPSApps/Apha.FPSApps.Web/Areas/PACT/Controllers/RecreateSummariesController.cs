@@ -83,8 +83,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var response = await _service.GetBatchJobHistoryAsync(query, RecreateSummariesJobName);
 
             grid.Data = response.Data != null
-                ? _mapper.Map<List<BatchJobHistoryItem>>(response.Data.data)
-                : [];
+                ? _mapper.Map<List<BatchJobHistoryItem>>(response.Data)
+                : new List<BatchJobHistoryItem>();
 
             grid.Pagination = response.Pagination != null
                 ? _mapper.Map<PaginationModel>(response.Pagination)

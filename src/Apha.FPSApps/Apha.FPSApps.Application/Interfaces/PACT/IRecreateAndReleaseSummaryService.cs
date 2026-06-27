@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
     public interface IRecreateAndReleaseSummaryService
     {
         Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetRecreateSummaryLogAsync(QueryParameters<string> query);
-        Task<ApiResponseDto<PaginatedResult<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName);
+        Task<ApiResponseDto<List<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName);
         Task<ApiResponseDto<bool>> CanRunBatchJobAsync(string jobName);
         Task<ApiResponseDto<BatchJobQueueDto>> TriggerRecreateSummariesJobAsync(int month);
     }
