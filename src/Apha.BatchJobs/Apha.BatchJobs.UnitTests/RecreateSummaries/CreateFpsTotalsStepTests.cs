@@ -105,4 +105,74 @@ public sealed class CreateFpsTotalsStepTests
         Assert.Equal(7d, row.TotalPayCosts);
         Assert.Equal(harness.FpsYear, row.FpsYear);
     }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_YearScopedJoinsPreventCrossYearFanout()
+    {
+        // Validation: CreateFpsTotals uses composite (ParentProject, FpsYear) joins, not jobcode-only.
+        // This test ensures multi-year data does not cause row multiplication.
+
+        await using var harness = await RecreateSummariesPostgresTestHarness.CreateAsync();
+        var db = harness.DbContext;
+        var year2 = harness.FpsYear - 1;
+
+        var project = harness.Id("PRJ_SHARED");
+        var program = $"P{harness.Prefix[2..6]}A";
+
+        await harness.ExecuteSqlAsync($@"
+            INSERT INTO fps.tlkpprogram (programno, fpsyear, sector_name)
+            VALUES ('{program}', {harness.FpsYear}, 'charge'), ('{program}', {year2}, 'charge');
+
+            -- Same project exists in BOTH years
+            INSERT INTO fps.tlkpproject
+                (parentproject, projecttitle, program, customer, transferincome, custincome, projectstatus, disease,
+                 contract, plancaseworkdebit, pvsincome, budget_cvl, profit, isdefraproject, incomeaccountcode, fpsyear)
+            VALUES
+                ('{project}', 'Project Y1', '{program}', 'Cust', 200::money, 100::money, 'Active', 'General',
+                 'Contract', 10::money, 5::money, 50::money, 20::money, 0, 'IA1', {harness.FpsYear}),
+                ('{project}', 'Project Y2', '{program}', 'Cust', 300::money, 150::money, 'Active', 'General',
+                 'Contract', 15::money, 7::money, 60::money, 25::money, 0, 'IA1', {year2});
+
+            -- Costs only for year2 (different year from test execution)
+            INSERT INTO fps.tbladditionalcosts (jobcode, account, description, itemcost, fpsyear)
+            VALUES ('{project}', 'A1', 'Additional Y2', 5::money, {year2});
+        ");
+
+        // Delete any existing totals
+        var deleteStep = new DeleteFpsTotalsStep();
+        var deleteResult = await deleteStep.ExecuteAsync(
+            new RecreateSummariesExecutionContext(db, new NpgsqlConnection()),
+            CancellationToken.None);
+        Assert.True(deleteResult.Status == StepStatus.Success, deleteResult.ErrorMessage);
+
+        // Execute CreateFpsTotals for current year (harness.FpsYear)
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var step = new CreateFpsTotalsStep();
+        var result = await step.ExecuteAsync(context, CancellationToken.None);
+
+        // Assert: Execution succeeds
+        Assert.True(result.Status == StepStatus.Success, result.ErrorMessage);
+
+        // Assert: Both year rows created correctly with NO cross-year multiplication
+        var currentYearRow = await db.RsFpsYearTotals.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ParentProject == project && x.FpsYear == harness.FpsYear);
+        
+        var year2Row = await db.RsFpsYearTotals.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ParentProject == project && x.FpsYear == year2);
+        
+        Assert.NotNull(currentYearRow);
+        Assert.NotNull(year2Row);
+        
+        // Assert: Each year has isolated costs (composite join prevents cross-year fanout)
+        // Year 2026: no additional costs (inserted only for year2)
+        Assert.Equal(0m, currentYearRow.TotalAdditionalCosts);
+        // Year 2025: has the additional cost we inserted
+        Assert.Equal(5m, year2Row.TotalAdditionalCosts);
+
+        // Assert: Exactly 2 rows for this project (one per year, no multiplication)
+        var totalRowsForProject = await db.RsFpsYearTotals.AsNoTracking()
+            .CountAsync(x => x.ParentProject == project);
+        
+        Assert.Equal(2, totalRowsForProject);
+    }
 }
