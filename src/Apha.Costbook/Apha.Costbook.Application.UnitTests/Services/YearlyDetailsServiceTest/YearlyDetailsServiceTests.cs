@@ -438,7 +438,7 @@ public class YearlyDetailsServiceTests
     }
 
     [Fact]
-    public async Task AddAnimalRequirementAsync_ThrowsValidation_WhenNumberOfDaysIsNull()
+    public async Task AddAnimalRequirementAsync_ReturnsNullAnimalCost_WhenNumberOfDaysIsNull()
     {
         var dto = new AnimalRequirementDto { AnimalType = "CAT", Project = "P1", Year = 1, NumberOfDays = null, NumberOfAnimals = 3, DailyRate = 10, AnimalCost = null };
         var entity = new AnimalRequirement { NumberOfDays = null, NumberOfAnimals = 3, DailyRate = 10 };
@@ -446,8 +446,9 @@ public class YearlyDetailsServiceTests
         _mapper.Map<AnimalRequirement>(dto).Returns(entity);
         _animalRepo.AddAnimalRequirementAsync(entity).Returns(entity);
 
-        var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddAnimalRequirementAsync(dto));
-        Assert.NotEmpty(ex.Errors);
+        var result = await _sut.AddAnimalRequirementAsync(dto);
+
+        Assert.Null(result.AnimalCost);
     }
 
     #endregion

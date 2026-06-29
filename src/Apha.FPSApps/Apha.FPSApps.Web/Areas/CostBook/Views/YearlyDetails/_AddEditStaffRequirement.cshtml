@@ -67,37 +67,39 @@
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="Name" class="govuk-label">
-                Name <span class="sup_color_red">*</span>
+                Name 
             </label>
             <input asp-for="Name" type="text" class="govuk-input" />
             
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="Nohours" class="govuk-label">
-                Hrs <span class="sup_color_red">*</span>
+                Hrs 
             </label>
-            <input asp-for="Nohours" type="number"  class="govuk-input"
-                   value="@(Model.Nohours ?? 0)" />
+            <input asp-for="Nohours" type="number" class="govuk-input"
+                   value="@(Model.Nohours ?? 0)"
+                   onblur="if(this.value==='')this.value='0';" />
            
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="Nodays" class="govuk-label">
-                Days <span class="sup_color_red">*</span>
+                Days 
             </label>
-            <input asp-for="Nodays" type="number"  class="govuk-input"
-                   value="@(Model.Nodays ?? 0)" />
+            <input asp-for="Nodays" type="number" class="govuk-input"
+                   value="@(Model.Nodays ?? 0)"
+                   onblur="if(this.value==='')this.value='0';" />
             
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="Chargerate" class="govuk-label">
-                Rate <span class="sup_color_red">*</span>
+                Rate 
             </label>
             <input asp-for="Chargerate" type="text" readonly class="govuk-input" />
             <span asp-validation-for="Chargerate" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="StaffCost" class="govuk-label">
-                Cost <span class="sup_color_red">*</span>
+                Cost 
             </label>
             <input asp-for="StaffCost" type="text" readonly class="govuk-input" />
             <span asp-validation-for="StaffCost" class="govuk-error-message" style="display:none;"></span>

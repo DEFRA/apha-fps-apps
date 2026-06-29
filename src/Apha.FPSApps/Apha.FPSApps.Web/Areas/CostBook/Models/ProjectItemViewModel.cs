@@ -13,6 +13,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Models
         public required string ProjectTitle { get; set; }
 
         [GridColumn(Width = 271, Type = GridColumnType.Text)]
+        [Display(Name = "Contract")]
         public required string ContractNumber { get; set; }
        
         [GridColumn(Width = 271, Type = GridColumnType.Date)]
