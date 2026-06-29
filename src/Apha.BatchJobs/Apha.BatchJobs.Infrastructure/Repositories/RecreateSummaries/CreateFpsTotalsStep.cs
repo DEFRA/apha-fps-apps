@@ -6,7 +6,7 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
 internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
 {
-    public override string StepName => "CreateFpsTotals";
+    public override string StepName => "CreateFpsTotals"; // last hardened: 2026-06-29
 
     protected override async Task<int> ExecuteCoreAsync(RecreateSummariesExecutionContext context, CancellationToken cancellationToken)
     {
