@@ -1,0 +1,174 @@
+@model Apha.FPSApps.Web.Areas.PIMS.Models.MilestoneFormDatesItem
+@{
+    string? yearReadonly = ViewBag.IsAddingNew == true ? null : "readonly";
+}
+
+<div id="editFormDatesModal" class="govuk-edit-modal">
+    <div class="govuk-edit-modal-dialog" style="max-width: 580px;">
+        <div class="govuk-edit-modal__header">
+            <h3 class="govuk-edit-modal__title">
+                @(ViewBag.IsAddingNew == true ? "Add Financial Year Record" : "Edit Financial Year Record")
+            </h3>
+            <button type="button" onclick="closeFormDatesModal()"
+                    aria-label="Close" class="govuk-edit-modal__close-btn">
+                ✕
+            </button>
+        </div>
+        <div class="govuk-edit-modal__body">
+            <form id="editFormDatesForm" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ParentProject" />
+
+                <div class="govuk-error-summary" role="alert"
+                     aria-labelledby="editFormDatesErrorTitle" tabindex="-1" style="display: none;">
+                    <h2 class="govuk-error-summary__title" id="editFormDatesErrorTitle">
+                        There is a problem
+                    </h2>
+                    <div class="govuk-error-summary__body">
+                        <ul class="govuk-list govuk-error-summary__list"></ul>
+                    </div>
+                </div>
+
+                <div class="govuk-form-group govuk-!-margin-bottom-4" id="fgFinYear">
+                    <label class="govuk-label font-size-16" asp-for="Year">
+                        Financial Year <span class="sup_color_red">*</span>
+                    </label>
+                    <input class="govuk-input" asp-for="Year"
+                           type="text" placeholder="e.g. 2026"
+                           maxlength="4" pattern="\d{4}" min="1900" max="2100"
+                           style="width: 100%;"
+                           required="@(yearReadonly is null ? "required" : null)"
+                           readonly="@yearReadonly" />
+                    <span asp-validation-for="Year" class="govuk-error-message" style="display:none;"></span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px;">
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Jun">Jun</label>
+                        <div style="position:relative; display:block;">
+                            <input type="text" id="JunDisplay" class="govuk-input govuk-input--width-20"
+                                   value="@Model.Jun?.ToString("dd/MM/yyyy")"
+                                   autocomplete="off" onclick="openDatePicker('JunPicker')"
+                                   style="cursor:pointer;" readonly>
+                            <input type="hidden" name="Jun" id="JunBinding"
+                                   value="@(Model.Jun.HasValue ? Model.Jun.Value.ToString("yyyy-MM-dd") : string.Empty)">
+                            <input type="date" id="JunPicker"
+                                   value="@(Model.Jun.HasValue ? Model.Jun.Value.ToString("yyyy-MM-dd") : string.Empty)"
+                                   style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                   onchange="syncDateToText('JunPicker', 'JunDisplay', 'JunBinding')">
+                        </div>
+                    </div>
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Sep">Sep</label>
+                        <div style="position:relative; display:block;">
+                            <input type="text" id="SepDisplay" class="govuk-input govuk-input--width-20"
+                                   value="@Model.Sep?.ToString("dd/MM/yyyy")"
+                                   autocomplete="off" onclick="openDatePicker('SepPicker')"
+                                   style="cursor:pointer;" readonly>
+                            <input type="hidden" name="Sep" id="SepBinding"
+                                   value="@(Model.Sep.HasValue ? Model.Sep.Value.ToString("yyyy-MM-dd") : string.Empty)">
+                            <input type="date" id="SepPicker"
+                                   value="@(Model.Sep.HasValue ? Model.Sep.Value.ToString("yyyy-MM-dd") : string.Empty)"
+                                   style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                   onchange="syncDateToText('SepPicker', 'SepDisplay', 'SepBinding')">
+                        </div>
+                    </div>
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Dec">Dec</label>
+                        <div style="position:relative; display:block;">
+                            <input type="text" id="DecDisplay" class="govuk-input govuk-input--width-20"
+                                   value="@Model.Dec?.ToString("dd/MM/yyyy")"
+                                   autocomplete="off" onclick="openDatePicker('DecPicker')"
+                                   style="cursor:pointer;" readonly>
+                            <input type="hidden" name="Dec" id="DecBinding"
+                                   value="@(Model.Dec.HasValue ? Model.Dec.Value.ToString("yyyy-MM-dd") : string.Empty)">
+                            <input type="date" id="DecPicker"
+                                   value="@(Model.Dec.HasValue ? Model.Dec.Value.ToString("yyyy-MM-dd") : string.Empty)"
+                                   style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                   onchange="syncDateToText('DecPicker', 'DecDisplay', 'DecBinding')">
+                        </div>
+                    </div>
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Jan">Jan</label>
+                        <div style="position:relative; display:block;">
+                            <input type="text" id="JanDisplay" class="govuk-input govuk-input--width-20"
+                                   value="@Model.Jan?.ToString("dd/MM/yyyy")"
+                                   autocomplete="off" onclick="openDatePicker('JanPicker')"
+                                   style="cursor:pointer;" readonly>
+                            <input type="hidden" name="Jan" id="JanBinding"
+                                   value="@(Model.Jan.HasValue ? Model.Jan.Value.ToString("yyyy-MM-dd") : string.Empty)">
+                            <input type="date" id="JanPicker"
+                                   value="@(Model.Jan.HasValue ? Model.Jan.Value.ToString("yyyy-MM-dd") : string.Empty)"
+                                   style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                   onchange="syncDateToText('JanPicker', 'JanDisplay', 'JanBinding')">
+                        </div>
+                    </div>
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Feb">Feb</label>
+                        <div style="position:relative; display:block;">
+                            <input type="text" id="FebDisplay" class="govuk-input govuk-input--width-20"
+                                   value="@Model.Feb?.ToString("dd/MM/yyyy")"
+                                   autocomplete="off" onclick="openDatePicker('FebPicker')"
+                                   style="cursor:pointer;" readonly>
+                            <input type="hidden" name="Feb" id="FebBinding"
+                                   value="@(Model.Feb.HasValue ? Model.Feb.Value.ToString("yyyy-MM-dd") : string.Empty)">
+                            <input type="date" id="FebPicker"
+                                   value="@(Model.Feb.HasValue ? Model.Feb.Value.ToString("yyyy-MM-dd") : string.Empty)"
+                                   style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                   onchange="syncDateToText('FebPicker', 'FebDisplay', 'FebBinding')">
+                        </div>
+                    </div>
+                    <div class="govuk-form-group">
+                        <label class="govuk-label font-size-16" asp-for="Mar">Mar</label>
+                        <div style="position:relative; display:block;">
+                            <input type="text" id="MarDisplay" class="govuk-input govuk-input--width-20"
+                                   value="@Model.Mar?.ToString("dd/MM/yyyy")"
+                                   autocomplete="off" onclick="openDatePicker('MarPicker')"
+                                   style="cursor:pointer;" readonly>
+                            <input type="hidden" name="Mar" id="MarBinding"
+                                   value="@(Model.Mar.HasValue ? Model.Mar.Value.ToString("yyyy-MM-dd") : string.Empty)">
+                            <input type="date" id="MarPicker"
+                                   value="@(Model.Mar.HasValue ? Model.Mar.Value.ToString("yyyy-MM-dd") : string.Empty)"
+                                   style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                   onchange="syncDateToText('MarPicker', 'MarDisplay', 'MarBinding')">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="govuk-edit-modal__footer">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary font-size-16"
+                    onclick="closeFormDatesModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button font-size-16"
+                    id="saveFormDatesBtn"
+                    onclick="saveMilestoneFormDates()">
+                @(ViewBag.IsAddingNew == true ? "Save" : "Update")
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openDatePicker(pickerId) {
+        var picker = document.getElementById(pickerId);
+        if (picker) {
+            try { picker.showPicker(); } catch (e) { picker.click(); }
+        }
+    }
+
+    function syncDateToText(pickerId, displayId, hiddenId) {
+        var picker = document.getElementById(pickerId);
+        if (picker.value) {
+            var parts = picker.value.split('-');
+            document.getElementById(displayId).value = parts[2] + '/' + parts[1] + '/' + parts[0];
+            document.getElementById(hiddenId).value = picker.value;
+        } else {
+            document.getElementById(displayId).value = '';
+            document.getElementById(hiddenId).value = '';
+        }
+    }
+</script>

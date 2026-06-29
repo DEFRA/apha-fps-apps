@@ -51,6 +51,54 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
             int fpsYear = DefaultTestFpsYear)
             => CreateRepositoryWithMocks(jobCodes, fpsYear).Repo;
 
+        #region GetJobCodesAsync
+
+        [Fact]
+        public async Task GetJobCodesAsync_WithJobCodes_ReturnsAllOrderedByJobCodeId()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC3", ParentProject = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC1", ParentProject = "PRJ2", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC2", ParentProject = "PRJ3", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+
+            var result = (await repo.GetJobCodesAsync()).ToList();
+
+            Assert.Equal(3, result.Count);
+            Assert.Equal("JC1", result[0].JobCodeId);
+            Assert.Equal("JC2", result[1].JobCodeId);
+            Assert.Equal("JC3", result[2].JobCodeId);
+        }
+
+        [Fact]
+        public async Task GetJobCodesAsync_EmptyTable_ReturnsEmptyList()
+        {
+            var repo = CreateRepository([]);
+
+            var result = await repo.GetJobCodesAsync();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetJobCodesAsync_SingleRecord_ReturnsSingleItem()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", ParentProject = "PRJ1", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+
+            var result = (await repo.GetJobCodesAsync()).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("JC1", result[0].JobCodeId);
+        }
+
+        #endregion
+
         #region GetJobCodesByProjectAsync
 
         [Fact]
@@ -119,6 +167,201 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
             var result = await repo.GetPagedJobCodesAsync(query, null);
 
             Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedJobCodesAsync_WithJobCodeIdFilter_ReturnsMatchingRecord()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "ALPHA", ParentProject = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "BETA",  ParentProject = "PRJ1", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Filter = """{"JobCodeId":"ALPHA"}"""
+            };
+
+            var result = await repo.GetPagedJobCodesAsync(query, null);
+
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("ALPHA", result.Data.First().JobCodeId);
+        }
+
+        [Fact]
+        public async Task GetPagedJobCodesAsync_WithParentProjectFilter_ReturnsMatchingRecords()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", ParentProject = "PRJ1", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC2", ParentProject = "PRJ2", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC3", ParentProject = "PRJ1", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Filter = """{"ParentProject":"PRJ1"}"""
+            };
+
+            var result = await repo.GetPagedJobCodesAsync(query, null);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, j => Assert.Equal("PRJ1", j.ParentProject));
+        }
+
+        [Fact]
+        public async Task GetPagedJobCodesAsync_WithJobCodeWorkGroupFilter_ReturnsMatchingRecords()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", JobCodeWorkGroup = "WGA", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC2", JobCodeWorkGroup = "WGB", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Filter = """{"JobCodeWorkGroup":"WGA"}"""
+            };
+
+            var result = await repo.GetPagedJobCodesAsync(query, null);
+
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("WGA", result.Data.First().JobCodeWorkGroup);
+        }
+
+        [Fact]
+        public async Task GetPagedJobCodesAsync_WithTypeFilter_ReturnsMatchingRecords()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", Type = "TypeA", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC2", Type = "TypeB", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Filter = """{"Type":"TypeA"}"""
+            };
+
+            var result = await repo.GetPagedJobCodesAsync(query, null);
+
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("TypeA", result.Data.First().Type);
+        }
+
+        [Fact]
+        public async Task GetPagedJobCodesAsync_WithJobCodeNameFilter_ReturnsMatchingRecords()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", JobCodeName = "Analysis", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC2", JobCodeName = "Review",   FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+            var query = new PaginationParameters<string>
+            {
+                Filter = """{"JobCodeName":"Analysis"}"""
+            };
+
+            var result = await repo.GetPagedJobCodesAsync(query, null);
+
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("Analysis", result.Data.First().JobCodeName);
+        }
+
+        [Fact]
+        public async Task GetPagedJobCodesAsync_NullFilter_ReturnsAllRecords()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+            var query = new PaginationParameters<string> { Filter = null };
+
+            var result = await repo.GetPagedJobCodesAsync(query, null);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedJobCodesAsync_EmptyFilter_ReturnsAllRecords()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+            var query = new PaginationParameters<string> { Filter = string.Empty };
+
+            var result = await repo.GetPagedJobCodesAsync(query, null);
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Theory]
+        [InlineData("JobCodeId",       false, "JC1", "JC2")]
+        [InlineData("JobCodeId",       true,  "JC2", "JC1")]
+        [InlineData("ParentProject",   false, "JC1", "JC2")]
+        [InlineData("ParentProject",   true,  "JC2", "JC1")]
+        [InlineData("JobCodeWorkGroup",false, "JC1", "JC2")]
+        [InlineData("JobCodeWorkGroup",true,  "JC2", "JC1")]
+        [InlineData("Type",            false, "JC1", "JC2")]
+        [InlineData("Type",            true,  "JC2", "JC1")]
+        [InlineData("JobCodeName",     false, "JC1", "JC2")]
+        [InlineData("JobCodeName",     true,  "JC2", "JC1")]
+        public async Task GetPagedJobCodesAsync_WithSortBy_ReturnsSortedResults(
+            string sortBy, bool descending, string expectedFirst, string expectedSecond)
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", ParentProject = "AAA", JobCodeWorkGroup = "WG1", Type = "Alpha", JobCodeName = "AAA-Name", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC2", ParentProject = "BBB", JobCodeWorkGroup = "WG2", Type = "Beta",  JobCodeName = "BBB-Name", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+            var query = new PaginationParameters<string> { SortBy = sortBy, Descending = descending };
+
+            var result = await repo.GetPagedJobCodesAsync(query, null);
+
+            Assert.Equal(expectedFirst,  result.Data.First().JobCodeId);
+            Assert.Equal(expectedSecond, result.Data.Last().JobCodeId);
+        }
+
+        [Fact]
+        public async Task GetPagedJobCodesAsync_UnknownSortBy_DefaultsSortByJobCodeId()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC3", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC1", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+            var query = new PaginationParameters<string> { SortBy = "UnknownColumn" };
+
+            var result = await repo.GetPagedJobCodesAsync(query, null);
+
+            Assert.Equal("JC1", result.Data.First().JobCodeId);
+        }
+
+        [Fact]
+        public async Task GetPagedJobCodesAsync_NoSortBy_DefaultsSortByJobCodeId()
+        {
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JC3", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC1", FpsYear = DefaultTestFpsYear },
+                new() { JobCodeId = "JC2", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepository(jobCodes);
+            var query = new PaginationParameters<string>();
+
+            var result = await repo.GetPagedJobCodesAsync(query, null);
+
+            Assert.Equal("JC1", result.Data.First().JobCodeId);
         }
 
         #endregion
@@ -314,6 +557,101 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.JobCodeRepositoryTest
             var result = await repo.DeleteJobCodeAsync("JC1");
 
             Assert.False(result);
+        }
+
+        #endregion
+
+        #region GetZtJobCodesAsync
+
+        private static JobCodeRepository CreateRepositoryWithProjectViews(
+            IEnumerable<ProjectView> projectViews,
+            string userEmail,
+            int fpsYear = DefaultTestFpsYear)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+            fpsRequestContext.UserEmailId.Returns(userEmail);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            var jobCodesMockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<JobCode>());
+            mockContext.Setup(x => x.JobCodes).Returns(jobCodesMockSet.Object);
+
+            var projectViewsMockSet = RepositoryTestHelper.CreateMockDbSet(projectViews);
+            mockContext.Setup(x => x.ProjectViews).Returns(projectViewsMockSet.Object);
+
+            return new JobCodeRepository(mockContext.Object, fpsRequestContext);
+        }
+
+        [Fact]
+        public async Task GetZtJobCodesAsync_WithMatchingRecords_ReturnsLookups()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "ZT001", ProjectTitle = "ZT Project 1", Program = "zt_prog", UserEmail = "user@test.com", FpsYear = DefaultTestFpsYear },
+                new() { ParentProject = "ZT002", ProjectTitle = "ZT Project 2", Program = "zt_prog", UserEmail = "user@test.com", FpsYear = DefaultTestFpsYear },
+                new() { ParentProject = "OTHER", ProjectTitle = "Non-ZT", Program = "other_prog", UserEmail = "user@test.com", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepositoryWithProjectViews(projectViews, "user@test.com");
+
+            var result = (await repo.GetZtJobCodesAsync()).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.JobCode == "ZT001" && r.Description == "ZT Project 1");
+            Assert.Contains(result, r => r.JobCode == "ZT002" && r.Description == "ZT Project 2");
+        }
+
+        [Fact]
+        public async Task GetZtJobCodesAsync_NoMatchingProgram_ReturnsEmpty()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "PRJ1", ProjectTitle = "Other Project", Program = "other_prog", UserEmail = "user@test.com", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepositoryWithProjectViews(projectViews, "user@test.com");
+
+            var result = await repo.GetZtJobCodesAsync();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetZtJobCodesAsync_NoMatchingEmail_ReturnsEmpty()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "ZT001", ProjectTitle = "ZT Project 1", Program = "zt_prog", UserEmail = "other@test.com", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepositoryWithProjectViews(projectViews, "user@test.com");
+
+            var result = await repo.GetZtJobCodesAsync();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetZtJobCodesAsync_EmptyTable_ReturnsEmpty()
+        {
+            var repo = CreateRepositoryWithProjectViews([], "user@test.com");
+
+            var result = await repo.GetZtJobCodesAsync();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetZtJobCodesAsync_CaseInsensitiveProgram_ReturnsMatches()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "ZT001", ProjectTitle = "ZT Project 1", Program = "ZT_PROG", UserEmail = "user@test.com", FpsYear = DefaultTestFpsYear }
+            };
+            var repo = CreateRepositoryWithProjectViews(projectViews, "user@test.com");
+
+            var result = (await repo.GetZtJobCodesAsync()).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("ZT001", result[0].JobCode);
         }
 
         #endregion

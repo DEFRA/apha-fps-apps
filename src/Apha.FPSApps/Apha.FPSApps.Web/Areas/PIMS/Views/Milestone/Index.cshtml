@@ -1,0 +1,354 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.PIMS.Models.MilestoneViewModel
+
+@{
+    ViewData["Title"] = "PIMS : Milestones/Deliverables";
+    string parentproject = Model.Parentproject;
+}
+
+<div class="govuk-grid-row sup_border-bottom govuk-!-margin-bottom-1 govuk-!-padding-0">
+    <h5 class="govuk-heading-s sup_margin_0 govuk-!-padding-top-2 govuk-!-padding-right-0 govuk-!-padding-bottom-1 govuk-!-padding-left-5">
+        Milestones/Deliverables
+    </h5>
+</div>
+
+<div class="sup_flex">
+
+    
+    <main class="main-content govuk-!-padding-top-0 sup_overflow_hidden">
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+
+                <!-- ── Milestones toolbar ─────────────────────────────────── -->
+                <div class="milestones-toolbar">
+                    <div class="sup_flex_align_center sup_flex_gap_10 sup_margin_left_20">
+                        <label class="govuk-label font-size-16" for="projectSelectGrid">Project</label>
+                        <select class="govuk-select font-size-16 govuk-!-margin-right-3" id="projectSelectGrid"
+                                onchange="onProjectChanged(this.value)">
+                            @foreach (var opt in Model.ProjectOptions)
+                            {
+                                if (opt.Value == parentproject)
+                                {
+                                    <option value="@opt.Value" selected>@opt.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@opt.Value">@opt.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <a id="logOfUpdatesBtn"
+                           href="@Url.Action("LogIndex", "Milestone", new { area = "PIMS", project = parentproject })"
+                           class="govuk-button font-size-16 govuk-!-margin-bottom-1">
+                            Log of Updates
+                        </a>
+                    </div>
+                </div>
+
+                <!-- ── Milestones DataGrid ───────────────────────────────── -->
+                <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                    <div class="govuk-grid-column-full sup_p_0">
+                        
+                        <div id="@($"gridContainer_{Model.MilestonesGrid.GridId}")">
+                            @await Html.PartialAsync("_DataGrid", Model.MilestonesGrid)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Financial Form Dates section ─────────────────────── -->
+                <div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_20">
+                    <div class="govuk-grid-column-full govuk-!-padding-4">
+                        <div class="govuk-grid-column-full sup_margin_left_right_10 checkbox-section sup_flex_align_center sup_gap_16 govuk-!-margin-bottom-2">
+                            <span class="govuk-label tab-font-bold-size sup_margin_0">
+                                Show Milestone/Deliverable Update Received
+                            </span>
+                            <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0 sup_flex_align_center"
+                                 data-module="govuk-checkboxes">
+                                <div class="govuk-checkboxes__item sup_margin_0 sup_flex_align_center milestone-checkbox-inline">
+                                    <input class="govuk-checkboxes__input govuk-checkboxes__input--small govuk-!-font-size-16 sup_margin_0"
+                                           id="chkMilestoneDeliverable"
+                                           name="chkMilestoneDeliverable"
+                                           type="checkbox"
+                                           value="milestone"
+                                    @(Model.FormRequired ? "checked" : "")>
+                                    <label class="govuk-!-font-weight-regular sup_no_wrap govuk-label govuk-checkboxes__label sup_margin_0 govuk-!-font-size-14"
+                                           for="chkMilestoneDeliverable">
+                                        Form Required
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="button"
+                                    class="govuk-button font-size-16 sup_margin_0"
+                                    onclick="submitFormRequired()">
+                                Submit
+                            </button>
+                        </div>
+                        <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                            <div class="govuk-grid-column-full sup_p_0">
+                                <div id="@($"gridContainer_{Model.MilestoneFormDatesGrid.GridId}")">
+                                    @await Html.PartialAsync("_DataGrid", Model.MilestoneFormDatesGrid)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ── Modal placeholder (loaded via AJAX) ───────────────────────────── -->
+<div id="milestoneModalContainer"></div>
+<div id="milestoneFormDatesModalContainer"></div>
+@Html.AntiForgeryToken()
+
+<script src="~/js/ajax-form-validation.js"></script>
+
+@section Scripts {
+    <script>
+        // ── Shared state ─────────────────────────────────────────────────────
+        var currentProject = '@Html.Raw(parentproject)';
+
+        function onProjectChanged(project) {
+            currentProject = project;
+            $.get('@Url.Action("GetFormRequired", "Milestone", new { area = "PIMS" })',
+                { parentproject: project },
+                function (data) {
+                    var chk = document.getElementById('chkMilestoneDeliverable');
+                    if (chk) { chk.checked = data.formRequired === true; }
+                });
+            var gmMilestone = window['gridManager_milestonesGrid'];
+            if (gmMilestone) { gmMilestone.reloadGrid({ page: 1 }); }
+            var gmFormDates = window['gridManager_milestoneFormDatesGrid'];
+            if (gmFormDates) { gmFormDates.reloadGrid({ page: 1 }); }
+        }
+
+        function getMilestoneExtraFilters() {
+            return { parentproject: currentProject };
+        }
+
+        function getMilestoneFormDatesExtraFilters() {
+            return { parentproject: currentProject };
+        }
+
+        function submitFormRequired() {
+            var formRequired = document.getElementById('chkMilestoneDeliverable').checked;
+            var token = $('input[name="__RequestVerificationToken"]').val();
+            $.ajax({
+                url: '@Url.Action("UpdateFormRequired", "Milestone", new { area = "PIMS" })',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': token },
+                data: { parentproject: currentProject, formRequired: formRequired },
+                success: function (result) {
+                    if (result.success) {
+                        showGovukAlert('Form Required setting updated successfully.');
+                    } else {
+                        showGovukAlert('Failed to update Form Required setting.');
+                    }
+                },
+                error: function () {
+                    showGovukAlert('An error occurred while updating the Form Required setting.');
+                }
+            });
+        }
+
+        // ── Milestone CRUD ───────────────────────────────────────────────────
+        function addMilestone() {
+            $.get('@Url.Action("GetAddEditMilestonePartial", "Milestone", new { area = "PIMS" })',
+                { parentproject: currentProject },
+                function (html) {
+                    $('#milestoneModalContainer').html(html);
+                    var modal = document.getElementById('editRecordModal');
+                    if (modal) { modal.classList.add('open'); }
+                });
+        }
+
+        function editMilestone(btn) {
+            var number = $(btn).data('id');
+            $.get('@Url.Action("GetAddEditMilestonePartial", "Milestone", new { area = "PIMS" })',
+                { parentproject: currentProject, number: number },
+                function (html) {
+                    $('#milestoneModalContainer').html(html);
+                    var modal = document.getElementById('editRecordModal');
+                    if (modal) { modal.classList.add('open'); }
+                });
+        }
+
+        function deleteMilestone(btn) {
+            var number = $(btn).data('id');
+            showGovukConfirm('Are you sure you want to delete milestone ' + number + '?').then(function (result) {
+                if (!result) return;
+                $.ajax({
+                    url: '@Url.Action("DeleteMilestone", "Milestone", new { area = "PIMS" })',
+                    type: 'DELETE',
+                    data: { parentproject: currentProject, number: number },
+                    success: function (data) {
+                        if (data.success) {
+                            showGovukAlert(data.message).then(function () {
+                                var gm = window['gridManager_milestonesGrid'];
+                                if (gm) { gm.reloadGrid({ page: 1 }); }
+                            });
+                        } else {
+                            showGovukAlert(data.errors?.map(e => e.message).join(', ') || 'Delete failed. Please try again.');
+                        }
+                    },
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting the milestone.');
+                    }
+                });
+            });
+        }
+
+        function saveMilestone() {
+            var form = document.getElementById('editRecordForm');
+            if (!form) return;
+            var $form  = $(form);
+            var $modal = $('#editRecordModal');
+
+            clearValidationErrors($modal);
+
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $modal);
+                return;
+            }
+
+            // Validate Number format: digits/digits only (e.g. 01/01)
+            var numberVal = $form.find('[name="Number"]').val() || '';
+            if (!/^\d{1,2}\/\d{1,2}$/.test(numberVal)) {
+                displayServerValidationErrors(
+                    [{ field: 'Number', message: 'Number must be in format 00/00 (digits only, e.g. 01/01)' }],
+                    'There is a problem', '#editRecordModal');
+                return;
+            }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '@Url.Action("SaveMilestone", "Milestone", new { area = "PIMS" })',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': token },
+                data: $form.serialize(),
+                success: function (result) {
+                    if (result.success) {
+                        closeEditModal();
+                        showGovukAlert(result.message).then(function () {
+                            var gm = window['gridManager_milestonesGrid'];
+                            if (gm) { gm.reloadGrid({ page: 1 }); }
+                        });
+                    } else {
+                        displayServerValidationErrors(result.errors, 'Failed to save milestone.', '#editRecordModal');
+                    }
+                }
+            });
+        }
+
+        // ── Milestone Form Dates CRUD ─────────────────────────────────────────
+        function addMilestoneFormDates() {
+            $.get('@Url.Action("GetAddEditMilestoneFormDatesPartial", "Milestone", new { area = "PIMS" })',
+                { parentproject: currentProject },
+                function (html) {
+                    $('#milestoneFormDatesModalContainer').html(html);
+                    var modal = document.getElementById('editFormDatesModal');
+                    if (modal) { modal.classList.add('open'); }
+                });
+        }
+
+        function editMilestoneFormDates(btn) {
+            var year = $(btn).data('id');
+            $.get('@Url.Action("GetAddEditMilestoneFormDatesPartial", "Milestone", new { area = "PIMS" })',
+                { parentproject: currentProject, year: year },
+                function (html) {
+                    $('#milestoneFormDatesModalContainer').html(html);
+                    var modal = document.getElementById('editFormDatesModal');
+                    if (modal) { modal.classList.add('open'); }
+                });
+        }
+
+        function deleteMilestoneFormDates(btn) {
+            var year = $(btn).data('id');
+            showGovukConfirm('Are you sure you want to delete the financial year ' + year + ' record?').then(function (result) {
+                if (!result) return;
+                $.ajax({
+                    url: '@Url.Action("DeleteMilestoneFormDates", "Milestone", new { area = "PIMS" })',
+                    type: 'DELETE',
+                    data: { parentproject: currentProject, year: year },
+                    success: function (data) {
+                        if (data.success) {
+                            showGovukAlert(data.message).then(function () {
+                                var gm = window['gridManager_milestoneFormDatesGrid'];
+                                if (gm) { gm.reloadGrid({ page: 1 }); }
+                            });
+                        } else {
+                            showGovukAlert(data.errors?.map(e => e.message).join(', ') || 'Delete failed. Please try again.');
+                        }
+                    },
+                    error: function () {
+                        showGovukAlert('An error occurred while deleting the financial year record.');
+                    }
+                });
+            });
+        }
+
+        function saveMilestoneFormDates() {
+            var form = document.getElementById('editFormDatesForm');
+            if (!form) return;
+            var $form  = $(form);
+            var $modal = $('#editFormDatesModal');
+
+            clearValidationErrors($modal);
+
+            if (!isFormValid($form)) {
+                displayClientValidationErrors($form, $modal);
+                return;
+            }
+
+            // Validate Year: 4-digit number between 1900 and 2100 (only when adding new)
+            var yearInput = $form.find('[name="Year"]');
+            if (!yearInput.prop('readOnly')) {
+                var yearVal = yearInput.val() || '';
+                if (!/^\d{4}$/.test(yearVal) || parseInt(yearVal) < 1900 || parseInt(yearVal) > 2100) {
+                    displayServerValidationErrors(
+                        [{ field: 'Year', message: 'Enter a valid 4-digit year between 1900 and 2100' }],
+                        'There is a problem', '#editFormDatesModal');
+                    return;
+                }
+            }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '@Url.Action("SaveMilestoneFormDates", "Milestone", new { area = "PIMS" })',
+                type: 'POST',
+                headers: { 'RequestVerificationToken': token },
+                data: $form.serialize(),
+                success: function (result) {
+                    if (result.success) {
+                        closeFormDatesModal();
+                        showGovukAlert(result.message).then(function () {
+                            var gm = window['gridManager_milestoneFormDatesGrid'];
+                            if (gm) { gm.reloadGrid({ page: 1 }); }
+                        });
+                    } else {
+                        displayServerValidationErrors(result.errors, 'Failed to save financial year record.', '#editFormDatesModal');
+                    }
+                }
+            });
+        }
+
+        // ── Modal helpers ────────────────────────────────────────────────────
+        function closeEditModal() {
+            var modal = document.getElementById('editRecordModal');
+            if (modal) { modal.classList.remove('open'); }
+        }
+
+        function closeFormDatesModal() {
+            var modal = document.getElementById('editFormDatesModal');
+            if (modal) { modal.classList.remove('open'); }
+        }
+
+            </script>
+        }

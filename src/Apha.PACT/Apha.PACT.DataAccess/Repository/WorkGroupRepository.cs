@@ -9,10 +9,11 @@ namespace Apha.PACT.DataAccess.Repository
 {
     public class WorkGroupRepository : BaseRepository, IWorkGroupRepository
     {
+        private readonly IFpsRequestContext _requestContext;
 
-        public WorkGroupRepository(FpsDbContext context) : base(context)
+        public WorkGroupRepository(FpsDbContext context, IFpsRequestContext requestContext) : base(context)
         {
-
+            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
         private const string WorkGroupColumn     = "WorkGroup";
@@ -29,6 +30,15 @@ namespace Apha.PACT.DataAccess.Repository
             return await _context.WorkGroups
                 .AsNoTracking()
                 .OrderBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetAllWorkGroupNamesAsync()
+        {
+            return await _context.WorkGroups
+                .AsNoTracking()
+                .Select(w => w.WorkGroupName)
+                .OrderBy(x => x)
                 .ToListAsync();
         }
 
@@ -94,8 +104,7 @@ namespace Apha.PACT.DataAccess.Repository
             else
                 baseQuery = baseQuery.OrderBy(e => e.Name);
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<PagedData<WorkGroupValidTimeCode>> GetWorkGroupValidTimeCodeAsync(
@@ -137,8 +146,7 @@ namespace Apha.PACT.DataAccess.Repository
             else
                 baseQuery = baseQuery.OrderBy(e => e.ParentProject);
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<IEnumerable<WgSummarisedStaffTimeUsageView>> GetWgSummarisedStaffTimeUsageAsync(
@@ -164,6 +172,35 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(w => w.ProfitCentre == profitCentre && w.SendEmail == 1)
                 .OrderBy(w => w.WorkGroupName)
                 .ToListAsync();
+        }
+
+        public async Task<List<WorkGroupView>> GetWorkGroupsByProfitCentreForBudgetAsync(string profitCentre)
+        {
+            return await _context.WorkGroupViews
+                .AsNoTracking()
+                .Where(w => w.ProfitCentre == profitCentre
+                         && w.UserEmail != null && w.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Distinct()
+                .OrderBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<PagedData<WorkGroupView>> GetWorkGroupsByProfitCentreForBudgetPagedAsync(
+            PaginationParameters<string> query, string profitCentre)
+        {
+            var q = _context.WorkGroupViews
+                .AsNoTracking()
+                .Where(w => w.ProfitCentre == profitCentre
+                         && w.UserEmail != null && w.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Distinct()
+                .AsQueryable();
+
+            q = ApplyWorkGroupViewFilter(q, query.Filter);
+            q = ApplyWorkGroupViewSort(q, query.SortBy, query.Descending);
+
+            var pageNumber = query.Page     > 0 ? query.Page     : 1;
+            var pageSize   = query.PageSize > 0 ? query.PageSize : 5;
+            return await ApplyPaging<WorkGroupView>(q, pageNumber, pageSize);
         }
 
         public async Task<IEnumerable<TimeSheetTemplateRow>> GetTimeSheetTemplateAsync(
@@ -277,8 +314,7 @@ namespace Apha.PACT.DataAccess.Repository
                 ? baseQuery.OrderByDescending(e => EF.Property<object>(e, sortBy))
                 : baseQuery.OrderBy(e => EF.Property<object>(e, sortBy));
 
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<bool> SetSendEmailForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
@@ -311,6 +347,83 @@ namespace Apha.PACT.DataAccess.Repository
                     .SetProperty(w => w.SendEmail, sendEmail)
                     .SetProperty(w => w.EmailRecipient, emailRecipient));
             return affectedRows >= 0;
+        }
+
+        // ── COS90 ────────────────────────────────────────────────────────────
+
+        public async Task<IEnumerable<WorkGroup>> GetWorkGroupsFlaggedForCos90Async()
+        {
+            return await _context.WorkGroups
+                .AsNoTracking()
+                .Where(w => w.Cos90 == 1)
+                .OrderBy(w => w.ProfitCentre)
+                .ThenBy(w => w.WorkGroupName)
+                .ToListAsync();
+        }
+
+        public async Task<bool> SetCos90ForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
+        {
+            var updated = await _context.WorkGroups
+                .Where(w => w.ProfitCentre == profitCentre)
+                .ExecuteUpdateAsync(s => s.SetProperty(w => w.Cos90, flag));
+            return updated >= 0;
+        }
+
+        public async Task<bool> SetCos90ForAllWorkGroupsAsync(short flag)
+        {
+            var updated = await _context.WorkGroups
+                .ExecuteUpdateAsync(s => s.SetProperty(w => w.Cos90, flag));
+            return updated >= 0;
+        }
+
+        public async Task<bool> SetCos90ForWorkGroupAsync(string profitCentre, string workGroupName, short flag)
+        {
+            var updated = await _context.WorkGroups
+                .Where(w => w.ProfitCentre == profitCentre && w.WorkGroupName == workGroupName)
+                .ExecuteUpdateAsync(s => s.SetProperty(w => w.Cos90, flag));
+            return updated >= 0;
+        }
+
+        public async Task<IEnumerable<WorkGroupCos90sExportRow>> GetCos90ExportRowsAsync(string profitCentre, short monthNumber, short year, string? pactId)
+        {
+            var query =
+                from staff in _context.WorkGroupStaffViews.AsNoTracking()
+                join wgGrade in _context.PactWorkGroupGradeViews.AsNoTracking() on staff.WorkGroupGrade equals wgGrade.WgGrade
+                join tcv in _context.TimeCodeValids.AsNoTracking() on wgGrade.WorkGroup equals tcv.WorkGroup
+                join job in _context.JobCodes.AsNoTracking() on tcv.TimeCode equals job.JobCodeId into jobJoin
+                from job in jobJoin.DefaultIfEmpty()
+                join top in _context.TestorProducts.AsNoTracking() on tcv.TimeCode equals top.ItemCode into topJoin
+                from top in topJoin.DefaultIfEmpty()
+                where tcv.Active
+                      && staff.PersonStatus != "I"
+                select new WorkGroupCos90sExportRow
+                {
+                    ProfitCentre = "",
+                    WorkGroupName = wgGrade.WorkGroup ?? string.Empty,
+                    PactId = staff.PactId ?? string.Empty,
+                    StaffName = staff.Name ?? string.Empty,
+                    TimeCode = tcv.TimeCode,
+                    Description = job.JobCodeName ?? top.ItemDescription,
+                    ParentProject = tcv.ParentProject,
+                    GradeCode = wgGrade.GradeCode,
+                    SpNumber = staff.SpNumber,
+                    Hours = null,
+                    Month = monthNumber,
+                    Year = year
+                };
+
+            if (!string.IsNullOrWhiteSpace(pactId))
+                query = query.Where(r => r.PactId == pactId);
+
+            if (year > 0)
+                query = query.Where(r => r.Year == year);
+
+            return await query
+                .Distinct()
+                .OrderBy(r => r.StaffName)
+                .ThenBy(r => r.TimeCode)
+                .ThenBy(r => r.ParentProject)
+                .ToListAsync();
         }
 
         private static IQueryable<WorkGroup> ApplyWorkGroupFilter(
@@ -380,81 +493,43 @@ namespace Apha.PACT.DataAccess.Repository
             return query;
         }
 
-        // ── COS90 ────────────────────────────────────────────────────────────
-
-        public async Task<IEnumerable<WorkGroup>> GetWorkGroupsFlaggedForCos90Async()
+        private static IQueryable<WorkGroupView> ApplyWorkGroupViewFilter(
+            IQueryable<WorkGroupView> query, string? filterJson)
         {
-            return await _context.WorkGroups
-                .AsNoTracking()
-                .Where(w => w.Cos90 == 1)
-                .OrderBy(w => w.ProfitCentre)
-                .ThenBy(w => w.WorkGroupName)
-                .ToListAsync();
+            if (string.IsNullOrWhiteSpace(filterJson)) return query;
+
+            var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
+            if (filters is null) return query;
+
+            if (filters.TryGetValue("WorkGroupName", out var wgName) && !string.IsNullOrWhiteSpace(wgName))
+                query = query.Where(w => EF.Functions.ILike(w.WorkGroupName, $"%{wgName}%"));
+
+            if (filters.TryGetValue("WorkGroup", out var wgName2) && !string.IsNullOrWhiteSpace(wgName2))
+                query = query.Where(w => EF.Functions.ILike(w.WorkGroupName, $"%{wgName2}%"));
+
+            if (filters.TryGetValue("ProfitCentre", out var pc) && !string.IsNullOrWhiteSpace(pc))
+                query = query.Where(w => EF.Functions.ILike(w.ProfitCentre, $"%{pc}%"));
+
+            if (filters.TryGetValue("Owner", out var owner) && !string.IsNullOrWhiteSpace(owner))
+                query = query.Where(w => EF.Functions.ILike(w.Owner!, $"%{owner}%"));
+
+            if (filters.TryGetValue("Description", out var desc) && !string.IsNullOrWhiteSpace(desc))
+                query = query.Where(w => EF.Functions.ILike(w.Description!, $"%{desc}%"));
+
+            return query;
         }
 
-        public async Task<bool> SetCos90ForProfitCentreWorkGroupsAsync(string profitCentre, short flag)
+        private static IQueryable<WorkGroupView> ApplyWorkGroupViewSort(
+            IQueryable<WorkGroupView> query, string? sortBy, bool descending)
         {
-            var updated = await _context.WorkGroups
-                .Where(w => w.ProfitCentre == profitCentre)
-                .ExecuteUpdateAsync(s => s.SetProperty(w => w.Cos90, flag));
-            return updated >= 0;
-        }
-
-        public async Task<bool> SetCos90ForAllWorkGroupsAsync(short flag)
-        {
-            var updated = await _context.WorkGroups
-                .ExecuteUpdateAsync(s => s.SetProperty(w => w.Cos90, flag));
-            return updated >= 0;
-        }
-
-        public async Task<bool> SetCos90ForWorkGroupAsync(string profitCentre, string workGroupName, short flag)
-        {
-            var updated = await _context.WorkGroups
-                .Where(w => w.ProfitCentre == profitCentre && w.WorkGroupName == workGroupName)
-                .ExecuteUpdateAsync(s => s.SetProperty(w => w.Cos90, flag));
-            return updated >= 0;
-        }
-
-        public async Task<IEnumerable<WorkGroupCos90sExportRow>> GetCos90ExportRowsAsync(string profitCentre, short monthNumber, short year, string? pactId)
-        {
-            var query =
-                from staff in _context.WorkGroupStaffViews.AsNoTracking()
-                join wgGrade in _context.PactWorkGroupGradeViews.AsNoTracking() on staff.WorkGroupGrade equals wgGrade.WgGrade
-                join tcv in _context.TimeCodeValids.AsNoTracking() on wgGrade.WorkGroup equals tcv.WorkGroup                
-                join job in _context.JobCodes.AsNoTracking() on tcv.TimeCode equals job.JobCodeId into jobJoin
-                from job in jobJoin.DefaultIfEmpty()
-                join top in _context.TestorProducts.AsNoTracking() on tcv.TimeCode equals top.ItemCode into topJoin
-                from top in topJoin.DefaultIfEmpty()
-                where tcv.Active 
-                      && staff.PersonStatus != "I"
-                select new WorkGroupCos90sExportRow
-                {
-                    ProfitCentre = "",
-                    WorkGroupName = wgGrade.WorkGroup ?? string.Empty,
-                    PactId = staff.PactId ?? string.Empty,
-                    StaffName = staff.Name ?? string.Empty,
-                    TimeCode = tcv.TimeCode,
-                    Description = job.JobCodeName ?? top.ItemDescription,
-                    ParentProject = tcv.ParentProject,
-                    GradeCode = wgGrade.GradeCode,
-                    SpNumber = staff.SpNumber,
-                    Hours = null,
-                    Month = monthNumber,
-                    Year = year
-                };
-
-            if (!string.IsNullOrWhiteSpace(pactId))
-                query = query.Where(r => r.PactId == pactId);
-
-            if (year > 0)
-                query = query.Where(r => r.Year == year);
-
-            return await query
-                .Distinct()
-                .OrderBy(r => r.StaffName)
-                .ThenBy(r => r.TimeCode)
-                .ThenBy(r => r.ParentProject)
-                .ToListAsync();
+            return sortBy?.ToLower() switch
+            {
+                "workgroupname" => descending ? query.OrderByDescending(w => w.WorkGroupName) : query.OrderBy(w => w.WorkGroupName),
+                "profitcentre"  => descending ? query.OrderByDescending(w => w.ProfitCentre)  : query.OrderBy(w => w.ProfitCentre),
+                "owner"         => descending ? query.OrderByDescending(w => w.Owner)         : query.OrderBy(w => w.Owner),
+                "description"   => descending ? query.OrderByDescending(w => w.Description)   : query.OrderBy(w => w.Description),
+                _               => query.OrderBy(w => w.WorkGroupName)
+            };
         }
     }
 }

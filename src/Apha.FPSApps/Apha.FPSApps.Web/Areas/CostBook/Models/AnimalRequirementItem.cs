@@ -19,12 +19,10 @@ public class AnimalRequirementItem
     public double? DailyRate { get; set; }
 
     [Display(Name = "No")]
-    [Required(ErrorMessage = "Number of Animals is required.")]
     [GridColumn(Order = 3, Width = 70, Type = GridColumnType.DecimalNumber)]
     public double? NumberOfAnimals { get; set; }
 
     [Display(Name = "Days")]
-    [Required(ErrorMessage = "Number of Days is required.")]
     [GridColumn(Order = 4, Width = 70, Type = GridColumnType.DecimalNumber)]
     public double? NumberOfDays { get; set; }
 

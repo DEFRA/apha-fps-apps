@@ -1143,6 +1143,368 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgramProjectControllerTes
 
         #endregion
 
+        #region Project Group Mode Tests
+
+        [Fact]
+        public async Task Index_WithSourceProjectGroup_SetsIsProjectGroupModeTrue()
+        {
+            // Arrange
+            var projectGroups = new List<ProjectGroupDto>
+            {
+                new() { ProjectGroupName = "Group A" },
+                new() { ProjectGroupName = "Group B" }
+            };
+            _projectService.GetProjectGroupsByUserAsync()
+                .Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(projectGroups));
+            _appStateService.GetSessionAsync<string>(Arg.Any<string>())
+                .Returns(string.Empty);
+
+            // Act
+            var result = await _controller.Index(null, "projectgroup");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProgramProjectViewModel>(viewResult.Model);
+            Assert.True(model.IsProjectGroupMode);
+            Assert.Equal(2, model.ProjectGroupList.Count);
+            Assert.Empty(model.ProgrammeList);
+            Assert.Equal("Projects within Project Group", model.ProjectsGrid.Title);
+        }
+
+        [Fact]
+        public async Task Index_WithSourceNotProjectGroup_SetsIsProjectGroupModeFalse()
+        {
+            // Arrange
+            var programs = new List<ProgramDto>
+            {
+                new() { ProgramNo = "P001", ProgramName = "Programme Alpha" }
+            };
+            _programService.GetAllProgramsAsync()
+                .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
+            _appStateService.GetSessionAsync<string>(Arg.Any<string>())
+                .Returns(string.Empty);
+
+            // Act
+            var result = await _controller.Index(null, null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProgramProjectViewModel>(viewResult.Model);
+            Assert.False(model.IsProjectGroupMode);
+            Assert.Single(model.ProgrammeList);
+            Assert.Empty(model.ProjectGroupList);
+            Assert.Equal("Projects within Programme", model.ProjectsGrid.Title);
+        }
+
+        [Fact]
+        public async Task Index_InProjectGroupMode_SelectsFirstGroupWhenSessionIsEmpty()
+        {
+            // Arrange
+            var projectGroups = new List<ProjectGroupDto>
+            {
+                new() { ProjectGroupName = "Alpha Group" },
+                new() { ProjectGroupName = "Beta Group" }
+            };
+            _projectService.GetProjectGroupsByUserAsync()
+                .Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(projectGroups));
+            _appStateService.GetSessionAsync<string>(Arg.Any<string>())
+                .Returns(string.Empty);
+
+            // Act
+            var result = await _controller.Index(null, "projectgroup");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProgramProjectViewModel>(viewResult.Model);
+            Assert.Equal("Alpha Group", model.SelectedProjectGroup);
+            await _appStateService.Received(1).SetSessionAsync(
+                Arg.Is<string>(s => s.Contains("SelectedProjectGroup")),
+                "Alpha Group"
+            );
+        }
+
+        [Fact]
+        public async Task Index_InProjectGroupMode_UsesSessionValueWhenValid()
+        {
+            // Arrange
+            var projectGroups = new List<ProjectGroupDto>
+            {
+                new() { ProjectGroupName = "Alpha Group" },
+                new() { ProjectGroupName = "Beta Group" }
+            };
+            _projectService.GetProjectGroupsByUserAsync()
+                .Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(projectGroups));
+            _appStateService.GetSessionAsync<string>(Arg.Any<string>())
+                .Returns("Beta Group");
+
+            // Act
+            var result = await _controller.Index(null, "projectgroup");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProgramProjectViewModel>(viewResult.Model);
+            Assert.Equal("Beta Group", model.SelectedProjectGroup);
+        }
+
+        [Fact]
+        public async Task Index_InProjectGroupMode_FiltersOutNullOrEmptyProjectGroups()
+        {
+            // Arrange
+            var projectGroups = new List<ProjectGroupDto>
+            {
+                new() { ProjectGroupName = "Valid Group" },
+                new() { ProjectGroupName = null! },
+                new() { ProjectGroupName = "" },
+                new() { ProjectGroupName = "   " }
+            };
+            _projectService.GetProjectGroupsByUserAsync()
+                .Returns(ApiResponseDto<List<ProjectGroupDto>>.SuccessResponse(projectGroups));
+            _appStateService.GetSessionAsync<string>(Arg.Any<string>())
+                .Returns(string.Empty);
+
+            // Act
+            var result = await _controller.Index(null, "projectgroup");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ProgramProjectViewModel>(viewResult.Model);
+            Assert.Single(model.ProjectGroupList);
+            Assert.Equal("Valid Group", model.ProjectGroupList.First().Value);
+        }
+
+        [Fact]
+        public async Task LoadProgramProjectGrid_WithProjectGroup_CallsGetProjectsByProjectGroupAsync()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var projectGroup = "Group A";
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projects = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One", ProjectGroup = "Group A" }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
+            var serviceResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects, paginationDto);
+            var projectItems = new List<ProgramProjectItem>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One" }
+            };
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+            _projectService.GetProjectsByProjectGroupAsync(queryParameters, projectGroup).Returns(serviceResponse);
+            _mapper.Map<List<ProgramProjectItem>>(projects).Returns(projectItems);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.LoadProgramProjectGrid(request, null, projectGroup);
+
+            // Assert
+            await _projectService.Received(1).GetProjectsByProjectGroupAsync(queryParameters, projectGroup);
+            await _projectService.DidNotReceive().GetProjectsByProgramAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ProgramProjectItem>>(partialView.Model);
+            Assert.Equal("Projects within Project Group", gridConfig.Title);
+            Assert.Single(gridConfig.Data);
+        }
+
+        [Fact]
+        public async Task LoadProgramProjectGrid_WithProgramNo_CallsGetProjectsByProgramAsync()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projects = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One" }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
+            var serviceResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects, paginationDto);
+            var projectItems = new List<ProgramProjectItem>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Project One" }
+            };
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+            _projectService.GetProjectsByProgramAsync(queryParameters, programNo).Returns(serviceResponse);
+            _mapper.Map<List<ProgramProjectItem>>(projects).Returns(projectItems);
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.LoadProgramProjectGrid(request, programNo, null);
+
+            // Assert
+            await _projectService.Received(1).GetProjectsByProgramAsync(queryParameters, programNo);
+            await _projectService.DidNotReceive().GetProjectsByProjectGroupAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            var gridConfig = Assert.IsType<DataGridConfig<ProgramProjectItem>>(partialView.Model);
+            Assert.Equal("Projects within Programme", gridConfig.Title);
+        }
+
+        [Fact]
+        public async Task LoadProgramProjectGrid_WithBothParams_PrioritizesProjectGroup()
+        {
+            // Arrange
+            var request = new PaginationFilter<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var projectGroup = "Group A";
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var projects = new List<ProjectDto> { new() { ParentProject = "PP001" } };
+            var serviceResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                projects, new PaginationDto());
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+            _projectService.GetProjectsByProjectGroupAsync(queryParameters, projectGroup).Returns(serviceResponse);
+            _mapper.Map<List<ProgramProjectItem>>(Arg.Any<List<ProjectDto>>()).Returns(new List<ProgramProjectItem>());
+            _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>()).Returns(new PaginationModel());
+
+            // Act
+            var result = await _controller.LoadProgramProjectGrid(request, programNo, projectGroup);
+
+            // Assert
+            await _projectService.Received(1).GetProjectsByProjectGroupAsync(queryParameters, projectGroup);
+            await _projectService.DidNotReceive().GetProjectsByProgramAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetProjectTotals_WithProjectGroup_ReturnsProjectGroupTotals()
+        {
+            // Arrange
+            var projectGroup = "Group A";
+            var projects = new List<ProjectDto>
+            {
+                new() { BudgetCvl = 1000M, BudgetExt = 2000M, TransferIncome = 500, PlanCaseWorkDebit = 300M },
+                new() { BudgetCvl = 500M, BudgetExt = 1500M, TransferIncome = 200, PlanCaseWorkDebit = 100M }
+            };
+            var serviceResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects);
+
+            _projectService.GetProjectsByProjectGroupAsync(
+                Arg.Is<QueryParameters<string>>(q => q.PageSize == 9999), projectGroup)
+                .Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.GetProjectTotals(null, projectGroup);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonElement>(jsonResult);
+            Assert.Equal(1500M, value.GetProperty("budgetCvl").GetDecimal());
+            Assert.Equal(3500M, value.GetProperty("budgetExt").GetDecimal());
+            Assert.Equal(700M,  value.GetProperty("transferIncome").GetDecimal());
+            Assert.Equal(400M,  value.GetProperty("planCaseWorkDebit").GetDecimal());
+            await _projectService.DidNotReceive().GetProjectsByProgramAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetProjectTotals_WithProgramNo_ReturnsProgrammeTotals()
+        {
+            // Arrange
+            var programNo = "P001";
+            var projects = new List<ProjectDto>
+            {
+                new() { BudgetCvl = 1000M, BudgetExt = 2000M, TransferIncome = 500, PlanCaseWorkDebit = 300M }
+            };
+            var serviceResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects);
+
+            _projectService.GetProjectsByProgramAsync(
+                Arg.Is<QueryParameters<string>>(q => q.PageSize == 9999), programNo)
+                .Returns(serviceResponse);
+
+            var result = await _controller.GetProjectTotals(programNo, null);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonElement>(jsonResult);
+            Assert.Equal(1000M, value.GetProperty("budgetCvl").GetDecimal());
+            Assert.Equal(2000M, value.GetProperty("budgetExt").GetDecimal());
+            await _projectService.DidNotReceive().GetProjectsByProjectGroupAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetProjectTotals_WithBothParams_PrioritizesProjectGroup()
+        {
+            // Arrange
+            var programNo = "P001";
+            var projectGroup = "Group A";
+            var projects = new List<ProjectDto> { new() { BudgetCvl = 1000M } };
+            var serviceResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(projects);
+
+            _projectService.GetProjectsByProjectGroupAsync(
+                Arg.Any<QueryParameters<string>>(), projectGroup)
+                .Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.GetProjectTotals(programNo, projectGroup);
+
+            // Assert
+            await _projectService.Received(1).GetProjectsByProjectGroupAsync(
+                Arg.Any<QueryParameters<string>>(), projectGroup);
+            await _projectService.DidNotReceive().GetProjectsByProgramAsync(
+                Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetProjectTotals_WhenProjectGroupServiceFails_ReturnsZeroTotals()
+        {
+            // Arrange
+            var projectGroup = "Group A";
+            var errors = new List<ApiErrorDto> { new() { Message = "Service error" } };
+            var serviceResponse = ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _projectService.GetProjectsByProjectGroupAsync(
+                Arg.Any<QueryParameters<string>>(), projectGroup)
+                .Returns(serviceResponse);
+
+            // Act
+            var result = await _controller.GetProjectTotals(null, projectGroup);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonElement>(jsonResult);
+            Assert.Equal(0M, value.GetProperty("budgetCvl").GetDecimal());
+            Assert.Equal(0M, value.GetProperty("budgetExt").GetDecimal());
+            Assert.Equal(0M, value.GetProperty("transferIncome").GetDecimal());
+            Assert.Equal(0M, value.GetProperty("planCaseWorkDebit").GetDecimal());
+        }
+
+        [Fact]
+        public async Task SaveProjectGroupSession_SavesProjectGroupToSession()
+        {
+            // Arrange
+            var projectGroup = "Group A";
+
+            // Act
+            var result = await _controller.SaveProjectGroupSession(projectGroup);
+
+            // Assert
+            Assert.IsType<OkResult>(result);
+            await _appStateService.Received(1).SetSessionAsync(
+                Arg.Is<string>(s => s.Contains("SelectedProjectGroup")),
+                projectGroup
+            );
+        }
+
+        [Fact]
+        public async Task SaveProjectGroupSession_WithEmptyString_SavesEmptyValue()
+        {
+            // Act
+            var result = await _controller.SaveProjectGroupSession(string.Empty);
+
+            // Assert
+            Assert.IsType<OkResult>(result);
+            await _appStateService.Received(1).SetSessionAsync(
+                Arg.Is<string>(s => s.Contains("SelectedProjectGroup")),
+                string.Empty
+            );
+        }
+
+        #endregion
+
         private void SetupDropdownMocks()
         {
             _employeeService.GetAllManagersAsync()

@@ -5,13 +5,15 @@ var currentParentProject = '';
 var currentTestCode = '';
 var currentWorkGroup = '';
 var currentPortfolio = '';
-
+let portfolioSelectDropdown = null;
+let selectedPortfolio = null;
 function toggleSidebar() {
     document.querySelector('#shortnav').classList.toggle('collapsed');
 }
 
 // ── Portfolio dropdown init ───────────────────────────────────────────────
 $(document).ready(function () {
+    initializePortfolioMultiColumnDropdown();
     var $panel = $('#portfolioDropdownPanel');
     var $input = $('#dpselectportfolio');
     var $rows  = $('#portfolioDropdownBody tr');
@@ -452,4 +454,33 @@ function deletePortfolioTimeCode(btn) {
             }
         }).fail(function () { showGovukAlert('An error occurred while deleting.'); });
     });
+}
+
+function initializePortfolioMultiColumnDropdown() {
+    /*Multicolumn dropdown functionality for program selection*/
+    portfolioSelectDropdown = new MultiColumnDropdownComponent({
+        dropdownId: 'portfolioSelectDropdown',
+        containerSelector: '#portfolioSelectMultiDropdown',//name as per cshtml div id
+        placeholder: 'Select a Portfolio',
+        showSerialNumber: false,
+        searchPlaceholder: 'Search by code or title',
+        labelText: '',//this label will come at the top of dropdown, can be set as per requirement
+        columns: [
+            { field: 'Value', header: 'Code', width: '80px' },
+            { field: 'Text', header: 'Portfolio Title', width: '150px' },
+        ],
+        data: portfolioOptionsListData,
+        displayField: 'Text',
+        valueField: 'Value',
+        clearButtonClearsSelection: false,//this will only clear searchbox and not selected value
+        callbacks: {
+            onSelect: function (selectedItem, dropdown) {
+                selectedPortfolio = selectedItem.Value;
+                loadPortfolioData(selectedPortfolio); 
+            },
+             
+
+        }
+    });
+   
 }

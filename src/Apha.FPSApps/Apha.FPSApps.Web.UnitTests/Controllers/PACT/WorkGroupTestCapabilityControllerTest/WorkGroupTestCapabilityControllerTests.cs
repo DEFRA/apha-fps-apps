@@ -7,7 +7,6 @@ using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using NSubstitute;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityControllerTest
@@ -34,6 +33,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         {
             _workGroupService.GetAllWorkGroupsAsync()
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(workGroups));
+            _mapper.Map<List<WorkGroup>>(Arg.Any<List<WorkGroupDto>>())
+                .Returns(workGroups.Select(w => new WorkGroup { WorkGroupName = w.WorkGroupName }).ToList());
         }
 
         private void SetupPagedTestCapabilityResponse(List<TestCapabilityDto> testCapabilities, PaginationDto? pagination = null)
@@ -149,7 +150,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
         }
 
         [Fact]
-        public async Task Index_WithWorkGroups_SetsCorrectSelectListItemText()
+        public async Task Index_WithWorkGroups_SetsCorrectWorkGroupName()
         {
             // Arrange
             var workGroups = new List<WorkGroupDto>
@@ -165,8 +166,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupTestCapabilityCon
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<WorkGroupTestCapabilityViewModel>(viewResult.Model);
             var firstItem = model.WorkGroupOptions.First();
-            Assert.Equal("TestWorkGroup", firstItem.Text);
-            Assert.Equal("TestWorkGroup", firstItem.Value);
+            Assert.Equal("TestWorkGroup", firstItem.WorkGroupName);
         }
 
         #endregion

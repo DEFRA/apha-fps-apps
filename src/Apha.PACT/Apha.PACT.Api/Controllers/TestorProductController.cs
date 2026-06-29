@@ -14,7 +14,7 @@ namespace Apha.PACT.Api.Controllers
     /// <summary>
     /// API controller for Test List operations.
     /// </summary>
-    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin, API-PACTShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/testorproduct")]
@@ -100,5 +100,38 @@ namespace Apha.PACT.Api.Controllers
             var owners = await _service.GetOwnersAsync();
             return Ok(owners);
         }
+
+        /// <summary>Returns paged test price check rows (qryTestPriceZero) filtered by priceFilter and optional owner.</summary>
+        [HttpGet("testpricecheck")]
+        public async Task<IActionResult> GetTestPriceCheckPaged(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string priceFilter = "all",
+            [FromQuery] string? owner = null)
+        {
+            var result = await _service.GetTestPriceCheckPagedAsync(query, priceFilter, owner);
+            return Ok(_mapper.Map<PaginationRes<TestPriceCheckRes>>(result));
+        }
+
+        /// <summary>Returns a single test price check row by testCode and jobCode.</summary>
+        [HttpGet("testpricecheck/{testCode}/{jobCode}")]
+        public async Task<IActionResult> GetTestPriceCheckByKey(string testCode, string jobCode)
+        {
+            var result = await _service.GetTestPriceCheckByKeyAsync(testCode, jobCode);
+            if (result == null)
+                throw new KeyNotFoundException($"Test or Product with TestCode {testCode} and JobCode {jobCode} not found.");
+            return Ok(_mapper.Map<TestPriceCheckRes>(result));
+        }
+
+        /// <summary>Updates IsDefraProject, TestPrice and DefraUnitPrice across their respective tables.</summary>
+        [HttpPut("testpricecheck/{testCode}/{jobCode}")]
+        public async Task<IActionResult> UpdateTestPriceCheck(
+            string testCode, string jobCode,
+            [FromBody] TestPriceCheckReq request)
+        {
+            var dto = _mapper.Map<TestPriceCheckDto>(request);
+            var updated = await _service.UpdateTestPriceCheckAsync(testCode, jobCode, dto);
+            return Ok(updated);
+        }
+
     }
 }

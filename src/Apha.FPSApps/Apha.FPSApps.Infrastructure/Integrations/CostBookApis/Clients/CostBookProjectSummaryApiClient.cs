@@ -87,4 +87,17 @@ public class CostBookProjectSummaryApiClient : ICostBookProjectSummaryApiClient
         var url = string.Format(CostBookApiEndpoints.ExportProjectSummaryToExcel, HttpUtility.UrlEncode(projectId));
         return _http.GetFileAsync(url);
     }
+
+    public async Task<ApiResponseDto<ProjectYearCostSummaryDto>> GetProjectYearCostSummaryAsync(string projectId, int year)
+    {
+        var response = await _http.GetAsync<ProjectYearCostSummaryRes>(
+            string.Format(CostBookApiEndpoints.GetAllCostTotal,
+                          HttpUtility.UrlEncode(projectId), year));
+
+        if (response.Success && response.Data != null)
+            return _mapper.Map<ApiResponseDto<ProjectYearCostSummaryDto>>(response);
+
+        var err = _mapper.Map<ApiResponseDto<ProjectYearCostSummaryDto>>(response);
+        return ApiResponseDto<ProjectYearCostSummaryDto>.FailureResponse(err.Errors, err.Meta);
+    }
 }

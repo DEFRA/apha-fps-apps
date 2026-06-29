@@ -412,5 +412,141 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookProject
         }
 
         #endregion
+
+        #region GetProjectYearCostSummaryAsync Tests
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_WithSuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            var projectId = "PROJECT-001";
+            var year = 2024;
+            var apiResponse = new ApiResponse<ProjectYearCostSummaryRes>
+            {
+                Success = true,
+                Data = new ProjectYearCostSummaryRes
+                {
+                    Project = projectId,
+                    Year = year,
+                    StaffCostTotal = 1000.0,
+                    TestCostTotal = 200.0,
+                    AnimalCostTotal = 300.0,
+                    AdditionalCostTotal = 50.0,
+                    GrandTotal = 1550.0
+                }
+            };
+            var expectedDto = ApiResponseDto<ProjectYearCostSummaryDto>.SuccessResponse(new ProjectYearCostSummaryDto
+            {
+                Project = projectId,
+                Year = year,
+                StaffCostTotal = 1000.0,
+                TestCostTotal = 200.0,
+                AnimalCostTotal = 300.0,
+                AdditionalCostTotal = 50.0,
+                GrandTotal = 1550.0
+            });
+
+            _http.GetAsync<ProjectYearCostSummaryRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProjectYearCostSummaryDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetProjectYearCostSummaryAsync(projectId, year);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(projectId, result.Data.Project);
+            Assert.Equal(year, result.Data.Year);
+            Assert.Equal(1550.0, result.Data.GrandTotal);
+            await _http.Received(1).GetAsync<ProjectYearCostSummaryRes>(Arg.Any<string>());
+            _mapper.Received(1).Map<ApiResponseDto<ProjectYearCostSummaryDto>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_WithSpecialCharactersInId_EncodesUrlCorrectly()
+        {
+            // Arrange
+            var projectId = "PROJECT/001";
+            var year = 2024;
+            var apiResponse = new ApiResponse<ProjectYearCostSummaryRes>
+            {
+                Success = true,
+                Data = new ProjectYearCostSummaryRes { Project = projectId, Year = year }
+            };
+            var expectedDto = ApiResponseDto<ProjectYearCostSummaryDto>.SuccessResponse(new ProjectYearCostSummaryDto());
+
+            _http.GetAsync<ProjectYearCostSummaryRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProjectYearCostSummaryDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            await _client.GetProjectYearCostSummaryAsync(projectId, year);
+
+            // Assert - URL should be encoded, not contain raw slash
+            await _http.Received(1).GetAsync<ProjectYearCostSummaryRes>(Arg.Is<string>(s => !s.Contains("PROJECT/001")));
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var projectId = "PROJECT-001";
+            var year = 2024;
+            var apiResponse = new ApiResponse<ProjectYearCostSummaryRes>
+            {
+                Success = false,
+                Data = null,
+                Errors = new List<ApiError> { new ApiError { Message = "API Error", Code = "ERROR_CODE" } }
+            };
+            var errors = new List<ApiErrorDto> { new ApiErrorDto { Message = "API Error", Code = "ERROR_CODE" } };
+            var mappedResponse = new ApiResponseDto<ProjectYearCostSummaryDto>
+            {
+                Success = false,
+                Errors = errors,
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<ProjectYearCostSummaryRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProjectYearCostSummaryDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetProjectYearCostSummaryAsync(projectId, year);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Null(result.Data);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("API Error", result.Errors[0].Message);
+            Assert.Equal("ERROR_CODE", result.Errors[0].Code);
+        }
+
+        [Fact]
+        public async Task GetProjectYearCostSummaryAsync_WhenApiSuccessButNullData_ReturnsFailureResponse()
+        {
+            // Arrange
+            var projectId = "PROJECT-001";
+            var year = 2024;
+            var apiResponse = new ApiResponse<ProjectYearCostSummaryRes> { Success = true, Data = null };
+            var mappedResponse = new ApiResponseDto<ProjectYearCostSummaryDto>
+            {
+                Success = false,
+                Errors = [],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<ProjectYearCostSummaryRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ProjectYearCostSummaryDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetProjectYearCostSummaryAsync(projectId, year);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+        }
+
+        #endregion
     }
 }

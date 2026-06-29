@@ -21,8 +21,14 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsAsync()
             => await _fpsClient.FpsProject.GetAllProjectsAsync();
 
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsForAllUsersAsync()
+            => await _fpsClient.FpsProject.GetAllProjectsForAllUsersAsync();
+
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query)
             => await _fpsClient.FpsProject.GetPagedProjectsAsync(query);
+
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsByUserAsync(QueryParameters<string> query)
+            => await _fpsClient.FpsProject.GetPagedProjectsByUserAsync(query);
 
         public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsAsync(QueryParameters<string> query)
             => await _fpsClient.FpsProject.GetPagedPactProjectsAsync(query);
@@ -36,11 +42,17 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(ProjectDto project)
             => await _fpsClient.FpsProject.UpdateProjectAsync(project);
 
+        public Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project)
+            => _fpsClient.FpsProject.UpdateProjectAsync(parentProject, project);
+
         public async Task<ApiResponseDto<ProjectDto>> UpdatePactProjectAsync(ProjectDto project)
             => await _fpsClient.FpsProject.UpdatePactProjectAsync(project);
 
         public async Task<ApiResponseDto<ProjectDto>> UpdatePactPortfolioAsync(ProjectDto project)
             => await _fpsClient.FpsProject.UpdatePactPortfolioAsync(project);
+
+        public async Task<ApiResponseDto<ProjectDto>> UpdateFpsPortfolioAsync(ProjectDto project)
+            => await _fpsClient.FpsProject.UpdateFpsPortfolioAsync(project);
 
         public async Task<ApiResponseDto<bool>> DeleteProjectAsync(string parentProject)
             => await _fpsClient.FpsProject.DeleteProjectAsync(parentProject);
@@ -73,9 +85,6 @@ namespace Apha.FPSApps.Application.Services.FPS
         public Task<ApiResponseDto<ProjectDto>> GetProgrammeNewProjectByIdAsync(string parentProject)
             => _fpsClient.FpsProject.GetProjectByIdAsync(parentProject);
 
-        public Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project)
-            => _fpsClient.FpsProject.UpdateProjectAsync(parentProject, project);
-
         public Task<ApiResponseDto<bool>> DeleteProjectAndChildrenAsync(string parentProject)
             => _fpsClient.FpsProject.DeleteProjectAndChildrenAsync(parentProject);
 
@@ -106,5 +115,21 @@ namespace Apha.FPSApps.Application.Services.FPS
         public Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(
             QueryParameters<string> query, string programNo, string workTypeFilter)
             => _fpsClient.FpsProject.GetProjectProfitabilityAsync(query, programNo, workTypeFilter);
+
+        public Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(
+            QueryParameters<string> query, string projectGroup, string workTypeFilter)
+            => _fpsClient.FpsProject.GetProjectGroupProfitabilityAsync(query, projectGroup, workTypeFilter);
+
+        // TRANSFORMENGINE: new method — Phase 8 addition; thin delegate forwarding to
+        // _fpsClient.FpsProject.GetProjectProfitabilityVlaAsync() — NO business logic.
+        // All five params passed through unchanged; four filter params default to null when
+        // not supplied by the MVC controller (optional filters on the VLA DataGrid page).
+        public Task<ApiResponseDto<List<ProjectProfitabilityVlaDto>>> GetProjectProfitabilityVlaAsync(
+            QueryParameters<string> query,
+            string? projectStatus = null,
+            string? programNo = null,
+            string? manager = null,
+            string? customer = null)
+            => _fpsClient.FpsProject.GetProjectProfitabilityVlaAsync(query, projectStatus, programNo, manager, customer);
     }
 }

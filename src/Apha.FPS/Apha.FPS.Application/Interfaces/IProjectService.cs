@@ -6,14 +6,17 @@ namespace Apha.FPS.Application.Interfaces
     public interface IProjectService
     {
         Task<IEnumerable<ProjectDto>> GetAllProjectsAsync();
+        Task<IEnumerable<ProjectDto>> GetAllProjectsForAllUsersAsync();
         Task<IEnumerable<ProjectDto>> GetAllPactProjectsAsync();
         Task<PaginatedResult<ProjectDto>> GetPagedProjectsAsync(QueryParameters<string> query);
+        Task<PaginatedResult<ProjectDto>> GetPagedProjectsByUserAsync(QueryParameters<string> query);
         Task<PaginatedResult<ProjectDto>> GetPagedPactProjectsAsync(QueryParameters<string> query);
         Task<ProjectDto?> GetProjectByIdAsync(string parentProject);
         Task<ProjectDto> CreateProjectAsync(ProjectDto projectDto);
         Task<ProjectDto> UpdateProjectAsync(ProjectDto projectDto);
         Task<ProjectDto?> UpdatePactProjectDetailsAsync(ProjectDto projectDto);
         Task<ProjectDto?> UpdatePactPortfolioDetailsAsync(ProjectDto projectDto);
+        Task<ProjectDto?> UpdateFpsPortfolioDetailsAsync(ProjectDto projectDto);
         Task<bool> DeleteProjectAsync(string parentProject);
         Task<PaginatedResult<ProjectDto>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);
         Task<PaginatedResult<ProjectDto>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup);
@@ -25,5 +28,7 @@ namespace Apha.FPS.Application.Interfaces
         Task DeleteProjectAndChildrenAsync(string parentProject);
 
         Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
+        Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
+        Task<PaginatedResult<ProjectProfitabilityVlaDto>> GetProjectProfitabilityVlaAsync(QueryParameters<string> query, string? projectStatus = null, string? programNo = null, string? manager = null, string? customer = null);
     }
 }

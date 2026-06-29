@@ -15,13 +15,15 @@ namespace Apha.FPS.Application.Mappings
 
             CreateMap<PaginationData, PaginationDto>().ReverseMap();
             CreateMap<StaffJobView, StaffJobViewDto>().ReverseMap();
+            CreateMap<StaffJobZtView, StaffJobZtViewDto>()
+                .ForMember(dest => dest.ZtDescription, opt => opt.MapFrom(src => src.Name))
+                .ReverseMap();
             CreateMap<StaffWorkgroupLookup, StaffWorkgroupLookupDto>().ReverseMap();
             CreateMap<StaffJob, StaffJobDto>().ReverseMap();
             CreateMap<FpsSetting, FpsSettingDto>().ReverseMap();
             CreateMap<Program, ProgramDto>().ReverseMap();
             CreateMap<Project, ProjectDto>().ReverseMap();
             CreateMap<ProjectView, Project>().ReverseMap();
-            CreateMap<JobCode, JobCodeDto>().ReverseMap();
             CreateMap<Contract, ContractDto>().ReverseMap();
             CreateMap<AnimalCostView, AnimalCostViewDto>().ReverseMap();
             CreateMap<Animal, AnimalDto>().ReverseMap();
@@ -39,13 +41,19 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<YearMaster, YearMasterDto>().ReverseMap();
             CreateMap<Division, DivisionDto>().ReverseMap();
             CreateMap<DivisionGrade, DivisionGradeDto>().ReverseMap();
+
+            // TRANSFORMENGINE: Grade <-> GradeDto — ForMember required: Grade.DescLong <-> GradeDto.Description (field rename)
+            CreateMap<Grade, GradeDto>()
+                .ForMember(d => d.Description, o => o.MapFrom(s => s.DescLong))
+                .ReverseMap()
+                .ForMember(d => d.DescLong, o => o.MapFrom(s => s.Description));
+
             CreateMap<Agency, AgencyDto>().ReverseMap();
             CreateMap<TimeCostCalcsView, TimeCostCalcsViewDto>().ReverseMap();
             CreateMap<ProjectStaffPlanView, ProjectStaffPlanViewDto>().ReverseMap();
+            CreateMap<ProjectGroupStaffPlanView, ProjectGroupStaffPlanViewDto>().ReverseMap();
             CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
             CreateMap<AccountCategory, AccountCategoryDto>().ReverseMap();
-            CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
-            CreateMap<WorkGroupStaff, WorkGroupStaffDto>().ReverseMap();
             CreateMap<WorkGroupPerson, WorkGroupPersonDto>().ReverseMap();
            
 
@@ -59,12 +67,27 @@ namespace Apha.FPS.Application.Mappings
                 .ForMember(d => d.ProfitCentreHead, o => o.MapFrom(s => s.ProfitCentreHead))
                 .ForMember(d => d.DivisionId, o => o.MapFrom(s => s.DivisionId))
                 .ForMember(d => d.EmailRecipient, o => o.MapFrom(s => s.EmailRecipient));
+            CreateMap<ProfitCentreCostSummary, ProfitCentreCostDto>().ReverseMap();
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupGradeView, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupEmployee, WorkGroupEmployeeDto>().ReverseMap();
             CreateMap<WorkGroupEmployeeView, WorkGroupEmployeeDto>().ReverseMap();
+            CreateMap<PactStaff, PactStaffDto>().ReverseMap();
             CreateMap<ProjectProfitabilityView, ProjectProfitabilityDto>().ReverseMap();
+            CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
+
+            // TRANSFORMENGINE: new mapping â€” frmJobcodeTotalsVLA migration (Phase 3)
+            //   Property names are aligned between entity and DTO; no ForMember overrides needed.
+            //   Covers: Id, JobCode, Program, Customer, Manager, Status, StaffCosts, TestCost,
+            //   AnimalCosts, AdditionalCosts, TotalCosts, Budget, Profit, TargetProfit, OffTarget.
+            CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
+              
+
+            // BudgetResourceLevel
+            CreateMap<Bid, BidDto>().ReverseMap();
+            CreateMap<BidView, BidViewDto>().ReverseMap();
+            CreateMap<Purchase, PurchaseDto>().ReverseMap();
         }
     }
 }

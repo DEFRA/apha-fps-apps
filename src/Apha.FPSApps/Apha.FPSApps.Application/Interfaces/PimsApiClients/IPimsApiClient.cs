@@ -6,5 +6,7 @@
         IPimsProjectDetailsApiClient PimsProjectDetails { get; }
         IPimsProjectCommentApiClient PimsProjectComment { get; }
         IPimsProposedProjectApiClient PimsProposedProject { get; }
+        IPimsProjectYearCostsApiClient PimsProjectYearCosts { get; }
+        IPimsMilestoneApiClient PimsMilestone { get; }
     }
 }

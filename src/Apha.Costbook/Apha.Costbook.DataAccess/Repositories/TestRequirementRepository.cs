@@ -7,7 +7,7 @@ using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
-public class TestRequirementRepository : RepositoryBase<TestRequirement>, ITestRequirementRepository
+public class TestRequirementRepository : RepositoryBase, ITestRequirementRepository
 {
     private readonly IFPSYearContext _fpsYearContext;
     private readonly ISettingsRepository _settingsRepo;
@@ -54,9 +54,8 @@ public class TestRequirementRepository : RepositoryBase<TestRequirement>, ITestR
             };
 
         baseQuery = ApplySorting(baseQuery, query.SortBy, query.Descending);
-
-        List<TestRequirementDetailView> result = await baseQuery.ToListAsync();
-        return ApplyPaging(result, query.Page, query.PageSize);
+       
+        return await ApplyPaging(baseQuery, query.Page, query.PageSize);
     }
 
     public async Task<TestRequirement> AddTestRequirementAsync(TestRequirement testRequirement)

@@ -1,4 +1,4 @@
-﻿using Apha.FPS.Core.Entities;
+using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +22,7 @@ namespace Apha.FPS.DataAccess.Repositories
                  {
                      CostCentre = g.Key.CostCentre,
                      ProfitCentre = g.Key.ProfitCentre,
-                     WGs = string.Join(", ", g.Select(x => x.WorkgroupName))
+                     WGs = string.Join(", ", g.Select(x => x.WorkGroupName))
                  })
                  .ToListAsync();
         }

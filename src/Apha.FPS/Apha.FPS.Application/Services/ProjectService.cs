@@ -26,6 +26,12 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<ProjectDto>>(projects);
         }
 
+        public async Task<IEnumerable<ProjectDto>> GetAllProjectsForAllUsersAsync()
+        {
+            var projects = await _projectRepository.GetAllProjectsForAllUsersAsync();
+            return _mapper.Map<IEnumerable<ProjectDto>>(projects);
+        }
+
         public async Task<IEnumerable<ProjectDto>> GetAllPactProjectsAsync()
         {
             var projects = await _projectRepository.GetAllPactProjectsAsync();
@@ -35,6 +41,13 @@ namespace Apha.FPS.Application.Services
         public async Task<PaginatedResult<ProjectDto>> GetPagedProjectsAsync(QueryParameters<string> query)
         {
             var pagedProjects = await _projectRepository.GetPagedProjectsAsync(
+                _mapper.Map<PaginationParameters<string>>(query));
+            return _mapper.Map<PaginatedResult<ProjectDto>>(pagedProjects);
+        }
+
+        public async Task<PaginatedResult<ProjectDto>> GetPagedProjectsByUserAsync(QueryParameters<string> query)
+        {
+            var pagedProjects = await _projectRepository.GetPagedProjectsByUserAsync(
                 _mapper.Map<PaginationParameters<string>>(query));
             return _mapper.Map<PaginatedResult<ProjectDto>>(pagedProjects);
         }
@@ -113,6 +126,24 @@ namespace Apha.FPS.Application.Services
         {
             var project = _mapper.Map<Project>(projectDto);
             var updated = await _projectRepository.UpdatePactPortfolioDetailsAsync(project);
+            return updated == null ? null : _mapper.Map<ProjectDto>(updated);
+        }
+
+        public async Task<ProjectDto?> UpdateFpsPortfolioDetailsAsync(ProjectDto projectDto)
+        {
+            if (!string.IsNullOrWhiteSpace(projectDto.Program) &&
+                !await _projectRepository.CheckProgramExistsAsync(projectDto.Program))
+            {
+                throw new BusinessValidationErrorException(
+                [
+                    new BusinessValidationError(
+                        $"Cannot update portfolio: Program '{projectDto.Program}' does not exist.",
+                        "PROGRAM_NOT_FOUND")
+                ]);
+            }
+
+            var project = _mapper.Map<Project>(projectDto);
+            var updated = await _projectRepository.UpdateFpsPortfolioDetailsAsync(project);
             return updated == null ? null : _mapper.Map<ProjectDto>(updated);
         }
 
@@ -222,6 +253,23 @@ namespace Apha.FPS.Application.Services
             var pagedResult = await _projectRepository.GetProjectProfitabilityAsync(
                 _mapper.Map<PaginationParameters<string>>(query), programNo, workTypeFilter);
             return _mapper.Map<PaginatedResult<ProjectProfitabilityDto>>(pagedResult);
+        }
+
+        public async Task<PaginatedResult<ProjectProfitabilityDto>> GetProjectGroupProfitabilityAsync(
+            QueryParameters<string> query, string projectGroup, string workTypeFilter)
+        {
+            var pagedResult = await _projectRepository.GetProjectGroupProfitabilityAsync(
+                _mapper.Map<PaginationParameters<string>>(query), projectGroup, workTypeFilter);
+            return _mapper.Map<PaginatedResult<ProjectProfitabilityDto>>(pagedResult);
+        }
+
+        public async Task<PaginatedResult<ProjectProfitabilityVlaDto>> GetProjectProfitabilityVlaAsync(
+            QueryParameters<string> query, string? projectStatus = null, string? programNo = null, string? manager = null, string? customer = null)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            var pagedResult = await _projectRepository.GetProjectProfitabilityVlaAsync(
+                _mapper.Map<PaginationParameters<string>>(query), projectStatus, programNo, manager, customer);
+            return _mapper.Map<PaginatedResult<ProjectProfitabilityVlaDto>>(pagedResult);
         }
     }
 }

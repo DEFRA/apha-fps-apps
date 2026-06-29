@@ -1,4 +1,4 @@
-ï»¿using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Application.Validation;
@@ -124,6 +124,86 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
 
             await _mockRepository.Received(1).GetAllProjectsAsync();
             _mockMapper.DidNotReceive().Map<IEnumerable<ProjectDto>>(Arg.Any<IEnumerable<Project>>());
+        }
+
+        #endregion
+
+        #region GetAllProjectsForAllUsersAsync
+
+        [Fact]
+        public async Task GetAllProjectsForAllUsersAsync_WithValidData_ReturnsMappedDtoList()
+        {
+            // Arrange
+            var projectEntities = new List<Project>
+            {
+                new() { ParentProject = "PROJ001", ProjectTitle = "FMD Survey", ProjectStatus = "Active", Disease = "FMD", Contract = "CON001", Customer = "DEFRA", Program = "P001", IncomeAccountCode = "IAC01" },
+                new() { ParentProject = "PROJ002", ProjectTitle = "TB Eradication", ProjectStatus = "Active", Disease = "TB", Contract = "CON002", Customer = "APHA", Program = "P002", IncomeAccountCode = "IAC02" }
+            };
+
+            var expectedDtos = new List<ProjectDto>
+            {
+                new() { ParentProject = "PROJ001", ProjectTitle = "FMD Survey" },
+                new() { ParentProject = "PROJ002", ProjectTitle = "TB Eradication" }
+            };
+
+            _mockRepository.GetAllProjectsForAllUsersAsync()
+                .Returns(Task.FromResult<IEnumerable<Project>>(projectEntities));
+
+            _mockMapper.Map<IEnumerable<ProjectDto>>(projectEntities)
+                .Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetAllProjectsForAllUsersAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(2);
+            result.First().ParentProject.Should().Be("PROJ001");
+
+            await _mockRepository.Received(1).GetAllProjectsForAllUsersAsync();
+            _mockMapper.Received(1).Map<IEnumerable<ProjectDto>>(projectEntities);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForAllUsersAsync_WithEmptyList_ReturnsEmptyDtoList()
+        {
+            // Arrange
+            var emptyEntities = new List<Project>();
+            var emptyDtos = new List<ProjectDto>();
+
+            _mockRepository.GetAllProjectsForAllUsersAsync()
+                .Returns(Task.FromResult<IEnumerable<Project>>(emptyEntities));
+
+            _mockMapper.Map<IEnumerable<ProjectDto>>(emptyEntities)
+                .Returns(emptyDtos);
+
+            // Act
+            var result = await _sut.GetAllProjectsForAllUsersAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetAllProjectsForAllUsersAsync();
+            _mockMapper.Received(1).Map<IEnumerable<ProjectDto>>(emptyEntities);
+        }
+
+        [Fact]
+        public async Task GetAllProjectsForAllUsersAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetAllProjectsForAllUsersAsync()
+                .Returns(Task.FromException<IEnumerable<Project>>(expectedException));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetAllProjectsForAllUsersAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetAllProjectsForAllUsersAsync();
         }
 
         #endregion
@@ -514,6 +594,90 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             exception.Message.Should().Be("Database connection failed");
             await _mockRepository.Received(1).GetPagedProjectsAsync(paginationParams);
             _mockMapper.DidNotReceive().Map<PaginatedResult<ProjectDto>>(Arg.Any<PagedData<Project>>());
+        }
+
+        #endregion
+
+        #region GetPagedProjectsByUserAsync
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_WithValidQuery_ReturnsMappedPaginatedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+            var viewEntities = new List<ProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project", UserEmail = "test@example.com" }
+            };
+            var paginationData = new PaginationData { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 1 };
+            var pagedData = new PagedData<ProjectView>(viewEntities, paginationData);
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 1 };
+            var expectedResult = new PaginatedResult<ProjectDto>(
+                new List<ProjectDto> { new() { ParentProject = "PP001" } }, paginationDto);
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetPagedProjectsByUserAsync(paginationParams).Returns(pagedData);
+            _mockMapper.Map<PaginatedResult<ProjectDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            var result = await _sut.GetPagedProjectsByUserAsync(query);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().HaveCount(1);
+            result.Data.First().ParentProject.Should().Be("PP001");
+            _mockMapper.Received(1).Map<PaginationParameters<string>>(query);
+            await _mockRepository.Received(1).GetPagedProjectsByUserAsync(paginationParams);
+            _mockMapper.Received(1).Map<PaginatedResult<ProjectDto>>(pagedData);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_WithEmptyResult_ReturnsMappedEmptyResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+            var emptyPagedData = new PagedData<ProjectView>(
+                Enumerable.Empty<ProjectView>(),
+                new PaginationData { PageNumber = 1, PageSize = 10, TotalPages = 0, TotalRecords = 0 });
+            var emptyResult = new PaginatedResult<ProjectDto>(
+                Enumerable.Empty<ProjectDto>(),
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 0, TotalRecords = 0 });
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetPagedProjectsByUserAsync(paginationParams).Returns(emptyPagedData);
+            _mockMapper.Map<PaginatedResult<ProjectDto>>(emptyPagedData).Returns(emptyResult);
+
+            // Act
+            var result = await _sut.GetPagedProjectsByUserAsync(query);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Data.Should().BeEmpty();
+            result.PaginationData.TotalRecords.Should().Be(0);
+            await _mockRepository.Received(1).GetPagedProjectsByUserAsync(paginationParams);
+        }
+
+        [Fact]
+        public async Task GetPagedProjectsByUserAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetPagedProjectsByUserAsync(paginationParams)
+                .Returns(Task.FromException<PagedData<ProjectView>>(new Exception("Database connection failed")));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetPagedProjectsByUserAsync(query)
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetPagedProjectsByUserAsync(paginationParams);
+            _mockMapper.DidNotReceive().Map<PaginatedResult<ProjectDto>>(Arg.Any<PagedData<ProjectView>>());
         }
 
         #endregion
@@ -1189,6 +1353,160 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectServiceTest
             exception.Errors.Should().Contain(e => e.Code == "HAS_PLANNED_TESTS");
             exception.Errors.Should().Contain(e => e.Code == "HAS_MONTHLY_OUTPUT");
             await _mockRepository.DidNotReceive().DeleteProjectAndChildrenAsync(Arg.Any<string>());
+        }
+
+        #endregion
+
+        #region UpdateFpsPortfolioDetailsAsync
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_WithValidDto_ReturnsMappedUpdatedDto()
+        {
+            // Arrange
+            var inputDto = new ProjectDto
+            {
+                ParentProject = "PP001", ProjectTitle = "FPS Portfolio Update",
+                Program = "P002", Manager = "Manager A",
+                Disease = "FMD", ProjectStatus = "Active",
+                TransferIncome = 500m, CustIncome = 600m, Profit = 150m,
+                Contract = "C001", Customer = "DEFRA"
+            };
+            var projectEntity = new Project
+            {
+                ParentProject = "PP001", ProjectTitle = "FPS Portfolio Update",
+                Program = "P002", Manager = "Manager A",
+                Disease = "FMD", ProjectStatus = "Active",
+                TransferIncome = 500m, CustIncome = 600m, Profit = 150m,
+                Contract = "C001", Customer = "DEFRA"
+            };
+            var updatedEntity = new Project
+            {
+                ParentProject = "PP001", ProjectTitle = "FPS Portfolio Update",
+                Program = "P002", Manager = "Manager A",
+                Disease = "FMD", ProjectStatus = "Active",
+                TransferIncome = 500m, CustIncome = 600m, Profit = 150m,
+                Contract = "C001", Customer = "DEFRA"
+            };
+            var expectedDto = new ProjectDto { ParentProject = "PP001", ProjectTitle = "FPS Portfolio Update" };
+
+            _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(inputDto.Program).Returns(true);
+            _mockRepository.UpdateFpsPortfolioDetailsAsync(projectEntity).Returns(updatedEntity);
+            _mockMapper.Map<ProjectDto>(updatedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdateFpsPortfolioDetailsAsync(inputDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.ParentProject.Should().Be("PP001");
+            result.ProjectTitle.Should().Be("FPS Portfolio Update");
+            _mockMapper.Received(1).Map<Project>(inputDto);
+            await _mockRepository.Received(1).UpdateFpsPortfolioDetailsAsync(projectEntity);
+            _mockMapper.Received(1).Map<ProjectDto>(updatedEntity);
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_WhenProjectNotFound_ReturnsNull()
+        {
+            // Arrange
+            var inputDto = new ProjectDto
+            {
+                ParentProject = "PP999", Program = "P001",
+                Customer = "DEFRA", ProjectStatus = "Active"
+            };
+            var projectEntity = new Project
+            {
+                ParentProject = "PP999", Program = "P001",
+                Customer = "DEFRA", ProjectStatus = "Active"
+            };
+
+            _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
+            _mockRepository.UpdateFpsPortfolioDetailsAsync(projectEntity).Returns((Project?)null);
+
+            // Act
+            var result = await _sut.UpdateFpsPortfolioDetailsAsync(inputDto);
+
+            // Assert
+            result.Should().BeNull();
+            await _mockRepository.Received(1).UpdateFpsPortfolioDetailsAsync(projectEntity);
+            _mockMapper.DidNotReceive().Map<ProjectDto>(Arg.Any<Project>());
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_WhenProgramDoesNotExist_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var inputDto = new ProjectDto
+            {
+                ParentProject = "PP001", Program = "INVALID",
+                Customer = "DEFRA", ProjectStatus = "Active"
+            };
+
+            _mockRepository.CheckProgramExistsAsync("INVALID").Returns(false);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                async () => await _sut.UpdateFpsPortfolioDetailsAsync(inputDto));
+
+            exception.Errors.Should().ContainSingle(e => e.Code == "PROGRAM_NOT_FOUND");
+            await _mockRepository.DidNotReceive().UpdateFpsPortfolioDetailsAsync(Arg.Any<Project>());
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_WhenProgramIsNullOrEmpty_SkipsProgramCheck()
+        {
+            // Arrange — null/empty program bypasses the FK guard
+            var inputDto = new ProjectDto
+            {
+                ParentProject = "PP001", Program = null!,
+                Customer = "DEFRA", ProjectStatus = "Active"
+            };
+            var projectEntity = new Project { ParentProject = "PP001", Customer = "DEFRA", ProjectStatus = "Active" };
+            var updatedEntity = new Project { ParentProject = "PP001" };
+            var expectedDto   = new ProjectDto { ParentProject = "PP001" };
+
+            _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.UpdateFpsPortfolioDetailsAsync(projectEntity).Returns(updatedEntity);
+            _mockMapper.Map<ProjectDto>(updatedEntity).Returns(expectedDto);
+
+            // Act
+            var result = await _sut.UpdateFpsPortfolioDetailsAsync(inputDto);
+
+            // Assert
+            result.Should().NotBeNull();
+            await _mockRepository.DidNotReceive().CheckProgramExistsAsync(Arg.Any<string>());
+            await _mockRepository.Received(1).UpdateFpsPortfolioDetailsAsync(projectEntity);
+        }
+
+        [Fact]
+        public async Task UpdateFpsPortfolioDetailsAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var inputDto = new ProjectDto
+            {
+                ParentProject = "PP001", Program = "P001",
+                Customer = "DEFRA", ProjectStatus = "Active"
+            };
+            var projectEntity = new Project
+            {
+                ParentProject = "PP001", Program = "P001",
+                Customer = "DEFRA", ProjectStatus = "Active"
+            };
+
+            _mockMapper.Map<Project>(inputDto).Returns(projectEntity);
+            _mockRepository.CheckProgramExistsAsync(Arg.Any<string>()).Returns(true);
+            _mockRepository.UpdateFpsPortfolioDetailsAsync(projectEntity)
+                .Returns(Task.FromException<Project?>(new Exception("Database connection failed")));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.UpdateFpsPortfolioDetailsAsync(inputDto));
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).UpdateFpsPortfolioDetailsAsync(projectEntity);
+            _mockMapper.DidNotReceive().Map<ProjectDto>(Arg.Any<Project>());
         }
 
         #endregion

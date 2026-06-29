@@ -1,4 +1,4 @@
-ï»¿using Apha.Common.Helpers.Repository;
+using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.DataAccess.Data;
@@ -14,7 +14,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StoredProcRepositoryTest
         /// <summary>
         /// Creates a StoredProcRepository with in-memory Workgroups data.
         /// IFpsYearContext is substituted via NSubstitute.
-        /// Workgroup has a FpsCalYear query filter in FpsDbContext â€” seed data is
+        /// Workgroup has a FpsCalYear query filter in FpsDbContext — seed data is
         /// pre-filtered per test to simulate what EF's query filter produces.
         /// </summary>
         private static StoredProcRepository CreateRepository(IEnumerable<Workgroup> workgroups)
@@ -38,8 +38,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StoredProcRepositoryTest
             // Arrange
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG-A", CostCentre = 100, ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear },
-                new() { WorkgroupName = "WG-B", CostCentre = 200, ProfitCentre = "PC2", FpsYear = DefaultTestFpsYear }
+                new() { WorkGroupName = "WG-A", CostCentre = 100, ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear },
+                new() { WorkGroupName = "WG-B", CostCentre = 200, ProfitCentre = "PC2", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(workgroups);
 
@@ -68,11 +68,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StoredProcRepositoryTest
         [Fact]
         public async Task GetAllCostCentreWorkgroupAsync_ExcludesWorkgroups_WhenCostCentreIsNull()
         {
-            // Arrange â€” one workgroup has null CostCentre and must be excluded by the Where filter
+            // Arrange — one workgroup has null CostCentre and must be excluded by the Where filter
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG-A", CostCentre = 100,  ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear },
-                new() { WorkgroupName = "WG-B", CostCentre = null, ProfitCentre = "PC2", FpsYear = DefaultTestFpsYear }
+                new() { WorkGroupName = "WG-A", CostCentre = 100,  ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear },
+                new() { WorkGroupName = "WG-B", CostCentre = null, ProfitCentre = "PC2", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(workgroups);
 
@@ -87,11 +87,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StoredProcRepositoryTest
         [Fact]
         public async Task GetAllCostCentreWorkgroupAsync_ReturnsEmptyCollection_WhenAllCostCentresAreNull()
         {
-            // Arrange â€” all workgroups have null CostCentre, none should pass the Where filter
+            // Arrange — all workgroups have null CostCentre, none should pass the Where filter
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG-A", CostCentre = null, ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear },
-                new() { WorkgroupName = "WG-B", CostCentre = null, ProfitCentre = "PC2", FpsYear = DefaultTestFpsYear }
+                new() { WorkGroupName = "WG-A", CostCentre = null, ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear },
+                new() { WorkGroupName = "WG-B", CostCentre = null, ProfitCentre = "PC2", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(workgroups);
 
@@ -103,14 +103,14 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StoredProcRepositoryTest
         }
 
         [Fact]
-        public async Task GetAllCostCentreWorkgroupAsync_GroupsByKeyAndJoinsWorkgroupNames_WhenMultipleWorkgroupsShareSameKey()
+        public async Task GetAllCostCentreWorkgroupAsync_GroupsByKeyAndJoinsWorkGroupNames_WhenMultipleWorkgroupsShareSameKey()
         {
-            // Arrange â€” two workgroups share the same CostCentre + ProfitCentre key and must be merged into one row
+            // Arrange — two workgroups share the same CostCentre + ProfitCentre key and must be merged into one row
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG-A", CostCentre = 100, ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear },
-                new() { WorkgroupName = "WG-B", CostCentre = 100, ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear },
-                new() { WorkgroupName = "WG-C", CostCentre = 200, ProfitCentre = "PC2", FpsYear = DefaultTestFpsYear }
+                new() { WorkGroupName = "WG-A", CostCentre = 100, ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear },
+                new() { WorkGroupName = "WG-B", CostCentre = 100, ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear },
+                new() { WorkGroupName = "WG-C", CostCentre = 200, ProfitCentre = "PC2", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(workgroups);
 
@@ -132,7 +132,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StoredProcRepositoryTest
             // Arrange
             var workgroups = new List<Workgroup>
             {
-                new() { WorkgroupName = "WG-A", CostCentre = 100, ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear }
+                new() { WorkGroupName = "WG-A", CostCentre = 100, ProfitCentre = "PC1", FpsYear = DefaultTestFpsYear }
             };
             var repo = CreateRepository(workgroups);
 

@@ -1,0 +1,240 @@
+@using Apha.FPSApps.Web.Areas.FPS.Models
+@model Apha.FPSApps.Web.Areas.FPS.Models.BudgetResourceLevelItem
+@{
+    // ── common flags ────────────────────────────────────────────────────────
+    var isBudgetBid = Model.ModalType == BudgetResourceLevelModalType.BudgetBid;
+    var bid         = Model.BudgetBid;
+    var purchase    = Model.Purchase;
+
+    bool isEditMode;
+    string title, formId, saveLabel, saveAction;
+
+    if (isBudgetBid)
+    {
+        isEditMode  = !string.IsNullOrEmpty(bid!.WorkGroupName) && !string.IsNullOrEmpty(bid.Account);
+        title       = isEditMode ? "Update Budget Bid"  : "Add Budget Bid";
+        formId      = isEditMode ? "formEditBudgetBid"  : "formAddBudgetBid";
+        saveLabel   = isEditMode ? "Update"             : "Save";
+        saveAction  = isEditMode ? "updateBudgetBid()"  : "saveBudgetBid()";
+    }
+    else
+    {
+        isEditMode  = !string.IsNullOrEmpty(purchase!.WorkGroupName)
+                   && !string.IsNullOrEmpty(purchase.Account)
+                   && !string.IsNullOrEmpty(purchase.ItemDescription);
+        title       = isEditMode ? "Update Purchase"   : "Add Purchase";
+        formId      = isEditMode ? "formEditPurchase"  : "formAddPurchase";
+        saveLabel   = isEditMode ? "Update"            : "Save";
+        saveAction  = isEditMode ? "updatePurchase()"  : "savePurchase()";
+    }
+}
+
+<div class="modal-header flex-space-center sup_align_heading">
+    <h3 class="modal-title m-0">@title</h3>
+    <button type="button" class="btn-close btn-red sup_p_5" onclick="closeModal()">X</button>
+</div>
+
+<div class="modal-body" style="overflow@(isBudgetBid ? ": visible" : "-y: auto; max-height: calc(80vh - 120px)"); padding: 8px 16px 0 16px;">
+    <div class="govuk-error-summary" role="alert"
+         aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list" id="modalErrorList"></ul>
+        </div>
+    </div>
+
+    @if (isBudgetBid)
+    {
+        <form id="@formId">
+            <input type="hidden" name="WorkGroupName" id="WorkGroupName" value="@bid!.WorkGroupName" />
+            <div class="govuk-form-group sup_margin_bottom_10">
+                <label class="govuk-label govuk-!-font-weight-bold">Work Group</label>
+                <input type="text" class="govuk-input govuk-!-font-size-16" value="@bid.WorkGroupName" readonly />
+            </div>
+            <div class="govuk-form-group sup_margin_bottom_10">
+                <label class="govuk-label govuk-!-font-weight-bold">Account <span class="sup_error_text_color">*</span></label>
+                @if (isEditMode)
+                {
+                    <input type="hidden" id="Account" name="Account" value="@bid.Account" />
+                    <input type="text" class="govuk-input govuk-!-font-size-16" value="@bid.Account" readonly />
+                }
+                else
+                {
+                    <input type="hidden" id="Account" name="Account" required />
+                    <div class="tableselectdropdown input-group" data-empdropdown style="position:relative;">
+                        <div id="AccountComboBox"
+                             onclick="toggleAccountDropdown()"
+                             class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                             style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; min-height:40px; user-select:none; background:#fff;">
+                            <span id="AccountDisplayText" style="color:#505a5f; flex:1;">&#8211; Select Account &#8211;</span>
+                            <span style="font-size:12px; color:#505a5f;">&#9660;</span>
+                        </div>
+                        <div id="accountDropdownPanel" class="tbl-dropdown-panel"
+                             style="display:none; position:absolute; z-index:9999; background:#fff;
+                                    border:2px solid #0b0c0c; width:100%; min-width:580px; top:100%; left:0;
+                                    box-shadow:0 4px 8px rgba(0,0,0,0.2);">
+                            <div style="display:flex; align-items:center; padding:4px; border-bottom:1px solid #b1b4b6; background:#f3f2f1; gap:4px;">
+                                <input type="text" id="accountSearch" placeholder="Type to search account"
+                                       class="select-search-box govuk-input govuk-!-font-size-16"
+                                       style="flex:1; font-size:13px; padding:2px 6px; height:32px;"
+                                       oninput="filterAccountTable(this.value)" onclick="event.stopPropagation()" />
+                                <button type="button" class="govuk-button govuk-button--secondary clear-search-btn govuk-!-margin-bottom-0"
+                                        style="padding:2px 8px; height:32px; line-height:1;"
+                                        onclick="document.getElementById('accountSearch').value=''; filterAccountTable(''); event.stopPropagation();"
+                                        aria-label="Clear search">
+                                    <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
+                                </button>
+                            </div>
+                            <div class="table_scroll_wrapper" style="max-height:200px; overflow-y:auto;">
+                                <table class="govuk-table custom-table" style="width:100%; table-layout:fixed; margin-bottom:0;">
+                                    <colgroup>
+                                        <col style="width:18%;" />
+                                        <col style="width:50%;" />
+                                        <col style="width:32%;" />
+                                    </colgroup>
+                                    <thead class="govuk-table__head">
+                                        <tr class="govuk-table__row">
+                                            <th class="govuk-table__header">AccShortName</th>
+                                            <th class="govuk-table__header">Account Description</th>
+                                            <th class="govuk-table__header">Constituent Account Codes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="govuk-table__body" id="accountTableBody">
+                                        @if (bid.AccountFullList != null)
+                                        {
+                                            foreach (var a in bid.AccountFullList)
+                                            {
+                                                <tr class="govuk-table__row account-row"
+                                                    data-value="@a.AccShortName"
+                                                    data-description="@(a.AccountDescription ?? "")"
+                                                    style="cursor:pointer;"
+                                                    onmouseover="this.style.background='#bee0f7'"
+                                                    onmouseout="this.style.background=''"
+                                                    onclick="selectAccount(this)">
+                                                    <td class="govuk-table__cell" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@a.AccShortName</td>
+                                                    <td class="govuk-table__cell" style="overflow:hidden; text-overflow:ellipsis;">@a.AccountDescription</td>
+                                                    <td class="govuk-table__cell" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@a.ConstituentAccountCodes</td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="govuk-error-message" style="display:none;"></span>
+                }
+            </div>
+            <div class="govuk-form-group sup_margin_bottom_10">
+                <label for="GenBid" class="govuk-label govuk-!-font-weight-bold">Gen Bid <span class="sup_error_text_color">*</span></label>
+                <input type="hidden" id="GenBid" name="GenBid" value="@bid.GenBid" required />
+                <div class="govuk-input__wrapper">
+                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                    <input type="number" step="0.01" id="GenBidDisplay"
+                           value="@bid.GenBid" class="govuk-input govuk-!-font-size-16"
+                           oninput="syncGenBid(this.value)" />
+                </div>
+                <span class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </form>
+
+        <script>
+            function toggleAccountDropdown() {
+                var panel = document.getElementById('accountDropdownPanel');
+                if (panel.style.display === 'none') {
+                    panel.style.display = 'block';
+                    document.getElementById('accountSearch').focus();
+                } else {
+                    panel.style.display = 'none';
+                }
+            }
+
+            function selectAccount(row) {
+                var value       = row.getAttribute('data-value');
+                var description = row.getAttribute('data-description');
+                document.getElementById('Account').value = value;
+                $('#Account').trigger('change');
+                var displayText = value + (description ? ' - ' + description : '');
+                var span = document.getElementById('AccountDisplayText');
+                span.textContent = displayText;
+                span.style.color = '#0b0c0c';
+                document.getElementById('accountDropdownPanel').style.display = 'none';
+                document.getElementById('accountSearch').value = '';
+                filterAccountTable('');
+            }
+
+            function syncGenBid(value) {
+                $('#GenBid').val(value).trigger('change');
+            }
+
+            function filterAccountTable(query) {
+                var rows  = document.querySelectorAll('#accountTableBody .account-row');
+                var lower = query.toLowerCase();
+                rows.forEach(function (row) {
+                    row.style.display = row.innerText.toLowerCase().includes(lower) ? '' : 'none';
+                });
+            }
+
+            document.addEventListener('click', function (e) {
+                var panel = document.getElementById('accountDropdownPanel');
+                var combo = document.getElementById('AccountComboBox');
+                if (panel && combo && !panel.contains(e.target) && !combo.contains(e.target)) {
+                    panel.style.display = 'none';
+                }
+            });
+        </script>
+    }
+    else
+    {
+        <form class="row" id="@formId">
+            <input type="hidden" name="WorkGroupName" id="WorkGroupName" value="@purchase!.WorkGroupName" />
+            <input type="hidden" name="Account"       id="Account"       value="@purchase.Account" />
+            @if (isEditMode)
+            {
+                <input type="hidden" name="OldItemDescription" id="OldItemDescription" value="@purchase.ItemDescription" />
+            }
+            <div class="govuk-form-group sup_margin_bottom_10 col-12">
+                <label class="govuk-label govuk-!-font-weight-bold">Work Group</label>
+                <input type="text" class="govuk-input govuk-!-font-size-16" value="@purchase.WorkGroupName" readonly />
+            </div>
+            <div class="govuk-form-group sup_margin_bottom_10 col-12">
+                <label class="govuk-label govuk-!-font-weight-bold">Account</label>
+                <input type="text" class="govuk-input govuk-!-font-size-16" value="@purchase.Account" readonly />
+            </div>
+            <div class="govuk-form-group sup_margin_bottom_10 col-12">
+                <label for="ItemDescription" class="govuk-label govuk-!-font-weight-bold">
+                    
+                    Item Description <span class="sup_error_text_color">  @(isEditMode ? "" : " *") </span>
+                    
+                </label>
+                @if (isEditMode)
+                {
+                    <input type="text" name="ItemDescription" id="ItemDescription"
+                           value="@purchase.ItemDescription"
+                           class="govuk-input govuk-!-font-size-16" maxlength="50" readonly />
+                }
+                else
+                {
+                    <input type="text" name="ItemDescription" id="ItemDescription"
+                           value="@purchase.ItemDescription"
+                           class="govuk-input govuk-!-font-size-16" maxlength="50" required />
+                    <span class="govuk-error-message" style="display:none;"></span>
+                }
+            </div>
+            <div class="govuk-form-group sup_margin_bottom_10 col-12">
+                <label for="Amount" class="govuk-label govuk-!-font-weight-bold">Amount <span class="sup_error_text_color">*</span></label>
+                <div class="govuk-input__wrapper">
+                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                    <input type="number" step="0.01" name="Amount" id="Amount"
+                           value="@purchase.Amount" class="govuk-input govuk-!-font-size-16" required />
+                </div>
+                <span class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </form>
+    }
+</div>
+
+<div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="@saveAction">@saveLabel</button>
+</div>

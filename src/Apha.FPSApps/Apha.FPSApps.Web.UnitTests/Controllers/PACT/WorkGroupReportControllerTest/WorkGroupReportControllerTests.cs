@@ -16,7 +16,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
     public class WorkGroupReportControllerTests
     {
         private readonly IWorkGroupReportService _workGroupReportService;
-        private readonly IWorkGroupService _workGroupService;
+        private readonly Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService _workGroupService;
         private readonly ICalenderMonthService _calenderMonthService;
         private readonly IProfitCentreService _profitCentreService;
         private readonly WorkGroupReportController _controller;
@@ -24,9 +24,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupReportControllerT
         public WorkGroupReportControllerTests()
         {
             _workGroupReportService = Substitute.For<IWorkGroupReportService>();
-            _workGroupService       = Substitute.For<IWorkGroupService>();
-            _calenderMonthService   = Substitute.For<ICalenderMonthService>();
-            _profitCentreService    = Substitute.For<IProfitCentreService>();
+            _workGroupService     = Substitute.For<Apha.FPSApps.Application.Interfaces.PACT.IWorkGroupService>();
+            _calenderMonthService = Substitute.For<ICalenderMonthService>();
+            _profitCentreService  = Substitute.For<IProfitCentreService>();
 
             _controller = new WorkGroupReportController(
                 _workGroupReportService,

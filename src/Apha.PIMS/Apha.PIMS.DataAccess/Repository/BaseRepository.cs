@@ -1,5 +1,6 @@
 ﻿using Apha.PIMS.Core.Pagination;
 using Apha.PIMS.DataAccess.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Apha.PIMS.DataAccess.Repository
 {
@@ -11,18 +12,15 @@ namespace Apha.PIMS.DataAccess.Repository
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public PagedData<T> ApplyPaging<T>(
-                    IEnumerable<T> source,
-                    int page,
-                    int pageSize)
+        protected async Task<PagedData<T>> ApplyPaging<T>(IQueryable<T> source, int page, int pageSize)
         {
-            var list = source.ToList();
-            var totalRecords = list.Count;
 
-            var result = list
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            var totalRecords = await source.CountAsync();
+
+            var result = page == -1
+            ? await source.ToListAsync() : await source.Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
             var pagination = new PaginationData
             {

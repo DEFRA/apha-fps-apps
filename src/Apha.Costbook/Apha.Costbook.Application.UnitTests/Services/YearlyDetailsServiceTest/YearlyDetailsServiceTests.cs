@@ -583,7 +583,7 @@ public class YearlyDetailsServiceTests
         {
             new() { WgGrade = "HEO", ChargeRate = 45.50m, PayRate = 30.0m, Npr = 5.0m, Ohr = 10.0m }
         };
-        _projectYearRepo.GetPayRatesAsync("2024/001", 2024, false).Returns(rates);
+        _staffRepo.GetPayRatesAsync("2024/001", 2024, false).Returns(rates);
 
         var result = (await _sut.GetPayRatesAsync("2024/001", 2024, false)).ToList();
 
@@ -1448,19 +1448,19 @@ public class YearlyDetailsServiceTests
     public async Task GetPayRatesAsync_ReturnsRates_WhenIsDefraTrue()
     {
         var rates = new List<PayRateLookup> { new() { WgGrade = "SEO", ChargeRate = 55.0m, PayRate = 40.0m, Npr = 6.0m, Ohr = 12.0m } };
-        _projectYearRepo.GetPayRatesAsync("2024/001", 2024, true).Returns(rates);
+        _staffRepo.GetPayRatesAsync("2024/001", 2024, true).Returns(rates);
 
         var result = (await _sut.GetPayRatesAsync("2024/001", 2024, true)).ToList();
 
         Assert.Single(result);
         Assert.Equal("SEO", result[0].WgGrade);
-        await _projectYearRepo.Received(1).GetPayRatesAsync("2024/001", 2024, true);
+        await _staffRepo.Received(1).GetPayRatesAsync("2024/001", 2024, true);
     }
 
     [Fact]
     public async Task GetPayRatesAsync_ReturnsEmpty_WhenNoRatesExist()
     {
-        _projectYearRepo.GetPayRatesAsync("2024/001", 2024, false).Returns(new List<PayRateLookup>());
+        _staffRepo.GetPayRatesAsync("2024/001", 2024, false).Returns(new List<PayRateLookup>());
 
         var result = await _sut.GetPayRatesAsync("2024/001", 2024, false);
 

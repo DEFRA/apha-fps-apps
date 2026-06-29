@@ -45,7 +45,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .AsQueryable()
                 .Distinct();
-                
+
             profitCentresQuery = ApplyProfitCentreFilter(profitCentresQuery, query.Filter);
             profitCentresQuery = ApplyProfitCentreSorting(profitCentresQuery, query.SortBy, query.Descending);
 
@@ -245,6 +245,58 @@ namespace Apha.FPS.DataAccess.Repositories
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        private async Task<IEnumerable<ProfitCentreCostSummary>> GetProfitCenterCostSummaryAsync(double monthNumber)
+        {
+            // Fetch data with basic filtering, then perform calculation in memory
+            var query = from tcc in _dbContext.TimeCostCalcs
+                        join wg in _dbContext.Workgroups on tcc.WorkGroup equals wg.WorkGroupName
+                        where tcc.Class == "Charge" && tcc.Month <= monthNumber
+                        select new
+                        {
+                            wg.ProfitCentre,
+                            tcc.ChargeRate,
+                            tcc.Time
+                        };
+
+            var data = await query.ToListAsync();
+
+            // Group and calculate in memory to avoid PostgreSQL type casting issues
+            var result = data
+                .GroupBy(x => x.ProfitCentre)
+                .Select(g => new ProfitCentreCostSummary
+                {
+                    ProfitCentre = g.Key,
+                    Cost = g.Sum(x => (x.ChargeRate ?? 0m) * (decimal)(x.Time ?? 0))
+                })
+                .ToList();
+
+            return result;
+        }
+
+        public async Task<PagedData<ProfitCentreCostSummary>> GetPagedProfitCenterCostSummaryAsync(
+            PaginationParameters<string> parameters, double monthNumber)
+        {
+            ArgumentNullException.ThrowIfNull(parameters);
+
+            // Get all data first
+            var allData = (await GetProfitCenterCostSummaryAsync(monthNumber)).ToList();
+
+            // Apply sorting
+            var sortedData = parameters.SortBy?.ToLower() switch
+            {
+                "profitcentre" => parameters.Descending
+                    ? allData.OrderByDescending(x => x.ProfitCentre)
+                    : allData.OrderBy(x => x.ProfitCentre),
+                "cost" => parameters.Descending
+                    ? allData.OrderByDescending(x => x.Cost)
+                    : allData.OrderBy(x => x.Cost),
+                _ => allData.OrderBy(x => x.ProfitCentre)
+            };
+
+            // Use base repository ApplyPaging helper to create PagedData<T>
+            return ApplyPaging(sortedData, parameters.Page, parameters.PageSize);
         }
 
         private static IQueryable<ProfitCentre> ApplyProfitCentreFilter(IQueryable<ProfitCentre> query, string? filter)

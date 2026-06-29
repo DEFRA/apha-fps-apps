@@ -2,6 +2,7 @@ using Apha.Common.Constants;
 using Apha.Common.Contracts.PACT;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
+using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
@@ -19,6 +20,16 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         {
             _http = http;
             _mapper = mapper;
+        }
+
+        public async Task<ApiResponseDto<List<JobCodeDto>>> GetJobCodesAsync()
+        {
+            var response = await _http.GetAsync<List<JobCodeRes>>(PactApiEndpoints.GetAllJobCodes);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<JobCodeDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<JobCodeDto>>>(response);
+            return ApiResponseDto<List<JobCodeDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
         public async Task<ApiResponseDto<List<JobCodeDto>>> GetJobCodesByProjectAsync(string parentProject)
@@ -109,6 +120,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var dto = _mapper.Map<ApiResponseDto<bool>>(response);
             return ApiResponseDto<bool>.FailureResponse(dto.Errors, dto.Meta);
 
+        }
+
+        public async Task<ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>> GetZtJobCodesAsync()
+        {
+            var response = await _http.GetAsync<IEnumerable<JobCodeZtRes>>(PactApiEndpoints.GetZtJobCodes);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>>(response);
+            }
+            var responseDto = _mapper.Map<ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>>(response);
+            return ApiResponseDto<IEnumerable<FpsJobCodeZtDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }

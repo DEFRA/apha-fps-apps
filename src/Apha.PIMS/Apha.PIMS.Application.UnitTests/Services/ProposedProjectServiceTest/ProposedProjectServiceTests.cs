@@ -247,7 +247,7 @@ namespace Apha.PIMS.Application.UnitTests.Services.ProposedProjectServiceTest
             string? parentProject, string projectTitle, string expectedErrorCode)
         {
             // Arrange
-            var dto = new ProposedProjectDto { Parentproject = parentProject, Projecttitle = projectTitle };
+            var dto = new ProposedProjectDto { Parentproject = parentProject!, Projecttitle = projectTitle };
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddProposedProjectAsync(dto));

@@ -10,7 +10,7 @@ public class TestRequirementDto
     public int? Year { get; set; }
     [Required(ErrorMessage = "Test Code is required.")]
     public string TestCode { get; set; } = null!;
-    [Required(ErrorMessage = "Number of Tests is required.")]
+    
     public double? NumberOfTests { get; set; }
     [Required(ErrorMessage = "Unit Price is required.")]
     public double? UnitPrice { get; set; }

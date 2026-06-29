@@ -15,6 +15,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<TimeCodeValidDto, TimeCodeValidReq>().ReverseMap();
             CreateMap<TimeCodeValidDto, TimeCodeValidRes>().ReverseMap();
             CreateMap<WorkGroupDto, WorkGroupRes>().ReverseMap();
+            CreateMap<WorkGroupViewDto, WorkGroupViewRes>().ReverseMap();
             CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<CalenderMonthDto, CalenderMonthRes>().ReverseMap();
             CreateMap<ProjectInvoiceDto, ProjectInvoiceReq>().ReverseMap();
@@ -38,7 +39,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<MonthDto, MonthRes>().ReverseMap();
             CreateMap<ProjectProfileDto, ProjectProfileRes>().ReverseMap();
             CreateMap<ProjectProfileCumulativeDto, ProjectProfileCumulativeRes>().ReverseMap();
-            CreateMap<MonthlyOutputLogDto, MonthlyOutputLogRes>().ReverseMap();            
+            CreateMap<MonthlyOutputLogDto, MonthlyOutputLogRes>().ReverseMap();
+            CreateMap<MonthlyTimeLogDto, MonthlyTimeLogRes>().ReverseMap();
+            CreateMap<CalenderMonthDto, CalenderMonthRes>().ReverseMap();
             CreateMap<WorkGroupTimeCodeDto, WorkGroupTimeCodeRes>().ReverseMap();
             CreateMap<WorkGroupValidTimeCodeDto, WorkGroupValidTimeCodeRes>().ReverseMap();
             CreateMap<WgSummarisedStaffTimeUsageRowDto, WgSummarisedStaffTimeUsageRowRes>().ReverseMap();
@@ -51,6 +54,12 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectTitleLookupRes, SummarisedWgTimeProjectTitleLookupItem>().ReverseMap();
             CreateMap<ApiResponse<SummarisedWgTimePivotRes>, ApiResponseDto<SummarisedWgTimeViewDto>>();
             CreateMap<WorkGroupReportEmailResultDto, WorkGroupReportEmailResultRes>().ReverseMap();
+            CreateMap<TestSupplierViewDto, TestSupplierViewRes>().ReverseMap();
+            CreateMap<RecreateSummaryLogDto, RecreateSummaryLogRes>().ReverseMap();
+            CreateMap<ReleasePeriodDto, ReleasePeriodRes>().ReverseMap();
+            CreateMap<ReleaseSummaryRes, ReleaseSummaryDto>();
+            CreateMap<TestPriceCheckDto, TestPriceCheckRes>().ReverseMap();
+            CreateMap<TestPriceCheckDto, TestPriceCheckReq>();            
             CreateMap<WorkGroupCos90SExportResultDto, WorkGroupCos90sExportRes>().ReverseMap();
             CreateMap<Cos90WorkGroupDto, Cos90WorkGroupRes>().ReverseMap();
             CreateMap<MonthHourDto, MonthHourRes>().ReverseMap();

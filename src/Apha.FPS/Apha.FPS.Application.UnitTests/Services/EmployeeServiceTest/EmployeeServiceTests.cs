@@ -860,15 +860,15 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             // Arrange
             var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var repoResult = new PagedData<WorkGroupStaff>
+            var repoResult = new PagedData<PactStaff>
             {
-                Data = new List<WorkGroupStaff>
+                Data = new List<PactStaff>
                 {
                     new() { Name = "Alice", WorkGroupGrade = "WG1" }
                 },
                 PaginationData = new PaginationData { TotalRecords = 1, PageNumber = 1, PageSize = 10 }
             };
-            var expectedDto = new PaginatedResult<WorkGroupStaffDto>
+            var expectedDto = new PaginatedResult<PactStaffDto>
             {
                 Data = [new() { Name = "Alice", WorkGroupGrade = "WG1" }],
                 PaginationData = new PaginationDto { TotalRecords = 1 }
@@ -876,7 +876,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
 
             _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedParams);
             _mockRepository.GetWorkGroupStaffAsync(mappedParams, null).Returns(repoResult);
-            _mockMapper.Map<PaginatedResult<WorkGroupStaffDto>>(repoResult).Returns(expectedDto);
+            _mockMapper.Map<PaginatedResult<PactStaffDto>>(repoResult).Returns(expectedDto);
 
             // Act
             var result = await _sut.GetWorkGroupStaffAsync(queryFilter);
@@ -887,7 +887,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             result.Data.First().Name.Should().Be("Alice");
 
             await _mockRepository.Received(1).GetWorkGroupStaffAsync(mappedParams, null);
-            _mockMapper.Received(1).Map<PaginatedResult<WorkGroupStaffDto>>(repoResult);
+            _mockMapper.Received(1).Map<PaginatedResult<PactStaffDto>>(repoResult);
         }
 
         [Fact]
@@ -896,12 +896,12 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             // Arrange
             var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var repoResult = new PagedData<WorkGroupStaff>
+            var repoResult = new PagedData<PactStaff>
             {
-                Data = new List<WorkGroupStaff> { new() { Name = "Alice" } },
+                Data = new List<PactStaff> { new() { Name = "Alice" } },
                 PaginationData = new PaginationData { TotalRecords = 1 }
             };
-            var expectedDto = new PaginatedResult<WorkGroupStaffDto>
+            var expectedDto = new PaginatedResult<PactStaffDto>
             {
                 Data = [new() { Name = "Alice" }],
                 PaginationData = new PaginationDto { TotalRecords = 1 }
@@ -909,7 +909,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
 
             _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedParams);
             _mockRepository.GetWorkGroupStaffAsync(mappedParams, "WG1").Returns(repoResult);
-            _mockMapper.Map<PaginatedResult<WorkGroupStaffDto>>(repoResult).Returns(expectedDto);
+            _mockMapper.Map<PaginatedResult<PactStaffDto>>(repoResult).Returns(expectedDto);
 
             // Act
             var result = await _sut.GetWorkGroupStaffAsync(queryFilter, "WG1");
@@ -925,12 +925,12 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             // Arrange
             var queryFilter = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var repoResult = new PagedData<WorkGroupStaff>
+            var repoResult = new PagedData<PactStaff>
             {
-                Data = new List<WorkGroupStaff>(),
+                Data = new List<PactStaff>(),
                 PaginationData = new PaginationData { TotalRecords = 0, PageNumber = 1, PageSize = 10 }
             };
-            var expectedDto = new PaginatedResult<WorkGroupStaffDto>
+            var expectedDto = new PaginatedResult<PactStaffDto>
             {
                 Data = [],
                 PaginationData = new PaginationDto { TotalRecords = 0 }
@@ -938,7 +938,7 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
 
             _mockMapper.Map<PaginationParameters<string>>(queryFilter).Returns(mappedParams);
             _mockRepository.GetWorkGroupStaffAsync(mappedParams, null).Returns(repoResult);
-            _mockMapper.Map<PaginatedResult<WorkGroupStaffDto>>(repoResult).Returns(expectedDto);
+            _mockMapper.Map<PaginatedResult<PactStaffDto>>(repoResult).Returns(expectedDto);
 
             // Act
             var result = await _sut.GetWorkGroupStaffAsync(queryFilter);
@@ -963,6 +963,82 @@ namespace Apha.FPS.Application.UnitTests.Services.EmployeeServiceTest
             var ex = await Assert.ThrowsAsync<Exception>(
                 async () => await _sut.GetWorkGroupStaffAsync(queryFilter));
             ex.Message.Should().Be("DB failure");
+        }
+
+        #endregion
+
+        #region GetPactStaffAsync
+
+        [Fact]
+        public async Task GetPactStaffAsync_WithValidData_ReturnsPactStaffDtoList()
+        {
+            // Arrange
+            var pactStaffs = new List<PactStaff>
+            {
+                new PactStaff { PactId = "1", SpNumber = "SP001", Name = "Alice Smith", WorkGroupGrade = "WG1" },
+                new PactStaff { PactId = "2", SpNumber = "SP002", Name = "Bob Jones", WorkGroupGrade = "WG2" }
+            };
+
+            var expectedDtos = new List<PactStaffDto>
+            {
+                new PactStaffDto { PactId = "1", SpNumber = "SP001", Name = "Alice Smith", WorkGroupGrade = "WG1" },
+                new PactStaffDto { PactId = "2", SpNumber = "SP002", Name = "Bob Jones", WorkGroupGrade = "WG2" }
+            };
+
+            _mockRepository.GetPactStaffAsync().Returns(pactStaffs);
+            _mockMapper.Map<IEnumerable<PactStaffDto>>(pactStaffs).Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetPactStaffAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(2);
+            result.First().SpNumber.Should().Be("SP001");
+            result.First().Name.Should().Be("Alice Smith");
+
+            await _mockRepository.Received(1).GetPactStaffAsync();
+            _mockMapper.Received(1).Map<IEnumerable<PactStaffDto>>(pactStaffs);
+        }
+
+        [Fact]
+        public async Task GetPactStaffAsync_WithEmptyList_ReturnsEmptyList()
+        {
+            // Arrange
+            var emptyPactStaffs = new List<PactStaff>();
+            var emptyDtos = new List<PactStaffDto>();
+
+            _mockRepository.GetPactStaffAsync().Returns(emptyPactStaffs);
+            _mockMapper.Map<IEnumerable<PactStaffDto>>(emptyPactStaffs).Returns(emptyDtos);
+
+            // Act
+            var result = await _sut.GetPactStaffAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+
+            await _mockRepository.Received(1).GetPactStaffAsync();
+            _mockMapper.Received(1).Map<IEnumerable<PactStaffDto>>(emptyPactStaffs);
+        }
+
+        [Fact]
+        public async Task GetPactStaffAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var expectedException = new Exception("Database connection failed");
+
+            _mockRepository.GetPactStaffAsync()
+                .Throws(expectedException);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                async () => await _sut.GetPactStaffAsync()
+            );
+
+            exception.Message.Should().Be("Database connection failed");
+            await _mockRepository.Received(1).GetPactStaffAsync();
+            _mockMapper.DidNotReceive().Map<IEnumerable<PactStaffDto>>(Arg.Any<IEnumerable<PactStaff>>());
         }
 
         #endregion

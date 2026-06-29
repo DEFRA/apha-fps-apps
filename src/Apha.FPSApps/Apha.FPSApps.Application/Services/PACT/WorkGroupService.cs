@@ -16,6 +16,18 @@ namespace Apha.FPSApps.Application.Services.PACT
             _pactApiClient = pactApiClient;
         }
 
+        public async Task<ApiResponseDto<List<string>>> GetAllWorkGroupNamesAsync()
+            => await _pactApiClient.PactWorkGroup.GetAllWorkGroupNamesAsync();
+
+        public async Task<ApiResponseDto<List<WorkGroupViewDto>>> GetWorkGroupsByProfitCentreForBudgetAsync(string profitCentre)
+            => await _pactApiClient.PactWorkGroup.GetWorkGroupsByProfitCentreForBudgetAsync(profitCentre);
+
+        public async Task<ApiResponseDto<List<WorkGroupViewDto>>> GetWorkGroupsByProfitCentreForBudgetPagedAsync(
+            QueryParameters<string> query, string profitCentre)
+        {
+            return await _pactApiClient.PactWorkGroup.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, profitCentre);
+        }
+
         public async Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync()
             => await _pactApiClient.PactWorkGroup.GetAllWorkGroupsAsync();
 

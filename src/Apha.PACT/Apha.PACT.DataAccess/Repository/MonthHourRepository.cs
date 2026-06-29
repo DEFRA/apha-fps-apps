@@ -30,9 +30,8 @@ namespace Apha.PACT.DataAccess.Repository
             baseQuery = query.Descending
                 ? baseQuery.OrderByDescending(e => EF.Property<object>(e, sortBy)).ThenByDescending(e => e.Month)
                 : baseQuery.OrderBy(e => EF.Property<object>(e, sortBy)).ThenBy(e => e.Month);
-
-            var result = await baseQuery.ToListAsync();
-            return ApplyPaging(result, query.Page, query.PageSize);
+           
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
         }
 
         public async Task<IEnumerable<MonthHour>> GetByYearAsync(short year)

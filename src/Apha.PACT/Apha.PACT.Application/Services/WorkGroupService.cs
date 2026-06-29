@@ -25,6 +25,26 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<IEnumerable<WorkGroupDto>>(items);
         }
 
+        public async Task<List<string>> GetAllWorkGroupNamesAsync()
+            => await _repository.GetAllWorkGroupNamesAsync();
+
+
+        public async Task<List<WorkGroupViewDto>> GetWorkGroupsByProfitCentreForBudgetAsync(string profitCentre)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentre);
+            var views = await _repository.GetWorkGroupsByProfitCentreForBudgetAsync(profitCentre);
+            return _mapper.Map<List<WorkGroupViewDto>>(views);
+        }
+
+        public async Task<PaginatedResult<WorkGroupViewDto>> GetWorkGroupsByProfitCentreForBudgetPagedAsync(
+            QueryParameters<string> query, string profitCentre)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(profitCentre);
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetWorkGroupsByProfitCentreForBudgetPagedAsync(parameters, profitCentre);
+            return _mapper.Map<PaginatedResult<WorkGroupViewDto>>(pagedData);
+        }
+
         public async Task<PaginatedResult<WorkGroupTimeCodeDto>> GetWorkGroupTimeCodeAsync(QueryParameters<string> query, string workGroup, int monthNumber)
         {
             ValidateWorkGroup(workGroup);

@@ -142,5 +142,79 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProfitCentreGrade
         }
 
         #endregion
+
+        #region GetAllPcGradesAsync Tests
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_WithSuccessResponse_ReturnsGradeList()
+        {
+            // Arrange
+            var grades      = new List<string> { "G001", "G002" };
+            var apiResponse = new ApiResponse<List<string>> { Success = true, Data = grades };
+            var expectedDto = ApiResponseDto<List<string>>.SuccessResponse(grades);
+
+            _http.GetAsync<List<string>>(Arg.Is<string>(url => url.Contains("pcgrades/allpcgrades")))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetAllPcGradesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _http.Received(1).GetAsync<List<string>>(
+                Arg.Is<string>(url => url.Contains("pcgrades/allpcgrades")));
+        }
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<string>> { Success = true, Data = new List<string>() };
+            var expectedDto = ApiResponseDto<List<string>>.SuccessResponse(new List<string>());
+
+            _http.GetAsync<List<string>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetAllPcGradesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetAllPcGradesAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<string>>
+            {
+                Success = false,
+                Errors  = new List<ApiError> { new() { Message = "Not found", Code = "NOT_FOUND" } }
+            };
+            var mappedResponse = new ApiResponseDto<List<string>>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<string>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<string>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetAllPcGradesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.Single(result.Errors!);
+        }
+
+        #endregion
     }
 }

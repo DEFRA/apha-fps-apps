@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
 {
-    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin,API-PACTShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/workgroup")]
@@ -42,6 +42,14 @@ namespace Apha.PACT.Api.Controllers
         {
             var items = await _service.GetAllWorkGroupsAsync();
             return Ok(_mapper.Map<IEnumerable<WorkGroupRes>>(items));
+        }
+
+        /// <summary>Returns all WorkGroup names for dropdown population.</summary>
+        [HttpGet("names")]
+        public async Task<IActionResult> GetAllWorkGroupNamesAsync()
+        {
+            var result = await _service.GetAllWorkGroupNamesAsync();
+            return Ok(result);
         }
 
         /// <summary>
@@ -121,6 +129,24 @@ namespace Apha.PACT.Api.Controllers
         {
             var result = await _service.GetSummarisedWorkgroupTimeSummaryAsync(query, workGroup);
             return Ok(_mapper.Map<SummarisedWgTimePivotRes>(result));
+        }
+
+        /// <summary>Returns workgroups filtered by profit centre for budget pages (user-email filtered view).</summary>
+        [HttpGet("budget/by-profitcentre")]
+        public async Task<IActionResult> GetWorkGroupsByProfitCentreForBudgetAsync([FromQuery] string profitCentre)
+        {
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetAsync(profitCentre);
+            return Ok(_mapper.Map<List<WorkGroupViewRes>>(result));
+        }
+
+        /// <summary>Returns a paged, filtered and sorted list of workgroups for a profit centre (budget view).</summary>
+        [HttpGet("budget/by-profitcentre/paged")]
+        public async Task<IActionResult> GetWorkGroupsByProfitCentreForBudgetPagedAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string profitCentre)
+        {
+            var result = await _service.GetWorkGroupsByProfitCentreForBudgetPagedAsync(query, profitCentre);
+            return Ok(_mapper.Map<PaginationRes<WorkGroupViewRes>>(result));
         }
 
         /// <summary>

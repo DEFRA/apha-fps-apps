@@ -1,0 +1,49 @@
+@model Apha.FPSApps.Web.Areas.PACT.Models.ReleaseSummaryViewModel
+
+@{
+    ViewData["Title"] = "Release Summaries";
+     var isChecked = (Model.Setting == "1" || Model.Setting == "-1");
+}
+
+<style>
+    #gridContainer_releaseSummariesGrid .govuk-checkboxes__item {
+        pointer-events: auto !important;
+        cursor: pointer;
+    }
+</style>
+
+<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+    <div class="govuk-grid-column-full sup_flex_center_start sup_border-bottom sup_margin_bottom_10">
+        <h1 class="sup_margin_bottom_10">Release Summaries </h1>
+        <div class="govuk-grid-column-one-third sup_margin_top_neg_10">
+            <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0">
+                <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input govuk-!-font-size-16"
+                           id="cbSendEmail"
+                           name="cbSendEmail"
+                           type="checkbox"
+                           checked="@isChecked" />
+                    <label for="cbSendEmail"
+                        class="govuk-label govuk-checkboxes__label govuk-!-font-weight-bold sup_label_auto_width">
+                        Send Report Emails?
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-three-quarters">
+        <div id="gridContainer_releaseSummariesGrid">
+            @await Html.PartialAsync("_DataGrid", Model.ReleaseSummaryGrid)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pact_js/release-summary.js"></script>
+    <script>
+        var setFinalSummaryRunUrl = '@Url.Action("SetFinalSummaryRun", "ReleaseSummary", new { area = "PACT" })';
+    </script>
+}

@@ -431,7 +431,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private async Task<List<SelectListItem>> GetIndividualSelectListAsync()
         {
-            var response = await _employeeService.GetActiveStaffAsync();
+            var response = await _employeeService.GetActivePactStaffAsync();
             if (!response.Success || response.Data == null)
                 return new List<SelectListItem>();
 

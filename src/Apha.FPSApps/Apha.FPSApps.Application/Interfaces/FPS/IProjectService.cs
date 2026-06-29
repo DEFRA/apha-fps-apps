@@ -8,13 +8,17 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
     {
         Task<ApiResponseDto<List<ProjectDto>>> GetAllPactProjectsAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsAsync();
+        Task<ApiResponseDto<List<ProjectDto>>> GetAllProjectsForAllUsersAsync();
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsAsync(QueryParameters<string> query);
+        Task<ApiResponseDto<List<ProjectDto>>> GetPagedProjectsByUserAsync(QueryParameters<string> query);
         Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsAsync(QueryParameters<string> query);
         Task<ApiResponseDto<ProjectDto>> GetProjectByIdAsync(string parentProject);
         Task<ApiResponseDto<ProjectDto>> CreateProjectAsync(ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(ProjectDto project);
+        Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdatePactProjectAsync(ProjectDto project);
         Task<ApiResponseDto<ProjectDto>> UpdatePactPortfolioAsync(ProjectDto project);
+        Task<ApiResponseDto<ProjectDto>> UpdateFpsPortfolioAsync(ProjectDto project);
         Task<ApiResponseDto<bool>> DeleteProjectAsync(string parentProject);
         Task<ApiResponseDto<List<StatusDto>>> GetAllStatusesAsync();
         Task<ApiResponseDto<List<DiseaseDto>>> GetAllDiseasesAsync();
@@ -27,7 +31,6 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
 
         // Merged from IProgrammeNewProjectService
         Task<ApiResponseDto<ProjectDto>> GetProgrammeNewProjectByIdAsync(string parentProject);
-        Task<ApiResponseDto<ProjectDto>> UpdateProjectAsync(string parentProject, ProjectDto project);
         Task<ApiResponseDto<bool>> DeleteProjectAndChildrenAsync(string parentProject);
         Task<ApiResponseDto<bool>> ChangeProjectCodeAsync(string oldCode, string newCode);
         Task<ApiResponseDto<bool>> CheckProjectExistsAsync(string code);
@@ -38,5 +41,16 @@ namespace Apha.FPSApps.Application.Interfaces.FPS
         Task<ApiResponseDto<List<AccountCodeDto>>> GetAccountCodesAsync();
         Task<ApiResponseDto<List<SubAccountDto>>> GetSubAccountsAsync();
         Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectProfitabilityAsync(QueryParameters<string> query, string programNo, string workTypeFilter);
+        Task<ApiResponseDto<List<ProjectProfitabilityDto>>> GetProjectGroupProfitabilityAsync(QueryParameters<string> query, string projectGroup, string workTypeFilter);
+
+        // TRANSFORMENGINE: new method — Phase 8 addition; mirrors IFpsProjectApiClient.GetProjectProfitabilityVlaAsync()
+        // Delegates to backend GET /api/v1/project/profitability-vla via IFpsProjectApiClient.
+        // All four filter params are optional; sourced from VLA page filter dropdowns.
+        Task<ApiResponseDto<List<ProjectProfitabilityVlaDto>>> GetProjectProfitabilityVlaAsync(
+            QueryParameters<string> query,
+            string? projectStatus = null,
+            string? programNo = null,
+            string? manager = null,
+            string? customer = null);
     }
 }

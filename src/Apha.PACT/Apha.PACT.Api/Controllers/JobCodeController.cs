@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
 {
-    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin, API-PACTShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/jobcode")]
@@ -23,6 +23,20 @@ namespace Apha.PACT.Api.Controllers
         {
             _service = service;
             _mapper = mapper;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var items = await _service.GetJobCodesAsync();
+            return Ok(_mapper.Map<IEnumerable<JobCodeRes>>(items));
+        }
+
+        [HttpGet("zt")]
+        public async Task<IActionResult> GetZtCodesAsync()
+        {
+            var result = await _service.GetZtCodeLookupAsync();
+            return Ok(_mapper.Map<IEnumerable<JobCodeZtRes>>(result));
         }
 
         [HttpGet("project/{parentProject}")]

@@ -13,7 +13,7 @@ namespace Apha.FPS.Api.Controllers
     /// <summary>
     /// Controller for managing employee-related operations.
     /// </summary>    
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/employee")]
@@ -151,17 +151,7 @@ namespace Apha.FPS.Api.Controllers
         {
             var result = await _employeeService.GetAllWorkGroupPersonAsync();
             return Ok(_mapper.Map<List<WorkGroupPersonRes>>(result));
-        }
-
-        /// <summary>
-        /// Gets all active staff entries used by PACT/COS90 staff picker.
-        /// </summary>
-        [HttpGet("activestaff")]
-        public async Task<IActionResult> GetActiveStaffAsync()
-        {
-            var result = await _employeeService.GetActiveStaffAsync();
-            return Ok(_mapper.Map<List<WorkGroupStaffRes>>(result));
-        }
+        }        
 
         /// <summary>
         /// Gets a paginated, filtered and sorted list of all PACT staff people, optionally filtered by work group.
@@ -171,7 +161,27 @@ namespace Apha.FPS.Api.Controllers
         {
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _employeeService.GetWorkGroupStaffAsync(filter, workGroup);
-            return Ok(_mapper.Map<PaginationRes<WorkGroupStaffRes>>(result));
+            return Ok(_mapper.Map<PaginationRes<PactStaffRes>>(result));
+        }
+
+        /// <summary>
+        /// Gets an unpaged list of all PACT staff for dropdown population.
+        /// </summary>
+        [HttpGet("PactStaff")]
+        public async Task<IActionResult> GetAllPactStaffAsync()
+        {
+            var result = await _employeeService.GetPactStaffAsync();
+            return Ok(_mapper.Map<List<PactStaffRes>>(result));
+        }
+
+        /// <summary>
+        /// Gets all active staff entries used by PACT/COS90 staff picker.
+        /// </summary>
+        [HttpGet("activePactStaff")]
+        public async Task<IActionResult> GetActivePactStaffAsync()
+        {
+            var result = await _employeeService.GetActivePactStaffAsync();
+            return Ok(_mapper.Map<List<PactStaffRes>>(result));
         }
     }
 }

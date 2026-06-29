@@ -7,7 +7,7 @@ using System.Web;
 
 namespace Apha.Costbook.DataAccess.Repositories;
 
-public class AnimalRequirementRepository : RepositoryBase<AnimalRequirement>, IAnimalRequirementRepository
+public class AnimalRequirementRepository : RepositoryBase, IAnimalRequirementRepository
 {
     private readonly ISettingsRepository _settingsRepo;
     private readonly IProjectRepository _projectRepo;
@@ -49,10 +49,8 @@ public class AnimalRequirementRepository : RepositoryBase<AnimalRequirement>, IA
                 })
             .Distinct();
 
-        baseQuery = ApplySorting(baseQuery, query.SortBy, query.Descending);
-
-        var result = await baseQuery.ToListAsync();
-        return ApplyPaging(result, query.Page, query.PageSize);
+        baseQuery = ApplySorting(baseQuery, query.SortBy, query.Descending);        
+        return await ApplyPaging(baseQuery, query.Page, query.PageSize);
     }
 
     public async Task<AnimalRequirement> AddAnimalRequirementAsync(AnimalRequirement animalRequirement)

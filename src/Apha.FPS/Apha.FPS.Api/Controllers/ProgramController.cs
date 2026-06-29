@@ -12,7 +12,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPS.Api.Controllers
 {
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [Route("api/v{version:apiVersion}/program")]
     [ApiController]
     [ApiVersion("1.0")]
@@ -37,6 +37,17 @@ namespace Apha.FPS.Api.Controllers
             if (programDto == null)
             {
                 throw new ArgumentException("Program records not found for deletion");
+            }
+            return Ok(_mapper.Map<List<ProgramRes>>(programDto));
+        }
+
+        [HttpGet("all")]
+        public async Task<ActionResult> GetAllProgramsForAllUsersAsync()
+        {
+            var programDto = await _programService.GetAllProgramsForAllUsersAsync();
+            if (programDto == null)
+            {
+                throw new ArgumentException("Program records not found");
             }
             return Ok(_mapper.Map<List<ProgramRes>>(programDto));
         }

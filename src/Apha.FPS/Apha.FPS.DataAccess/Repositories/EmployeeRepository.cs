@@ -220,14 +220,14 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        private static IQueryable ApplyOrder<T>(IQueryable<WorkGroupStaff> query, Expression<Func<WorkGroupStaff, T>> keySelector, bool descending)
+        private static IQueryable ApplyOrder<T>(IQueryable<PactStaff> query, Expression<Func<PactStaff, T>> keySelector, bool descending)
         {
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
         public async Task<IEnumerable<WorkGroupPerson>> GetAllWorkGroupPersonAsync()
         {
-            return await _dbContext.WorkGroupStaffs
+            return await _dbContext.PactStaffs
                 .AsNoTracking()
                 .Join(_dbContext.WorkgroupGrades,
                     s => s.WorkGroupGrade,
@@ -243,48 +243,56 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<WorkGroupStaff>> GetActiveStaffAsync()
+        public async Task<PagedData<PactStaff>> GetWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null)
         {
-            return await _dbContext.WorkGroupStaffs
-                .AsNoTracking()
-                .Where(s => s.PersonStatus == "A")
-                .OrderBy(s => s.Name)
-                .ToListAsync();
-        }
-
-        public async Task<PagedData<WorkGroupStaff>> GetWorkGroupStaffAsync(PaginationParameters<string> query, string? workGroup = null)
-        {
-            IQueryable<WorkGroupStaff> queryStaff;
+            IQueryable<PactStaff> queryStaff;
 
             if (string.IsNullOrWhiteSpace(workGroup))
             {
-                queryStaff = _dbContext.WorkGroupStaffs.AsNoTracking();
+                queryStaff = _dbContext.PactStaffs.AsNoTracking();
             }
             else
             {
                 queryStaff = _dbContext.Workgroups
                     .AsNoTracking()
                     .Join(_dbContext.PactWorkGroupGradeViews.AsNoTracking(),
-                        wg    => wg.WorkgroupName,
+                        wg    => wg.WorkGroupName,
                         grade => grade.WorkGroup,
                         (wg, grade) => new { wg, grade })
-                    .Join(_dbContext.WorkGroupStaffs.AsNoTracking(),
+                    .Join(_dbContext.PactStaffs.AsNoTracking(),
                         wgGrade => wgGrade.grade.WgGrade,
                         staff   => staff.WorkGroupGrade,
                         (wgGrade, staff) => new { wgGrade.wg, staff })
-                    .Where(x => x.wg.WorkgroupName == workGroup)
+                    .Where(x => x.wg.WorkGroupName == workGroup)
                     .Select(x => x.staff);
             }
 
             queryStaff = ApplyWorkGroupStaffFilter(queryStaff, query.Filter);
-            queryStaff = (IQueryable<WorkGroupStaff>)ApplyWorkGroupStaffSorting(queryStaff, query.SortBy, query.Descending);
+            queryStaff = (IQueryable<PactStaff>)ApplyWorkGroupStaffSorting(queryStaff, query.SortBy, query.Descending);
 
             var result = await queryStaff.ToListAsync();
             result = ApplyWorkGroupStaffNumericFilter(result, query.Filter);
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        private static IQueryable<WorkGroupStaff> ApplyWorkGroupStaffFilter(IQueryable<WorkGroupStaff> query, string? filter)
+        public async Task<IEnumerable<PactStaff>> GetPactStaffAsync()
+        {
+            return await _dbContext.PactStaffs
+                .AsNoTracking()
+                .OrderBy(s => s.Name)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<PactStaff>> GetActivePactStaffAsync()
+        {
+            return await _dbContext.PactStaffs
+                .AsNoTracking()
+                .Where(s => s.PersonStatus == "A")
+                .OrderBy(s => s.Name)
+                .ToListAsync();
+        }
+
+        private static IQueryable<PactStaff> ApplyWorkGroupStaffFilter(IQueryable<PactStaff> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return query;
@@ -315,7 +323,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return query;
         }
-        private static List<WorkGroupStaff> ApplyWorkGroupStaffNumericFilter(List<WorkGroupStaff> list, string? filter)
+        private static List<PactStaff> ApplyWorkGroupStaffNumericFilter(List<PactStaff> list, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return list;
@@ -341,7 +349,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return list;
         }
 
-        private static IQueryable ApplyWorkGroupStaffSorting(IQueryable<WorkGroupStaff> query, string? sortBy, bool descending)
+        private static IQueryable ApplyWorkGroupStaffSorting(IQueryable<PactStaff> query, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
                 return query.OrderBy(s => s.Name);

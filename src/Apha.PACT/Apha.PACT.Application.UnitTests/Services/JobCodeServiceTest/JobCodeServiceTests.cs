@@ -26,6 +26,59 @@ namespace Apha.PACT.Application.UnitTests.Services.JobCodeServiceTest
             _sut = new JobCodeService(_mockRepository, _mockTimeCodeValidRepository, _mockMapper);
         }
 
+        #region GetJobCodesAsync
+
+        [Fact]
+        public async Task GetJobCodesAsync_WithItems_ReturnsMappedDtos()
+        {
+            var entities = new List<JobCode>
+            {
+                new() { JobCodeId = "JC1", ParentProject = "PRJ1" },
+                new() { JobCodeId = "JC2", ParentProject = "PRJ2" }
+            };
+            var dtos = new List<JobCodeDto>
+            {
+                new() { JobCodeId = "JC1", ParentProject = "PRJ1" },
+                new() { JobCodeId = "JC2", ParentProject = "PRJ2" }
+            };
+
+            _mockRepository.GetJobCodesAsync().Returns(entities);
+            _mockMapper.Map<IEnumerable<JobCodeDto>>(entities).Returns(dtos);
+
+            var result = await _sut.GetJobCodesAsync();
+
+            result.Should().BeEquivalentTo(dtos);
+            await _mockRepository.Received(1).GetJobCodesAsync();
+            _mockMapper.Received(1).Map<IEnumerable<JobCodeDto>>(entities);
+        }
+
+        [Fact]
+        public async Task GetJobCodesAsync_EmptyRepository_ReturnsEmptyCollection()
+        {
+            var entities = new List<JobCode>();
+            var dtos = new List<JobCodeDto>();
+
+            _mockRepository.GetJobCodesAsync().Returns(entities);
+            _mockMapper.Map<IEnumerable<JobCodeDto>>(entities).Returns(dtos);
+
+            var result = await _sut.GetJobCodesAsync();
+
+            result.Should().BeEmpty();
+            await _mockRepository.Received(1).GetJobCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetJobCodesAsync_RepositoryThrows_PropagatesException()
+        {
+            _mockRepository.GetJobCodesAsync().ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetJobCodesAsync());
+
+            await _mockRepository.Received(1).GetJobCodesAsync();
+        }
+
+        #endregion
+
         #region GetJobCodesByProjectAsync
 
         [Fact]
@@ -297,6 +350,59 @@ namespace Apha.PACT.Application.UnitTests.Services.JobCodeServiceTest
 
             await _mockTimeCodeValidRepository.Received(1).HasRelatedTimeCodeValidRecordsAsync("JC1");
             await _mockRepository.DidNotReceive().DeleteJobCodeAsync(Arg.Any<string>());
+        }
+
+        #endregion
+
+        #region GetZtCodeLookupAsync
+
+        [Fact]
+        public async Task GetZtCodeLookupAsync_WithItems_ReturnsMappedDtos()
+        {
+            var entities = new List<JobCodeZtLookup>
+            {
+                new() { JobCode = "ZT001", Description = "ZT Project 1" },
+                new() { JobCode = "ZT002", Description = "ZT Project 2" }
+            };
+            var dtos = new List<JobCodeZtDto>
+            {
+                new() { JobCode = "ZT001", Description = "ZT Project 1" },
+                new() { JobCode = "ZT002", Description = "ZT Project 2" }
+            };
+
+            _mockRepository.GetZtJobCodesAsync().Returns(entities);
+            _mockMapper.Map<IEnumerable<JobCodeZtDto>>(entities).Returns(dtos);
+
+            var result = await _sut.GetZtCodeLookupAsync();
+
+            result.Should().BeEquivalentTo(dtos);
+            await _mockRepository.Received(1).GetZtJobCodesAsync();
+            _mockMapper.Received(1).Map<IEnumerable<JobCodeZtDto>>(entities);
+        }
+
+        [Fact]
+        public async Task GetZtCodeLookupAsync_EmptyRepository_ReturnsEmptyCollection()
+        {
+            var entities = new List<JobCodeZtLookup>();
+            var dtos = new List<JobCodeZtDto>();
+
+            _mockRepository.GetZtJobCodesAsync().Returns(entities);
+            _mockMapper.Map<IEnumerable<JobCodeZtDto>>(entities).Returns(dtos);
+
+            var result = await _sut.GetZtCodeLookupAsync();
+
+            result.Should().BeEmpty();
+            await _mockRepository.Received(1).GetZtJobCodesAsync();
+        }
+
+        [Fact]
+        public async Task GetZtCodeLookupAsync_RepositoryThrows_PropagatesException()
+        {
+            _mockRepository.GetZtJobCodesAsync().ThrowsAsync(new Exception("DB error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _sut.GetZtCodeLookupAsync());
+
+            await _mockRepository.Received(1).GetZtJobCodesAsync();
         }
 
         #endregion

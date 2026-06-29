@@ -15,7 +15,7 @@ namespace Apha.FPS.Api.Controllers
     /// Supports read, create, update, and delete of profit centre grades,
     /// with trigger-derived FK validation enforced at service level.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin, API-FPSShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/pcgrades")]
@@ -109,6 +109,14 @@ namespace Apha.FPS.Api.Controllers
         public async Task<IActionResult> GetProfitCentreCodesAsync()
         {
             var result = await _profitCentreGradeService.GetAllProfitCentreCodesAsync();
+            return Ok(result);
+        }
+
+        /// <summary>Returns all Profit Centre Grade codes for dropdown population.</summary>
+        [HttpGet("allpcgrades")]
+        public async Task<ActionResult<List<string>>> GetAllPcGradesAsync()
+        {
+            var result = await _profitCentreGradeService.GetAllPcGradesAsync();
             return Ok(result);
         }
     }

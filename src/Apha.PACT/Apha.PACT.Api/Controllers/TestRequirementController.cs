@@ -13,7 +13,7 @@ namespace Apha.PACT.Api.Controllers
     /// <summary>
     /// API controller for TestRequirement operations.
     /// </summary>    
-    [Authorize(Roles = "API-PACTUser,API-PACTAdmin")]
+    [Authorize(Roles = "API-PACTUser,API-PACTAdmin, API-PACTShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/testrequirement")]
@@ -36,6 +36,17 @@ namespace Apha.PACT.Api.Controllers
         {
             var result = await _service.GetPagedTestReqmtAsync(query, testCode);
             return Ok(_mapper.Map<PaginationRes<TestRequirementtRes>>(result));
+        }
+
+        /// <summary>Retrieves a paged supplier list for a given test code including project manager and computed test cost.</summary>
+        [HttpGet("supplier/paged/{testCode}")]
+        public async Task<IActionResult> GetPagedBySupplierTestCode(
+            [FromQuery] QueryParameters<string> query,
+            string testCode,
+            [FromQuery] bool showRejected = false)
+        {
+            var result = await _service.GetPagedBySupplierTestCodeAsync(query, testCode, showRejected);
+            return Ok(_mapper.Map<PaginationRes<TestSupplierViewRes>>(result));
         }
 
         /// <summary>Retrieves a paged list of TestReqmt records for a given ParentProject.</summary>

@@ -523,16 +523,16 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
             // Arrange
             var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
             var mappedQuery = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var people = new List<WorkGroupStaffDto>
+            var people = new List<PactStaffDto>
             {
                 new() { Name = "Alice", WorkGroupGrade = "WG1" }
             };
-            var pagedResult = new PaginatedResult<WorkGroupStaffDto>(people, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 });
-            var mappedRes = new PaginationRes<WorkGroupStaffRes>();
+            var pagedResult = new PaginatedResult<PactStaffDto>(people, new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 });
+            var mappedRes = new PaginationRes<PactStaffRes>();
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
             _serviceMock.GetWorkGroupStaffAsync(mappedQuery, null).Returns(pagedResult);
-            _mapperMock.Map<PaginationRes<WorkGroupStaffRes>>(pagedResult).Returns(mappedRes);
+            _mapperMock.Map<PaginationRes<PactStaffRes>>(pagedResult).Returns(mappedRes);
 
             // Act
             var result = await _controller.GetWorkGroupStaffPaginatedAsync(query, null);
@@ -548,12 +548,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
             // Arrange
             var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
             var mappedQuery = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var pagedResult = new PaginatedResult<WorkGroupStaffDto>([], new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 });
-            var mappedRes = new PaginationRes<WorkGroupStaffRes>();
+            var pagedResult = new PaginatedResult<PactStaffDto>([], new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 });
+            var mappedRes = new PaginationRes<PactStaffRes>();
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
             _serviceMock.GetWorkGroupStaffAsync(mappedQuery, "WG1").Returns(pagedResult);
-            _mapperMock.Map<PaginationRes<WorkGroupStaffRes>>(pagedResult).Returns(mappedRes);
+            _mapperMock.Map<PaginationRes<PactStaffRes>>(pagedResult).Returns(mappedRes);
 
             // Act
             var result = await _controller.GetWorkGroupStaffPaginatedAsync(query, "WG1");
@@ -569,12 +569,12 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
             // Arrange
             var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
             var mappedQuery = new QueryParameters<string>();
-            var pagedResult = new PaginatedResult<WorkGroupStaffDto>([], new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 });
-            var mappedRes = new PaginationRes<WorkGroupStaffRes>();
+            var pagedResult = new PaginatedResult<PactStaffDto>([], new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0, TotalPages = 0 });
+            var mappedRes = new PaginationRes<PactStaffRes>();
 
             _mapperMock.Map<QueryParameters<string>>(query).Returns(mappedQuery);
             _serviceMock.GetWorkGroupStaffAsync(mappedQuery, null).Returns(pagedResult);
-            _mapperMock.Map<PaginationRes<WorkGroupStaffRes>>(pagedResult).Returns(mappedRes);
+            _mapperMock.Map<PaginationRes<PactStaffRes>>(pagedResult).Returns(mappedRes);
 
             // Act
             var result = await _controller.GetWorkGroupStaffPaginatedAsync(query, null);
@@ -605,6 +605,67 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.GetWorkGroupStaffPaginatedAsync(query, null));
+        }
+
+        #endregion
+
+        #region GetAllPactStaffAsync
+
+        [Fact]
+        public async Task GetAllPactStaffAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var serviceResult = new List<PactStaffDto>();
+            var mappedResult = new List<PactStaffRes>();
+
+            _serviceMock.GetPactStaffAsync().Returns(serviceResult);
+            _mapperMock.Map<List<PactStaffRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAllPactStaffAsync();
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, ((OkObjectResult)result).Value);
+        }
+
+        [Fact]
+        public async Task GetAllPactStaffAsync_EdgeCase_EmptyList()
+        {
+            // Arrange
+            var serviceResult = new List<PactStaffDto>();
+            var mappedResult = new List<PactStaffRes>();
+
+            _serviceMock.GetPactStaffAsync().Returns(serviceResult);
+            _mapperMock.Map<List<PactStaffRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetAllPactStaffAsync();
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetAllPactStaffAsync_Error_ServiceThrows()
+        {
+            // Arrange
+            _serviceMock.GetPactStaffAsync().Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllPactStaffAsync());
+        }
+
+        [Fact]
+        public async Task GetAllPactStaffAsync_Error_MapperThrows()
+        {
+            // Arrange
+            var serviceResult = new List<PactStaffDto>();
+            _serviceMock.GetPactStaffAsync().Returns(serviceResult);
+            _mapperMock.Map<List<PactStaffRes>>(serviceResult).Throws(new Exception("Mapping error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllPactStaffAsync());
         }
 
         #endregion

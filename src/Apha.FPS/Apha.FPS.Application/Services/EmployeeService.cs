@@ -116,19 +116,25 @@ namespace Apha.FPS.Application.Services
         {
             var items = await _employeeRepository.GetAllWorkGroupPersonAsync();
             return _mapper.Map<IEnumerable<WorkGroupPersonDto>>(items);
-        }
+        }        
 
-        public async Task<IEnumerable<WorkGroupStaffDto>> GetActiveStaffAsync()
-        {
-            var items = await _employeeRepository.GetActiveStaffAsync();
-            return _mapper.Map<IEnumerable<WorkGroupStaffDto>>(items);
-        }
-
-        public async Task<PaginatedResult<WorkGroupStaffDto>> GetWorkGroupStaffAsync(QueryParameters<string> queryFilter, string? workGroup = null)
+        public async Task<PaginatedResult<PactStaffDto>> GetWorkGroupStaffAsync(QueryParameters<string> queryFilter, string? workGroup = null)
         {
             var filter = _mapper.Map<PaginationParameters<string>>(queryFilter);
             var items = await _employeeRepository.GetWorkGroupStaffAsync(filter, workGroup);
-            return _mapper.Map<PaginatedResult<WorkGroupStaffDto>>(items);
+            return _mapper.Map<PaginatedResult<PactStaffDto>>(items);
+        }
+
+        public async Task<IEnumerable<PactStaffDto>> GetPactStaffAsync()
+        {
+            var items = await _employeeRepository.GetPactStaffAsync();
+            return _mapper.Map<IEnumerable<PactStaffDto>>(items);
+        }
+
+        public async Task<IEnumerable<PactStaffDto>> GetActivePactStaffAsync()
+        {
+            var items = await _employeeRepository.GetActivePactStaffAsync();
+            return _mapper.Map<IEnumerable<PactStaffDto>>(items);
         }
     }
 }

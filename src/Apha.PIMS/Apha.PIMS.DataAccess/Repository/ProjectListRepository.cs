@@ -9,13 +9,10 @@ using System.Linq.Expressions;
 
 namespace Apha.PIMS.DataAccess.Repository
 {
-    public class ProjectListRepository : IProjectListRepository
+    public class ProjectListRepository : BaseRepository, IProjectListRepository
     {
-        private readonly PimsDbContext _context;
-
-        public ProjectListRepository(PimsDbContext context)
+        public ProjectListRepository(PimsDbContext context) : base(context)
         {
-            _context = context;
         }
         public async Task<PagedData<ProjectListView>> GetAllProjectsAsync(PaginationParameters<string> queryFilter)
         {
@@ -24,13 +21,10 @@ namespace Apha.PIMS.DataAccess.Repository
             query = ApplyFilter(query, queryFilter.Filter);
 
 
-            query = ApplySorting(query, queryFilter.SortBy, queryFilter.Descending);
+            query = ApplySorting(query, queryFilter.SortBy, queryFilter.Descending);          
 
 
-            List<ProjectListView> result = await query.ToListAsync();
-
-
-            return ApplyPaging(result, queryFilter.Page, queryFilter.PageSize);
+            return await ApplyPaging(query, queryFilter.Page, queryFilter.PageSize);
         }
 
         public async Task<List<ProjectListView>> GetAllProjectsForDropDownAsync()
@@ -119,12 +113,9 @@ namespace Apha.PIMS.DataAccess.Repository
             query = ApplyFilter(query, queryFilter.Filter);
 
             // Apply sorting
-            query = ApplySorting(query, queryFilter.SortBy, queryFilter.Descending);
+            query = ApplySorting(query, queryFilter.SortBy, queryFilter.Descending);           
 
-            // Execute query and apply paging
-            List<ProjectListView> result = await query.ToListAsync();
-
-            return ApplyPaging(result, queryFilter.Page, queryFilter.PageSize);
+            return await ApplyPaging(query, queryFilter.Page, queryFilter.PageSize);
         }
 
         public async Task<List<Projects>> GetYearlyDetailsByProjectAsync(string parentproject)
@@ -135,7 +126,24 @@ namespace Apha.PIMS.DataAccess.Repository
                 .OrderByDescending(p => p.Year)
                 .ToListAsync();
         }
-
+        public async Task<List<ProjectListMilestone>> GetAllProjectsForMilestone()
+        {
+            return await _context.ProjectRadTrackData
+                .AsNoTracking()
+                .Join(_context.ProjectLatestDetails,
+                      g => g.Parentproject,
+                      v => v.ParentProject,
+                      (g, v) => new ProjectListMilestone
+                      {
+                          Parentproject = g.Parentproject,
+                          Program = v.Program,
+                          Customer = v.Customer,
+                          ProjectGroup = v.ProjectGroup,
+                          Formrequired = g.Formrequired
+                      })
+                .OrderBy(x => x.Parentproject)
+                .ToListAsync();
+        }
         private static IQueryable<ProjectListView> ApplyFilter(IQueryable<ProjectListView> query, string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter) || filter == "{}")
@@ -150,19 +158,19 @@ namespace Apha.PIMS.DataAccess.Repository
             if (dict.TryGetValue("Parentproject", out var parentproject) && parentproject != null)
             {
                 string val = parentproject.ToString()!;
-                query = query.Where(x => x.Parentproject.Contains(val));
+                query = query.Where(x => EF.Functions.ILike(x.Parentproject, $"%{val}%"));
             }
 
             if (dict.TryGetValue("Program", out var program) && program != null)
             {
                 string val = program.ToString()!;
-                query = query.Where(x => x.Program != null && x.Program.Contains(val));
+                query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{val}%"));
             }
 
             if (dict.TryGetValue("Customer", out var customer) && customer != null)
             {
                 string val = customer.ToString()!;
-                query = query.Where(x => x.Customer != null && x.Customer.Contains(val));
+                query = query.Where(x => x.Customer != null && EF.Functions.ILike(x.Customer, $"%{val}%"));
             }
 
             return query;
@@ -196,28 +204,6 @@ namespace Apha.PIMS.DataAccess.Repository
             bool descending)
             => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
 
-        private static PagedData<ProjectListView> ApplyPaging(List<ProjectListView> data, int page, int pageSize)
-        {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 10;
-
-            int totalCount = data.Count;
-            int totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-            List<ProjectListView> pagedItems = data
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            PaginationData paginationData = new()
-            {
-                TotalRecords = totalCount,
-                PageNumber = page,
-                PageSize = pageSize,
-                TotalPages = totalPages
-            };
-
-            return new PagedData<ProjectListView>(pagedItems, paginationData);
-        }
+       
     }
 }

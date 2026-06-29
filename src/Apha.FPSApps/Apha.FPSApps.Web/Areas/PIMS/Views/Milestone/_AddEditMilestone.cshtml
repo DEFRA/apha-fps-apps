@@ -1,0 +1,239 @@
+@model Apha.FPSApps.Web.Areas.PIMS.Models.MilestoneItem
+@{
+    string? numberReadonly = ViewBag.IsAddingNew == true ? null : "readonly";
+}
+
+<div id="editRecordModal" class="govuk-edit-modal">
+    <div class="govuk-edit-modal-dialog">
+        <div class="govuk-edit-modal__header">
+            <h3 class="govuk-edit-modal__title">
+                @(ViewBag.IsAddingNew == true ? "Add Milestone/Deliverable" : "Edit Milestone/Deliverable")
+            </h3>
+            <button type="button" onclick="closeEditModal()"
+                    aria-label="Close" class="govuk-edit-modal__close-btn">
+                ✕
+            </button>
+        </div>
+        <div class="govuk-edit-modal__body">
+            <form id="editRecordForm" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Project" />
+                <input type="hidden" name="IsAddingNew" value="@(ViewBag.IsAddingNew == true ? "true" : "false")" />
+
+                <div class="govuk-error-summary" role="alert"
+                     aria-labelledby="editFormErrorTitle" tabindex="-1" style="display: none;">
+                    <h2 class="govuk-error-summary__title" id="editFormErrorTitle">
+                        There is a problem
+                    </h2>
+                    <div class="govuk-error-summary__body">
+                        <ul class="govuk-list govuk-error-summary__list"></ul>
+                    </div>
+                </div>
+
+                <div class="govuk-grid-row">
+                    <div class="govuk-grid-column-one-half">
+                        <div class="govuk-form-group govuk-!-margin-bottom-4" id="numberGroup">
+                            <label class="govuk-label font-size-16" asp-for="Number">
+                                Number <span class="sup_color_red">*</span>
+                            </label>
+                            <input class="govuk-input" asp-for="Number"
+                                   pattern="\d{1,2}/\d{1,2}" maxlength="5" required
+                                   placeholder="e.g. 01/01"
+                                   readonly="@numberReadonly" />
+                            <span asp-validation-for="Number" class="govuk-error-message" style="display:none;"></span>
+                        </div>
+                    </div>
+                    <div class="govuk-grid-column-one-half">
+                        <div class="govuk-form-group govuk-!-margin-bottom-4" id="typeGroup">
+                            <label class="govuk-label font-size-16" asp-for="IdType">
+                                Type <span class="sup_color_red">*</span>
+                            </label>
+                            <select class="govuk-select" asp-for="IdType"
+                                    asp-items="ViewBag.MilestoneTypeOptions"
+                                    required
+                                    style="width: stretch;">
+                                <option value="">Select type</option>
+                            </select>
+                            <span asp-validation-for="IdType" class="govuk-error-message" style="display:none;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="govuk-form-group govuk-!-margin-bottom-4">
+                    <label class="govuk-label font-size-16" asp-for="Description">Description</label>
+                    <textarea class="govuk-textarea" asp-for="Description"
+                              rows="3" style="width: stretch;"></textarea>
+                </div>
+
+                <div class="govuk-form-group govuk-!-margin-bottom-4">
+                    <label class="govuk-label font-size-16" asp-for="ProjectLeaderComment">
+                        P Leader's Comment
+                    </label>
+                    <textarea class="govuk-textarea" asp-for="ProjectLeaderComment"
+                              rows="2" style="width: stretch;"></textarea>
+                </div>
+
+                <div class="govuk-form-group govuk-!-margin-bottom-4">
+                    <label class="govuk-label font-size-16" asp-for="CapsComment">
+                        CAP's Comment
+                    </label>
+                    <textarea class="govuk-textarea" asp-for="CapsComment"
+                              rows="2" style="width: stretch;"></textarea>
+                </div>
+
+                <div class="govuk-grid-row">
+                    <div class="govuk-grid-column-one-half">
+                        <div class="govuk-form-group govuk-!-margin-bottom-4" id="dueGroup">
+                            <label class="govuk-label font-size-16" asp-for="DateDue">
+                                Due <span class="sup_color_red">*</span>
+                            </label>
+                            <div style="position:relative; display:inline-block; width:stretch;">
+                                <input type="text"
+                                       id="DateDueDisplay"
+                                       class="govuk-input"
+                                       value="@Model.DateDue?.ToString("dd/MM/yyyy")"
+                                       autocomplete="off"
+                                       onclick="openDatePicker('DateDuePicker')"
+                                       style="cursor:pointer; width:stretch;"
+                                       readonly>
+                                <input type="hidden"
+                                       name="DateDue"
+                                       id="DateDueBinding"
+                                       value="@(Model.DateDue.HasValue ? Model.DateDue.Value.ToString("yyyy-MM-dd") : string.Empty)">
+                                <input type="date"
+                                       id="DateDuePicker"
+                                       value="@(Model.DateDue.HasValue ? Model.DateDue.Value.ToString("yyyy-MM-dd") : string.Empty)"
+                                       style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                       onchange="syncDateToText('DateDuePicker', 'DateDueDisplay', 'DateDueBinding')">
+                            </div>
+                            <span asp-validation-for="DateDue" class="govuk-error-message" style="display:none;"></span>
+                        </div>
+                    </div>
+                    <div class="govuk-grid-column-one-half">
+                        <div class="govuk-form-group govuk-!-margin-bottom-4" id="completedGroup">
+                            <label class="govuk-label font-size-16" asp-for="DateCompleted">
+                                Completed/Delivered
+                            </label>
+                            <div style="position:relative; display:inline-block; width:stretch;">
+                                <input type="text"
+                                       id="DateCompletedDisplay"
+                                       class="govuk-input"
+                                       value="@Model.DateCompleted?.ToString("dd/MM/yyyy")"
+                                       autocomplete="off"
+                                       onclick="openDatePicker('DateCompletedPicker')"
+                                       style="cursor:pointer; width:stretch;"
+                                       readonly>
+                                <input type="hidden"
+                                       name="DateCompleted"
+                                       id="DateCompletedBinding"
+                                       value="@(Model.DateCompleted.HasValue ? Model.DateCompleted.Value.ToString("yyyy-MM-dd") : string.Empty)">
+                                <input type="date"
+                                       id="DateCompletedPicker"
+                                       value="@(Model.DateCompleted.HasValue ? Model.DateCompleted.Value.ToString("yyyy-MM-dd") : string.Empty)"
+                                       style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
+                                       onchange="syncDateToText('DateCompletedPicker', 'DateCompletedDisplay', 'DateCompletedBinding')">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="govuk-grid-row">
+                    <div class="govuk-grid-column-one-half">
+                        <div class="govuk-checkboxes govuk-checkboxes--small">
+                            <div class="govuk-checkboxes__item">
+                                <input class="govuk-checkboxes__input"
+                                       id="underSdReviewChk" name="UnderSdReview"
+                                       type="checkbox" value="-1"
+                                       @(Model.UnderSdReview == -1 ? "checked" : "")
+                                       onchange="onUnderReviewChanged(this)" />
+                                <label class="govuk-checkboxes__label font-size-16"
+                                       for="underSdReviewChk"
+                                       style="font-weight: normal;">
+                                    Under Review
+                                </label>
+                                <input type="hidden" name="UnderSdReview" value="0" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="govuk-grid-column-one-half">
+                        <div class="govuk-checkboxes govuk-checkboxes--small">
+                            <div class="govuk-checkboxes__item">
+                                <input class="govuk-checkboxes__input"
+                                       id="onTargetChk" name="OnTarget"
+                                       type="checkbox" value="-1"
+                                       @(Model.OnTarget == -1 ? "checked" : "")
+                                       onchange="onOnTargetChanged(this)" />
+                                <label class="govuk-checkboxes__label font-size-16"
+                                       for="onTargetChk"
+                                       style="font-weight: normal;">
+                                    On Target
+                                </label>
+                                <input type="hidden" name="OnTarget" value="0" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="govuk-edit-modal__footer">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary font-size-16"
+                    onclick="closeEditModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button font-size-16"
+                    id="saveRecordBtn"
+                    onclick="saveMilestone()">
+                @(ViewBag.IsAddingNew == true ? "Save" : "Update")
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openDatePicker(pickerId) {
+        var picker = document.getElementById(pickerId);
+        if (picker) {
+            try { picker.showPicker(); } catch (e) { picker.click(); }
+        }
+    }
+
+    function syncDateToText(pickerId, displayId, hiddenId) {
+        var picker = document.getElementById(pickerId);
+        if (picker.value) {
+            var parts = picker.value.split('-');
+            document.getElementById(displayId).value = parts[2] + '/' + parts[1] + '/' + parts[0];
+            document.getElementById(hiddenId).value = picker.value;
+        } else {
+            document.getElementById(displayId).value = '';
+            document.getElementById(hiddenId).value = '';
+        }
+    }
+
+    // Mutual-exclusion logic mirrors Access VBA AfterUpdate handlers
+    function onUnderReviewChanged(chk) {
+        if (chk.checked) {
+            document.getElementById('onTargetChk').checked = false;
+            document.getElementById('DateCompletedDisplay').value = '';
+            document.getElementById('DateCompletedBinding').value = '';
+            document.getElementById('DateCompletedPicker').value = '';
+        }
+    }
+
+    function onOnTargetChanged(chk) {
+        if (chk.checked) {
+            document.getElementById('underSdReviewChk').checked = false;
+            document.getElementById('DateCompletedDisplay').value = '';
+            document.getElementById('DateCompletedBinding').value = '';
+            document.getElementById('DateCompletedPicker').value = '';
+        }
+    }
+
+    document.getElementById('DateCompletedPicker').addEventListener('change', function () {
+        if (this.value) {
+            document.getElementById('underSdReviewChk').checked = false;
+            document.getElementById('onTargetChk').checked = false;
+        }
+    });
+</script>
