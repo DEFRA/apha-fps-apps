@@ -49,11 +49,17 @@ namespace Apha.Costbook.Application.Services
             if (string.IsNullOrEmpty(dto.ProjectTitle))
                 errors.Add(new BusinessValidationError("Please enter a title", "Please enter a title"));
 
-            if (!string.IsNullOrEmpty(dto.ProjectTitle) && dto.ProjectTitle.Length > 255)
-                errors.Add(new BusinessValidationError("Please enter a title of less than 255 characters", "Please enter a title of less than 255 characters"));
+            if (!string.IsNullOrEmpty(dto.ProjectTitle) && dto.ProjectTitle.Length > 100)
+                errors.Add(new BusinessValidationError("Please enter a title of less than 100 characters", "Please enter a title of less than 100 characters"));
 
             if (!dto.IsDefraProject.HasValue)
                 errors.Add(new BusinessValidationError("Please choose Defra/Non-Defra", "Please choose Defra/Non-Defra"));
+
+            if (!string.IsNullOrEmpty(dto.Notes) && dto.Notes.Length > 255)
+                errors.Add(new BusinessValidationError("Please enter notes of less than 255 characters", "Please enter notes of less than 255 characters"));
+            
+            if (string.IsNullOrEmpty(dto.PreparedBy))
+                errors.Add(new BusinessValidationError("Please enter who has prepared this", "Please enter who has prepared this"));
 
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
@@ -89,12 +95,16 @@ namespace Apha.Costbook.Application.Services
             
             if (string.IsNullOrEmpty(dto.ProjectTitle))
                 errors.Add(new BusinessValidationError("Please enter a title", "Please enter a title"));    
-            if (!string.IsNullOrEmpty(dto.ProjectTitle) && dto.ProjectTitle.Length > 255)
-                errors.Add(new BusinessValidationError("Please enter a title of less than 255 characters", "Please enter a title of less than 255 characters"));
+            if (!string.IsNullOrEmpty(dto.ProjectTitle) && dto.ProjectTitle.Length > 100)
+                errors.Add(new BusinessValidationError("Please enter a title of less than 100 characters", "Please enter a title of less than 100 characters"));
 
+            if (!string.IsNullOrEmpty(dto.Notes) && dto.Notes.Length > 255)
+                errors.Add(new BusinessValidationError("Please enter notes of less than 255 characters", "Please enter notes of less than 255 characters"));
             if (!dto.IsDefraProject.HasValue)
                 errors.Add(new BusinessValidationError("Please choose Defra/Non-Defra", "Please choose Defra/Non-Defra"));
 
+            if (string.IsNullOrEmpty(dto.PreparedBy))
+                errors.Add(new BusinessValidationError("Please enter who has prepared this", "Please enter who has prepared this"));
             if (errors.Count > 0)
                 throw new BusinessValidationErrorException(errors);
 

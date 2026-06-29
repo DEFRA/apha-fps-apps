@@ -121,6 +121,31 @@ function saveSubContract() {
         if (data[f] === '' || data[f] === undefined) data[f] = null;
     });
 
+    // Validate Amount field against PostgreSQL money limits
+    if (data.Amount !== null && data.Amount !== undefined) {
+        var amount = parseFloat(data.Amount);
+        var maxMoney = 92233720368547758.07;
+
+        if (isNaN(amount)) {
+            showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+            return;
+        }
+        if (amount < 0 || amount > maxMoney) {
+            showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+            return;
+        }
+
+        // Check decimal places
+        var decimalPart = amount.toString().split('.')[1];
+        if (decimalPart && decimalPart.length > 2) {
+            showGovukAlert('Amount must have at most 2 decimal places.');
+            return;
+        }
+
+        // Ensure we send a proper decimal, not scientific notation
+        data.Amount = amount;
+    }
+
     $.ajax({
         url: '/PACT/SubContract/SaveSubContract',
         type: 'POST',

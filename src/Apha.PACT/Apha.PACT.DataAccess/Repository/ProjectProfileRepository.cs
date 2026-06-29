@@ -16,8 +16,8 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(pmf => pmf.Project == project)
                 .Join(
                     _context.ProjectMonths.AsNoTracking(),
-                    pmf => new { pmf.Project, MonthNo = (double?)pmf.MonthNo },
-                    pm => new { pm.Project, MonthNo = (double?)pm.MonthNo },
+                    pmf => new { pmf.Project, MonthNo = (double?)pmf.MonthNo, FpsYear = (int?)pmf.FpsYear },
+                    pm => new { pm.Project, MonthNo = (double?)pm.MonthNo, FpsYear = (int?)pm.FpsYear },
                     (pmf, pm) => new ProjectProfile
                     {
                         MonthNo = pmf.MonthNo,
@@ -35,13 +35,13 @@ namespace Apha.PACT.DataAccess.Repository
                 .Where(pmf => pmf.Project == project)
                 .Join(
                     _context.ProjectMonths.AsNoTracking().Where(pm => pm.Project == project),
-                    pmf => pmf.Project,
-                    pm => pm.Project,
+                    pmf => new { pmf.Project, FpsYear = (int?)pmf.FpsYear },
+                    pm => new { pm.Project, FpsYear = (int?)pm.FpsYear },
                     (pmf, pm) => new { pmf, pm })
                 .Join(
                     _context.PeriodMonths.AsNoTracking(),
-                    j => new { MonthNo = (double?)j.pm.MonthNo, EndMonth = (double?)j.pmf.MonthNo },
-                    p => new { p.MonthNo, p.EndMonth },
+                    j => new { MonthNo = (double?)j.pm.MonthNo, EndMonth = (double?)j.pmf.MonthNo, FpsYear = j.pmf.FpsYear },
+                    p => new { p.MonthNo, p.EndMonth, p.FpsYear },
                     (j, p) => new { j.pmf, j.pm })
                 .GroupBy(j => new { j.pmf.MonthNo, j.pmf.CumCost })
                 .Select(g => new ProjectProfile
