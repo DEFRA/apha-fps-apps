@@ -1,4 +1,3 @@
-@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.PACT.Models.WorkGroupCos90sViewModel
 
 @{
@@ -49,8 +48,7 @@
                     <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                             id="SelectedProfitCentre"
                             name="SelectedProfitCentre"
-                            required
-                            aria-label="select profit centre">
+                            required>
                         <option value="">--select profit centre--</option>
                         @foreach (var pc in Model.ProfitCentreOptions)
                         {
@@ -89,7 +87,8 @@
                             <input type="text"
                                    class="select-search-box"
                                    id="for-period-search"
-                                   placeholder="Type to search and select period" />
+                                   placeholder="Type to search and select period" 
+                                   aria-label="Search" />
 
                             <table id="tblMonthPeriod" class="govuk-table govuk-!-font-size-16">
                                 <thead>
@@ -125,8 +124,7 @@
                     <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                             id="dpInYear"
                             name="SelectedYear"
-                            required
-                            aria-label="select In Year">
+                            required>
                         <option value="">--select In Year--</option>
                         @foreach (var year in Model.YearOptions)
                         {
@@ -186,8 +184,7 @@
             <button class="govuk-button govuk-button--warning sup_margin_bottom_10"
                     id="clearAllWorkgroupsBtn"
                     type="button"
-                    data-module="govuk-button"
-                    aria-label="Clear All Work Group">
+                    data-module="govuk-button">
                 Clear All Work Groups
             </button>
             <button class="govuk-button sup_margin_bottom_20"
@@ -219,8 +216,7 @@
                 </label>
                 <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_50"
                         id="dpWgMemberList"
-                        name="dpWgMemberList"
-                        aria-label="Person (leave blank to use WGs above)">
+                        name="dpWgMemberList">
                     <option value="">--select--</option>
                     @foreach (var person in Model.IndividualOptions)
                     {
@@ -279,7 +275,7 @@
         }
     </script>
     <script src="~/js/ajax-form-validation.js"></script>
-    <script>window.__cos90PeriodData = @Html.Raw(periodsJson);</script>
+    <script> window.__cos90PeriodData = @Html.Raw(periodsJson); </script>
     <script src="~/js/pact_js/work-group-cos90s.js"></script>
 }
 
