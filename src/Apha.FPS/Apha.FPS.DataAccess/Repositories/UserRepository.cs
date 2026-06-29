@@ -73,14 +73,14 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Username == username);
+                .FirstOrDefaultAsync(u => u.Username != null && u.Username.ToLower() == username.ToLower());
         }
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
             return await _dbContext.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.UserEmail == email);
+                .FirstOrDefaultAsync(u => u.UserEmail != null && u.UserEmail.ToLower() == email.ToLower());
         }
 
         public async Task<User> AddUserAsync(User entity)
