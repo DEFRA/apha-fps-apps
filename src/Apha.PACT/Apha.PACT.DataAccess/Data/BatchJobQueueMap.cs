@@ -50,6 +50,8 @@ namespace Apha.PACT.DataAccess.Data
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
+
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }

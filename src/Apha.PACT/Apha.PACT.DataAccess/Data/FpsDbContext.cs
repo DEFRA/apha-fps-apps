@@ -53,6 +53,7 @@ namespace Apha.PACT.DataAccess.Data
 
         public virtual DbSet<BatchJobMaster> BatchJobs { get; set; }
         public virtual DbSet<BatchJobQueue> BatchJobQueues { get; set; }
+        public virtual DbSet<BatchJobQueueLog> BatchJobQueueLogs { get; set; }
         public virtual DbSet<BatchJobStatus> BatchJobStatuses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -151,6 +152,8 @@ namespace Apha.PACT.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new BatchJobMasterMap());
             modelBuilder.ApplyConfiguration(new BatchJobQueueMap());
+            modelBuilder.Entity<BatchJobQueue>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new BatchJobQueueLogMap());
             modelBuilder.ApplyConfiguration(new BatchJobStatusMap());
         }
     }

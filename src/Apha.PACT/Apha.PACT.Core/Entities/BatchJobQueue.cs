@@ -13,5 +13,6 @@
         public string? ErrorMessage { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public int FpsYear { get; set; }
     }
 }
