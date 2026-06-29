@@ -523,5 +523,773 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.UserRepositoryTest
         }
 
         #endregion
+
+        #region UpdateUserAsync Tests (additional coverage)
+
+        [Fact]
+        public async Task UpdateUserAsync_UpdatesAllFields_WhenUserExists()
+        {
+            var existingUser = BuildUser(1, "olduser", "Old Comment", "old@test.com", "olddt2");
+            var users = new List<User> { existingUser };
+
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(users);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.Users).Returns(mockSet.Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var updatedEntity = BuildUser(1, "newuser", "New Comment", "new@test.com", "newdt2");
+
+            var result = await repo.UpdateUserAsync(updatedEntity);
+
+            Assert.Equal("newuser", result.Username);
+            Assert.Equal("New Comment", result.Comments);
+            Assert.Equal("new@test.com", result.UserEmail);
+            Assert.Equal("newdt2", result.Dt2Username);
+        }
+
+        [Fact]
+        public async Task UpdateUserAsync_ThrowsArgumentException_WhenUserNotFound()
+        {
+            var repo = CreateRepository([]);
+
+            var entity = BuildUser(999, "ghost");
+
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() => repo.UpdateUserAsync(entity));
+            Assert.Contains("User with ID 999 not found", ex.Message);
+        }
+
+        [Fact]
+        public async Task UpdateUserAsync_CallsSaveChangesAsync()
+        {
+            var existingUser = BuildUser(1, "user1", "Comment", "email@test.com", "dt2");
+            var users = new List<User> { existingUser };
+
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(users);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.Users).Returns(mockSet.Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var updatedEntity = BuildUser(1, "updated", "Updated", "updated@test.com", "updateddt2");
+            await repo.UpdateUserAsync(updatedEntity);
+
+            RepositoryTestHelper.VerifySaveChanges(dbContext);
+        }
+
+        #endregion
+
+        #region AddUserAsync Tests (additional coverage)
+
+        [Fact]
+        public async Task AddUserAsync_CallsSaveChangesAsync()
+        {
+            var (repo, dbContext, _) = CreateRepositoryWithMocks([]);
+            var user = BuildUser(0, "newuser");
+
+            await repo.AddUserAsync(user);
+
+            RepositoryTestHelper.VerifySaveChanges(dbContext);
+        }
+
+        [Fact]
+        public async Task AddUserAsync_ReturnsAddedEntity()
+        {
+            var (repo, _, _) = CreateRepositoryWithMocks([]);
+            var user = BuildUser(0, "newuser", "New User", "new@test.com", "dt2new");
+
+            var result = await repo.AddUserAsync(user);
+
+            Assert.NotNull(result);
+            Assert.Equal("newuser", result.Username);
+            Assert.Equal("New User", result.Comments);
+            Assert.Equal("new@test.com", result.UserEmail);
+            Assert.Equal("dt2new", result.Dt2Username);
+        }
+
+        #endregion
+
+        #region GetUserByUsernameAsync Tests (additional coverage)
+
+        [Fact]
+        public async Task GetUserByUsernameAsync_ReturnsUser_CaseInsensitive()
+        {
+            var users = new List<User> { BuildUser(1, "TestUser") };
+            var repo = CreateRepository(users);
+
+            var result = await repo.GetUserByUsernameAsync("testuser");
+
+            Assert.NotNull(result);
+            Assert.Equal("TestUser", result!.Username);
+        }
+
+        [Fact]
+        public async Task GetUserByUsernameAsync_ReturnsNull_WhenUsernameIsNull()
+        {
+            var users = new List<User> { BuildUser(1, username: null) };
+            var repo = CreateRepository(users);
+
+            var result = await repo.GetUserByUsernameAsync("testuser");
+
+            Assert.Null(result);
+        }
+
+        #endregion
+
+        #region GetUserByEmailAsync Tests (additional coverage)
+
+        [Fact]
+        public async Task GetUserByEmailAsync_ReturnsUser_CaseInsensitive()
+        {
+            var users = new List<User> { BuildUser(1, userEmail: "Test@Example.COM") };
+            var repo = CreateRepository(users);
+
+            var result = await repo.GetUserByEmailAsync("test@example.com");
+
+            Assert.NotNull(result);
+            Assert.Equal("Test@Example.COM", result!.UserEmail);
+        }
+
+        [Fact]
+        public async Task GetUserByEmailAsync_ReturnsNull_WhenEmailIsNull()
+        {
+            var users = new List<User> { BuildUser(1, userEmail: null) };
+            var repo = CreateRepository(users);
+
+            var result = await repo.GetUserByEmailAsync("test@example.com");
+
+            Assert.Null(result);
+        }
+
+        #endregion
+
+        #region GetNonSuperUsersPagedAsync Tests (additional coverage)
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_ExcludesSuperUser()
+        {
+            var superUserId = (int)Core.Enums.SuperUser.SuperUserId;
+            var users = new List<User>
+            {
+                BuildUser(superUserId, "superuser", "Super User"),
+                BuildUser(superUserId + 1, "regular1", "Regular One"),
+                BuildUser(superUserId + 2, "regular2", "Regular Two")
+            };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var result = await repo.GetNonSuperUsersPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.DoesNotContain(result.Data, u => u.UserId == superUserId);
+        }
+
+        [Fact]
+        public async Task GetNonSuperUsersPagedAsync_ReturnsEmpty_WhenOnlySuperUserExists()
+        {
+            var superUserId = (int)Core.Enums.SuperUser.SuperUserId;
+            var users = new List<User> { BuildUser(superUserId, "superuser") };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var result = await repo.GetNonSuperUsersPagedAsync(query);
+
+            Assert.Empty(result.Data);
+        }
+
+        #endregion
+
+        #region GetAllUsersPagedAsync Sorting Tests (additional coverage)
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_AppliesSorting_ByDt2Username()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, dt2Username: "Charlie"),
+                BuildUser(2, dt2Username: "Alice"),
+                BuildUser(3, dt2Username: "Bob")
+            };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "dt2username" };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            var list = result.Data.ToList();
+            Assert.Equal("Alice", list[0].Dt2Username);
+            Assert.Equal("Bob", list[1].Dt2Username);
+            Assert.Equal("Charlie", list[2].Dt2Username);
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_AppliesSorting_ByUserEmail()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, userEmail: "charlie@test.com"),
+                BuildUser(2, userEmail: "alice@test.com"),
+                BuildUser(3, userEmail: "bob@test.com")
+            };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "useremail" };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            var list = result.Data.ToList();
+            Assert.Equal("alice@test.com", list[0].UserEmail);
+            Assert.Equal("bob@test.com", list[1].UserEmail);
+            Assert.Equal("charlie@test.com", list[2].UserEmail);
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_AppliesSorting_ByUserId()
+        {
+            var users = new List<User>
+            {
+                BuildUser(3, "user3"),
+                BuildUser(1, "user1"),
+                BuildUser(2, "user2")
+            };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "userid" };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            var list = result.Data.ToList();
+            Assert.Equal(1, list[0].UserId);
+            Assert.Equal(2, list[1].UserId);
+            Assert.Equal(3, list[2].UserId);
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_AppliesSorting_ByComments()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, comments: "Zeta"),
+                BuildUser(2, comments: "Alpha"),
+                BuildUser(3, comments: "Mango")
+            };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "comments" };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            var list = result.Data.ToList();
+            Assert.Equal("Alpha", list[0].Comments);
+            Assert.Equal("Mango", list[1].Comments);
+            Assert.Equal("Zeta", list[2].Comments);
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_DefaultsSorting_WhenSortByIsUnknown()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, comments: "Zeta"),
+                BuildUser(2, comments: "Alpha")
+            };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "unknownfield" };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            var list = result.Data.ToList();
+            Assert.Equal("Alpha", list[0].Comments);
+            Assert.Equal("Zeta", list[1].Comments);
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_DefaultsSorting_WhenSortByIsNull()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, comments: "Zeta"),
+                BuildUser(2, comments: "Alpha")
+            };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = null };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            var list = result.Data.ToList();
+            Assert.Equal("Alpha", list[0].Comments);
+            Assert.Equal("Zeta", list[1].Comments);
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_ReturnsSecondPage()
+        {
+            var users = Enumerable.Range(1, 25).Select(i =>
+                BuildUser(i, $"user{i:D2}", $"Comment{i:D2}")).ToList();
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 2, PageSize = 10 };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            Assert.Equal(10, result.Data.Count());
+        }
+
+        #endregion
+
+        #region GetAllProfitCentreOptionsAsync Tests
+
+        [Fact]
+        public async Task GetAllProfitCentreOptionsAsync_ReturnsDistinctOrderedProfitCentres()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var data = new List<ProfitCentre>
+            {
+                new() { ProfitCentreId = "PC3", ProfitCentreName = "Centre 3", Division = "D1" },
+                new() { ProfitCentreId = "PC1", ProfitCentreName = "Centre 1", Division = "D1" },
+                new() { ProfitCentreId = "PC2", ProfitCentreName = "Centre 2", Division = "D1" },
+                new() { ProfitCentreId = "PC1", ProfitCentreName = "Centre 1 Dup", Division = "D2" }
+            };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.ProfitCentres).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetAllProfitCentreOptionsAsync();
+
+            Assert.Equal(3, result.Count);
+            Assert.Equal("PC1", result[0]);
+            Assert.Equal("PC2", result[1]);
+            Assert.Equal("PC3", result[2]);
+        }
+
+        [Fact]
+        public async Task GetAllProfitCentreOptionsAsync_ReturnsEmpty_WhenNoProfitCentres()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<ProfitCentre>());
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.ProfitCentres).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetAllProfitCentreOptionsAsync();
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetAllProgramOptionsAsync Tests
+
+        [Fact]
+        public async Task GetAllProgramOptionsAsync_ReturnsDistinctOrderedPrograms()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var data = new List<Program>
+            {
+                new() { ProgramNo = "B01", FpsYear = DefaultFpsYear },
+                new() { ProgramNo = "A01", FpsYear = DefaultFpsYear },
+                new() { ProgramNo = "C01", FpsYear = DefaultFpsYear },
+                new() { ProgramNo = "A01", FpsYear = DefaultFpsYear }
+            };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.Programs).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetAllProgramOptionsAsync();
+
+            Assert.Equal(3, result.Count);
+            Assert.Equal("A01", result[0]);
+            Assert.Equal("B01", result[1]);
+            Assert.Equal("C01", result[2]);
+        }
+
+        [Fact]
+        public async Task GetAllProgramOptionsAsync_ReturnsEmpty_WhenNoPrograms()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<Program>());
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.Programs).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetAllProgramOptionsAsync();
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetAllTestOwnerOptionsAsync Tests
+
+        [Fact]
+        public async Task GetAllTestOwnerOptionsAsync_ReturnsDistinctOrderedTestOwners()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var data = new List<UserTestOwner>
+            {
+                new() { UserId = 1, TestOwner = "OwnerC", FpsYear = DefaultFpsYear },
+                new() { UserId = 2, TestOwner = "OwnerA", FpsYear = DefaultFpsYear },
+                new() { UserId = 3, TestOwner = "OwnerB", FpsYear = DefaultFpsYear },
+                new() { UserId = 4, TestOwner = "OwnerA", FpsYear = DefaultFpsYear }
+            };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.UserTestOwners).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetAllTestOwnerOptionsAsync();
+
+            Assert.Equal(3, result.Count);
+            Assert.Equal("OwnerA", result[0]);
+            Assert.Equal("OwnerB", result[1]);
+            Assert.Equal("OwnerC", result[2]);
+        }
+
+        [Fact]
+        public async Task GetAllTestOwnerOptionsAsync_ReturnsEmpty_WhenNoTestOwners()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<UserTestOwner>());
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.UserTestOwners).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetAllTestOwnerOptionsAsync();
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetAllProjectGroupOptionsAsync Tests
+
+        [Fact]
+        public async Task GetAllProjectGroupOptionsAsync_ReturnsDistinctOrderedProjectGroups()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var data = new List<ProjectGroup>
+            {
+                new() { ProjectGroupName = "GroupC", FpsYear = DefaultFpsYear },
+                new() { ProjectGroupName = "GroupA", FpsYear = DefaultFpsYear },
+                new() { ProjectGroupName = "GroupB", FpsYear = DefaultFpsYear },
+                new() { ProjectGroupName = "GroupA", FpsYear = DefaultFpsYear }
+            };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.ProjectGroups).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetAllProjectGroupOptionsAsync();
+
+            Assert.Equal(3, result.Count);
+            Assert.Equal("GroupA", result[0]);
+            Assert.Equal("GroupB", result[1]);
+            Assert.Equal("GroupC", result[2]);
+        }
+
+        [Fact]
+        public async Task GetAllProjectGroupOptionsAsync_ReturnsEmpty_WhenNoProjectGroups()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<ProjectGroup>());
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.ProjectGroups).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetAllProjectGroupOptionsAsync();
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetUserProfitCentresAsync Tests (additional coverage)
+
+        [Fact]
+        public async Task GetUserProfitCentresAsync_ReturnsEmpty_WhenUserHasNoProfitCentres()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var data = new List<UserProfitcentre>
+            {
+                new() { UserId = 2, ProfitCentre = "PC1", FpsYear = DefaultFpsYear }
+            };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.UserProfitcentres).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetUserProfitCentresAsync(999);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetUserProgramsAsync Tests (additional coverage)
+
+        [Fact]
+        public async Task GetUserProgramsAsync_ReturnsEmpty_WhenUserHasNoPrograms()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var data = new List<UserProgram>
+            {
+                new() { UserID = 2, ProgramNo = "P1", FpsYear = DefaultFpsYear }
+            };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.UserPrograms).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetUserProgramsAsync(999);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetUserCategoriesAsync Tests (additional coverage)
+
+        [Fact]
+        public async Task GetUserCategoriesAsync_ReturnsEmpty_WhenUserHasNoCategories()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var data = new List<UserCategory>
+            {
+                new() { UserId = 2, Category = "C1", FpsYear = DefaultFpsYear }
+            };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.UserCategories).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetUserCategoriesAsync(999);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetUserTestOwnersAsync Tests (additional coverage)
+
+        [Fact]
+        public async Task GetUserTestOwnersAsync_ReturnsEmpty_WhenUserHasNoTestOwners()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var data = new List<UserTestOwner>
+            {
+                new() { UserId = 2, TestOwner = "T1", FpsYear = DefaultFpsYear }
+            };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.UserTestOwners).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetUserTestOwnersAsync(999);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetUserProjectGroupsAsync Tests (additional coverage)
+
+        [Fact]
+        public async Task GetUserProjectGroupsAsync_ReturnsEmpty_WhenUserHasNoProjectGroups()
+        {
+            var requestCtx = CreateRequestContextMock();
+            var dbContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(requestCtx.Object);
+
+            var data = new List<UserProjectGroup>
+            {
+                new() { UserId = 2, ProjectGroup = "PG1", FpsYear = DefaultFpsYear }
+            };
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(data);
+            RepositoryTestHelper.SetupDbSetOperations(mockSet);
+            dbContext.Setup(x => x.UserProjectGroups).Returns(mockSet.Object);
+            dbContext.Setup(x => x.Users).Returns(RepositoryTestHelper.CreateMockDbSet(new List<User>()).Object);
+            RepositoryTestHelper.SetupSaveChanges(dbContext);
+
+            var repo = new UserRepository(dbContext.Object, requestCtx.Object);
+
+            var result = await repo.GetUserProjectGroupsAsync(999);
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region GetAllUsersPagedAsync Filter Tests
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_AppliesFilter_ByUsername()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, "JohnDoe", "John"),
+                BuildUser(2, "JaneSmith", "Jane"),
+                BuildUser(3, "JohnSmith", "JohnS")
+            };
+            var repo = CreateRepository(users);
+
+            var filter = "{\"Username\":\"John\"}";
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, u => Assert.Contains("John", u.Username!, StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_AppliesFilter_ByUserEmail()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, "user1", userEmail: "john@test.com"),
+                BuildUser(2, "user2", userEmail: "jane@test.com"),
+                BuildUser(3, "user3", userEmail: "john.doe@test.com")
+            };
+            var repo = CreateRepository(users);
+
+            var filter = "{\"UserEmail\":\"john\"}";
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_AppliesFilter_ByComments()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, comments: "Admin User"),
+                BuildUser(2, comments: "Regular User"),
+                BuildUser(3, comments: "Admin Manager")
+            };
+            var repo = CreateRepository(users);
+
+            var filter = "{\"Comments\":\"Admin\"}";
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_AppliesFilter_ByDt2Username()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, dt2Username: "dt2john"),
+                BuildUser(2, dt2Username: "dt2jane"),
+                BuildUser(3, dt2Username: "dt2johnson")
+            };
+            var repo = CreateRepository(users);
+
+            var filter = "{\"Dt2Username\":\"john\"}";
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = filter };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_ReturnsAll_WhenFilterIsNull()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, "user1"),
+                BuildUser(2, "user2")
+            };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        [Fact]
+        public async Task GetAllUsersPagedAsync_ReturnsAll_WhenFilterIsEmptyJson()
+        {
+            var users = new List<User>
+            {
+                BuildUser(1, "user1"),
+                BuildUser(2, "user2")
+            };
+            var repo = CreateRepository(users);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{}" };
+            var result = await repo.GetAllUsersPagedAsync(query);
+
+            Assert.Equal(2, result.Data.Count());
+        }
+
+        #endregion
     }
 }
