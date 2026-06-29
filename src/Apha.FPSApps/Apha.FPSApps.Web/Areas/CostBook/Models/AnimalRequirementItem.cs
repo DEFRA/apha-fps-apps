@@ -13,8 +13,7 @@ public class AnimalRequirementItem
     [GridColumn(Order = 1, Width = 160, Type = GridColumnType.Text, IsFilterable = false)]
     public string AnimalType { get; set; } = null!;
 
-    [Display(Name = "Rate")]
-    [Required(ErrorMessage = "Daily Rate is required.")]
+    [Display(Name = "Rate")]   
     [GridColumn(Order = 2, Width = 100, Type = GridColumnType.GbpValue)]
     public double? DailyRate { get; set; }
 
@@ -26,8 +25,7 @@ public class AnimalRequirementItem
     [GridColumn(Order = 4, Width = 70, Type = GridColumnType.DecimalNumber)]
     public double? NumberOfDays { get; set; }
 
-    [Display(Name = "Cost")]
-    [Required(ErrorMessage = "Animal Cost is required.")]
+    [Display(Name = "Cost")]    
     [GridColumn(Order = 5, Width = 100, Type = GridColumnType.GbpValue)]
     public double? AnimalCost { get; set; }
 }

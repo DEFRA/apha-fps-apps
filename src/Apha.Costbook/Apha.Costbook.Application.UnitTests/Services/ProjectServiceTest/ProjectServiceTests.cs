@@ -524,7 +524,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
         public async Task AddProjectAsync_TitleTooLong_ThrowsArgumentException()
         {
             // Arrange
-            var longTitle = new string('A', 256); // 256 characters
+            var longTitle = new string('A', 101); // 101 characters - exceeds 100 char limit
             var projectDto = new ProjectDto
             {
                 ProjectId = "P001",
@@ -536,7 +536,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.AddProjectAsync(projectDto));
-            Assert.Contains(exception.Errors, e => e.Message == "Please enter a title of less than 255 characters");
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter a title of less than 100 characters");
         }
 
         #endregion
@@ -619,10 +619,11 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
-            Assert.Equal(3, exception.Errors.Count);
+            Assert.Equal(4, exception.Errors.Count);
             Assert.Contains(exception.Errors, e => e.Message == "Please enter Start Date");
             Assert.Contains(exception.Errors, e => e.Message == "Please enter a title");
             Assert.Contains(exception.Errors, e => e.Message == "Please choose Defra/Non-Defra");
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter who has prepared this");
         }
 
         [Fact]
@@ -631,7 +632,7 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             // Arrange
             var projectId = "P001";
             var existingProject = new Project { ProjectId = projectId };
-            var longTitle = new string('A', 256); // 256 characters
+            var longTitle = new string('A', 101); // 101 characters - exceeds 100 char limit
             var projectDto = new ProjectDto
             {
                 ProjectId = projectId,
@@ -646,7 +647,54 @@ namespace Apha.Costbook.Application.UnitTests.Services.ProjectServiceTest
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
             Assert.Single(exception.Errors);
-            Assert.Contains(exception.Errors, e => e.Message == "Please enter a title of less than 255 characters");
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter a title of less than 100 characters");
+        }
+
+        [Fact]
+        public async Task UpdateProjectAsync_NotesTooLong_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var projectId = "P001";
+            var existingProject = new Project { ProjectId = projectId };
+            var projectDto = new ProjectDto
+            {
+                ProjectId = projectId,
+                ProjectTitle = "Valid Title",
+                PreparedBy = "John Doe",
+                Startdate = new DateTime(2024, 4, 1),
+                IsDefraProject = 1,
+                Notes = new string('A', 256) // 256 characters - exceeds 255 char limit
+            };
+
+            _mockRepository.GetProjectByIdAsync(projectId).Returns(existingProject);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
+            Assert.Single(exception.Errors);
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter notes of less than 255 characters");
+        }
+
+        [Fact]
+        public async Task UpdateProjectAsync_PreparedByMissing_ThrowsBusinessValidationErrorException()
+        {
+            // Arrange
+            var projectId = "P001";
+            var existingProject = new Project { ProjectId = projectId };
+            var projectDto = new ProjectDto
+            {
+                ProjectId = projectId,
+                ProjectTitle = "Valid Title",
+                PreparedBy = "",
+                Startdate = new DateTime(2024, 4, 1),
+                IsDefraProject = 1
+            };
+
+            _mockRepository.GetProjectByIdAsync(projectId).Returns(existingProject);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _projectService.UpdateProjectAsync(projectId, projectDto));
+            Assert.Single(exception.Errors);
+            Assert.Contains(exception.Errors, e => e.Message == "Please enter who has prepared this");
         }
 
         [Fact]

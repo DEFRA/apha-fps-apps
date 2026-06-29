@@ -47,7 +47,7 @@
                     <label class="govuk-label" asp-for="CostProfile">Cost Profile (£):</label>
                     <input class="govuk-input govuk-!-font-size-16 govuk-input--width-10"
                            asp-for="CostProfile"
-                           type="number" step="0.01" />
+                           type="number" step="0.01"  onkeydown="if(['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();" />
                     <span asp-validation-for="CostProfile" class="govuk-error-message"></span>
                 </div>
             </div>
