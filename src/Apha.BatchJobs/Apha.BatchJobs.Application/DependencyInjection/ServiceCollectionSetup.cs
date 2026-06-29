@@ -62,10 +62,8 @@ public static class ServiceCollectionSetup
                     connectionString,
                     npgsqlOptions =>
                     {
-                        npgsqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 5,
-                            maxRetryDelay: TimeSpan.FromSeconds(10),
-                            errorCodesToAdd: null);
+                        npgsqlOptions.ExecutionStrategy(ctx =>
+                            new BatchJobsRetryStrategy(ctx, maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10)));
                         npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
                     });
             },
@@ -79,10 +77,8 @@ public static class ServiceCollectionSetup
                 connectionString,
                 npgsqlOptions =>
                 {
-                    npgsqlOptions.EnableRetryOnFailure(
-                        maxRetryCount: 5,
-                        maxRetryDelay: TimeSpan.FromSeconds(10),
-                        errorCodesToAdd: null);
+                    npgsqlOptions.ExecutionStrategy(ctx =>
+                        new BatchJobsRetryStrategy(ctx, maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10)));
                     npgsqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
                 });
         });

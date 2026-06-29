@@ -76,7 +76,7 @@ public sealed class RecreateSummariesOrchestrator
             if (npgsqlConnection.State != System.Data.ConnectionState.Open)
                 await _dbContext.Database.OpenConnectionAsync(cancellationToken);
 
-            var executionContext = new RecreateSummariesExecutionContext(_dbContext, npgsqlConnection);
+            var executionContext = new RecreateSummariesExecutionContext(_dbContext, npgsqlConnection, year);
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 

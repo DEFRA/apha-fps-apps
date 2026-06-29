@@ -35,7 +35,7 @@ public sealed class CreateProjectMonthCaseworkStepTests
             VALUES ('{project}', 1, 0::money, {harness.FpsYear});
         ");
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var deleteStep = new DeleteProjectMonthCaseworkStep();
         var deleteResult = await deleteStep.ExecuteAsync(context, CancellationToken.None);
         Assert.True(deleteResult.Status == StepStatus.Success, deleteResult.ErrorMessage);

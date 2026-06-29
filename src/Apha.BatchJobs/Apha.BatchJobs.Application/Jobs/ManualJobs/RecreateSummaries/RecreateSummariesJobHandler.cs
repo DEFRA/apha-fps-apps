@@ -113,7 +113,7 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
         }
         catch (OperationCanceledException ex)
         {
-            _logger.LogWarning(ex, "RecreateSummaries job execution was interrupted | CorrelationId={CorrelationId}", correlationId);
+            _logger.LogInformation(ex, "RecreateSummaries job execution was interrupted | CorrelationId={CorrelationId}", correlationId);
             throw;
         }
         catch (Exception ex)
@@ -150,7 +150,7 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
             if (npgsqlConnection.State != System.Data.ConnectionState.Open)
                 await context.Database.OpenConnectionAsync(cancellationToken);
 
-            var executionContext = new RecreateSummariesExecutionContext(context, npgsqlConnection);
+            var executionContext = new RecreateSummariesExecutionContext(context, npgsqlConnection, year);
 
             await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
@@ -181,7 +181,7 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
                     // Warn if step exceeded 2 minutes (slow-step detection)
                     if (stepDurationMs > 120_000)
                     {
-                        _logger.LogWarning(
+                        _logger.LogInformation(
                             "[{CorrelationId}] SLOW STEP DETECTED | StepName={StepName} | Duration={Ms}ms | RowsAffected={Rows}",
                             correlationId, result.StepName, stepDurationMs, result.RowsAffected);
                     }
@@ -231,7 +231,7 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
                         // Warn if step exceeded 2 minutes (slow-step detection)
                         if (stepDurationMs > 120_000)
                         {
-                            _logger.LogWarning(
+                            _logger.LogInformation(
                                 "[{CorrelationId}] SLOW STEP DETECTED | StepName={StepName} | Duration={Ms}ms | RowsAffected={Rows}",
                                 correlationId, result.StepName, stepDurationMs, result.RowsAffected);
                         }
@@ -290,39 +290,35 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
     {
         try
         {
-            if (_executionRepository is not null && Guid.TryParse(correlationId, out var jobExecutionId))
+            if (_executionRepository is null || !Guid.TryParse(correlationId, out var jobExecutionId))
             {
-                var touched = await _executionRepository.TouchRunningExecutionAsync(
-                    jobExecutionId, cancellationToken);
-
-                if (!touched)
-                {
-                    _logger.LogWarning(
-                        "[{CorrelationId}] Heartbeat: execution touch failed (not in Running state) | JobName={JobName}",
-                        correlationId, Name);
-                    return;
-                }
+                throw new InvalidOperationException($"Heartbeat execution repository unavailable or correlation id invalid for job '{Name}' ({correlationId}).");
             }
 
-            if (_lockRepository is not null)
-            {
-                // Unlimited timeout (0 seconds) means lock does not expire
-                var renewed = await _lockRepository.TryRenewLockAsync(
-                    Name, Guid.Empty, 0, cancellationToken);
+            var execution = await _executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
 
-                if (!renewed)
-                {
-                    _logger.LogWarning(
-                        "[{CorrelationId}] Heartbeat: lock renewal returned false | JobName={JobName}",
-                        correlationId, Name);
-                }
-                else
-                {
-                    _logger.LogDebug(
-                        "[{CorrelationId}] Heartbeat: execution touched & lock renewed | JobName={JobName}",
-                        correlationId, Name);
-                }
-            }
+            if (execution is null || execution.JobQueueId == Guid.Empty)
+                throw new InvalidOperationException($"Heartbeat execution row missing for job '{Name}' ({correlationId}).");
+
+            var touched = await _executionRepository.TouchRunningExecutionAsync(
+                execution.JobQueueId, cancellationToken);
+
+            if (!touched)
+                throw new InvalidOperationException($"Heartbeat execution touch failed because job '{Name}' is not in Running state ({correlationId}, JobQueueId={execution.JobQueueId}).");
+
+            if (_lockRepository is null)
+                throw new InvalidOperationException($"Heartbeat lock repository is unavailable for job '{Name}' ({correlationId}).");
+
+            // Unlimited timeout (0 seconds) means lock does not expire.
+            var renewed = await _lockRepository.TryRenewLockAsync(
+                Name, execution.JobQueueId, 0, cancellationToken);
+
+            if (!renewed)
+                throw new InvalidOperationException($"Heartbeat lock renewal returned false for job '{Name}' ({correlationId}, JobQueueId={execution.JobQueueId}).");
+
+            _logger.LogDebug(
+                "[{CorrelationId}] Heartbeat: execution touched & lock renewed | JobName={JobName} | JobQueueId={JobQueueId}",
+                correlationId, Name, execution.JobQueueId);
         }
         catch (OperationCanceledException)
         {
@@ -330,13 +326,7 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
             _logger.LogInformation(
                 "[{CorrelationId}] Heartbeat cancelled | JobName={JobName}",
                 correlationId, Name);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(
-                ex,
-                "[{CorrelationId}] Heartbeat exception (non-critical) | JobName={JobName} | ExceptionType={ExceptionType}",
-                correlationId, Name, ex.GetType().Name);
+            throw;
         }
     }
 
@@ -364,6 +354,7 @@ public sealed class RecreateSummariesJobHandler : IBatchJob
         catch (Exception rollbackEx)
         {
             _logger.LogError(rollbackEx, "[{CorrelationId}] Rollback failed.", correlationId);
+            throw new InvalidOperationException($"Rollback failed for RecreateSummaries job ({correlationId}).", rollbackEx);
         }
     }
 }

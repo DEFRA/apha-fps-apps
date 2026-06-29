@@ -36,7 +36,7 @@ public sealed class InsertMissingProjectsStepTests
         });
         await db.SaveChangesAsync();
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var step = new InsertMissingProjectsStep();
         // Act
         var result = await step.ExecuteAsync(context, CancellationToken.None);

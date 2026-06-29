@@ -79,7 +79,7 @@ public sealed class CreateProjectMonthSingleStepTests
             VALUES ('{project}', '{workGroup}', '{testCode}', 1, 1, {harness.FpsYear});
         ");
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var deleteStep = new DeleteProjectMonth2Step();
         var deleteResult = await deleteStep.ExecuteAsync(context, CancellationToken.None);
         Assert.True(deleteResult.Status == StepStatus.Success, deleteResult.ErrorMessage);

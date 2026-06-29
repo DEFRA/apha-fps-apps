@@ -311,7 +311,7 @@ public sealed class RecreateSummariesPostgresStepIntegrationTests : IAsyncLifeti
         Assert.NotNull(step);
 
         var connection = (NpgsqlConnection)context.Database.GetDbConnection();
-        var executionContext = new RecreateSummariesExecutionContext(context, connection);
+        var executionContext = new RecreateSummariesExecutionContext(context, connection, 2026);
 
         return await step!.ExecuteAsync(executionContext, CancellationToken.None);
     }

@@ -34,8 +34,8 @@ internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
         await EnsureTotalsViewsAreYearScopedAsync(db, cancellationToken);
         _logger.LogInformation("CreateFpsTotals view contract validated");
 
-        _logger.LogInformation("CreateFpsTotals loading joined totals rows");
-        var rawRows = await LoadRawTotalsRowsAsync(db, cancellationToken);
+        _logger.LogInformation("CreateFpsTotals loading joined totals rows for year {FpsYear}", context.FpsYear);
+        var rawRows = await LoadRawTotalsRowsAsync(db, context.FpsYear, cancellationToken);
         _logger.LogInformation("CreateFpsTotals loaded {RowCount} raw joined rows", rawRows.Count);
 
         _logger.LogInformation("CreateFpsTotals mapping rows to target table shape");
@@ -50,12 +50,13 @@ internal sealed class CreateFpsTotalsStep : RecreateSummariesExecutionStepBase
         return savedRows;
     }
 
-    private static async Task<List<RawTotalsRow>> LoadRawTotalsRowsAsync(BatchJobsDbContext db, CancellationToken cancellationToken)
+    private static async Task<List<RawTotalsRow>> LoadRawTotalsRowsAsync(BatchJobsDbContext db, int fpsYear, CancellationToken cancellationToken)
     {
-        // ✓ PostgreSQL multi-year isolation: composite joins on (JobCode, FpsYear) prevent cross-year fanout.
-        // Query plan cost: ~0..11 (year-scoped) vs ~3859..42M (year-agnostic) - critical for performance.
+        // ✓ Year-scoped: query is restricted to the single fpsYear from the job parameter.
+        // Legacy SQL ran against a per-year database; in PostgreSQL fpsyear is the shared-table discriminator.
+        // Composite joins on (JobCode, FpsYear) additionally prevent cross-year row fanout.
         return await (
-            from p in db.RsTlkpProject.AsNoTracking()
+            from p in db.RsTlkpProject.AsNoTracking().Where(p => p.FpsYear == fpsYear)
             join add0 in db.RsQryTotalAdditionalCosts.AsNoTracking()
                 on new { JobCode = p.ParentProject, p.FpsYear }
                 equals new { add0.JobCode, add0.FpsYear } into add1

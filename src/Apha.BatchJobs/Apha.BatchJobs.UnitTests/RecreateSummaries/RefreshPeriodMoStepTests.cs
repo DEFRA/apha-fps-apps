@@ -52,7 +52,7 @@ public sealed class RefreshPeriodMoStepTests
             VALUES ('{project}', '{workGroup}', '{testCode}', 1, 5, {harness.FpsYear});
         ");
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var step = new RefreshPeriodMoStep(period);
         // Act
         var result = await step.ExecuteAsync(context, CancellationToken.None);

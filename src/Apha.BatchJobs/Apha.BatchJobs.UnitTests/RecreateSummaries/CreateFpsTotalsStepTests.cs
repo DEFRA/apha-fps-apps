@@ -78,7 +78,7 @@ public sealed class CreateFpsTotalsStepTests
             VALUES ('{testCode}', '{project}', 4::money, 1, '{project}', 1, {harness.FpsYear});
         ");
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var deleteStep = new DeleteFpsTotalsStep();
         var deleteResult = await deleteStep.ExecuteAsync(context, CancellationToken.None);
         Assert.True(deleteResult.Status == StepStatus.Success, deleteResult.ErrorMessage);
@@ -141,12 +141,12 @@ public sealed class CreateFpsTotalsStepTests
         // Delete any existing totals
         var deleteStep = new DeleteFpsTotalsStep();
         var deleteResult = await deleteStep.ExecuteAsync(
-            new RecreateSummariesExecutionContext(db, new NpgsqlConnection()),
+            new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026),
             CancellationToken.None);
         Assert.True(deleteResult.Status == StepStatus.Success, deleteResult.ErrorMessage);
 
         // Execute CreateFpsTotals for current year (harness.FpsYear)
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var step = new CreateFpsTotalsStep();
         var result = await step.ExecuteAsync(context, CancellationToken.None);
 

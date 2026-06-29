@@ -75,7 +75,7 @@ public sealed class RefreshPeriodTccStepTests
                  'DivA', 40::money, 16::money, 8::money, {harness.FpsYear});
         ");
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var step = new RefreshPeriodTccStep(period);
         // Act
         var result = await step.ExecuteAsync(context, CancellationToken.None);

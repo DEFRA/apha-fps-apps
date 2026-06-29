@@ -45,7 +45,7 @@ public sealed class RefreshPeriodPscStepTests
             VALUES ({subContCounter}, '{project}', 1, 100::money, 'A1', {harness.FpsYear});
         ");
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var step = new RefreshPeriodPscStep(period);
         // Act
         var result = await step.ExecuteAsync(context, CancellationToken.None);

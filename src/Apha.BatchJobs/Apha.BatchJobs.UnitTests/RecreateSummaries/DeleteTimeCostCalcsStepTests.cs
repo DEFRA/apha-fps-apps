@@ -29,7 +29,7 @@ public sealed class DeleteTimeCostCalcsStepTests
         });
         await db.SaveChangesAsync();
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var step = new DeleteTimeCostCalcsStep();
         // Act
         var result = await step.ExecuteAsync(context, CancellationToken.None);

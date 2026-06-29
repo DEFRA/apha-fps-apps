@@ -82,7 +82,7 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
         }
 
         var connection = (NpgsqlConnection)DbContext.Database.GetDbConnection();
-        var context = new RecreateSummariesExecutionContext(DbContext, connection);
+        var context = new RecreateSummariesExecutionContext(DbContext, connection, FpsYear);
         return await step.ExecuteAsync(context, CancellationToken.None);
     }
 

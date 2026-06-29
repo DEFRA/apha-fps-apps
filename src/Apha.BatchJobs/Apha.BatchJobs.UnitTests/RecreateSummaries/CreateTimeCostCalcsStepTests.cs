@@ -74,7 +74,7 @@ public sealed class CreateTimeCostCalcsStepTests
             VALUES ('{jobCode}', '{workGroup}', '{project}', true, {harness.FpsYear});
         ");
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var deleteStep = new DeleteTimeCostCalcsStep();
         var deleteResult = await deleteStep.ExecuteAsync(context, CancellationToken.None);
         Assert.True(deleteResult.Status == StepStatus.Success, deleteResult.ErrorMessage);

@@ -15,7 +15,7 @@ public sealed class RecreateSummariesExecutionContextTests
 
         // Act
         var exception = Assert.Throws<ArgumentNullException>(
-            () => new RecreateSummariesExecutionContext(dbContext: null!, connection));
+            () => new RecreateSummariesExecutionContext(dbContext: null!, connection, fpsYear: 2026));
 
         // Assert
         Assert.Equal("dbContext", exception.ParamName);
@@ -29,7 +29,7 @@ public sealed class RecreateSummariesExecutionContextTests
 
         // Act
         var exception = Assert.Throws<ArgumentNullException>(
-            () => new RecreateSummariesExecutionContext(dbContext, connection: null!));
+            () => new RecreateSummariesExecutionContext(dbContext, connection: null!, fpsYear: 2026));
 
         // Assert
         Assert.Equal("connection", exception.ParamName);
@@ -43,11 +43,12 @@ public sealed class RecreateSummariesExecutionContextTests
         using var connection = new NpgsqlConnection();
 
         // Act
-        var context = new RecreateSummariesExecutionContext(dbContext, connection);
+        var context = new RecreateSummariesExecutionContext(dbContext, connection, fpsYear: 2026);
 
         // Assert
         Assert.Same(dbContext, context.DbContext);
         Assert.Same(connection, context.Connection);
+        Assert.Equal(2026, context.FpsYear);
     }
 
     private static BatchJobsDbContext CreateDbContext()

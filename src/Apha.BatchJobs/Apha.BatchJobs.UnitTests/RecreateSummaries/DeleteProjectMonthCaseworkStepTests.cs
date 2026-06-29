@@ -28,7 +28,7 @@ public sealed class DeleteProjectMonthCaseworkStepTests
         });
         await db.SaveChangesAsync();
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var step = new DeleteProjectMonthCaseworkStep();
         // Act
         var result = await step.ExecuteAsync(context, CancellationToken.None);

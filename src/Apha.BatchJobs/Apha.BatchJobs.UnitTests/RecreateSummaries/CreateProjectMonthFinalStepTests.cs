@@ -74,7 +74,7 @@ public sealed class CreateProjectMonthFinalStepTests
         });
         await db.SaveChangesAsync();
 
-        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection());
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
         var step = new CreateProjectMonthFinalStep(1); // _month = 1
         // Act
         var result = await step.ExecuteAsync(context, CancellationToken.None);
