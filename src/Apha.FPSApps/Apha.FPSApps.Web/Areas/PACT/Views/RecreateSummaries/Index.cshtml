@@ -17,35 +17,10 @@
             <tbody class="govuk-table__body">
                 <tr class="govuk-table__row">
                     <td class="govuk-table__cell sup_border_0">
-                        <div class="period-dropdown" id="select-period-dropdown" style="width:260px;">
-                            <label class="govuk-label govuk-!-margin-bottom-1 isFontBold" for="select-period-input">
-                                Select Summary Period:
-                            </label>
-                            <input type="text" id="select-period-input" value="--select--"
-                                   class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
-                                   readonly />
-                            <input type="hidden" id="select-period-value" value="" />
-
-                            <div class="dropdown-panel" id="select-period-panel"
-                                 style="display:none; position:absolute; top:100%; left:0; width:100%;">
-                                <label class="govuk-visually-hidden" for="select-period-search">
-                                    Select Summary Period
-                                </label>
-                                <input type="text" class="search-box" id="select-period-search"
-                                       placeholder="Type to search and select period" />
-                                <table class="period-dropdown__table">
-                                    <thead>
-                                        <tr>
-                                            <th>Period</th>
-                                            <th>Month Name</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="select-period-body">
-                                        @* Populated by inline script below *@
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <label class="govuk-label govuk-!-margin-bottom-1 isFontBold">
+                            Select Summary Period:
+                        </label>
+                        <div id="select-period-container" style="min-width:280px;"></div>
                     </td>
                     <td class="govuk-table__cell sup_border_0 govuk-!-padding-left-3 recreate-summaries__action-cell">
                         <div class="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-4">
@@ -76,6 +51,9 @@
     </div>
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/common/multicolumn-dropdown.css" />
+}
 @section Scripts {
 <script>
     // ── Period dropdown data ──────────────────────────────────────────────
@@ -86,49 +64,41 @@
             monthName = m.Text.Contains(" - ") ? m.Text.Split(" - ", 2)[1] : m.Text
         })
     ));
+</script>
+<script src="~/js/common/multicolumn-dropdown.component.js"></script>
+<script>
+    var selectPeriodDropdown = null;
 
-    // ── Populate tbody ────────────────────────────────────────────────────
-    (function populatePeriodRows(rows) {
-        const tbody = document.getElementById('select-period-body');
-        rows.forEach(function (item) {
-            const tr = document.createElement('tr');
-            tr.dataset.value    = item.value;
-            tr.dataset.display  = item.period + ' - ' + item.monthName;
-            tr.innerHTML = '<td>' + item.period + '</td><td>' + item.monthName + '</td>';
-            tr.addEventListener('click', function () {
-                document.getElementById('select-period-input').value = this.dataset.display;
-                document.getElementById('select-period-value').value = this.dataset.value;
-                document.getElementById('select-period-panel').style.display = 'none';
-            });
-            tbody.appendChild(tr);
+    document.addEventListener('DOMContentLoaded', function () {
+        selectPeriodDropdown = new MultiColumnDropdownComponent({
+            dropdownId: 'selectPeriodDropdown',
+            containerSelector: '#select-period-container',
+            placeholder: '--select--',
+            searchPlaceholder: 'Type to search and select period',
+            showSerialNumber: false,
+            columns: [
+                { field: 'period',    header: 'Period',     width: '80px'  },
+                { field: 'monthName', header: 'Month Name', width: '160px' }
+            ],
+            data: periodData,
+            displayField: 'period',
+            valueField: 'value',
+            clearButtonClearsSelection: true,
+            callbacks: {
+                onSelect: function (selectedItem) {
+                    // display as "period - monthName" in the input
+                    var input = document.getElementById('selectPeriodDropdown_input');
+                    if (input) input.value = selectedItem.period + ' - ' + selectedItem.monthName;
+                },
+                onClear: function () { }
+            }
         });
-    })(periodData);
-
-    // ── Toggle panel on input click ───────────────────────────────────────
-    document.getElementById('select-period-input').addEventListener('click', function () {
-        const panel = document.getElementById('select-period-panel');
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    });
-
-    // ── Live search ───────────────────────────────────────────────────────
-    document.getElementById('select-period-search').addEventListener('input', function () {
-        const term = this.value.toLowerCase();
-        document.querySelectorAll('#select-period-body tr').forEach(function (tr) {
-            tr.style.display = tr.textContent.toLowerCase().includes(term) ? '' : 'none';
-        });
-    });
-
-    // ── Close panel when clicking outside ────────────────────────────────
-    document.addEventListener('click', function (e) {
-        const container = document.getElementById('select-period-dropdown');
-        if (container && !container.contains(e.target)) {
-            document.getElementById('select-period-panel').style.display = 'none';
-        }
     });
 
     // ── Trigger job ───────────────────────────────────────────────────────
     function triggerCreateSummary() {
-        const monthVal = parseInt(document.getElementById('select-period-value').value, 10);
+        const hiddenInput = document.getElementById('selectPeriodDropdown_value');
+        const monthVal = hiddenInput ? parseInt(hiddenInput.value, 10) : NaN;
         if (!monthVal) {
             showNotification('Please select a summary period.', 'error');
             return;
@@ -146,7 +116,7 @@
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                showNotification('Job triggered successfully. The history grid will refresh shortly.', 'success');
+                showNotification('Job triggered successfully.', 'success');
                 refreshHistoryGrid();
             } else {
                 showNotification(data.message ?? 'Failed to trigger the job.', 'error');
