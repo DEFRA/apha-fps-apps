@@ -46,6 +46,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<ReleaseSummary, ReleaseSummaryDto>();
             CreateMap<JobCodeZtLookup, JobCodeZtDto>().ReverseMap();
             CreateMap<TestPriceCheckView, TestPriceCheckDto>().ReverseMap();
+            CreateMap<TestReqBreakdownView, TestReqBreakdownDto>().ReverseMap();
         }
     }
 }

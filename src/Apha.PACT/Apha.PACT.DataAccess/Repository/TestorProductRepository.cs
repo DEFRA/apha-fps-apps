@@ -291,5 +291,61 @@ namespace Apha.PACT.DataAccess.Repository
             return query;
         }
 
+        public async Task<PagedData<TestReqBreakdownView>> GetPlannedTestsByWorkgroupAsync(PaginationParameters<string> query)
+        {
+            var baseQuery = _context.TestReqBreakdownViews.AsNoTracking();
+
+            baseQuery = ApplyPlannedTestsByWorkgroupFilter(baseQuery, query.Filter);
+            var sorted = ApplyPlannedTestsByWorkgroupSorting(baseQuery, query.SortBy, query.Descending);
+
+            return await ApplyPaging(sorted, query.Page, query.PageSize);
+        }
+
+        private static IQueryable<TestReqBreakdownView> ApplyPlannedTestsByWorkgroupSorting(
+            IQueryable<TestReqBreakdownView> source, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "testcode" => ApplyOrder(source, x => x.TestCode, descending),
+                "shortdescription" => ApplyOrder(source, x => x.ShortDescription, descending),
+                "program" => ApplyOrder(source, x => x.Program, descending),
+                "project" => ApplyOrder(source, x => x.Project, descending),
+                "pc" => ApplyOrder(source, x => x.Pc, descending),
+                "workg" => ApplyOrder(source, x => x.WorkG, descending),
+                "wgprice" => ApplyOrder(source, x => x.WgPrice, descending),
+                "totalcost" => ApplyOrder(source, x => x.TotalCost, descending),
+                _ => ApplyOrder(source, x => x.TestCode, descending)
+            };
+        }
+
+        private static IQueryable<TestReqBreakdownView> ApplyPlannedTestsByWorkgroupFilter(
+            IQueryable<TestReqBreakdownView> query, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("TestCode", out var testCode) && testCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.TestCode, $"%{testCode}%"));
+            if (dict.TryGetValue("ShortDescription", out var shortDescription) && shortDescription != null)
+                query = query.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, $"%{shortDescription}%"));
+            if (dict.TryGetValue("Program", out var program) && program != null)
+                query = query.Where(x => x.Program != null && EF.Functions.ILike(x.Program, $"%{program}%"));
+            if (dict.TryGetValue("Project", out var project) && project != null)
+                query = query.Where(x => EF.Functions.ILike(x.Project, $"%{project}%"));
+            if (dict.TryGetValue("Pc", out var pc) && pc != null)
+                query = query.Where(x => x.Pc != null && EF.Functions.ILike(x.Pc, $"%{pc}%"));
+            if (dict.TryGetValue("WorkG", out var workg) && workg != null)
+                query = query.Where(x => x.WorkG != null && EF.Functions.ILike(x.WorkG, $"%{workg}%"));
+
+            return query;
+        }
+
     }
 }
+

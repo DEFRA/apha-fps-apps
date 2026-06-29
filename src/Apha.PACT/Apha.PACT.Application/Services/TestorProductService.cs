@@ -256,5 +256,12 @@ namespace Apha.PACT.Application.Services
         public async Task<bool> UpdateTestPriceCheckAsync(string testCode, string jobCode, TestPriceCheckDto dto)
             => await _repository.UpdateTestPriceCheckAsync(testCode, jobCode, dto.IsDefraProject, dto.TestPrice, dto.DefraUnitPrice);
 
+        public async Task<PaginatedResult<TestReqBreakdownDto>> GetPlannedTestsByWorkgroupAsync(QueryParameters<string> query)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetPlannedTestsByWorkgroupAsync(parameters);
+            return _mapper.Map<PaginatedResult<TestReqBreakdownDto>>(pagedData);
         }
+
+    }
 }
