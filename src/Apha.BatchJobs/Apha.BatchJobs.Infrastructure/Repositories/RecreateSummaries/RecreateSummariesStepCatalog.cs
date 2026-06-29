@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 
 /// <summary>
@@ -7,10 +10,21 @@ namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 /// </summary>
 internal sealed class RecreateSummariesStepCatalog : IRecreateSummariesStepCatalog
 {
+    private readonly ILoggerFactory? _loggerFactory;
+
+    public RecreateSummariesStepCatalog()
+    {
+    }
+
+    public RecreateSummariesStepCatalog(ILoggerFactory loggerFactory)
+    {
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    }
+
     public IReadOnlyList<IRecreateSummariesExecutionStep> BuildMandatorySteps(int month, int year, string triggeredBy) =>
     [
         new DeleteFpsTotalsStep(),
-        new CreateFpsTotalsStep(),
+        new CreateFpsTotalsStep(GetLogger<CreateFpsTotalsStep>()),
         new InsertMissingProjectsStep(),
         new DeleteTimeCostCalcsStep(),
         new CreateTimeCostCalcsStep(),
@@ -31,4 +45,7 @@ internal sealed class RecreateSummariesStepCatalog : IRecreateSummariesStepCatal
         new RefreshPeriodPscStep(month),
         new RefreshPeriodTccStep(month),
     ];
+
+    private ILogger<T> GetLogger<T>() where T : class
+        => _loggerFactory?.CreateLogger<T>() ?? NullLogger<T>.Instance;
 }

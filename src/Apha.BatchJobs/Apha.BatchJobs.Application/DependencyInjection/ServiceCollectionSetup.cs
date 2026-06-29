@@ -16,6 +16,7 @@ using Apha.BatchJobs.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.Application.DependencyInjection;
 
@@ -128,7 +129,7 @@ public static class ServiceCollectionSetup
         // RecreateSummaries Configuration and Services
         services.AddScoped<IRecreateSummariesContext, RecreateSummariesContext>();
         // SQL-backed step catalogs are retired; LINQ is the only active implementation.
-        services.AddScoped<IRecreateSummariesStepCatalog>(_ => new RecreateSummariesStepCatalog());
+        services.AddScoped<IRecreateSummariesStepCatalog>(sp => new RecreateSummariesStepCatalog(sp.GetRequiredService<ILoggerFactory>()));
     }
 
     private static void RegisterMabArchiveLoaders(IServiceCollection services)
