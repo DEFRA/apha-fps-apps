@@ -20,6 +20,11 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsApiClient.FpsWorkGroupEmployee.GetWorkGroupEmployeeAsync(query, wgGrade);
         }
 
+        public async Task<ApiResponseDto<List<WorkGroupEmployeeDto>>> GetWorkGroupEmployeeForStaffAsync(QueryParameters<string> query, string wgGrade)
+        {
+            return await _fpsApiClient.FpsWorkGroupEmployee.GetWorkGroupEmployeeForStaffAsync(query, wgGrade);
+        }
+
         public async Task<ApiResponseDto<WorkGroupEmployeeDto>> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             return await _fpsApiClient.FpsWorkGroupEmployee.GetWorkGroupEmployeeByIdAsync(pactId);
@@ -33,6 +38,11 @@ namespace Apha.FPSApps.Application.Services.FPS
         public async Task<ApiResponseDto<WorkGroupEmployeeDto>> UpdateWorkGroupEmployeeAsync(WorkGroupEmployeeDto dto)
         {
             return await _fpsApiClient.FpsWorkGroupEmployee.UpdateWorkGroupEmployeeAsync(dto);
+        }
+
+        public async Task<ApiResponseDto<WorkGroupEmployeeDto>> UpdateWorkGroupEmployeeForStaffAsync(WorkGroupEmployeeDto dto)
+        {
+            return await _fpsApiClient.FpsWorkGroupEmployee.UpdateWorkGroupEmployeeForStaffAsync(dto);
         }
 
         public async Task<ApiResponseDto<bool>> DeleteWorkGroupEmployeeAsync(string pactId)

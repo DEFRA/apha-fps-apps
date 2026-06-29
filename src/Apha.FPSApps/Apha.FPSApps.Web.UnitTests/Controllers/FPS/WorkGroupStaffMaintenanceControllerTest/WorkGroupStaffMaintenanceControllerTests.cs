@@ -72,7 +72,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
                 employeeDtos,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
-            _workGroupEmployeeService.GetWorkGroupEmployeeAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
+            _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
                 .Returns(apiResponse);
             _mapper.Map<List<WorkGroupEmployeeItem>>(Arg.Any<List<WorkGroupEmployeeDto>>())
                 .Returns(new List<WorkGroupEmployeeItem> { new() { PactId = "P001", WgGrade = "WG-A" } });
@@ -118,7 +118,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
                     };
                 });
 
-            _workGroupEmployeeService.GetWorkGroupEmployeeAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
+            _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
                 .Returns(ApiResponseDto<List<WorkGroupEmployeeDto>>.SuccessResponse(
                     new List<WorkGroupEmployeeDto>(),
                     new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }));
@@ -138,7 +138,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             var result = await _controller.LoadWGStaffGrid(request);
 
             Assert.IsType<PartialViewResult>(result);
-            await _workGroupEmployeeService.Received(1).GetWorkGroupEmployeeAsync(
+            await _workGroupEmployeeService.Received(1).GetWorkGroupEmployeeForStaffAsync(
                 Arg.Is<QueryParameters<string>>(q =>
                     q.Filter != null
                     && q.Filter.Contains("\"Name\":\"Alice\"")
@@ -165,7 +165,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
                     };
                 });
 
-            _workGroupEmployeeService.GetWorkGroupEmployeeAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
+            _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
                 .Returns(ApiResponseDto<List<WorkGroupEmployeeDto>>.SuccessResponse(
                     new List<WorkGroupEmployeeDto>(),
                     new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }));
@@ -189,7 +189,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
             var model = Assert.IsType<DataGridConfig<WorkGroupEmployeeItem>>(partialViewResult.Model);
 
-            await _workGroupEmployeeService.Received(1).GetWorkGroupEmployeeAsync(
+            await _workGroupEmployeeService.Received(1).GetWorkGroupEmployeeForStaffAsync(
                 Arg.Is<QueryParameters<string>>(q => q.SortBy == apiSortBy && q.Descending),
                 string.Empty);
 
@@ -284,7 +284,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
                 TimeRecorder = 1
             };
 
-            _workGroupEmployeeService.UpdateWorkGroupEmployeeAsync(dto)
+            _workGroupEmployeeService.UpdateWorkGroupEmployeeForStaffAsync(dto)
                 .Returns(ApiResponseDto<WorkGroupEmployeeDto>.SuccessResponse(dto));
 
             var result = await _controller.Edit(dto);

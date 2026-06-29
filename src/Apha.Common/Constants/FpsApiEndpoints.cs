@@ -186,8 +186,10 @@ namespace Apha.Common.Constants
 
         // Resource Set-Up — WG Staff
         public const string GetWgStaff = "api/v1/wgstaff?wgGrade={0}";
+        public const string GetWgStaffForStaff = "api/v1/wgstaff/staff?wgGrade={0}";
         public const string GetWgEmployeeById = "api/v1/wgstaff/{0}";
         public const string UpdateWgEmployee = "api/v1/wgstaff";
+        public const string UpdateWgEmployeeForStaff = "api/v1/wgstaff/staff";
         public const string DeleteWgEmployee = "api/v1/wgstaff/{0}";
         public const string DeleteWgGrade = "api/v1/wggrades/{0}";
 

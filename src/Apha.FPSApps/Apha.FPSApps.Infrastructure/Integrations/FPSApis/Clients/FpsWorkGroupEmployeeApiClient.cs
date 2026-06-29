@@ -38,6 +38,21 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
+        public async Task<ApiResponseDto<List<WorkGroupEmployeeDto>>> GetWorkGroupEmployeeForStaffAsync(QueryParameters<string> query, string wgGrade)
+        {
+            var baseUrl = string.Format(FpsApiEndpoints.GetWgStaffForStaff, Uri.EscapeDataString(wgGrade));
+            var url = QueryStringHelper.AddQueryString(baseUrl, query);
+            var response = await _http.GetAsync<List<WorkGroupEmployeeRes>>(url);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeDto>>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeDto>>>(response);
+                return ApiResponseDto<List<WorkGroupEmployeeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
         public async Task<ApiResponseDto<WorkGroupEmployeeDto>> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             var response = await _http.GetAsync<WorkGroupEmployeeRes>(
@@ -72,6 +87,21 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             var req = _mapper.Map<WorkGroupEmployeeReq>(dto);
             var response = await _http.PutAsync<WorkGroupEmployeeReq, WorkGroupEmployeeRes>(FpsApiEndpoints.UpdateWgEmployee, req);
+            if (response.Success)
+            {
+                return _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(response);
+            }
+            else
+            {
+                var responseDto = _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(response);
+                return ApiResponseDto<WorkGroupEmployeeDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+        }
+
+        public async Task<ApiResponseDto<WorkGroupEmployeeDto>> UpdateWorkGroupEmployeeForStaffAsync(WorkGroupEmployeeDto dto)
+        {
+            var req = _mapper.Map<WorkGroupEmployeeReq>(dto);
+            var response = await _http.PutAsync<WorkGroupEmployeeReq, WorkGroupEmployeeRes>(FpsApiEndpoints.UpdateWgEmployeeForStaff, req);
             if (response.Success)
             {
                 return _mapper.Map<ApiResponseDto<WorkGroupEmployeeDto>>(response);

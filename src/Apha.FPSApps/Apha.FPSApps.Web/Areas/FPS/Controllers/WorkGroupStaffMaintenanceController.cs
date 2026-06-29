@@ -187,7 +187,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var response = await _workGroupEmployeeService.UpdateWorkGroupEmployeeAsync(model);
+            var response = await _workGroupEmployeeService.UpdateWorkGroupEmployeeForStaffAsync(model);
             if (response.Success)
             {
                 return Json(new
@@ -240,7 +240,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             QueryParameters<string>? query = null,
             Dictionary<string, string>? filterDict = null)
         {
-            var response = await _workGroupEmployeeService.GetWorkGroupEmployeeAsync(query ?? new QueryParameters<string>(), string.Empty);
+            var response = await _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(query ?? new QueryParameters<string>(), string.Empty);
 
             var items = new List<WorkGroupEmployeeItem>();
             if (response.Data != null)

@@ -37,6 +37,16 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<WorkGroupEmployeeRes>>(result));
         }
 
+        [HttpGet("staff")]
+        public async Task<ActionResult> GetWorkGroupEmployeeForStaffAsync(
+            [FromQuery] PaginationReq<string> query,
+            [FromQuery] string? wgGrade)
+        {
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(filter, wgGrade ?? string.Empty);
+            return Ok(_mapper.Map<PaginationRes<WorkGroupEmployeeRes>>(result));
+        }
+
         [HttpGet("{pactId}")]
         public async Task<ActionResult<WorkGroupEmployeeRes>> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
@@ -62,6 +72,14 @@ namespace Apha.FPS.Api.Controllers
         {
             var mappedDto = _mapper.Map<WorkGroupEmployeeDto>(req);
             var updatedDto = await _workGroupEmployeeService.UpdateWorkGroupEmployeeAsync(mappedDto);
+            return Ok(_mapper.Map<WorkGroupEmployeeRes>(updatedDto));
+        }
+
+        [HttpPut("staff")]
+        public async Task<ActionResult<WorkGroupEmployeeRes>> UpdateWorkGroupEmployeeForStaffAsync([FromBody] WorkGroupEmployeeReq req)
+        {
+            var mappedDto = _mapper.Map<WorkGroupEmployeeDto>(req);
+            var updatedDto = await _workGroupEmployeeService.UpdateWorkGroupEmployeeForStaffAsync(mappedDto);
             return Ok(_mapper.Map<WorkGroupEmployeeRes>(updatedDto));
         }
 

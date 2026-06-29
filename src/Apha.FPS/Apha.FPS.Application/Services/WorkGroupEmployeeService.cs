@@ -28,6 +28,15 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<PaginatedResult<WorkGroupEmployeeDto>>(pagedData);
         }
 
+        public async Task<PaginatedResult<WorkGroupEmployeeDto>> GetWorkGroupEmployeeForStaffAsync(QueryParameters<string> query, string wgGrade)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+
+            var filter = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetWorkGroupEmployeeForStaffAsync(filter, wgGrade);
+            return _mapper.Map<PaginatedResult<WorkGroupEmployeeDto>>(pagedData);
+        }
+
         public async Task<WorkGroupEmployeeDto?> GetWorkGroupEmployeeByIdAsync(string pactId)
         {
             if (string.IsNullOrWhiteSpace(pactId))
@@ -81,6 +90,26 @@ namespace Apha.FPS.Application.Services
 
             var entity = _mapper.Map<WorkGroupEmployee>(dto);
             var updated = await _repository.UpdateWorkGroupEmployeeAsync(entity);
+            return _mapper.Map<WorkGroupEmployeeDto>(updated);
+        }
+
+        public async Task<WorkGroupEmployeeDto> UpdateWorkGroupEmployeeForStaffAsync(WorkGroupEmployeeDto dto)
+        {
+            ArgumentNullException.ThrowIfNull(dto);
+
+            if (string.IsNullOrWhiteSpace(dto.PactId))
+            {
+                throw new ArgumentException("PACT Id is required.");
+            }
+
+            var existing = await _repository.GetWorkGroupEmployeeByIdAsync(dto.PactId);
+            if (existing == null)
+            {
+                throw new KeyNotFoundException($"WorkGroupEmployee with PACT Id '{dto.PactId}' not found.");
+            }
+
+            var entity = _mapper.Map<WorkGroupEmployee>(dto);
+            var updated = await _repository.UpdateWorkGroupEmployeeForStaffAsync(entity);
             return _mapper.Map<WorkGroupEmployeeDto>(updated);
         }
 
