@@ -1,34 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsProjectAuditTrailApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New file — concrete HTTP API client implementing IFpsProjectAuditTrailApiClient
- *   - 5 GET methods binding to backend ProjectAuditTrailController endpoints:
- *     GET /api/v1/projectaudittrail/projectlogs
- *     GET /api/v1/projectaudittrail/staffjoblogs
- *     GET /api/v1/projectaudittrail/testrequirementlogs
- *     GET /api/v1/projectaudittrail/animalrequestlogs
- *     GET /api/v1/projectaudittrail/additionalcostlogs
- *   - project (required) and optional fromDate/toDate appended to query string via QueryHelpers
- *   - QueryParameters<string> pagination appended via QueryStringHelper.AddQueryString
- *   - AutoMapper maps backend Res list → frontend Dto list inside ApiResponseDto<T>
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse (Sonar S2139)
- *   - _http and _mapper fields private readonly (Sonar S2933)
- *   - InternalCodeError private const string (Sonar S1192)
- *   - BuildAuditUrl private static helper extracts repeated URL construction (Sonar S1192)
- *   - Registered on aggregate FpsApiClient.cs as IFpsProjectAuditTrailApiClient FpsProjectAuditTrail
- *
- * PRESERVED:
- *   - All 5 log endpoint operations with exact route matching the backend controller
- *   - Optional date range semantics: fromDate/toDate nullable, not sent when null
- *   - project required at call site — same guard as backend (ArgumentException if empty)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: DateOnly? params serialised as ISO 8601 date strings (yyyy-MM-dd); verify
- *     backend [FromQuery] DateOnly? binding accepts this format without additional model binder config
- */
 using Apha.Common.Constants;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
@@ -47,7 +16,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        // TRANSFORMENGINE: InternalCodeError as private const — Sonar S1192 compliance
         private const string InternalCodeError = "INTERNAL_ERROR";
 
         public FpsProjectAuditTrailApiClient(IFpsHttpExecutor http, IMapper mapper)
@@ -56,7 +24,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectaudittrail/projectlogs → ProjectAuditTrailController.GetProjectLogsAsync
         //   project (required) appended as ?project={project}; date range appended when non-null
         public async Task<ApiResponseDto<List<ProjectLogDto>>> GetProjectLogsAsync(
             QueryParameters<string> query,
@@ -82,7 +49,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectaudittrail/staffjoblogs → ProjectAuditTrailController.GetStaffJobLogsAsync
         public async Task<ApiResponseDto<List<StaffJobLogDto>>> GetStaffJobLogsAsync(
             QueryParameters<string> query,
             string project,
@@ -107,7 +73,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectaudittrail/testrequirementlogs → ProjectAuditTrailController.GetTestRequirementLogsAsync
         public async Task<ApiResponseDto<List<TestRequirementLogDto>>> GetTestRequirementLogsAsync(
             QueryParameters<string> query,
             string project,
@@ -132,7 +97,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectaudittrail/animalrequestlogs → ProjectAuditTrailController.GetAnimalRequestLogsAsync
         public async Task<ApiResponseDto<List<AnimalRequestLogDto>>> GetAnimalRequestLogsAsync(
             QueryParameters<string> query,
             string project,
@@ -157,7 +121,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET /api/v1/projectaudittrail/additionalcostlogs → ProjectAuditTrailController.GetAdditionalCostLogsAsync
         public async Task<ApiResponseDto<List<AdditionalCostLogDto>>> GetAdditionalCostLogsAsync(
             QueryParameters<string> query,
             string project,
@@ -182,7 +145,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: helper — appends project (required) and optional date range params to the pagination query string
         //   project sent as-is; DateOnly? serialised as ISO 8601 (yyyy-MM-dd) to match [FromQuery] DateOnly? on backend
         private static string BuildAuditUrl(
             string baseEndpoint,

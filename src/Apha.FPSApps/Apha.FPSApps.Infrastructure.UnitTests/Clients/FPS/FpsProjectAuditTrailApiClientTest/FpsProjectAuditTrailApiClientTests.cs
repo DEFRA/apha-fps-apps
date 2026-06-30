@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsProjectAuditTrailApiClientTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New file — xUnit tests for FpsProjectAuditTrailApiClient (Infrastructure layer)
- *   - Covers all 5 GET methods: GetProjectLogsAsync, GetStaffJobLogsAsync,
- *     GetTestRequirementLogsAsync, GetAnimalRequestLogsAsync, GetAdditionalCostLogsAsync
- *   - Tests: HTTP success (mapper called), HTTP failure (mapped failure), exception (FailureResponse returned)
- *   - URL construction tests: verify correct endpoint + project param in URL
- *
- * PRESERVED:
- *   - NSubstitute mock pattern consistent with existing FPS Infrastructure.UnitTests project
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPSApps.Application.Dtos;
@@ -43,7 +24,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsProjectAuditTrail
         {
             _http = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            // TRANSFORMENGINE: client constructed with mocked http executor and mapper
             _client = new FpsProjectAuditTrailApiClient(_http, _mapper);
         }
 

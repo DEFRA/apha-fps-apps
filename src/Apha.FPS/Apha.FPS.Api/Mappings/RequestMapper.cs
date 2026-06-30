@@ -1,33 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — RequestMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - Added 5 ProjectAuditTrail Dto↔Res mappings for the 5 audit log tables:
- *       ProjectLogDto ↔ ProjectLogRes
- *       StaffJobLogDto ↔ StaffJobLogRes
- *       TestRequirementLogDto ↔ TestRequirementLogRes
- *       AnimalRequestLogDto ↔ AnimalRequestLogRes
- *       AdditionalCostLogDto ↔ AdditionalCostLogRes
- *   - Added 5 corresponding PaginatedResult<TDto> → PaginationRes<TRes> mappings
- *     consistent with existing ProjectStaffPlanView / ProjectGroupStaffPlanView pattern
- *   - Phase 6 Backend Readiness Gate — VERIFIED: all 5 Dto↔Res CreateMap pairs present;
- *     all 5 PaginatedResult<TDto> → PaginationRes<TRes> unidirectional pagination maps present;
- *     no structural changes required
- *
- * PRESERVED:
- *   - All pre-existing mappings (Pagination, StaffJob, Animal, Employee, Program, Project,
- *     Division, Grade, Agency, ProgrammeNewProject, ResourceSetUp, BudgetResourceLevel)
- *   - All ForMember custom projections (BudgetExt↔CustIncome, SubAccount name swap, etc.)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: ProjectLogDto.CaseWorkSub (decimal?) maps to ProjectLogRes.CaseworkSub (decimal?) —
- *     names differ by capitalisation (CaseWork vs Casework); AutoMapper resolves by convention here
- *     but verify the frontend grid column name matches the response property name
- *   - TRANSFORMENGINE TODO: ProjectLogDto.PlanCaseWorkDebit maps to ProjectLogRes.PlanCaseworkDebit —
- *     same case difference as above; confirm convention mapping is correct
- */
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
@@ -72,7 +42,6 @@ namespace Apha.FPS.Api.Mappings
                 .ForMember(d => d.BudgetExt, o => o.MapFrom(s => s.CustIncome)).ReverseMap()
                 .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt));
 
-            // TRANSFORMENGINE: VLA profitability mappings — frmJobcodeTotalsVLA Phase 5
             //   JobCode (DTO natural key) -> Project (response display column per HTML prototype)
             //   Id is int? in DTO (nullable ROW_NUMBER) -> int in Res (non-nullable contract property)
             CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
@@ -136,24 +105,19 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
-            // TRANSFORMENGINE: ProjectAuditTrail Dto↔Res mappings — Phase 5 frmProjectChangesLog + subforms migration
             // 5 log tables: project_log, staffjob_log, testreq_log, animalreq_log, additionalcosts_log
             CreateMap<ProjectLogDto, ProjectLogRes>().ReverseMap();
             CreateMap<PaginatedResult<ProjectLogDto>, PaginationRes<ProjectLogRes>>();
 
-            // TRANSFORMENGINE: StaffJobLogDto ↔ StaffJobLogRes — sf_StaffJob_Log subform (Tab 2)
             CreateMap<StaffJobLogDto, StaffJobLogRes>().ReverseMap();
             CreateMap<PaginatedResult<StaffJobLogDto>, PaginationRes<StaffJobLogRes>>();
 
-            // TRANSFORMENGINE: TestRequirementLogDto ↔ TestRequirementLogRes — sf_TestReq_Log subform (Tab 3)
             CreateMap<TestRequirementLogDto, TestRequirementLogRes>().ReverseMap();
             CreateMap<PaginatedResult<TestRequirementLogDto>, PaginationRes<TestRequirementLogRes>>();
 
-            // TRANSFORMENGINE: AnimalRequestLogDto ↔ AnimalRequestLogRes — sf_AnimalReq_Log subform (Tab 4)
             CreateMap<AnimalRequestLogDto, AnimalRequestLogRes>().ReverseMap();
             CreateMap<PaginatedResult<AnimalRequestLogDto>, PaginationRes<AnimalRequestLogRes>>();
 
-            // TRANSFORMENGINE: AdditionalCostLogDto ↔ AdditionalCostLogRes — sf_AdditionalCosts_Log subform (Tab 5)
             CreateMap<AdditionalCostLogDto, AdditionalCostLogRes>().ReverseMap();
             CreateMap<PaginatedResult<AdditionalCostLogDto>, PaginationRes<AdditionalCostLogRes>>();
         }

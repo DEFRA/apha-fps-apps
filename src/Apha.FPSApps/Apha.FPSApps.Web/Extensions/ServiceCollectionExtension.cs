@@ -1,25 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - Added AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>() in AddServices()
- *     (alphabetical position among FPS services, after IPlanStaffZTCodeService)
- *   - Added AddScoped<IFpsProjectAuditTrailApiClient, FpsProjectAuditTrailApiClient>() in AddRepositories()
- *   - Added using directives for FpsApiClients interfaces and FPSApis.Clients namespace
- *
- * PRESERVED:
- *   - All existing service registrations unchanged
- *   - All existing using directives
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: IFpsProjectAuditTrailApiClient is registered here in AddRepositories()
- *     as a provisional location. Per the existing codebase pattern (see ApiClientExtension.cs line 49
- *     where IFpsProfitCentreApiClient is registered), IFps*ApiClient types should be registered in
- *     ApiClientExtension.AddApiClient() alongside the IFpsHttpExecutor setup. Move this registration
- *     to ApiClientExtension.cs in a follow-up task.
- */
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -113,7 +91,6 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IPurchasesService, PurchasesService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
             services.AddScoped<IPlanStaffZTCodeService, PlanStaffZTCodeService>();
-            // TRANSFORMENGINE: ProjectAuditTrail service registration added — Phase 10 (Step 15c).
             // IProjectAuditTrailService is the frontend application-layer service; it delegates to
             // IFpsProjectAuditTrailApiClient (registered in AddRepositories() below).
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
@@ -121,8 +98,6 @@ namespace Apha.FPSApps.Web.Extensions
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            // TRANSFORMENGINE: IFpsProjectAuditTrailApiClient registered here as a provisional location.
-            // TRANSFORMENGINE TODO: Move to ApiClientExtension.AddApiClient() to align with the pattern
             //   used by IFpsProfitCentreApiClient and other IFps*ApiClient registrations (see ApiClientExtension.cs).
             services.AddScoped<IFpsProjectAuditTrailApiClient, FpsProjectAuditTrailApiClient>();
             return services;

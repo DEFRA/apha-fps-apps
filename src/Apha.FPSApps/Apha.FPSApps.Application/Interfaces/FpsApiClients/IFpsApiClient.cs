@@ -27,9 +27,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsProjectGroupApiClient FpsProjectGroup { get; }
         IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         IFpsPurchasesApiClient FpsPurchases { get; }
-        // TRANSFORMENGINE: FpsGrade added
         IFpsGradeApiClient FpsGrade { get; }
-        // TRANSFORMENGINE: FpsProjectAuditTrail added — Phase 7 frontend API client for ProjectAuditTrailController
         IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
     }
 }

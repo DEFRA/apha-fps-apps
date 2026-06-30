@@ -1,25 +1,5 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProjectLogDto.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New file — DTO mirroring ProjectLog entity for service-layer contracts
- *   - All 41 fields from ProjectLog entity exposed as DTO properties for API surface
- *   - Used as input/output contract between service layer and API controller
- *
- * PRESERVED:
- *   - All property names, types, and nullability exactly matching ProjectLog entity
- *   - decimal fields preserved as decimal (no lossy conversion)
- *   - FpsYear as int (NOT NULL in entity, matching DDL NOT NULL constraint)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify that CostCentre (double?) is acceptable in DTO surface or should be decimal?
- *   - TRANSFORMENGINE TODO: Finished and IsDefraProject (short?) may need bool representation at API boundary
- */
 namespace Apha.FPS.Application.Dtos
 {
-    // TRANSFORMENGINE: DTO mirroring fps.project_log table — all 41 columns surfaced for audit trail display
     public class ProjectLogDto
     {
         public int SequenceNo { get; set; }

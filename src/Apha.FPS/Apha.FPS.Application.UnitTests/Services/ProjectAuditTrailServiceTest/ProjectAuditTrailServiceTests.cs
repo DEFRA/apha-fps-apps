@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProjectAuditTrailServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New file — xUnit tests for ProjectAuditTrailService (backend Application layer)
- *   - Covers all 5 service methods: GetProjectLogsAsync, GetStaffJobLogsAsync,
- *     GetTestRequirementLogsAsync, GetAnimalRequestLogsAsync, GetAdditionalCostLogsAsync
- *   - Tests: happy path, empty result, null parentProject guard, null query guard, delegation verification
- *
- * PRESERVED:
- *   - NSubstitute mock pattern consistent with existing FPS Application.UnitTests project
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Application.Pagination;
@@ -40,7 +22,6 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectAuditTrailServiceTest
         {
             _repository = Substitute.For<IProjectAuditTrailRepository>();
             _mapper = Substitute.For<IMapper>();
-            // TRANSFORMENGINE: service constructed with mocked repository and mapper
             _service = new ProjectAuditTrailService(_repository, _mapper);
         }
 

@@ -1,26 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsDbContext.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - Phase 4 VERIFY: confirmed all 5 log entity DbSets registered (StaffJobLogs, AnimalRequestLogs,
- *     AdditionalCostLogs, TestRequirementLogs, ProjectLogs)
- *   - Phase 4 VERIFY: confirmed HasQueryFilter(e => e.FpsYear == FilterFpsYear) applied to all 5 log entities
- *   - Phase 4 VERIFY: confirmed ApplyConfiguration registered for all 5 log map files
- *     (StaffJobLogMap, AnimalRequestLogMap, AdditionalCostLogMap, TestRequirementLogMap, ProjectLogMap)
- *
- * PRESERVED:
- *   - IFpsRequestContext injection for FilterFpsYear scoping
- *   - All existing DbSet declarations (104 total) and OnModelCreating registrations unchanged
- *   - Cross-year table comment (MonthlyTime, ProjectMonth, TimeCodeValid, Milestone, ProjectMonthFinal)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Duplicate ApplyConfiguration(new MonthlyTimeMap()) and
- *     ApplyConfiguration(new MonthlyOutputMap()) detected — remove duplicate calls before production build
- *   - TRANSFORMENGINE TODO: WorkGroupView DbSet is referenced in HasQueryFilter but no DbSet<WorkGroupView>
- *     declaration is visible in this file — verify WorkGroupView is declared in a partial class file
- */
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;

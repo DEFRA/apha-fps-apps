@@ -1,20 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProjectAuditTrailServiceTests.cs (Frontend Application)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New file — xUnit tests for the frontend ProjectAuditTrailService (Application layer)
- *   - Tests thin delegation: all 5 methods forward to _fpsClient.FpsProjectAuditTrail
- *   - Covers: happy path success, API failure, delegation verification (Received(1))
- *
- * PRESERVED:
- *   - NSubstitute mock pattern consistent with existing FPS Application.UnitTests project
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -37,7 +20,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectAuditTrailServi
         {
             _fpsClient = Substitute.For<IFpsApiClient>();
             _auditTrailApiClient = Substitute.For<IFpsProjectAuditTrailApiClient>();
-            // TRANSFORMENGINE: wire aggregate client property to typed sub-client mock
             _fpsClient.FpsProjectAuditTrail.Returns(_auditTrailApiClient);
             _service = new ProjectAuditTrailService(_fpsClient);
         }

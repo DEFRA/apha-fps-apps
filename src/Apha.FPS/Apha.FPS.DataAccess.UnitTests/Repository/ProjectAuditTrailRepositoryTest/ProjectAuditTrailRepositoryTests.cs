@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProjectAuditTrailRepositoryTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New file — xUnit tests for ProjectAuditTrailRepository (DataAccess layer)
- *   - Covers all 5 query methods: GetProjectLogsAsync, GetStaffJobLogsAsync,
- *     GetTestRequirementLogsAsync, GetAnimalRequestLogsAsync, GetAdditionalCostLogsAsync
- *   - Tests: happy path (data returned), no-match (empty), date range filtering, search filtering
- *   - Uses RepositoryTestHelper.CreateMockDbContext + CreateMockDbSet (Moq) pattern
- *     consistent with all other FPS DataAccess.UnitTests repository tests
- *
- * PRESERVED:
- *   - Moq + RepositoryTestHelper pattern (NOT NSubstitute) for DbContext/DbSet mocking
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Join-based tests (StaffJobLogs, AnimalRequestLogs, etc.) require
- *     both JobCodes and the log DbSet to be seeded for the join filter to work correctly.
- */
 using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
@@ -44,7 +23,6 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             return mock;
         }
 
-        // TRANSFORMENGINE: factory method — provides only the DbSets needed by each test
         private static ProjectAuditTrailRepository CreateRepository(
             IEnumerable<ProjectLog>? projectLogs = null,
             IEnumerable<StaffJobLog>? staffJobLogs = null,

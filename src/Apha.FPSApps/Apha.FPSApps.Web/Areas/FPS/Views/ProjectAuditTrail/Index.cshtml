@@ -1,83 +1,12 @@
-<!-- TRANSFORMENGINE MIGRATION — Index.cshtml (ProjectAuditTrail)
-     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
-     Migrated : 2026-06-22
-
-     CHANGED:
-       - New file — Razor view replacing HTML prototype projectaudit_trail.html
-       - 5-tab GOV.UK tabs layout: Project Detail Changes, Staff Plan Changes,
-         Test Requirement Changes, Animal Requirement Changes, Exceptional Cost Changes
-       - Explicit filter section from HTML prototype preserved:
-           * filter-project <select> (outside all grid containers) bound to asp-for="ParentProject"
-             populated via asp-items="Model.ProjectList" (ProjectList from IProjectService)
-           * filter-from <input type="date"> bound to asp-for="FromDate"
-           * filter-to <input type="date"> bound to asp-for="ToDate"
-         All 3 filter controls are outside #gridContainer_* divs — explicit page-level filters
-       - Search / Clear buttons from HTML prototype preserved
-       - 5 _DataGrid partials (one per tab): ProjectLogsGrid, StaffJobLogsGrid,
-         TestRequirementLogsGrid, AnimalRequestLogsGrid, AdditionalCostLogsGrid
-       - ExtraFilterMethod set per-grid in the controller; JS filter functions declared
-         below pass project + fromDate + toDate to the AJAX reload POST
-       - showAddButton: false in all 5 JS grids → AllowAdd/Edit/Delete all false
-         → no add/edit/delete JS functions needed (read-only audit trail)
-       - Tab switching via govuk-tabs JS pattern (DOMContentLoaded event handler)
-       - All IDs mirror the HTML prototype: filter-project, filter-from, filter-to,
-         gridContainer_projectAuditTrailList, gridContainer_staffPlanChangesList, etc.
-
-     PRESERVED:
-       - All HTML prototype DOM ids, aria attributes, role attributes
-       - govuk-tabs structure: ul.govuk-tabs__list + div.govuk-tabs__panel per tab
-       - Filter section layout: label + select + date fieldset + Search/Clear buttons
-       - Tab panel IDs: panel-project-detail-changes, panel-staff-plan-changes,
-         panel-test-requirement-changes, panel-animal-requirement-changes,
-         panel-exceptional-cost-changes
-
-     --- Phase 14 — Pre-Build Security Review Gate (2026-06-22) ---
-     SECURITY REVIEW RESULT: PASS — no security defects requiring code changes.
-
-     Checks performed:
-       [PASS] No form-method-post elements — filter controls use button-type-button
-              triggering JS; AJAX POSTs originate from _DataGrid's internal mechanism.
-              Html.AntiForgeryToken() is not required in this view.
-       [PASS] asp-for Tag Helpers (ParentProject, FromDate, ToDate) HTML-encode all
-              model values before rendering into value attributes. No Html.Raw() used.
-       [PASS] asp-items="Model.ProjectList" — Tag Helper renders and HTML-encodes all
-              option tags from server-side SelectListItem list. No XSS vector.
-       [PASS] No unencoded Razor output (Html.Raw / Razor string interpolation of
-              user-supplied values) anywhere in the view.
-       [PASS] JavaScript filter reads (filter-project, filter-from, filter-to) are sent
-              as POST body params to server — not written back into the DOM. Server-side
-              controller uses LINQ with typed params; no SQL injection vector.
-       [PASS] Tab navigation: aria-controls values passed to showAuditTab() are
-              hardcoded server-rendered panel IDs (panel-project-detail-changes etc.) —
-              never derived from user-supplied data. getElementById(targetId) is safe.
-       [PASS] window['gridManager_' + gridId] access: gridId drawn from a hardcoded
-              array literal — no user-controlled key. No prototype pollution risk.
-       [PASS] No hardcoded secrets, connection strings, API tokens, or environment-
-              specific endpoints in view markup or the Scripts section block.
-       [PASS] reloadGrid({ page: 1 }) used exclusively — not the deprecated reload().
-       [PASS] No window.location, document.referrer, or query-string reads used for
-              auth or routing decisions in client-side code.
-       [REVIEW] Inline Scripts section block — consistent with FPS app-wide pattern
-              (all other FPS views use inline Scripts sections). If a strict Content
-              Security Policy (CSP) with nonce enforcement is adopted in the future,
-              these scripts must be moved to external .js files or receive CSP nonces.
-              Not a blocker for current deployment model.
-
-     DEFERRED / REQUIRES HUMAN REVIEW:
-       - TRANSFORMENGINE TODO: UserEmail column in all 5 grids is resolved at the backend;
-         the stub AutoMapper Ignore() means the column renders empty until the backend
-         UserId-to-email resolution is implemented.
-       - TRANSFORMENGINE TODO: StaffJobLogItem.Name is stubbed — column renders empty
-         until the backend staff-lookup join is implemented.
-       - TRANSFORMENGINE TODO: FromDate/ToDate binding from HTML <input type="date"> to
-         DateOnly? — verify the model binder handles ISO 8601 date strings correctly in all
-         .NET 10 environments; add a custom TypeConverter or format annotation if needed. -->
-
-@using Apha.FPSApps.Web.Models.Components.DataGrid
+﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.ProjectAuditTrailViewModel
 
 @{
     ViewData["Title"] = FyContext.Year + " : Project Audit Trail";
+}
+
+@section Styles {
+    <link href="~/css/common/_govuk_tabs.css" rel="stylesheet" />
 }
 
 <main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
@@ -105,9 +34,7 @@
         </div>
 
         <!-- ── Filter section ─────────────────────────────────────────────── -->
-        <!-- TRANSFORMENGINE: Explicit filter controls from HTML prototype, outside all
-             gridContainer_* divs. Project <select> populated from IProjectService
-             (separate lookup flow). fromDate/toDate are DateOnly? on ViewModel. -->
+        
         <div class="govuk-grid-row sup_margin_left_right_10 trl-intro-block">
             <div class="govuk-grid-column-full sup_p_0">
 
@@ -124,9 +51,16 @@
                                     name="filterProject"
                                     asp-for="ParentProject"
                                     asp-items="Model.ProjectList"
+                                    aria-describedby="filter-project-error"
                                     aria-label="Select project">
-                                <option value="">All projects</option>
+                                <option value="">-- Select a project --</option>
                             </select>
+                            <p class="govuk-error-message govuk-!-font-size-16 govuk-!-margin-top-1 govuk-!-margin-bottom-0"
+                               id="filter-project-error"
+                               role="alert"
+                               style="display:none">
+                                <span class="govuk-visually-hidden">Error:</span> Please select a project before searching.
+                            </p>
                             <div class="govuk-button-group sup_margin_0 trl-filter-actions-buttons trl-filter-buttons_alignment govuk-!-margin-top-2">
                                 <button type="button"
                                         class="govuk-button sup_margin_0"
@@ -237,10 +171,8 @@
                          aria-labelledby="tab-project-detail-changes">
                         <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
                             <div class="govuk-grid-column-full sup_p_0">
-                                <!-- TRANSFORMENGINE: Tab 1 — projectAuditTrailGrid
-                                     AllowAdd/Edit/Delete all false (showAddButton:false in JS prototype).
-                                     ExtraFilterMethod="getProjectAuditTrailExtraFilters" set in controller. -->
-                                <div id="gridContainer_projectAuditTrailList">
+                                
+                                <div id="@($"gridContainer_{Model.ProjectLogsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.ProjectLogsGrid)
                                 </div>
                             </div>
@@ -254,9 +186,8 @@
                          aria-labelledby="tab-staff-plan-changes">
                         <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
                             <div class="govuk-grid-column-full sup_p_0">
-                                <!-- TRANSFORMENGINE: Tab 2 — staffPlanChangesGrid
-                                     AllowAdd/Edit/Delete all false. ExtraFilterMethod="getStaffPlanChangesExtraFilters". -->
-                                <div id="gridContainer_staffPlanChangesList">
+                                
+                                <div id="@($"gridContainer_{Model.StaffJobLogsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.StaffJobLogsGrid)
                                 </div>
                             </div>
@@ -270,9 +201,8 @@
                          aria-labelledby="tab-test-requirement-changes">
                         <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
                             <div class="govuk-grid-column-full sup_p_0">
-                                <!-- TRANSFORMENGINE: Tab 3 — testRequirementChangesGrid
-                                     AllowAdd/Edit/Delete all false. ExtraFilterMethod="getTestRequirementChangesExtraFilters". -->
-                                <div id="gridContainer_testRequirementChangesList">
+                                
+                                <div id="@($"gridContainer_{Model.TestRequirementLogsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.TestRequirementLogsGrid)
                                 </div>
                             </div>
@@ -286,9 +216,8 @@
                          aria-labelledby="tab-animal-requirement-changes">
                         <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
                             <div class="govuk-grid-column-full sup_p_0">
-                                <!-- TRANSFORMENGINE: Tab 4 — animalRequirementChangesGrid
-                                     AllowAdd/Edit/Delete all false. ExtraFilterMethod="getAnimalRequirementChangesExtraFilters". -->
-                                <div id="gridContainer_animalRequirementChangesList">
+                                
+                                <div id="@($"gridContainer_{Model.AnimalRequestLogsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.AnimalRequestLogsGrid)
                                 </div>
                             </div>
@@ -302,9 +231,8 @@
                          aria-labelledby="tab-exceptional-cost-changes">
                         <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
                             <div class="govuk-grid-column-full sup_p_0">
-                                <!-- TRANSFORMENGINE: Tab 5 — exceptionalCostChangesGrid
-                                     AllowAdd/Edit/Delete all false. ExtraFilterMethod="getExceptionalCostChangesExtraFilters". -->
-                                <div id="gridContainer_exceptionalCostChangesList">
+                                
+                                <div id="@($"gridContainer_{Model.AdditionalCostLogsGrid.GridId}")">
                                     @await Html.PartialAsync("_DataGrid", Model.AdditionalCostLogsGrid)
                                 </div>
                             </div>
@@ -326,6 +254,7 @@
         // ── Tab switching (mirrors govuk_tabs.js behavior from HTML prototype) ──────────
         function showAuditTab(targetId) {
             document.querySelectorAll('.govuk-tabs__panel').forEach(function (panel) {
+                panel.classList.remove('active');
                 panel.classList.add('govuk-tabs__panel--hidden');
                 panel.hidden = true;
             });
@@ -336,6 +265,7 @@
             });
             var activePanel = document.getElementById(targetId);
             if (activePanel) {
+                activePanel.classList.add('active');
                 activePanel.classList.remove('govuk-tabs__panel--hidden');
                 activePanel.hidden = false;
             }
@@ -348,7 +278,6 @@
         }
 
         // ── Extra filter methods — called by each _DataGrid on every AJAX reload ────────
-        // TRANSFORMENGINE: Each function returns the current filter state to the POST body.
         // The controller LoadXxxLogsGrid actions read project/fromDate/toDate from these params.
         function getProjectAuditTrailExtraFilters() {
             return {
@@ -387,7 +316,6 @@
         }
 
         // ── Grid reload helpers — reloadGrid({ page: 1 }) per _DataGrid contract ────────
-        // TRANSFORMENGINE: ALWAYS use gm.reloadGrid({ page: 1 }) — NOT gm.reload()
         function reloadAllAuditGrids() {
             ['projectAuditTrailGrid',
              'staffPlanChangesGrid',
@@ -401,6 +329,18 @@
 
         // ── Apply filters (Search button) ─────────────────────────────────────────────
         function applyProjectAuditTrailFilters() {
+            var projectVal = document.getElementById('filter-project')?.value || '';
+            var errorEl    = document.getElementById('filter-project-error');
+            var selectEl   = document.getElementById('filter-project');
+
+            if (!projectVal) {
+                if (errorEl)  { errorEl.style.display = ''; }
+                if (selectEl) { selectEl.classList.add('govuk-select--error'); selectEl.focus(); }
+                return;
+            }
+
+            if (errorEl)  { errorEl.style.display = 'none'; }
+            if (selectEl) { selectEl.classList.remove('govuk-select--error'); }
             reloadAllAuditGrids();
         }
 
@@ -409,6 +349,10 @@
             document.getElementById('filter-project').value = '';
             document.getElementById('filter-from').value   = '';
             document.getElementById('filter-to').value     = '';
+            var errorEl  = document.getElementById('filter-project-error');
+            var selectEl = document.getElementById('filter-project');
+            if (errorEl)  { errorEl.style.display = 'none'; }
+            if (selectEl) { selectEl.classList.remove('govuk-select--error'); }
             reloadAllAuditGrids();
         }
 

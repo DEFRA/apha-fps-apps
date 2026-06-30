@@ -35,10 +35,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         public IFpsPurchasesApiClient FpsPurchases { get; }
 
-        // TRANSFORMENGINE: FpsGrade added � Phase 9 (FpsGradeApiClient for frmMaintGrade ? api/v1/Grade)
         public IFpsGradeApiClient FpsGrade { get; }
 
-        // TRANSFORMENGINE: FpsProjectAuditTrail added — Phase 7 frontend API client for ProjectAuditTrailController
         public IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
@@ -69,9 +67,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsWorkgroupGrade = new FpsWorkGroupGradeApiClient(http, mapper);
             FpsBudgetBids = new FpsBudgetBidsApiClient(http, mapper);
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
-            // TRANSFORMENGINE: FpsGrade wired
             FpsGrade = new FpsGradeApiClient(http, mapper);
-            // TRANSFORMENGINE: FpsProjectAuditTrail wired — Phase 7
             FpsProjectAuditTrail = new FpsProjectAuditTrailApiClient(http, mapper);
         }
     }

@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProjectAuditTrailControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New file — xUnit tests for ProjectAuditTrailController (API layer)
- *   - Covers all 5 GET endpoints: GetProjectLogsAsync, GetStaffJobLogsAsync,
- *     GetTestRequirementLogsAsync, GetAnimalRequestLogsAsync, GetAdditionalCostLogsAsync
- *   - Tests: valid request, empty result, null/whitespace project guard (ArgumentException),
- *     with date range, without date range
- *
- * PRESERVED:
- *   - NSubstitute mock pattern consistent with existing FPS Api.UnitTests project
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
@@ -41,7 +22,6 @@ namespace Apha.FPS.Api.UnitTests.Controllers.ProjectAuditTrailControllerTest
         {
             _service = Substitute.For<IProjectAuditTrailService>();
             _mapper = Substitute.For<IMapper>();
-            // TRANSFORMENGINE: controller constructed with mocked service and mapper
             _controller = new ProjectAuditTrailController(_service, _mapper);
         }
 
@@ -107,7 +87,7 @@ namespace Apha.FPS.Api.UnitTests.Controllers.ProjectAuditTrailControllerTest
             var fromDate = new DateOnly(2024, 1, 1);
             var toDate = new DateOnly(2024, 12, 31);
             var expectedFrom = fromDate.ToDateTime(TimeOnly.MinValue);
-            var expectedTo = toDate.ToDateTime(TimeOnly.MinValue);
+            var expectedTo = toDate.ToDateTime(TimeOnly.MaxValue);
 
             var serviceResult = new PaginatedResult<ProjectLogDto>
             {
@@ -207,7 +187,7 @@ namespace Apha.FPS.Api.UnitTests.Controllers.ProjectAuditTrailControllerTest
             var fromDate = new DateOnly(2024, 3, 1);
             var toDate = new DateOnly(2024, 3, 31);
             var expectedFrom = fromDate.ToDateTime(TimeOnly.MinValue);
-            var expectedTo = toDate.ToDateTime(TimeOnly.MinValue);
+            var expectedTo = toDate.ToDateTime(TimeOnly.MaxValue);
 
             _service.GetStaffJobLogsAsync(query, TestProject, expectedFrom, expectedTo)
                 .Returns(new PaginatedResult<StaffJobLogDto> { Data = new List<StaffJobLogDto>(), PaginationData = new PaginationDto() });
@@ -298,7 +278,7 @@ namespace Apha.FPS.Api.UnitTests.Controllers.ProjectAuditTrailControllerTest
 
             _service.GetTestRequirementLogsAsync(query, TestProject,
                     fromDate.ToDateTime(TimeOnly.MinValue),
-                    toDate.ToDateTime(TimeOnly.MinValue))
+                    toDate.ToDateTime(TimeOnly.MaxValue))
                 .Returns(new PaginatedResult<TestRequirementLogDto> { Data = new List<TestRequirementLogDto>(), PaginationData = new PaginationDto() });
             _mapper.Map<PaginationRes<TestRequirementLogRes>>(Arg.Any<PaginatedResult<TestRequirementLogDto>>())
                 .Returns(new PaginationRes<TestRequirementLogRes> { Data = new List<TestRequirementLogRes>(), PaginationData = new Pagination() });
@@ -310,7 +290,7 @@ namespace Apha.FPS.Api.UnitTests.Controllers.ProjectAuditTrailControllerTest
             await _service.Received(1).GetTestRequirementLogsAsync(
                 query, TestProject,
                 fromDate.ToDateTime(TimeOnly.MinValue),
-                toDate.ToDateTime(TimeOnly.MinValue));
+                toDate.ToDateTime(TimeOnly.MaxValue));
         }
 
         [Fact]
@@ -390,7 +370,7 @@ namespace Apha.FPS.Api.UnitTests.Controllers.ProjectAuditTrailControllerTest
 
             _service.GetAnimalRequestLogsAsync(query, TestProject,
                     fromDate.ToDateTime(TimeOnly.MinValue),
-                    toDate.ToDateTime(TimeOnly.MinValue))
+                    toDate.ToDateTime(TimeOnly.MaxValue))
                 .Returns(new PaginatedResult<AnimalRequestLogDto> { Data = new List<AnimalRequestLogDto>(), PaginationData = new PaginationDto() });
             _mapper.Map<PaginationRes<AnimalRequestLogRes>>(Arg.Any<PaginatedResult<AnimalRequestLogDto>>())
                 .Returns(new PaginationRes<AnimalRequestLogRes> { Data = new List<AnimalRequestLogRes>(), PaginationData = new Pagination() });
@@ -402,7 +382,7 @@ namespace Apha.FPS.Api.UnitTests.Controllers.ProjectAuditTrailControllerTest
             await _service.Received(1).GetAnimalRequestLogsAsync(
                 query, TestProject,
                 fromDate.ToDateTime(TimeOnly.MinValue),
-                toDate.ToDateTime(TimeOnly.MinValue));
+                toDate.ToDateTime(TimeOnly.MaxValue));
         }
 
         [Fact]
@@ -482,7 +462,7 @@ namespace Apha.FPS.Api.UnitTests.Controllers.ProjectAuditTrailControllerTest
 
             _service.GetAdditionalCostLogsAsync(query, TestProject,
                     fromDate.ToDateTime(TimeOnly.MinValue),
-                    toDate.ToDateTime(TimeOnly.MinValue))
+                    toDate.ToDateTime(TimeOnly.MaxValue))
                 .Returns(new PaginatedResult<AdditionalCostLogDto> { Data = new List<AdditionalCostLogDto>(), PaginationData = new PaginationDto() });
             _mapper.Map<PaginationRes<AdditionalCostLogRes>>(Arg.Any<PaginatedResult<AdditionalCostLogDto>>())
                 .Returns(new PaginationRes<AdditionalCostLogRes> { Data = new List<AdditionalCostLogRes>(), PaginationData = new Pagination() });
@@ -494,7 +474,7 @@ namespace Apha.FPS.Api.UnitTests.Controllers.ProjectAuditTrailControllerTest
             await _service.Received(1).GetAdditionalCostLogsAsync(
                 query, TestProject,
                 fromDate.ToDateTime(TimeOnly.MinValue),
-                toDate.ToDateTime(TimeOnly.MinValue));
+                toDate.ToDateTime(TimeOnly.MaxValue));
         }
 
         [Fact]

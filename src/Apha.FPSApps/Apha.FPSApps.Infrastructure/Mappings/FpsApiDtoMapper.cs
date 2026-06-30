@@ -1,29 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsApiDtoMapper.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - Added 5 read-only Res→Dto CreateMap entries for ProjectAuditTrail log types:
- *       ProjectLogRes→ProjectLogDto, StaffJobLogRes→StaffJobLogDto,
- *       TestRequirementLogRes→TestRequirementLogDto (with type-coercion ForMembers),
- *       AnimalRequestLogRes→AnimalRequestLogDto, AdditionalCostLogRes→AdditionalCostLogDto
- *   - All 5 log mappings are one-directional (Res→Dto only; no ReverseMap — audit logs are read-only)
- *
- * PRESERVED:
- *   - All existing CreateMap entries unchanged
- *   - Existing ForMember configurations (ProjectProfitabilityVla, ProjectReq/BudgetExt, etc.)
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: TestRequirementLogRes.UnitPrice is double? but TestRequirementLogDto.UnitPrice
- *     is decimal? — explicit cast via ForMember applied; verify precision loss is acceptable at this boundary.
- *   - TRANSFORMENGINE TODO: ProjectLogDto contains extra fields (SequenceNo, JobCode, IsDefraProject,
- *     FpsYear, etc.) not present in ProjectLogRes — these will remain default-valued after mapping;
- *     confirm they are not needed in the audit trail grid display.
- *   - TRANSFORMENGINE TODO: StaffJobLogRes.Name (staff display name resolved server-side) is not in
- *     StaffJobLogDto — mapping silently drops Name; Phase 11 Item model should source Name from Dto
- *     or resolve via a separate lookup if needed in the grid.
- */
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
@@ -101,7 +75,6 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
-            // TRANSFORMENGINE: Grade mappings added � Phase 10 (Step 15a)
             // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
             CreateMap<GradeDto, GradeReq>().ReverseMap();
             CreateMap<GradeDto, GradeRes>().ReverseMap();
@@ -141,7 +114,6 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
 
             // ProjectProfitabilityVla
-            // TRANSFORMENGINE: Project<->JobCode ForMember required — VlaRes.Project maps to VlaDto.JobCode;
             //   ForMember(Id) handles int->int? coercion: Id=GetValueOrDefault(0) on reverse.
             //   TotalCount is on Res only; silently ignored in Res->Dto direction (see DEFERRED note above).
             CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
@@ -174,7 +146,6 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
-            // TRANSFORMENGINE: ProjectAuditTrail — 5 read-only Res→Dto log mappings added Phase 10 (Step 15a).
             // Audit logs are read-only so no .ReverseMap() — frontend never writes back to backend audit tables.
 
             // ProjectLog: Res has 33 properties; Dto has 41 (extra: SequenceNo, JobCode, IsDefraProject,
@@ -187,12 +158,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
                 .ForMember(d => d.PlanCaseWorkDebit, o => o.MapFrom(s => s.PlanCaseworkDebit));
 
             // StaffJobLog: Res.Name (staff display name resolved server-side) has no Dto counterpart — silently dropped.
-            // TRANSFORMENGINE TODO: Phase 11 Item model should surface Name from a direct Res property or a secondary staff lookup.
             CreateMap<StaffJobLogRes, StaffJobLogDto>();
 
             // TestRequirementLog: type-coercion — Res.UnitPrice is double? but Dto.UnitPrice is decimal?;
             //   Res.NoRequired is int? but Dto.NoRequired is double?. Explicit ForMember casts applied.
-            // TRANSFORMENGINE TODO: verify precision loss on UnitPrice decimal↔double conversion is acceptable.
             CreateMap<TestRequirementLogRes, TestRequirementLogDto>()
                 .ForMember(d => d.UnitPrice, o => o.MapFrom(s => s.UnitPrice.HasValue ? (decimal?)Convert.ToDecimal(s.UnitPrice.Value) : null))
                 .ForMember(d => d.NoRequired, o => o.MapFrom(s => s.NoRequired.HasValue ? (double?)Convert.ToDouble(s.NoRequired.Value) : null));

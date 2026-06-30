@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ProjectAuditTrailControllerTests.cs (Web MVC)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-22
- *
- * CHANGED:
- *   - New file — xUnit tests for ProjectAuditTrailController (MVC frontend Web layer)
- *   - Covers: Index (GET), and all 5 AJAX POST endpoints:
- *     LoadProjectLogsGrid, LoadStaffJobLogsGrid, LoadTestRequirementLogsGrid,
- *     LoadAnimalRequestLogsGrid, LoadAdditionalCostLogsGrid
- *   - Tests: happy path, empty project returns empty grid, invalid ModelState returns JSON failure,
- *     service returns failure maps empty items
- *
- * PRESERVED:
- *   - NSubstitute mock pattern consistent with existing FPS Web.UnitTests project
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - DEFERRED: none — fully automated.
- */
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -46,7 +26,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProjectAuditTrailController
             _mapper = Substitute.For<IMapper>();
             _auditTrailService = Substitute.For<IProjectAuditTrailService>();
             _projectService = Substitute.For<IProjectService>();
-            // TRANSFORMENGINE: controller takes IMapper, IProjectAuditTrailService, IProjectService
             _controller = new ProjectAuditTrailController(_mapper, _auditTrailService, _projectService);
         }
 
