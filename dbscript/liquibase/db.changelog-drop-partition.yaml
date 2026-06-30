@@ -1,5 +1,5 @@
 databaseChangeLog:
   - include:
-      file: partitions/001_drop_partition.sql
+      file: /partitions/001_drop_partition.sql
       relativeToChangelogFile: true
       errorIfMissingOrEmpty: false
