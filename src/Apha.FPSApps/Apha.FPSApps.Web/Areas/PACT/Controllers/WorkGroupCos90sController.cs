@@ -1,3 +1,4 @@
+using Apha.Common.Utilities.ExcelExport;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 {
@@ -20,6 +22,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     {
         private readonly IWorkGroupService _workGroupService;
         private readonly IWorkGroupReportService _workGroupReportService;
+        private readonly IExcelExportService _excelExportService;
         private readonly IMonthHourService _monthHourService;
         private readonly IProfitCentreService _profitCentreService;
         private readonly ICalenderMonthService _calenderMonthService;
@@ -29,6 +32,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public WorkGroupCos90sController(
             IWorkGroupService workGroupService,
             IWorkGroupReportService workGroupReportService,
+            IExcelExportService excelExportService,
             IMonthHourService monthHourService,
             IProfitCentreService profitCentreService,
             ICalenderMonthService calenderMonthService,
@@ -37,6 +41,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             _workGroupService = workGroupService;
             _workGroupReportService = workGroupReportService;
+            _excelExportService = excelExportService;
             _monthHourService = monthHourService;
             _profitCentreService = profitCentreService;
             _calenderMonthService = calenderMonthService;
@@ -284,25 +289,63 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 selectedYear!.Value,
                 pactId);
 
-            if (!response.Success || response.Data == null || response.Data.Content == null || response.Data.Content.Length == 0)
+            var rows = response.Data?.Rows;
+            if (!response.Success || rows == null || rows.Count == 0)
                 return BadRequest(new
                 {
                     success = false,
                     message = "Failed to generate COS90 Excel."
                 });
 
-            var contentType = string.IsNullOrWhiteSpace(response.Data.ContentType)
-                ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                : response.Data.ContentType;
+            var exportRows = rows.Select(r => new WorkGroupCos90sExportRow
+            {
+                WorkGroupName = r.WorkGroupName,
+                ProfitCentre = r.ProfitCentre,
+                PactId = r.PactId,
+                StaffName = r.StaffName,
+                TimeCode = r.TimeCode,
+                Description = r.Description,
+                ParentProject = r.ParentProject,
+                GradeCode = r.GradeCode,
+                SpNumber = r.SpNumber,
+                Hours = r.Hours,
+                Month = r.Month,
+                Year = r.Year
+            });
 
-            var fileName = string.IsNullOrWhiteSpace(response.Data.FileName)
-                ? $"COS90_{selectedProfitCentre}_{selectedYear}_{selectedMonthNumber:D2}.xlsx"
-                : response.Data.FileName;
+            var content = _excelExportService.BuildWorkGroupCos90sExcel(
+                exportRows,
+                selectedMonthNumber!.Value,
+                selectedYear!.Value,
+                selectedProfitCentre,
+                pactId);
 
-            return File(response.Data.Content, contentType, fileName);
+            if (content.Length == 0)
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Failed to generate COS90 Excel."
+                });
+
+            var firstRow = rows.FirstOrDefault();
+            var workGroupPart = SanitizeFileNamePart(firstRow?.WorkGroupName, "WorkGroup");
+            var userNamePart = SanitizeFileNamePart(firstRow?.StaffName, "User");
+            var fileName = $"{workGroupPart}_{selectedMonthNumber}_{userNamePart}_Cos90.xlsx";
+
+            return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
         // ── Private helpers ─────────────────────────────────────────────────
+
+        private static string SanitizeFileNamePart(string? value, string fallback)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return fallback;
+
+            var invalidCharsPattern = $"[{Regex.Escape(new string(Path.GetInvalidFileNameChars()))}]";
+            var cleaned = Regex.Replace(value.Trim(), invalidCharsPattern, "_");
+            return string.IsNullOrWhiteSpace(cleaned) ? fallback : cleaned;
+        }
 
         private async Task<DataGridConfig<WorkGroupCos90sWorkGroupItem>> GetWorkGroupGridConfigAsync(
             PaginationFilter<string> request, string profitCentre)

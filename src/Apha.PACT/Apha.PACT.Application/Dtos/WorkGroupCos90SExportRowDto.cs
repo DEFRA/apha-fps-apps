@@ -1,6 +1,6 @@
-namespace Apha.PACT.Core.Entities
+namespace Apha.PACT.Application.Dtos
 {
-    public class WorkGroupCos90SExportRow
+    public class WorkGroupCos90SExportRowDto
     {
         public string WorkGroupName { get; set; } = string.Empty;
         public string ProfitCentre { get; set; } = string.Empty;

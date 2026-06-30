@@ -1,9 +1,7 @@
 namespace Apha.PACT.Application.Dtos
 {
-    public class WorkGroupCos90sExportResultDto
+    public class WorkGroupCos90SExportResultDto
     {
-        public string FileName { get; set; } = string.Empty;
-        public string ContentType { get; set; } = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        public byte[] Content { get; set; } = [];
+        public List<WorkGroupCos90SExportRowDto> Rows { get; set; } = [];
     }
 }

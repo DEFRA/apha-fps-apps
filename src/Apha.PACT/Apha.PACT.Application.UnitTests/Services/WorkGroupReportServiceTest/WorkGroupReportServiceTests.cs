@@ -4,6 +4,7 @@ using Apha.Common.Utilities.ExcelExport;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using FluentAssertions;
@@ -18,6 +19,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportServiceTest
         private readonly IGraphEmailService _mockEmailService;
         private readonly IExcelExportService _mockExcelService;
         private readonly ILogger<WorkGroupReportService> _mockLogger;
+        private readonly IMapper _mockMapper;
         private readonly WorkGroupReportService _sut;
 
         private const short Month4 = 4;
@@ -70,6 +72,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportServiceTest
             _mockEmailService = Substitute.For<IGraphEmailService>();
             _mockExcelService = Substitute.For<IExcelExportService>();
             _mockLogger       = Substitute.For<ILogger<WorkGroupReportService>>();
+            _mockMapper       = Substitute.For<IMapper>();
             _mockExcelService
                 .BuildTimeSheetExcel(Arg.Any<string>(), Arg.Any<short>(), Arg.Any<IEnumerable<WorkGroupTimeSheetRow>>(), Arg.Any<short>())
                 .Returns(Array.Empty<byte>());
@@ -83,7 +86,7 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportServiceTest
                 EmailBodyTemplate = "Please complete and return to APHA Gatekeeper - OTL Mailbox. [Mailto:{0}]. Thank you."
             });
 
-            _sut = new WorkGroupReportService(_mockRepository, _mockEmailService, _mockExcelService, emailSettings, _mockLogger);
+            _sut = new WorkGroupReportService(_mockRepository, _mockEmailService, _mockExcelService, emailSettings, _mockLogger, _mockMapper);
         }
 
         #region SendEmailsAsync — empty work groups

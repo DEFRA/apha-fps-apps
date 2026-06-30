@@ -5,9 +5,9 @@ using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.RegularExpressions;
 
 namespace Apha.PACT.Application.Services
 {
@@ -23,18 +23,21 @@ namespace Apha.PACT.Application.Services
         private readonly IExcelExportService _excelService;
         private readonly ILogger<WorkGroupReportService> _logger;
         private readonly string _emailBody;
+        private readonly AutoMapper.IMapper _mapper;
 
         public WorkGroupReportService(
             IWorkGroupRepository workGroupReportRepository,
             IGraphEmailService emailService,
             IExcelExportService excelService,
             IOptions<WorkGroupReportEmailSettings> emailSettings,
-            ILogger<WorkGroupReportService> logger)
+            ILogger<WorkGroupReportService> logger,
+            IMapper mapper)
         {
             _workGroupReportRepository = workGroupReportRepository;
             _emailService = emailService;
             _excelService = excelService;
             _logger = logger;
+            _mapper = mapper;
 
             var settings = emailSettings.Value;
             _emailBody = string.Format(settings.EmailBodyTemplate, settings.GatekeeperMailbox);
@@ -67,7 +70,7 @@ namespace Apha.PACT.Application.Services
             return results;
         }
 
-        public async Task<WorkGroupCos90sExportResultDto> ExportCos90sAsync(
+        public async Task<WorkGroupCos90SExportResultDto> ExportCos90sAsync(
             string profitCentre,
             short monthNumber,
             short year,
@@ -77,45 +80,11 @@ namespace Apha.PACT.Application.Services
             cancellationToken.ThrowIfCancellationRequested();
 
             var rows = (await _workGroupReportRepository.GetCos90ExportRowsAsync(profitCentre, monthNumber, year, pactId)).ToList();
-            var exportRows = rows.Select(r => new Apha.Common.Utilities.ExcelExport.WorkGroupCos90sExportRow
+
+            return new WorkGroupCos90SExportResultDto
             {
-                WorkGroupName = r.WorkGroupName,
-                ProfitCentre = r.ProfitCentre,
-                PactId = r.PactId,
-                StaffName = r.StaffName,
-                TimeCode = r.TimeCode,
-                Description = r.Description,
-                ParentProject = r.ParentProject,
-                GradeCode = r.GradeCode,
-                SpNumber = r.SpNumber,
-                Hours = r.Hours,
-                Month = r.Month,
-                Year = r.Year
-            });
-
-            var bytes = _excelService.BuildWorkGroupCos90sExcel(exportRows, monthNumber, year, profitCentre, pactId);
-
-            var firstRow = rows.FirstOrDefault();
-            var workGroupPart = SanitizeFileNamePart(firstRow?.WorkGroupName, "WorkGroup");
-            var userNamePart = SanitizeFileNamePart(firstRow?.StaffName, "User");
-            var fileName = $"{workGroupPart}_{monthNumber}_{userNamePart}_Cos90.xlsx";
-
-            return new WorkGroupCos90sExportResultDto
-            {
-                FileName = fileName,
-                ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                Content = bytes
+                Rows = _mapper.Map<List<WorkGroupCos90SExportRowDto>>(rows)
             };
-        }
-
-        private static string SanitizeFileNamePart(string? value, string fallback)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return fallback;
-
-            var invalidCharsPattern = $"[{Regex.Escape(new string(Path.GetInvalidFileNameChars()))}]";
-            var cleaned = Regex.Replace(value.Trim(), invalidCharsPattern, "_");
-            return string.IsNullOrWhiteSpace(cleaned) ? fallback : cleaned;
         }
 
         private async Task<WorkGroupReportEmailResultDto> ProcessWorkGroupAsync(

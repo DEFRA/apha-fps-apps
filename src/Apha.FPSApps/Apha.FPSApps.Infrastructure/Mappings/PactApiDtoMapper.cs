@@ -60,7 +60,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ReleaseSummaryRes, ReleaseSummaryDto>();
             CreateMap<TestPriceCheckDto, TestPriceCheckRes>().ReverseMap();
             CreateMap<TestPriceCheckDto, TestPriceCheckReq>();            
-            CreateMap<WorkGroupCos90SExportResultDto, WorkGroupCos90sExportRes>().ReverseMap();
+            CreateMap<WorkGroupCos90SExportResultDto, WorkGroupCos90SExportRes>().ReverseMap();
+            CreateMap<WorkGroupCos90SExportRowDto, WorkGroupCos90SExportRowRes>().ReverseMap();
             CreateMap<Cos90WorkGroupDto, Cos90WorkGroupRes>().ReverseMap();
             CreateMap<MonthHourDto, MonthHourRes>().ReverseMap();
             CreateMap<StaffPickerItemDto, StaffPickerItemRes>().ReverseMap();

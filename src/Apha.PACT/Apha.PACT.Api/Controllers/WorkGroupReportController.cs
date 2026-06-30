@@ -47,7 +47,7 @@ namespace Apha.PACT.Api.Controllers
                 request.PactId,
                 cancellationToken);
 
-            return Ok(_mapper.Map<WorkGroupCos90sExportRes>(result));
+            return Ok(_mapper.Map<WorkGroupCos90SExportRes>(result));
         }
     }
 }

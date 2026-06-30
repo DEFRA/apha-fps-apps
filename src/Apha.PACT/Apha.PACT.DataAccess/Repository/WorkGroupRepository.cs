@@ -384,7 +384,7 @@ namespace Apha.PACT.DataAccess.Repository
             return updated >= 0;
         }
 
-        public async Task<IEnumerable<WorkGroupCos90sExportRow>> GetCos90ExportRowsAsync(string profitCentre, short monthNumber, short year, string? pactId)
+        public async Task<IEnumerable<WorkGroupCos90SExportRow>> GetCos90ExportRowsAsync(string profitCentre, short monthNumber, short year, string? pactId)
         {
             var query =
                 from staff in _context.WorkGroupStaffViews.AsNoTracking()
@@ -396,7 +396,7 @@ namespace Apha.PACT.DataAccess.Repository
                 from top in topJoin.DefaultIfEmpty()
                 where tcv.Active
                       && staff.PersonStatus != "I"
-                select new WorkGroupCos90sExportRow
+                select new WorkGroupCos90SExportRow
                 {
                     ProfitCentre = "",
                     WorkGroupName = wgGrade.WorkGroup ?? string.Empty,

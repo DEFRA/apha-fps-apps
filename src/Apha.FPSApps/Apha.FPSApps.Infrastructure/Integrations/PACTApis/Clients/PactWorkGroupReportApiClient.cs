@@ -47,7 +47,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 PactId = pactId
             };
 
-            var response = await _http.PostAsync<WorkGroupCos90sExportReq, WorkGroupCos90sExportRes>(
+            var response = await _http.PostAsync<WorkGroupCos90sExportReq, WorkGroupCos90SExportRes>(
                 PactApiEndpoints.ExportCos90s, request);
 
             if (response.Success)

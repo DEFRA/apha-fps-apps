@@ -65,7 +65,8 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<ReleaseSummaryDto, ReleaseSummaryRes>();
             CreateMap<TestPriceCheckDto, TestPriceCheckRes>().ReverseMap();            
             CreateMap<TestPriceCheckReq, TestPriceCheckDto>().ReverseMap();            
-            CreateMap<WorkGroupCos90sExportResultDto, WorkGroupCos90sExportRes>().ReverseMap();
+            CreateMap<WorkGroupCos90SExportResultDto, WorkGroupCos90SExportRes>().ReverseMap();
+            CreateMap<WorkGroupCos90SExportRowDto, WorkGroupCos90SExportRowRes>().ReverseMap();
             CreateMap<Cos90WorkGroupRes, Cos90WorkGroupDto>().ReverseMap();
             CreateMap<MonthHourRes, MonthHourDto>().ReverseMap();
             CreateMap<StaffPickerItemRes, StaffPickerItemDto>().ReverseMap();

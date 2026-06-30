@@ -47,6 +47,7 @@ namespace Apha.PACT.Application.Mappings
             CreateMap<JobCodeZtLookup, JobCodeZtDto>().ReverseMap();
             CreateMap<TestPriceCheckView, TestPriceCheckDto>().ReverseMap();
             CreateMap<MonthHour, MonthHourDto>().ReverseMap();
+            CreateMap<WorkGroupCos90SExportRow, WorkGroupCos90SExportRowDto>().ReverseMap();
             CreateMap<WorkGroup, Cos90WorkGroupDto>().ReverseMap();
         }
     }

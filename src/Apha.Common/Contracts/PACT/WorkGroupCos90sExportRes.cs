@@ -1,9 +1,7 @@
 namespace Apha.Common.Contracts.PACT
 {
-    public class WorkGroupCos90sExportRes
+    public class WorkGroupCos90SExportRes
     {
-        public string FileName { get; set; } = string.Empty;
-        public string ContentType { get; set; } = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        public byte[] Content { get; set; } = [];
+        public List<WorkGroupCos90SExportRowRes> Rows { get; set; } = [];
     }
 }
