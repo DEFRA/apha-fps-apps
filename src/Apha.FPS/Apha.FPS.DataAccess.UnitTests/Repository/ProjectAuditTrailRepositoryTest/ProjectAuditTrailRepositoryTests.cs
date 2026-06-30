@@ -549,5 +549,535 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
         }
 
         #endregion
+
+        // ── GetProjectLogsAsync – additional search and sorting ───────────────────────
+
+        #region GetProjectLogsAsync - additional
+
+        [Fact]
+        public async Task GetProjectLogsAsync_WithSearchFilter_ReturnsMatchingByUserId()
+        {
+            // Arrange – InsertDelete is null to force UserId branch evaluation
+            var logs = new List<ProjectLog>
+            {
+                new() { SequenceNo = 1, ParentProject = TestProject, ProjectTitle = "Alpha", Program = "P1",
+                        Customer = "C1", ProjectStatus = "Active", Disease = "D1", Contract = "K1",
+                        InsertDelete = null, UserId = "adminuser",   FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, ParentProject = TestProject, ProjectTitle = "Beta",  Program = "P1",
+                        Customer = "C1", ProjectStatus = "Active", Disease = "D1", Contract = "K1",
+                        InsertDelete = null, UserId = "regularuser", FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(projectLogs: logs);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "admin" };
+
+            // Act
+            var result = await repo.GetProjectLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Theory]
+        [InlineData("parentproject",  false)]
+        [InlineData("parentproject",  true)]
+        [InlineData("projecttitle",   false)]
+        [InlineData("projecttitle",   true)]
+        [InlineData("program",        false)]
+        [InlineData("program",        true)]
+        [InlineData("jobcode",        false)]
+        [InlineData("jobcode",        true)]
+        [InlineData("date_time",      false)]
+        [InlineData("date_time",      true)]
+        [InlineData("insert_delete",  false)]
+        [InlineData("insert_delete",  true)]
+        [InlineData("user_id",        false)]
+        [InlineData("user_id",        true)]
+        public async Task GetProjectLogsAsync_Sorting_ReturnsResults(string sortBy, bool descending)
+        {
+            // Arrange
+            var logs = new List<ProjectLog>
+            {
+                new() { SequenceNo = 1, ParentProject = TestProject, ProjectTitle = "Alpha", Program = "PA",
+                        JobCode = "JA", Customer = "C1", ProjectStatus = "Active", Disease = "D1", Contract = "K1",
+                        InsertDelete = "I", UserId = "user1", DateTime = new DateTime(2024, 1, 1), FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, ParentProject = TestProject, ProjectTitle = "Beta",  Program = "PB",
+                        JobCode = "JB", Customer = "C2", ProjectStatus = "Active", Disease = "D2", Contract = "K2",
+                        InsertDelete = "D", UserId = "user2", DateTime = new DateTime(2024, 6, 1), FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(projectLogs: logs);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+
+            // Act
+            var result = await repo.GetProjectLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        // ── GetStaffJobLogsAsync – additional filters, search and sorting ─────────────
+
+        #region GetStaffJobLogsAsync - additional
+
+        [Fact]
+        public async Task GetStaffJobLogsAsync_WithToDateFilter_ExcludesLaterRecords()
+        {
+            // Arrange
+            var cutoff   = new DateTime(2024, 6, 30);
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<StaffJobLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, StaffId = "S001", PlannedHours = 8,
+                        DateTime = new DateTime(2024, 3, 1), FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, StaffId = "S002", PlannedHours = 4,
+                        DateTime = new DateTime(2024, 9, 1), FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(staffJobLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, cutoff);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetStaffJobLogsAsync_WithSearchFilter_ReturnsMatchingByJobCode()
+        {
+            // Arrange – two distinct job codes so only one matches the search term
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JOB_ALPHA", ParentProject = TestProject },
+                new() { JobCodeId = "JOB_BETA",  ParentProject = TestProject }
+            };
+            var logs = new List<StaffJobLog>
+            {
+                new() { SequenceNo = 1, JobCode = "JOB_ALPHA", StaffId = "S001", PlannedHours = 8,  FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = "JOB_BETA",  StaffId = "S002", PlannedHours = 4,  FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(staffJobLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "alpha" };
+
+            // Act
+            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetStaffJobLogsAsync_WithSearchFilter_ReturnsMatchingByUserId()
+        {
+            // Arrange – JobCode doesn't match to force UserId branch evaluation
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<StaffJobLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, StaffId = "S001", PlannedHours = 8,
+                        UserId = "adminuser",   FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, StaffId = "S002", PlannedHours = 4,
+                        UserId = "regularuser", FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(staffJobLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "admin" };
+
+            // Act
+            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Theory]
+        [InlineData("staffid",       false)]
+        [InlineData("staffid",       true)]
+        [InlineData("jobcode",       false)]
+        [InlineData("jobcode",       true)]
+        [InlineData("plannedhours",  false)]
+        [InlineData("plannedhours",  true)]
+        [InlineData("date_time",     false)]
+        [InlineData("date_time",     true)]
+        [InlineData("insert_delete", false)]
+        [InlineData("insert_delete", true)]
+        [InlineData("user_id",       false)]
+        [InlineData("user_id",       true)]
+        public async Task GetStaffJobLogsAsync_Sorting_ReturnsResults(string sortBy, bool descending)
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<StaffJobLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, StaffId = "S001", PlannedHours = 8,
+                        InsertDelete = "I", UserId = "user1", DateTime = new DateTime(2024, 1, 1), FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, StaffId = "S002", PlannedHours = 16,
+                        InsertDelete = "D", UserId = "user2", DateTime = new DateTime(2024, 6, 1), FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(staffJobLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+
+            // Act
+            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        // ── GetTestRequirementLogsAsync – additional search and sorting ───────────────
+
+        #region GetTestRequirementLogsAsync - additional
+
+        [Fact]
+        public async Task GetTestRequirementLogsAsync_WithSearchFilter_ReturnsMatchingByTestCode()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<TestRequirementLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, TestCode = "TC_ALPHA", FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, TestCode = "TC_BETA",  FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(testRequirementLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "alpha" };
+
+            // Act
+            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetTestRequirementLogsAsync_WithSearchFilter_ReturnsMatchingByBuyer()
+        {
+            // Arrange – TestCode is null to force Buyer branch evaluation
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<TestRequirementLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, TestCode = null, Buyer = "BuyerAlpha", FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, TestCode = null, Buyer = "BuyerBeta",  FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(testRequirementLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "alpha" };
+
+            // Act
+            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetTestRequirementLogsAsync_WithSearchFilter_ReturnsMatchingByUserId()
+        {
+            // Arrange – TestCode and Buyer are null to force UserId branch evaluation
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<TestRequirementLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, TestCode = null, Buyer = null,
+                        UserId = "adminuser",   FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, TestCode = null, Buyer = null,
+                        UserId = "regularuser", FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(testRequirementLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "admin" };
+
+            // Act
+            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Theory]
+        [InlineData("testcode",         false)]
+        [InlineData("testcode",         true)]
+        [InlineData("buyer",            false)]
+        [InlineData("buyer",            true)]
+        [InlineData("unitprice",        false)]
+        [InlineData("unitprice",        true)]
+        [InlineData("norequired",       false)]
+        [InlineData("norequired",       true)]
+        [InlineData("projectbuyercode", false)]
+        [InlineData("projectbuyercode", true)]
+        [InlineData("testbuyercode",    false)]
+        [InlineData("testbuyercode",    true)]
+        [InlineData("active",           false)]
+        [InlineData("active",           true)]
+        [InlineData("date_time",        false)]
+        [InlineData("date_time",        true)]
+        [InlineData("insert_delete",    false)]
+        [InlineData("insert_delete",    true)]
+        [InlineData("user_id",          false)]
+        [InlineData("user_id",          true)]
+        public async Task GetTestRequirementLogsAsync_Sorting_ReturnsResults(string sortBy, bool descending)
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<TestRequirementLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, TestCode = "TC1", Buyer = "BA",
+                        UnitPrice = 10m, NoRequired = 5,  ProjectBuyerCode = "PB1", TestBuyerCode = "TB1",
+                        Active = 0, InsertDelete = "I", UserId = "user1",
+                        DateTime = new DateTime(2024, 1, 1), FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, TestCode = "TC2", Buyer = "BB",
+                        UnitPrice = 20m, NoRequired = 10, ProjectBuyerCode = "PB2", TestBuyerCode = "TB2",
+                        Active = 1, InsertDelete = "D", UserId = "user2",
+                        DateTime = new DateTime(2024, 6, 1), FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(testRequirementLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+
+            // Act
+            var result = await repo.GetTestRequirementLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        // ── GetAnimalRequestLogsAsync – additional filters, search and sorting ────────
+
+        #region GetAnimalRequestLogsAsync - additional
+
+        [Fact]
+        public async Task GetAnimalRequestLogsAsync_WithFromDateFilter_ExcludesEarlierRecords()
+        {
+            // Arrange
+            var cutoff   = new DateTime(2024, 6, 1);
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AnimalRequestLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, AnimalType = "Rat",
+                        NumberOfDays = 10, NumberOfAnimals = 5,
+                        DateTime = new DateTime(2024, 1, 1), FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, AnimalType = "Mouse",
+                        NumberOfDays = 20, NumberOfAnimals = 10,
+                        DateTime = new DateTime(2024, 9, 1), FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(animalRequestLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, cutoff, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetAnimalRequestLogsAsync_WithToDateFilter_ExcludesLaterRecords()
+        {
+            // Arrange
+            var cutoff   = new DateTime(2024, 6, 30);
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AnimalRequestLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, AnimalType = "Rat",
+                        NumberOfDays = 10, NumberOfAnimals = 5,
+                        DateTime = new DateTime(2024, 3, 1), FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, AnimalType = "Mouse",
+                        NumberOfDays = 20, NumberOfAnimals = 10,
+                        DateTime = new DateTime(2024, 9, 1), FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(animalRequestLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, cutoff);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetAnimalRequestLogsAsync_WithSearchFilter_ReturnsMatchingByUserId()
+        {
+            // Arrange – JobCode/AnimalType don't match to force UserId branch evaluation
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AnimalRequestLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, AnimalType = "Rat",
+                        NumberOfDays = 10, NumberOfAnimals = 5,
+                        UserId = "adminuser",   FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, AnimalType = "Mouse",
+                        NumberOfDays = 20, NumberOfAnimals = 10,
+                        UserId = "regularuser", FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(animalRequestLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "admin" };
+
+            // Act
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Theory]
+        [InlineData("jobcode",         false)]
+        [InlineData("jobcode",         true)]
+        [InlineData("animaltype",      false)]
+        [InlineData("animaltype",      true)]
+        [InlineData("numberofdays",    false)]
+        [InlineData("numberofdays",    true)]
+        [InlineData("numberofanimals", false)]
+        [InlineData("numberofanimals", true)]
+        [InlineData("date_time",       false)]
+        [InlineData("date_time",       true)]
+        [InlineData("insert_delete",   false)]
+        [InlineData("insert_delete",   true)]
+        [InlineData("user_id",         false)]
+        [InlineData("user_id",         true)]
+        public async Task GetAnimalRequestLogsAsync_Sorting_ReturnsResults(string sortBy, bool descending)
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AnimalRequestLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, AnimalType = "Rat",
+                        NumberOfDays = 5,  NumberOfAnimals = 10,
+                        InsertDelete = "I", UserId = "user1", DateTime = new DateTime(2024, 1, 1), FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, AnimalType = "Mouse",
+                        NumberOfDays = 10, NumberOfAnimals = 20,
+                        InsertDelete = "D", UserId = "user2", DateTime = new DateTime(2024, 6, 1), FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(animalRequestLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+
+            // Act
+            var result = await repo.GetAnimalRequestLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        // ── GetAdditionalCostLogsAsync – additional search and sorting ────────────────
+
+        #region GetAdditionalCostLogsAsync - additional
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_WithSearchFilter_ReturnsMatchingByAccount()
+        {
+            // Arrange – tests the Account branch of the search predicate
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC_ALPHA",
+                        Description = "Desc1", ItemCost = 100m, FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, Account = "ACC_BETA",
+                        Description = "Desc2", ItemCost = 200m, FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "alpha" };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_WithSearchFilter_ReturnsMatchingByJobCode()
+        {
+            // Arrange – two distinct job codes so only one matches; tests the JobCode branch
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = "JOB_ALPHA", ParentProject = TestProject },
+                new() { JobCodeId = "JOB_BETA",  ParentProject = TestProject }
+            };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = "JOB_ALPHA", Account = "ACC1",
+                        Description = "Desc1", ItemCost = 100m, FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = "JOB_BETA",  Account = "ACC2",
+                        Description = "Desc2", ItemCost = 200m, FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "alpha" };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_WithSearchFilter_ReturnsMatchingByUserId()
+        {
+            // Arrange – Account/Description don't match to force UserId branch evaluation
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1",
+                        Description = "Desc1", ItemCost = 100m, UserId = "adminuser",   FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, Account = "ACC2",
+                        Description = "Desc2", ItemCost = 200m, UserId = "regularuser", FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Search = "admin" };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Single(result.Data);
+        }
+
+        [Theory]
+        [InlineData("jobcode",       false)]
+        [InlineData("jobcode",       true)]
+        [InlineData("account",       false)]
+        [InlineData("account",       true)]
+        [InlineData("description",   false)]
+        [InlineData("description",   true)]
+        [InlineData("itemcost",      false)]
+        [InlineData("itemcost",      true)]
+        [InlineData("freq",          false)]
+        [InlineData("freq",          true)]
+        [InlineData("supplier",      false)]
+        [InlineData("supplier",      true)]
+        [InlineData("date_time",     false)]
+        [InlineData("date_time",     true)]
+        [InlineData("insert_delete", false)]
+        [InlineData("insert_delete", true)]
+        [InlineData("user_id",       false)]
+        [InlineData("user_id",       true)]
+        public async Task GetAdditionalCostLogsAsync_Sorting_ReturnsResults(string sortBy, bool descending)
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "DescA",
+                        ItemCost = 100m, Freq = "M", Supplier = "SupA",
+                        InsertDelete = "I", UserId = "user1", DateTime = new DateTime(2024, 1, 1), FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, Account = "ACC2", Description = "DescB",
+                        ItemCost = 200m, Freq = "A", Supplier = "SupB",
+                        InsertDelete = "D", UserId = "user2", DateTime = new DateTime(2024, 6, 1), FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
     }
 }
