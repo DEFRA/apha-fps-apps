@@ -344,14 +344,14 @@ function refreshJobCodeGrid() {
                 $('#gridContainer_' + jobCodeGridId).html(html);
             })
             .fail(function () {
-                alert('Failed to refresh job code grid.');
+                showAlertMessage('Failed to refresh job code grid.', AlertType.ERROR);
             });
     }
 }
 
 function refreshTimeCodeGrid() {
     if (!currentParentProject) {
-        alert('Cannot refresh: Missing parent project');
+        showAlertMessage('Cannot refresh: Missing parent project', AlertType.INFO);
         return;
     }
 
@@ -381,7 +381,7 @@ function refreshTimeCodeGrid() {
                 $('#gridContainer_' + timeCodeGridId).html(html);
             })
             .fail(function (xhr, status, error) {
-                alert('Failed to refresh time code grid.');
+                showAlertMessage('Failed to refresh time code grid.', AlertType.ERROR);
             });
     }
 }

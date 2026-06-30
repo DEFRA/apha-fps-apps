@@ -488,14 +488,14 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        alert(successMsg);
+                        showAlertMessage(successMsg, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         getJobCodeGridManager()?.reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#jobCodeForm');
                     }
                 },
-                error: function() { alert('An error occurred while saving.'); }
+        error: function() { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
 
@@ -525,7 +525,7 @@
         }
 
         function addTimeCode() {
-            if (!selectedJobCodeId) { alert('Please select a job code first.'); return; }
+            if (!selectedJobCodeId) { showAlertMessage('Please select a job code first.',AlertType.INFO); return; }
             $.get('/PACT/ProjectMaintenance/CreateTimeCode',
                 { parentProject: decodeURIComponent(parentProject), jobCodeId: selectedJobCodeId },
                 function(html) {
@@ -584,14 +584,14 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        alert(successMsg);
+                        showAlertMessage(successMsg, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         reloadTimeCodeGrid(selectedJobCodeId);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#timeCodeForm');
                     }
                 },
-                error: function() { alert('An error occurred while saving.'); }
+                error: function() { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
 

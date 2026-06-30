@@ -177,11 +177,11 @@
                     var parsedValue = parseFloat(fieldValue);
 
                     if (isNaN(parsedValue)) {
-        showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.INFO);
+                        showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                         return;
                     }
                     if (parsedValue < 0 || parsedValue > maxMoney) {
-        showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.INFO);
+                        showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                         return;
                     }
 
@@ -205,7 +205,7 @@
                 data: JSON.stringify(data),
                 success: function (response) {
                     if (response.success) {
-                        alert(response.message);
+                        showAlertMessage(response.message, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         getInvoicesGridManager()?.reloadGrid({ page: 1 });
                         refreshInvoiceTotalAmount();
@@ -213,7 +213,7 @@
                         displayServerValidationErrors(response.errors, response.message, '#invoiceForm');
                     }
                 },
-                error: function () { alert('An error occurred while saving.'); }
+        error: function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
 
@@ -304,7 +304,7 @@
                 data: JSON.stringify(data),
                 success: function (response) {
                     if (response.success) {
-                        alert(response.message);
+                        showAlertMessage(response.message, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         getSubContractsGridManager()?.reloadGrid({ page: 1 });
                         refreshSubContractTotalAmount();
@@ -312,7 +312,7 @@
                         displayServerValidationErrors(response.errors, response.message, '#subContractForm');
                     }
                 },
-                error: function () { alert('An error occurred while saving.'); }
+        error: function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
 

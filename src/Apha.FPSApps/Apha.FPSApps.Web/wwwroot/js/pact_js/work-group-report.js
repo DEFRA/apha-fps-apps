@@ -25,7 +25,7 @@ function openWorkGroupEditModal(btnElement) {
             setTimeout(function () { $('#edit-email').focus(); }, 50);
         },
         error: function () {
-            alert('Error loading edit form.');
+            showAlertMessage('Error loading edit form.', AlertType.ERROR);
         }
     });
 }
@@ -36,7 +36,7 @@ function saveWorkGroupEmail() {
     var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
     if (data.sendEmail === undefined || data.sendEmail === '') {
-        alert('Please select Yes or No for SendEmail.');
+        showAlertMessage('Please select Yes or No for SendEmail.', AlertType.ERROR);
         return;
     }
 
@@ -51,7 +51,7 @@ function saveWorkGroupEmail() {
             if (gm) { gm.reloadGrid({ page: 1 }); }
         },
         error: function () {
-            alert('Failed to save changes. Please try again.');
+            showAlertMessage('Failed to save changes. Please try again.', AlertType.ERROR);
         }
     });
 }
@@ -224,7 +224,7 @@ function saveProfitCentreSettings() {
             __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
         },
         error: function () {
-            alert('Failed to save settings. Please try again.');
+            showAlertMessage('Failed to save settings. Please try again.', AlertType.ERROR);
         }
     });
 }

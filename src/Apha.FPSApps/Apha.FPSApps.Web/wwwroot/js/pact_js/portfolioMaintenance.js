@@ -113,11 +113,11 @@ $(document).ready(function () {
         }).done(function (res) {
             if (res.success) {
                 clearValidationErrors('#portfolioDetailForm');
-                alert(res.message || 'Saved successfully.');
+                showAlertMessage(res.message || 'Saved successfully.', AlertType.ERROR);
             } else {
                 displayServerValidationErrors(res.errors, res.message, '#portfolioDetailForm');
             }
-        }).fail(function () { alert('An error occurred while saving.'); });
+        }).fail(function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR);); });
     });
 
     // ── Portfolio Time Codes button ───────────────────────────────────────────
@@ -126,7 +126,7 @@ $(document).ready(function () {
         e.stopPropagation(); // Stop event bubbling
 
         if (!currentParentProject) {
-            alert('Please select a portfolio first.');
+            showAlertMessage('Please select a portfolio first.', AlertType.INFO);
             return;
         }
 
@@ -213,7 +213,7 @@ function loadPortfolioData(parentProject) {
                 showAlertMessage(res.message || 'Portfolio not found.', AlertType.ERROR);
             }
         })
-        .fail(function () { alert('An error occurred while loading portfolio data.'); });
+        .fail(function () { showAlertMessage('An error occurred while loading portfolio data.', AlertType.ERROR); });
 }
 
 // ── Enable/disable buttons ───────────────────────────────────────────────
@@ -251,7 +251,7 @@ function loadConstituentTestGrid(parentProject, page, pageSize, sortBy, desc) {
             $('#txtSelectedPortfolioTest').val('');
             loadTimeCodeGrid(parentProject, '');
         }
-    }).fail(function () { alert('An error occurred while loading constituent tests.'); });
+    }).fail(function () {showAlertMessage('An error occurred while loading constituent tests.', AlertType.ERROR); });
 }
 
 function addConstituentTest() {
@@ -283,11 +283,11 @@ function saveConstituentTest() {
         if (res.success) {
             $('#modalPopup').removeClass('show');
             loadConstituentTestGrid(currentParentProject);
-            alert(res.message || 'Test added.');
+            showAlertMessage(res.message || 'Test added.', AlertType.SUCCESS);
         } else {
             displayServerValidationErrors(res.errors, res.message, '#formAddTest');
         }
-    }).fail(function () { alert('An error occurred while saving.'); });
+    }).fail(function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); });
 }
 
 function deleteConstituentTest(btn) {
@@ -353,7 +353,7 @@ function loadTimeCodeGrid(parentProject, testCode, page, pageSize) {
         data: payload
     }).done(function (html) {
         $('#gridContainer_portfolioTimeCodeGrid').html(html);
-    }).fail(function () { alert('An error occurred while loading work groups.'); });
+    }).fail(function () { showAlertMessage('An error occurred while loading work groups.', AlertType.ERROR); });
 }
 
 function addPortfolioTimeCode() {
@@ -388,11 +388,11 @@ function savePortfolioTimeCode() {
         if (res.success) {
             $('#modalPopup').removeClass('show');
             loadTimeCodeGrid(currentParentProject, currentTestCode);
-            alert(res.message || 'Work group added.');
+            showAlertMessage(res.message || 'Work group added.', AlertType.SUCCESS);
         } else {
             displayServerValidationErrors(res.errors, res.message, '#timeCodeForm');
         }
-    }).fail(function () { alert('An error occurred while saving.'); });
+    }).fail(function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); });
 }
 
 function editPortfolioTimeCode(btn) {
@@ -429,11 +429,11 @@ function updatePortfolioTimeCode() {
         if (res.success) {
             $('#modalPopup').removeClass('show');
             loadTimeCodeGrid(currentParentProject, currentTestCode);
-            alert(res.message || 'Work group updated.');
+            showAlertMessage(res.message || 'Work group updated.', AlertType.SUCCESS);
         } else {
             displayServerValidationErrors(res.errors, res.message, '#timeCodeForm');
         }
-    }).fail(function () { alert('An error occurred while saving.'); });
+    }).fail(function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); });
 }
 
 function deletePortfolioTimeCode(btn) {

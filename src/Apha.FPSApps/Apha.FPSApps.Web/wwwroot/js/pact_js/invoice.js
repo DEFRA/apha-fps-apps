@@ -65,7 +65,7 @@ function addInvoice() {
             $('#modalPopup').addClass('show');
         })
         .fail(function(xhr, status, error) {
-            alert('Error loading form: ' + error);
+            showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
         });
 }
 
@@ -76,7 +76,7 @@ function editInvoice(btn) {
         $('#modalPopup').addClass('show');
     })
     .fail(function(xhr, status, error) {
-        alert('Error loading form: ' + error);
+        showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
     });
 }
 
