@@ -54,7 +54,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
             services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IMaintTotalBusinessOverheadsService, MaintTotalBusinessOverheadsService>();
+            services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

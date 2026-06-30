@@ -27,24 +27,7 @@
 
                                     <div style="display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin: 0 0px 5px 8px;">
 
-                                        @if (TempData["SuccessMessage"] != null)
-                                        {
-                                            <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
-                                                <div class="govuk-notification-banner__content">
-                                                    <p class="govuk-notification-banner__heading">@TempData["SuccessMessage"]</p>
-                                                </div>
-                                            </div>
-                                        }
-                                        @if (TempData["ErrorMessage"] != null)
-                                        {
-                                            <div class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" data-module="govuk-error-summary">
-                                                <div class="govuk-error-summary__body">
-                                                    <p>@TempData["ErrorMessage"]</p>
-                                                </div>
-                                            </div>
-                                        }
-
-                                        <form asp-action="Save" method="post">
+                                        <form id="totalBusinessOverheadsForm">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" asp-for="FpsYear" />
 
@@ -63,7 +46,7 @@
 
                                                     <div class="govuk-form-group sup_margin_bottom_10">
                                                         <div class="govuk-button-group sup_margin_0 trl-filter-actions-buttons">
-                                                            <button type="submit" class="govuk-button govuk-!-margin-bottom-2" id="btnSaveBusinessOverheads" data-module="govuk-button">Save</button>
+                                                            <button type="button" class="govuk-button govuk-!-margin-bottom-2" id="btnSaveBusinessOverheads" data-module="govuk-button" onclick="saveBusinessOverheads()">Save</button>
                                                         </div>
                                                     </div>
 
@@ -83,3 +66,40 @@
 
     </div>
 </main>
+
+@section Scripts {
+    <script>
+        function saveBusinessOverheads() {
+            var form = $('#totalBusinessOverheadsForm');
+            var data = {
+                FpsYear: form.find('[name="FpsYear"]').val(),
+                TotalBusinessOverheads: parseDecimalOrNull(form.find('[name="TotalBusinessOverheads"]').val())
+            };
+
+            $.ajax({
+                url: '@Url.Action("Save", "TotalBusinessOverheadsMaintenance", new { area = "FPS" })',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    'RequestVerificationToken': form.find('[name="__RequestVerificationToken"]').val()
+                },
+                success: function (result) {
+                    if (result.success) {
+                        showGovukAlert(result.message || 'Total Business Overheads saved successfully.');
+                    } else {
+                        showGovukAlert(result.message || 'Failed to save Total Business Overheads.');
+                    }
+                },
+                error: function () {
+                    showGovukAlert('An error occurred while saving.');
+                }
+            });
+        }
+
+        function parseDecimalOrNull(val) {
+            var cleaned = (val || '').replace(/[£,]/g, '').trim();
+            return cleaned !== '' ? parseFloat(cleaned) : null;
+        }
+    </script>
+}

@@ -37,11 +37,15 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Save(TotalBusinessOverheadsViewModel model)
+        public async Task<IActionResult> Save([FromBody] TotalBusinessOverheadsViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                return View("Index", model);
+                var errors = ModelState
+                    .Where(x => x.Value?.Errors.Count > 0)
+                    .Select(x => new { field = x.Key, message = x.Value!.Errors.First().ErrorMessage })
+                    .ToList();
+                return Json(new { success = false, message = "Validation failed.", errors });
             }
 
             var dto = _mapper.Map<TotalBusinessOverheadsDto>(model);
@@ -49,14 +53,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (result.Success)
             {
-                TempData["SuccessMessage"] = "Total Business Overheads saved successfully.";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Failed to save Total Business Overheads.";
+                return Json(new { success = true, message = "Total Business Overheads saved successfully." });
             }
 
-            return RedirectToAction("Index");
+            return Json(new { success = false, message = "Failed to save Total Business Overheads." });
         }
     }
 }

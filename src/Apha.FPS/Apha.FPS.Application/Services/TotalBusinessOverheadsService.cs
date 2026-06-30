@@ -6,13 +6,13 @@ using AutoMapper;
 
 namespace Apha.FPS.Application.Services
 {
-    public class MaintTotalBusinessOverheadsService : IMaintTotalBusinessOverheadsService
+    public class TotalBusinessOverheadsService : ITotalBusinessOverheadsService
     {
         private readonly ITotalBusinessOverheadsRepository _repository;
         private readonly IFpsRequestContext _requestContext;
         private readonly IMapper _mapper;
 
-        public MaintTotalBusinessOverheadsService(
+        public TotalBusinessOverheadsService(
             ITotalBusinessOverheadsRepository repository,
             IFpsRequestContext requestContext,
             IMapper mapper)

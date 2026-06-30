@@ -15,18 +15,18 @@ namespace Apha.FPS.Api.Controllers
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/totalbusinessoverheads")]
-    public class MaintTotalBusinessOverheadsController : ControllerBase
+    public class TotalBusinessOverheadsController : ControllerBase
     {
-        private readonly IMaintTotalBusinessOverheadsService _service;
+        private readonly ITotalBusinessOverheadsService _service;
         private readonly IMapper _mapper;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MaintTotalBusinessOverheadsController"/> class.
+        /// Initializes a new instance of the <see cref="TotalBusinessOverheadsController"/> class.
         /// </summary>
         /// <param name="service">The Total Business Overheads service.</param>
         /// <param name="mapper">The AutoMapper instance.</param>
-        public MaintTotalBusinessOverheadsController(
-            IMaintTotalBusinessOverheadsService service,
+        public TotalBusinessOverheadsController(
+            ITotalBusinessOverheadsService service,
             IMapper mapper)
         {
             _service = service;
