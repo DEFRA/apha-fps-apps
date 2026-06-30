@@ -111,7 +111,7 @@
             },
             error: function () {
                 console.error('Failed to load Test Capability grid.');
-                showGovukAlert('Failed to load test capabilities. Please try again.');
+                showAlertMessage('Failed to load test capabilities. Please try again.', AlertType.ERROR);
             }
         });
     }
@@ -176,7 +176,7 @@
     function navigateToPortfolioMaintenance() {
         var portfolio = $('#selectedPortfolio').val();
         if (!portfolio) {
-            showGovukAlert('Please select a test capability row first.');
+            showAlertMessage('Please select a test capability row first.', AlertType.INFO);
             return;
         }
 

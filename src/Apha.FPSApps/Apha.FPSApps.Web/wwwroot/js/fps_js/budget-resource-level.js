@@ -58,7 +58,7 @@ $(document).on('click', '#gridContainer_budgetBidsGrid table tbody tr', function
 
 // ─── Budget Bid CRUD ─────────────────────────────────────────────────────────
 function addBudgetBid() {
-    if (!currentWorkgroup) { showGovukAlert('Please select a work group first.'); return; }
+    if (!currentWorkgroup) { showAlertMessage('Please select a work group first.', AlertType.INFO); return; }
     openModal('/FPS/BudgetResourceLevel/CreateBudgetBid?WorkGroupName=' + encodeURIComponent(currentWorkgroup));
 }
 
@@ -76,15 +76,15 @@ function deleteBudgetBid(btn) {
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
-                    showGovukAlert(response.message).then(function () {
+                    showAlertMessage(response.message, AlertType.SUCCESS).then(function () {
                         var mgr = getBudgetBidsGridManager(); if (mgr) mgr.reloadGrid({ page: 1 });
                     });
                 } else {
-                    showGovukAlert(response.message || 'Failed to delete budget bid.');
+                    showAlertMessage(response.message || 'Failed to delete budget bid.', AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
@@ -118,7 +118,7 @@ function updateBudgetBid() {
 
 // ─── Purchase CRUD ───────────────────────────────────────────────────────────
 function addPurchase() {
-    if (!currentWorkgroup || !currentAccount) { showGovukAlert('Please select a work group and account first.'); return; }
+    if (!currentWorkgroup || !currentAccount) { showAlertMessage('Please select a work group and account first.', AlertType.INFO); return; }
     openModal('/FPS/BudgetResourceLevel/CreatePurchase?WorkGroupName=' + encodeURIComponent(currentWorkgroup) + '&account=' + encodeURIComponent(currentAccount));
 }
 
@@ -136,15 +136,15 @@ function deletePurchase(btn) {
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
-                    showGovukAlert(response.message).then(function () {
+                    showAlertMessage(response.message, AlertType.SUCCESS).then(function () {
                         var mgr = getPurchasesGridManager(); if (mgr) mgr.reloadGrid({ page: 1 });
                     });
                 } else {
-                    showGovukAlert(response.message || 'Failed to delete purchase.');
+                    showAlertMessage(response.message || 'Failed to delete purchase.', AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
@@ -186,7 +186,7 @@ function viewReport() {
 }
 
 function sendToExcel() {
-    if (!currentProfitCentre) { showGovukAlert('Please select a Resource Centre first.'); return; }
+    if (!currentProfitCentre) { showAlertMessage('Please select a Resource Centre first.', AlertType.INFO); return; }
     window.location.href = '/FPS/BudgetResourceLevel/ExportToExcel?profitCentre=' + encodeURIComponent(currentProfitCentre) + '&year=' + currentYear;
 }
 
@@ -214,7 +214,7 @@ function submitFormAsJson(form, url, successCallback) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modalContent');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -231,7 +231,7 @@ function openModal(url) {
         $('#modalContent').html(html);
         $('#modalContainer').css('display', 'flex');
     }).fail(function () {
-        showGovukAlert('An error occurred while loading the form.');
+        showAlertMessage('An error occurred while loading the form.', AlertType.ERROR);
     });
 }
 
@@ -245,11 +245,11 @@ function showModalErrors(errors, message) {
 }
 
 function showSuccess(message) {
-    showGovukAlert(message);
+    showAlertMessage(message, AlertType.SUCCESS);
 }
 
 function showError(message) {
-    showGovukAlert(message);
+    showAlertMessage(message, AlertType.ERROR);
 }
 
 // ─── Total calculation helpers ────────────────────────────────────────────────

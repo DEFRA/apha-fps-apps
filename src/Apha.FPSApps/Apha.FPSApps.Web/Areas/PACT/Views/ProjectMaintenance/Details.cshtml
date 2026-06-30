@@ -399,7 +399,7 @@
 
             // Stop if validation failed
             if (validationError) {
-                showGovukAlert(validationError);
+                showAlertMessage(validationError, AlertType.INFO);
                 return;
             }
 
@@ -413,12 +413,12 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        showGovukAlert('Project updated successfully.');
+                        showAlertMessage('Project updated successfully.', AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#projectDetailForm');
                     }
                 },
-                error: function() { showGovukAlert('An error occurred while saving.'); }
+                error: function() { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
 
@@ -450,12 +450,12 @@
                         if (response.success) {
                             getJobCodeGridManager()?.reloadGrid({ page: 1 });
                             reloadTimeCodeGrid(null);
-                            showGovukAlert('JobCode deleted successfully.');
+                            showAlertMessage('JobCode deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
-                    error: function() { showGovukAlert('An error occurred while deleting.'); }
+                    error: function() { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }
@@ -557,12 +557,12 @@
                     success: function(response) {
                         if (response.success) {
                             reloadTimeCodeGrid(selectedJobCodeId);
-                            showGovukAlert('Time code deleted successfully.');
+                            showAlertMessage('Time code deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
-                    error: function() { showGovukAlert('An error occurred while deleting.'); }
+                    error: function() { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }
@@ -626,12 +626,12 @@
                             if (data.CopyWorkGroup) {
                                 reloadTimeCodeGrid(jobCodeId);
                             }
-                            showGovukAlert('JobCode copied successfully.');
+                            showAlertMessage('JobCode copied successfully.', AlertType.SUCCESS);
                         } else {
                             displayServerValidationErrors(response.errors, response.message, '#formAddJobcode');
                         }
                     },
-                    error: function() { showGovukAlert('An error occurred while copying.'); }
+                    error: function() { showAlertMessage('An error occurred while copying.', AlertType.ERROR); }
                 });
             });
         }
@@ -639,9 +639,9 @@
         // ── Bulk Copy Work Group ──────────────────────────────────────────────
 
         function copyBulkWorkGroup(selection) {
-            if (!selectedJobCodeId) { showGovukAlert('Please select a job code first.'); return; }
+            if (!selectedJobCodeId) { showAlertMessage('Please select a job code first.', AlertType.INFO); return; }
             if (!selection || !selection.ids || selection.ids.length === 0) {
-                showGovukAlert('Please select at least one work group to copy.'); return;
+                showAlertMessage('Please select at least one work group to copy.', AlertType.INFO); return;
             }
 
             $.get('/PACT/ProjectMaintenance/CopyWorkGroupPartial',
@@ -670,7 +670,7 @@
                         });
 
                         if (container.find('.cwg-wg').length === 0) {
-                            showGovukAlert('No work groups found in selected rows.');
+                            showAlertMessage('No work groups found in selected rows.', AlertType.INFO);
                             return;
                         }
                     }
@@ -708,12 +708,12 @@
                             if (response.success) {
                                 $('#modalPopup').removeClass('show');
                                 reloadTimeCodeGrid(selectedJobCodeId);
-                                showGovukAlert('All work groups copied successfully.');
+                                showAlertMessage('All work groups copied successfully.', AlertType.SUCCESS);
                             } else {
                                 displayServerValidationErrors(response.errors, response.message, '#copyWorkGroupForm');
                             }
                         },
-                        error: function() { showGovukAlert('An error occurred while copying.'); }
+                        error: function() { showAlertMessage('An error occurred while copying.', AlertType.ERROR); }
                     });
                 });
             } else {
@@ -723,7 +723,7 @@
                     workGroups.push($(this).val());
                 });
 
-                if (workGroups.length === 0) { showGovukAlert('No work groups to copy.'); return; }
+                if (workGroups.length === 0) { showAlertMessage('No work groups to copy.', AlertType.INFO); return; }
 
                 showGovukConfirm('Copy ' + workGroups.length + ' work group(s) from "' + sourceJobCode + '" to "' + targetJobCode + '"?').then(function(confirmed) {
                     if (!confirmed) return;
@@ -741,12 +741,12 @@
                             if (response.success) {
                                 $('#modalPopup').removeClass('show');
                                 reloadTimeCodeGrid(selectedJobCodeId);
-                                showGovukAlert('Work group(s) copied successfully.');
+                                showAlertMessage('Work group(s) copied successfully.', AlertType.SUCCESS);
                             } else {
                                 displayServerValidationErrors(response.errors, response.message, '#copyWorkGroupForm');
                             }
                         },
-                        error: function() { showGovukAlert('An error occurred while copying.'); }
+                        error: function() { showAlertMessage('An error occurred while copying.', AlertType.ERROR); }
                     });
                 });
             }
@@ -755,9 +755,9 @@
         // ── Bulk Delete Time Codes ────────────────────────────────────────────
 
         function deleteBulkTimeCode(selection) {
-            if (!selectedJobCodeId) { showGovukAlert('Please select a job code first.'); return; }
+            if (!selectedJobCodeId) { showAlertMessage('Please select a job code first.', AlertType.INFO); return; }
             if (!selection || !selection.ids || selection.ids.length === 0) {
-                showGovukAlert('Please select at least one time code row to delete.'); return;
+                showAlertMessage('Please select at least one time code row to delete.', AlertType.INFO); return;
             }
 
             if (selection.isAll) {
@@ -771,12 +771,12 @@
                         success: function(response) {
                             if (response.success) {
                                 reloadTimeCodeGrid(selectedJobCodeId);
-                                showGovukAlert('All time codes deleted successfully.');
+                                showAlertMessage('All time codes deleted successfully.', AlertType.SUCCESS);
                             } else {
-                                showGovukAlert('Error: ' + (response.message || 'Delete failed.'));
+                                showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
                             }
                         },
-                        error: function() { showGovukAlert('An error occurred while deleting.'); }
+                        error: function() { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                     });
                 });
             } else {
@@ -790,7 +790,7 @@
                     }
                 });
 
-                if (items.length === 0) { showGovukAlert('No rows selected for deletion.'); return; }
+                if (items.length === 0) { showAlertMessage('No rows selected for deletion.', AlertType.INFO); return; }
 
                 showGovukConfirm('Delete ' + items.length + ' selected time code(s)?').then(function(confirmed) {
                     if (!confirmed) return;
@@ -805,12 +805,12 @@
                         success: function(response) {
                             if (response.success) {
                                 reloadTimeCodeGrid(selectedJobCodeId);
-                                showGovukAlert(items.length + ' time code(s) deleted successfully.');
+                                showAlertMessage(items.length + ' time code(s) deleted successfully.', AlertType.SUCCESS);
                             } else {
-                                showGovukAlert('Error: ' + (response.message || 'Delete failed.'));
+                                showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
                             }
                         },
-                        error: function() { showGovukAlert('An error occurred while deleting.'); }
+                        error: function() { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                     });
                 });
             }

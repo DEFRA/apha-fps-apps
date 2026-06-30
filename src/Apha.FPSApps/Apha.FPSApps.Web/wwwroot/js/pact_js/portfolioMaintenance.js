@@ -210,7 +210,7 @@ function loadPortfolioData(parentProject) {
                 resetFormButtons(true);
                 loadConstituentTestGrid(parentProject);
             } else {
-                showGovukAlert(res.message || 'Portfolio not found.');
+                showAlertMessage(res.message || 'Portfolio not found.', AlertType.ERROR);
             }
         })
         .fail(function () { alert('An error occurred while loading portfolio data.'); });
@@ -307,11 +307,11 @@ function deleteConstituentTest(btn) {
                     $('#txtSelectedPortfolioTest').val('');
                     loadTimeCodeGrid(currentParentProject, '');
                 }
-                showGovukAlert(res.message || 'Deleted.');
+                showAlertMessage(res.message || 'Deleted.', AlertType.SUCCESS);
             } else {
-                showGovukAlert('Error: ' + (res.message || 'Delete failed.'));
+                showAlertMessage('Error: ' + (res.message || 'Delete failed.'), AlertType.ERROR);
             }
-        }).fail(function () { showGovukAlert('An error occurred while deleting.'); });
+        }).fail(function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); });
     });
 }
 
@@ -448,11 +448,11 @@ function deletePortfolioTimeCode(btn) {
         }).done(function (res) {
             if (res.success) {
                 loadTimeCodeGrid(currentParentProject, currentTestCode);
-                showGovukAlert(res.message || 'Deleted.');
+                showAlertMessage(res.message || 'Deleted.', AlertType.SUCCESS);
             } else {
-                showGovukAlert('Error: ' + (res.message || 'Delete failed.'));
+                showAlertMessage('Error: ' + (res.message || 'Delete failed.'), AlertType.ERROR);
             }
-        }).fail(function () { showGovukAlert('An error occurred while deleting.'); });
+        }).fail(function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); });
     });
 }
 

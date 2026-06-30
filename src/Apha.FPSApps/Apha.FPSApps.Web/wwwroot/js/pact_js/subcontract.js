@@ -97,12 +97,12 @@ function deleteSubContract(btn) {
             success: function (response) {
                 if (response.success) {
                     reloadSubContractsGrid();
-                    showGovukAlert('SubContract deleted successfully.');
+                    showAlertMessage('SubContract deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showGovukAlert('Error: ' + response.message);
+                    showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                 }
             },
-            error: function () { showGovukAlert('An error occurred while deleting.'); }
+            error: function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
         });
     });
 }
@@ -127,18 +127,18 @@ function saveSubContract() {
         var maxMoney = 92233720368547758.07;
 
         if (isNaN(amount)) {
-            showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+            showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.INFO);
             return;
         }
         if (amount < 0 || amount > maxMoney) {
-            showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+            showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.INFO);
             return;
         }
 
         // Check decimal places
         var decimalPart = amount.toString().split('.')[1];
         if (decimalPart && decimalPart.length > 2) {
-            showGovukAlert('Amount must have at most 2 decimal places.');
+            showAlertMessage('Amount must have at most 2 decimal places.', AlertType.INFO);
             return;
         }
 
@@ -154,14 +154,14 @@ function saveSubContract() {
         success: function (response) {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
-                showGovukAlert(response.message || 'SubContract saved successfully.');
+                showAlertMessage(response.message || 'SubContract saved successfully.', AlertType.SUCCESS);
                 reloadSubContractsGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
             }
         },
         error: function () { 
-            showGovukAlert('An error occurred while saving.'); 
+            showAlertMessage('An error occurred while saving.', AlertType.ERROR); 
         }
     });
 }

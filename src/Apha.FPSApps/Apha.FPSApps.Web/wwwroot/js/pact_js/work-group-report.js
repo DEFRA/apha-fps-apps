@@ -111,7 +111,7 @@ $(function () {
         if (!pc) { return; }
 
         if (!hasTimeSheet && !hasOutputSheet) {
-            window.showGovukAlert('You must check Time Sheets and/or Output Sheets for the Profit Centre first.');
+            window.showAlertMessage('You must check Time Sheets and/or Output Sheets for the Profit Centre first.', AlertType.INFO);
             return;
         }
 
@@ -160,15 +160,15 @@ $(function () {
         var hasOutputSheet = $('#chk-outputsheets').is(':checked');
 
         if (!pc) {
-            window.showGovukAlert('Please select a Profit Centre before sending.');
+            window.showAlertMessage('Please select a Profit Centre before sending.', AlertType.INFO);
             return;
         }
         if (!period) {
-            window.showGovukAlert('Please select a Period before sending.');
+            window.showAlertMessage('Please select a Period before sending.', AlertType.INFO);
             return;
         }
         if (!hasTimeSheet && !hasOutputSheet) {
-            window.showGovukAlert('You must check Time Sheets and/or Output Sheets before sending.');
+            window.showAlertMessage('You must check Time Sheets and/or Output Sheets before sending.', AlertType.INFO);
             return;
         }
 
@@ -190,7 +190,7 @@ $(function () {
                 var msg = (xhr.responseJSON && xhr.responseJSON.error)
                     ? xhr.responseJSON.error
                     : 'An error occurred while sending emails. Please try again.';
-                window.showGovukAlert(msg);
+                window.showAlertMessage(msg, AlertType.ERROR);
             },
             complete: function () {
                 $btn.prop('disabled', false).text('Send Emails');

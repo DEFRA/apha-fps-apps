@@ -52,7 +52,7 @@
                     $('#modalPopup').addClass("show");
                 },
                 error: function () {
-                    showGovukAlert('An error occurred while loading the form', AlertType.ERROR);
+                    showAlertMessage('An error occurred while loading the form', AlertType.ERROR);
                 }
             });
         }
@@ -83,7 +83,7 @@
                 success: function (result) {
                     if (result.success) {
                         closeModal();
-                        showGovukAlert(result.message || 'Animal data created successfully.', AlertType.SUCCESS);
+                        showAlertMessage(result.message || 'Animal data created successfully.', AlertType.SUCCESS);
                         window['gridManager_animalMasterGrid'].reloadGrid({ page: 1 });
                     }
                     else {
@@ -94,7 +94,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving', AlertType.ERROR);
+                        showAlertMessage('An error occurred while saving', AlertType.ERROR);
                     }
                 }
             });
@@ -126,7 +126,7 @@
                 success: function (result) {
                     if (result.success) {
                         closeModal();
-                        showGovukAlert(result.message || 'Animal data updated successfully.', AlertType.SUCCESS);
+                        showAlertMessage(result.message || 'Animal data updated successfully.', AlertType.SUCCESS);
                         window['gridManager_animalMasterGrid'].reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
@@ -136,7 +136,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.', AlertType.ERROR);
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });
@@ -153,7 +153,7 @@
                     $('#modalPopup').addClass("show");
                 },
                 error: function () {
-                    showGovukAlert('An error occurred while editing record', AlertType.ERROR);
+                    showAlertMessage('An error occurred while editing record', AlertType.ERROR);
                 }
             });
         }
@@ -168,15 +168,15 @@
                     data: { animalType: animalType },
                     success: function (response) {
                         if (response.success) {
-                            showGovukAlert('Deleted successfully', AlertType.SUCCESS).then(function () {
+                            showAlertMessage('Deleted successfully', AlertType.SUCCESS).then(function () {
                                 window['gridManager_animalMasterGrid'].reloadGrid({ page: 1 });
                             });
                         } else {
-                            showGovukAlert('Error: ' + response.message, AlertType.ERROR);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting', AlertType.ERROR);
+                        showAlertMessage('An error occurred while deleting', AlertType.ERROR);
                     }
                 });
             });

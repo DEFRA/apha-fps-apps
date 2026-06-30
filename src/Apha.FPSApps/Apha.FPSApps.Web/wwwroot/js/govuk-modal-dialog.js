@@ -1,5 +1,5 @@
 (function () {
-    if (window.showGovukAlert && window.showGovukConfirm) {
+    if (window.showAlertMessage && window.showGovukConfirm) {
         return;
     }
 
@@ -302,7 +302,7 @@
 
     window.initializeSafeModal = initializeSafeModal;
 
-    window.showGovukAlert = function (message, type) {
+    window.showAlertMessage = function (message, type) {
 
         var validTypes = Object.values(AlertType);
         var resolvedType = type || AlertType.INFO;
