@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -9,13 +10,11 @@ namespace Apha.FPS.DataAccess.Repositories
     public class ProjectAuditTrailRepository : BaseRepository, IProjectAuditTrailRepository
     {
         private readonly FpsDbContext _dbContext;
-        private readonly IFpsRequestContext _requestContext;
 
-        public ProjectAuditTrailRepository(FpsDbContext dbContext, IFpsRequestContext requestContext)
+        public ProjectAuditTrailRepository(FpsDbContext dbContext)
             : base(dbContext)
         {
             _dbContext = dbContext;
-            _requestContext = requestContext;
         }
 
         // fps.project_log has a direct parentproject column; no join required
@@ -217,20 +216,21 @@ namespace Apha.FPS.DataAccess.Repositories
         private static IQueryable<TestRequirementLog> ApplyTestRequirementLogSorting(
             IQueryable<TestRequirementLog> q, string? sortBy, bool descending)
         {
-            return sortBy?.ToLower() switch
+            Expression<Func<TestRequirementLog, object?>> keySelector = sortBy?.ToLower() switch
             {
-                "testcode"         => descending ? q.OrderByDescending(e => e.TestCode)         : q.OrderBy(e => e.TestCode),
-                "buyer"            => descending ? q.OrderByDescending(e => e.Buyer)            : q.OrderBy(e => e.Buyer),
-                "unitprice"        => descending ? q.OrderByDescending(e => e.UnitPrice)        : q.OrderBy(e => e.UnitPrice),
-                "norequired"       => descending ? q.OrderByDescending(e => e.NoRequired)       : q.OrderBy(e => e.NoRequired),
-                "projectbuyercode" => descending ? q.OrderByDescending(e => e.ProjectBuyerCode) : q.OrderBy(e => e.ProjectBuyerCode),
-                "testbuyercode"    => descending ? q.OrderByDescending(e => e.TestBuyerCode)    : q.OrderBy(e => e.TestBuyerCode),
-                "active"           => descending ? q.OrderByDescending(e => e.Active)           : q.OrderBy(e => e.Active),
-                "date_time"        => descending ? q.OrderByDescending(e => e.DateTime)         : q.OrderBy(e => e.DateTime),
-                "insert_delete"    => descending ? q.OrderByDescending(e => e.InsertDelete)     : q.OrderBy(e => e.InsertDelete),
-                "user_id"          => descending ? q.OrderByDescending(e => e.UserId)           : q.OrderBy(e => e.UserId),
-                _                  => q.OrderByDescending(e => e.DateTime),
+                "testcode"         => e => e.TestCode,
+                "buyer"            => e => e.Buyer,
+                "unitprice"        => e => e.UnitPrice,
+                "norequired"       => e => e.NoRequired,
+                "projectbuyercode" => e => e.ProjectBuyerCode,
+                "testbuyercode"    => e => e.TestBuyerCode,
+                "active"           => e => e.Active,
+                "date_time"        => e => e.DateTime,
+                "insert_delete"    => e => e.InsertDelete,
+                "user_id"          => e => e.UserId,
+                _                  => e => e.DateTime,
             };
+            return descending ? q.OrderByDescending(keySelector) : q.OrderBy(keySelector);
         }
 
         private static IQueryable<AnimalRequestLog> ApplyAnimalRequestLogSorting(
@@ -252,19 +252,20 @@ namespace Apha.FPS.DataAccess.Repositories
         private static IQueryable<AdditionalCostLog> ApplyAdditionalCostLogSorting(
             IQueryable<AdditionalCostLog> q, string? sortBy, bool descending)
         {
-            return sortBy?.ToLower() switch
+            Expression<Func<AdditionalCostLog, object?>> keySelector = sortBy?.ToLower() switch
             {
-                "jobcode"       => descending ? q.OrderByDescending(e => e.JobCode)     : q.OrderBy(e => e.JobCode),
-                "account"       => descending ? q.OrderByDescending(e => e.Account)     : q.OrderBy(e => e.Account),
-                "description"   => descending ? q.OrderByDescending(e => e.Description) : q.OrderBy(e => e.Description),
-                "itemcost"      => descending ? q.OrderByDescending(e => e.ItemCost)    : q.OrderBy(e => e.ItemCost),
-                "freq"          => descending ? q.OrderByDescending(e => e.Freq)        : q.OrderBy(e => e.Freq),
-                "supplier"      => descending ? q.OrderByDescending(e => e.Supplier)    : q.OrderBy(e => e.Supplier),
-                "date_time"     => descending ? q.OrderByDescending(e => e.DateTime)    : q.OrderBy(e => e.DateTime),
-                "insert_delete" => descending ? q.OrderByDescending(e => e.InsertDelete): q.OrderBy(e => e.InsertDelete),
-                "user_id"       => descending ? q.OrderByDescending(e => e.UserId)      : q.OrderBy(e => e.UserId),
-                _               => q.OrderByDescending(e => e.DateTime),
+                "jobcode"       => e => e.JobCode,
+                "account"       => e => e.Account,
+                "description"   => e => e.Description,
+                "itemcost"      => e => e.ItemCost,
+                "freq"          => e => e.Freq,
+                "supplier"      => e => e.Supplier,
+                "date_time"     => e => e.DateTime,
+                "insert_delete" => e => e.InsertDelete,
+                "user_id"       => e => e.UserId,
+                _               => e => e.DateTime,
             };
+            return descending ? q.OrderByDescending(keySelector) : q.OrderBy(keySelector);
         }
     }
 }

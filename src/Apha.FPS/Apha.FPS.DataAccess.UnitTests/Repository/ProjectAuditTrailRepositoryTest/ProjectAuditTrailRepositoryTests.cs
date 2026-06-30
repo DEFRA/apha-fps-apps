@@ -71,7 +71,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
                 mockContext.Setup(x => x.JobCodes).Returns(mockSet.Object);
             }
 
-            return new ProjectAuditTrailRepository(mockContext.Object, mockRequestContext.Object);
+            return new ProjectAuditTrailRepository(mockContext.Object);
         }
 
         // ── GetProjectLogsAsync ──────────────────────────────────────────────
