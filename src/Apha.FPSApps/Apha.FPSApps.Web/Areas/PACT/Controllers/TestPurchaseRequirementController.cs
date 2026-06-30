@@ -208,7 +208,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return new DataGridConfig<TestPurchaseRequirementItem>
             {
                 GridId = "testPurchaseReqGrid",
-                Title = "Test to Buy....",
+                Title = "Tests to Buy....",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Buyer",

@@ -13,5 +13,14 @@ namespace Apha.PACT.Core.Interfaces
         Task<bool> DeleteTestOrProductAsync(string itemCode);
         Task<IEnumerable<string>> GetOwnersAsync();
         Task<Dictionary<string, string?>> GetDescriptionsByCodesAsync(IEnumerable<string> itemCodes);
+
+        // TestPriceCheck (frmTestPriceCheck — qryTestPriceZero)
+        Task<PagedData<TestPriceCheckView>> GetTestPriceCheckPagedAsync(
+            PaginationParameters<string> query,
+            string priceFilter,
+            string? owner);
+        Task<TestPriceCheckView?> GetTestPriceCheckByKeyAsync(string testCode, string jobCode);
+        Task<bool> UpdateTestPriceCheckAsync(string testCode, string jobCode, short isDefraProject, decimal? testPrice, decimal? defraUnitPrice);
     }
 }
+

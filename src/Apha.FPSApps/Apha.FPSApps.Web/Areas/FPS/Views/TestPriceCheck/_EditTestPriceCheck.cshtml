@@ -1,0 +1,138 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.TestPriceCheckItem
+
+<div class="modal-header">
+    <h5 class="modal-title" id="testPriceModalTitle">Edit Test Price</h5>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()" data-bs-dismiss="modal">X</button>
+</div>
+<div class="modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
+    <div class="govuk-error-summary" role="alert"
+         aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">
+            There is a problem
+        </h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list"></ul>
+        </div>
+    </div>
+    <div class="row g-3">
+        <form id="editTestPriceForm">
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_0">
+                        <label class="govuk-label" asp-for="TestCode">Test Code</label>
+                        <input class="govuk-input" asp-for="TestCode" readonly />
+                        <span asp-validation-for="TestCode" class="govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_0">
+                        <label class="govuk-label" asp-for="JobCode">Job Code</label>
+                        <input class="govuk-input" asp-for="JobCode" readonly />
+                        <span asp-validation-for="JobCode" class="govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_0">
+                        <label class="govuk-label" asp-for="Manager">Manager</label>
+                        <input class="govuk-input" asp-for="Manager" readonly />
+                        <span asp-validation-for="Manager" class="govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_0">
+                        <label class="govuk-label" asp-for="Program">Program</label>
+                        <input class="govuk-input" asp-for="Program" readonly />
+                        <span asp-validation-for="Program" class="govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_0">
+                        <label class="govuk-label" asp-for="NoTests">No. Tests</label>
+                        <input class="govuk-input" asp-for="NoTests" type="number" min="0" step="1" readonly />
+                        <span asp-validation-for="NoTests" class="govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_0">
+                        <label class="govuk-label" asp-for="TestPrice">Avg Price</label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input class="govuk-input govuk-input--width-20" asp-for="TestPrice"
+                                   type="number" step="0.01" />
+                        </div>
+                        <span asp-validation-for="TestPrice" class="govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_0">
+                        <label class="govuk-label" asp-for="NormalPrice">Standard Price</label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input class="govuk-input govuk-input--width-20" asp-for="NormalPrice"
+                                   type="number" step="0.01" readonly />
+                        </div>
+                        <span asp-validation-for="NormalPrice" class="govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_0">
+                        <label class="govuk-label" asp-for="IsDefraProject">Defra Project</label>
+                        <select class="govuk-select" asp-for="IsDefraProject" asp-items="Model.IsDefraProjectList"></select>
+                        <span asp-validation-for="IsDefraProject" class="govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="govuk-grid-row">
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_0">
+                        <label class="govuk-label" asp-for="UnitPriceVla">Non Defra Price</label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input class="govuk-input govuk-input--width-20" asp-for="UnitPriceVla"
+                                   type="number" step="0.01" readonly />
+                        </div>
+                        <span asp-validation-for="UnitPriceVla" class="govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+                <div class="govuk-grid-column-one-half">
+                    <div class="govuk-form-group sup_margin_0">
+                        <label class="govuk-label" asp-for="DefraUnitPrice">Defra Price  <span class="sup_color_red">*</span></label>
+                        <div class="govuk-input__wrapper">
+                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                            <input class="govuk-input govuk-input--width-20" asp-for="DefraUnitPrice"
+                                   type="number" step="0.01" min="0" required />
+                        </div>
+                        <span asp-validation-for="DefraUnitPrice" class="govuk-error-message" style="display:none;"></span>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal-footer sup_flex_space_center">
+    <button class="govuk-button govuk-button--secondary sup_margin_0"
+            data-module="govuk-button" data-bs-dismiss="modal" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0"
+            data-module="govuk-button" type="button" onclick="saveTestPriceCheck()">Save</button>
+</div>
+
+<script>
+    (function () {
+        function updateNormalPrice() {
+            var isDefra = parseInt($('#IsDefraProject').val(), 10);
+            var price = isDefra === -1
+                ? $('#DefraUnitPrice').val()
+                : $('#UnitPriceVla').val();
+            $('#NormalPrice').val(price);
+        }
+
+        $('#IsDefraProject').on('change', updateNormalPrice);
+        $('#DefraUnitPrice').on('input change', updateNormalPrice);
+    })();
+</script>
