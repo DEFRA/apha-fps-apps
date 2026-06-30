@@ -19,6 +19,7 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<TestPriceCheckItem, TestPriceCheckDto>();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
+            CreateMap<UserPermissionViewModel, UserDto>().ReverseMap();
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();

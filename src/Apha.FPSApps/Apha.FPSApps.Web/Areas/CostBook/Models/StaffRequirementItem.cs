@@ -17,8 +17,7 @@ public class StaffRequirementItem
     [GridColumn(Order = 2, Width = 150, Type = GridColumnType.Text)]
     public string? Name { get; set; }
 
-    [Display(Name = "Rate")]
-    [Required(ErrorMessage = "Rate is required.")]
+    [Display(Name = "Rate")]    
     [GridColumn(Order = 3, Width = 100, Type = GridColumnType.GbpValue)]
     public double? Chargerate { get; set; }
 
@@ -30,8 +29,7 @@ public class StaffRequirementItem
     [GridColumn(Order = 5, Width = 70, Type = GridColumnType.DoubleNumber)]
     public double? Nodays { get; set; }
 
-    [Display(Name = "Cost")]
-    [Required(ErrorMessage = "Cost is required.")]
+    [Display(Name = "Cost")]    
     [GridColumn(Order = 6, Width = 100, Type = GridColumnType.GbpValue)]
     public double? StaffCost { get; set; }
 

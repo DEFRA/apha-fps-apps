@@ -13,8 +13,7 @@ public class AnimalRequirementDto
     public string AnimalType { get; set; } = null!;    
     public double? NumberOfDays { get; set; }    
     public double? NumberOfAnimals { get; set; }
-    [Required(ErrorMessage = "Daily Rate is required.")]
-    public double? DailyRate { get; set; }
-    [Required(ErrorMessage = "Animal Cost is required.")]
+    
+    public double? DailyRate { get; set; }   
     public double? AnimalCost { get; set; }
 }

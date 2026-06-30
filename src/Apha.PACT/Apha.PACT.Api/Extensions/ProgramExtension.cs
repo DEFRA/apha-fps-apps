@@ -163,15 +163,15 @@ namespace Apha.PACT.Api.Extensions
                 });
             }
 
+            app.UseMiddleware<ExceptionMiddleware>();
+
             app.UseHsts();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            app.UseRouting();
-
-            app.UseMiddleware<ExceptionMiddleware>();
-            app.UseMiddleware<RequestContextMiddleware>();
+            app.UseRouting();                 
 
             app.UseAuthentication();
+            app.UseMiddleware<RequestContextMiddleware>();
             app.UseAuthorization();
 
             // Default route

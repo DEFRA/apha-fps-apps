@@ -1,0 +1,53 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.UserPermissionViewModel
+@{
+    var isEditMode  = Model.UserId > 0;
+    var title       = isEditMode ? "Edit User"     : "Add User";
+    var formId      = isEditMode ? "editUserForm"  : "addUserForm";
+    var saveLabel   = isEditMode ? "Update"         : "Save";
+    var saveAction  = isEditMode ? "updateUser()"   : "saveUser()";
+}
+
+<div class="modal-header">
+    <h5 class="modal-title" id="userModalTitle">@title</h5>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()" data-bs-dismiss="modal">X</button>
+</div>
+<div class="modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
+    <div class="govuk-error-summary" role="alert"
+         aria-labelledby="error-summary-title" tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">
+            There is a problem
+        </h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list"></ul>
+        </div>
+    </div>
+    <div class="row g-3">
+        <form id="@formId">
+            <input type="hidden" name="UserId" value="@Model.UserId" />
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="Username">SQL Username <span class="sup_color_red">*</span></label>
+                <input type="text" asp-for="Username" required class="govuk-input" />
+                <span asp-validation-for="Username" class="govuk-error-message" style="display:none;"></span>
+            </div>
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="Comments">User</label>
+                <input type="text" asp-for="Comments" class="govuk-input" />
+                <span asp-validation-for="Comments" class="govuk-error-message" style="display:none;"></span>
+            </div>
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="UserEmail">Email <span class="sup_color_red">*</span></label>
+                <input type="email" asp-for="UserEmail" class="govuk-input" />
+                <span asp-validation-for="UserEmail" class="govuk-error-message" style="display:none;"></span>
+            </div>
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label" asp-for="Dt2Username">DT2 Username</label>
+                <input type="text" asp-for="Dt2Username" class="govuk-input" />
+                <span asp-validation-for="Dt2Username" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal-footer sup_flex_space_center">
+    <button class="govuk-button govuk-button--secondary sup_margin_0" data-module="govuk-button" data-bs-dismiss="modal" onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0" data-module="govuk-button" type="button" onclick="@saveAction">@saveLabel</button>
+</div>
