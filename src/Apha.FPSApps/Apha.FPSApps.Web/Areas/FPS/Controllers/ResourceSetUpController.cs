@@ -1,18 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ResourceSetUpController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 15 — Build, Fix, and Final Validation
- * Migrated : 2026-06-11
- *
- * CHANGED:
- *   - Lines 271, 325: WorkGroupEmployeeItem initializer changed Name = d.Name / Name = response.Data.Name
- *     to StaffName = d.Name / StaffName = response.Data.Name — property was renamed in Phase 11 to
- *     align with JS DataGrid field key 'staffName'; these two call sites were not updated at that time.
- * PRESERVED:
- *   - All other controller logic, actions, DI wiring, and route attributes unchanged.
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - none — fully automated.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -60,7 +45,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var viewModel = new ResourceSetUpViewModel
             {
-                ProfitCentre     = selectedProfitCentre,
+                ProfitCentre = selectedProfitCentre,
                 ProfitCentreList = profitCentreList
             };
 
@@ -74,9 +59,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     rcGradeItems = rcResponse.Data
                         .Select(d => new ProfitCentreGradeItem
                         {
-                            PcGrade        = d.PcGrade,
+                            PcGrade = d.PcGrade,
                             RcGradeDisplay = d.PcGrade,
-                            ChargeRate     = d.ChargeRate
+                            ChargeRate = d.ChargeRate
                         })
                         .ToList();
                 }
@@ -84,54 +69,54 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             viewModel.RcGradeGrid = new DataGridConfig<ProfitCentreGradeItem>
             {
-                GridId             = "rcGradeGrid",
-                Title              = "RC Grades Available",
+                GridId = "rcGradeGrid",
+                Title = "RC Grades Available",
                 ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "PcGrade",
-                AllowAdd           = false,
-                AllowEdit          = false,
-                AllowDelete        = false,
-                ExtraFilterMethod  = "getRcGradeExtraFilters",
-                BindGridUrl        = "/FPS/ResourceSetUp/LoadRcGradeGrid",
-                Data               = rcGradeItems.Take(10).ToList(),
-                Columns            = GridDataProvider.GetColumnsDefination<ProfitCentreGradeItem>(),
-                Pagination         = new PaginationModel { TotalRecords = rcGradeItems.Count, PageNumber = 1, PageSize = 10 }
+                ShowPagination = true,
+                KeyProperty = "PcGrade",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                ExtraFilterMethod = "getRcGradeExtraFilters",
+                BindGridUrl = "/FPS/ResourceSetUp/LoadRcGradeGrid",
+                Data = rcGradeItems.Take(10).ToList(),
+                Columns = GridDataProvider.GetColumnsDefination<ProfitCentreGradeItem>(),
+                Pagination = new PaginationModel { TotalRecords = rcGradeItems.Count, PageNumber = 1, PageSize = 10 }
             };
 
             viewModel.WgGradeGrid = new DataGridConfig<WorkGroupGradeItem>
             {
-                GridId             = "wgGradeGrid",
-                Title              = string.Empty,
+                GridId = "wgGradeGrid",
+                Title = string.Empty,
                 ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "WgGrade",
-                AllowAdd           = false,
-                AllowEdit          = false,
-                AllowDelete        = false,
-                ExtraFilterMethod  = "getWgGradeExtraFilters",
-                BindGridUrl        = "/FPS/ResourceSetUp/LoadWgGradeGrid",
-                Data               = new List<WorkGroupGradeItem>(),
-                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupGradeItem>(),
-                Pagination         = new PaginationModel()
+                ShowPagination = true,
+                KeyProperty = "WgGrade",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                ExtraFilterMethod = "getWgGradeExtraFilters",
+                BindGridUrl = "/FPS/ResourceSetUp/LoadWgGradeGrid",
+                Data = new List<WorkGroupGradeItem>(),
+                Columns = GridDataProvider.GetColumnsDefination<WorkGroupGradeItem>(),
+                Pagination = new PaginationModel()
             };
 
             viewModel.WgStaffGrid = new DataGridConfig<WorkGroupEmployeeItem>
             {
-                GridId             = "wgStaffGrid",
-                Title              = "Staff of WG Grade",
+                GridId = "wgStaffGrid",
+                Title = "Staff of WG Grade",
                 ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "PactId",
-                AllowAdd           = false,
-                AllowEdit          = true,
-                EditFunction       = "editWgStaff",
-                AllowDelete        = false,
-                ExtraFilterMethod  = "getWgStaffExtraFilters",
-                BindGridUrl        = "/FPS/ResourceSetUp/LoadWgStaffGrid",
-                Data               = new List<WorkGroupEmployeeItem>(),
-                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupEmployeeItem>(),
-                Pagination         = new PaginationModel()
+                ShowPagination = true,
+                KeyProperty = "PactId",
+                AllowAdd = false,
+                AllowEdit = true,
+                EditFunction = "editWgStaff",
+                AllowDelete = false,
+                ExtraFilterMethod = "getWgStaffExtraFilters",
+                BindGridUrl = "/FPS/ResourceSetUp/LoadWgStaffGrid",
+                Data = new List<WorkGroupEmployeeItem>(),
+                Columns = GridDataProvider.GetColumnsDefination<WorkGroupEmployeeItem>(),
+                Pagination = new PaginationModel()
             };
 
             return View(viewModel);
@@ -154,9 +139,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var items = (response.Data ?? new List<ProfitCentreGradeDto>())
                 .Select(d => new ProfitCentreGradeItem
                 {
-                    PcGrade        = d.PcGrade,
+                    PcGrade = d.PcGrade,
                     RcGradeDisplay = d.PcGrade,
-                    ChargeRate     = d.ChargeRate
+                    ChargeRate = d.ChargeRate
                 })
                 .AsQueryable();
 
@@ -167,8 +152,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             items = sortBy?.ToLower() switch
             {
                 "rcgradedisplay" => descending ? items.OrderByDescending(x => x.RcGradeDisplay) : items.OrderBy(x => x.RcGradeDisplay),
-                "chargerate"    => descending ? items.OrderByDescending(x => x.ChargeRate)     : items.OrderBy(x => x.ChargeRate),
-                _               => items
+                "chargerate" => descending ? items.OrderByDescending(x => x.ChargeRate) : items.OrderBy(x => x.ChargeRate),
+                _ => items
             };
 
             var totalRecords = items.Count();
@@ -176,20 +161,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var gridConfig = new DataGridConfig<ProfitCentreGradeItem>
             {
-                GridId             = "rcGradeGrid",
-                Title              = "RC Grades Available",
+                GridId = "rcGradeGrid",
+                Title = "RC Grades Available",
                 ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "PcGrade",
-                AllowAdd           = false,
-                AllowEdit          = false,
-                AllowDelete        = false,
-                ExtraFilterMethod  = "getRcGradeExtraFilters",
-                BindGridUrl        = "/FPS/ResourceSetUp/LoadRcGradeGrid",
-                Data               = pagedItems,
-                Columns            = GridDataProvider.GetColumnsDefination<ProfitCentreGradeItem>(),
-                Pagination         = new PaginationModel { TotalRecords = totalRecords, PageNumber = page, PageSize = pageSize, SortColumn = sortBy, SortDirection = descending },
-                CurrentFilters     = filterDict
+                ShowPagination = true,
+                KeyProperty = "PcGrade",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                ExtraFilterMethod = "getRcGradeExtraFilters",
+                BindGridUrl = "/FPS/ResourceSetUp/LoadRcGradeGrid",
+                Data = pagedItems,
+                Columns = GridDataProvider.GetColumnsDefination<ProfitCentreGradeItem>(),
+                Pagination = new PaginationModel { TotalRecords = totalRecords, PageNumber = page, PageSize = pageSize, SortColumn = sortBy, SortDirection = descending },
+                CurrentFilters = filterDict
             };
 
             return PartialView("_DataGrid", gridConfig);
@@ -213,7 +198,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 .Select(d => new WorkGroupGradeItem
                 {
                     ProfitCentreGrade = d.ProfitCentreGrade,
-                    WgGrade           = d.WgGrade
+                    WgGrade = d.WgGrade
                 })
                 .AsQueryable();
 
@@ -224,7 +209,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             items = sortBy?.ToLower() switch
             {
                 "wggrade" => descending ? items.OrderByDescending(x => x.WgGrade) : items.OrderBy(x => x.WgGrade),
-                _         => items
+                _ => items
             };
 
             var totalRecords = items.Count();
@@ -232,20 +217,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var gridConfig = new DataGridConfig<WorkGroupGradeItem>
             {
-                GridId             = "wgGradeGrid",
-                Title              = string.Empty,
+                GridId = "wgGradeGrid",
+                Title = string.Empty,
                 ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "WgGrade",
-                AllowAdd           = false,
-                AllowEdit          = false,
-                AllowDelete        = false,
-                ExtraFilterMethod  = "getWgGradeExtraFilters",
-                BindGridUrl        = "/FPS/ResourceSetUp/LoadWgGradeGrid",
-                Data               = pagedItems,
-                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupGradeItem>(),
-                Pagination         = new PaginationModel { TotalRecords = totalRecords, PageNumber = page, PageSize = pageSize, SortColumn = sortBy, SortDirection = descending },
-                CurrentFilters     = filterDict
+                ShowPagination = true,
+                KeyProperty = "WgGrade",
+                AllowAdd = false,
+                AllowEdit = false,
+                AllowDelete = false,
+                ExtraFilterMethod = "getWgGradeExtraFilters",
+                BindGridUrl = "/FPS/ResourceSetUp/LoadWgGradeGrid",
+                Data = pagedItems,
+                Columns = GridDataProvider.GetColumnsDefination<WorkGroupGradeItem>(),
+                Pagination = new PaginationModel { TotalRecords = totalRecords, PageNumber = page, PageSize = pageSize, SortColumn = sortBy, SortDirection = descending },
+                CurrentFilters = filterDict
             };
 
             return PartialView("_DataGrid", gridConfig);
@@ -260,7 +245,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     success = false,
                     message = "Invalid request data",
-                    errors  = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
             }
 
@@ -281,39 +266,39 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var rawData = response.Data ?? new List<WorkGroupEmployeeDto>();
             var staffItems = rawData.Select(d => new WorkGroupEmployeeItem
             {
-                PactId        = d.PactId,
-                SpNumber      = d.SpNumber,
-                StaffName     = d.Name,
-                HrsPaid       = d.HrsPaid,
-                Leave         = d.Leave,
-                SickSpecial   = d.SickSpecial,
-                HrsAvail      = d.HrsAvail,
+                PactId = d.PactId,
+                SpNumber = d.SpNumber,
+                Name = d.Name,
+                HrsPaid = d.HrsPaid,
+                Leave = d.Leave,
+                SickSpecial = d.SickSpecial,
+                HrsAvail = d.HrsAvail,
                 MakeAvailable = d.MakeAvailable == -1,
-                PersonStatus  = d.PersonStatus,
-                PersonClass   = d.PersonClass
+                PersonStatus = d.PersonStatus,
+                PersonClass = d.PersonClass
             }).ToList();
 
             var paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
-            paginationModel.SortColumn    = request.SortBy;
+            paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
             var gridConfig = new DataGridConfig<WorkGroupEmployeeItem>
             {
-                GridId             = "wgStaffGrid",
-                Title              = "Staff of WG Grade",
+                GridId = "wgStaffGrid",
+                Title = "Staff of WG Grade",
                 ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "PactId",
-                AllowAdd           = false,
-                AllowEdit          = true,
-                EditFunction       = "editWgStaff",
-                AllowDelete        = false,
-                ExtraFilterMethod  = "getWgStaffExtraFilters",
-                BindGridUrl        = "/FPS/ResourceSetUp/LoadWgStaffGrid",
-                Data               = staffItems,
-                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupEmployeeItem>(),
-                Pagination         = paginationModel,
-                CurrentFilters     = filterDict
+                ShowPagination = true,
+                KeyProperty = "PactId",
+                AllowAdd = false,
+                AllowEdit = true,
+                EditFunction = "editWgStaff",
+                AllowDelete = false,
+                ExtraFilterMethod = "getWgStaffExtraFilters",
+                BindGridUrl = "/FPS/ResourceSetUp/LoadWgStaffGrid",
+                Data = staffItems,
+                Columns = GridDataProvider.GetColumnsDefination<WorkGroupEmployeeItem>(),
+                Pagination = paginationModel,
+                CurrentFilters = filterDict
             };
 
             return PartialView("_DataGrid", gridConfig);
@@ -335,16 +320,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var item = new WorkGroupEmployeeItem
             {
-                PactId        = response.Data.PactId,
-                SpNumber      = response.Data.SpNumber,
-                StaffName     = response.Data.Name,
-                HrsPaid       = response.Data.HrsPaid,
-                Leave         = response.Data.Leave,
-                SickSpecial   = response.Data.SickSpecial,
-                HrsAvail      = response.Data.HrsAvail,
+                PactId = response.Data.PactId,
+                SpNumber = response.Data.SpNumber,
+                Name = response.Data.Name,
+                HrsPaid = response.Data.HrsPaid,
+                Leave = response.Data.Leave,
+                SickSpecial = response.Data.SickSpecial,
+                HrsAvail = response.Data.HrsAvail,
                 MakeAvailable = response.Data.MakeAvailable == -1,
-                PersonStatus  = response.Data.PersonStatus,
-                PersonClass   = response.Data.PersonClass
+                PersonStatus = response.Data.PersonStatus,
+                PersonClass = response.Data.PersonClass
             };
 
             return PartialView("_AddEditResourceSetUp", item);
@@ -359,7 +344,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     success = false,
                     message = "Please correct the errors below.",
-                    errors  = ModelState
+                    errors = ModelState
                         .Where(kvp => kvp.Value!.Errors.Any())
                         .SelectMany(kvp => kvp.Value!.Errors.Select(e => new { field = kvp.Key, message = e.ErrorMessage }))
                 });
@@ -367,16 +352,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var dto = new WorkGroupEmployeeDto
             {
-                PactId         = item.PactId,
-                SpNumber       = item.SpNumber ?? string.Empty,
+                PactId = item.PactId,
+                SpNumber = item.SpNumber,
                 WorkGroupGrade = string.Empty,
-                HrsPaid        = item.HrsPaid,
-                Leave          = item.Leave,
-                SickSpecial    = item.SickSpecial,
-                HrsAvail       = item.HrsAvail,
-                MakeAvailable  = item.MakeAvailable ? -1 : 0,
-                PersonStatus   = item.PersonStatus,
-                PersonClass    = item.PersonClass
+                HrsPaid = item.HrsPaid,
+                Leave = item.Leave,
+                SickSpecial = item.SickSpecial,
+                HrsAvail = item.HrsAvail,
+                MakeAvailable = item.MakeAvailable ? -1 : 0,
+                PersonStatus = item.PersonStatus,
+                PersonClass = item.PersonClass
             };
 
             var result = await _WorkGroupEmployeeService.UpdateWorkGroupEmployeeAsync(dto);
@@ -389,11 +374,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 success = false,
                 message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update staff record.",
-                errors  = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
+                errors = (result.Errors ?? new List<ApiErrorDto>()).Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
             });
         }
 
-       
+
 
         private static Dictionary<string, string> ParseFilterJson(string? filter)
         {
@@ -419,7 +404,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .Select(p => new SelectListItem
                     {
                         Value = p.ProfitCentreId,
-                        Text  = $"{p.ProfitCentreId} - {p.ProfitCentreName}"
+                        Text = $"{p.ProfitCentreId} - {p.ProfitCentreName}"
                     })
                     .ToList();
             }

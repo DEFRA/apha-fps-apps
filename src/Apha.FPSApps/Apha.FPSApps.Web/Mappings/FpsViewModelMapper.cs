@@ -40,25 +40,18 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<TestPlanActualItem, TestRequirementDto>().ReverseMap();
             CreateMap<ActualTestOutputItem, MonthlyOutputDto>().ReverseMap();
 
+            // ProgrammeNewProject
             CreateMap<ProjectDto, ProgrammeNewProjectViewModel>().ReverseMap();
 
             // PortfolioNew
             CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
 
+            //Work Group Staff Maintenance
+            CreateMap<WorkGroupEmployeeStaffItem, WorkGroupEmployeeStaffDto>().ReverseMap();
             // Resource Set-Up
-            CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>()
-                .ForMember(d => d.MakeAvailable,   o => o.MapFrom(s => s.MakeAvailable ? 1 : 0))
-                .ForMember(d => d.TimeRecorder,    o => o.MapFrom(s => s.TimeRecorder ? 1 : 0))
-                .ForMember(d => d.Name,            o => o.MapFrom(s => s.StaffName ?? string.Empty))
-                .ForMember(d => d.WorkGroupGrade,  o => o.MapFrom(s => s.WgGrade ?? string.Empty))
-                .ForMember(d => d.SpNumber,        o => o.MapFrom(s => s.SpNumber ?? string.Empty))
-                .ReverseMap()
-                .ForMember(d => d.MakeAvailable,   o => o.MapFrom(s => s.MakeAvailable != 0))
-                .ForMember(d => d.TimeRecorder,    o => o.MapFrom(s => s.TimeRecorder != 0))
-                .ForMember(d => d.StaffName,       o => o.MapFrom(s => s.Name))
-                .ForMember(d => d.WgGrade,         o => o.MapFrom(s => s.WorkGroupGrade))
-                .ForMember(d => d.SpNumber,        o => o.MapFrom(s => s.SpNumber));
+            CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 
+            // ProfitCentreGradeMaint
             CreateMap<ProfitCentreGradeMaintItem, ProfitCentreGradeDto>().ReverseMap();
 
             // BudgetResourceLevel
@@ -80,7 +73,7 @@ namespace Apha.FPSApps.Web.Mappings
             //   ProjectProfitabilityVlaItem is defined in Phase 11; see DEFERRED note in file header.
             CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaItem>().ReverseMap();
 
-
+            // Staff Plan view
             CreateMap<StaffPlanViewItem, ProjectStaffPlanViewDto>().ReverseMap();
 
             // Project Group Staff Plan view
@@ -100,8 +93,10 @@ namespace Apha.FPSApps.Web.Mappings
                 .ReverseMap();
             CreateMap<MaintWGGradeItem, WorkgroupGradeDto>().ReverseMap();
 
+            // Test Capability (FPS portfolio page — reuses PACT TestCapabilityDto)
             CreateMap<Apha.FPSApps.Web.Areas.FPS.Models.TestCapabilityItem, Apha.FPSApps.Application.Dtos.PACT.TestCapabilityDto>().ReverseMap();
 
+            // Plan Staff ZT Code
             CreateMap<PlanStaffZTCodeItemViewModel, StaffJobViewDto>().ReverseMap();
             CreateMap<PlanStaffZTCodeItemViewModel, StaffJobDto>()
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))

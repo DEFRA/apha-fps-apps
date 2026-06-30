@@ -111,24 +111,23 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         }
 
         [Fact]
-        public async Task GetWorkGroupEmployeeAsync_WithSpNumberFilter_ReturnsMatchingEmployees()
+        public async Task GetWorkGroupEmployeeAsync_WithEmptyJsonFilter_ReturnsAllActiveEmployees()
         {
             var employees = new List<WorkGroupEmployee>
             {
                 new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" },
                 new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
             };
-            var repo  = CreateRepository(employees);
-            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"SpNumber\":\"SP001\"}" };
+            var repo = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{}" };
 
             var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
 
-            Assert.Single(result.Data);
-            Assert.Equal("SP001", result.Data.First().SpNumber);
+            Assert.Equal(2, result.Data.Count());
         }
 
         [Fact]
-        public async Task GetWorkGroupEmployeeAsync_WithNameFilter_ReturnsMatchingEmployees()
+        public async Task GetWorkGroupEmployeeAsync_WithNameSort_ProjectsEmployeeNames()
         {
             var employees = new List<WorkGroupEmployee>
             {
@@ -138,19 +137,20 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             var staffMembers = new List<Employee>
             {
                 new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith" },
-                new() { SPNumber = "SP002", FirstName = "Bob",   LastName = "Jones" }
+                new() { SPNumber = "SP002", FirstName = "Bob", LastName = "Jones" }
             };
-            var repo  = CreateRepository(employees, staffMembers);
-            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"Name\":\"Smith\"}" };
+            var repo = CreateRepository(employees, staffMembers);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "name", Descending = false };
 
             var result = await repo.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
 
-            Assert.Single(result.Data);
-            Assert.Contains("Smith", result.Data.First().Name);
+            Assert.All(result.Data, item => Assert.False(string.IsNullOrWhiteSpace(item.Name)));
+            Assert.Contains(result.Data, item => item.Name!.Contains("Smith"));
+            Assert.Contains(result.Data, item => item.Name!.Contains("Jones"));
         }
 
         [Fact]
-        public async Task GetWorkGroupEmployeeForStaffAsync_WithStaffNameFilter_ReturnsMatchingEmployees()
+        public async Task GetWorkGroupEmployeeForStaffAsync_WithDefaultSort_ReturnsAllEmployeesForGrade()
         {
             var employees = new List<WorkGroupEmployee>
             {
@@ -160,15 +160,16 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             var staffMembers = new List<Employee>
             {
                 new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Smith" },
-                new() { SPNumber = "SP002", FirstName = "Bob",   LastName = "Jones" }
+                new() { SPNumber = "SP002", FirstName = "Bob", LastName = "Jones" }
             };
-            var repo  = CreateRepository(employees, staffMembers);
-            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"StaffName\":\"Smith\"}" };
+            var repo = CreateRepository(employees, staffMembers);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             var result = await repo.GetWorkGroupEmployeeForStaffAsync(query, DefaultWgGrade);
 
-            Assert.Single(result.Data);
-            Assert.Contains("Smith", result.Data.First().Name);
+            Assert.Equal(2, result.Data.Count());
+            Assert.All(result.Data, item => Assert.Equal(DefaultWgGrade, item.WorkGroupGrade));
+            Assert.All(result.Data, item => Assert.False(string.IsNullOrWhiteSpace(item.Name)));
         }
 
         [Fact]
@@ -328,20 +329,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         }
 
         [Fact]
-        public async Task GetWorkGroupEmployeeForStaffAsync_WithWgGradeFilter_ReturnsMatchingEmployees()
+        public async Task GetWorkGroupEmployeeForStaffAsync_WithWgGradeSortAlias_ReturnsOrderedResults()
         {
             var employees = new List<WorkGroupEmployee>
             {
                 new() { PactId = "P001", SpNumber = "SP001", WorkGroupGrade = "WG-A", PersonStatus = "A" },
                 new() { PactId = "P002", SpNumber = "SP002", WorkGroupGrade = "WG-B", PersonStatus = "A" }
             };
-            var repo  = CreateRepository(employees);
-            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"WgGrade\":\"WG-B\"}" };
+            var repo = CreateRepository(employees);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "wggrade", Descending = true };
 
             var result = await repo.GetWorkGroupEmployeeForStaffAsync(query, string.Empty);
 
-            Assert.Single(result.Data);
-            Assert.Equal("WG-B", result.Data.First().WorkGroupGrade);
+            var list = result.Data.ToList();
+            Assert.Equal("WG-B", list[0].WorkGroupGrade);
+            Assert.Equal("WG-A", list[1].WorkGroupGrade);
         }
 
         [Fact]
@@ -463,9 +465,21 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         [Fact]
         public async Task GetWorkGroupEmployeeByIdAsync_WithMatchingPactId_ReturnsEmployee()
         {
+            var startDate = new DateTime(2025, 4, 1);
+            var endDate = new DateTime(2025, 12, 31);
             var employees = new List<WorkGroupEmployee>
             {
-                new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade, PersonStatus = "A" }
+                new()
+                {
+                    PactId = DefaultPactId,
+                    SpNumber = "SP001",
+                    WorkGroupGrade = DefaultWgGrade,
+                    PersonStatus = "A",
+                    TimeRecorder = 1,
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    HoursPerWeek = 37.5
+                }
             };
             var repo = CreateRepository(employees);
 
@@ -473,6 +487,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
 
             Assert.NotNull(result);
             Assert.Equal(DefaultPactId, result!.PactId);
+            Assert.Equal(1, result.TimeRecorder);
+            Assert.Equal(startDate, result.StartDate);
+            Assert.Equal(endDate, result.EndDate);
+            Assert.Equal(37.5, result.HoursPerWeek);
         }
 
         [Fact]
@@ -529,6 +547,8 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
         [Fact]
         public async Task UpdateWorkGroupEmployeeForStaffAsync_WithValidEntity_UpdatesAndReturnsEntity()
         {
+            var startDate = new DateTime(2025, 4, 1);
+            var endDate = new DateTime(2025, 12, 31);
             var existing = new WorkGroupEmployee
             {
                 PactId         = DefaultPactId,
@@ -539,7 +559,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
                 Leave          = 0.0,
                 SickSpecial    = 0.0,
                 HrsAvail       = 37.0,
-                MakeAvailable  = -1
+                MakeAvailable  = -1,
+                TimeRecorder   = 0,
+                StartDate      = null,
+                EndDate        = null,
+                HoursPerWeek   = null
             };
             var repo = CreateRepository(new List<WorkGroupEmployee> { existing });
 
@@ -551,7 +575,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
                 SickSpecial   = 1.0,
                 HrsAvail      = 1200.0,
                 PersonStatus  = "A",
-                MakeAvailable = 0
+                MakeAvailable = 0,
+                TimeRecorder  = 1,
+                StartDate     = startDate,
+                EndDate       = endDate,
+                HoursPerWeek  = 37.5
             };
 
             var result = await repo.UpdateWorkGroupEmployeeForStaffAsync(update);
@@ -559,6 +587,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
             Assert.NotNull(result);
             Assert.Equal(40.0, result.HrsPaid);
             Assert.Equal(1200.0, result.HrsAvail);
+            Assert.Equal(1, result.TimeRecorder);
+            Assert.Equal(startDate, result.StartDate);
+            Assert.Equal(endDate, result.EndDate);
+            Assert.Equal(37.5, result.HoursPerWeek);
         }
 
         [Fact]

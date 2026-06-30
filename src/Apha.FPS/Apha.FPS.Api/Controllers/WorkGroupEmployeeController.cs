@@ -59,11 +59,11 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<WorkGroupEmployeeRes>(result));
         }
 
-        [HttpPost]
-        public async Task<ActionResult<WorkGroupEmployeeRes>> CreateWorkGroupEmployeeAsync([FromBody] WorkGroupEmployeeReq req)
+        [HttpPost("staff")]
+        public async Task<ActionResult<WorkGroupEmployeeRes>> CreateWorkGroupEmployeeForStaffAsync([FromBody] WorkGroupEmployeeReq req)
         {
             var mappedDto = _mapper.Map<WorkGroupEmployeeDto>(req);
-            var createdDto = await _workGroupEmployeeService.CreateWorkGroupEmployeeAsync(mappedDto);
+            var createdDto = await _workGroupEmployeeService.CreateWorkGroupEmployeeForStaffAsync(mappedDto);
             return Ok(_mapper.Map<WorkGroupEmployeeRes>(createdDto));
         }
 

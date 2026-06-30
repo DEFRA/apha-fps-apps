@@ -1,17 +1,3 @@
-@* TRANSFORMENGINE MIGRATION — ResourceSetUp/_AddEditResourceSetUp.cshtml
-   Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 15 — Build, Fix, and Final Validation
-   Migrated : 2026-06-11
-
-   CHANGED:
-     - asp-for="Name" → asp-for="StaffName" (hidden input and label, 2 locations)
-     - @Model.Name → @Model.StaffName (read-only text input value)
-     WorkGroupEmployeeItem.Name was renamed to StaffName in Phase 11 to align with JS field key
-     'staffName'; these view bindings were not updated at that time. Fixed in Phase 15.
-   PRESERVED:
-     - All other form fields, layout, and binding logic unchanged.
-   DEFERRED / REQUIRES HUMAN REVIEW:
-     - none — fully automated.
-*@
 @model Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupEmployeeItem
 
 <div class="modal-header">
@@ -30,7 +16,7 @@
     <form id="wgStaffForm">
         <input type="hidden" asp-for="PactId" />
         <input type="hidden" asp-for="SpNumber" />
-        <input type="hidden" asp-for="StaffName" />
+        <input type="hidden" asp-for="Name" />
         <input type="hidden" asp-for="HrsAvail" />
         <input type="hidden" asp-for="PersonStatus" />
         <input type="hidden" asp-for="PersonClass" />
@@ -42,8 +28,8 @@
             </div>
 
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label" asp-for="StaffName">Name</label>
-                <input type="text" class="govuk-input" value="@Model.StaffName" readonly />
+                <label class="govuk-label" asp-for="Name">Name</label>
+                <input type="text" class="govuk-input" value="@Model.Name" readonly />
             </div>
 
             <div class="govuk-form-group sup_margin_0">

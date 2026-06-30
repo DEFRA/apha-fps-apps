@@ -55,24 +55,42 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task GetWorkGroupEmployeeAsync_WithNullOrWhitespaceWgGrade_PassesValueToRepository(string wgGrade)
+        public async Task GetWorkGroupEmployeeAsync_WithNullOrWhitespaceWgGrade_ThrowsArgumentException(string wgGrade)
         {
-            // Arrange
-            var query        = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _sut.GetWorkGroupEmployeeAsync(query, wgGrade));
+
+            await _mockRepository.DidNotReceive().GetWorkGroupEmployeeAsync(Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeForStaffAsync_WithValidQuery_ReturnsMappedPaginatedResult()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var mappedParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var pagedData    = new PagedData<WorkGroupEmployeeView>();
-            var expected     = new PaginatedResult<WorkGroupEmployeeDto>();
+            var pagedData = new PagedData<WorkGroupEmployeeView>();
+            var expected = new PaginatedResult<WorkGroupEmployeeDto>();
 
             _mockMapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
-            _mockRepository.GetWorkGroupEmployeeAsync(mappedParams, wgGrade).Returns(pagedData);
+            _mockRepository.GetWorkGroupEmployeeForStaffAsync(mappedParams, DefaultWgGrade).Returns(pagedData);
             _mockMapper.Map<PaginatedResult<WorkGroupEmployeeDto>>(pagedData).Returns(expected);
 
-            // Act
-            var result = await _sut.GetWorkGroupEmployeeAsync(query, wgGrade);
+            var result = await _sut.GetWorkGroupEmployeeForStaffAsync(query, DefaultWgGrade);
 
-            // Assert
             result.Should().Be(expected);
-            await _mockRepository.Received(1).GetWorkGroupEmployeeAsync(mappedParams, wgGrade);
+            await _mockRepository.Received(1).GetWorkGroupEmployeeForStaffAsync(mappedParams, DefaultWgGrade);
+            _mockMapper.Received(1).Map<PaginatedResult<WorkGroupEmployeeDto>>(pagedData);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeForStaffAsync_WithNullQuery_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _sut.GetWorkGroupEmployeeForStaffAsync(null!, DefaultWgGrade));
+
+            await _mockRepository.DidNotReceive().GetWorkGroupEmployeeForStaffAsync(Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
         }
 
         #endregion
@@ -129,7 +147,7 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
         #region CreateWorkGroupEmployeeAsync Tests
 
         [Fact]
-        public async Task CreateWorkGroupEmployeeAsync_WithValidDto_ReturnsMappedResult()
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WithValidDto_ReturnsMappedResult()
         {
             // Arrange
             var dto     = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade, HrsPaid = 40.0, Leave = 5.0, SickSpecial = 2.0 };
@@ -138,57 +156,70 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
             var expected = new WorkGroupEmployeeDto { PactId = DefaultPactId };
 
             _mockMapper.Map<WorkGroupEmployee>(dto).Returns(entity);
-            _mockRepository.CreateWorkGroupEmployeeAsync(entity).Returns(created);
+            _mockRepository.CreateWorkGroupEmployeeForStaffAsync(entity).Returns(created);
             _mockMapper.Map<WorkGroupEmployeeDto>(created).Returns(expected);
 
             // Act
-            var result = await _sut.CreateWorkGroupEmployeeAsync(dto);
+            var result = await _sut.CreateWorkGroupEmployeeForStaffAsync(dto);
 
             // Assert
             result.Should().Be(expected);
-            await _mockRepository.Received(1).CreateWorkGroupEmployeeAsync(entity);
+            await _mockRepository.Received(1).CreateWorkGroupEmployeeForStaffAsync(entity);
             _mockMapper.Received(1).Map<WorkGroupEmployee>(dto);
             _mockMapper.Received(1).Map<WorkGroupEmployeeDto>(created);
         }
 
         [Fact]
-        public async Task CreateWorkGroupEmployeeAsync_WithNullDto_ThrowsArgumentNullException()
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WithNullDto_ThrowsArgumentNullException()
         {
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                _sut.CreateWorkGroupEmployeeAsync(null!));
+                _sut.CreateWorkGroupEmployeeForStaffAsync(null!));
 
-            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeAsync(Arg.Any<WorkGroupEmployee>());
+            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployee>());
         }
 
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task CreateWorkGroupEmployeeAsync_WithNullOrWhitespacePactId_ThrowsArgumentException(string pactId)
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WithNullOrWhitespacePactId_ThrowsArgumentException(string pactId)
         {
             // Arrange
             var dto = new WorkGroupEmployeeDto { PactId = pactId, WorkGroupGrade = DefaultWgGrade };
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateWorkGroupEmployeeAsync(dto));
+                _sut.CreateWorkGroupEmployeeForStaffAsync(dto));
 
-            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeAsync(Arg.Any<WorkGroupEmployee>());
+            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployee>());
         }
 
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task CreateWorkGroupEmployeeAsync_WithNullOrWhitespaceWorkGroupGrade_ThrowsArgumentException(string wgGrade)
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WithNullOrWhitespaceWorkGroupGrade_ThrowsArgumentException(string wgGrade)
         {
             // Arrange
             var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = wgGrade };
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _sut.CreateWorkGroupEmployeeAsync(dto));
+                _sut.CreateWorkGroupEmployeeForStaffAsync(dto));
 
-            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeAsync(Arg.Any<WorkGroupEmployee>());
+            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployee>());
+        }
+
+        [Fact]
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WhenEmployeeAlreadyExists_ThrowsArgumentException()
+        {
+            var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade };
+            _mockRepository.GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId)
+                .Returns(new WorkGroupEmployeeView { PactId = DefaultPactId });
+
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _sut.CreateWorkGroupEmployeeForStaffAsync(dto));
+
+            await _mockRepository.DidNotReceive().CreateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployee>());
         }
 
         #endregion
@@ -242,6 +273,62 @@ namespace Apha.FPS.Application.UnitTests.Services.WorkGroupEmployeeServiceTest
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
                 _sut.UpdateWorkGroupEmployeeAsync(dto));
+        }
+
+        [Fact]
+        public async Task UpdateWorkGroupEmployeeForStaffAsync_WithValidDto_ReturnsMappedResult()
+        {
+            var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId };
+            var existing = new WorkGroupEmployeeView { PactId = DefaultPactId };
+            var entity = new WorkGroupEmployee { PactId = DefaultPactId };
+            var updated = new WorkGroupEmployee { PactId = DefaultPactId };
+            var expected = new WorkGroupEmployeeDto { PactId = DefaultPactId };
+
+            _mockRepository.GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId).Returns(existing);
+            _mockMapper.Map<WorkGroupEmployee>(dto).Returns(entity);
+            _mockRepository.UpdateWorkGroupEmployeeForStaffAsync(entity).Returns(updated);
+            _mockMapper.Map<WorkGroupEmployeeDto>(updated).Returns(expected);
+
+            var result = await _sut.UpdateWorkGroupEmployeeForStaffAsync(dto);
+
+            result.Should().Be(expected);
+            await _mockRepository.Received(1).UpdateWorkGroupEmployeeForStaffAsync(entity);
+            _mockMapper.Received(1).Map<WorkGroupEmployeeDto>(updated);
+        }
+
+        [Fact]
+        public async Task UpdateWorkGroupEmployeeForStaffAsync_WithNullDto_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _sut.UpdateWorkGroupEmployeeForStaffAsync(null!));
+
+            await _mockRepository.DidNotReceive().UpdateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployee>());
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task UpdateWorkGroupEmployeeForStaffAsync_WithNullOrWhitespacePactId_ThrowsArgumentException(string pactId)
+        {
+            var dto = new WorkGroupEmployeeDto { PactId = pactId };
+
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _sut.UpdateWorkGroupEmployeeForStaffAsync(dto));
+
+            await _mockRepository.DidNotReceive().GetWorkGroupEmployeeByIdForStaffAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task UpdateWorkGroupEmployeeForStaffAsync_WhenEmployeeDoesNotExist_ThrowsKeyNotFoundException()
+        {
+            var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId };
+            _mockRepository.GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId)
+                .Returns((WorkGroupEmployeeView?)null);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+                _sut.UpdateWorkGroupEmployeeForStaffAsync(dto));
+
+            await _mockRepository.DidNotReceive().UpdateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployee>());
         }
 
         #endregion

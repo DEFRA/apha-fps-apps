@@ -1,4 +1,4 @@
-@model Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupEmployeeItem
+@model Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupEmployeeStaffItem
 
 @{
     var isEditMode = ViewData["IsEditMode"] is bool mode
@@ -58,10 +58,10 @@
 
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="StaffName">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Name">
                     Staff Name: <span class="sup_color_red">*</span>
                 </label>
-                <input type="hidden" id="StaffName" asp-for="StaffName" required />
+                <input type="hidden" id="Name" asp-for="Name" required />
                 <div class="tableselectdropdown input-group" data-empdropdown style="position:relative;">
                     <div id="StaffNameComboBox"
                          onclick="toggleWgStaffNameDropdown()"
@@ -124,18 +124,18 @@
                         </div>
                     </div>
                 </div>
-                <span asp-validation-for="StaffName" class="govuk-error-message" style="display:none;"></span>
+                <span asp-validation-for="Name" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
 
         <div class="col-12">
             <div class="govuk-form-group sup_margin_0">
-                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="WgGrade">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="WorkGroupGrade">
                     WG Grade: <span class="sup_color_red">*</span>
                 </label>
                 <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
-                        id="WgGrade"
-                        asp-for="WgGrade"
+                        id="WorkGroupGrade"
+                        asp-for="WorkGroupGrade"
                         required>
                     <option value="">-- Select WG Grade --</option>
                     @foreach (var wgGrade in (Model?.WgGradeOptions ?? System.Linq.Enumerable.Empty<string>()))
@@ -143,7 +143,7 @@
                         <option value="@wgGrade">@wgGrade</option>
                     }
                 </select>
-                <span asp-validation-for="WgGrade" class="govuk-error-message" style="display:none;"></span>
+                <span asp-validation-for="WorkGroupGrade" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
 
@@ -277,7 +277,9 @@
                 <input class="govuk-input govuk-!-font-size-16"
                        id="StartDate"
                        asp-for="StartDate"
-                       type="date" />
+                       type="date"
+                       value="@(Model?.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                       autocomplete="off" />
                 <span asp-validation-for="StartDate" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -290,7 +292,9 @@
                 <input class="govuk-input govuk-!-font-size-16"
                        id="EndDate"
                        asp-for="EndDate"
-                       type="date" />
+                       type="date"
+                       value="@(Model?.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                       autocomplete="off" />
                 <span asp-validation-for="EndDate" class="govuk-error-message" style="display:none;"></span>
             </div>
         </div>
@@ -343,7 +347,7 @@
         var name = row.getAttribute('data-name') || '';
         var spNumber = row.getAttribute('data-spnumber') || '';
 
-        var staffNameInput = document.getElementById('StaffName');
+        var staffNameInput = document.getElementById('Name');
         var spNumberInput = document.getElementById('SpNumber');
 
         if (staffNameInput) {
@@ -368,7 +372,7 @@
             var formGroup = staffNameInput.closest('.govuk-form-group');
             if (formGroup) {
                 formGroup.classList.remove('govuk-form-group--error');
-                var validationMessage = formGroup.querySelector('[data-valmsg-for="StaffName"]');
+                var validationMessage = formGroup.querySelector('[data-valmsg-for="Name"]');
                 if (validationMessage) {
                     validationMessage.textContent = '';
                     validationMessage.style.display = 'none';
@@ -411,7 +415,7 @@
     }
 
     (function initialiseWgStaffModalDropdowns() {
-        var initialName = document.getElementById('StaffName')?.value || '';
+        var initialName = document.getElementById('Name')?.value || '';
         var initialSpNumber = document.getElementById('SpNumber')?.value || '';
 
         if (initialName) {

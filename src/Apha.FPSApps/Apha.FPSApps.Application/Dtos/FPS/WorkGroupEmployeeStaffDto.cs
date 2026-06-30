@@ -1,6 +1,6 @@
-﻿namespace Apha.FPSApps.Application.Dtos.FPS
+namespace Apha.FPSApps.Application.Dtos.FPS
 {
-    public class WorkGroupEmployeeDto
+    public class WorkGroupEmployeeStaffDto
     {
         public string PactId { get; set; } = null!;
         public string SpNumber { get; set; } = null!;
@@ -13,5 +13,10 @@
         public double SickSpecial { get; set; }
         public double HrsAvail { get; set; }
         public int MakeAvailable { get; set; }
+
+        public int TimeRecorder { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public double? HoursPerWeek { get; set; }
     }
 }

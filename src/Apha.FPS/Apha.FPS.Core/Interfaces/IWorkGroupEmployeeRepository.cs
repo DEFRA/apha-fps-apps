@@ -8,7 +8,8 @@ namespace Apha.FPS.Core.Interfaces
         Task<PagedData<WorkGroupEmployeeView>> GetWorkGroupEmployeeAsync(PaginationParameters<string> query, string wgGrade);
         Task<PagedData<WorkGroupEmployeeView>> GetWorkGroupEmployeeForStaffAsync(PaginationParameters<string> query, string wgGrade);
         Task<WorkGroupEmployeeView?> GetWorkGroupEmployeeByIdAsync(string pactId);
-        Task<WorkGroupEmployee> CreateWorkGroupEmployeeAsync(WorkGroupEmployee entity);
+        Task<WorkGroupEmployeeView?> GetWorkGroupEmployeeByIdForStaffAsync(string pactId);
+        Task<WorkGroupEmployee> CreateWorkGroupEmployeeForStaffAsync(WorkGroupEmployee entity);
         Task<WorkGroupEmployee> UpdateWorkGroupEmployeeAsync(WorkGroupEmployee entity);
         Task<WorkGroupEmployee> UpdateWorkGroupEmployeeForStaffAsync(WorkGroupEmployee entity);
         Task<bool> DeleteWorkGroupEmployeeAsync(string pactId);

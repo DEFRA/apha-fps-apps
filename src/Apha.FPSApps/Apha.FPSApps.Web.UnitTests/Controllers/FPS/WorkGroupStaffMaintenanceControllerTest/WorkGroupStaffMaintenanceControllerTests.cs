@@ -50,7 +50,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
         [Fact]
         public async Task Index_ReturnsViewResult_WithWorkGroupStaffMaintenanceViewModel()
         {
-            var employeeDtos = new List<WorkGroupEmployeeDto>
+            var employeeDtos = new List<WorkGroupEmployeeStaffDto>
             {
                 new()
                 {
@@ -68,14 +68,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
                 }
             };
 
-            var apiResponse = ApiResponseDto<List<WorkGroupEmployeeDto>>.SuccessResponse(
+            var apiResponse = ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.SuccessResponse(
                 employeeDtos,
                 new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
             _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
                 .Returns(apiResponse);
-            _mapper.Map<List<WorkGroupEmployeeItem>>(Arg.Any<List<WorkGroupEmployeeDto>>())
-                .Returns(new List<WorkGroupEmployeeItem> { new() { PactId = "P001", WgGrade = "WG-A" } });
+            _mapper.Map<List<WorkGroupEmployeeStaffItem>>(Arg.Any<List<WorkGroupEmployeeStaffDto>>())
+                .Returns(new List<WorkGroupEmployeeStaffItem> { new() { PactId = "P001", WorkGroupGrade = "WG-A" } });
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel { PageNumber = 1, PageSize = 10, TotalRecords = 1 });
 
@@ -102,7 +102,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
         }
 
         [Fact]
-        public async Task LoadWGStaffGrid_WithStaffNameAndWgGradeFilters_MapsApiFilterKeysForQuery()
+        public async Task LoadWGStaffGrid_WithNameAndWorkGroupGradeFilters_PassesFilterKeysToQuery()
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(callInfo =>
@@ -119,12 +119,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
                 });
 
             _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
-                .Returns(ApiResponseDto<List<WorkGroupEmployeeDto>>.SuccessResponse(
-                    new List<WorkGroupEmployeeDto>(),
+                .Returns(ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.SuccessResponse(
+                    new List<WorkGroupEmployeeStaffDto>(),
                     new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }));
 
-            _mapper.Map<List<WorkGroupEmployeeItem>>(Arg.Any<List<WorkGroupEmployeeDto>>())
-                .Returns(new List<WorkGroupEmployeeItem>());
+            _mapper.Map<List<WorkGroupEmployeeStaffItem>>(Arg.Any<List<WorkGroupEmployeeStaffDto>>())
+                .Returns(new List<WorkGroupEmployeeStaffItem>());
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel { PageNumber = 1, PageSize = 10, TotalRecords = 0 });
 
@@ -132,7 +132,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             {
                 Page = 1,
                 PageSize = 10,
-                Filter = "{\"StaffName\":\"Alice\",\"WgGrade\":\"WG01\"}"
+                Filter = "{\"Name\":\"Alice\",\"WorkGroupGrade\":\"WG01\"}"
             };
 
             var result = await _controller.LoadWGStaffGrid(request);
@@ -147,9 +147,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
         }
 
         [Theory]
-        [InlineData("StaffName", "Name")]
-        [InlineData("WgGrade", "WorkGroupGrade")]
-        public async Task LoadWGStaffGrid_WithUiSortColumn_MapsSortForApiAndPreservesUiSortOnGrid(string uiSortBy, string apiSortBy)
+        [InlineData("Name")]
+        [InlineData("WorkGroupGrade")]
+        public async Task LoadWGStaffGrid_WithUiSortColumn_PreservesSortOnGridAndQuery(string uiSortBy)
         {
             _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
                 .Returns(callInfo =>
@@ -166,12 +166,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
                 });
 
             _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(Arg.Any<QueryParameters<string>>(), string.Empty)
-                .Returns(ApiResponseDto<List<WorkGroupEmployeeDto>>.SuccessResponse(
-                    new List<WorkGroupEmployeeDto>(),
+                .Returns(ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.SuccessResponse(
+                    new List<WorkGroupEmployeeStaffDto>(),
                     new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }));
 
-            _mapper.Map<List<WorkGroupEmployeeItem>>(Arg.Any<List<WorkGroupEmployeeDto>>())
-                .Returns(new List<WorkGroupEmployeeItem>());
+            _mapper.Map<List<WorkGroupEmployeeStaffItem>>(Arg.Any<List<WorkGroupEmployeeStaffDto>>())
+                .Returns(new List<WorkGroupEmployeeStaffItem>());
             _mapper.Map<PaginationModel>(Arg.Any<PaginationDto>())
                 .Returns(new PaginationModel { PageNumber = 1, PageSize = 10, TotalRecords = 0 });
 
@@ -187,10 +187,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             var result = await _controller.LoadWGStaffGrid(request);
 
             var partialViewResult = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<DataGridConfig<WorkGroupEmployeeItem>>(partialViewResult.Model);
+            var model = Assert.IsType<DataGridConfig<WorkGroupEmployeeStaffItem>>(partialViewResult.Model);
 
             await _workGroupEmployeeService.Received(1).GetWorkGroupEmployeeForStaffAsync(
-                Arg.Is<QueryParameters<string>>(q => q.SortBy == apiSortBy && q.Descending),
+                Arg.Is<QueryParameters<string>>(q => q.SortBy == uiSortBy && q.Descending),
                 string.Empty);
 
             Assert.Equal(uiSortBy, model.Pagination.SortColumn);
@@ -218,7 +218,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
 
             var partialView = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("~/Areas/FPS/Views/WorkGroupStaffMaintenance/_AddEditWorkGroupStaff.cshtml", partialView.ViewName);
-            var model = Assert.IsType<WorkGroupEmployeeItem>(partialView.Model);
+            var model = Assert.IsType<WorkGroupEmployeeStaffItem>(partialView.Model);
             Assert.Contains("A_BAC1", model.WgGradeOptions);
             Assert.Contains(model.StaffLookupOptions, s => s.SpNumber == "SP001");
             var isEditMode = Assert.IsType<bool>(_controller.ViewData["IsEditMode"]);
@@ -228,7 +228,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
         [Fact]
         public async Task Create_Post_WithValidModel_ReturnsSuccessJson()
         {
-            var dto = new WorkGroupEmployeeDto
+            var dto = new WorkGroupEmployeeStaffDto
             {
                 PactId = "P001",
                 SpNumber = "SP001",
@@ -243,8 +243,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
                 TimeRecorder = 0
             };
 
-            _workGroupEmployeeService.CreateWorkGroupEmployeeAsync(dto)
-                .Returns(ApiResponseDto<WorkGroupEmployeeDto>.SuccessResponse(dto));
+            _workGroupEmployeeService.CreateWorkGroupEmployeeForStaffAsync(dto)
+                .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(dto));
 
             var result = await _controller.Create(dto);
 
@@ -258,8 +258,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
         [Fact]
         public async Task Edit_Get_WhenServiceReturnsNoData_ReturnsNotFound()
         {
-            _workGroupEmployeeService.GetWorkGroupEmployeeByIdAsync("P404")
-                .Returns(ApiResponseDto<WorkGroupEmployeeDto>.FailureResponse([], new ApiMetaDto()));
+            _workGroupEmployeeService.GetWorkGroupEmployeeByIdForStaffAsync("P404")
+                .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.FailureResponse([], new ApiMetaDto()));
 
             var result = await _controller.Edit("P404");
 
@@ -267,9 +267,42 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
         }
 
         [Fact]
+        public async Task Edit_Get_WithValidEmployee_ReturnsPartialView_WithEditModeAndLookupData()
+        {
+            var dto = new WorkGroupEmployeeStaffDto
+            {
+                PactId = "P001",
+                SpNumber = "SP001",
+                Name = "Alice Brown",
+                WorkGroupGrade = "WG-A"
+            };
+
+            var employeeResponse = ApiResponseDto<List<EmployeeDto>>.SuccessResponse(
+                new List<EmployeeDto> { new() { SPNumber = "SP001", FirstName = "Alice", LastName = "Brown" } });
+            var gradeResponse = ApiResponseDto<List<WorkgroupGradeDto>>.SuccessResponse(
+                new List<WorkgroupGradeDto> { new() { WgGrade = "WG-A" } });
+            var mappedModel = new WorkGroupEmployeeStaffItem { PactId = "P001", SpNumber = "SP001", Name = "Alice Brown", WorkGroupGrade = "WG-A" };
+
+            _workGroupEmployeeService.GetWorkGroupEmployeeByIdForStaffAsync("P001")
+                .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(dto));
+            _mapper.Map<WorkGroupEmployeeStaffItem>(dto).Returns(mappedModel);
+            _employeeService.GetFilteredEmployeesAsync(Arg.Any<QueryParameters<string>>(), 0).Returns(employeeResponse);
+            _workGroupGradeService.GetAllWorkgroupGradesPagedAsync(Arg.Any<QueryParameters<string>>()).Returns(gradeResponse);
+
+            var result = await _controller.Edit("P001");
+
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("~/Areas/FPS/Views/WorkGroupStaffMaintenance/_AddEditWorkGroupStaff.cshtml", partialView.ViewName);
+            var model = Assert.IsType<WorkGroupEmployeeStaffItem>(partialView.Model);
+            Assert.Equal("P001", model.PactId);
+            Assert.True((bool)_controller.ViewData["IsEditMode"]!);
+            Assert.Contains(model.StaffLookupOptions, s => s.SpNumber == "SP001");
+        }
+
+        [Fact]
         public async Task Edit_Post_WithValidModel_ReturnsSuccessJson()
         {
-            var dto = new WorkGroupEmployeeDto
+            var dto = new WorkGroupEmployeeStaffDto
             {
                 PactId = "P001",
                 SpNumber = "SP001",
@@ -285,7 +318,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             };
 
             _workGroupEmployeeService.UpdateWorkGroupEmployeeForStaffAsync(dto)
-                .Returns(ApiResponseDto<WorkGroupEmployeeDto>.SuccessResponse(dto));
+                .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(dto));
 
             var result = await _controller.Edit(dto);
 
@@ -294,6 +327,20 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.WorkGroupStaffMaintenanceCo
             Assert.NotNull(value);
             Assert.True(value!.success);
             Assert.Equal("WG Staff record updated successfully.", value.message);
+        }
+
+        [Fact]
+        public async Task Edit_Post_WithInvalidModelState_ReturnsValidationJson()
+        {
+            _controller.ModelState.AddModelError("PactId", "PACT Id is required");
+
+            var result = await _controller.Edit(new WorkGroupEmployeeStaffDto());
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var value = GetJsonResultValue<JsonResponse>(jsonResult);
+            Assert.NotNull(value);
+            Assert.False(value!.success);
+            Assert.Equal("Please correct the errors below.", value.message);
         }
 
         [Fact]

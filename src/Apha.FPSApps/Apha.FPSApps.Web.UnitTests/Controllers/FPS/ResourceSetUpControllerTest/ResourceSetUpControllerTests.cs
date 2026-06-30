@@ -1,4 +1,3 @@
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -381,7 +380,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ResourceSetUpControllerTest
 
             Assert.Equal(DefaultPactId, model.PactId);
             Assert.Equal("SP001",       model.SpNumber);
-            Assert.Equal("John Doe",    model.StaffName);
+            Assert.Equal("John Doe",    model.Name);
             Assert.Equal(40.0,          model.HrsPaid);
             await _wgEmployeeService.Received(1).GetWorkGroupEmployeeByIdAsync(DefaultPactId);
         }

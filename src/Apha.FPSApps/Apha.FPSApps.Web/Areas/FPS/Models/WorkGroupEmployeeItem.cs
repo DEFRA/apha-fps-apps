@@ -1,86 +1,55 @@
-using Apha.FPSApps.Web.Models.Components.DataGrid;
+﻿using Apha.FPSApps.Web.Models.Components.DataGrid;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
 {
+    /// <summary>
+    /// Grid item for the Staff of WG Grade table (fsubWGStaff — edit + delete; no add).
+    /// AllowAdd: false  AllowEdit: true  AllowDelete: true
+    /// </summary>
     public class WorkGroupEmployeeItem
     {
-        [Display(Name = "PACTId")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        /// <summary>PACTid — hidden primary key used as KeyProperty.</summary>
+        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
         public string PactId { get; set; } = null!;
 
-        [Display(Name = "Staff Name")]
+        [Display(Name = "SP No")]
+        [GridColumn(Width = 100, Type = GridColumnType.ReadOnly, IsFilterable = true)]
+        public string SpNumber { get; set; } = null!;
+
+        [Display(Name = "Name")]
         [GridColumn(Width = 220, Type = GridColumnType.ReadOnly, IsFilterable = true)]
-        public string? StaffName { get; set; }
-
-        [Display(Name = "WG Grade")]
-        [GridColumn(Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]
-        public string? WgGrade { get; set; }
-
-        [Display(Name = "Status")]
-        [Required(ErrorMessage = "Status is required")]
-        [GridColumn(Width = 70, Type = GridColumnType.Text, IsFilterable = false)]
-        public string PersonStatus { get; set; } = null!;
-
-        [Display(Name = "Class")]
-        [GridColumn(Width = 70, Type = GridColumnType.Text, IsFilterable = false)]
-        public string? PersonClass { get; set; }
+        public string Name { get; set; } = null!;
 
         [Display(Name = "HrsPaid")]
         [Required(ErrorMessage = "HrsPaid is required")]
-        [GridColumn(Width = 80, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double HrsPaid { get; set; }
 
         [Display(Name = "Leave")]
         [Required(ErrorMessage = "Leave is required")]
-        [GridColumn(Width = 70, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double Leave { get; set; }
 
         [Display(Name = "SickSp")]
         [Required(ErrorMessage = "SickSp is required")]
-        [GridColumn(Width = 95, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
+        [GridColumn(Width = 100, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double SickSpecial { get; set; }
 
-        [Display(Name = "HrsAvail")]
-        [Required(ErrorMessage = "HrsAvail is required")]
-        [GridColumn(Width = 90, Type = GridColumnType.ReadOnly, IsFilterable = false)]
+        [Display(Name = "AtWork")]
+        [GridColumn(Width = 100, Type = GridColumnType.ReadOnly, IsFilterable = false)]
         public double HrsAvail { get; set; }
 
-        [Display(Name = "Available?")]
-        [GridColumn(Width = 90, Type = GridColumnType.Checkbox, IsFilterable = false)]
+        [Display(Name = "Planable")]
+        [GridColumn(Width = 100, Type = GridColumnType.Checkbox, IsFilterable = false)]
         public bool MakeAvailable { get; set; }
 
-        [Display(Name = "Time recorder?")]
-        [GridColumn(Width = 105, Type = GridColumnType.Checkbox, IsFilterable = false)]
-        public bool TimeRecorder { get; set; }
+        [Display(Name = "Status")]
+        [GridColumn(Width = 100, Type = GridColumnType.Text, IsFilterable = false, IsVisible = false)]
+        public string PersonStatus { get; set; } = null!;
 
-        [Display(Name = "Start Date")]
-        [GridColumn(Width = 110, Type = GridColumnType.Date, IsFilterable = false)]
-        public DateTime? StartDate { get; set; }
-
-        [Display(Name = "End Date")]
-        [GridColumn(Width = 110, Type = GridColumnType.Date, IsFilterable = false)]
-        public DateTime? EndDate { get; set; }
-
-        [Display(Name = "Hours per week")]
-        [GridColumn(Width = 115, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
-        public double? HoursPerWeek { get; set; }
-
-        [Display(Name = "SP No")]
-        [GridColumn(Width = 100, Type = GridColumnType.ReadOnly, IsVisible = false, IsFilterable = false)]
-        public string? SpNumber { get; set; }
-
-        [GridColumn(IsVisible = false)]
-        public List<WorkGroupStaffLookupItem> StaffLookupOptions { get; set; } = [];
-
-        [GridColumn(IsVisible = false)]
-        public List<string> WgGradeOptions { get; set; } = [];
-    }
-
-    public class WorkGroupStaffLookupItem
-    {
-        public string PactId { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string SpNumber { get; set; } = string.Empty;
+        [Display(Name = "Class")]
+        [GridColumn(Width = 100, Type = GridColumnType.Text, IsFilterable = false, IsVisible = false)]
+        public string? PersonClass { get; set; }
     }
 }

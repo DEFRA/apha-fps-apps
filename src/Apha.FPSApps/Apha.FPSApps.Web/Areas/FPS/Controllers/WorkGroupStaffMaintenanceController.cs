@@ -67,26 +67,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (apiFilterDict != null)
             {
-                if (apiFilterDict.TryGetValue("StaffName", out var staffNameValue) && !string.IsNullOrWhiteSpace(staffNameValue))
-                {
-                    apiFilterDict["Name"] = staffNameValue;
-                }
-
-                if (apiFilterDict.TryGetValue("WgGrade", out var wgGradeValue) && !string.IsNullOrWhiteSpace(wgGradeValue))
-                {
-                    apiFilterDict["WorkGroupGrade"] = wgGradeValue;
-                }
-
                 request.Filter = JsonConvert.SerializeObject(apiFilterDict);
             }
 
             var uiSortBy = request.SortBy;
-            request.SortBy = request.SortBy switch
-            {
-                "StaffName" => "Name",
-                "WgGrade" => "WorkGroupGrade",
-                _ => request.SortBy
-            };
 
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
             var gridConfig = await GetWorkGroupStaffGridConfigAsync(queryParameters, uiFilterDict);
@@ -101,11 +85,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var model = new WorkGroupEmployeeItem
+            var model = new WorkGroupEmployeeStaffItem
             {
                 PactId = string.Empty,
-                StaffName = string.Empty,
-                WgGrade = string.Empty,
+                Name = string.Empty,
+                WorkGroupGrade = string.Empty,
                 PersonStatus = string.Empty,
                 HrsPaid = 0,
                 Leave = 0,
@@ -119,7 +103,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] WorkGroupEmployeeDto model)
+        public async Task<IActionResult> Create([FromBody] WorkGroupEmployeeStaffDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -137,7 +121,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 });
             }
 
-            var response = await _workGroupEmployeeService.CreateWorkGroupEmployeeAsync(model);
+            var response = await _workGroupEmployeeService.CreateWorkGroupEmployeeForStaffAsync(model);
             if (response.Success)
             {
                 return Json(new { success = true, data = response.Data, message = "WG Staff record created successfully" });
@@ -158,18 +142,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(string pactId)
         {
-            var response = await _workGroupEmployeeService.GetWorkGroupEmployeeByIdAsync(pactId);
+            var response = await _workGroupEmployeeService.GetWorkGroupEmployeeByIdForStaffAsync(pactId);
             if (!response.Success || response.Data == null)
                 return NotFound();
 
-            var model = _mapper.Map<WorkGroupEmployeeItem>(response.Data);
+            var model = _mapper.Map<WorkGroupEmployeeStaffItem>(response.Data);
             ViewData["IsEditMode"] = true;
             await PopulateLookupDataAsync(model);
             return PartialView("~/Areas/FPS/Views/WorkGroupStaffMaintenance/_AddEditWorkGroupStaff.cshtml", model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit([FromBody] WorkGroupEmployeeDto model)
+        public async Task<IActionResult> Edit([FromBody] WorkGroupEmployeeStaffDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -236,23 +220,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             });
         }
 
-        private async Task<DataGridConfig<WorkGroupEmployeeItem>> GetWorkGroupStaffGridConfigAsync(
+        private async Task<DataGridConfig<WorkGroupEmployeeStaffItem>> GetWorkGroupStaffGridConfigAsync(
             QueryParameters<string>? query = null,
             Dictionary<string, string>? filterDict = null)
         {
             var response = await _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(query ?? new QueryParameters<string>(), string.Empty);
 
-            var items = new List<WorkGroupEmployeeItem>();
+            var items = new List<WorkGroupEmployeeStaffItem>();
             if (response.Data != null)
             {
-                items = _mapper.Map<List<WorkGroupEmployeeItem>>(response.Data.ToList());
+                items = _mapper.Map<List<WorkGroupEmployeeStaffItem>>(response.Data.ToList());
             }
 
             var paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
             paginationModel.SortColumn = query?.SortBy;
             paginationModel.SortDirection = query?.Descending ?? false;
 
-            return new DataGridConfig<WorkGroupEmployeeItem>
+            return new DataGridConfig<WorkGroupEmployeeStaffItem>
             {
                 GridId = "wgStaffGrid",
                 Title = "WG Staff",
@@ -264,14 +248,14 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod = "getMaintWGStaffExtraFilters",
                 BindGridUrl = "/FPS/WorkGroupStaffMaintenance/LoadWGStaffGrid",
                 Data = items,
-                Columns = GridDataProvider.GetColumnsDefination<WorkGroupEmployeeItem>(null),
+                Columns = GridDataProvider.GetColumnsDefination<WorkGroupEmployeeStaffItem>(null),
                 ShowCheckboxColumn = false,
                 Pagination = paginationModel,
                 CurrentFilters = filterDict
             };
         }
 
-        private async Task PopulateLookupDataAsync(WorkGroupEmployeeItem model)
+        private async Task PopulateLookupDataAsync(WorkGroupEmployeeStaffItem model)
         {
             var lookupQuery = new QueryParameters<string>
             {
@@ -315,13 +299,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 .OrderBy(g => g)
                 .ToList();
 
-            if (!string.IsNullOrWhiteSpace(model.StaffName) && !string.IsNullOrWhiteSpace(model.SpNumber)
+            if (!string.IsNullOrWhiteSpace(model.Name) && !string.IsNullOrWhiteSpace(model.SpNumber)
                 && !model.StaffLookupOptions.Any(s => string.Equals(s.SpNumber, model.SpNumber, StringComparison.OrdinalIgnoreCase)))
             {
                 model.StaffLookupOptions.Add(new WorkGroupStaffLookupItem
                 {
                     PactId = model.PactId ?? string.Empty,
-                    Name = model.StaffName,
+                    Name = model.Name,
                     SpNumber = model.SpNumber
                 });
 
@@ -330,9 +314,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .ToList();
             }
 
-            if (!string.IsNullOrWhiteSpace(model.WgGrade) && !model.WgGradeOptions.Any(g => string.Equals(g, model.WgGrade, StringComparison.OrdinalIgnoreCase)))
+            if (!string.IsNullOrWhiteSpace(model.WorkGroupGrade) && !model.WgGradeOptions.Any(g => string.Equals(g, model.WorkGroupGrade, StringComparison.OrdinalIgnoreCase)))
             {
-                model.WgGradeOptions.Add(model.WgGrade);
+                model.WgGradeOptions.Add(model.WorkGroupGrade);
                 model.WgGradeOptions = model.WgGradeOptions
                     .OrderBy(g => g)
                     .ToList();

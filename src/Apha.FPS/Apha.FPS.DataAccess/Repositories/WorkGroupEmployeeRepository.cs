@@ -42,6 +42,44 @@ namespace Apha.FPS.DataAccess.Repositories
                         SickSpecial = wg.SickSpecial,
                         HrsAvail = wg.HrsAvail,
                         MakeAvailable = wg.MakeAvailable,
+                        TimeRecorder = wg.TimeRecorder,
+                        StartDate = wg.StartDate,
+                        EndDate = wg.EndDate,
+                        HoursPerWeek = wg.HoursPerWeek,
+                    })
+                .FirstOrDefaultAsync(default);
+        }
+
+        public async Task<WorkGroupEmployeeView?> GetWorkGroupEmployeeByIdForStaffAsync(string pactId)
+        {
+            return await _dbContext.WorkGroupEmployeeViews
+                .AsNoTracking()
+                .Where(wg => wg.PactId == pactId)
+                .Join(
+                    _dbContext.Employees.AsNoTracking(),
+                    wg => wg.SpNumber,
+                    e => e.SPNumber,
+                    (wg, e) => new WorkGroupEmployeeView
+                    {
+                        PactId = wg.PactId,
+                        SpNumber = wg.SpNumber,
+                        WorkGroupGrade = wg.WorkGroupGrade,
+                        Name = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
+                        PersonStatus = wg.PersonStatus,
+                        PersonClass = wg.PersonClass,
+                        HrsPaid = wg.HrsPaid,
+                        Leave = wg.Leave,
+                        SickSpecial = wg.SickSpecial,
+                        HrsAvail = wg.HrsAvail,
+                        MakeAvailable = wg.MakeAvailable,
+                        TimeRecorder = wg.TimeRecorder,
+                        StartDate = wg.StartDate,
+                        EndDate = wg.EndDate,
+                        HoursPerWeek = wg.HoursPerWeek,
+                        FpsYear = wg.FpsYear,
+                        UserId = wg.UserId,
+                        Dt2Username = wg.Dt2Username,
+                        UserEmail = wg.UserEmail
                     })
                 .FirstOrDefaultAsync(default);
         }
@@ -81,6 +119,10 @@ namespace Apha.FPS.DataAccess.Repositories
             existing.PersonStatus = entity.PersonStatus;
             existing.PersonClass = entity.PersonClass;
             existing.MakeAvailable = entity.MakeAvailable;
+            existing.TimeRecorder = entity.TimeRecorder;
+            existing.StartDate = entity.StartDate;
+            existing.EndDate = entity.EndDate;
+            existing.HoursPerWeek = entity.HoursPerWeek;
 
             await _dbContext.SaveChangesAsync(default);
             return existing;
@@ -94,7 +136,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AsNoTracking()
                 .Where(x => x.WorkGroupGrade == wgGrade
                          && x.PersonStatus != "I"
-                         && x.UserEmail != null && x.UserEmail.ToLower() == _requestContext.UserEmailId.ToLower())
+                         && x.UserEmail != null && x.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .Join(
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
@@ -150,7 +192,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .AnyAsync(e => e.WorkGroupGrade == wgGrade);
         }
 
-        public async Task<WorkGroupEmployee> CreateWorkGroupEmployeeAsync(WorkGroupEmployee entity)
+        public async Task<WorkGroupEmployee> CreateWorkGroupEmployeeForStaffAsync(WorkGroupEmployee entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
             entity.FpsYear = _requestContext.FpsYear;
@@ -159,7 +201,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return entity;
         }
 
-
+       
         private static IQueryable<WorkGroupEmployeeView> ApplyFilter(IQueryable<WorkGroupEmployeeView> query, string? filter)
         {
             if (string.IsNullOrWhiteSpace(filter))
@@ -171,24 +213,21 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
+            if (dict.TryGetValue("PactId", out var pactId) && pactId != null)
+                query = query.Where(x => EF.Functions.ILike(x.PactId, $"%{pactId}%"));
+
             if (dict.TryGetValue("SpNumber", out var spNumber) && spNumber != null)
-                query = query.Where(x => x.SpNumber != null && x.SpNumber.Contains(spNumber.ToString()!));
+                query = query.Where(x => x.SpNumber != null && EF.Functions.ILike(x.SpNumber, $"%{spNumber}%"));
 
             if (dict.TryGetValue("Name", out var name) && name != null)
-                query = query.Where(x => x.Name != null && x.Name.Contains(name.ToString()!));
+                query = query.Where(x => x.Name != null && EF.Functions.ILike(x.Name, $"%{name}%"));
+
+            if (dict.TryGetValue("WorkGroupGrade", out var workGroupGrade) && workGroupGrade != null)
+                query = query.Where(x => x.WorkGroupGrade != null && EF.Functions.ILike(x.WorkGroupGrade, $"%{workGroupGrade}%"));
 
             return query;
         }
-
-        private static IQueryable<WorkGroupEmployeeView> ApplySorting(IQueryable<WorkGroupEmployeeView> query, string? sortBy, bool descending)
-        {
-            return sortBy?.ToLower() switch
-            {
-                "spnumber" => descending ? query.OrderByDescending(x => x.SpNumber) : query.OrderBy(x => x.SpNumber),
-                "name" => descending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
-                _ => query.OrderBy(x => x.Name)
-            };
-        }
+       
 
         public async Task<PagedData<WorkGroupEmployeeView>> GetWorkGroupEmployeeForStaffAsync(
             PaginationParameters<string> query,
@@ -228,77 +267,26 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Distinct()
                 .AsQueryable();
 
-            workGroupEmployeeQuery = ApplyWorkGroupEmployeeFilter(workGroupEmployeeQuery, query.Filter);
-            workGroupEmployeeQuery = (IQueryable<WorkGroupEmployeeView>)ApplySorting_Enhanced(workGroupEmployeeQuery, query.SortBy, query.Descending);
+            workGroupEmployeeQuery = ApplyFilter(workGroupEmployeeQuery, query.Filter);
+            workGroupEmployeeQuery = ApplySorting(workGroupEmployeeQuery, query.SortBy, query.Descending);
 
             var result = await workGroupEmployeeQuery.ToListAsync();
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
-        private static IQueryable<WorkGroupEmployeeView> ApplyWorkGroupEmployeeFilter(IQueryable<WorkGroupEmployeeView> query, string? filter)
+           
+
+        private static IQueryable<WorkGroupEmployeeView> ApplySorting(IQueryable<WorkGroupEmployeeView> query, string? sortBy, bool descending)
         {
-            if (string.IsNullOrWhiteSpace(filter))
-                return query;
-
-            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
-            if (filterModel == null)
-                return query;
-
-            var dict = (IDictionary<string, object>)filterModel;
-
-            if (dict.TryGetValue("PactId", out var pactId) && pactId != null)
-                query = query.Where(x => EF.Functions.ILike(x.PactId, $"%{pactId}%"));
-
-            if (dict.TryGetValue("SpNumber", out var spNumber) && spNumber != null)
-                query = query.Where(x => x.SpNumber != null && EF.Functions.ILike(x.SpNumber, $"%{spNumber}%"));
-
-            if (TryGetFilterValue(dict, "Name", "StaffName", out var name) && name != null)
-                query = query.Where(x => x.Name != null && EF.Functions.ILike(x.Name, $"%{name}%"));
-
-            if (TryGetFilterValue(dict, "WorkGroupGrade", "WgGrade", out var workGroupGrade) && workGroupGrade != null)
-                query = query.Where(x => x.WorkGroupGrade != null && EF.Functions.ILike(x.WorkGroupGrade, $"%{workGroupGrade}%"));
-
-            return query;
-        }
-
-        private static bool TryGetFilterValue(IDictionary<string, object> dict, string primaryKey, string alternateKey, out object? value)
-        {
-            if (dict.TryGetValue(primaryKey, out value))
-                return true;
-
-            if (dict.TryGetValue(alternateKey, out value))
-                return true;
-
-            value = null;
-            return false;
-        }
-
-        private static IQueryable ApplySorting_Enhanced(IQueryable<WorkGroupEmployeeView> query, string? sortBy, bool descending)
-        {
-            if (string.IsNullOrEmpty(sortBy))
+            return sortBy?.ToLower() switch
             {
-                return query;
-            }
-
-            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
-        }
-
-        private static IQueryable ApplySortingByProperty(IQueryable<WorkGroupEmployeeView> query, string property, bool descending)
-        {
-            return property switch
-            {
-                "pactid" => ApplyOrder(query, i => i.PactId, descending),
-                "spnumber" => ApplyOrder(query, i => i.SpNumber, descending),
-                "name" or "staffname" => ApplyOrder(query, i => i.Name, descending),
-                "workgroupgrade" or "wggrade" => ApplyOrder(query, i => i.WorkGroupGrade, descending),
-                "personstatus" => ApplyOrder(query, i => i.PersonStatus, descending),
-                _ => query
+                "pactid" => descending ? query.OrderByDescending(x => x.PactId) : query.OrderBy(x => x.PactId),
+                "spnumber" => descending ? query.OrderByDescending(x => x.SpNumber) : query.OrderBy(x => x.SpNumber),
+                "name" or "staffname" => descending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
+                "workgroupgrade" or "wggrade" => descending ? query.OrderByDescending(x => x.WorkGroupGrade) : query.OrderBy(x => x.WorkGroupGrade),
+                "personstatus" => descending ? query.OrderByDescending(x => x.PersonStatus) : query.OrderBy(x => x.PersonStatus),
+                _ => query.OrderBy(x => x.Name)
             };
-        }
-
-        private static IQueryable ApplyOrder<T>(IQueryable<WorkGroupEmployeeView> query, Expression<Func<WorkGroupEmployeeView, T>> keySelector, bool descending)
-        {
-            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
     }
 }
