@@ -240,7 +240,7 @@ $(document).ready(function () {
         }
         downloadExcelReport(
             exportUrls.timeSaleWorkgroup,
-            { profitCentre: selectedWorkGroupValue }
+            { workGroup: selectedWorkGroupValue }
         );
     });
 

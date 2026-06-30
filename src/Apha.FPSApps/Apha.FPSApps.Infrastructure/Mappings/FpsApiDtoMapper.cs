@@ -148,6 +148,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
+            // UserPermission
+            CreateMap<UserDto, UserRes>().ReverseMap();
+            CreateMap<UserDto, UserReq>().ReverseMap();
+            CreateMap<UserPermissionDataDto, UserPermissionRes>().ReverseMap();
+            CreateMap<UserPermissionDataDto, UserPermissionReq>().ReverseMap();
+            CreateMap<PermissionOptionsDto, PermissionOptionsRes>().ReverseMap();
+
 
         }
     }
