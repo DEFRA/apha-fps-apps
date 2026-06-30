@@ -82,9 +82,9 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<BatchJobQueueDto>(queued);
         }
 
-        private static BatchTriggerEventDetail BuildReCreateJobEvent(string requestedBy, string correlationId, int month, int contextYear)
+        private static EventDetail BuildReCreateJobEvent(string requestedBy, string correlationId, int month, int contextYear)
         {
-            return new BatchTriggerEventDetail
+            return new EventDetail
             {
                 JobExecutionId = correlationId,
                 JobName = RecreateSummariesJobName,

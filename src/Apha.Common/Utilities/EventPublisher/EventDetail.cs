@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Apha.Common.Utilities.EventPublisher
 {
-    public class BatchTriggerEventDetail
+    public class EventDetail
     {
         public string JobExecutionId { get; set; }
         public string JobName { get; set; }

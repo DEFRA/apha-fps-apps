@@ -2,6 +2,6 @@
 {
     public interface IEventPublisherService
     {
-        public Task<string> PublishAsync(BatchTriggerEventDetail detail, CancellationToken cancellationToken = default);
+        public Task<string> PublishAsync(EventDetail detail, CancellationToken cancellationToken = default);
     }
 }

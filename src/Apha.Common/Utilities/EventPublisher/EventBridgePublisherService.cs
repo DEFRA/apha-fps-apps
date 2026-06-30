@@ -21,7 +21,7 @@ namespace Apha.Common.Utilities.EventPublisher
             _configuration = configuration;
         }
 
-        public async Task<string> PublishAsync(BatchTriggerEventDetail detail, CancellationToken cancellationToken = default)
+        public async Task<string> PublishAsync(EventDetail detail, CancellationToken cancellationToken = default)
         {
            var _eventBusArn = _configuration["EventBridge:EventBusArn"]
         ?? throw new InvalidOperationException(
