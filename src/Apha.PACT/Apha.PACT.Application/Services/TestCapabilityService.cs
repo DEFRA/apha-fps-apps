@@ -5,6 +5,7 @@ using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
+using System.Text.Json;
 
 namespace Apha.PACT.Application.Services
 {
@@ -56,6 +57,9 @@ namespace Apha.PACT.Application.Services
                     if (descriptions.TryGetValue(dto.TestCode, out var desc))
                         dto.ItemDescription = desc;
                 }
+
+                if (HasItemDescriptionFilterOrSort(query))
+                    result.Data = ApplyItemDescriptionFilterAndSort(result.Data, query);
             }
 
             return result;
@@ -97,6 +101,50 @@ namespace Apha.PACT.Application.Services
             var entity = _mapper.Map<TestCapability>(dto);
             var updated = await _testCapabilityRepository.UpdateAsync(entity);
             return _mapper.Map<TestCapabilityDto>(updated);
+        }
+
+        private static IEnumerable<TestCapabilityDto> ApplyItemDescriptionFilterAndSort(
+            IEnumerable<TestCapabilityDto> data, QueryParameters<string> query)
+        {
+            if (!string.IsNullOrWhiteSpace(query.Filter))
+            {
+                var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(query.Filter);
+                if (filters != null
+                    && filters.TryGetValue("ItemDescription", out var itemDescFilter)
+                    && !string.IsNullOrWhiteSpace(itemDescFilter))
+                {
+                    data = data
+                        .Where(d => d.ItemDescription != null
+                            && d.ItemDescription.Contains(itemDescFilter, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                }
+            }
+
+            if (string.Equals(query.SortBy, "ItemDescription", StringComparison.OrdinalIgnoreCase))
+            {
+                data = query.Descending
+                    ? data.OrderByDescending(d => d.ItemDescription).ToList()
+                    : data.OrderBy(d => d.ItemDescription).ToList();
+            }
+
+            return data;
+        }
+
+        private static bool HasItemDescriptionFilterOrSort(QueryParameters<string> query)
+        {
+            if (string.Equals(query.SortBy, "ItemDescription", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (!string.IsNullOrWhiteSpace(query.Filter))
+            {
+                var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(query.Filter);
+                if (filters != null
+                    && filters.TryGetValue("ItemDescription", out var value)
+                    && !string.IsNullOrWhiteSpace(value))
+                    return true;
+            }
+
+            return false;
         }
 
         private static void ValidateRequiredFields(TestCapabilityDto dto)

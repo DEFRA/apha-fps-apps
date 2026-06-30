@@ -14,6 +14,10 @@ function initPortfolioTimeCodes(selectedPortfolio, jobCodeGrid, timeCodeGrid) {
     timeCodeGridId = timeCodeGrid;
 }
 
+function toggleSidebar() {
+    document.querySelector('.sidenav').classList.toggle('collapsed');
+}
+
 function getJobCodeGridManager() {
     return window['gridManager_' + jobCodeGridId];
 }
