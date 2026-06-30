@@ -210,6 +210,43 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectAuditTrailServiceTest
             Assert.Empty(result.Data);
         }
 
+        [Fact]
+        public async Task GetStaffJobLogsAsync_WhitespaceParentProject_ThrowsArgumentException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(
+                async () => await _service.GetStaffJobLogsAsync(query, "   ", null, null));
+        }
+
+        [Fact]
+        public async Task GetStaffJobLogsAsync_WithDateRange_PassesDateRangeToRepository()
+        {
+            // Arrange
+            var query          = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var fromDate       = new DateTime(2024, 1, 1);
+            var toDate         = new DateTime(2024, 12, 31);
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _repository.GetStaffJobLogsAsync(paginationParams, TestProject, fromDate, toDate)
+                .Returns(new PagedData<Apha.FPS.Core.Entities.StaffJobLog>
+                {
+                    Data           = new List<Apha.FPS.Core.Entities.StaffJobLog>(),
+                    PaginationData = new Apha.FPS.Core.Pagination.PaginationData()
+                });
+            _mapper.Map<PaginatedResult<StaffJobLogDto>>(Arg.Any<PagedData<Apha.FPS.Core.Entities.StaffJobLog>>())
+                .Returns(new PaginatedResult<StaffJobLogDto> { Data = new List<StaffJobLogDto>(), PaginationData = new PaginationDto() });
+
+            // Act
+            await _service.GetStaffJobLogsAsync(query, TestProject, fromDate, toDate);
+
+            // Assert
+            await _repository.Received(1).GetStaffJobLogsAsync(paginationParams, TestProject, fromDate, toDate);
+        }
+
         #endregion
 
         // ── GetTestRequirementLogsAsync ──────────────────────────────────────
@@ -278,6 +315,40 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectAuditTrailServiceTest
 
             // Assert
             Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetTestRequirementLogsAsync_NullQuery_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(
+                async () => await _service.GetTestRequirementLogsAsync(null!, TestProject, null, null));
+        }
+
+        [Fact]
+        public async Task GetTestRequirementLogsAsync_WithDateRange_PassesDateRangeToRepository()
+        {
+            // Arrange
+            var query          = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var fromDate       = new DateTime(2024, 1, 1);
+            var toDate         = new DateTime(2024, 12, 31);
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _repository.GetTestRequirementLogsAsync(paginationParams, TestProject, fromDate, toDate)
+                .Returns(new PagedData<Apha.FPS.Core.Entities.TestRequirementLog>
+                {
+                    Data           = new List<Apha.FPS.Core.Entities.TestRequirementLog>(),
+                    PaginationData = new Apha.FPS.Core.Pagination.PaginationData()
+                });
+            _mapper.Map<PaginatedResult<TestRequirementLogDto>>(Arg.Any<PagedData<Apha.FPS.Core.Entities.TestRequirementLog>>())
+                .Returns(new PaginatedResult<TestRequirementLogDto> { Data = new List<TestRequirementLogDto>(), PaginationData = new PaginationDto() });
+
+            // Act
+            await _service.GetTestRequirementLogsAsync(query, TestProject, fromDate, toDate);
+
+            // Assert
+            await _repository.Received(1).GetTestRequirementLogsAsync(paginationParams, TestProject, fromDate, toDate);
         }
 
         #endregion
@@ -350,6 +421,51 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectAuditTrailServiceTest
             Assert.Empty(result.Data);
         }
 
+        [Fact]
+        public async Task GetAnimalRequestLogsAsync_NullQuery_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(
+                async () => await _service.GetAnimalRequestLogsAsync(null!, TestProject, null, null));
+        }
+
+        [Fact]
+        public async Task GetAnimalRequestLogsAsync_WhitespaceParentProject_ThrowsArgumentException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(
+                async () => await _service.GetAnimalRequestLogsAsync(query, "   ", null, null));
+        }
+
+        [Fact]
+        public async Task GetAnimalRequestLogsAsync_WithDateRange_PassesDateRangeToRepository()
+        {
+            // Arrange
+            var query          = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var fromDate       = new DateTime(2024, 1, 1);
+            var toDate         = new DateTime(2024, 12, 31);
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _repository.GetAnimalRequestLogsAsync(paginationParams, TestProject, fromDate, toDate)
+                .Returns(new PagedData<Apha.FPS.Core.Entities.AnimalRequestLog>
+                {
+                    Data           = new List<Apha.FPS.Core.Entities.AnimalRequestLog>(),
+                    PaginationData = new Apha.FPS.Core.Pagination.PaginationData()
+                });
+            _mapper.Map<PaginatedResult<AnimalRequestLogDto>>(Arg.Any<PagedData<Apha.FPS.Core.Entities.AnimalRequestLog>>())
+                .Returns(new PaginatedResult<AnimalRequestLogDto> { Data = new List<AnimalRequestLogDto>(), PaginationData = new PaginationDto() });
+
+            // Act
+            await _service.GetAnimalRequestLogsAsync(query, TestProject, fromDate, toDate);
+
+            // Assert
+            await _repository.Received(1).GetAnimalRequestLogsAsync(paginationParams, TestProject, fromDate, toDate);
+        }
+
         #endregion
 
         // ── GetAdditionalCostLogsAsync ───────────────────────────────────────
@@ -418,6 +534,51 @@ namespace Apha.FPS.Application.UnitTests.Services.ProjectAuditTrailServiceTest
 
             // Assert
             Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_NullQuery_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(
+                async () => await _service.GetAdditionalCostLogsAsync(null!, TestProject, null, null));
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_WhitespaceParentProject_ThrowsArgumentException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(
+                async () => await _service.GetAdditionalCostLogsAsync(query, "   ", null, null));
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_WithDateRange_PassesDateRangeToRepository()
+        {
+            // Arrange
+            var query          = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var fromDate       = new DateTime(2024, 1, 1);
+            var toDate         = new DateTime(2024, 12, 31);
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _repository.GetAdditionalCostLogsAsync(paginationParams, TestProject, fromDate, toDate)
+                .Returns(new PagedData<Apha.FPS.Core.Entities.AdditionalCostLog>
+                {
+                    Data           = new List<Apha.FPS.Core.Entities.AdditionalCostLog>(),
+                    PaginationData = new Apha.FPS.Core.Pagination.PaginationData()
+                });
+            _mapper.Map<PaginatedResult<AdditionalCostLogDto>>(Arg.Any<PagedData<Apha.FPS.Core.Entities.AdditionalCostLog>>())
+                .Returns(new PaginatedResult<AdditionalCostLogDto> { Data = new List<AdditionalCostLogDto>(), PaginationData = new PaginationDto() });
+
+            // Act
+            await _service.GetAdditionalCostLogsAsync(query, TestProject, fromDate, toDate);
+
+            // Assert
+            await _repository.Received(1).GetAdditionalCostLogsAsync(paginationParams, TestProject, fromDate, toDate);
         }
 
         #endregion
