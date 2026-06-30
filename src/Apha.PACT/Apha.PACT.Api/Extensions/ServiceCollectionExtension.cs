@@ -1,4 +1,5 @@
 ﻿using Apha.Common.Utilities.Email;
+using Apha.Common.Utilities.EventPublisher;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.PACT.Api.Context;
@@ -40,6 +41,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IMonthlyTimeService, MonthlyTimeService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
             services.AddScoped<IBatchJobService, BatchJobService>();
+            services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
