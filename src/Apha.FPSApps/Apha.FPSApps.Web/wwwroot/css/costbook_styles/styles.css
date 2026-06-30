@@ -1878,20 +1878,6 @@ th.col-resizable {
     display: none !important;
 }
 
-/*.govuk-form-group--error {
-    border-left: none;
-    padding-left: 0;
-}
-*/
-.govuk-button-group .govuk-button {
-    margin-bottom: 5px !important;
-}
-
-.govuk-button-group .govuk-button,
-.govuk-button-group .govuk-link {
-    margin-right: auto !important;
-}
-
 /* ── maint-* Layout ──────────────────────────────────────────── */
 .maint-page-heading {
     padding: 10px 0 0 2px;
