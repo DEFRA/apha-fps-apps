@@ -68,5 +68,17 @@ namespace Apha.Common.Constants
 
         // Log Milestone
         public const string GetLogMilestones = "api/v1/milestone/log";
+
+        // RadTrack Invoice
+        public const string GetAllRadTrackInvoices = "api/v1/radtrackinvoice";
+        public const string GetRadTrackInvoiceTotals = "api/v1/radtrackinvoice/totals";
+        public const string GetRadTrackInvoiceById = "api/v1/radtrackinvoice/{0}";
+        public const string CreateRadTrackInvoice = "api/v1/radtrackinvoice";
+        public const string UpdateRadTrackInvoice = "api/v1/radtrackinvoice/{0}";
+        public const string DeleteRadTrackInvoice = "api/v1/radtrackinvoice/{0}";
+        public const string GetRadTrackInvoiceProjects = "api/v1/radtrackinvoice/lookups/projects";
+        public const string GetRadTrackInvoiceYears = "api/v1/radtrackinvoice/lookups/years";
+        public const string GetRadTrackInvoiceContracts = "api/v1/radtrackinvoice/lookups/contracts";
+        public const string GetRadTrackInvoicePrograms = "api/v1/radtrackinvoice/lookups/programs";
     }
 }

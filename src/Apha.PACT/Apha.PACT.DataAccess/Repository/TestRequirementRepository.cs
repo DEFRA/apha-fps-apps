@@ -147,7 +147,7 @@ namespace Apha.PACT.DataAccess.Repository
             var baseQuery = (from t in _context.TestRequirements
                              join tp in _context.TestorProducts on t.TestCode equals tp.ItemCode
                              join p in _context.Projects on t.Buyer equals p.ParentProject
-                             where t.Buyer == parentProject
+                             where t.Buyer != null && parentProject != null && t.Buyer.ToLower() == parentProject.ToLower()
                              select new TestRequirementDetail
                              {
                                  TestCode = t.TestCode,

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
@@ -73,14 +74,16 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return await _dbContext.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Username == username);
+                .FirstOrDefaultAsync(u => u.Username != null
+                    && EF.Functions.ILike(u.Username, username));
         }
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
             return await _dbContext.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.UserEmail == email);
+                .FirstOrDefaultAsync(u => u.UserEmail != null
+                    && EF.Functions.ILike(u.UserEmail, email));
         }
 
         public async Task<User> AddUserAsync(User entity)
@@ -108,6 +111,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return existing;
         }
 
+        [ExcludeFromCodeCoverage(Justification = "Uses ExecuteDeleteAsync with transactions which cannot be unit tested with mocked DbContext.")]
         public async Task<bool> DeleteUserAsync(int userId)
         {
             var strategy = _dbContext.Database.CreateExecutionStrategy();
@@ -186,6 +190,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        [ExcludeFromCodeCoverage(Justification = "Uses ExecuteDeleteAsync with transactions which cannot be unit tested with mocked DbContext.")]
         public async Task SaveUserPermissionsAsync(int userId, List<string> profitCentres, List<string> programs,
             List<string> categories, List<string> testOwners, List<string> projectGroups)
         {
