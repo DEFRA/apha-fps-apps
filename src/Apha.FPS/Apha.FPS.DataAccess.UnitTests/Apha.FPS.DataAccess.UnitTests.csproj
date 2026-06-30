@@ -36,6 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Repository\UserPermissionRepositoryTest\" />
     <Folder Include="Repository\WorkGroupRepositoryTest\" />
   </ItemGroup>
 
