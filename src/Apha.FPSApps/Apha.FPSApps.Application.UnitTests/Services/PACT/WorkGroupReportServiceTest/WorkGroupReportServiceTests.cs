@@ -125,7 +125,24 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupReportServic
             const string pactId = "S001";
             var exportResult = new WorkGroupCos90SExportResultDto
             {
-                Rows = [new WorkGroupCos90SExportRowDto { WorkGroupName = "WG001", StaffName = "John Smith" }]
+                Rows =
+                [
+                    new WorkGroupCos90SExportRowDto
+                    {
+                        WorkGroupName = "WG001",
+                        ProfitCentre = "PC001",
+                        PactId = "S001",
+                        StaffName = "John Smith",
+                        TimeCode = "TC01",
+                        Description = "Time code description",
+                        ParentProject = "PP001",
+                        GradeCode = "G7",
+                        SpNumber = "SP123",
+                        Hours = 7.5,
+                        Month = 3,
+                        Year = 2025
+                    }
+                ]
             };
             var expectedResponse = ApiResponseDto<WorkGroupCos90SExportResultDto>.SuccessResponse(exportResult);
             _pactWorkGroupReportApiClient.ExportCos90sAsync(profitCentre, monthNumber, year, pactId).Returns(expectedResponse);
@@ -138,6 +155,18 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupReportServic
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
             Assert.Single(result.Data!.Rows);
+            Assert.Equal("WG001", result.Data.Rows[0].WorkGroupName);
+            Assert.Equal("PC001", result.Data.Rows[0].ProfitCentre);
+            Assert.Equal("S001", result.Data.Rows[0].PactId);
+            Assert.Equal("John Smith", result.Data.Rows[0].StaffName);
+            Assert.Equal("TC01", result.Data.Rows[0].TimeCode);
+            Assert.Equal("Time code description", result.Data.Rows[0].Description);
+            Assert.Equal("PP001", result.Data.Rows[0].ParentProject);
+            Assert.Equal("G7", result.Data.Rows[0].GradeCode);
+            Assert.Equal("SP123", result.Data.Rows[0].SpNumber);
+            Assert.Equal(7.5, result.Data.Rows[0].Hours);
+            Assert.Equal((short)3, result.Data.Rows[0].Month);
+            Assert.Equal((short)2025, result.Data.Rows[0].Year);
             await _pactWorkGroupReportApiClient.Received(1).ExportCos90sAsync(profitCentre, monthNumber, year, pactId);
         }
 

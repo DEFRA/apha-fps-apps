@@ -329,12 +329,43 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupCos90sControllerT
             // Arrange
             var rows = new List<WorkGroupCos90SExportRowDto>
             {
-                new() { WorkGroupName = "WG1", StaffName = "John", Month = 1, Year = 2025 }
+                new()
+                {
+                    WorkGroupName = "WG1",
+                    ProfitCentre = "PC001",
+                    PactId = "S001",
+                    StaffName = "John",
+                    TimeCode = "TC01",
+                    Description = "Time code description",
+                    ParentProject = "PP001",
+                    GradeCode = "G7",
+                    SpNumber = "SP123",
+                    Hours = 7.5,
+                    Month = 1,
+                    Year = 2025
+                }
             };
             _workGroupReportService.ExportCos90sAsync("PC001", 1, 2025, null)
                 .Returns(ApiResponseDto<WorkGroupCos90SExportResultDto>.SuccessResponse(
                     new WorkGroupCos90SExportResultDto { Rows = rows }));
-            _excelExportService.BuildWorkGroupCos90sExcel(Arg.Any<IEnumerable<WorkGroupCos90SExportRow>>(), 1, 2025, "PC001", null)
+            _excelExportService.BuildWorkGroupCos90sExcel(
+                Arg.Is<IEnumerable<WorkGroupCos90SExportRow>>(x =>
+                    x.Single().WorkGroupName == "WG1" &&
+                    x.Single().ProfitCentre == "PC001" &&
+                    x.Single().PactId == "S001" &&
+                    x.Single().StaffName == "John" &&
+                    x.Single().TimeCode == "TC01" &&
+                    x.Single().Description == "Time code description" &&
+                    x.Single().ParentProject == "PP001" &&
+                    x.Single().GradeCode == "G7" &&
+                    x.Single().SpNumber == "SP123" &&
+                    x.Single().Hours == 7.5 &&
+                    x.Single().Month == 1 &&
+                    x.Single().Year == 2025),
+                1,
+                2025,
+                "PC001",
+                null)
                 .Returns([1, 2, 3]);
 
             // Act
@@ -344,6 +375,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupCos90sControllerT
             var file = Assert.IsType<FileContentResult>(result);
             Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file.ContentType);
             Assert.EndsWith("_Cos90.xlsx", file.FileDownloadName);
+            _excelExportService.Received(1).BuildWorkGroupCos90sExcel(
+                Arg.Any<IEnumerable<WorkGroupCos90SExportRow>>(),
+                1,
+                2025,
+                "PC001",
+                null);
         }
     }
 }

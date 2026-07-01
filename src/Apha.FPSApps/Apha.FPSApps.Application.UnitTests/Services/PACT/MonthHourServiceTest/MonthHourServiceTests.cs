@@ -31,8 +31,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.MonthHourServiceTest
             var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var monthHours = new List<MonthHourDto>
             {
-                new() { Year = 2024, Month = 1, CvlHours = 160 },
-                new() { Year = 2024, Month = 2, CvlHours = 152 }
+                new() { Year = 2024, Month = 1, Days = 20.5m, CvlHours = 160, VidHours = 12.25m, Fmonth = 10, FpsYear = 2024 },
+                new() { Year = 2024, Month = 2, Days = 19.0m, CvlHours = 152, VidHours = 8.5m, Fmonth = 11, FpsYear = 2024 }
             };
             var expectedResponse = ApiResponseDto<List<MonthHourDto>>.SuccessResponse(monthHours);
             _pactMonthHourApiClient.GetAllAsync(query).Returns(expectedResponse);
@@ -44,6 +44,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.MonthHourServiceTest
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data!.Count);
+            Assert.Equal((short)2024, result.Data[0].Year);
+            Assert.Equal((short)1, result.Data[0].Month);
+            Assert.Equal(20.5m, result.Data[0].Days);
+            Assert.Equal(160m, result.Data[0].CvlHours);
+            Assert.Equal(12.25m, result.Data[0].VidHours);
+            Assert.Equal((short)10, result.Data[0].Fmonth);
+            Assert.Equal(2024, result.Data[0].FpsYear);
             await _pactMonthHourApiClient.Received(1).GetAllAsync(query);
         }
 

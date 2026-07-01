@@ -43,8 +43,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactMonthHourApiCli
             };
             var expectedDto = ApiResponseDto<List<MonthHourDto>>.SuccessResponse(
             [
-                new MonthHourDto { Year = 2025, Month = 1, CvlHours = 160 },
-                new MonthHourDto { Year = 2025, Month = 2, CvlHours = 152 }
+                new MonthHourDto { Year = 2025, Month = 1, Days = 21.0m, CvlHours = 160, VidHours = 11.5m, Fmonth = 10, FpsYear = 2025 },
+                new MonthHourDto { Year = 2025, Month = 2, Days = 20.0m, CvlHours = 152, VidHours = 9.75m, Fmonth = 11, FpsYear = 2025 }
             ]);
 
             _http.GetAsync<List<MonthHourRes>>(Arg.Any<string>()).Returns(apiResponse);
@@ -57,6 +57,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactMonthHourApiCli
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
+            Assert.Equal((short)2025, result.Data![0].Year);
+            Assert.Equal((short)1, result.Data[0].Month);
+            Assert.Equal(21.0m, result.Data[0].Days);
+            Assert.Equal(160m, result.Data[0].CvlHours);
+            Assert.Equal(11.5m, result.Data[0].VidHours);
+            Assert.Equal((short)10, result.Data[0].Fmonth);
+            Assert.Equal(2025, result.Data[0].FpsYear);
             await _http.Received(1).GetAsync<List<MonthHourRes>>(Arg.Any<string>());
         }
 
