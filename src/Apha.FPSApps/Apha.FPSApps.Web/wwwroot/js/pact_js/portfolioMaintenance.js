@@ -117,7 +117,7 @@ $(document).ready(function () {
             } else {
                 displayServerValidationErrors(res.errors, res.message, '#portfolioDetailForm');
             }
-        }).fail(function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR);); });
+        }).fail(function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); });
     });
 
     // ── Portfolio Time Codes button ───────────────────────────────────────────
