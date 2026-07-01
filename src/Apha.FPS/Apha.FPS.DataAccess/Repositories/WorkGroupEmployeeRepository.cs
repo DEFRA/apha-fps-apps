@@ -112,6 +112,8 @@ namespace Apha.FPS.DataAccess.Repositories
             if (existing == null)
                 throw new KeyNotFoundException($"WorkGroupEmployee with PACTid '{entity.PactId}' was not found.");
 
+            existing.SpNumber = entity.SpNumber;
+            existing.WorkGroupGrade = entity.WorkGroupGrade;
             existing.HrsPaid = entity.HrsPaid;
             existing.Leave = entity.Leave;
             existing.SickSpecial = entity.SickSpecial;

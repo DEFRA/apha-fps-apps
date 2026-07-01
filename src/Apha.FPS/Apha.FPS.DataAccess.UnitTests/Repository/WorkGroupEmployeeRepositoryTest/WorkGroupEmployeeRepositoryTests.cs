@@ -569,22 +569,26 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
 
             var update = new WorkGroupEmployee
             {
-                PactId        = DefaultPactId,
-                HrsPaid       = 40.0,
-                Leave         = 2.0,
-                SickSpecial   = 1.0,
-                HrsAvail      = 1200.0,
-                PersonStatus  = "A",
-                MakeAvailable = 0,
-                TimeRecorder  = 1,
-                StartDate     = startDate,
-                EndDate       = endDate,
-                HoursPerWeek  = 37.5
+                PactId         = DefaultPactId,
+                SpNumber       = "SP999",
+                WorkGroupGrade = "WG-UPDATED",
+                HrsPaid        = 40.0,
+                Leave          = 2.0,
+                SickSpecial    = 1.0,
+                HrsAvail       = 1200.0,
+                PersonStatus   = "A",
+                MakeAvailable  = 0,
+                TimeRecorder   = 1,
+                StartDate      = startDate,
+                EndDate        = endDate,
+                HoursPerWeek   = 37.5
             };
 
             var result = await repo.UpdateWorkGroupEmployeeForStaffAsync(update);
 
             Assert.NotNull(result);
+            Assert.Equal("SP999", result.SpNumber);
+            Assert.Equal("WG-UPDATED", result.WorkGroupGrade);
             Assert.Equal(40.0, result.HrsPaid);
             Assert.Equal(1200.0, result.HrsAvail);
             Assert.Equal(1, result.TimeRecorder);

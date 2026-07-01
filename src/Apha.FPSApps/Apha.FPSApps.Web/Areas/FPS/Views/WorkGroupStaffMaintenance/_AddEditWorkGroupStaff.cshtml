@@ -62,66 +62,50 @@
                     Staff Name: <span class="sup_color_red">*</span>
                 </label>
                 <input type="hidden" id="Name" asp-for="Name" required />
-                <div class="tableselectdropdown input-group" data-empdropdown style="position:relative;">
-                    <div id="StaffNameComboBox"
-                         onclick="toggleWgStaffNameDropdown()"
-                         class="dropdown-input govuk-select govuk-!-font-size-16 sup_select_option_width_100 wg-staff-name-selectlike down-arrow-img"
-                         style="display:flex; align-items:center; cursor:pointer; user-select:none;"
-                         tabindex="0"
-                         role="button"
-                         aria-haspopup="listbox"
-                         aria-expanded="false">
-                        <span id="StaffNameDisplayText" style="color:#505a5f; flex:1;">&#8211; Select Staff &#8211;</span>
-                    </div>
-                    <div id="staffNameDropdownPanel" class="tbl-dropdown-panel"
-                         style="display:none; position:absolute; z-index:9999; background:#fff;
-                                border:2px solid #0b0c0c; width:100%; min-width:580px; top:100%; left:0;
-                                box-shadow:0 4px 8px rgba(0,0,0,0.2);">
-                        <div style="display:flex; align-items:center; padding:4px; border-bottom:1px solid #b1b4b6; background:#f3f2f1; gap:4px;">
-                            <input type="text" id="staffNameSearch" placeholder="Type to search staff"
-                                   class="select-search-box govuk-input govuk-!-font-size-16"
-                                   style="flex:1; font-size:13px; padding:2px 6px; height:32px;"
-                                   oninput="filterWgStaffNameTable(this.value)" onclick="event.stopPropagation()" />
-                            <button type="button" class="govuk-button govuk-button--secondary clear-search-btn govuk-!-margin-bottom-0"
-                                    style="padding:2px 8px; height:32px; line-height:1;"
-                                    onclick="document.getElementById('staffNameSearch').value=''; filterWgStaffNameTable(''); event.stopPropagation();"
-                                    aria-label="Clear search">
-                                <span class="sup_error_text_color govuk-!-font-size-19">&times;</span>
-                            </button>
-                        </div>
-                        <div class="table_scroll_wrapper" style="max-height:200px; overflow-y:auto;">
-                            <table class="govuk-table custom-table" style="width:100%; table-layout:fixed; margin-bottom:0;">
-                                <colgroup>
-                                    <col style="width:65%;" />
-                                    <col style="width:35%;" />
-                                </colgroup>
-                                <thead class="govuk-table__head">
-                                    <tr class="govuk-table__row">
-                                        <th class="govuk-table__header">Name</th>
-                                        <th class="govuk-table__header">SPNumber</th>
+                <div id="staff-name-dropdown" class="govuk-form-group govuk-!-margin-bottom-0">
+                    <input type="text"
+                           id="staff-name-input"
+                           value="-- Select Staff --"
+                           class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                           readonly
+                           aria-label="Staff Name"
+                           onclick="toggleWgStaffNameDropdown()" />
+
+                    <div class="dropdown-panel" id="staff-name-panel" style="display:none; width:100%; min-width:580px; top:100%; left:0; max-height:220px; overflow-y:auto;">
+                        <input type="text"
+                               class="search-box govuk-input govuk-!-font-size-16"
+                               id="staff-name-search"
+                               placeholder="Type to search staff"
+                               oninput="filterWgStaffNameTable(this.value)" />
+                        <table class="period-dropdown__table govuk-table govuk-!-font-size-16" style="table-layout:fixed; margin-bottom:0;">
+                            <colgroup>
+                                <col style="width:65%;" />
+                                <col style="width:35%;" />
+                            </colgroup>
+                            <thead class="govuk-table__head">
+                                <tr class="govuk-table__row">
+                                    <th class="govuk-table__header">Name</th>
+                                    <th class="govuk-table__header">SPNumber</th>
+                                </tr>
+                            </thead>
+                            <tbody class="govuk-table__body" id="staffNameTableBody">
+                                @foreach (var staff in (Model?.StaffLookupOptions ?? System.Linq.Enumerable.Empty<Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupStaffLookupItem>())
+                                   .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                                   .GroupBy(x => x.Name)
+                                   .Select(g => g.First()))
+                                {
+                                    <tr class="govuk-table__row staff-name-row"
+                                        data-pactid="@staff.PactId"
+                                        data-name="@staff.Name"
+                                        data-spnumber="@staff.SpNumber"
+                                        style="cursor:pointer;"
+                                        onclick="selectWgStaffName(this)">
+                                        <td class="govuk-table__cell" style="overflow:hidden; text-overflow:ellipsis;">@staff.Name</td>
+                                        <td class="govuk-table__cell" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@staff.SpNumber</td>
                                     </tr>
-                                </thead>
-                                <tbody class="govuk-table__body" id="staffNameTableBody">
-                                    @foreach (var staff in (Model?.StaffLookupOptions ?? System.Linq.Enumerable.Empty<Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupStaffLookupItem>())
-                                       .Where(x => !string.IsNullOrWhiteSpace(x.Name))
-                                       .GroupBy(x => x.Name)
-                                       .Select(g => g.First()))
-                                    {
-                                        <tr class="govuk-table__row staff-name-row"
-                                            data-pactid="@staff.PactId"
-                                            data-name="@staff.Name"
-                                            data-spnumber="@staff.SpNumber"
-                                            style="cursor:pointer;"
-                                            onmouseover="this.style.background='#bee0f7'"
-                                            onmouseout="this.style.background=''"
-                                            onclick="selectWgStaffName(this)">
-                                            <td class="govuk-table__cell" style="overflow:hidden; text-overflow:ellipsis;">@staff.Name</td>
-                                            <td class="govuk-table__cell" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@staff.SpNumber</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 <span asp-validation-for="Name" class="govuk-error-message" style="display:none;"></span>
@@ -328,18 +312,19 @@
 
 <script>
     function toggleWgStaffNameDropdown() {
-        var panel = document.getElementById('staffNameDropdownPanel');
-        var combo = document.getElementById('StaffNameComboBox');
-        if (!panel) return;
+        var dropdown = document.getElementById('staff-name-dropdown');
+        var input = document.getElementById('staff-name-input');
+        var panel = document.getElementById('staff-name-panel');
+        var search = document.getElementById('staff-name-search');
+        if (!dropdown || !input || !panel || !search) return;
 
-        if (panel.style.display === 'none' || panel.style.display === '') {
+        var isHidden = panel.style.display === 'none' || panel.style.display === '';
+        if (isHidden) {
             panel.style.display = 'block';
-            if (combo) combo.setAttribute('aria-expanded', 'true');
-            var search = document.getElementById('staffNameSearch');
-            if (search) search.focus();
+            panel.style.width = input.offsetWidth + 'px';
+            search.focus();
         } else {
             panel.style.display = 'none';
-            if (combo) combo.setAttribute('aria-expanded', 'false');
         }
     }
 
@@ -359,10 +344,9 @@
         }
 
         var displayText = name + (spNumber ? ' - ' + spNumber : '');
-        var display = document.getElementById('StaffNameDisplayText');
+        var display = document.getElementById('staff-name-input');
         if (display) {
-            display.textContent = displayText;
-            display.style.color = '#0b0c0c';
+            display.value = displayText;
         }
 
         if (staffNameInput) {
@@ -382,10 +366,8 @@
             }
         }
 
-        document.getElementById('staffNameDropdownPanel').style.display = 'none';
-        var combo = document.getElementById('StaffNameComboBox');
-        if (combo) combo.setAttribute('aria-expanded', 'false');
-        document.getElementById('staffNameSearch').value = '';
+        document.getElementById('staff-name-panel').style.display = 'none';
+        document.getElementById('staff-name-search').value = '';
         filterWgStaffNameTable('');
     }
 
@@ -419,10 +401,9 @@
         var initialSpNumber = document.getElementById('SpNumber')?.value || '';
 
         if (initialName) {
-            var display = document.getElementById('StaffNameDisplayText');
+            var display = document.getElementById('staff-name-input');
             if (display) {
-                display.textContent = initialName + (initialSpNumber ? ' - ' + initialSpNumber : '');
-                display.style.color = '#0b0c0c';
+                display.value = initialName + (initialSpNumber ? ' - ' + initialSpNumber : '');
             }
         }
 
@@ -434,12 +415,10 @@
         });
 
         document.addEventListener('click', function (e) {
-            var panel = document.getElementById('staffNameDropdownPanel');
-            var combo = document.getElementById('StaffNameComboBox');
-
-            if (panel && combo && !panel.contains(e.target) && !combo.contains(e.target)) {
+            var dropdown = document.getElementById('staff-name-dropdown');
+            var panel = document.getElementById('staff-name-panel');
+            if (dropdown && panel && !dropdown.contains(e.target)) {
                 panel.style.display = 'none';
-                combo.setAttribute('aria-expanded', 'false');
             }
         });
     })();
