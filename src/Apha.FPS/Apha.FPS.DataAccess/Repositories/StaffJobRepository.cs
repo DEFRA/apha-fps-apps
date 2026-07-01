@@ -3,6 +3,7 @@ using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using Newtonsoft.Json;
 using System.Dynamic;
 using System.Linq.Expressions;
@@ -104,7 +105,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         on wg.PactId equals s.StaffId
                     join t in _dbContext.Projects
                         on s.JobCode equals t.ParentProject
-                    where s.StaffId == staffId 
+                    where s.StaffId == staffId
                     select new
                     {
                         ParentProject = t.ParentProject,
@@ -114,7 +115,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     };
 
             decimal? changeRate = await result.Where(e => e.ParentProject == jobcode).Select(e => e.ChargeRate).FirstOrDefaultAsync();
-            changeRate ??= await result.Select(e => e.ChargeRate).FirstOrDefaultAsync(); 
+            changeRate ??= await result.Select(e => e.ChargeRate).FirstOrDefaultAsync();
             return changeRate;
         }
 
@@ -132,10 +133,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var lookupStaffList = await GetStaffWorkgroupLookup();
             var staffName = lookupStaffList
-                .Where(p=> p.StaffID == staffId).Select(s => new { s.StaffID, s.Name }).FirstOrDefault();
+                .Where(p => p.StaffID == staffId).Select(s => new { s.StaffID, s.Name }).FirstOrDefault();
 
             record?.Name = staffName?.Name;
-           
+
             return record != null ? ComputeStaffCost(record) : null;
         }
 
@@ -277,19 +278,19 @@ namespace Apha.FPS.DataAccess.Repositories
 
 
             var projProgram = (from p in _dbContext.ProjectViews
-                              join prg in _dbContext.ProgramViews on
-                                  new { p.Program, p.UserId } equals new { Program = prg.ProgramNo, prg.UserId }
-                              where p.ParentProject == jobCode
-                                    && p.UserEmail != null
-                                    && p.UserEmail.ToLower() == _requestContext.UserEmailId
-                              select new
-                              {
-                                  p.ParentProject,
-                                  prg.SectorName,
-                                  p.IsDefraProject, 
-                                  prg.UserId,
-                                  prg.UserEmail
-                              }).Distinct();
+                               join prg in _dbContext.ProgramViews on
+                                   new { p.Program, p.UserId } equals new { Program = prg.ProgramNo, prg.UserId }
+                               where p.ParentProject == jobCode
+                                     && p.UserEmail != null
+                                     && p.UserEmail.ToLower() == _requestContext.UserEmailId
+                               select new
+                               {
+                                   p.ParentProject,
+                                   prg.SectorName,
+                                   p.IsDefraProject,
+                                   prg.UserId,
+                                   prg.UserEmail
+                               }).Distinct();
 
             return (from sj in _dbContext.StaffJobTblViews
                     join s in _dbContext.StaffGeneralViews on sj.StaffId equals s.StaffId
@@ -312,7 +313,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         WorkGroup = wg.Workgroup,
                         SectorName = pp.SectorName,
                         Days = dutyHours != null ? (sj.PlannedHours ?? 0) / Convert.ToDouble(dutyHours) : 0
-                    }).Distinct().OrderBy(e => e.Name).AsQueryable();            
+                    }).Distinct().OrderBy(e => e.Name).AsQueryable();
         }
 
         private static IQueryable<StaffJobView> ApplySorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)
@@ -369,6 +370,143 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             return queryStaffJob;
+        }        
+
+        public async Task<PagedData<StaffResourceUtilisationView>> GetStaffResourceUtilisationAsync(
+            PaginationParameters<string> query, string workgroup)
+        {
+            // Stage 1: fetch flat distinct rows from the DB, mirroring the SQL SELECT list.
+            // FpsYear is driven from _requestContext so it is never hardcoded.
+            var rawData = await (
+                from wg in _context.WorkgroupGrades
+
+                join s in _context.StaffViews
+                    on new { WorkgroupGrade = wg.WgGrade, FpsYear = (int?)wg.FpsYear }
+                    equals new { s.WorkgroupGrade, s.FpsYear }
+
+                join pc in _context.ProfitCentreGrades
+                    on new { ProfitCentreGrade = wg.ProfitCentreGrade, FpsYear = wg.FpsYear }
+                    equals new { ProfitCentreGrade = pc.PcGrade, FpsYear = (int?)pc.FpsYear }
+
+                join sj in _context.StaffJobRmViews
+                    on new { StaffId = s.StaffId, FpsYear = s.FpsYear }
+                    equals new { sj.StaffId, sj.FpsYear } into staffJobs
+                from sj in staffJobs.DefaultIfEmpty()
+
+                join p in _context.Projects
+                    on sj.JobCode equals p.ParentProject into projects
+                from p in projects.DefaultIfEmpty()
+
+                where EF.Functions.ILike(s.Name!, "%General")
+                      && wg.FpsYear == _requestContext.FpsYear
+                      && EF.Functions.ILike(s.UserEmail!, _requestContext.UserEmailId)
+                      && wg.Workgroup == workgroup
+
+                select new
+                {
+                    pc.ProfitCentre,
+                    wg.Workgroup,
+                    wg.WgGrade,
+                    s.StaffId,
+                    s.Name,
+                    s.HrsAvail,
+                    Program       = p  != null ? p.Program       : null,
+                    ProjectStatus = p  != null ? p.ProjectStatus : null,
+                    PlannedHours  = sj != null ? sj.PlannedHours : (double?)null
+                }
+            ).Distinct().ToListAsync();
+
+            // Stage 2: aggregate in-memory — mirrors SQL GROUP BY + SUM(CASE WHEN …).
+            var result = rawData
+                .GroupBy(x => new
+                {
+                    x.ProfitCentre,
+                    x.Workgroup,
+                    x.WgGrade,
+                    x.StaffId,
+                    x.Name,
+                    x.HrsAvail
+                })
+                .Select(g =>
+                {
+                    double hrsAvail     = g.Key.HrsAvail ?? 0d;
+                    double plannedZt    = g.Sum(x => x.Program       == "zt_prog"      ? (x.PlannedHours ?? 0d) : 0d);
+                    double nApproved    = g.Sum(x => x.ProjectStatus == "Not Approved" ? (x.PlannedHours ?? 0d) : 0d);
+                    double approvedRaw  = g.Sum(x => x.ProjectStatus == "Approved"     ? (x.PlannedHours ?? 0d) : 0d);
+
+                    double approvedSoct = Math.Round(approvedRaw - plannedZt,              2);
+                    double availSoct    = Math.Round(hrsAvail    - plannedZt,              2);
+                    double left         = Math.Round(availSoct   - approvedSoct - nApproved, 2);
+
+                    return new StaffResourceUtilisationView
+                    {
+                        ProfitCentre       = g.Key.ProfitCentre,
+                        WorkGroup          = g.Key.Workgroup,
+                        WgGrade            = g.Key.WgGrade,
+                        StaffId            = g.Key.StaffId,
+                        Name               = g.Key.Name,
+                        HrsAvail           = hrsAvail,
+                        PlannedZt          = plannedZt,
+                        AvailSoct          = availSoct,
+                        NotApprovedSoct    = nApproved,
+                        ApprovedSoct       = approvedSoct,
+                        Left               = left,
+                        ApprovedUtilPct    = hrsAvail == 0d ? null : Math.Round(approvedSoct              * 100d / hrsAvail, 2),
+                        NotApprovedUtilPct = hrsAvail == 0d ? null : Math.Round(nApproved                 * 100d / hrsAvail, 2),
+                        TotalUtilPct       = hrsAvail == 0d ? null : Math.Round((approvedSoct + nApproved) * 100d / hrsAvail, 2)
+                    };
+                })
+                .AsQueryable();
+
+            result = ApplyStaffResourceUtilisationFilter(result, query.Filter);
+            result = ApplyStaffResourceUtilisationSorting(result, query.SortBy, query.Descending);
+            return base.ApplyPaging(result.ToList(), query.Page, query.PageSize);
+        }
+
+        private static IQueryable<StaffResourceUtilisationView> ApplyStaffResourceUtilisationFilter(
+            IQueryable<StaffResourceUtilisationView> query, string? filter)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("WgGrade", out var wgGrade) && wgGrade != null)
+                query = query.Where(x => x.WgGrade != null &&
+                    x.WgGrade.Contains(wgGrade.ToString()!, StringComparison.OrdinalIgnoreCase));
+
+            if (dict.TryGetValue("Name", out var name) && name != null)
+                query = query.Where(x => x.Name != null &&
+                    x.Name.Contains(name.ToString()!, StringComparison.OrdinalIgnoreCase));
+
+            return query;
+        }
+
+        private static IQueryable<StaffResourceUtilisationView> ApplyStaffResourceUtilisationSorting(
+            IQueryable<StaffResourceUtilisationView> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy))
+                return query.OrderBy(x => x.WgGrade);
+
+            return sortBy.ToLower() switch
+            {
+                "wggrade" => descending ? query.OrderByDescending(x => x.WgGrade) : query.OrderBy(x => x.WgGrade),
+                "name" => descending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
+                "hrsavail" => descending ? query.OrderByDescending(x => x.HrsAvail) : query.OrderBy(x => x.HrsAvail),
+                "plannedzt" => descending ? query.OrderByDescending(x => x.PlannedZt) : query.OrderBy(x => x.PlannedZt),
+                "availsoct" => descending ? query.OrderByDescending(x => x.AvailSoct) : query.OrderBy(x => x.AvailSoct),
+                "notapprovedsoct" => descending ? query.OrderByDescending(x => x.NotApprovedSoct) : query.OrderBy(x => x.NotApprovedSoct),
+                "approvedsoct" => descending ? query.OrderByDescending(x => x.ApprovedSoct) : query.OrderBy(x => x.ApprovedSoct),
+                "left" => descending ? query.OrderByDescending(x => x.Left) : query.OrderBy(x => x.Left),
+                "approvedutilpct" => descending ? query.OrderByDescending(x => x.ApprovedUtilPct) : query.OrderBy(x => x.ApprovedUtilPct),
+                "notapprovedutilpct" => descending ? query.OrderByDescending(x => x.NotApprovedUtilPct) : query.OrderBy(x => x.NotApprovedUtilPct),
+                "totalutilpct" => descending ? query.OrderByDescending(x => x.TotalUtilPct) : query.OrderBy(x => x.TotalUtilPct),
+                _ => query.OrderBy(x => x.WgGrade)
+            };
         }
 
         public async Task<double> GetZtTotalHoursByStaffIdAsync(string staffId)
@@ -428,10 +566,10 @@ namespace Apha.FPS.DataAccess.Repositories
 
             return sortBy.ToLower() switch
             {
-                "jobcode"      => descending ? query.OrderByDescending(x => x.JobCode)      : query.OrderBy(x => x.JobCode),
+                "jobcode" => descending ? query.OrderByDescending(x => x.JobCode) : query.OrderBy(x => x.JobCode),
                 "plannedhours" => descending ? query.OrderByDescending(x => x.PlannedHours) : query.OrderBy(x => x.PlannedHours),
-                "name"         => descending ? query.OrderByDescending(x => x.Name)         : query.OrderBy(x => x.Name),
-                _              => query
+                "name" => descending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
+                _ => query
             };
         }
 

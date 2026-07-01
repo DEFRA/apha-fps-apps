@@ -88,6 +88,9 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
+
+            // StaffResourceUtilisation
+            CreateMap<StaffResourceUtilisationView, StaffResourceUtilisationDto>().ReverseMap();
         }
     }
 }
