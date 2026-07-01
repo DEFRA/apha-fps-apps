@@ -979,5 +979,122 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupControllerTest
         }
 
         #endregion
+
+        #region Cos90 endpoints
+
+        [Fact]
+        public async Task GetWorkGroupsFlaggedForCos90_WithData_ReturnsOkWithMappedItems()
+        {
+            // Arrange
+            var items = new List<Cos90WorkGroupDto>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1", Cos90 = 1 }
+            };
+            var mapped = new List<Cos90WorkGroupRes>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1", Cos90 = 1 }
+            };
+
+            _serviceMock.GetWorkGroupsFlaggedForCos90Async().Returns(items);
+            _mapperMock.Map<IEnumerable<Cos90WorkGroupRes>>(items).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetWorkGroupsFlaggedForCos90();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mapped, okResult.Value);
+            await _serviceMock.Received(1).GetWorkGroupsFlaggedForCos90Async();
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsFlaggedForCos90_WithEmptyList_ReturnsOkWithEmptyCollection()
+        {
+            // Arrange
+            var items = new List<Cos90WorkGroupDto>();
+            var mapped = new List<Cos90WorkGroupRes>();
+
+            _serviceMock.GetWorkGroupsFlaggedForCos90Async().Returns(items);
+            _mapperMock.Map<IEnumerable<Cos90WorkGroupRes>>(items).Returns(mapped);
+
+            // Act
+            var result = await _controller.GetWorkGroupsFlaggedForCos90();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var value = Assert.IsAssignableFrom<IEnumerable<Cos90WorkGroupRes>>(okResult.Value);
+            Assert.Empty(value);
+        }
+
+        [Fact]
+        public async Task SetCos90ForProfitCentreWorkGroups_WithValidProfitCentre_ReturnsOkWithResult()
+        {
+            // Arrange
+            _serviceMock.SetCos90ForProfitCentreWorkGroupsAsync("PC1", 1).Returns(true);
+
+            // Act
+            var result = await _controller.SetCos90ForProfitCentreWorkGroups("PC1", 1);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+            await _serviceMock.Received(1).SetCos90ForProfitCentreWorkGroupsAsync("PC1", 1);
+        }
+
+        [Fact]
+        public async Task SetCos90ForProfitCentreWorkGroups_WithEmptyProfitCentre_ReturnsBadRequest()
+        {
+            // Act
+            var result = await _controller.SetCos90ForProfitCentreWorkGroups("", 1);
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("ProfitCentre is required.", badRequest.Value);
+            await _serviceMock.DidNotReceive().SetCos90ForProfitCentreWorkGroupsAsync(Arg.Any<string>(), Arg.Any<short>());
+        }
+
+        [Fact]
+        public async Task SetCos90ForAllWorkGroups_WithAnyFlag_ReturnsOkWithResult()
+        {
+            // Arrange
+            _serviceMock.SetCos90ForAllWorkGroupsAsync(0).Returns(true);
+
+            // Act
+            var result = await _controller.SetCos90ForAllWorkGroups(0);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+            await _serviceMock.Received(1).SetCos90ForAllWorkGroupsAsync(0);
+        }
+
+        [Fact]
+        public async Task SetCos90ForWorkGroup_WithValidInput_ReturnsOkWithResult()
+        {
+            // Arrange
+            _serviceMock.SetCos90ForWorkGroupAsync("PC1", "WG1", 1).Returns(true);
+
+            // Act
+            var result = await _controller.SetCos90ForWorkGroup("PC1", "WG1", 1);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.True((bool)okResult.Value!);
+            await _serviceMock.Received(1).SetCos90ForWorkGroupAsync("PC1", "WG1", 1);
+        }
+
+        [Fact]
+        public async Task SetCos90ForWorkGroup_WithMissingFields_ReturnsBadRequest()
+        {
+            // Act
+            var result = await _controller.SetCos90ForWorkGroup("", "", 1);
+
+            // Assert
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("ProfitCentre and WorkGroupName are required.", badRequest.Value);
+            await _serviceMock.DidNotReceive().SetCos90ForWorkGroupAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<short>());
+        }
+
+        #endregion
     }
 }

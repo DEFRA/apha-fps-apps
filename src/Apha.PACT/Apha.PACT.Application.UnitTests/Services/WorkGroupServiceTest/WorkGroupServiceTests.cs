@@ -2599,5 +2599,138 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupServiceTest
                     }
 
                     #endregion
+
+                    #region Cos90
+
+                    [Fact]
+                    public async Task GetWorkGroupsFlaggedForCos90Async_WithData_ReturnsMappedDtos()
+                    {
+                        // Arrange
+                        var entities = new List<WorkGroup>
+                        {
+                            new() { WorkGroupName = "WG1", ProfitCentre = "PC1", Cos90 = 1 }
+                        };
+                        var dtos = new List<Cos90WorkGroupDto>
+                        {
+                            new() { WorkGroupName = "WG1", ProfitCentre = "PC1", Cos90 = 1 }
+                        };
+
+                        _mockRepository.GetWorkGroupsFlaggedForCos90Async().Returns(entities);
+                        _mockMapper.Map<IEnumerable<Cos90WorkGroupDto>>(entities).Returns(dtos);
+
+                        // Act
+                        var result = await _sut.GetWorkGroupsFlaggedForCos90Async();
+
+                        // Assert
+                        result.Should().BeEquivalentTo(dtos);
+                        await _mockRepository.Received(1).GetWorkGroupsFlaggedForCos90Async();
+                        _mockMapper.Received(1).Map<IEnumerable<Cos90WorkGroupDto>>(entities);
+                    }
+
+                    [Fact]
+                    public async Task GetWorkGroupsFlaggedForCos90Async_WithEmptyData_ReturnsEmptyCollection()
+                    {
+                        // Arrange
+                        var entities = new List<WorkGroup>();
+                        var dtos = new List<Cos90WorkGroupDto>();
+
+                        _mockRepository.GetWorkGroupsFlaggedForCos90Async().Returns(entities);
+                        _mockMapper.Map<IEnumerable<Cos90WorkGroupDto>>(entities).Returns(dtos);
+
+                        // Act
+                        var result = await _sut.GetWorkGroupsFlaggedForCos90Async();
+
+                        // Assert
+                        result.Should().BeEmpty();
+                    }
+
+                    [Fact]
+                    public async Task GetWorkGroupsFlaggedForCos90Async_RepositoryThrows_PropagatesException()
+                    {
+                        // Arrange
+                        _mockRepository.GetWorkGroupsFlaggedForCos90Async().ThrowsAsync(new Exception("DB error"));
+
+                        // Act & Assert
+                        await Assert.ThrowsAsync<Exception>(() => _sut.GetWorkGroupsFlaggedForCos90Async());
+                    }
+
+                    [Fact]
+                    public async Task SetCos90ForProfitCentreWorkGroupsAsync_WithValidArgs_ReturnsRepositoryResult()
+                    {
+                        // Arrange
+                        _mockRepository.SetCos90ForProfitCentreWorkGroupsAsync("PC001", 1).Returns(true);
+
+                        // Act
+                        var result = await _sut.SetCos90ForProfitCentreWorkGroupsAsync("PC001", 1);
+
+                        // Assert
+                        result.Should().BeTrue();
+                        await _mockRepository.Received(1).SetCos90ForProfitCentreWorkGroupsAsync("PC001", 1);
+                    }
+
+                    [Fact]
+                    public async Task SetCos90ForProfitCentreWorkGroupsAsync_RepositoryThrows_PropagatesException()
+                    {
+                        // Arrange
+                        _mockRepository.SetCos90ForProfitCentreWorkGroupsAsync(Arg.Any<string>(), Arg.Any<short>())
+                            .ThrowsAsync(new Exception("DB error"));
+
+                        // Act & Assert
+                        await Assert.ThrowsAsync<Exception>(() =>
+                            _sut.SetCos90ForProfitCentreWorkGroupsAsync("PC001", 1));
+                    }
+
+                    [Fact]
+                    public async Task SetCos90ForAllWorkGroupsAsync_WithValidFlag_ReturnsRepositoryResult()
+                    {
+                        // Arrange
+                        _mockRepository.SetCos90ForAllWorkGroupsAsync(0).Returns(true);
+
+                        // Act
+                        var result = await _sut.SetCos90ForAllWorkGroupsAsync(0);
+
+                        // Assert
+                        result.Should().BeTrue();
+                        await _mockRepository.Received(1).SetCos90ForAllWorkGroupsAsync(0);
+                    }
+
+                    [Fact]
+                    public async Task SetCos90ForAllWorkGroupsAsync_RepositoryThrows_PropagatesException()
+                    {
+                        // Arrange
+                        _mockRepository.SetCos90ForAllWorkGroupsAsync(Arg.Any<short>())
+                            .ThrowsAsync(new Exception("DB error"));
+
+                        // Act & Assert
+                        await Assert.ThrowsAsync<Exception>(() => _sut.SetCos90ForAllWorkGroupsAsync(0));
+                    }
+
+                    [Fact]
+                    public async Task SetCos90ForWorkGroupAsync_WithValidArgs_ReturnsRepositoryResult()
+                    {
+                        // Arrange
+                        _mockRepository.SetCos90ForWorkGroupAsync("PC001", "WG1", 1).Returns(true);
+
+                        // Act
+                        var result = await _sut.SetCos90ForWorkGroupAsync("PC001", "WG1", 1);
+
+                        // Assert
+                        result.Should().BeTrue();
+                        await _mockRepository.Received(1).SetCos90ForWorkGroupAsync("PC001", "WG1", 1);
+                    }
+
+                    [Fact]
+                    public async Task SetCos90ForWorkGroupAsync_RepositoryThrows_PropagatesException()
+                    {
+                        // Arrange
+                        _mockRepository.SetCos90ForWorkGroupAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<short>())
+                            .ThrowsAsync(new Exception("DB error"));
+
+                        // Act & Assert
+                        await Assert.ThrowsAsync<Exception>(() =>
+                            _sut.SetCos90ForWorkGroupAsync("PC001", "WG1", 1));
+                    }
+
+                    #endregion
                 }
             }

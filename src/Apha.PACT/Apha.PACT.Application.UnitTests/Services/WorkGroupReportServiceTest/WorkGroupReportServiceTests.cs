@@ -1,6 +1,7 @@
 using Apha.Common.Contracts.Email;
 using Apha.Common.Utilities.Email;
 using Apha.Common.Utilities.ExcelExport;
+using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Services;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
@@ -342,6 +343,69 @@ namespace Apha.PACT.Application.UnitTests.Services.WorkGroupReportServiceTest
 
             // Assert
             await _mockEmailService.Received(1).SendEmailAsync(Arg.Any<EmailMessageModel>(), cts.Token);
+        }
+
+        #endregion
+
+        #region ExportCos90sAsync
+
+        [Fact]
+        public async Task ExportCos90sAsync_WithRows_ReturnsMappedExportRows()
+        {
+            // Arrange
+            var rows = new List<Apha.PACT.Core.Entities.WorkGroupCos90SExportRow>
+            {
+                new() { WorkGroupName = "WG1", StaffName = "John Smith", Month = 3, Year = 2025 }
+            };
+            var mappedRows = new List<WorkGroupCos90SExportRowDto>
+            {
+                new() { WorkGroupName = "WG1", StaffName = "John Smith", Month = 3, Year = 2025 }
+            };
+
+            _mockRepository.GetCos90ExportRowsAsync("PC001", 3, 2025, "S001").Returns(rows);
+            _mockMapper.Map<List<WorkGroupCos90SExportRowDto>>(Arg.Any<List<Apha.PACT.Core.Entities.WorkGroupCos90SExportRow>>()).Returns(mappedRows);
+
+            // Act
+            var result = await _sut.ExportCos90sAsync("PC001", 3, 2025, "S001");
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Rows.Should().HaveCount(1);
+            result.Rows[0].WorkGroupName.Should().Be("WG1");
+            await _mockRepository.Received(1).GetCos90ExportRowsAsync("PC001", 3, 2025, "S001");
+            _mockMapper.Received(1).Map<List<WorkGroupCos90SExportRowDto>>(Arg.Is<List<Apha.PACT.Core.Entities.WorkGroupCos90SExportRow>>(r => r.Count == 1 && r[0].WorkGroupName == "WG1"));
+        }
+
+        [Fact]
+        public async Task ExportCos90sAsync_WithNoRows_ReturnsEmptyResult()
+        {
+            // Arrange
+            var rows = new List<Apha.PACT.Core.Entities.WorkGroupCos90SExportRow>();
+            var mappedRows = new List<WorkGroupCos90SExportRowDto>();
+
+            _mockRepository.GetCos90ExportRowsAsync("PC001", 3, 2025, null).Returns(rows);
+            _mockMapper.Map<List<WorkGroupCos90SExportRowDto>>(Arg.Any<List<Apha.PACT.Core.Entities.WorkGroupCos90SExportRow>>()).Returns(mappedRows);
+
+            // Act
+            var result = await _sut.ExportCos90sAsync("PC001", 3, 2025, null);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Rows.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task ExportCos90sAsync_WhenCancelled_ThrowsOperationCanceledException()
+        {
+            // Arrange
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<OperationCanceledException>(() =>
+                _sut.ExportCos90sAsync("PC001", 3, 2025, "S001", cts.Token));
+
+            await _mockRepository.DidNotReceive().GetCos90ExportRowsAsync(Arg.Any<string>(), Arg.Any<short>(), Arg.Any<short>(), Arg.Any<string?>());
         }
 
         #endregion

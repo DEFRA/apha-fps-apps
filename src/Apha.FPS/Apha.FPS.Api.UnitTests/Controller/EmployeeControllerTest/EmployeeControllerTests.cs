@@ -669,5 +669,62 @@ namespace Apha.FPS.Api.UnitTests.Controller.EmployeeControllerTest
         }
 
         #endregion
+
+        #region GetActivePactStaffAsync
+
+        [Fact]
+        public async Task GetActivePactStaffAsync_ServiceReturnsStaff_ReturnsOkWithMappedStaff()
+        {
+            // Arrange
+            var serviceResult = new List<PactStaffDto>
+            {
+                new PactStaffDto { PactId = "S001", SpNumber = "SP001", Name = "Alice Smith" }
+            };
+            var mappedResult = new List<PactStaffRes>
+            {
+                new PactStaffRes { PactId = "S001", SpNumber = "SP001", Name = "Alice Smith" }
+            };
+
+            _serviceMock.GetActivePactStaffAsync().Returns(serviceResult);
+            _mapperMock.Map<List<PactStaffRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetActivePactStaffAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+            await _serviceMock.Received(1).GetActivePactStaffAsync();
+        }
+
+        [Fact]
+        public async Task GetActivePactStaffAsync_ServiceReturnsEmptyList_ReturnsOkWithEmptyMappedList()
+        {
+            // Arrange
+            var serviceResult = new List<PactStaffDto>();
+            var mappedResult = new List<PactStaffRes>();
+
+            _serviceMock.GetActivePactStaffAsync().Returns(serviceResult);
+            _mapperMock.Map<List<PactStaffRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetActivePactStaffAsync();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetActivePactStaffAsync_ServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            _serviceMock.GetActivePactStaffAsync().Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetActivePactStaffAsync());
+        }
+
+        #endregion
     }
 }

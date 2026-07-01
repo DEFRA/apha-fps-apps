@@ -164,5 +164,101 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupReport
         }
 
         #endregion
+
+        #region ExportCos90sAsync Tests
+
+        [Fact]
+        public async Task ExportCos90sAsync_WithSuccessResponse_ReturnsMappedExportResult()
+        {
+            // Arrange
+            var responseData = new WorkGroupCos90SExportRes
+            {
+                Rows = [new WorkGroupCos90SExportRowRes { WorkGroupName = "WG001", StaffName = "John Smith" }]
+            };
+            var apiResponse = new ApiResponse<WorkGroupCos90SExportRes> { Success = true, Data = responseData };
+            var expectedDto = ApiResponseDto<WorkGroupCos90SExportResultDto>.SuccessResponse(
+                new WorkGroupCos90SExportResultDto
+                {
+                    Rows = [new WorkGroupCos90SExportRowDto { WorkGroupName = "WG001", StaffName = "John Smith" }]
+                });
+
+            _http.PostAsync<WorkGroupCos90SExportReq, WorkGroupCos90SExportRes>(
+                PactApiEndpoints.ExportCos90s, Arg.Any<WorkGroupCos90SExportReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<WorkGroupCos90SExportResultDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.ExportCos90sAsync("PC001", 3, 2025, "S001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Single(result.Data!.Rows);
+            await _http.Received(1).PostAsync<WorkGroupCos90SExportReq, WorkGroupCos90SExportRes>(
+                PactApiEndpoints.ExportCos90s, Arg.Any<WorkGroupCos90SExportReq>());
+        }
+
+        [Fact]
+        public async Task ExportCos90sAsync_WithNullPactId_SendsCorrectRequestPayload()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<WorkGroupCos90SExportRes>
+            {
+                Success = true,
+                Data = new WorkGroupCos90SExportRes { Rows = [] }
+            };
+            var expectedDto = ApiResponseDto<WorkGroupCos90SExportResultDto>.SuccessResponse(
+                new WorkGroupCos90SExportResultDto { Rows = [] });
+
+            WorkGroupCos90SExportReq? capturedRequest = null;
+            _http.PostAsync<WorkGroupCos90SExportReq, WorkGroupCos90SExportRes>(
+                Arg.Any<string>(),
+                Arg.Do<WorkGroupCos90SExportReq>(r => capturedRequest = r))
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<WorkGroupCos90SExportResultDto>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            await _client.ExportCos90sAsync("PC001", 1, 2025, null);
+
+            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("PC001", capturedRequest!.ProfitCentre);
+            Assert.Equal((short)1, capturedRequest.MonthNumber);
+            Assert.Equal((short)2025, capturedRequest.Year);
+            Assert.Null(capturedRequest.PactId);
+        }
+
+        [Fact]
+        public async Task ExportCos90sAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<WorkGroupCos90SExportRes>
+            {
+                Success = false,
+                Errors = [new ApiError { Message = "Export failed", Code = "EXPORT_ERROR" }]
+            };
+            var mappedResponse = new ApiResponseDto<WorkGroupCos90SExportResultDto>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Export failed", Code = "EXPORT_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<WorkGroupCos90SExportReq, WorkGroupCos90SExportRes>(
+                Arg.Any<string>(), Arg.Any<WorkGroupCos90SExportReq>())
+                .Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<WorkGroupCos90SExportResultDto>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.ExportCos90sAsync("PC001", 3, 2025, "S001");
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
     }
 }

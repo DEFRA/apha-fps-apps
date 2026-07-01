@@ -2071,5 +2071,50 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.EmployeeRepositoryTest
         }
 
         #endregion
+
+        #region GetActivePactStaffAsync Tests
+
+        [Fact]
+        public async Task GetActivePactStaffAsync_WithMixedStatuses_ReturnsOnlyActiveStaffOrderedByName()
+        {
+            // Arrange
+            var pactStaffs = new List<PactStaff>
+            {
+                new() { PactId = "S003", SpNumber = "SP003", Name = "Charlie", PersonStatus = "A" },
+                new() { PactId = "S001", SpNumber = "SP001", Name = "Alice", PersonStatus = "A" },
+                new() { PactId = "S002", SpNumber = "SP002", Name = "Bob", PersonStatus = "I" }
+            };
+            var repo = CreateRepository(new List<Employee>(), pactStaffs: pactStaffs);
+
+            // Act
+            var result = await repo.GetActivePactStaffAsync();
+
+            // Assert
+            var resultList = result.ToList();
+            Assert.Equal(2, resultList.Count);
+            Assert.All(resultList, s => Assert.Equal("A", s.PersonStatus));
+            Assert.Equal("Alice", resultList[0].Name);
+            Assert.Equal("Charlie", resultList[1].Name);
+        }
+
+        [Fact]
+        public async Task GetActivePactStaffAsync_WithNoActiveStaff_ReturnsEmptyList()
+        {
+            // Arrange
+            var pactStaffs = new List<PactStaff>
+            {
+                new() { PactId = "S001", SpNumber = "SP001", Name = "Alice", PersonStatus = "I" }
+            };
+            var repo = CreateRepository(new List<Employee>(), pactStaffs: pactStaffs);
+
+            // Act
+            var result = await repo.GetActivePactStaffAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        #endregion
     }
 }

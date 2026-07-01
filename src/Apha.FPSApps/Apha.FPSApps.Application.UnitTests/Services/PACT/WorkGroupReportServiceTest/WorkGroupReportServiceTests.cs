@@ -112,5 +112,77 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupReportServic
         }
 
         #endregion
+
+        #region ExportCos90sAsync Tests
+
+        [Fact]
+        public async Task ExportCos90sAsync_WithValidInput_ReturnsExportResult()
+        {
+            // Arrange
+            const string profitCentre = "PC001";
+            const short monthNumber = 3;
+            const short year = 2025;
+            const string pactId = "S001";
+            var exportResult = new WorkGroupCos90SExportResultDto
+            {
+                Rows = [new WorkGroupCos90SExportRowDto { WorkGroupName = "WG001", StaffName = "John Smith" }]
+            };
+            var expectedResponse = ApiResponseDto<WorkGroupCos90SExportResultDto>.SuccessResponse(exportResult);
+            _pactWorkGroupReportApiClient.ExportCos90sAsync(profitCentre, monthNumber, year, pactId).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.ExportCos90sAsync(profitCentre, monthNumber, year, pactId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Single(result.Data!.Rows);
+            await _pactWorkGroupReportApiClient.Received(1).ExportCos90sAsync(profitCentre, monthNumber, year, pactId);
+        }
+
+        [Fact]
+        public async Task ExportCos90sAsync_WithNoRows_ReturnsSuccessWithEmptyRows()
+        {
+            // Arrange
+            const string profitCentre = "PC001";
+            const short monthNumber = 3;
+            const short year = 2025;
+            var exportResult = new WorkGroupCos90SExportResultDto { Rows = [] };
+            var expectedResponse = ApiResponseDto<WorkGroupCos90SExportResultDto>.SuccessResponse(exportResult);
+            _pactWorkGroupReportApiClient.ExportCos90sAsync(profitCentre, monthNumber, year, null).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.ExportCos90sAsync(profitCentre, monthNumber, year, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Empty(result.Data!.Rows);
+        }
+
+        [Fact]
+        public async Task ExportCos90sAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string profitCentre = "PC001";
+            const short monthNumber = 3;
+            const short year = 2025;
+            var errors = new List<ApiErrorDto> { new() { Message = "Export failed", Code = "EXPORT_ERROR" } };
+            var expectedResponse = ApiResponseDto<WorkGroupCos90SExportResultDto>.FailureResponse(errors, new ApiMetaDto());
+            _pactWorkGroupReportApiClient.ExportCos90sAsync(profitCentre, monthNumber, year, null).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.ExportCos90sAsync(profitCentre, monthNumber, year, null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        #endregion
     }
 }

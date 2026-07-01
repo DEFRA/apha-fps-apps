@@ -105,5 +105,87 @@ namespace Apha.PACT.Api.UnitTests.Controller.WorkGroupReportControllerTest
         }
 
         #endregion
+
+        #region ExportCos90s
+
+        [Fact]
+        public async Task ExportCos90s_WithValidRequest_ReturnsOkWithMappedResult()
+        {
+            // Arrange
+            var request = new WorkGroupCos90SExportReq
+            {
+                ProfitCentre = "PC001",
+                MonthNumber = 3,
+                Year = 2025,
+                PactId = "S001"
+            };
+            var serviceResult = new WorkGroupCos90SExportResultDto
+            {
+                Rows = [new WorkGroupCos90SExportRowDto { WorkGroupName = "WG1", StaffName = "John Smith" }]
+            };
+            var mappedResult = new WorkGroupCos90SExportRes
+            {
+                Rows = [new WorkGroupCos90SExportRowRes { WorkGroupName = "WG1", StaffName = "John Smith" }]
+            };
+
+            _serviceMock.ExportCos90sAsync("PC001", 3, 2025, "S001", Arg.Any<CancellationToken>()).Returns(serviceResult);
+            _mapperMock.Map<WorkGroupCos90SExportRes>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.ExportCos90s(request, CancellationToken.None);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mappedResult, okResult.Value);
+            await _serviceMock.Received(1).ExportCos90sAsync("PC001", 3, 2025, "S001", Arg.Any<CancellationToken>());
+            _mapperMock.Received(1).Map<WorkGroupCos90SExportRes>(serviceResult);
+        }
+
+        [Fact]
+        public async Task ExportCos90s_WithNullPactId_ReturnsOkWithMappedResult()
+        {
+            // Arrange
+            var request = new WorkGroupCos90SExportReq
+            {
+                ProfitCentre = "PC001",
+                MonthNumber = 3,
+                Year = 2025,
+                PactId = null
+            };
+            var serviceResult = new WorkGroupCos90SExportResultDto { Rows = [] };
+            var mappedResult = new WorkGroupCos90SExportRes { Rows = [] };
+
+            _serviceMock.ExportCos90sAsync("PC001", 3, 2025, null, Arg.Any<CancellationToken>()).Returns(serviceResult);
+            _mapperMock.Map<WorkGroupCos90SExportRes>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.ExportCos90s(request, CancellationToken.None);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var value = Assert.IsType<WorkGroupCos90SExportRes>(okResult.Value);
+            Assert.Empty(value.Rows);
+        }
+
+        [Fact]
+        public async Task ExportCos90s_ServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var request = new WorkGroupCos90SExportReq
+            {
+                ProfitCentre = "PC001",
+                MonthNumber = 3,
+                Year = 2025,
+                PactId = "S001"
+            };
+
+            _serviceMock.ExportCos90sAsync(Arg.Any<string>(), Arg.Any<short>(), Arg.Any<short>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+                .ThrowsAsync(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.ExportCos90s(request, CancellationToken.None));
+        }
+
+        #endregion
     }
 }

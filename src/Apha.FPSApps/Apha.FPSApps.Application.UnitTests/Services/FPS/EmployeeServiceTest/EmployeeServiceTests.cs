@@ -932,5 +932,61 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.EmployeeServiceTest
         }
 
         #endregion
+
+        #region GetActivePactStaffAsync Tests
+
+        [Fact]
+        public async Task GetActivePactStaffAsync_WithSuccessResponse_ReturnsStaffList()
+        {
+            // Arrange
+            var staff = new List<PactStaffDto>
+            {
+                new PactStaffDto { PactId = "S001", SpNumber = "SP001", Name = "Alice Smith" }
+            };
+            var expectedResponse = ApiResponseDto<List<PactStaffDto>>.SuccessResponse(staff);
+
+            _fpsEmployeeApiClient.GetActivePactStaffAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetActivePactStaffAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            Assert.Equal("SP001", result.Data![0].SpNumber);
+            await _fpsEmployeeApiClient.Received(1).GetActivePactStaffAsync();
+        }
+
+        [Fact]
+        public async Task GetActivePactStaffAsync_WithEmptyList_ReturnsEmptySuccessResponse()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<PactStaffDto>>.SuccessResponse([]);
+            _fpsEmployeeApiClient.GetActivePactStaffAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _employeeService.GetActivePactStaffAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetActivePactStaffAsync_ClientThrows_PropagatesException()
+        {
+            // Arrange
+            _fpsEmployeeApiClient.GetActivePactStaffAsync()
+                .ThrowsAsync(new Exception("API unavailable"));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(
+                async () => await _employeeService.GetActivePactStaffAsync());
+            Assert.Equal("API unavailable", ex.Message);
+        }
+
+        #endregion
     }
 }

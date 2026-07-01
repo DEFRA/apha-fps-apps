@@ -3259,5 +3259,228 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.WorkGroupRepositoryTest
         }
 
         #endregion
+
+        // ════════════════════════════════════════════════════════════════════
+        // COS90 methods
+        // ════════════════════════════════════════════════════════════════════
+
+        private static WorkGroupRepository CreateCos90Repository(
+            IEnumerable<WorkGroup>? workGroups = null,
+            IEnumerable<ProfitCentre>? profitCentres = null,
+            IEnumerable<WorkGroupStaffView>? workGroupStaffViews = null,
+            IEnumerable<PactWorkGroupGradeView>? workGroupGradeViews = null,
+            IEnumerable<TimeCodeValid>? timeCodeValids = null,
+            IEnumerable<JobCode>? jobCodes = null,
+            IEnumerable<TestorProduct>? testorProducts = null)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            mockContext.Setup(x => x.WorkGroups)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(workGroups ?? []).Object);
+            mockContext.Setup(x => x.ProfitCentres)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(profitCentres ?? []).Object);
+            mockContext.Setup(x => x.WorkGroupStaffViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(workGroupStaffViews ?? []).Object);
+            mockContext.Setup(x => x.PactWorkGroupGradeViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(workGroupGradeViews ?? []).Object);
+            mockContext.Setup(x => x.TimeCodeValids)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(timeCodeValids ?? []).Object);
+            mockContext.Setup(x => x.JobCodes)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(jobCodes ?? []).Object);
+            mockContext.Setup(x => x.TestorProducts)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(testorProducts ?? []).Object);
+
+            return new WorkGroupRepository(mockContext.Object, fpsRequestContext);
+        }
+
+        #region GetWorkGroupsFlaggedForCos90Async
+
+        [Fact]
+        public async Task GetWorkGroupsFlaggedForCos90Async_WithMixedCos90Flags_ReturnsOnlyFlaggedOrderedRows()
+        {
+            var repo = CreateCos90Repository(
+            [
+                new WorkGroup { WorkGroupName = "WG_B", ProfitCentre = "PC2", Cos90 = 1 },
+                new WorkGroup { WorkGroupName = "WG_A", ProfitCentre = "PC1", Cos90 = 1 },
+                new WorkGroup { WorkGroupName = "WG_C", ProfitCentre = "PC1", Cos90 = 0 }
+            ]);
+
+            var result = (await repo.GetWorkGroupsFlaggedForCos90Async()).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal("PC1", result[0].ProfitCentre);
+            Assert.Equal("WG_A", result[0].WorkGroupName);
+            Assert.Equal("PC2", result[1].ProfitCentre);
+            Assert.Equal("WG_B", result[1].WorkGroupName);
+            Assert.All(result, x => Assert.Equal((short)1, x.Cos90));
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsFlaggedForCos90Async_WithNoFlaggedRows_ReturnsEmpty()
+        {
+            var repo = CreateCos90Repository(
+            [
+                new WorkGroup { WorkGroupName = "WG_A", ProfitCentre = "PC1", Cos90 = 0 },
+                new WorkGroup { WorkGroupName = "WG_B", ProfitCentre = "PC2", Cos90 = null }
+            ]);
+
+            var result = await repo.GetWorkGroupsFlaggedForCos90Async();
+
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region SetCos90ForProfitCentreWorkGroupsAsync
+
+        [Fact]
+        public async Task SetCos90ForProfitCentreWorkGroupsAsync_WithMockedQueryable_ThrowsTargetInvocationException()
+        {
+            var repo = CreateCos90Repository(
+                workGroups:
+                [
+                    new WorkGroup { WorkGroupName = "WG1", ProfitCentre = "PC1", Cos90 = 0 }
+                ],
+                profitCentres:
+                [
+                    new ProfitCentre { ProfitCentreId = "PC1", ProfitCentreName = "PC One", Division = "Div" }
+                ]);
+
+            var ex = await Assert.ThrowsAsync<System.Reflection.TargetInvocationException>(() =>
+                repo.SetCos90ForProfitCentreWorkGroupsAsync("PC1", 1));
+
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+        }
+
+        #endregion
+
+        #region SetCos90ForAllWorkGroupsAsync
+
+        [Fact]
+        public async Task SetCos90ForAllWorkGroupsAsync_WithMockedQueryable_ThrowsTargetInvocationException()
+        {
+            var repo = CreateCos90Repository(
+            [
+                new WorkGroup { WorkGroupName = "WG1", ProfitCentre = "PC1", Cos90 = 0 }
+            ]);
+
+            var ex = await Assert.ThrowsAsync<System.Reflection.TargetInvocationException>(() =>
+                repo.SetCos90ForAllWorkGroupsAsync(1));
+
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+        }
+
+        #endregion
+
+        #region SetCos90ForWorkGroupAsync
+
+        [Fact]
+        public async Task SetCos90ForWorkGroupAsync_WithMockedQueryable_ThrowsTargetInvocationException()
+        {
+            var repo = CreateCos90Repository(
+            [
+                new WorkGroup { WorkGroupName = "WG1", ProfitCentre = "PC1", Cos90 = 0 }
+            ]);
+
+            var ex = await Assert.ThrowsAsync<System.Reflection.TargetInvocationException>(() =>
+                repo.SetCos90ForWorkGroupAsync("PC1", "WG1", 1));
+
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+        }
+
+        #endregion
+
+        #region GetCos90ExportRowsAsync
+
+        [Fact]
+        public async Task GetCos90ExportRowsAsync_WithActiveRows_ReturnsOrderedProjectedRows()
+        {
+            var repo = CreateCos90Repository(
+                workGroupStaffViews:
+                [
+                    new WorkGroupStaffView { PactId = "S1", Name = "Alice", WorkGroupGrade = "G1", PersonStatus = "A", SpNumber = "SP1" },
+                    new WorkGroupStaffView { PactId = "S2", Name = "Bob", WorkGroupGrade = "G2", PersonStatus = "A", SpNumber = "SP2" },
+                    new WorkGroupStaffView { PactId = "S3", Name = "Inactive", WorkGroupGrade = "G1", PersonStatus = "I", SpNumber = "SP3" }
+                ],
+                workGroupGradeViews:
+                [
+                    new PactWorkGroupGradeView { WgGrade = "G1", WorkGroup = "WG1", GradeCode = "GR1" },
+                    new PactWorkGroupGradeView { WgGrade = "G2", WorkGroup = "WG1", GradeCode = "GR2" }
+                ],
+                timeCodeValids:
+                [
+                    new TimeCodeValid { WorkGroup = "WG1", TimeCode = "TC1", ParentProject = "PP1", Active = true }
+                ],
+                jobCodes:
+                [
+                    new JobCode { JobCodeId = "TC1", JobCodeName = "Job One" }
+                ]);
+
+            var result = (await repo.GetCos90ExportRowsAsync("PC1", monthNumber: 4, year: 2025, pactId: null)).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Equal("Alice", result[0].StaffName);
+            Assert.Equal("Bob", result[1].StaffName);
+            Assert.All(result, r => Assert.Equal((short)4, r.Month));
+            Assert.All(result, r => Assert.Equal((short)2025, r.Year));
+            Assert.All(result, r => Assert.Equal("Job One", r.Description));
+        }
+
+        [Fact]
+        public async Task GetCos90ExportRowsAsync_WithPactIdFilter_ReturnsOnlyMatchingRow()
+        {
+            var repo = CreateCos90Repository(
+                workGroupStaffViews:
+                [
+                    new WorkGroupStaffView { PactId = "S1", Name = "Alice", WorkGroupGrade = "G1", PersonStatus = "A" },
+                    new WorkGroupStaffView { PactId = "S2", Name = "Bob", WorkGroupGrade = "G1", PersonStatus = "A" }
+                ],
+                workGroupGradeViews:
+                [
+                    new PactWorkGroupGradeView { WgGrade = "G1", WorkGroup = "WG1", GradeCode = "GR1" }
+                ],
+                timeCodeValids:
+                [
+                    new TimeCodeValid { WorkGroup = "WG1", TimeCode = "TC1", ParentProject = "PP1", Active = true }
+                ],
+                jobCodes:
+                [
+                    new JobCode { JobCodeId = "TC1", JobCodeName = "Job One" }
+                ]);
+
+            var result = (await repo.GetCos90ExportRowsAsync("PC1", monthNumber: 4, year: 2025, pactId: "S2")).ToList();
+
+            Assert.Single(result);
+            Assert.Equal("S2", result[0].PactId);
+            Assert.Equal("Bob", result[0].StaffName);
+        }
+
+        [Fact]
+        public async Task GetCos90ExportRowsAsync_WithMissingJobCode_ThrowsNullReferenceException()
+        {
+            var repo = CreateCos90Repository(
+                workGroupStaffViews:
+                [
+                    new WorkGroupStaffView { PactId = "S1", Name = "Alice", WorkGroupGrade = "G1", PersonStatus = "A" }
+                ],
+                workGroupGradeViews:
+                [
+                    new PactWorkGroupGradeView { WgGrade = "G1", WorkGroup = "WG1", GradeCode = "GR1" }
+                ],
+                timeCodeValids:
+                [
+                    new TimeCodeValid { WorkGroup = "WG1", TimeCode = "TCX", ParentProject = "PP1", Active = true }
+                ],
+                testorProducts:
+                [
+                    new TestorProduct { ItemCode = "TCX", ItemDescription = "Fallback Product" }
+                ]);
+
+            await Assert.ThrowsAsync<NullReferenceException>(() =>
+                repo.GetCos90ExportRowsAsync("PC1", monthNumber: 4, year: 2025, pactId: null));
+        }
+
+        #endregion
     }
 }

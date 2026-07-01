@@ -1401,5 +1401,178 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.WorkGroupServiceTest
         }
 
         #endregion
+
+        #region Cos90 Methods Tests
+
+        [Fact]
+        public async Task GetWorkGroupsFlaggedForCos90Async_WithData_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var workGroups = new List<WorkGroupDto>
+            {
+                new() { WorkGroupName = "WG1", ProfitCentre = "PC1" },
+                new() { WorkGroupName = "WG2", ProfitCentre = "PC1" }
+            };
+            var expectedResponse = ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(workGroups);
+            _pactWorkGroupApiClient.GetWorkGroupsFlaggedForCos90Async().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetWorkGroupsFlaggedForCos90Async();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            await _pactWorkGroupApiClient.Received(1).GetWorkGroupsFlaggedForCos90Async();
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsFlaggedForCos90Async_WithEmptyList_ReturnsSuccessWithEmptyData()
+        {
+            // Arrange
+            var expectedResponse = ApiResponseDto<List<WorkGroupDto>>.SuccessResponse([]);
+            _pactWorkGroupApiClient.GetWorkGroupsFlaggedForCos90Async().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetWorkGroupsFlaggedForCos90Async();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsFlaggedForCos90Async_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<WorkGroupDto>>.FailureResponse(errors, new ApiMetaDto());
+            _pactWorkGroupApiClient.GetWorkGroupsFlaggedForCos90Async().Returns(expectedResponse);
+
+            // Act
+            var result = await _service.GetWorkGroupsFlaggedForCos90Async();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task SetCos90ForProfitCentreWorkGroupsAsync_WithValidInput_ReturnsSuccessTrue()
+        {
+            // Arrange
+            const string profitCentre = "PC001";
+            const short flag = 1;
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _pactWorkGroupApiClient.SetCos90ForProfitCentreWorkGroupsAsync(profitCentre, flag).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SetCos90ForProfitCentreWorkGroupsAsync(profitCentre, flag);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _pactWorkGroupApiClient.Received(1).SetCos90ForProfitCentreWorkGroupsAsync(profitCentre, flag);
+        }
+
+        [Fact]
+        public async Task SetCos90ForProfitCentreWorkGroupsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Update Failed", Code = "UPDATE_ERROR" } };
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
+            _pactWorkGroupApiClient.SetCos90ForProfitCentreWorkGroupsAsync(Arg.Any<string>(), Arg.Any<short>()).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SetCos90ForProfitCentreWorkGroupsAsync("PC001", 1);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task SetCos90ForAllWorkGroupsAsync_WithValidFlag_ReturnsSuccessTrue()
+        {
+            // Arrange
+            const short flag = 0;
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _pactWorkGroupApiClient.SetCos90ForAllWorkGroupsAsync(flag).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SetCos90ForAllWorkGroupsAsync(flag);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _pactWorkGroupApiClient.Received(1).SetCos90ForAllWorkGroupsAsync(flag);
+        }
+
+        [Fact]
+        public async Task SetCos90ForAllWorkGroupsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Update Failed", Code = "UPDATE_ERROR" } };
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
+            _pactWorkGroupApiClient.SetCos90ForAllWorkGroupsAsync(Arg.Any<short>()).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SetCos90ForAllWorkGroupsAsync(1);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task SetCos90ForWorkGroupAsync_WithValidInput_ReturnsSuccessTrue()
+        {
+            // Arrange
+            const string profitCentre = "PC001";
+            const string workGroupName = "WG001";
+            const short flag = 1;
+            var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
+            _pactWorkGroupApiClient.SetCos90ForWorkGroupAsync(profitCentre, workGroupName, flag).Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SetCos90ForWorkGroupAsync(profitCentre, workGroupName, flag);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _pactWorkGroupApiClient.Received(1).SetCos90ForWorkGroupAsync(profitCentre, workGroupName, flag);
+        }
+
+        [Fact]
+        public async Task SetCos90ForWorkGroupAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "Update Failed", Code = "UPDATE_ERROR" } };
+            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
+            _pactWorkGroupApiClient
+                .SetCos90ForWorkGroupAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<short>())
+                .Returns(expectedResponse);
+
+            // Act
+            var result = await _service.SetCos90ForWorkGroupAsync("PC001", "WG001", 1);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        #endregion
     }
 }

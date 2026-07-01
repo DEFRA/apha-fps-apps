@@ -352,5 +352,200 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactWorkGroupApiCli
         }
 
         #endregion
+
+        #region Cos90 Methods Tests
+
+        [Fact]
+        public async Task GetWorkGroupsFlaggedForCos90Async_WithSuccessResponse_ReturnsMappedWorkGroups()
+        {
+            // Arrange
+            var resList = new List<WorkGroupRes>
+            {
+                new() { WorkGroupName = "WG001", ProfitCentre = "PC001" }
+            };
+            var apiResponse = new ApiResponse<List<WorkGroupRes>> { Success = true, Data = resList };
+            var expectedDto = ApiResponseDto<List<WorkGroupDto>>.SuccessResponse(
+                [new WorkGroupDto { WorkGroupName = "WG001", ProfitCentre = "PC001" }]);
+
+            _http.GetAsync<List<WorkGroupRes>>(PactApiEndpoints.GetWorkGroupsFlaggedForCos90).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetWorkGroupsFlaggedForCos90Async();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _http.Received(1).GetAsync<List<WorkGroupRes>>(PactApiEndpoints.GetWorkGroupsFlaggedForCos90);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupsFlaggedForCos90Async_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<WorkGroupRes>> { Success = false, Errors = [new ApiError { Message = "API Error", Code = "API_ERROR" }] };
+            var mappedResponse = new ApiResponseDto<List<WorkGroupDto>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "API Error", Code = "API_ERROR" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<WorkGroupRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<WorkGroupDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetWorkGroupsFlaggedForCos90Async();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task SetCos90ForProfitCentreWorkGroupsAsync_WithSuccessResponse_ReturnsMappedResult()
+        {
+            // Arrange
+            const string profitCentre = "PC 001";
+            const short flag = 1;
+            var expectedUrl = string.Format(PactApiEndpoints.SetCos90ForProfitCentreWorkGroups, Uri.EscapeDataString(profitCentre), flag);
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.PutAsync<object, bool?>(expectedUrl, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.SetCos90ForProfitCentreWorkGroupsAsync(profitCentre, flag);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _http.Received(1).PutAsync<object, bool?>(expectedUrl, Arg.Any<object>());
+        }
+
+        [Fact]
+        public async Task SetCos90ForProfitCentreWorkGroupsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Message = "Failed", Code = "FAILED" }] };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Failed", Code = "FAILED" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PutAsync<object, bool?>(Arg.Any<string>(), Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.SetCos90ForProfitCentreWorkGroupsAsync("PC001", 0);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task SetCos90ForAllWorkGroupsAsync_WithSuccessResponse_ReturnsMappedResult()
+        {
+            // Arrange
+            const short flag = 1;
+            var expectedUrl = string.Format(PactApiEndpoints.SetCos90ForAllWorkGroups, flag);
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.PutAsync<object, bool?>(expectedUrl, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.SetCos90ForAllWorkGroupsAsync(flag);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _http.Received(1).PutAsync<object, bool?>(expectedUrl, Arg.Any<object>());
+        }
+
+        [Fact]
+        public async Task SetCos90ForAllWorkGroupsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Message = "Failed", Code = "FAILED" }] };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Failed", Code = "FAILED" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PutAsync<object, bool?>(Arg.Any<string>(), Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.SetCos90ForAllWorkGroupsAsync(1);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        [Fact]
+        public async Task SetCos90ForWorkGroupAsync_WithSuccessResponse_ReturnsMappedResult()
+        {
+            // Arrange
+            const string profitCentre = "PC 001";
+            const string workGroupName = "WG 001";
+            const short flag = 1;
+            var expectedUrl = string.Format(PactApiEndpoints.SetCos90ForWorkGroup,
+                Uri.EscapeDataString(profitCentre), Uri.EscapeDataString(workGroupName), flag);
+            var apiResponse = new ApiResponse<bool?> { Success = true, Data = true };
+            var expectedDto = ApiResponseDto<bool>.SuccessResponse(true);
+
+            _http.PutAsync<object, bool?>(expectedUrl, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.SetCos90ForWorkGroupAsync(profitCentre, workGroupName, flag);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.True(result.Data);
+            await _http.Received(1).PutAsync<object, bool?>(expectedUrl, Arg.Any<object>());
+        }
+
+        [Fact]
+        public async Task SetCos90ForWorkGroupAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<bool?> { Success = false, Errors = [new ApiError { Message = "Failed", Code = "FAILED" }] };
+            var mappedResponse = new ApiResponseDto<bool>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Message = "Failed", Code = "FAILED" }],
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PutAsync<object, bool?>(Arg.Any<string>(), Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.SetCos90ForWorkGroupAsync("PC001", "WG001", 1);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
     }
 }
