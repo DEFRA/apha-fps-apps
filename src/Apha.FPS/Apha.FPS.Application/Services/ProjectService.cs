@@ -177,6 +177,20 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<PaginatedResult<ProjectDto>>(projects);
         }
 
+        public async Task<PaginatedResult<ProjectDto>> GetProjectsByProgramProjectProfitabilityVLAAsync(QueryParameters<string> query, string programNo)
+        {
+            var filter = _mapper.Map<PaginationParameters<string>>(query);
+            var projects = await _projectRepository.GetProjectsByProgramProjectProfitabilityVLAAsync(filter, programNo);
+            return _mapper.Map<PaginatedResult<ProjectDto>>(projects);
+        }
+
+        public async Task<PaginatedResult<ProjectDto>> GetProjectsByProjectGroupProjectProfitabilityVLAAsync(QueryParameters<string> query, string projectGroup)
+        {
+            var filter = _mapper.Map<PaginationParameters<string>>(query);
+            var projects = await _projectRepository.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(filter, projectGroup);
+            return _mapper.Map<PaginatedResult<ProjectDto>>(projects);
+        }
+
         public async Task<bool> CheckProjectExistsAsync(string newProject)
         {
             ArgumentNullException.ThrowIfNull(newProject);

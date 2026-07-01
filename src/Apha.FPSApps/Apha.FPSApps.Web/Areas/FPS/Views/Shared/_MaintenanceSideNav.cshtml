@@ -112,7 +112,8 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="#">
+            <a class="dropdown-item@(Model == "UserPermission" ? " sidenav-title" : "")"
+               asp-area="FPS" asp-controller="UserPermission" asp-action="Index">
                 Maintain User Permissions
             </a>
         </li>
