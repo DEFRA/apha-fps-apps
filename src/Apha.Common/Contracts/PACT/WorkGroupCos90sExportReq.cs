@@ -1,6 +1,6 @@
 namespace Apha.Common.Contracts.PACT
 {
-    public class WorkGroupCos90sExportReq
+    public class WorkGroupCos90SExportReq
     {
         public string ProfitCentre { get; set; } = string.Empty;
         public short MonthNumber { get; set; }

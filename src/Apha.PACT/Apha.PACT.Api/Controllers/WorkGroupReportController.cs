@@ -38,7 +38,7 @@ namespace Apha.PACT.Api.Controllers
         }
 
         [HttpPost("cos90s/export")]
-        public async Task<IActionResult> ExportCos90s([FromBody] WorkGroupCos90sExportReq request, CancellationToken cancellationToken)
+        public async Task<IActionResult> ExportCos90s([FromBody] WorkGroupCos90SExportReq request, CancellationToken cancellationToken)
         {
             var result = await _service.ExportCos90sAsync(
                 request.ProfitCentre,

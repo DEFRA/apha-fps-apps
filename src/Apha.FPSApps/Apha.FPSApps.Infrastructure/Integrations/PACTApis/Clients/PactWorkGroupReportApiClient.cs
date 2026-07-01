@@ -39,7 +39,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<WorkGroupCos90SExportResultDto>> ExportCos90sAsync(string profitCentre, short monthNumber, short year, string? pactId)
         {
-            var request = new WorkGroupCos90sExportReq
+            var request = new WorkGroupCos90SExportReq
             {
                 ProfitCentre = profitCentre,
                 MonthNumber = monthNumber,
@@ -47,7 +47,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
                 PactId = pactId
             };
 
-            var response = await _http.PostAsync<WorkGroupCos90sExportReq, WorkGroupCos90SExportRes>(
+            var response = await _http.PostAsync<WorkGroupCos90SExportReq, WorkGroupCos90SExportRes>(
                 PactApiEndpoints.ExportCos90s, request);
 
             if (response.Success)

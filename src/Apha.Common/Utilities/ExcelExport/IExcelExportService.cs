@@ -18,7 +18,7 @@ namespace Apha.Common.Utilities.ExcelExport
             IEnumerable<WorkGroupOutputSheetRow> rows);
 
         byte[] BuildWorkGroupCos90sExcel(
-            IEnumerable<WorkGroupCos90sExportRow> rows,
+            IEnumerable<WorkGroupCos90SExportRow> rows,
             short monthNumber,
             short year,
             string? profitCentre,

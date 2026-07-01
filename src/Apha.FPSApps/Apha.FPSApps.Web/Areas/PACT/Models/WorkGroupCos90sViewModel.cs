@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
-    public class WorkGroupCos90sViewModel
+    public class WorkGroupCos90SViewModel
     {
         // ── Filter bar ──────────────────────────────────────────────────────
         public string? SelectedProfitCentre { get; set; }
@@ -20,13 +20,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public List<short> YearOptions { get; set; } = new();
 
         // ── Work-group grid (uses shared DataGrid component) ─────────────────
-        public DataGridConfig<WorkGroupCos90sWorkGroupItem> WorkGroupGrid { get; set; } = new();
+        public DataGridConfig<WorkGroupCos90SWorkGroupItem> WorkGroupGrid { get; set; } = new();
 
         // ── Flagged work groups (for COS90 generation) ───────────────────────
         public List<Cos90WorkGroupDto> FlaggedWorkGroups { get; set; } = new();
     }
 
-    public class WorkGroupCos90sWorkGroupItem
+    public class WorkGroupCos90SWorkGroupItem
     {
         [Display(Name = "Work Group")]
         [GridColumn(Order = 1, Width = 220, Type = GridColumnType.Text, IsFilterable = true)]

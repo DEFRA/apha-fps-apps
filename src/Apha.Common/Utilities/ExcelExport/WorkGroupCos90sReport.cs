@@ -5,7 +5,7 @@ namespace Apha.Common.Utilities.ExcelExport
     public partial class ExcelExportService : IExcelExportService
     {
         public byte[] BuildWorkGroupCos90sExcel(
-            IEnumerable<WorkGroupCos90sExportRow> rows,
+            IEnumerable<WorkGroupCos90SExportRow> rows,
             short monthNumber,
             short year,
             string? profitCentre,
@@ -16,11 +16,11 @@ namespace Apha.Common.Utilities.ExcelExport
 
             var groupedByPerson = data.GroupBy(r => r.PactId).ToList();
             if (groupedByPerson.Count == 0)
-                groupedByPerson = new List<IGrouping<string, WorkGroupCos90sExportRow>>
+                groupedByPerson = new List<IGrouping<string, WorkGroupCos90SExportRow>>
                 {
                     new[]
                     {
-                        new WorkGroupCos90sExportRow
+                        new WorkGroupCos90SExportRow
                         {
                             PactId = pactId ?? string.Empty,
                             ProfitCentre = profitCentre ?? string.Empty,

@@ -62,7 +62,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var calenderMonthItems = await GetCalenderMonthItemsAsync();
             var yearOptions = await GetYearOptionsAsync();
 
-            var vm = new WorkGroupCos90sViewModel
+            var vm = new WorkGroupCos90SViewModel
             {
                 ProfitCentreOptions = profitCentreOptions,
                 IndividualOptions   = individualOptions,
@@ -232,11 +232,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             {
                 Page = 1,
                 PageSize = 500,
-                SortBy = nameof(WorkGroupCos90sWorkGroupItem.WorkGroupName),
+                SortBy = nameof(WorkGroupCos90SWorkGroupItem.WorkGroupName),
                 Descending = false,
                 Filter = JsonConvert.SerializeObject(new Dictionary<string, string>
                 {
-                    [nameof(WorkGroupCos90sWorkGroupItem.WorkGroupName)] = workGroupName
+                    [nameof(WorkGroupCos90SWorkGroupItem.WorkGroupName)] = workGroupName
                 })
             };
 
@@ -261,13 +261,13 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> ExportCos90s(string? selectedProfitCentre, short? selectedMonthNumber, short? selectedYear, string? pactId)
         {
             if (string.IsNullOrWhiteSpace(selectedProfitCentre))
-                ModelState.AddModelError(nameof(WorkGroupCos90sViewModel.SelectedProfitCentre), "Profit Centre is required.");
+                ModelState.AddModelError(nameof(WorkGroupCos90SViewModel.SelectedProfitCentre), "Profit Centre is required.");
 
             if (!selectedMonthNumber.HasValue || selectedMonthNumber.Value <= 0)
-                ModelState.AddModelError(nameof(WorkGroupCos90sViewModel.SelectedMonthNumber), "For Period is required.");
+                ModelState.AddModelError(nameof(WorkGroupCos90SViewModel.SelectedMonthNumber), "For Period is required.");
 
             if (!selectedYear.HasValue || selectedYear.Value <= 0)
-                ModelState.AddModelError(nameof(WorkGroupCos90sViewModel.SelectedYear), "In Year is required.");
+                ModelState.AddModelError(nameof(WorkGroupCos90SViewModel.SelectedYear), "In Year is required.");
 
             if (!ModelState.IsValid)
                 return BadRequest(new
@@ -297,7 +297,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                     message = "Failed to generate COS90 Excel."
                 });
 
-            var exportRows = rows.Select(r => new WorkGroupCos90sExportRow
+            var exportRows = rows.Select(r => new WorkGroupCos90SExportRow
             {
                 WorkGroupName = r.WorkGroupName,
                 ProfitCentre = r.ProfitCentre,
@@ -347,7 +347,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             return string.IsNullOrWhiteSpace(cleaned) ? fallback : cleaned;
         }
 
-        private async Task<DataGridConfig<WorkGroupCos90sWorkGroupItem>> GetWorkGroupGridConfigAsync(
+        private async Task<DataGridConfig<WorkGroupCos90SWorkGroupItem>> GetWorkGroupGridConfigAsync(
             PaginationFilter<string> request, string profitCentre)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(
@@ -359,7 +359,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             var items = response.Success && response.Data != null
                 ? response.Data
-                    .Select(w => new WorkGroupCos90sWorkGroupItem
+                    .Select(w => new WorkGroupCos90SWorkGroupItem
                     {
                         WorkGroupName = w.WorkGroupName,
                         ProfitCentre  = w.ProfitCentre,
@@ -367,22 +367,22 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                         FpsYear       = w.FpsYear
                     })
                     .ToList()
-                : new List<WorkGroupCos90sWorkGroupItem>();
+                : new List<WorkGroupCos90SWorkGroupItem>();
 
             var pagination = new PaginationModel
             {
                 TotalRecords  = response.Pagination?.TotalRecords ?? 0,
                 PageNumber    = request.Page,
                 PageSize      = request.PageSize,
-                SortColumn    = request.SortBy    ?? nameof(WorkGroupCos90sWorkGroupItem.WorkGroupName),
+                SortColumn    = request.SortBy    ?? nameof(WorkGroupCos90SWorkGroupItem.WorkGroupName),
                 SortDirection = request.Descending
             };
 
             return BuildWorkGroupGrid(items, pagination, filterDict);
         }
 
-        private static DataGridConfig<WorkGroupCos90sWorkGroupItem> BuildEmptyWorkGroupGrid() =>
-            BuildWorkGroupGrid(new List<WorkGroupCos90sWorkGroupItem>(), new PaginationModel(), new Dictionary<string, string>());
+        private static DataGridConfig<WorkGroupCos90SWorkGroupItem> BuildEmptyWorkGroupGrid() =>
+            BuildWorkGroupGrid(new List<WorkGroupCos90SWorkGroupItem>(), new PaginationModel(), new Dictionary<string, string>());
 
         private async Task<DataGridConfig<MonthHourRowItem>> GetMonthHourGridConfigAsync(
             PaginationFilter<string> request, short? year)
@@ -433,16 +433,16 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             };
         }
 
-        private static DataGridConfig<WorkGroupCos90sWorkGroupItem> BuildWorkGroupGrid(
-            List<WorkGroupCos90sWorkGroupItem> items,
+        private static DataGridConfig<WorkGroupCos90SWorkGroupItem> BuildWorkGroupGrid(
+            List<WorkGroupCos90SWorkGroupItem> items,
             PaginationModel pagination,
             Dictionary<string, string> filterDict)
         {
-            return new DataGridConfig<WorkGroupCos90sWorkGroupItem>
+            return new DataGridConfig<WorkGroupCos90SWorkGroupItem>
             {
                 GridId             = "cos90WorkGroupGrid",
                 Title              = "Work Groups",
-                KeyProperty        = nameof(WorkGroupCos90sWorkGroupItem.WorkGroupName),
+                KeyProperty        = nameof(WorkGroupCos90SWorkGroupItem.WorkGroupName),
                 AllowAdd           = false,
                 AllowEdit          = true,
                 EditFunction       = "editCos90WorkGroup",
@@ -456,7 +456,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 Data               = items,
                 Pagination         = pagination,
                 CurrentFilters     = filterDict,
-                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupCos90sWorkGroupItem>()
+                Columns            = GridDataProvider.GetColumnsDefination<WorkGroupCos90SWorkGroupItem>()
             };
         }
 

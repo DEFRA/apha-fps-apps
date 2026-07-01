@@ -1,6 +1,6 @@
 namespace Apha.Common.Utilities.ExcelExport
 {
-    public class WorkGroupCos90sExportRow
+    public class WorkGroupCos90SExportRow
     {
         public string WorkGroupName { get; set; } = string.Empty;
         public string ProfitCentre { get; set; } = string.Empty;
