@@ -1,3 +1,31 @@
+/*
+ * TRANSFORMENGINE MIGRATION — FpsApiDtoMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-07-01
+ *
+ * CHANGED:
+ *   - Phase 10 (Step 15a): Added CreateMap entries for TestListVla, TestRCCost, TestRequirementRCCost
+ *     frontend DTOs <-> backend Req/Res contracts (all convention-mapped; 1:1 property names):
+ *       TestListVlaDto <-> TestListVlaRes  (ReverseMap)
+ *       TestListVlaDto <-> TestListVlaReq  (ReverseMap)
+ *       TestRCCostDto <-> TestRCCostRes    (ReverseMap)
+ *       TestRCCostDto <-> TestRCCostReq    (ReverseMap)
+ *       TestRequirementRCCostDto <-> TestRequirementRCCostRes  (ReverseMap)
+ *       TestRequirementRCCostDto <-> TestRequirementRCCostReq  (ReverseMap)
+ *
+ * PRESERVED:
+ *   - All existing CreateMap entries for prior forms and shared pagination contracts
+ *   - All ForMember projections (ProjectDto/ProjectReq, ProjectProfitabilityVlaDto/Res, SubAccountDto/Res)
+ *   - All lookup CreateMap entries (StatusDto, DiseaseDto, CustomerDto, etc.)
+ *   - Namespace, class name, and Profile base class
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: If TestListVlaRes gains additional computed/display fields in a future
+ *     backend phase, add ForMember projections here and update frontend TestListVlaDto accordingly.
+ *   - TRANSFORMENGINE TODO: All property names on the three new Dto types are 1:1 mirrors of their
+ *     Res/Req contracts — convention mapping assumed; verify at runtime via AutoMapper validation.
+ */
+
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
@@ -75,7 +103,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
-            // TRANSFORMENGINE: Grade mappings added � Phase 10 (Step 15a)
+            // TRANSFORMENGINE: Grade mappings added — Phase 10 (Step 15a)
             // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
             CreateMap<GradeDto, GradeReq>().ReverseMap();
             CreateMap<GradeDto, GradeRes>().ReverseMap();
@@ -133,13 +161,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             CreateMap<PactStaffDto,PactStaffRes>().ReverseMap();
 
-            // WorkgroupGrade  
+            // WorkgroupGrade
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
 
 
             // Job Code (ZT lookup) - now served from PACT API
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
-                      
+
 
             // BudgetResourceLevel
             CreateMap<BidDto, BidReq>().ReverseMap();
@@ -154,6 +182,28 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<UserPermissionDataDto, UserPermissionRes>().ReverseMap();
             CreateMap<UserPermissionDataDto, UserPermissionReq>().ReverseMap();
             CreateMap<PermissionOptionsDto, PermissionOptionsRes>().ReverseMap();
+
+            // TRANSFORMENGINE: Phase 10 (Step 15a) — TestListVla CRUD: maps frontend TestListVlaDto to/from
+            //   backend TestListVlaRes (GET /api/v1/testlistvla responses) and
+            //   TestListVlaReq (POST/PUT /api/v1/testlistvla request bodies).
+            //   All 11 property names are 1:1 between Dto and Res/Req — convention mapping applies.
+            CreateMap<TestListVlaDto, TestListVlaRes>().ReverseMap();
+            CreateMap<TestListVlaDto, TestListVlaReq>().ReverseMap();
+
+            // TRANSFORMENGINE: Phase 10 (Step 15a) — TestRCCost CRUD: maps frontend TestRCCostDto to/from
+            //   backend TestRCCostRes (GET /api/v1/testrccost responses) and
+            //   TestRCCostReq (POST/PUT /api/v1/testrccost request bodies).
+            //   All 4 property names are 1:1 between Dto and Res/Req — convention mapping applies.
+            CreateMap<TestRCCostDto, TestRCCostRes>().ReverseMap();
+            CreateMap<TestRCCostDto, TestRCCostReq>().ReverseMap();
+
+            // TRANSFORMENGINE: Phase 10 (Step 15a) — TestRequirementRCCost CRUD: maps frontend
+            //   TestRequirementRCCostDto to/from backend TestRequirementRCCostRes
+            //   (GET /api/v1/testrequirementrccost responses) and TestRequirementRCCostReq
+            //   (POST/PUT /api/v1/testrequirementrccost request bodies).
+            //   All 5 property names are 1:1 between Dto and Res/Req — convention mapping applies.
+            CreateMap<TestRequirementRCCostDto, TestRequirementRCCostRes>().ReverseMap();
+            CreateMap<TestRequirementRCCostDto, TestRequirementRCCostReq>().ReverseMap();
 
 
         }

@@ -1,3 +1,32 @@
+/*
+ * TRANSFORMENGINE MIGRATION — RequestMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 6 — Backend Readiness Gate - Route + Contract + Mapper Confirmation
+ * Migrated : 2026-07-01
+ *
+ * CHANGED:
+ *   - Phase 5: Added 6 new AutoMapper profiles for TestListVla, TestRCCost, TestRequirementRCCost:
+ *     TestListVlaReq <-> TestListVlaDto
+ *     TestListVlaRes <-> TestListVlaDto
+ *     TestRCCostReq <-> TestRCCostDto
+ *     TestRCCostRes <-> TestRCCostDto
+ *     TestRequirementRCCostReq <-> TestRequirementRCCostDto
+ *     TestRequirementRCCostRes <-> TestRequirementRCCostDto
+ *   - Phase 5: PaginatedResult<TestListVlaDto> -> PaginationRes<TestListVlaRes> added for paged list endpoint
+ *   - Phase 6: Readiness gate confirmed — all 7 new mappings verified present and sufficient
+ *   - Phase 6: Req->Dto coverage: TestListVlaReq↔TestListVlaDto, TestRCCostReq↔TestRCCostDto, TestRequirementRCCostReq↔TestRequirementRCCostDto
+ *   - Phase 6: Res->Dto coverage: TestListVlaRes↔TestListVlaDto, TestRCCostRes↔TestRCCostDto, TestRequirementRCCostRes↔TestRequirementRCCostDto
+ *   - Phase 6: Pagination coverage: PaginatedResult<TestListVlaDto> -> PaginationRes<TestListVlaRes> for GetAll paged endpoint
+ *   - Phase 6: No ForMember projections required — all fields are flat 1:1 across Req/Res/Dto for these 3 resource families
+ *
+ * PRESERVED:
+ *   - All existing mappings (StaffJob, Animal, Employee, Program, Project, Contract,
+ *     Division, Grade, ProfitCentre, WorkGroup, BudgetBids, Purchases, User, etc.)
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: If TestListVlaRes / TestListVlaReq add display-only computed fields
+ *     in future, add ForMember projections here.
+ */
+
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
@@ -113,7 +142,23 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
-          
+            // TRANSFORMENGINE: TestListVla mappings — frmTestList / fsubTest_MainList Phase 5
+            //   TestListVlaReq and TestListVlaRes both map bidirectionally to TestListVlaDto.
+            //   PaginatedResult<TestListVlaDto> -> PaginationRes<TestListVlaRes> for paged list endpoint.
+            CreateMap<TestListVlaReq, TestListVlaDto>().ReverseMap();
+            CreateMap<TestListVlaRes, TestListVlaDto>().ReverseMap();
+            CreateMap<PaginatedResult<TestListVlaDto>, PaginationRes<TestListVlaRes>>();
+
+            // TRANSFORMENGINE: TestRCCost mappings — fsubTestRCPrice Phase 5
+            //   TestRCCostReq and TestRCCostRes both map bidirectionally to TestRCCostDto.
+            CreateMap<TestRCCostReq, TestRCCostDto>().ReverseMap();
+            CreateMap<TestRCCostRes, TestRCCostDto>().ReverseMap();
+
+            // TRANSFORMENGINE: TestRequirementRCCost mappings — fsubTestequirementRCPrice Phase 5
+            //   TestRequirementRCCostReq and TestRequirementRCCostRes both map bidirectionally to TestRequirementRCCostDto.
+            CreateMap<TestRequirementRCCostReq, TestRequirementRCCostDto>().ReverseMap();
+            CreateMap<TestRequirementRCCostRes, TestRequirementRCCostDto>().ReverseMap();
+
         }
     }
 }

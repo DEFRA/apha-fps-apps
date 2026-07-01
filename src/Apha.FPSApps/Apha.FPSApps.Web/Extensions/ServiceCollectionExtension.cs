@@ -1,3 +1,28 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-07-01
+ *
+ * CHANGED:
+ *   - Phase 10 (Step 15c): Added DI registration for ITestListVlaService -> TestListVlaService (AddScoped).
+ *     IFpsApiClient (aggregate client) is already registered in ApiClientExtension.AddApiClient()
+ *     and is injected into TestListVlaService — no additional API client registration required here.
+ *
+ * PRESERVED:
+ *   - All existing AddScoped / AddTransient registrations unchanged
+ *   - AddApplicationServices(), AddServices(), AddRepositories() method signatures
+ *   - All using directives
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: IFpsTestRCCostApiClient and IFpsTestRequirementRCCostApiClient are
+ *     consumed via the aggregate IFpsApiClient.FpsTestRCCost / IFpsApiClient.FpsTestRequirementRCCost
+ *     properties — no direct service registrations are needed for these sub-clients. Verify that
+ *     FpsApiClient correctly wires FpsTestRCCost and FpsTestRequirementRCCost in Phase 9.
+ *   - TRANSFORMENGINE TODO: ITestRCCostService and ITestRequirementRCCostService frontend service
+ *     wrappers have not been created yet (Phase 8 only created ITestListVlaService). If these
+ *     services are introduced in a future phase, register them here with AddScoped.
+ */
+
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -53,6 +78,11 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<ICalenderMonthService, CalenderMonthService>();
             services.AddScoped<ITestCapabilityService, TestCapabilityService>();
             services.AddScoped<ITestRequirementService, TestRequirementService>();
+            // TRANSFORMENGINE: Phase 10 (Step 15c) — ITestListVlaService registered as AddScoped.
+            //   TestListVlaService is a thin delegate injecting IFpsApiClient (already registered
+            //   in ApiClientExtension.AddApiClient()). AddScoped matches the request-scoped lifetime
+            //   of the IFpsApiClient aggregate client it depends on.
+            services.AddScoped<ITestListVlaService, TestListVlaService>();
             services.AddScoped<ITimeCostCalcsService, TimeCostCalcsService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IAppStateService, AppStateService>();

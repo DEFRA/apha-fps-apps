@@ -1,3 +1,25 @@
+/*
+ * TRANSFORMENGINE MIGRATION — EntityMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
+ * Migrated : 2026-07-01
+ *
+ * CHANGED:
+ *   - Added three new CreateMap entries for the TestListVla resource family:
+ *     TestOrProduct <-> TestListVlaDto
+ *     TestRCCost <-> TestRCCostDto
+ *     TestRequirementRCCost <-> TestRequirementRCCostDto
+ *   - All three mappings use .ReverseMap() — all property names are aligned between entity and DTO
+ *
+ * PRESERVED:
+ *   - All pre-existing CreateMap registrations unchanged
+ *   - Generic pagination mappings (PaginationParameters<>, PagedData<>) unchanged
+ *   - All ForMember overrides (Grade<->GradeDto, StaffJobZtView, PactProjectView) unchanged
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: none — mappings fully automated; no ForMember overrides required
+ *     as entity and DTO property names are identical for all three new pairs.
+ */
+
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
@@ -91,6 +113,21 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
+
+            // TRANSFORMENGINE: TestListVla migration (Phase 3) — frmTestList / fsubTest_MainList
+            //   TestOrProduct <-> TestListVlaDto: all property names aligned; no ForMember overrides needed.
+            //   Covers composite PK (ItemCode, FpsYear) plus all VLA pricing and descriptor fields.
+            CreateMap<TestOrProduct, TestListVlaDto>().ReverseMap();
+
+            // TRANSFORMENGINE: TestRCCost migration (Phase 3) — fsubTestRCPrice component charges tab
+            //   TestRCCost <-> TestRCCostDto: all property names aligned; no ForMember overrides needed.
+            //   Covers composite PK (TestCode, ProfitCentre, FpsYear) and Price.
+            CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
+
+            // TRANSFORMENGINE: TestRequirementRCCost migration (Phase 3) — fsubTestequirementRCPrice project charges tab
+            //   TestRequirementRCCost <-> TestRequirementRCCostDto: all property names aligned; no ForMember overrides needed.
+            //   Covers composite PK (TestCode, Buyer, ProfitCentre, FpsYear) and Price.
+            CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
         }
     }
 }

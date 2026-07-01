@@ -1,3 +1,28 @@
+/*
+ * TRANSFORMENGINE MIGRATION — FpsViewModelMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-07-01
+ *
+ * CHANGED:
+ *   - Phase 10 (Step 15b): Added TRANSFORMENGINE TODO placeholder comments for Phase 11 ViewModel/Item
+ *     <-> Dto mappings that cannot be activated until Phase 11 creates the ViewModel types.
+ *   - Phase 11 (Steps 16-17): Activated all four deferred CreateMap entries now that ViewModel types exist:
+ *       CreateMap<TestListVlaItem, TestListVlaDto>().ReverseMap()
+ *       CreateMap<TestRCCostItem, TestRCCostDto>().ReverseMap()
+ *       CreateMap<TestRequirementRCCostItem, TestRequirementRCCostDto>().ReverseMap()
+ *       CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap()
+ *
+ * PRESERVED:
+ *   - All existing CreateMap entries unchanged
+ *   - All ForMember projections, file-level usings, and namespace
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: If ViewModel property names differ from Dto (e.g. display-only fields or
+ *     renamed grid columns), replace ReverseMap with explicit ForMember projections.
+ *   - TRANSFORMENGINE TODO: TestRequirementItem ↔ TestRequirementDto — convention ReverseMap used;
+ *     verify Buyer/NoRequired/UnitPrice/TestCode/FpsYear all round-trip correctly via AutoMapper.
+ */
+
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -109,6 +134,22 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.OracleProjectCode, o => o.MapFrom(s => s.OracleProjectCode))
                 .ForMember(d => d.SubAccountCode, o => o.MapFrom(s => s.SubAccountCode))
                 .ReverseMap();
+
+            // TRANSFORMENGINE: Phase 11 (Steps 16-17) — activated ViewModel/Item ↔ Dto CreateMap entries.
+            // All four types created in Phase 11; ReverseMap is convention-based (property names match Dto).
+
+            // TestListVla grid row ↔ DTO (frmTestList / fsubTest_MainList):
+            CreateMap<TestListVlaItem, TestListVlaDto>().ReverseMap();
+
+            // TestRCCost grid row ↔ DTO (fsubTestRCPrice / Component Charges general tab):
+            CreateMap<TestRCCostItem, TestRCCostDto>().ReverseMap();
+
+            // TestRequirementRCCost grid row ↔ DTO (fsubTestequirementRCPrice / Component Charges project tab):
+            CreateMap<TestRequirementRCCostItem, TestRequirementRCCostDto>().ReverseMap();
+
+            // TestRequirementItem grid row ↔ DTO (Test Requirements tab — stage2TestRequirementsGrid):
+            // Convention ReverseMap: Buyer, NoRequired, UnitPrice, TestCode, FpsYear all match DTO names.
+            CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
         }
     }
 }

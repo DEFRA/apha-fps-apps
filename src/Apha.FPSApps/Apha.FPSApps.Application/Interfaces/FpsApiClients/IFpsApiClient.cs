@@ -30,5 +30,9 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsUserApiClient FpsUserPermission { get; }
         // TRANSFORMENGINE: FpsGrade added
         IFpsGradeApiClient FpsGrade { get; }
+        // TRANSFORMENGINE: Phase 7 — TestListVla, TestRCCost, TestRequirementRCCost sub-clients added
+        IFpsTestListVlaApiClient FpsTestListVla { get; }
+        IFpsTestRCCostApiClient FpsTestRCCost { get; }
+        IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
     }
 }
