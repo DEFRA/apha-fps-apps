@@ -178,11 +178,11 @@ function updatePurchase() {
 
 // ─── WorkGroup action buttons ────────────────────────────────────────────────
 function selectByAccount() {
-    alert('Select by Account feature coming soon.');
+    showAlertMessage('Select by Account feature coming soon.', AlertType.ERROR);
 }
 
 function viewReport() {
-    alert('View Report feature coming soon.');
+    showAlertMessage('View Report feature coming soon.', AlertType.ERROR);
 }
 
 function sendToExcel() {
