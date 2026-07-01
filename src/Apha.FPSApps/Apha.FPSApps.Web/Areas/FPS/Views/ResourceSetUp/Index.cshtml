@@ -50,22 +50,20 @@
     <div class="container-fluid">
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <div class="row fps-sr-breadcrumb-row align-items-center">
-                        <div style="display: flex; justify-content: flex-end;" class="col-md-6">
-                            <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get" style="display: flex; align-items: center;">
-                                <input type="hidden" name="year" value="@FpsYearContext.Year" />
-                                <label class="fw-bold mt-2" for="profitCentreSelect">Resource Centre:</label>
-                                <select id="profitCentreSelect"
-                                        name="profitCentre"
-                                        asp-items="Model.ProfitCentreList"
-                                        class="govuk-select govuk-!-font-size-16"
-                                        style="width: auto; min-width: 260px;"
-                                        onchange="this.form.submit()">
-                                    <option value="">-- Select Resource Centre --</option>
-                                </select>
-                            </form>
-                        </div>
-                    </div>
+                <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get"
+                      class="govuk-!-padding-left-4 govuk-!-padding-top-2 govuk-!-padding-bottom-2"
+                      style="display: flex; align-items: center;">
+                    <input type="hidden" name="year" value="@FpsYearContext.Year" />
+                    <label class="fw-bold mt-2" for="profitCentreSelect">Resource Centre: </label>
+                    <select id="profitCentreSelect"
+                            name="profitCentre"
+                            asp-items="Model.ProfitCentreList"
+                            class="govuk-select govuk-!-font-size-16"
+                            style="width: auto; min-width: 260px;"
+                            onchange="this.form.submit()">
+                        <option value="">-- Select Resource Centre --</option>
+                    </select>
+                </form>
             </div>
         </div>
 

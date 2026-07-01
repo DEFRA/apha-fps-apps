@@ -9,8 +9,8 @@
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-full">
             <div class="row fps-sr-breadcrumb-row">
-                <div class="fps-sr-breadcrumb-flex">
-                    <div class="col-md-4 pva-project-wrap">
+                <div class="fps-sr-breadcrumb-flex" style="display: flex; justify-content: flex-end;">
+                    <div class="pva-project-wrap">
                         <label class="fw-bold me-2" for="projectSelect">Select a Project:</label>
                         <select id="projectSelect" asp-items="Model.ProjectList" asp-for="SelectedProjectCode"
                                 class="govuk-select" style="min-width: 200px;">
