@@ -458,6 +458,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 })
                 .AsQueryable();
 
+            result = result.Where(e => e.WorkGroup == workgroup).AsQueryable();
             result = ApplyStaffResourceUtilisationFilter(result, query.Filter);
             result = ApplyStaffResourceUtilisationSorting(result, query.SortBy, query.Descending);
             return base.ApplyPaging(result.ToList(), query.Page, query.PageSize);

@@ -5,17 +5,6 @@
     ViewData["Title"] = "Resource Utilization View";
 }
 
-@section Styles {
-<style>
-    /* Workgroup grid — ruv-left-panel controls width; shrink inner grid to content */
-    #gridContainer_@(Model.WorkgroupGrid.GridId) .editable-grid-container { min-height: unset; }
-    #gridContainer_@(Model.WorkgroupGrid.GridId) .grid-scroll-container   { height: auto; max-height: 300px; }
-    /* Staff grid — right-align numeric columns (3 onwards: Tot h, ZTW, Avail, Left, Plan/Util groups) */
-    #gridContainer_@(Model.StaffGrid.GridId) .editable-grid-table td:nth-child(n+3),
-    #gridContainer_@(Model.StaffGrid.GridId) .editable-grid-table thead th:nth-child(n+3) { text-align: right; }
-</style>
-}
-
 <main id="main-content">
     <div class="govuk-grid-row sup_margin_left_right_0 fps-sr-breadcrumb-row">
         <div class="govuk-grid-column-full">
@@ -133,6 +122,114 @@
         if (staffMgr) staffMgr.reloadGrid({ page: 1 });
     });
 
+    // ─── Totals row — rendered as a mirror table below the scroll area ──────
+    // Placed outside .grid-scroll-container so it never scrolls vertically.
+    // Column widths are read from rendered <td> cells; horizontal scroll is
+    // synced so the totals always align with the grid columns.
+    function buildRuvTotalsRow() {
+        var table = document.getElementById('tbl_@Model.StaffGrid.GridId');
+        if (!table) return;
+
+        // Remove any legacy tfoot that may exist from a previous approach
+        var existingFoot = table.querySelector('tfoot');
+        if (existingFoot) existingFoot.remove();
+
+        var totalsDiv = document.getElementById('ruvStaffTotals');
+        if (!totalsDiv) return;
+        totalsDiv.innerHTML = '';
+
+        var rows = table.querySelectorAll('tbody tr');
+        if (!rows.length) return;
+
+        // Column layout (0-based):
+        //  0:WgGrade(text) 1:Name(text)
+        //  2:TotalH  3:Ztw  4:Avail  5:Left
+        //  6:ApprovedPlan  7:ApprovedUtil(%)
+        //  8:NotApprovedPlan  9:NotApprovedUtil(%)
+        // 10:TotalPlan  11:TotalUtil(%)
+        var refCells  = rows[0].querySelectorAll('td');
+        var colCount  = refCells.length;
+        var sumCols   = [2, 3, 4, 5, 6, 8, 10];
+        var avgCols   = [7, 9, 11];
+        var sums = {}, avgTotals = {}, avgCounts = {};
+        sumCols.forEach(function (i) { sums[i] = 0; });
+        avgCols.forEach(function (i) { avgTotals[i] = 0; avgCounts[i] = 0; });
+
+        rows.forEach(function (row) {
+            var cells = row.querySelectorAll('td');
+            sumCols.forEach(function (i) {
+                if (!cells[i]) return;
+                var val = parseFloat(cells[i].textContent.trim().replace(/,/g, ''));
+                if (!isNaN(val)) sums[i] += val;
+            });
+            avgCols.forEach(function (i) {
+                if (!cells[i]) return;
+                var val = parseFloat(cells[i].textContent.trim().replace(/,/g, '').replace('%', ''));
+                if (!isNaN(val)) { avgTotals[i] += val; avgCounts[i]++; }
+            });
+        });
+
+        // ── Mirror scroll wrapper (hidden overflow, synced with grid) ──────────
+        var scrollMirror = document.createElement('div');
+        scrollMirror.style.overflow = 'hidden';
+
+        // ── Mirror table — column widths pinned to actual rendered td widths ──
+        var mirrorTable = document.createElement('table');
+        mirrorTable.className = table.className;
+        mirrorTable.style.cssText = 'margin:0; border-top:0; table-layout:fixed;';
+        mirrorTable.style.width    = table.offsetWidth + 'px';
+        mirrorTable.style.minWidth = table.offsetWidth + 'px';
+
+        var cg = document.createElement('colgroup');
+        for (var c = 0; c < colCount; c++) {
+            var col = document.createElement('col');
+            if (refCells[c]) col.style.width = refCells[c].offsetWidth + 'px';
+            cg.appendChild(col);
+        }
+        mirrorTable.appendChild(cg);
+
+        var tbody = document.createElement('tbody');
+        var tr    = document.createElement('tr');
+        tr.className = 'ruv-totals-row';
+
+        for (var i = 0; i < colCount; i++) {
+            var td = document.createElement('td');
+            td.className = 'govuk-table__cell';
+            if (i === 0) {
+                td.textContent = 'Staff Totals:';
+            } else if (sums.hasOwnProperty(i)) {
+                td.textContent = (Math.round(sums[i] * 100) / 100).toFixed(2);
+            } else if (avgCols.indexOf(i) !== -1 && avgCounts[i] > 0) {
+                td.textContent = (Math.round((avgTotals[i] / avgCounts[i]) * 100) / 100).toFixed(2) + '%';
+                td.title = 'Average of ' + avgCounts[i] + ' values';
+            }
+            // Name col (1) stays blank
+            tr.appendChild(td);
+        }
+
+        tbody.appendChild(tr);
+        mirrorTable.appendChild(tbody);
+        scrollMirror.appendChild(mirrorTable);
+
+        // Align mirror left edge with the table's left edge
+        var tableLeft  = table.getBoundingClientRect().left;
+        var totalsLeft = totalsDiv.getBoundingClientRect().left;
+        var offsetPx   = tableLeft - totalsLeft;
+        if (offsetPx > 0) scrollMirror.style.paddingLeft = offsetPx + 'px';
+
+        totalsDiv.appendChild(scrollMirror);
+
+        // Sync horizontal scroll from grid → mirror (wire up once per container)
+        var gridScroll = table.closest('.grid-scroll-container');
+        if (gridScroll && !gridScroll._ruvTotalsSynced) {
+            gridScroll._ruvTotalsSynced = true;
+            gridScroll.addEventListener('scroll', function () {
+                var wrap = document.querySelector('#ruvStaffTotals div');
+                if (wrap) wrap.scrollLeft = gridScroll.scrollLeft;
+            });
+        }
+    }
+
     // ─── Grouped header row for staff grid (Approved / Not Approved / Total) ─
     function applyRuvGroupedHeaderRow() {
         var table = document.getElementById('tbl_@Model.StaffGrid.GridId');
@@ -141,7 +238,7 @@
         if (!thead || thead.querySelector('.ruv-group-header-row')) return;
 
         var groupedRow = document.createElement('tr');
-        groupedRow.className = 'ruv-group-header-row govuk-table__row';
+       // groupedRow.className = 'ruv-group-header-row govuk-table__row';
         groupedRow.innerHTML =
             '<th colspan="6"><span class="govuk-visually-hidden">Staff baseline columns</span></th>' +
             '<th colspan="2">Approved</th>' +
@@ -172,9 +269,10 @@
             if (staffMgr) staffMgr.reloadGrid({ page: 1 });
         }
 
-        // After staff grid reloads (DOM replaced): re-apply the grouped header row
+        // After staff grid reloads (DOM replaced): re-apply grouped header and totals row
         if (e.detail.gridId === '@Model.StaffGrid.GridId') {
             applyRuvGroupedHeaderRow();
+            buildRuvTotalsRow();
         }
     });
 

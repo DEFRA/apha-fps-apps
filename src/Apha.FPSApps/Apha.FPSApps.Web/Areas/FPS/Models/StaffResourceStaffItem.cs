@@ -43,7 +43,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double? ApprovedPlan { get; set; }
 
         [Display(Name = "Util")]
-        [GridColumn(Order = 8, Width = 80, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 8, Width = 80, Type = GridColumnType.Percentage)]
         public double? ApprovedUtil { get; set; }
 
         // ── Not Approved columns (colspan 2 in grouped header) ──────────────
@@ -53,7 +53,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double? NotApprovedPlan { get; set; }
 
         [Display(Name = "Util")]
-        [GridColumn(Order = 10, Width = 80, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 10, Width = 80, Type = GridColumnType.Percentage)]
         public double? NotApprovedUtil { get; set; }
 
         // ── Total columns (colspan 2 in grouped header) ──────────────────────
@@ -63,7 +63,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double? TotalPlan { get; set; }
 
         [Display(Name = "Util")]
-        [GridColumn(Order = 12, Width = 80, Type = GridColumnType.DecimalNumber)]
+        [GridColumn(Order = 12, Width = 80, Type = GridColumnType.Percentage)]
         public double? TotalUtil { get; set; }
     }
 }
