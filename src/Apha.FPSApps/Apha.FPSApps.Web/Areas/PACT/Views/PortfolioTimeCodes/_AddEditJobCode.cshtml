@@ -26,7 +26,7 @@
 
         <!-- Project Dropdown at Top -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="ParentProject"><span class="sup_color_red">* </span>Project:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="ParentProject">Project<span class="sup_color_red">* </span></label>
             <select asp-for="ParentProject" class="govuk-select govuk-!-font-size-16"
                     asp-items="@(ViewBag.Projects as List<SelectListItem>)" required>
                 <option value="">--select project--</option>
@@ -36,7 +36,7 @@
 
         <!-- Job Code -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job Code:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeId">Job Code<span class="sup_color_red">* </span></label>
             @if (isEdit)
             {
                 <input type="hidden" asp-for="JobCodeId" />
@@ -51,7 +51,7 @@
 
         <!-- Name / Description -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeName"><span class="sup_color_red">* </span>Name:</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="JobCodeName">Name<span class="sup_color_red">* </span></label>
             <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
                       asp-for="JobCodeName" rows="3" required></textarea>
             <span asp-validation-for="JobCodeName" class="govuk-error-message"></span>
@@ -59,7 +59,7 @@
 
         <!-- Type -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Type"><span class="sup_color_red">* </span>Type:</label>            
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Type">Type<span class="sup_color_red">* </span></label>
             <select asp-for="Type" asp-items="ViewBag.Types" class="govuk-select govuk-!-font-size-16" required>
                 <option value="">--select type--</option>
             </select>

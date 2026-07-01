@@ -348,7 +348,9 @@ public class YearlyDetailsControllerTests
         var result = await _controller.CreateAnimal("2024/001", 2024, new AnimalRequirementItem { AnimalType = "CAT" });
 
         var jsonResult = Assert.IsType<JsonResult>(result);
-        Assert.True(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+        var element = GetJsonResultElement(jsonResult);
+        Assert.True(element.GetProperty("success").GetBoolean());
+        Assert.Equal("Animal Record Added Successfully", element.GetProperty("message").GetString());
     }
 
     [Fact]
@@ -374,7 +376,9 @@ public class YearlyDetailsControllerTests
         var result = await _controller.EditAnimal("2024/001", 2024, 1, new AnimalRequirementItem { AnimalType = "CAT" });
 
         var jsonResult = Assert.IsType<JsonResult>(result);
-        Assert.True(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+        var element = GetJsonResultElement(jsonResult);
+        Assert.True(element.GetProperty("success").GetBoolean());
+        Assert.Equal("Animal Record Updated Successfully", element.GetProperty("message").GetString());
     }
 
     [Fact]
@@ -386,7 +390,9 @@ public class YearlyDetailsControllerTests
         var result = await _controller.DeleteAnimal("2024/001", 2024, 1);
 
         var jsonResult = Assert.IsType<JsonResult>(result);
-        Assert.True(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+        var element = GetJsonResultElement(jsonResult);
+        Assert.True(element.GetProperty("success").GetBoolean());
+        Assert.Equal("Animal Record Deleted Successfully", element.GetProperty("message").GetString());
     }
 
     #endregion
@@ -915,6 +921,8 @@ public class YearlyDetailsControllerTests
     {
         _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
             .Returns(ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.SuccessResponse(new PaginatedResult<AnimalRequirementDto>(new List<AnimalRequirementDto>(), 0)));
+        _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+            .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
         _mapper.Map<List<AnimalRequirementItem>>(Arg.Any<IEnumerable<AnimalRequirementDto>>())
             .Returns(new List<AnimalRequirementItem>());
 
@@ -928,6 +936,8 @@ public class YearlyDetailsControllerTests
     {
         _service.GetAnimalRequirementsAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<QueryParameters<string>>())
             .Returns(ApiResponseDto<PaginatedResult<AnimalRequirementDto>>.FailureResponse(null, new ApiMetaDto()));
+        _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>())
+            .Returns(new QueryParameters<string> { Page = 1, PageSize = 10 });
 
         var result = await _controller.LoadAnimalGrid(new PaginationFilter<string>(), "2024/001", 2024);
 
@@ -1241,7 +1251,9 @@ public class YearlyDetailsControllerTests
         var result = await _controller.DeleteAnimal("2024/001", 2024, 1);
 
         var jsonResult = Assert.IsType<JsonResult>(result);
-        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+        Assert.Equal("Failed to delete animal entry.", element.GetProperty("message").GetString());
     }
 
     [Fact]
@@ -1253,7 +1265,9 @@ public class YearlyDetailsControllerTests
         var result = await _controller.DeleteAnimal("2024/001", 2024, 1);
 
         var jsonResult = Assert.IsType<JsonResult>(result);
-        Assert.False(GetJsonResultElement(jsonResult).GetProperty("success").GetBoolean());
+        var element = GetJsonResultElement(jsonResult);
+        Assert.False(element.GetProperty("success").GetBoolean());
+        Assert.Equal("Failed to delete animal entry.", element.GetProperty("message").GetString());
     }
 
     [Fact]
