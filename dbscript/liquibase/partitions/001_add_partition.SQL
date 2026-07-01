@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset repo-admin:001_add_partition labels:ddl context:all runAlways:true
+--changeset repo-admin:001_add_partition labels:ddl context:all runAlways:true splitStatements:false
 
 DO $$
 DECLARE
