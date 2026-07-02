@@ -27,8 +27,12 @@ SELECT
     COALESCE(mt.hours, 0),
     CASE
         WHEN prg.sector_name = 'Charge'
-            THEN COALESCE(mt.hours, 0) * (
-                CASE WHEN COALESCE(p.isdefraproject, 0) = 0 THEN COALESCE(pcg.chargerate, 0::money) ELSE COALESCE(pcg.defrachargerate, 0::money) END
+            THEN (
+                COALESCE(mt.hours, 0)::numeric *
+                CASE
+                    WHEN COALESCE(p.isdefraproject, 0) = 0 THEN COALESCE(pcg.chargerate::numeric, 0)
+                    ELSE COALESCE(pcg.defrachargerate::numeric, 0)
+                END
             )::double precision
         ELSE 0::double precision
     END,
