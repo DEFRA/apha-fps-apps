@@ -3,7 +3,7 @@ using Apha.FPSApps.Application.Dtos.FPS;
 
 namespace Apha.FPSApps.Application.Interfaces.FPS
 {
-    public interface IMaintTotalBusinessOverheadsService
+    public interface ITotalBusinessOverheadsService
     {
         Task<ApiResponseDto<TotalBusinessOverheadsDto>> GetAsync();
         Task<ApiResponseDto<TotalBusinessOverheadsDto>> UpdateAsync(TotalBusinessOverheadsDto dto);

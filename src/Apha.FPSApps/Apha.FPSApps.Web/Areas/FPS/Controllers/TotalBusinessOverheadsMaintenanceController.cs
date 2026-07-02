@@ -14,9 +14,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class TotalBusinessOverheadsMaintenanceController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IMaintTotalBusinessOverheadsService _service;
+        private readonly ITotalBusinessOverheadsService _service;
 
-        public TotalBusinessOverheadsMaintenanceController(IMapper mapper, IMaintTotalBusinessOverheadsService service)
+        public TotalBusinessOverheadsMaintenanceController(IMapper mapper, ITotalBusinessOverheadsService service)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _service = service ?? throw new ArgumentNullException(nameof(service));

@@ -13,13 +13,13 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TotalBusinessOverheadsMaint
     public class TotalBusinessOverheadsMaintenanceControllerTests
     {
         private readonly IMapper _mapper;
-        private readonly IMaintTotalBusinessOverheadsService _service;
+        private readonly ITotalBusinessOverheadsService _service;
         private readonly TotalBusinessOverheadsMaintenanceController _controller;
 
         public TotalBusinessOverheadsMaintenanceControllerTests()
         {
             _mapper = Substitute.For<IMapper>();
-            _service = Substitute.For<IMaintTotalBusinessOverheadsService>();
+            _service = Substitute.For<ITotalBusinessOverheadsService>();
             _controller = new TotalBusinessOverheadsMaintenanceController(_mapper, _service);
         }
 

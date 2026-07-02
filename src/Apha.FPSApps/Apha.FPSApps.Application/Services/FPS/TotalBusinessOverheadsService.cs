@@ -5,7 +5,7 @@ using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 
 namespace Apha.FPSApps.Application.Services.FPS
 {
-    public class TotalBusinessOverheadsService : IMaintTotalBusinessOverheadsService
+    public class TotalBusinessOverheadsService : ITotalBusinessOverheadsService
     {
         private readonly IFpsApiClient _fpsClient;
 
