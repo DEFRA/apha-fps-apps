@@ -6,7 +6,8 @@
 
 CREATE OR REPLACE VIEW fps.vtblkpprofitcentre
 AS
-SELECT DISTINCT pc.profitcentre,
+SELECT DISTINCT
+    pc.profitcentre,
     pc.profitcentrename,
     pc.division,
     pc.conttarget,
@@ -17,10 +18,12 @@ SELECT DISTINCT pc.profitcentre,
     u.user_id,
     u.dt2username,
     u.useremail,
-  upc.fpsyear
-   FROM fps.tblkpprofitcentre pc
-     JOIN fps.tbluser_profitcentre upc ON pc.profitcentre::text = upc.profitcentre::text
-     JOIN fps.tblusers u ON upc.user_id = u.user_id;
+    upc.fpsyear
+FROM fps.tblkpprofitcentre pc
+INNER JOIN fps.tbluser_profitcentre upc
+    ON pc.profitcentre::text = upc.profitcentre::text
+INNER JOIN fps.tblusers u
+    ON upc.user_id = u.user_id;
 	 
 --ROLLBACK
 --Not Applicable
