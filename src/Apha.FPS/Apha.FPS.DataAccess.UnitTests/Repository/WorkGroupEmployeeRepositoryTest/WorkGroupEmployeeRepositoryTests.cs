@@ -34,16 +34,25 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
                 SpNumber       = e.SpNumber,
                 WorkGroupGrade = e.WorkGroupGrade,
                 PersonStatus   = e.PersonStatus,
-                UserEmail      = testEmail
+                UserEmail      = testEmail,
+                FpsYear        = requestContext.FpsYear
             });
             var viewWgEmployeesMockSet = RepositoryTestHelper.CreateMockDbSet(viewWgEmployees);
             mockContext.Setup(x => x.WorkGroupEmployeeViews).Returns(viewWgEmployeesMockSet.Object);
 
-            var staff = staffMembers ?? employees.Select(e => new Employee
+            var staff = (staffMembers ?? employees.Select(e => new Employee
             {
                 SPNumber  = e.SpNumber,
                 FirstName = "First",
                 LastName  = "Last"
+            }))
+            .Select(s => new Employee
+            {
+                SPNumber = s.SPNumber,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+                Title = s.Title,
+                FpsYear = s.FpsYear ?? requestContext.FpsYear
             });
             var staffMockSet = RepositoryTestHelper.CreateMockDbSet(staff);
             mockContext.Setup(x => x.Employees).Returns(staffMockSet.Object);
