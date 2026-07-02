@@ -5,11 +5,11 @@ using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 
 namespace Apha.FPSApps.Application.Services.FPS
 {
-    public class MaintTotalBusinessOverheadsService : IMaintTotalBusinessOverheadsService
+    public class TotalBusinessOverheadsService : IMaintTotalBusinessOverheadsService
     {
         private readonly IFpsApiClient _fpsClient;
 
-        public MaintTotalBusinessOverheadsService(IFpsApiClient fpsClient)
+        public TotalBusinessOverheadsService(IFpsApiClient fpsClient)
         {
             _fpsClient = fpsClient;
         }

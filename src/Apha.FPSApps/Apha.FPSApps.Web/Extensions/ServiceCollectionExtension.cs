@@ -89,7 +89,7 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
-            services.AddScoped<IMaintTotalBusinessOverheadsService, MaintTotalBusinessOverheadsService>();
+            services.AddScoped<IMaintTotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
             services.AddScoped<IPlanStaffZTCodeService, PlanStaffZTCodeService>();
             return services;
