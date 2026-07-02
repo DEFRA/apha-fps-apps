@@ -73,7 +73,7 @@
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             }).fail(function () {
-                showGovukAlert('An error occurred while loading the form');
+                showAlertMessage('An error occurred while loading the form', AlertType.ERROR);
             });
         }
 
@@ -85,7 +85,7 @@
                 $('#modaPopupBody').html(html);
                 $('#modalPopup').addClass('show');
             }).fail(function () {
-                showGovukAlert('An error occurred while loading the edit form');
+                showAlertMessage('An error occurred while loading the edit form', AlertType.ERROR);
             });
         }
 
@@ -100,15 +100,15 @@
                     type: 'DELETE',
                     success: function (response) {
                         if (response.success) {
-                            showGovukAlert('Grade deleted successfully').then(function () {
+                            showAlertMessage('Grade deleted successfully', AlertType.SUCCESS).then(function () {
                                 reloadGradeGrid();
                             });
                         } else {
-                            showGovukAlert('Error: ' + (response.message || 'Delete failed.'));
+                            showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting.');
+                        showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
                     }
                 });
             });
@@ -138,7 +138,7 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
-                        showGovukAlert(data.message || 'Grade created successfully.');
+                        showAlertMessage(data.message || 'Grade created successfully.', AlertType.SUCCESS);
                         closeModal();
                         reloadGradeGrid();
                     } else {
@@ -149,7 +149,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });
@@ -181,7 +181,7 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     if (data.success) {
-                        showGovukAlert(data.message || 'Grade updated successfully.');
+                        showAlertMessage(data.message || 'Grade updated successfully.', AlertType.SUCCESS);
                         closeModal();
                         reloadGradeGrid();
                     } else {
@@ -192,7 +192,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });
