@@ -69,6 +69,7 @@ $(document).ready(function () {
         window.location.href = programMaintenanceConfig.projectMaintenanceUrl +
             '/' + encodeURIComponent(selectedProjectCode);
     });
+    initializeMultiColumnDropdown();
 });
 
 function loadProgram(programNo) {
@@ -170,12 +171,13 @@ function initializeMultiColumnDropdown() {
         data: programListData,
         displayField: 'Text',
         valueField: 'Value',
-        clearButtonClearsSelection:false,//this will only clear searchbox and not selected value
+        clearButtonClearsSelection: false,//this will only clear searchbox and not selected value
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
                 selectedProgramm = selectedItem.Value;
-                loadProgram(selectedItem.Value); 
-                
+                $('#selectedProgramNo').val(selectedItem.Value);
+                loadProgram(selectedItem.Value);
+                loadProjectsGrid(selectedItem.Value);
             },
             onClear: function (dropdown) {
                 let initialRecord = dropdown.originalData[0].Value;
@@ -210,8 +212,7 @@ function clearSelectedProgramm() {
 
 
 // Auto-select the first project row after the projects grid reloads
-document.addEventListener('gridReloaded', function (e) {
-    initializeMultiColumnDropdown();
+document.addEventListener('gridReloaded', function (e) {    
    
     if (e.detail && e.detail.gridId === 'projectsGrid') {
         var $firstRow = $('#tbl_projectsGrid tbody tr[data-id]:first');
