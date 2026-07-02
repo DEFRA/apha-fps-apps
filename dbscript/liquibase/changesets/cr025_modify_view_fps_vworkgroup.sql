@@ -1,12 +1,12 @@
 --liquibase formatted sql
 
---changeset repo-admin:CR025 labels:ddl context:all 
+--changeset repo-admin:CR025 labels:ddl context:all
 
 -- View: fps.vworkgroup
 
-CREATE OR REPLACE VIEW fps.vworkgroup
-AS
-SELECT DISTINCT w.workgroup,
+CREATE OR REPLACE VIEW fps.vworkgroup AS
+SELECT DISTINCT
+    w.workgroup,
     w.profitcentre,
     w.costcentre,
     w.owner,
@@ -20,9 +20,10 @@ SELECT DISTINCT w.workgroup,
     vpc.user_id,
     vpc.dt2username,
     vpc.useremail
-  FROM fps.workgroup w
-     JOIN fps.vtblkpprofitcentre vpc ON w.profitcentre::text = vpc.profitcentre::text
-   and w.fpsyear=vpc.fpsyear;
+FROM fps.workgroup w
+JOIN fps.vtblkpprofitcentre vpc
+    ON w.profitcentre::text = vpc.profitcentre::text
+   AND w.fpsyear = vpc.fpsyear;
 
 --ROLLBACK
 --Not Applicable
