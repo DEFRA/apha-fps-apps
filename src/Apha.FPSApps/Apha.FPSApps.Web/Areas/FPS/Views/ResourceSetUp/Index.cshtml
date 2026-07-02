@@ -378,7 +378,7 @@
         function planPersonOntoZTCodes() {
             var pactId = document.getElementById('fpsSrSelectedPactId').value;
             if (!pactId) {
-                showGovukAlert('Please select a person first.');
+                showAlertMessage('Please select a person first.', AlertType.INFO);
                 return;
             }
             window.location.href = '/FPS/PlanStaffZTCode/Index?staffId=' + encodeURIComponent(pactId);
@@ -413,7 +413,7 @@
                 success: function (response) {
                     if (response.success) {
                         closeModal();
-                        showGovukAlert('Staff record updated successfully.').then(function () {
+                        showAlertMessage('Staff record updated successfully.', AlertType.SUCCESS).then(function () {
                             getWgStaffGridManager().reloadGrid({ page: 1 });
                             updateStaffTotals();
                         });
@@ -422,7 +422,7 @@
                     }
                 },
                 error: function (xhr) {
-                    showGovukAlert('An unexpected error occurred. Please try again.');
+                    showAlertMessage('An unexpected error occurred. Please try again.', AlertType.ERROR);
                 }
             });
         }
