@@ -244,29 +244,51 @@ namespace Apha.FPS.DataAccess.Repositories
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,
                     e => e.SPNumber,
-                    (wg, e) => new WorkGroupEmployeeView
+                    (wg, e) => new
                     {
-                        PactId = wg.PactId,
-                        SpNumber = wg.SpNumber,
-                        WorkGroupGrade = wg.WorkGroupGrade,
+                        wg.PactId,
+                        wg.SpNumber,
+                        wg.WorkGroupGrade,
                         Name = (e.LastName ?? "") + " " + (e.FirstName ?? ""),
-                        PersonStatus = wg.PersonStatus,
-                        PersonClass = wg.PersonClass,
-                        HrsPaid = wg.HrsPaid,
-                        Leave = wg.Leave,
-                        SickSpecial = wg.SickSpecial,
-                        HrsAvail = wg.HrsAvail,
-                        MakeAvailable = wg.MakeAvailable,
-                        TimeRecorder = wg.TimeRecorder,
-                        StartDate = wg.StartDate,
-                        EndDate = wg.EndDate,
-                        HoursPerWeek = wg.HoursPerWeek,
-                        FpsYear = wg.FpsYear,
-                        UserId = wg.UserId,
-                        Dt2Username = wg.Dt2Username,
-                        UserEmail = wg.UserEmail
+                        wg.PersonStatus,
+                        wg.PersonClass,
+                        wg.HrsPaid,
+                        wg.Leave,
+                        wg.SickSpecial,
+                        wg.HrsAvail,
+                        wg.MakeAvailable,
+                        wg.TimeRecorder,
+                        wg.StartDate,
+                        wg.EndDate,
+                        wg.HoursPerWeek,
+                        wg.FpsYear,
+                        wg.UserId,
+                        wg.Dt2Username,
+                        wg.UserEmail
                     })
                 .Distinct()
+                .Select(x => new WorkGroupEmployeeView
+                {
+                    PactId = x.PactId,
+                    SpNumber = x.SpNumber,
+                    WorkGroupGrade = x.WorkGroupGrade,
+                    Name = x.Name,
+                    PersonStatus = x.PersonStatus,
+                    PersonClass = x.PersonClass,
+                    HrsPaid = x.HrsPaid,
+                    Leave = x.Leave,
+                    SickSpecial = x.SickSpecial,
+                    HrsAvail = x.HrsAvail,
+                    MakeAvailable = x.MakeAvailable,
+                    TimeRecorder = x.TimeRecorder,
+                    StartDate = x.StartDate,
+                    EndDate = x.EndDate,
+                    HoursPerWeek = x.HoursPerWeek,
+                    FpsYear = x.FpsYear,
+                    UserId = x.UserId,
+                    Dt2Username = x.Dt2Username,
+                    UserEmail = x.UserEmail
+                })
                 .AsQueryable();
 
             workGroupEmployeeQuery = ApplyFilter(workGroupEmployeeQuery, query.Filter);
