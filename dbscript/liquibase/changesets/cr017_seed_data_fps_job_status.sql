@@ -6,12 +6,12 @@ BEGIN;
 
 -- Remove Cancelled status from seed data (deferred per 2026-06-23 decision)
 DELETE FROM fps.job_status
-WHERE status_name = 'Cancelled';
+WHERE status = 'Cancelled';
 
 -- Ensure the 4 active states exist (idempotent upsert)
-INSERT INTO fps.job_status (status_name)
+INSERT INTO fps.job_status (status)
 VALUES ('Initiated'), ('Running'), ('Completed'), ('Failed')
-ON CONFLICT (status_name) DO NOTHING;
+ON CONFLICT (status) DO NOTHING;
 
 COMMIT;
 
