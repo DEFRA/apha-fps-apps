@@ -126,8 +126,8 @@
     }
     function formatCurrency(v) { return parseFloat(v||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
     function calculatePercentOfPlan() {
-        var p = parseFloat($('#planned-total-cost').val().replace(/[�,\s]/g,''))||0;
-        var a = parseFloat($('#project-total-cost').val().replace(/[�,\s]/g,''))||0;
+        var p = parseFloat($('#planned-total-cost').val().replace(/[£,\s]/g,''))||0;
+        var a = parseFloat($('#project-total-cost').val().replace(/[£,\s]/g,''))||0;
         $('#project-percent-plan').val((p>0?Math.round((a/p)*100):0)+'%');
     }
     function deleteCompareTests2(btn) {
