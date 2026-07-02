@@ -287,6 +287,26 @@ public class JobExecutionRepository : IJobExecutionRepository
         var jobId = await EnsureJobMasterAsync(jobName, cancellationToken);
         var statusId = await EnsureStatusAsync(jobId, nameof(JobStatus.Initiated), cancellationToken);
 
+        if (fpsYear.HasValue)
+        {
+            var activeExecution = await (
+                from q in _context.TblJobQueue
+                join s in _context.TblJobStatus on q.StatusId equals s.StatusId
+                where q.JobId == jobId
+                      && q.FpsYear == fpsYear.Value
+                      && (s.Status == nameof(JobStatus.Initiated) || s.Status == nameof(JobStatus.Running))
+                orderby q.UpdatedAt descending
+                select new { q.JobExecutionId, q.JobQueueId, s.Status })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (activeExecution is not null)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot start '{jobName}' for fpsyear {fpsYear.Value}. Active execution exists " +
+                    $"(JobExecutionId={activeExecution.JobExecutionId}, JobQueueId={activeExecution.JobQueueId}, Status={activeExecution.Status}).");
+            }
+        }
+
         var jobQueueId = Guid.NewGuid();
         var now = DateTime.UtcNow;
 

@@ -188,6 +188,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.IsActive).HasColumnName("is_active").IsRequired().HasDefaultValue(true);
             entity.HasIndex(e => e.JobName).HasDatabaseName("idx_job_lock_job_name");
             entity.HasIndex(e => new { e.JobName, e.IsActive }).HasDatabaseName("idx_job_lock_job_name_active");
+            entity.HasIndex(e => e.JobName).IsUnique().HasDatabaseName("uq_job_lock_job_name_active").HasFilter("is_active = true");
             entity.HasIndex(e => e.ExpiresAt).HasDatabaseName("idx_job_lock_expires_at");
         });
 

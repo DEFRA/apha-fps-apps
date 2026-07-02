@@ -258,7 +258,7 @@ public sealed class RecreateSummariesOrchestrator
             if (_jobExecutionRepository is not null)
             {
                 var touched = await _jobExecutionRepository.TouchRunningExecutionAsync(
-                    Guid.Parse(correlationId), cancellationToken);
+                    _jobQueueId, cancellationToken);
                 
                 if (!touched)
                 {
