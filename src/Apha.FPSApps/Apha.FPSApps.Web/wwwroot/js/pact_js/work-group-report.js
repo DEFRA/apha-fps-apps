@@ -25,7 +25,7 @@ function openWorkGroupEditModal(btnElement) {
             setTimeout(function () { $('#edit-email').focus(); }, 50);
         },
         error: function () {
-            alert('Error loading edit form.');
+            showAlertMessage('Error loading edit form.', AlertType.ERROR);
         }
     });
 }
@@ -36,7 +36,7 @@ function saveWorkGroupEmail() {
     var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
     if (data.sendEmail === undefined || data.sendEmail === '') {
-        alert('Please select Yes or No for SendEmail.');
+        showAlertMessage('Please select Yes or No for SendEmail.', AlertType.ERROR);
         return;
     }
 
@@ -51,7 +51,7 @@ function saveWorkGroupEmail() {
             if (gm) { gm.reloadGrid({ page: 1 }); }
         },
         error: function () {
-            alert('Failed to save changes. Please try again.');
+            showAlertMessage('Failed to save changes. Please try again.', AlertType.ERROR);
         }
     });
 }
@@ -111,7 +111,7 @@ $(function () {
         if (!pc) { return; }
 
         if (!hasTimeSheet && !hasOutputSheet) {
-            window.showGovukAlert('You must check Time Sheets and/or Output Sheets for the Profit Centre first.');
+            window.showAlertMessage('You must check Time Sheets and/or Output Sheets for the Profit Centre first.', AlertType.INFO);
             return;
         }
 
@@ -160,15 +160,15 @@ $(function () {
         var hasOutputSheet = $('#chk-outputsheets').is(':checked');
 
         if (!pc) {
-            window.showGovukAlert('Please select a Profit Centre before sending.');
+            window.showAlertMessage('Please select a Profit Centre before sending.', AlertType.INFO);
             return;
         }
         if (!period) {
-            window.showGovukAlert('Please select a Period before sending.');
+            window.showAlertMessage('Please select a Period before sending.', AlertType.INFO);
             return;
         }
         if (!hasTimeSheet && !hasOutputSheet) {
-            window.showGovukAlert('You must check Time Sheets and/or Output Sheets before sending.');
+            window.showAlertMessage('You must check Time Sheets and/or Output Sheets before sending.', AlertType.INFO);
             return;
         }
 
@@ -190,7 +190,7 @@ $(function () {
                 var msg = (xhr.responseJSON && xhr.responseJSON.error)
                     ? xhr.responseJSON.error
                     : 'An error occurred while sending emails. Please try again.';
-                window.showGovukAlert(msg);
+                window.showAlertMessage(msg, AlertType.ERROR);
             },
             complete: function () {
                 $btn.prop('disabled', false).text('Send Emails');
@@ -224,7 +224,7 @@ function saveProfitCentreSettings() {
             __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
         },
         error: function () {
-            alert('Failed to save settings. Please try again.');
+            showAlertMessage('Failed to save settings. Please try again.', AlertType.ERROR);
         }
     });
 }
