@@ -1,4 +1,4 @@
-﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
+@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
 
 @{
     ViewData["Title"] = "Add Project";
@@ -378,11 +378,11 @@
         $(document).ready(function () {
             @if (TempData["Success"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Success"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Success"])', AlertType.SUCCESS);</text>
             }
             @if (TempData["Error"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Error"])', AlertType.ERROR);</text>
             }
 
             // ── Client-side validation for StartDate (custom date picker) ─────

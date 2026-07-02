@@ -23,7 +23,7 @@ function addZtPlan(btn) {
             $('#modalPopup').addClass('show');
         },
         error: function () {
-            showGovukAlert('An error occurred while loading the form.');
+            showAlertMessage('An error occurred while loading the form.', AlertType.ERROR);
         }
     });
 }
@@ -52,7 +52,7 @@ function saveZtPlan() {
         success: function (result) {
             if (result.success) {
                 closeZtModal();
-                showGovukAlert(result.message || 'ZT plan entry created successfully.');
+                showAlertMessage(result.message || 'ZT plan entry created successfully.', AlertType.SUCCESS);
                 window['gridManager_' + ZtPlanConfig.gridId].reloadGrid({ page: 1 });
                 refreshZtTimeSummary();
             } else {
@@ -63,7 +63,7 @@ function saveZtPlan() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -80,7 +80,7 @@ function editZtPlan(btn) {
             $('#modalPopup').addClass('show');
         },
         error: function () {
-            showGovukAlert('An error occurred while loading the form.');
+            showAlertMessage('An error occurred while loading the form.', AlertType.ERROR);
         }
     });
 }
@@ -111,7 +111,7 @@ function updateZtPlan() {
         success: function (result) {
             if (result.success) {
                 closeZtModal();
-                showGovukAlert(result.message || 'ZT plan entry updated successfully.');
+                showAlertMessage(result.message || 'ZT plan entry updated successfully.', AlertType.SUCCESS);
                 window['gridManager_' + ZtPlanConfig.gridId].reloadGrid({ page: 1 });
                 refreshZtTimeSummary();
             } else {
@@ -122,7 +122,7 @@ function updateZtPlan() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -138,16 +138,16 @@ function deleteZtPlan(btn) {
             data: { staffId: ZtPlanConfig.staffId, jobCode: jobCode },
             success: function (response) {
                 if (response.success) {
-                    showGovukAlert('Deleted successfully').then(function () {
+                    showAlertMessage('Deleted successfully', AlertType.SUCCESS).then(function () {
                         window['gridManager_' + ZtPlanConfig.gridId].reloadGrid({ page: 1 });
                         refreshZtTimeSummary();
                     });
                 } else {
-                    showGovukAlert('Error: ' + response.message);
+                    showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
