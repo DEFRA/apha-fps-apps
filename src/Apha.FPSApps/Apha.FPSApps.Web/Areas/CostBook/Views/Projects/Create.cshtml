@@ -1,4 +1,4 @@
-﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
+@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
 
 @{
     ViewData["Title"] = "Add Project";
@@ -12,7 +12,7 @@
         }
     }
 
-    function syncDateToText(pickerId, displayId, hiddenId) {
+    function syncDateToText(pickerId, displayId, hiddenId, errorId) {
         var picker = document.getElementById(pickerId);
         if (picker.value) {
             var parts = picker.value.split('-');
@@ -23,25 +23,91 @@
             document.getElementById(hiddenId).value = '';
         }
 
+        if (errorId) {
+            var err = document.getElementById(errorId);
+            if (err) { err.style.display = 'none'; err.textContent = ''; }
+        }
+
         // Auto-calculate StartFYear when StartDate changes
         if (pickerId === 'StartdatePicker') {
             calculateStartFYear();
         }
     }
 
+    function formatDateInput(input) {
+        var val = input.value.replace(/[^\d\/\-]/g, '');
+        if (val.length > 10) val = val.substring(0, 10);
+        input.value = val;
+    }
+
+    function validateAndSyncDate(displayId, hiddenId, errorId) {
+        var display = document.getElementById(displayId);
+        var hidden  = document.getElementById(hiddenId);
+        var errorEl = document.getElementById(errorId);
+        var val = display.value.trim();
+
+        if (!val) {
+            hidden.value = '';
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+            return;
+        }
+
+        if (/^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(val)) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not yyyy/mm/dd';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var usMatch = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (usMatch && parseInt(usMatch[2], 10) > 12) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not mm/dd/yyyy';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!match) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var day   = parseInt(match[1], 10);
+        var month = parseInt(match[2], 10);
+        var year  = parseInt(match[3], 10);
+        var date  = new Date(year, month - 1, day);
+
+        if (date.getFullYear() !== year || date.getMonth() !== (month - 1) || date.getDate() !== day) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter a valid date in dd/mm/yyyy format';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var mm = String(month).padStart(2, '0');
+        var dd = String(day).padStart(2, '0');
+        hidden.value = year + '-' + mm + '-' + dd;
+        errorEl.style.display = 'none';
+        errorEl.textContent = '';
+    }
+
     function calculateStartFYear() {
-        var picker = document.getElementById('StartdatePicker');
+        var binding = document.getElementById('StartdateBinding');
         var startFYearInput = document.getElementById('StartFYear');
         var financialYearsSelect = document.getElementById('FinancialYears');
 
-        if (!picker || !startFYearInput || !financialYearsSelect) return;
+        if (!binding || !startFYearInput || !financialYearsSelect) return;
 
-        if (!picker.value) {
+        if (!binding.value) {
             startFYearInput.value = '';
             return;
         }
 
-        var parts = picker.value.split('-');
+        var parts = binding.value.split('-');
         var year = parseInt(parts[0], 10);
         var month = parseInt(parts[1], 10);
         var financialYears = financialYearsSelect.value;
@@ -154,15 +220,20 @@
                                     Start Date:<span class="sup_color_red">*</span>
                                 </label>
                                 <div class="me-4">
-                                    <div style="position:relative; display:inline-block;" class="margin_left_5">
+                                    <div style="position:relative; display:flex; align-items:center;" class="margin_left_5">
                                         <input type="text"
                                                id="StartdateDisplay"
                                                class="govuk-input width-200"
                                                value="@Model.StartDate?.ToString("dd/MM/yyyy")"
+                                               placeholder="dd/mm/yyyy"
+                                               maxlength="10"
                                                autocomplete="off"
-                                               onclick="openDatePicker('StartdatePicker')"
-                                               style="cursor:pointer;"
-                                               readonly>
+                                               oninput="formatDateInput(this)"
+                                               onblur="validateAndSyncDate('StartdateDisplay', 'StartdateBinding', 'StartdateError'); calculateStartFYear();">
+                                        <button type="button"
+                                                onclick="openDatePicker('StartdatePicker')"
+                                                style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                                aria-label="Open date picker for Start Date">&#128197;</button>
                                         <input type="hidden"
                                                name="StartDate"
                                                id="StartdateBinding"
@@ -171,8 +242,9 @@
                                                id="StartdatePicker"
                                                value="@(Model.StartDate.HasValue ? Model.StartDate.Value.ToString("yyyy-MM-dd") : string.Empty)"
                                                style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                               onchange="syncDateToText('StartdatePicker', 'StartdateDisplay', 'StartdateBinding')">
+                                               onchange="syncDateToText('StartdatePicker', 'StartdateDisplay', 'StartdateBinding', 'StartdateError')">
                                     </div>
+                                    <span id="StartdateError" class="govuk-error-message" style="display:none;"></span>
                                     <span asp-validation-for="StartDate" class="govuk-error-message"></span>
                                 </div>
                                 <label asp-for="IsDefraProject" class="govuk-label label_width mb-0 pt-1">
@@ -249,15 +321,20 @@
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label for="DateOfSubmissionDisplay" class="govuk-label label_width mb-0 pt-1">Date of Submission:</label>
                                 <div>
-                                    <div style="position:relative; display:inline-block;">
+                                    <div style="position:relative; display:flex; align-items:center;">
                                         <input type="text"
                                                id="DateOfSubmissionDisplay"
                                                class="govuk-input width-200 margin_left_5"
                                                value="@Model.DateOfSubmission?.ToString("dd/MM/yyyy")"
+                                               placeholder="dd/mm/yyyy"
+                                               maxlength="10"
                                                autocomplete="off"
-                                               onclick="openDatePicker('DateOfSubmissionPicker')"
-                                               style="cursor:pointer;"
-                                               readonly>
+                                               oninput="formatDateInput(this)"
+                                               onblur="validateAndSyncDate('DateOfSubmissionDisplay', 'DateOfSubmissionBinding', 'DateOfSubmissionError')">
+                                        <button type="button"
+                                                onclick="openDatePicker('DateOfSubmissionPicker')"
+                                                style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                                aria-label="Open date picker for Date of Submission">&#128197;</button>
                                         <input type="hidden"
                                                name="DateOfSubmission"
                                                id="DateOfSubmissionBinding"
@@ -266,8 +343,9 @@
                                                id="DateOfSubmissionPicker"
                                                value="@Model.DateOfSubmission?.ToString("yyyy-MM-dd")"
                                                style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                               onchange="syncDateToText('DateOfSubmissionPicker', 'DateOfSubmissionDisplay', 'DateOfSubmissionBinding')">
+                                               onchange="syncDateToText('DateOfSubmissionPicker', 'DateOfSubmissionDisplay', 'DateOfSubmissionBinding', 'DateOfSubmissionError')">
                                     </div>
+                                    <span id="DateOfSubmissionError" class="govuk-error-message" style="display:none;"></span>
                                     <span asp-validation-for="DateOfSubmission" class="govuk-error-message"></span>
                                 </div>
                             </div>
@@ -300,11 +378,11 @@
         $(document).ready(function () {
             @if (TempData["Success"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Success"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Success"])', AlertType.SUCCESS);</text>
             }
             @if (TempData["Error"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Error"])', AlertType.ERROR);</text>
             }
 
             // ── Client-side validation for StartDate (custom date picker) ─────

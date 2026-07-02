@@ -54,7 +54,6 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<ProjectGroupStaffPlanView, ProjectGroupStaffPlanViewDto>().ReverseMap();
             CreateMap<AdditionalCost, AdditionalCostDto>().ReverseMap();
             CreateMap<AccountCategory, AccountCategoryDto>().ReverseMap();
-            CreateMap<WorkGroupStaff, WorkGroupStaffDto>().ReverseMap();
             CreateMap<WorkGroupPerson, WorkGroupPersonDto>().ReverseMap();
            
 
@@ -84,6 +83,9 @@ namespace Apha.FPS.Application.Mappings
             //   AnimalCosts, AdditionalCosts, TotalCosts, Budget, Profit, TargetProfit, OffTarget.
             CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
               
+
+            // UserPermission
+            CreateMap<User, UserDto>().ReverseMap();
 
             // BudgetResourceLevel
             CreateMap<Bid, BidDto>().ReverseMap();

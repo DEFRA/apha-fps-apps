@@ -62,7 +62,7 @@ namespace Apha.FPSApps.Application.Services.FPS
             return await _fpsClient.FpsEmployee.GetAllWorkGroupPersonAsync();
         }
 
-        public async Task<ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>> GetWorkGroupStaffAsync(QueryParameters<string> query, string? workGroup = null)
+        public async Task<ApiResponseDto<PaginatedResult<PactStaffDto>>> GetWorkGroupStaffAsync(QueryParameters<string> query, string? workGroup = null)
         {
             return await _fpsClient.FpsEmployee.GetWorkGroupStaffAsync(query, workGroup);
         }

@@ -1,0 +1,120 @@
+@using Apha.FPSApps.Web.Areas.FPS.Models
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Apha.FPSApps.Application.Dtos.FPS
+@model DataGridConfig<UserPermissionViewModel>
+@{
+    var options = ViewBag.PermissionOptions as PermissionOptionsDto ?? new PermissionOptionsDto();
+}
+
+<main id="main-content">
+    <div class="container-fluid">
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="govuk-grid-row">
+                    <div class="govuk-grid-column-full govuk-!-margin-left-3">
+                        <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+                            Maintain User Permissions
+                        </h1>
+                    </div>
+                </div>
+
+                <div class="govuk-grid-row">
+                    <div class="wgg-container-fluid">
+                        <div class="wgg-layout-row">
+                            <!-- Side nav -->
+                            @await Html.PartialAsync("_MaintenanceSideNav", "UserPermission")
+
+                            <section class="govuk-grid-column-full fps-mup-page" aria-label="Maintain user permissions workspace">
+                                <!-- Selected user indicator -->
+                                <div class="govuk-grid-row">
+                                    <div class="govuk-grid-column-full">
+                                        <div class="fps-mup-search-group govuk-grid-column-one-quarter">
+                                            <label class="govuk-label govuk-visually-hidden" for="mupSelectedUser">Selected user</label>
+                                            <input id="mupSelectedUser" class="govuk-input govuk-input--width-20" type="text" readonly value="No user selected">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="fps-mup-content govuk-!-margin-top-3">
+                                    <!-- User Grid Panel -->
+                                    <div class="fps-mup-users-panel">
+                                        <div id="@($"gridContainer_{Model.GridId}")" class="sup_border govuk-!-margin-bottom-3">
+                                            @await Html.PartialAsync("_DataGrid", Model)
+                                        </div>
+                                    </div>
+
+                                    <!-- Permission Panels -->
+                                    <div class="fps-mup-permissions-panel" id="permissionPanelsContainer" style="display:none;">
+                                        <div class="fps-mup-permissions-grid govuk-!-margin-bottom-3">
+                                            @await Html.PartialAsync("_PermissionPanel", new ViewDataDictionary(ViewData)
+                                            {
+                                                { "PanelId", "profitCentres" },
+                                                { "PanelTitle", "Resource Centre Permission" },
+                                                { "Options", options.ProfitCentres }
+                                            })
+
+                                            @await Html.PartialAsync("_PermissionPanel", new ViewDataDictionary(ViewData)
+                                            {
+                                                { "PanelId", "programs" },
+                                                { "PanelTitle", "Programme Permissions" },
+                                                { "Options", options.Programs }
+                                            })
+
+                                            @await Html.PartialAsync("_PermissionPanel", new ViewDataDictionary(ViewData)
+                                            {
+                                                { "PanelId", "categories" },
+                                                { "PanelTitle", "Directorate Permissions" },
+                                                { "Options", options.Categories }
+                                            })
+
+                                            @await Html.PartialAsync("_PermissionPanel", new ViewDataDictionary(ViewData)
+                                            {
+                                                { "PanelId", "testOwners" },
+                                                { "PanelTitle", "Test Owner Permissions" },
+                                                { "Options", new List<string>() },
+                                                { "AllowFreeText", true }
+                                            })
+
+                                            @await Html.PartialAsync("_PermissionPanel", new ViewDataDictionary(ViewData)
+                                            {
+                                                { "PanelId", "projectGroups" },
+                                                { "PanelTitle", "Project Group Permissions" },
+                                                { "Options", options.ProjectGroups }
+                                            })
+                                        </div>
+                                    </div>
+
+                                    <!-- Save toolbar -->
+                                    <div class="fps-mup-toolbar" id="saveToolbar" style="display:none;">
+                                        <div class="fps-mup-toolbar-actions">
+                                            <button type="button" id="mupSaveBtn" class="govuk-button govuk-!-margin-bottom-0" disabled
+                                                    onclick="savePermissions()">Save changes</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Footer note -->
+                                <div class="fps-mup-help sup_border_t_1" role="note" aria-label="User permissions note">
+                                    <p class="govuk-body-s govuk-!-margin-bottom-0">
+                                        <strong>Note:</strong> This form is only for updating existing user permissions.<br>
+                                        If new users need to be added, contact the IT dept.
+                                    </p>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>window.userPermissionGridId = '@Model.GridId';</script>
+    <script src="~/js/fps_js/UserPermission.js"></script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

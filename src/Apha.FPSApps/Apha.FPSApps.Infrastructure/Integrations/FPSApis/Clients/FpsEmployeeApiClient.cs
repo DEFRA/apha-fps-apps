@@ -139,26 +139,26 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<WorkGroupPersonDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
-        public async Task<ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>> GetWorkGroupStaffAsync(QueryParameters<string> query, string? workGroup = null)
+        public async Task<ApiResponseDto<PaginatedResult<PactStaffDto>>> GetWorkGroupStaffAsync(QueryParameters<string> query, string? workGroup = null)
         {
             var url = QueryStringHelper.AddQueryString(FpsApiEndpoints.GetWorkGroupStaffPaginated, query);
             if (!string.IsNullOrWhiteSpace(workGroup))
                 url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
-            var response = await _http.GetAsync<List<WorkGroupStaffRes>>(url);
+            var response = await _http.GetAsync<List<PactStaffRes>>(url);
             if (response.Success)
             {
-                var dto = _mapper.Map<ApiResponseDto<List<WorkGroupStaffDto>>>(response);
+                var dto = _mapper.Map<ApiResponseDto<List<PactStaffDto>>>(response);
                 var pagination = response.Pagination;
-                var result = new PaginatedResult<WorkGroupStaffDto>(
-                    dto.Data ?? new List<WorkGroupStaffDto>(),
+                var result = new PaginatedResult<PactStaffDto>(
+                    dto.Data ?? new List<PactStaffDto>(),
                     pagination?.TotalRecords ?? 0,
                     pagination?.PageNumber ?? query.Page,
                     pagination?.PageSize ?? query.PageSize);
-                return ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.SuccessResponse(result);
+                return ApiResponseDto<PaginatedResult<PactStaffDto>>.SuccessResponse(result);
             }
 
-            var failDto = _mapper.Map<ApiResponseDto<List<WorkGroupStaffDto>>>(response);
-            return ApiResponseDto<PaginatedResult<WorkGroupStaffDto>>.FailureResponse(failDto.Errors, failDto.Meta);
+            var failDto = _mapper.Map<ApiResponseDto<List<PactStaffDto>>>(response);
+            return ApiResponseDto<PaginatedResult<PactStaffDto>>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
         public async Task<ApiResponseDto<List<PactStaffDto>>> GetPactStaffAsync()

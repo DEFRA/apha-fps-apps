@@ -66,7 +66,7 @@ namespace Apha.PACT.Application.Services
             // Validate required fields
             if (string.IsNullOrWhiteSpace(dto.ItemCode))
             {
-                throw new ArgumentException("Item Code is required.", nameof(dto.ItemCode));
+                throw new ArgumentException("Item Code is required.");
             }
 
             // Check for duplicate primary key
@@ -100,7 +100,7 @@ namespace Apha.PACT.Application.Services
             // Validate required fields
             if (string.IsNullOrWhiteSpace(dto.ItemCode))
             {
-                throw new ArgumentException("Item Code is required for update.", nameof(dto.ItemCode));
+                throw new ArgumentException("Item Code is required for update.");
             }
 
             // Verify entity exists before update
@@ -229,10 +229,32 @@ namespace Apha.PACT.Application.Services
             }
 
             // Throw exception if any validation errors found
-            if (validationErrors.Any())
+            if (validationErrors.Count != 0)
             {
                 throw new ArgumentException($"Validation failed: {string.Join(" ", validationErrors)}");
             }
         }
-    }
+
+        // ── TestPriceCheck (frmTestPriceCheck — qryTestPriceZero) ──────────────────────────────
+
+        public async Task<PaginatedResult<TestPriceCheckDto>> GetTestPriceCheckPagedAsync(
+            QueryParameters<string> query,
+            string priceFilter,
+            string? owner)
+        {
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetTestPriceCheckPagedAsync(parameters, priceFilter, owner);
+            return _mapper.Map<PaginatedResult<TestPriceCheckDto>>(pagedData);
+        }
+
+        public async Task<TestPriceCheckDto?> GetTestPriceCheckByKeyAsync(string testCode, string jobCode)
+        {
+            var entity = await _repository.GetTestPriceCheckByKeyAsync(testCode, jobCode);
+            return entity == null ? null : _mapper.Map<TestPriceCheckDto>(entity);
+        }
+
+        public async Task<bool> UpdateTestPriceCheckAsync(string testCode, string jobCode, TestPriceCheckDto dto)
+            => await _repository.UpdateTestPriceCheckAsync(testCode, jobCode, dto.IsDefraProject, dto.TestPrice, dto.DefraUnitPrice);
+
+        }
 }

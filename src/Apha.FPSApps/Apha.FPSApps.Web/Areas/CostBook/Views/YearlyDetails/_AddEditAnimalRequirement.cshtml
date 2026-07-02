@@ -61,30 +61,32 @@
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="NumberOfAnimals" class="govuk-label">
-                No <span class="sup_color_red">*</span>
+                No 
             </label>
             <input asp-for="NumberOfAnimals" type="number" step="1" class="govuk-input"
-                   value="@(Model.NumberOfAnimals ?? 0)" />
+                   value="@(Model.NumberOfAnimals ?? 0)"
+                   onblur="if(this.value==='')this.value='0';" />
             <span asp-validation-for="NumberOfAnimals" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="NumberOfDays" class="govuk-label">
-                Days <span class="sup_color_red">*</span>
+                Days 
             </label>
             <input asp-for="NumberOfDays" type="number" step="1" class="govuk-input"
-                   value="@(Model.NumberOfDays ?? 0)" />
+                   value="@(Model.NumberOfDays ?? 0)"
+                   onblur="if(this.value==='')this.value='0';" />
             <span asp-validation-for="NumberOfDays" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="DailyRate" class="govuk-label">
-                Rate <span class="sup_color_red">*</span>
+                Rate
             </label>
             <input asp-for="DailyRate" type="text" readonly class="govuk-input" />
             <span asp-validation-for="DailyRate" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="AnimalCost" class="govuk-label">
-                Cost <span class="sup_color_red">*</span>
+                Cost 
             </label>
             <input asp-for="AnimalCost" type="text" readonly class="govuk-input" />
             <span asp-validation-for="AnimalCost" class="govuk-error-message" style="display:none;"></span>

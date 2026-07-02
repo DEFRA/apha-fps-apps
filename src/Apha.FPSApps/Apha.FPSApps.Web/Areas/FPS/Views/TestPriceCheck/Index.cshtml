@@ -1,0 +1,205 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model Apha.FPSApps.Web.Areas.FPS.Models.TestPriceCheckViewModel
+
+@{
+    ViewData["Title"] = "Test Price Check";
+}
+
+<main id="main-content">
+    <div class="container-fluid">
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+                    Test Price Check
+                </h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="container-fluid" style="padding:0;">
+
+                    <!-- Filters row -->
+                    <div class="govuk-grid-row govuk-!-margin-left-0 govuk-!-margin-right-0 govuk-!-margin-bottom-3"
+                         id="test-price-layout-row">
+
+                        <div class="govuk-grid-column-three-quarters">
+                            <fieldset class="govuk-fieldset">
+                                <legend class="govuk-fieldset__legend govuk-fieldset__legend--s govuk-!-margin-bottom-1">
+                                    Price
+                                </legend>
+                                <div class="govuk-radios govuk-radios--inline govuk-radios--small"
+                                     data-module="govuk-radios">
+                                    <div class="govuk-radios__item">
+                                        <input class="govuk-radios__input" id="price-filter-zero"
+                                               name="priceFilter" type="radio" value="zero"
+                                               @(Model.SelectedPriceFilter == "zero" ? "checked" : "")
+                                               onchange="reloadTestPriceCheckGrid()" />
+                                        <label class="govuk-label govuk-radios__label" for="price-filter-zero">
+                                            Zero Rated
+                                        </label>
+                                    </div>
+                                    <div class="govuk-radios__item">
+                                        <input class="govuk-radios__input" id="price-filter-non"
+                                               name="priceFilter" type="radio" value="non-standard"
+                                               @(Model.SelectedPriceFilter == "non-standard" ? "checked" : "")
+                                               onchange="reloadTestPriceCheckGrid()" />
+                                        <label class="govuk-label govuk-radios__label" for="price-filter-non">
+                                            Non Standard
+                                        </label>
+                                    </div>
+                                    <div class="govuk-radios__item">
+                                        <input class="govuk-radios__input" id="price-filter-both"
+                                               name="priceFilter" type="radio" value="all"
+                                               @(Model.SelectedPriceFilter == "all" ? "checked" : "")
+                                               onchange="reloadTestPriceCheckGrid()" />
+                                        <label class="govuk-label govuk-radios__label" for="price-filter-both">
+                                            Both
+                                        </label>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+
+                        <div class="govuk-grid-column-one-quarter govuk-!-text-align-right">
+                            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16 govuk-!-margin-bottom-1"
+                                   for="test-owner-filter">Test Owner</label>
+                            <select class="govuk-select govuk-!-font-size-16" id="test-owner-filter" name="owner"
+                                    asp-items="@(new SelectList(Model.Owners, Model.SelectedOwner))"
+                                    onchange="reloadTestPriceCheckGrid()">
+                                <option value="">All Owners</option>
+                            </select>
+                        </div>
+
+                        <!-- Grid -->
+                        <div class="govuk-grid-column-full govuk-!-margin-top-3">
+                            <div id="gridContainer_testPriceCheckGrid">
+                                @await Html.PartialAsync("_DataGrid", Model.PriceCheckGrid)
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        var urlEdit = '@Url.Action("Edit", "TestPriceCheck", new { area = "FPS" })';
+
+        function getGridManager() {
+            return window['gridManager_testPriceCheckGrid'];
+        }
+
+        function getSelectedPriceFilter() {
+            var checked = document.querySelector('input[name="priceFilter"]:checked');
+            return checked ? checked.value : 'all';
+        }
+
+        function getSelectedOwner() {
+            var sel = document.getElementById('test-owner-filter');
+            return sel ? sel.value : '';
+        }
+
+        function getTestPriceCheckExtraFilters() {
+            return {
+                priceFilter: getSelectedPriceFilter(),
+                owner:       getSelectedOwner()
+            };
+        }
+
+        function reloadTestPriceCheckGrid() {
+            var gm = getGridManager();
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }
+
+        function editTestPriceCheck(btn) {
+            var $row     = $(btn).closest('tr');
+            var testCode = $(btn).data('id');
+            var jobCode  = $row.find('[data-property="JobCode"] span').text().trim();
+
+            var params = new URLSearchParams({
+                testCode: testCode,
+                jobCode:  jobCode
+            });
+
+            $.ajax({
+                url:  urlEdit + '?' + params.toString(),
+                type: 'GET',
+                success: function (html) {
+                    $('#modaPopupBody').html(html);
+                    $('#modalPopup').addClass('show');
+                },
+                error: function () {
+                    showAlertMessage('An error occurred while loading the edit form.', AlertType.ERROR);
+                }
+            });
+        }
+
+        function saveTestPriceCheck() {
+            clearValidationErrors('#modaPopupBody');
+            var form = $('#editTestPriceForm');
+
+            if (!isFormValid(form)) {
+                displayClientValidationErrors(form, '#modaPopupBody');
+                return;
+            }
+
+            var data = {
+                TestCode:       $('#TestCode').val(),
+                JobCode:        $('#JobCode').val(),
+                IsDefraProject: parseInt($('#IsDefraProject').val(), 10),
+                TestPrice:      parseFloat($('#TestPrice').val()),
+                DefraUnitPrice: parseFloat($('#DefraUnitPrice').val())
+            };
+
+            $.ajax({
+                url:         '/FPS/TestPriceCheck/Edit',
+                type:        'POST',
+                data:        JSON.stringify(data),
+                contentType: 'application/json',
+                success: function (response) {
+                    if (response.success) {
+                         closeModal();
+                        showAlertMessage(response.message, AlertType.SUCCESS).then(function () {                           
+                            reloadTestPriceCheckGrid();
+                        });
+                    } else {
+                        displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 400 && xhr.responseJSON) {
+                        displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
+                    } else {
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
+                    }
+                }
+            });
+        }
+
+        function isFormValid(form) {
+            var isValid = true;
+            form.find('[required]').each(function () {
+                if (!$(this).val() || $(this).val().trim() === '') {
+                    isValid = false;
+                    return false;
+                }
+            });
+            return isValid;
+        }
+
+        function closeModal() {
+            clearValidationErrors();
+            $('#modaPopupBody').html("");
+            $('#modalPopup').removeClass("show");
+        }
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

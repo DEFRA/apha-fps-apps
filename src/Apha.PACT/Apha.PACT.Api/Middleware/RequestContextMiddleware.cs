@@ -39,7 +39,7 @@ namespace Apha.PACT.Api.Middleware
             SetCorrelationId(context, CorrelationIdHeader);
 
             requestContext.FpsYear = fpsYear;
-            requestContext.UserEmailId = ("Rohit.Agarwal@defradev.onmicrosoft.com").ToLowerInvariant(); //(context.User?.Identity?.Name ?? string.Empty).ToLowerInvariant();
+            requestContext.UserEmailId = (context.User?.Identity?.Name ?? string.Empty).ToLowerInvariant();
 
             await _next(context);
         }

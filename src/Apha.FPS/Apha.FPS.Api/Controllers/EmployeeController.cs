@@ -161,7 +161,7 @@ namespace Apha.FPS.Api.Controllers
         {
             var filter = _mapper.Map<QueryParameters<string>>(query);
             var result = await _employeeService.GetWorkGroupStaffAsync(filter, workGroup);
-            return Ok(_mapper.Map<PaginationRes<WorkGroupStaffRes>>(result));
+            return Ok(_mapper.Map<PaginationRes<PactStaffRes>>(result));
         }
 
         /// <summary>
