@@ -21,7 +21,7 @@ public sealed class CreateProjectMonthCumulativeStepTests
         using var db = new BatchJobsDbContext(options);
 
         // Seed RsTblPeriod
-        db.RsTblPeriod.Add(new RsTblPeriodTable { EndPeriod = 1, PeriodName = "2026-01", PeriodLocked = 0 });
+        db.RsTblPeriod.Add(new RsTblPeriodTable { EndPeriod = 1, PeriodName = "2026-01", PeriodLocked = 0, FpsYear = 2026 });
         // Seed RsTblkPeriodMonth
         db.RsTblkPeriodMonth.Add(new RsTblkPeriodMonthTable { PeriodName = "2026-01", MonthNo = 1 });
         // Seed RsProjectMonth2
@@ -47,12 +47,14 @@ public sealed class CreateProjectMonthCumulativeStepTests
             PayCosts = 4d
         });
         // Seed RsProjectMonthCasework
-        db.RsProjectMonthCasework.Add(new RsProjectMonthCaseworkTable {
+        var casework = new RsProjectMonthCaseworkTable {
             Project = "P1",
             MonthNo = 1,
             CwDebit = 1d,
             CwCredit = 2d
-        });
+        };
+        db.RsProjectMonthCasework.Add(casework);
+        db.Entry(casework).Property("FpsYear").CurrentValue = 2026;
         await db.SaveChangesAsync();
 
         var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);

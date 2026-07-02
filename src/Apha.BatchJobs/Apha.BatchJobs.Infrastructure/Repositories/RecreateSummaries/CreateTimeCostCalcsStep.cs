@@ -20,6 +20,7 @@ internal sealed class CreateTimeCostCalcsStep : RecreateSummariesExecutionStepBa
             join mt in db.RsMonthlyTime.AsNoTracking() on vps.PactId equals mt.PactStaffId
             join tcv in db.RsTimeCodeValid.AsNoTracking() on new { mt.WorkGroup, mt.TimeCode, mt.ParentProject } equals new { tcv.WorkGroup, tcv.TimeCode, tcv.ParentProject }
             join p in db.RsTlkpProject.AsNoTracking() on tcv.ParentProject equals p.ParentProject
+            where p.FpsYear == context.FpsYear
             join prg in db.RsTlkpProgram.AsNoTracking() on p.Program equals prg.ProgramNo
             select new
             {

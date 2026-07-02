@@ -7,5 +7,7 @@ internal sealed class DeleteTimeCostCalcsStep : RecreateSummariesExecutionStepBa
     public override string StepName => "DeleteTimeCostCalcs";
 
     protected override Task<int> ExecuteCoreAsync(RecreateSummariesExecutionContext context, CancellationToken cancellationToken)
-        => context.DbContext.RsTimeCostCalcs.ExecuteDeleteAsync(cancellationToken);
+        => context.DbContext.RsTimeCostCalcs
+            .Where(x => x.FpsYear == context.FpsYear)
+            .ExecuteDeleteAsync(cancellationToken);
 }

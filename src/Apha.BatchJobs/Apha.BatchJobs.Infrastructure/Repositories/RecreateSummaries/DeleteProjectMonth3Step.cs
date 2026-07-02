@@ -7,5 +7,7 @@ internal sealed class DeleteProjectMonth3Step : RecreateSummariesExecutionStepBa
     public override string StepName => "DeleteProjectMonth3";
 
     protected override Task<int> ExecuteCoreAsync(RecreateSummariesExecutionContext context, CancellationToken cancellationToken)
-        => context.DbContext.RsProjectMonth3.ExecuteDeleteAsync(cancellationToken);
+        => context.DbContext.RsProjectMonth3
+            .Where(x => x.FpsYear == context.FpsYear)
+            .ExecuteDeleteAsync(cancellationToken);
 }

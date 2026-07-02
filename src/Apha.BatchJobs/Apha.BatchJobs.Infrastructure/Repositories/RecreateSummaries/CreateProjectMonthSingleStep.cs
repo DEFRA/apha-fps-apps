@@ -24,6 +24,7 @@ internal sealed class CreateProjectMonthSingleStep : RecreateSummariesExecutionS
         // then apply defaults in C#.
         var rawRows = await (
             from pm in db.RsProjectMonth.AsNoTracking()
+            where pm.FpsYear == context.FpsYear
             join sc0 in db.RsQryJobMonthSubContracts.AsNoTracking()
                 on new { pm.Project, Month = pm.MonthNo } equals new { sc0.Project, sc0.Month } into sc1
             from sc in sc1.DefaultIfEmpty()

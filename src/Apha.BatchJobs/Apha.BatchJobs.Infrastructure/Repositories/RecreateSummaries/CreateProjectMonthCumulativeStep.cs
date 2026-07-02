@@ -15,12 +15,14 @@ internal sealed class CreateProjectMonthCumulativeStep : RecreateSummariesExecut
         // COALESCE(SUM(money_col), 0::numeric) PostgreSQL type errors on money columns.
         var rawRows = await (
             from tp in db.RsTblPeriod.AsNoTracking()
+            where tp.FpsYear == context.FpsYear
             join tpm in db.RsTblkPeriodMonth.AsNoTracking()
                 on tp.PeriodName equals tpm.PeriodName
             join pm2 in db.RsProjectMonth2.AsNoTracking()
                 on tpm.MonthNo equals pm2.MonthNo
+            where pm2.FpsYear == context.FpsYear
             join pmcw in db.RsProjectMonthCasework.AsNoTracking()
-                on new { pm2.Project, pm2.MonthNo } equals new { pmcw.Project, pmcw.MonthNo }
+                on new { pm2.Project, pm2.MonthNo, pm2.FpsYear } equals new { pmcw.Project, pmcw.MonthNo, FpsYear = EF.Property<int>(pmcw, "FpsYear") }
             select new
             {
                 tp.EndPeriod,

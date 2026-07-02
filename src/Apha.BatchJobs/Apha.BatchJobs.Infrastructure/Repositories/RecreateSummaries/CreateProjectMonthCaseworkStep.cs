@@ -11,28 +11,19 @@ internal sealed class CreateProjectMonthCaseworkStep : RecreateSummariesExecutio
     {
         var db = context.DbContext;
 
-        // Strict SQL alignment: SELECT DISTINCT from qryProjectMonthCW, all fields, null handling.
-        var rawRows = await db.RsQryProjectMonthCw
-            .AsNoTracking()
-            .Select(x => new
-            {
-                Project = x.Project,
-                MonthNo = x.MonthNo,
-                CwDebit = x.CwDebit,
-                CwCredit = x.CwCredit
-            })
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        var rows = rawRows.Select(x => new RsProjectMonthCaseworkTable
-        {
-            Project = x.Project,
-            MonthNo = x.MonthNo,
-            CwDebit = (double)(x.CwDebit ?? 0m),
-            CwCredit = (double)(x.CwCredit ?? 0m)
-        }).ToList();
-
-        await db.RsProjectMonthCasework.AddRangeAsync(rows, cancellationToken);
-        return await db.SaveChangesAsync(cancellationToken);
+        // Preserve legacy data-shape logic while making year explicit in the shared multi-year DB.
+        return await db.Database.ExecuteSqlInterpolatedAsync($@"
+            INSERT INTO fps.projectmonthcasework (project, monthno, fpsyear, cwdebit, cwcredit)
+            SELECT DISTINCT
+                q.project,
+                q.monthno,
+                pm.fpsyear,
+                COALESCE(q.cwdebit, 0),
+                COALESCE(q.cwcredit, 0)
+            FROM fps.qryprojectmonthcw q
+            JOIN fps.projectmonth pm
+              ON pm.project = q.project
+             AND pm.monthno = q.monthno
+             AND pm.fpsyear = {context.FpsYear};", cancellationToken);
     }
 }

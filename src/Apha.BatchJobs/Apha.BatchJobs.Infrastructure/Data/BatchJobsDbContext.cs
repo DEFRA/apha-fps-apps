@@ -1339,7 +1339,7 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsTlkpProjectTable>(entity =>
         {
             entity.ToTable("tlkpproject", schema: "fps");
-            entity.HasKey(e => e.ParentProject);
+            entity.HasKey(e => new { e.ParentProject, e.FpsYear });
             entity.Property(e => e.ParentProject).HasColumnName("parentproject");
             entity.Property(e => e.Program).HasColumnName("program");
             entity.Property(e => e.PlanCaseworkDebit).HasColumnName("plancaseworkdebit");
@@ -1373,7 +1373,7 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsProjectMonthTable>(entity =>
         {
             entity.ToTable("projectmonth", schema: "fps");
-            entity.HasKey(e => new { e.Project, e.MonthNo });
+            entity.HasKey(e => new { e.Project, e.MonthNo, e.FpsYear });
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.MonthNo).HasColumnName("monthno");
             entity.Property(e => e.CostProfile).HasColumnName("costprofile");
@@ -1383,7 +1383,7 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsTimeCostCalcsTable>(entity =>
         {
             entity.ToTable("timecostcalcs", schema: "fps");
-            entity.HasKey(e => new { e.Project, e.Month, e.StaffId, e.JobCode });
+            entity.HasKey(e => new { e.WorkGroup, e.JobCode, e.Project, e.Month, e.StaffId, e.FpsYear });
             entity.Property(e => e.WorkGroup).HasColumnName("workgroup");
             entity.Property(e => e.JobCode).HasColumnName("jobcode");
             entity.Property(e => e.Project).HasColumnName("project");
@@ -1405,9 +1405,10 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsProjectMonthCaseworkTable>(entity =>
         {
             entity.ToTable("projectmonthcasework", schema: "fps");
-            entity.HasKey(e => new { e.Project, e.MonthNo });
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.MonthNo).HasColumnName("monthno");
+            entity.Property<int>("FpsYear").HasColumnName("fpsyear");
+            entity.HasKey("Project", "MonthNo", "FpsYear");
             entity.Property(e => e.CwDebit).HasColumnName("cwdebit");
             entity.Property(e => e.CwCredit).HasColumnName("cwcredit");
         });
@@ -1755,6 +1756,7 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.MonthNo)
                   .HasColumnName("monthno")
                   .HasConversion<double>();
+            entity.Property<int?>("FpsYear").HasColumnName("fpsyear");
             entity.Property(e => e.CwDebit).HasColumnName("cwdebit");
             entity.Property(e => e.CwCredit).HasColumnName("cwcredit");
         });
