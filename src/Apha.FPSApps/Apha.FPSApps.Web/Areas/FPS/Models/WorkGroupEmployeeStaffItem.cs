@@ -36,8 +36,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         [GridColumn(Width = 70, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double Leave { get; set; }
 
-        [Display(Name = "SickSp")]
-        [Required(ErrorMessage = "SickSp is required")]
+        [Display(Name = "Sick Special")]
+        [Required(ErrorMessage = "Sick Special is required")]
         [GridColumn(Width = 95, Type = GridColumnType.DecimalNumber, IsFilterable = false)]
         public double SickSpecial { get; set; }
 
