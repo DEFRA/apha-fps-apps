@@ -51,10 +51,10 @@
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
                 <form asp-action="Index" asp-controller="ResourceSetUp" asp-area="FPS" method="get"
-                      class="govuk-!-padding-left-4 govuk-!-padding-top-2 govuk-!-padding-bottom-2"
-                      style="display: flex; align-items: center;">
+                      class="govuk-!-padding-right-4 govuk-!-padding-top-2 govuk-!-padding-bottom-2"
+                      style="display: flex; align-items: center; justify-content: flex-end;">
                     <input type="hidden" name="year" value="@FpsYearContext.Year" />
-                    <label class="fw-bold mt-2" for="profitCentreSelect">Resource Centre: </label>
+                    <label class="fw-bold mt-2 me-2" for="profitCentreSelect">Resource Centre: </label>
                     <select id="profitCentreSelect"
                             name="profitCentre"
                             asp-items="Model.ProfitCentreList"
