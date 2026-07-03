@@ -68,4 +68,51 @@ public sealed class RefreshPeriodPscStepTests
         Assert.Equal(100m, row.Amount);
         Assert.Equal("A1", row.AcctCode);
     }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_IgnoresNullMonthRows()
+    {
+        await using var harness = await RecreateSummariesPostgresTestHarness.CreateAsync();
+        var db = harness.DbContext;
+
+        var period = 93;
+        var project = harness.Id("PRJPSCNULL");
+        var program = "PRGPSCN";
+        var costCentre = Random.Shared.Next(700001, 799999);
+        var subContCounter = Random.Shared.Next(970000, 979999);
+
+        await harness.ExecuteSqlAsync($@"
+            INSERT INTO fps.tlkpprogram (programno, fpsyear, sector_name)
+            VALUES ('{program}', {harness.FpsYear}, 'charge');
+
+            INSERT INTO fps.tlkpproject
+                (parentproject, projecttitle, program, customer, transferincome, custincome, projectstatus, disease,
+                 contract, isdefraproject, costcentre, oracleprojectcode, subaccountcode, incomeaccountcode, fpsyear)
+            VALUES
+                ('{project}', 'Project PSC Null Month', '{program}', 'Cust', 0::money, 0::money, 'Active', 'General',
+                 'Contract', 0, {costCentre}, 'OPC2', 'SAC2', 'IA2', {harness.FpsYear});
+
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
+            VALUES ('{harness.Id("PCN")}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1));
+
+            INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
+            VALUES ({costCentre}, '{harness.Id("PCN")}', {harness.FpsYear});
+
+            INSERT INTO fps.proj_subcontract (subcontcounter, project, month, amount, acctcode, fpsyear)
+            VALUES ({subContCounter}, '{project}', NULL, 125::money, 'A2', {harness.FpsYear});
+        ");
+
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), 2026);
+        var step = new RefreshPeriodPscStep(period);
+
+        var result = await step.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.Equal(StepStatus.Success, result.Status);
+
+        var rows = await db.RsPeriodProjSubContract.AsNoTracking()
+            .Where(x => x.Period == period && x.Project == project)
+            .ToListAsync();
+
+        Assert.Empty(rows);
+    }
 }

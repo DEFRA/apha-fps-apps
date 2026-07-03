@@ -1645,7 +1645,7 @@ public class BatchJobsDbContext : DbContext
             entity.HasKey(e => new { e.SubContCounter, e.FpsYear });
             entity.Property(e => e.SubContCounter).HasColumnName("subcontcounter");
             entity.Property(e => e.Project).HasColumnName("project");
-            entity.Property(e => e.Month).HasColumnName("month").HasConversion<double>();
+            entity.Property(e => e.Month).HasColumnName("month").HasConversion<double?>();
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.AcctCode).HasColumnName("acctcode");
             entity.Property(e => e.FpsYear).HasColumnName("fpsyear");

@@ -55,11 +55,13 @@ internal sealed class RefreshPeriodMoStep : RecreateSummariesExecutionStepBase
             INNER JOIN fps.tlkptestreqmt AS tr
                 ON mo.buyer = tr.projectbuyercode
                AND mo.testcode = tr.testcode
+               AND tr.fpsyear = {fpsYear}
             INNER JOIN fps.tlkpproject AS p
                 ON mo.buyer = p.parentproject
             LEFT JOIN fps.costcentre AS c
                 ON p.costcentre = c.costcentre
                AND p.fpsyear = c.fpsyear
-            WHERE p.fpsyear = {fpsYear};", cancellationToken);
+            WHERE p.fpsyear = {fpsYear}
+              AND mo.fpsyear = {fpsYear};", cancellationToken);
     }
 }

@@ -156,4 +156,64 @@ public sealed class RefreshPeriodMoStepTests
 
         Assert.Empty(priorRows);
     }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_DoesNotMultiplyRowsFromOtherYearSources()
+    {
+        await using var harness = await RecreateSummariesPostgresTestHarness.CreateAsync();
+        var db = harness.DbContext;
+
+        var period = 1000;
+        var project = harness.Id("PRJMOSRC");
+        var program = "PRGMOS";
+        var workGroupCurrent = harness.Id("WG4");
+        var workGroupPrior = harness.Id("WG5");
+        var testCode = harness.Id("T4");
+        var currentCostCentre = Random.Shared.Next(700001, 799999);
+
+        await harness.ExecuteSqlAsync($@"
+            INSERT INTO fps.tlkpprogram (programno, fpsyear, sector_name)
+            VALUES ('{program}', {harness.FpsYear}, 'charge');
+
+            INSERT INTO fps.tlkpproject
+                (parentproject, projecttitle, program, customer, transferincome, custincome, projectstatus, disease,
+                 contract, isdefraproject, costcentre, oracleprojectcode, subaccountcode, incomeaccountcode, fpsyear)
+            VALUES
+                ('{project}', 'Project MO Source Scope', '{program}', 'Cust', 0::money, 0::money, 'Active', 'General',
+                 'Contract', 0, {currentCostCentre}, 'OPC-SRC', 'SAC-SRC', 'IA-SRC', {harness.FpsYear});
+
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
+            VALUES ('{harness.Id("PC4")}', 'Profit Centre Source', (SELECT divname FROM fps.tlkpdivision LIMIT 1));
+
+            INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
+            VALUES ({currentCostCentre}, '{harness.Id("PC4")}', {harness.FpsYear});
+
+            INSERT INTO fps.workgroup (workgroup, profitcentre, costcentre, fpsyear)
+            VALUES ('{workGroupCurrent}', '{harness.Id("PC4")}', {currentCostCentre}, {harness.FpsYear}),
+                   ('{workGroupPrior}', '{harness.Id("PC4")}', {currentCostCentre}, {harness.FpsYear - 1});
+
+            INSERT INTO fps.tlkptestreqmt (testcode, buyer, unitprice, norequired, projectbuyercode, active, fpsyear)
+            VALUES ('{testCode}', '{project}', 12::money, 1, '{project}', 1, {harness.FpsYear}),
+                   ('{testCode}', '{project}', 33::money, 1, '{project}', 1, {harness.FpsYear - 1});
+
+            INSERT INTO fps.monthlyoutput (buyer, workgroup, testcode, month, volume, fpsyear)
+            VALUES ('{project}', '{workGroupCurrent}', '{testCode}', 1, 4, {harness.FpsYear}),
+                   ('{project}', '{workGroupPrior}', '{testCode}', 1, 9, {harness.FpsYear - 1});
+        ");
+
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), harness.FpsYear);
+        var step = new RefreshPeriodMoStep(period);
+
+        var result = await step.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.Equal(StepStatus.Success, result.Status);
+
+        var rows = await db.RsPeriodMonthlyOutput.AsNoTracking()
+            .Where(x => x.Period == period && x.Project == project)
+            .ToListAsync();
+
+        Assert.Single(rows);
+        Assert.Equal(4d, rows[0].Volume ?? 0d);
+        Assert.Equal(12m, rows[0].TestPrice ?? 0m);
+    }
 }

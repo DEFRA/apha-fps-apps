@@ -25,7 +25,7 @@ internal sealed class RefreshPeriodPscStep : RecreateSummariesExecutionStepBase
 
         var rows = await (
             from psc in db.RsProjSubContract.AsNoTracking()
-            where psc.FpsYear == fpsYear
+            where psc.FpsYear == fpsYear && psc.Month != null
             join p in db.RsTlkpProject.AsNoTracking()
                 on new { Project = psc.Project, psc.FpsYear }
                 equals new { Project = p.ParentProject, p.FpsYear }
@@ -44,7 +44,7 @@ internal sealed class RefreshPeriodPscStep : RecreateSummariesExecutionStepBase
                 IsDefraProject = (p.IsDefraProject ?? 0) == 0 ? "No" : "Yes",
                 Opc = cc != null ? cc.ProfitCentre : null,
                 Occ = cc != null ? cc.CostCentre : null,
-                Month = psc.Month,
+                Month = psc.Month!.Value,
                 Amount = psc.Amount,
                 AcctCode = psc.AcctCode
             })

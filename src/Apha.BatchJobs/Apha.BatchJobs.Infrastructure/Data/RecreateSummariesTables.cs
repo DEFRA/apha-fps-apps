@@ -394,7 +394,7 @@ internal sealed class RsProjSubContractTable
 {
     public int SubContCounter { get; set; }
     public required string Project { get; set; }
-    public int Month { get; set; }
+    public int? Month { get; set; }
     public decimal? Amount { get; set; }
     public string? AcctCode { get; set; }
     public int FpsYear { get; set; }
