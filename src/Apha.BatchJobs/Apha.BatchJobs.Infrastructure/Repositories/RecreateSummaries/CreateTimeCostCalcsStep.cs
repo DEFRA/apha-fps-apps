@@ -22,7 +22,12 @@ SELECT
     vps.pactid,
     COALESCE(wgg.gradecode, ''),
     COALESCE(vps.name, ''),
-    CASE WHEN COALESCE(p.isdefraproject, 0) = 0 THEN COALESCE(pcg.chargerate, 0::money) ELSE COALESCE(pcg.defrachargerate, 0::money) END,
+    (
+        CASE
+            WHEN COALESCE(p.isdefraproject, 0) = 0 THEN COALESCE(pcg.chargerate::numeric, 0::numeric)
+            ELSE COALESCE(pcg.defrachargerate::numeric, 0::numeric)
+        END
+    )::money,
     CASE WHEN prg.sector_name = 'Charge' THEN 'Charge' ELSE 'Free' END,
     COALESCE(mt.hours, 0),
     CASE

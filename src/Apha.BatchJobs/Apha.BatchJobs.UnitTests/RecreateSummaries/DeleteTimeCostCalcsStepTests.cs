@@ -25,7 +25,8 @@ public sealed class DeleteTimeCostCalcsStepTests
             JobCode = "JC1",
             Project = project,
             Month = 1,
-            StaffId = "S1"
+            StaffId = "S1",
+            FpsYear = 2026
         });
         await db.SaveChangesAsync();
 

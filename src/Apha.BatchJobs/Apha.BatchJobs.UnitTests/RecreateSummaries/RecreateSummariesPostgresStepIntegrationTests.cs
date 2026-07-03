@@ -99,10 +99,10 @@ public sealed class RecreateSummariesPostgresStepIntegrationTests : IAsyncLifeti
                 ('PRJ1', 4, 'P04', 1000, 300, 40, 20, 800, 900, 5, 4, 3, 25, 15, 20, 10, 9, 8, 2026),
                 ('PRJ1', 8, 'P08', 2000, 600, 80, 50, 1600, 1700, 8, 7, 6, 55, 35, 40, 20, 18, 16, 2026);
 
-            INSERT INTO fps.projectmonthcasework (project, monthno, cwdebit, cwcredit)
+            INSERT INTO fps.projectmonthcasework (project, monthno, fpsyear, cwdebit, cwcredit)
             VALUES
-                ('PRJ1', 4, 11, 9),
-                ('PRJ1', 8, 22, 18);
+                ('PRJ1', 4, 2026, 11, 9),
+                ('PRJ1', 8, 2026, 22, 18);
         ");
 
         var result = await ExecuteStepAsync("CreateProjectMonthFinalStep", [6], context);

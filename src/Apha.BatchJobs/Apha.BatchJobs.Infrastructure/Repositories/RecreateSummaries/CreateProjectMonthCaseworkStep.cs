@@ -18,8 +18,8 @@ internal sealed class CreateProjectMonthCaseworkStep : RecreateSummariesExecutio
                 q.project,
                 q.monthno,
                 pm.fpsyear,
-                COALESCE(q.cwdebit, 0::money),
-                COALESCE(q.cwcredit, 0::money)
+                COALESCE(q.cwdebit::numeric, 0::numeric)::double precision,
+                COALESCE(q.cwcredit::numeric, 0::numeric)::double precision
             FROM fps.qryprojectmonthcw q
             JOIN fps.projectmonth pm
               ON pm.project = q.project

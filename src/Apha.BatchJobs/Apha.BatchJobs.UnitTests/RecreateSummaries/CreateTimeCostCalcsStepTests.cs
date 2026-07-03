@@ -36,9 +36,22 @@ public sealed class CreateTimeCostCalcsStepTests
             INSERT INTO fps.tlkpproject
                 (parentproject, projecttitle, program, customer, transferincome, custincome, projectstatus, disease,
                  contract, isdefraproject, incomeaccountcode, fpsyear)
-            VALUES
-                ('{project}', 'Project', '{program}', 'Cust', 0::money, 0::money, 'Active', 'General',
-                 'Contract', 0, 'IA1', {harness.FpsYear});
+            SELECT
+                '{project}',
+                'Project',
+                '{program}',
+                p.customer,
+                0::money,
+                0::money,
+                p.projectstatus,
+                p.disease,
+                p.contract,
+                0,
+                p.incomeaccountcode,
+                {harness.FpsYear}
+            FROM fps.tlkpproject p
+            WHERE p.fpsyear = {harness.FpsYear}
+            LIMIT 1;
 
             INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
             VALUES ('{profitCentre}', 'Profit Centre', (SELECT divname FROM fps.tlkpdivision LIMIT 1));

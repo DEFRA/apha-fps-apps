@@ -16,25 +16,15 @@ public sealed class RecreateSummariesContext : IRecreateSummariesContext
     public RecreateSummariesContext()
     {
         var parametersJson = Environment.GetEnvironmentVariable("BATCH_JOB_PARAMETERS_JSON");
+        if (string.IsNullOrWhiteSpace(parametersJson))
+        {
+            throw new InvalidOperationException(
+                "BATCH_JOB_PARAMETERS_JSON is required for RecreateSummary and must include month in YYYY-MM format.");
+        }
+
         if (!string.IsNullOrWhiteSpace(parametersJson))
         {
             ApplyParametersJson(parametersJson);
-        }
-
-        var monthOverride = Environment.GetEnvironmentVariable("BATCH_RECREATE_SUMMARIES_MONTH");
-        if (string.IsNullOrWhiteSpace(parametersJson)
-            && int.TryParse(monthOverride, out var parsedMonth)
-            && parsedMonth is >= 1 and <= 12)
-        {
-            Month = parsedMonth;
-        }
-
-        var yearOverride = Environment.GetEnvironmentVariable("BATCH_RECREATE_SUMMARIES_YEAR");
-        if (string.IsNullOrWhiteSpace(parametersJson)
-            && int.TryParse(yearOverride, out var parsedYear)
-            && parsedYear is >= 2000 and <= 9999)
-        {
-            Year = parsedYear;
         }
 
         var triggeredByOverride = Environment.GetEnvironmentVariable("BATCH_REQUESTED_BY");

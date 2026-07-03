@@ -3,6 +3,7 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Text.Json;
 
 namespace Apha.BatchJobs.UnitTests.RecreateSummaries;
 
@@ -34,9 +35,7 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
 
     public static async Task<RecreateSummariesPostgresTestHarness> CreateAsync()
     {
-        var rawConnectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString")
-            ?? DefaultConnectionString;
+        var rawConnectionString = ResolveConnectionString();
 
         var builder = new NpgsqlConnectionStringBuilder(rawConnectionString)
         {
@@ -57,6 +56,70 @@ internal sealed class RecreateSummariesPostgresTestHarness : IAsyncDisposable
         await dbContext.Database.UseTransactionAsync(transaction);
 
         return new RecreateSummariesPostgresTestHarness(connectionString, dbContext, connection, transaction);
+    }
+
+    private static string ResolveConnectionString()
+    {
+        var fromEnvironment = Environment.GetEnvironmentVariable("ConnectionStrings__FPSConnectionString");
+        if (!string.IsNullOrWhiteSpace(fromEnvironment))
+        {
+            return fromEnvironment;
+        }
+
+        var currentDirectory = Directory.GetCurrentDirectory();
+
+        var candidatePaths = new[]
+        {
+            Path.GetFullPath(Path.Combine(currentDirectory, "Apha.BatchJobs.UnitTests", "appsettings.local.json")),
+            Path.GetFullPath(Path.Combine(currentDirectory, "appsettings.local.json")),
+            Path.GetFullPath(Path.Combine(currentDirectory, "Apha.BatchJobs.Worker", "appsettings.Local.json")),
+            Path.GetFullPath(Path.Combine(currentDirectory, "src", "Apha.BatchJobs", "Apha.BatchJobs.Worker", "appsettings.Local.json")),
+            Path.GetFullPath(Path.Combine(currentDirectory, "src", "Apha.BatchJobs", "Apha.BatchJobs.UnitTests", "appsettings.local.json")),
+        };
+
+        var settingsPath = candidatePaths.FirstOrDefault(File.Exists);
+
+        if (!File.Exists(settingsPath))
+        {
+            return DefaultConnectionString;
+        }
+
+        var json = File.ReadAllText(settingsPath);
+        var config = JsonSerializer.Deserialize<LocalPostgresConfig>(json);
+
+        if (config is null
+            || string.IsNullOrWhiteSpace(config.Host)
+            || string.IsNullOrWhiteSpace(config.Database)
+            || string.IsNullOrWhiteSpace(config.User)
+            || string.IsNullOrWhiteSpace(config.Password)
+            || config.Port <= 0)
+        {
+            return DefaultConnectionString;
+        }
+
+        var builder = new NpgsqlConnectionStringBuilder
+        {
+            Host = config.Host,
+            Port = config.Port,
+            Database = config.Database,
+            Username = config.User,
+            Password = config.Password,
+            Timeout = 30,
+            SslMode = config.Ssl ? SslMode.Prefer : SslMode.Disable,
+        };
+
+        return builder.ConnectionString;
+    }
+
+    private sealed class LocalPostgresConfig
+    {
+        public string? Label { get; set; }
+        public string? Host { get; set; }
+        public string? User { get; set; }
+        public int Port { get; set; }
+        public bool Ssl { get; set; }
+        public string? Database { get; set; }
+        public string? Password { get; set; }
     }
 
     public string Id(string suffix) => $"{Prefix}_{suffix}";

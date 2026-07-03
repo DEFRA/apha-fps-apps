@@ -27,9 +27,24 @@ public sealed class CreateProjectMonthCaseworkStepTests
             INSERT INTO fps.tlkpproject
                 (parentproject, projecttitle, program, customer, transferincome, custincome, projectstatus, disease,
                  contract, caseworksub, plancaseworkdebit, isdefraproject, incomeaccountcode, fpsyear)
-            VALUES
-                ('{project}', 'Test Project', '{program}', 'Cust', 24::money, 0::money, 'Active', 'General',
-                 'Contract', 1, 12::money, 0, 'IA1', {harness.FpsYear});
+            SELECT
+                '{project}',
+                'Test Project',
+                '{program}',
+                p.customer,
+                24::money,
+                0::money,
+                p.projectstatus,
+                p.disease,
+                p.contract,
+                1,
+                12::money,
+                0,
+                p.incomeaccountcode,
+                {harness.FpsYear}
+            FROM fps.tlkpproject p
+            WHERE p.fpsyear = {harness.FpsYear}
+            LIMIT 1;
 
             INSERT INTO fps.projectmonth (project, monthno, costprofile, fpsyear)
             VALUES ('{project}', 1, 0::money, {harness.FpsYear});

@@ -12,14 +12,10 @@ internal sealed class InsertMissingProjectsStep : RecreateSummariesExecutionStep
         var db = context.DbContext;
         var rowsAffected = 0;
 
-        // RecreateSummaries runs multiple steps in one DbContext scope; clear any stale tracked entities
-        // so this step can add projectmonth rows without tracker collisions.
-        db.ChangeTracker.Clear();
-
         for (var month = 1; month <= 12; month++)
         {
-            // Preserve legacy intent (insert missing project-month rows), but scope identity to execution year
-            // in the shared multi-year database.
+            // Year-scoped missing detection: in shared multi-year schema we only insert rows for the current
+            // execution year, and avoid duplicates within (project, month, fpsyear).
             var missingProjects = await (
                 from p in db.RsTlkpProject.AsNoTracking()
                 where p.FpsYear == context.FpsYear
@@ -41,10 +37,7 @@ internal sealed class InsertMissingProjectsStep : RecreateSummariesExecutionStep
                 Project = parentProject,
                 MonthNo = month,
                 FpsYear = context.FpsYear
-            })
-            .GroupBy(x => new { x.Project, x.MonthNo, x.FpsYear })
-            .Select(g => g.First())
-            .ToList();
+            });
 
             await db.RsProjectMonth.AddRangeAsync(inserts, cancellationToken);
             rowsAffected += await db.SaveChangesAsync(cancellationToken);

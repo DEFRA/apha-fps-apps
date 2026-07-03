@@ -153,7 +153,7 @@ public sealed class CreateFpsTotalsStepTests
         // Assert: Execution succeeds
         Assert.True(result.Status == StepStatus.Success, result.ErrorMessage);
 
-        // Assert: Both year rows created correctly with NO cross-year multiplication
+        // Assert: Only execution-year row is created (year-scoped run)
         var currentYearRow = await db.RsFpsYearTotals.AsNoTracking()
             .FirstOrDefaultAsync(x => x.ParentProject == project && x.FpsYear == harness.FpsYear);
         
@@ -161,18 +161,15 @@ public sealed class CreateFpsTotalsStepTests
             .FirstOrDefaultAsync(x => x.ParentProject == project && x.FpsYear == year2);
         
         Assert.NotNull(currentYearRow);
-        Assert.NotNull(year2Row);
+        Assert.Null(year2Row);
         
-        // Assert: Each year has isolated costs (composite join prevents cross-year fanout)
-        // Year 2026: no additional costs (inserted only for year2)
+        // Assert: Year 2026 totals are isolated from year2 costs (composite join prevents cross-year fanout)
         Assert.Equal(0m, currentYearRow.TotalAdditionalCosts);
-        // Year 2025: has the additional cost we inserted
-        Assert.Equal(5m, year2Row.TotalAdditionalCosts);
 
-        // Assert: Exactly 2 rows for this project (one per year, no multiplication)
+        // Assert: Exactly 1 row for this project (current execution year only)
         var totalRowsForProject = await db.RsFpsYearTotals.AsNoTracking()
             .CountAsync(x => x.ParentProject == project);
         
-        Assert.Equal(2, totalRowsForProject);
+        Assert.Equal(1, totalRowsForProject);
     }
 }

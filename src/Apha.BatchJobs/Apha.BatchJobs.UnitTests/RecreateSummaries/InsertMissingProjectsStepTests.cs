@@ -44,7 +44,7 @@ public sealed class InsertMissingProjectsStepTests
         Assert.Equal("InsertMissingProjects", result.StepName);
         Assert.True(result.Status == Apha.BatchJobs.Domain.Enums.StepStatus.Success, result.ErrorMessage);
 
-        // Validate that P2 is now present for month 1 in the execution year.
+        // Validate that P2 is now present for month 1 in execution year.
         var rows = await db.RsProjectMonth.ToListAsync();
         Assert.Contains(rows, r => r.Project == "P2" && r.MonthNo == 1 && r.FpsYear == 2026);
     }

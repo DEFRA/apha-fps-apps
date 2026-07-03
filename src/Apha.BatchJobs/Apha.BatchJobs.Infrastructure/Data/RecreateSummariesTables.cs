@@ -112,6 +112,7 @@ internal sealed class RsProjectMonthCaseworkTable
 {
     public required string Project { get; set; }
     public int MonthNo { get; set; }
+    public int FpsYear { get; set; }
     public double? CwDebit { get; set; }
     public double? CwCredit { get; set; }
 }
@@ -120,6 +121,7 @@ internal sealed class RsQryProjectMonthCwView
 {
     public required string Project { get; set; }
     public int MonthNo { get; set; }
+    public int? FpsYear { get; set; }
     public decimal? CwDebit { get; set; }
     public decimal? CwCredit { get; set; }
 }

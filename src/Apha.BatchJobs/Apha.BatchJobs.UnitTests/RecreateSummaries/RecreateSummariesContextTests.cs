@@ -10,7 +10,7 @@ public sealed class RecreateSummariesContextTests
     private const string ParametersJsonEnv = "BATCH_JOB_PARAMETERS_JSON";
 
     [Fact]
-    public void Constructor_WhenNoEnvironmentOverrides_ShouldUseDefaults()
+    public void Constructor_WhenParametersJsonMissing_ShouldThrow()
     {
         // Arrange
         var previousMonth = Environment.GetEnvironmentVariable(MonthEnv);
@@ -23,13 +23,8 @@ public sealed class RecreateSummariesContextTests
 
         try
         {
-            // Act
-            var context = new RecreateSummariesContext();
-
-            // Assert
-            Assert.Equal(1, context.Month);
-            Assert.Equal(DateTime.UtcNow.Year, context.Year);
-            Assert.Equal("system", context.TriggeredBy);
+            // Act / Assert
+            Assert.Throws<InvalidOperationException>(() => new RecreateSummariesContext());
         }
         finally
         {
@@ -41,7 +36,7 @@ public sealed class RecreateSummariesContextTests
     }
 
     [Fact]
-    public void Constructor_WhenEnvironmentOverridesAreValid_ShouldUseOverrides()
+    public void Constructor_WhenParametersJsonAndTriggeredByAreValid_ShouldUseValues()
     {
         // Arrange
         var previousMonth = Environment.GetEnvironmentVariable(MonthEnv);
@@ -50,7 +45,7 @@ public sealed class RecreateSummariesContextTests
         Environment.SetEnvironmentVariable(MonthEnv, "12");
         Environment.SetEnvironmentVariable(YearEnv, "2027");
         Environment.SetEnvironmentVariable(TriggeredByEnv, "  test-user  ");
-        Environment.SetEnvironmentVariable(ParametersJsonEnv, null);
+        Environment.SetEnvironmentVariable(ParametersJsonEnv, "{\"month\":\"2026-06\"}");
 
         try
         {
@@ -58,8 +53,8 @@ public sealed class RecreateSummariesContextTests
             var context = new RecreateSummariesContext();
 
             // Assert
-            Assert.Equal(12, context.Month);
-            Assert.Equal(2027, context.Year);
+            Assert.Equal(6, context.Month);
+            Assert.Equal(2026, context.Year);
             Assert.Equal("test-user", context.TriggeredBy);
         }
         finally
@@ -71,30 +66,25 @@ public sealed class RecreateSummariesContextTests
         }
     }
 
-    [Theory]
-    [InlineData("0")]
-    [InlineData("13")]
-    [InlineData("-1")]
-    [InlineData("abc")]
-    [InlineData("")]
-    public void Constructor_WhenMonthOverrideIsInvalid_ShouldKeepDefaultMonth(string invalidMonth)
+    [Fact]
+    public void Constructor_WhenMonthYearOverridesProvidedWithoutParametersJson_ShouldThrow()
     {
         // Arrange
         var previousMonth = Environment.GetEnvironmentVariable(MonthEnv);
-        Environment.SetEnvironmentVariable(MonthEnv, invalidMonth);
+        var previousYear = Environment.GetEnvironmentVariable(YearEnv);
+        Environment.SetEnvironmentVariable(MonthEnv, "6");
+        Environment.SetEnvironmentVariable(YearEnv, "2026");
         Environment.SetEnvironmentVariable(ParametersJsonEnv, null);
 
         try
         {
-            // Act
-            var context = new RecreateSummariesContext();
-
-            // Assert
-            Assert.Equal(1, context.Month);
+            // Act / Assert
+            Assert.Throws<InvalidOperationException>(() => new RecreateSummariesContext());
         }
         finally
         {
             Environment.SetEnvironmentVariable(MonthEnv, previousMonth);
+            Environment.SetEnvironmentVariable(YearEnv, previousYear);
             Environment.SetEnvironmentVariable(ParametersJsonEnv, null);
         }
     }
