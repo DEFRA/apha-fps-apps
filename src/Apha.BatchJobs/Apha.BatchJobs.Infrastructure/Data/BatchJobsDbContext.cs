@@ -1620,7 +1620,8 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsPeriodMonthlyOutputTable>(entity =>
         {
             entity.ToTable("period_monthlyoutput", schema: "fps");
-            entity.HasKey(e => new { e.Period, e.Project, e.Month });
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Period).HasColumnName("period");
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.OracleProjectCode).HasColumnName("oracleprojectcode");
