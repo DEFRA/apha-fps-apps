@@ -269,5 +269,76 @@ namespace Apha.PACT.Api.UnitTests.Controller.TestCapabilityControllerTest
 
         #endregion
 
+        #region GetPagedWgTestCapabilitiesWithDescriptionAsync
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_HappyPath_ReturnsOkWithMappedPaginationResAndProperties()
+        {
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "TestCode", Descending = true, Filter = "{\"TestCode\":\"TC\"}" };
+
+            var serviceResult = new PaginatedResult<WgTestCapabilitiesWithDescriptionDto>
+            {
+                Data = new List<WgTestCapabilitiesWithDescriptionDto>
+                {
+                    new() { WorkGroup = "WG1", TestCode = "TC001", ItemDescription = "Item 1" },
+                    new() { WorkGroup = "WG1", TestCode = "TC002", ItemDescription = "Item 2" }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 2,
+                    PageSize = 5,
+                    TotalPages = 3,
+                    TotalRecords = 12
+                }
+            };
+
+            var mapped = new PaginationRes<WgTestCapabilitiesWithDescriptionRes>
+            {
+                Data = new List<WgTestCapabilitiesWithDescriptionRes>
+                {
+                    new() { WorkGroup = "WG1", TestCode = "TC001", ItemDescription = "Item 1" },
+                    new() { WorkGroup = "WG1", TestCode = "TC002", ItemDescription = "Item 2" }
+                },
+                PaginationData = new Pagination
+                {
+                    PageNumber = 2,
+                    PageSize = 5,
+                    TotalPages = 3,
+                    TotalRecords = 12
+                }
+            };
+
+            _service.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1").Returns(serviceResult);
+            _mapper.Map<PaginationRes<WgTestCapabilitiesWithDescriptionRes>>(serviceResult).Returns(mapped);
+
+            var result = await _controller.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            var value = Assert.IsType<PaginationRes<WgTestCapabilitiesWithDescriptionRes>>(ok.Value);
+
+            value.Data.Should().HaveCount(2);
+            value.Data!.First().WorkGroup.Should().Be("WG1");
+            value.Data.First().TestCode.Should().Be("TC001");
+            value.Data.First().ItemDescription.Should().Be("Item 1");
+            value.PaginationData.PageNumber.Should().Be(2);
+            value.PaginationData.PageSize.Should().Be(5);
+            value.PaginationData.TotalPages.Should().Be(3);
+            value.PaginationData.TotalRecords.Should().Be(12);
+
+            await _service.Received(1).GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+            _mapper.Received(1).Map<PaginationRes<WgTestCapabilitiesWithDescriptionRes>>(serviceResult);
+        }
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_ServiceThrows_PropagatesException()
+        {
+            var query = new QueryParameters<string>();
+            _service.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1").ThrowsAsync(new Exception("Service error"));
+
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1"));
+        }
+
+        #endregion
+
     }
 }

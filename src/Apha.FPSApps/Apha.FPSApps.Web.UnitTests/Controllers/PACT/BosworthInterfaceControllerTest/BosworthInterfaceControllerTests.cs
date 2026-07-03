@@ -4,11 +4,14 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.PACT;
+using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
+using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using System.Text.Json;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControllerTest
 {
@@ -20,6 +23,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
         private readonly IProjectService _projectService;
         private readonly IProfitCentreService _profitCentreService;
         private readonly IExcelExportService _excelExportService;
+        private readonly ITestCapabilityService _testCapabilityService;
         private readonly BosworthInterfaceController _controller;
 
         public BosworthInterfaceControllerTests()
@@ -30,13 +34,15 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
             _projectService = Substitute.For<IProjectService>();
             _profitCentreService = Substitute.For<IProfitCentreService>();
             _excelExportService = Substitute.For<IExcelExportService>();
+            _testCapabilityService = Substitute.For<ITestCapabilityService>();
             _controller = new BosworthInterfaceController(
                 _mapper,
                 _bosworthInterfaceService,
                 _workGroupService,
                 _projectService,
                 _profitCentreService,
-                _excelExportService);
+                _excelExportService,
+                _testCapabilityService);
         }
 
         private void SetupDropdownsSuccess()
@@ -68,6 +74,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
                 .Returns(ApiResponseDto<IEnumerable<ProfitCentreDto>>.FailureResponse(errors, new ApiMetaDto()));
             _workGroupService.GetAllWorkGroupsAsync()
                 .Returns(ApiResponseDto<List<WorkGroupDto>>.FailureResponse(errors, new ApiMetaDto()));
+        }
+
+        private static JsonElement GetJsonResultElement(JsonResult jsonResult)
+        {
+            var json = JsonSerializer.Serialize(jsonResult.Value);
+            return JsonSerializer.Deserialize<JsonElement>(json);
         }
 
         #region Index
@@ -543,6 +555,185 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.BosworthInterfaceControlle
             Assert.IsType<FileContentResult>(result);
             _excelExportService.Received(1).ExportToExcel(
                 Arg.Is<IEnumerable<TestSaleBuyingProjectDto>>(d => !d.Any()), "TestSaleBuyingProject");
+        }
+
+        #endregion
+
+        #region ListTestCapability / LoadCapabilitiesGrid
+
+        [Fact]
+        public async Task ListTestCapability_WithValidWorkGroup_ReturnsViewWithPopulatedGridAndViewModel()
+        {
+            // Arrange
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var request = new PaginationFilter<string> { Filter = "{}" };
+            var dtoData = new List<WgTestCapabilitiesWithDescriptionDto>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", ItemDescription = "Desc 1" }
+            };
+            var itemData = new List<WgTestCapabilitiesWithDescriptionItem>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", ItemDescription = "Desc 1" }
+            };
+
+            _mapper.Map<QueryParameters<string>>(Arg.Any<PaginationFilter<string>>()).Returns(queryParameters);
+            _testCapabilityService.GetPagedWgTestCapabilitiesWithDescriptionAsync(queryParameters, "WG1")
+                .Returns(ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>.SuccessResponse(dtoData, new PaginationDto
+                {
+                    PageNumber = 1,
+                    PageSize = 10,
+                    TotalPages = 1,
+                    TotalRecords = 1
+                }));
+            _mapper.Map<List<WgTestCapabilitiesWithDescriptionItem>>(dtoData).Returns(itemData);
+
+            // Act
+            var result = await _controller.ListTestCapability("WG1");
+
+            // Assert
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<BosworthInterfaceViewModel>(view.Model);
+            Assert.Equal("WG1", model.WorkGroup);
+            Assert.Equal("wgTestCapabilitiesGrid", model.CapabilitiesGrid.GridId);
+            Assert.True(model.CapabilitiesGrid.ShowPagination);
+            Assert.Equal("/PACT/BosworthInterface/LoadCapabilitiesGrid?workGroup=WG1", model.CapabilitiesGrid.BindGridUrl);
+            Assert.Single(model.CapabilitiesGrid.Data);
+            Assert.Equal("WG1", model.CapabilitiesGrid.Data.First().WorkGroup);
+            Assert.Equal("TC1", model.CapabilitiesGrid.Data.First().TestCode);
+            Assert.Equal("Desc 1", model.CapabilitiesGrid.Data.First().ItemDescription);
+            Assert.Equal(1, model.CapabilitiesGrid.Pagination.TotalRecords);
+            Assert.Equal(1, model.CapabilitiesGrid.Pagination.PageNumber);
+            Assert.Equal(10, model.CapabilitiesGrid.Pagination.PageSize);
+            Assert.NotNull(model.CapabilitiesGrid.CurrentFilters);
+            Assert.Empty(model.CapabilitiesGrid.CurrentFilters);
+        }
+
+        [Fact]
+        public async Task ListTestCapability_WithEmptyWorkGroup_ReturnsViewWithEmptyGridAndDoesNotCallService()
+        {
+            // Act
+            var result = await _controller.ListTestCapability("   ");
+
+            // Assert
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<BosworthInterfaceViewModel>(view.Model);
+            Assert.Equal("   ", model.WorkGroup);
+            Assert.Empty(model.CapabilitiesGrid.Data);
+            Assert.Equal(string.Empty, model.CapabilitiesGrid.BindGridUrl);
+            Assert.True(model.CapabilitiesGrid.ShowPagination);
+            Assert.False(model.CapabilitiesGrid.Pagination.SortDirection);
+            Assert.Null(model.CapabilitiesGrid.Pagination.SortColumn);
+
+            await _testCapabilityService.DidNotReceive()
+                .GetPagedWgTestCapabilitiesWithDescriptionAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task LoadCapabilitiesGrid_InvalidModelState_ReturnsJsonErrorPayload()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("Filter", "Filter error");
+
+            // Act
+            var result = await _controller.LoadCapabilitiesGrid(new PaginationFilter<string>(), "WG1");
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element = GetJsonResultElement(jsonResult);
+            Assert.False(element.GetProperty("success").GetBoolean());
+            Assert.Equal("Invalid request data", element.GetProperty("message").GetString());
+            Assert.True(element.GetProperty("errors").GetArrayLength() > 0);
+        }
+
+        [Fact]
+        public async Task LoadCapabilitiesGrid_ValidRequest_ReturnsPartialViewWithConfiguredGrid()
+        {
+            // Arrange
+            var request = new PaginationFilter<string>
+            {
+                Page = 2,
+                PageSize = 5,
+                SortBy = "TestCode",
+                Descending = true,
+                Filter = "{\"WorkGroup\":\"WG1\",\"TestCode\":\"TC\",\"ItemDescription\":\"Desc\"}"
+            };
+            var queryParameters = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "TestCode", Descending = true };
+            var dtoData = new List<WgTestCapabilitiesWithDescriptionDto>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC2", ItemDescription = "Desc 2" }
+            };
+            var mappedItems = new List<WgTestCapabilitiesWithDescriptionItem>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC2", ItemDescription = "Desc 2" }
+            };
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+            _testCapabilityService.GetPagedWgTestCapabilitiesWithDescriptionAsync(queryParameters, "WG1")
+                .Returns(ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>.SuccessResponse(dtoData, new PaginationDto
+                {
+                    TotalRecords = 11,
+                    PageNumber = 2,
+                    PageSize = 5,
+                    TotalPages = 3
+                }));
+            _mapper.Map<List<WgTestCapabilitiesWithDescriptionItem>>(dtoData).Returns(mappedItems);
+
+            // Act
+            var result = await _controller.LoadCapabilitiesGrid(request, "WG1");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partial.ViewName);
+            var grid = Assert.IsType<DataGridConfig<WgTestCapabilitiesWithDescriptionItem>>(partial.Model);
+            Assert.Equal("wgTestCapabilitiesGrid", grid.GridId);
+            Assert.Equal("/PACT/BosworthInterface/LoadCapabilitiesGrid?workGroup=WG1", grid.BindGridUrl);
+            Assert.True(grid.ShowPagination);
+            Assert.Single(grid.Data);
+            Assert.Equal("TC2", grid.Data.First().TestCode);
+            Assert.Equal(11, grid.Pagination.TotalRecords);
+            Assert.Equal(2, grid.Pagination.PageNumber);
+            Assert.Equal(5, grid.Pagination.PageSize);
+            Assert.Equal("TestCode", grid.Pagination.SortColumn);
+            Assert.True(grid.Pagination.SortDirection);
+            Assert.Equal("WG1", grid.CurrentFilters!["WorkGroup"]);
+            Assert.Equal("TC", grid.CurrentFilters["TestCode"]);
+            Assert.Equal("Desc", grid.CurrentFilters["ItemDescription"]);
+        }
+
+        [Fact]
+        public async Task LoadCapabilitiesGrid_ServiceFailsOrNoPagination_ReturnsEmptyDataAndDefaultPagination()
+        {
+            // Arrange
+            var request = new PaginationFilter<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "WorkGroup",
+                Descending = false,
+                Filter = null
+            };
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10, SortBy = "WorkGroup", Descending = false };
+
+            _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
+            _testCapabilityService.GetPagedWgTestCapabilitiesWithDescriptionAsync(queryParameters, "WG1")
+                .Returns(new ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>
+                {
+                    Success = false,
+                    Data = null,
+                    Pagination = null
+                });
+
+            // Act
+            var result = await _controller.LoadCapabilitiesGrid(request, "WG1");
+
+            // Assert
+            var partial = Assert.IsType<PartialViewResult>(result);
+            var grid = Assert.IsType<DataGridConfig<WgTestCapabilitiesWithDescriptionItem>>(partial.Model);
+            Assert.Empty(grid.Data);
+            Assert.Equal("WorkGroup", grid.Pagination.SortColumn);
+            Assert.False(grid.Pagination.SortDirection);
+            Assert.NotNull(grid.CurrentFilters);
+            Assert.Empty(grid.CurrentFilters);
         }
 
         #endregion

@@ -310,5 +310,118 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
         }
 
         #endregion
+
+        #region GetPagedWgTestCapabilitiesWithDescriptionAsync
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_WithValidParamsAndWorkGroup_ReturnsMappedList()
+        {
+            var query = new QueryParameters<string>
+            {
+                Page = 2,
+                PageSize = 5,
+                SortBy = "TestCode",
+                Descending = true,
+                Filter = "{\"TestCode\":\"TC\"}"
+            };
+
+            var apiResponse = new ApiResponse<List<WgTestCapabilitiesWithDescriptionRes>>
+            {
+                Success = true,
+                Data =
+                [
+                    new WgTestCapabilitiesWithDescriptionRes { WorkGroup = "WG1", TestCode = "TC001", ItemDescription = "Item 1" },
+                    new WgTestCapabilitiesWithDescriptionRes { WorkGroup = "WG1", TestCode = "TC002", ItemDescription = "Item 2" }
+                ],
+                Pagination = new Pagination { PageNumber = 2, PageSize = 5, TotalPages = 3, TotalRecords = 12 }
+            };
+
+            var expectedDto = ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>.SuccessResponse(
+                [
+                    new WgTestCapabilitiesWithDescriptionDto { WorkGroup = "WG1", TestCode = "TC001", ItemDescription = "Item 1" },
+                    new WgTestCapabilitiesWithDescriptionDto { WorkGroup = "WG1", TestCode = "TC002", ItemDescription = "Item 2" }
+                ],
+                new PaginationDto { PageNumber = 2, PageSize = 5, TotalPages = 3, TotalRecords = 12 });
+
+            _http.GetAsync<List<WgTestCapabilitiesWithDescriptionRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/testcapability/paged/user-test-capabilities")
+                && url.Contains("workGroup=WG1")
+                && url.Contains("Page=2")
+                && url.Contains("PageSize=5")))
+                .Returns(apiResponse);
+
+            _mapper.Map<ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data!.Count);
+            Assert.Equal("WG1", result.Data.First().WorkGroup);
+            Assert.Equal("TC001", result.Data.First().TestCode);
+            Assert.Equal("Item 1", result.Data.First().ItemDescription);
+            Assert.Equal(2, result.Pagination!.PageNumber);
+            Assert.Equal(5, result.Pagination.PageSize);
+            Assert.Equal(3, result.Pagination.TotalPages);
+            Assert.Equal(12, result.Pagination.TotalRecords);
+
+            await _http.Received(1).GetAsync<List<WgTestCapabilitiesWithDescriptionRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/testcapability/paged/user-test-capabilities")));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_WithNullOrWhitespaceWorkGroup_OmitsWorkGroupQueryParam(string? workGroup)
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<WgTestCapabilitiesWithDescriptionRes>> { Success = true, Data = [] };
+            var expectedDto = ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>.SuccessResponse([]);
+
+            _http.GetAsync<List<WgTestCapabilitiesWithDescriptionRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/testcapability/paged/user-test-capabilities")
+                && !url.Contains("workGroup=")))
+                .Returns(apiResponse);
+
+            _mapper.Map<ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>>(apiResponse).Returns(expectedDto);
+
+            var result = await _client.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, workGroup!);
+
+            Assert.True(result.Success);
+            await _http.Received(1).GetAsync<List<WgTestCapabilitiesWithDescriptionRes>>(Arg.Is<string>(url =>
+                url.Contains("api/v1/testcapability/paged/user-test-capabilities")
+                && !url.Contains("workGroup=")));
+        }
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<WgTestCapabilitiesWithDescriptionRes>>
+            {
+                Success = false,
+                Errors = [new ApiError { Code = "ERR", Message = "Failure" }],
+                Meta = new ApiMeta { CorrelationId = "corr-1" }
+            };
+
+            var mappedFailure = new ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>
+            {
+                Success = false,
+                Errors = [new ApiErrorDto { Code = "ERR", Message = "Failure" }],
+                Meta = new ApiMetaDto { CorrelationId = "corr-1" }
+            };
+
+            _http.GetAsync<List<WgTestCapabilitiesWithDescriptionRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>>(apiResponse).Returns(mappedFailure);
+
+            var result = await _client.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Equal("ERR", result.Errors!.First().Code);
+            Assert.Equal("corr-1", result.Meta.CorrelationId);
+        }
+
+        #endregion
     }
 }

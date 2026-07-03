@@ -244,6 +244,14 @@ $(document).ready(function () {
         );
     });
 
+    $('#test-sale-capabilities-button').on('click', function () {
+        if (!selectedSellingWorkGroupValue) {
+            showGovukAlert('Please select a Selling Workgroup first.');
+            return;
+        }
+        window.fpsNavigateTo('/PACT/BosworthInterface/ListTestCapability?workGroup=' + encodeURIComponent(selectedSellingWorkGroupValue));
+    });
+
     $('#export-selling-workgroup-link').on('click', function (e) {
         e.preventDefault();
         if (selectedSellingWorkGroupValue) {

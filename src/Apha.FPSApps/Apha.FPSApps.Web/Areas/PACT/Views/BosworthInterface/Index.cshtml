@@ -49,9 +49,7 @@
             <div class="govuk-!-padding-2 govuk-!-padding-bottom-0 isOverflowHidden tr-section-box isCenterAligned">
                 <h2 class="govuk-heading-s isSubHeading">Resource Management</h2>
                 <div class="govuk-grid-column-one-full govuk-!-padding-2">
-                    <button type="submit" class="govuk-button" data-module="govuk-button">
-                        Show Workgroups &amp; Staffs
-                    </button>
+                    <a class="govuk-button" asp-area="PACT" asp-controller="WorkGroupPeople" asp-action="Index">Show Workgroups &amp; Staffs</a>
                 </div>
                 <div class="govuk-grid-column-one-full govuk-!-padding-2 govuk-!-padding-bottom-0 tr-section-panel">
                     <h2 class="govuk-!-margin-bottom-0 isCustomHeading">TimeSale PivWiz</h2>
@@ -169,7 +167,8 @@
             timeSaleProfitCentre: '@Url.Action("GenerateTimeSaleProfitCentreReport", "BosworthInterface", new { area = "PACT" })',
             timeSaleWorkgroup:    '@Url.Action("GenerateTimeSaleWorkgroupReport", "BosworthInterface", new { area = "PACT" })',
             testSaleSellingWg:    '@Url.Action("GenerateTestSaleSellingWorkgroupReport", "BosworthInterface", new { area = "PACT" })',
-            testSaleBuyingProj:   '@Url.Action("GenerateTestSaleBuyingProjectReport", "BosworthInterface", new { area = "PACT" })'
+            testSaleBuyingProj:   '@Url.Action("GenerateTestSaleBuyingProjectReport", "BosworthInterface", new { area = "PACT" })',
+            listTestCapability:   '@Url.Action("ListTestCapability", "BosworthInterface", new { area = "PACT" })'
         };
     </script>
     <script src="~/js/common/multicolumn-dropdown.component.js"></script>

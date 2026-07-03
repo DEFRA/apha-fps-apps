@@ -69,6 +69,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<TimeSaleProfitCentreDto, TimeSaleProfitCentreRes>();
             CreateMap<TestSaleSellingWorkgroupDto, TestSaleSellingWorkgroupRes>();
             CreateMap<TestSaleBuyingProjectDto, TestSaleBuyingProjectRes>();
+            CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionRes>();
         }
     }
 }
