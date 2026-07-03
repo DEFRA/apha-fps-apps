@@ -17,6 +17,7 @@ internal sealed class RefreshPeriodPscStep : RecreateSummariesExecutionStepBase
     protected override async Task<int> ExecuteCoreAsync(RecreateSummariesExecutionContext context, CancellationToken cancellationToken)
     {
         var db = context.DbContext;
+        var fpsYear = context.FpsYear;
 
         await db.RsPeriodProjSubContract
             .Where(x => x.Period == _period)
@@ -24,11 +25,13 @@ internal sealed class RefreshPeriodPscStep : RecreateSummariesExecutionStepBase
 
         var rows = await (
             from psc in db.RsProjSubContract.AsNoTracking()
+            where psc.FpsYear == fpsYear
             join p in db.RsTlkpProject.AsNoTracking()
                 on new { Project = psc.Project, psc.FpsYear }
                 equals new { Project = p.ParentProject, p.FpsYear }
+            where p.FpsYear == fpsYear
             join cc0 in db.RsCostCentre.AsNoTracking()
-                on new { CostCentre = p.CostCentre, p.FpsYear }
+                on new { CostCentre = p.CostCentre, FpsYear = p.FpsYear }
                 equals new { CostCentre = (double?)cc0.CostCentre, cc0.FpsYear } into cc1
             from cc in cc1.DefaultIfEmpty()
             select new RsPeriodProjSubContractTable

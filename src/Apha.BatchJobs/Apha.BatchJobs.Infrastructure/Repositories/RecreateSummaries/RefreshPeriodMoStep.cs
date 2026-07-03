@@ -17,6 +17,7 @@ internal sealed class RefreshPeriodMoStep : RecreateSummariesExecutionStepBase
     protected override async Task<int> ExecuteCoreAsync(RecreateSummariesExecutionContext context, CancellationToken cancellationToken)
     {
         var db = context.DbContext;
+        var fpsYear = context.FpsYear;
 
         await db.RsPeriodMonthlyOutput
             .Where(x => x.Period == _period)
@@ -29,8 +30,9 @@ internal sealed class RefreshPeriodMoStep : RecreateSummariesExecutionStepBase
                 on new { Buyer = mo.Buyer, mo.TestCode }
                 equals new { Buyer = tr.ProjectBuyerCode, tr.TestCode }
             join p in db.RsTlkpProject.AsNoTracking() on mo.Buyer equals p.ParentProject
+            where p.FpsYear == fpsYear
             join cc0 in db.RsCostCentre.AsNoTracking()
-                on new { CostCentre = p.CostCentre, p.FpsYear }
+                on new { CostCentre = p.CostCentre, FpsYear = p.FpsYear }
                 equals new { CostCentre = (double?)cc0.CostCentre, cc0.FpsYear } into cc1
             from cc in cc1.DefaultIfEmpty()
             select new RsPeriodMonthlyOutputTable

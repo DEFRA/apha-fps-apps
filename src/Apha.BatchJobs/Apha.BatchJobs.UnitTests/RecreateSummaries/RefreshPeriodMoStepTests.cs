@@ -79,4 +79,81 @@ public sealed class RefreshPeriodMoStepTests
         Assert.Equal(10m, row.TestPrice);
         Assert.Equal(50m, row.TotalCost);
     }
+
+    [Fact]
+    public async Task ExecuteCoreAsync_IgnoresRowsFromOtherYears()
+    {
+        await using var harness = await RecreateSummariesPostgresTestHarness.CreateAsync();
+        var db = harness.DbContext;
+
+        var period = 999;
+        var currentProject = harness.Id("PRJMOCUR");
+        var priorProject = harness.Id("PRJMOOLD");
+        var currentProgram = "PRGMO1";
+        var priorProgram = "PRGMO2";
+        var currentCostCentre = Random.Shared.Next(700001, 799999);
+        var priorCostCentre = Random.Shared.Next(600001, 699999);
+        var currentWorkGroup = harness.Id("WG2");
+        var priorWorkGroup = harness.Id("WG3");
+        var currentTestCode = harness.Id("T2");
+        var priorTestCode = harness.Id("T3");
+
+        await harness.ExecuteSqlAsync($@"
+            INSERT INTO fps.tlkpprogram (programno, fpsyear, sector_name)
+            VALUES ('{currentProgram}', {harness.FpsYear}, 'charge'),
+                   ('{priorProgram}', {harness.FpsYear - 1}, 'charge');
+
+            INSERT INTO fps.tlkpproject
+                (parentproject, projecttitle, program, customer, transferincome, custincome, projectstatus, disease,
+                 contract, isdefraproject, costcentre, oracleprojectcode, subaccountcode, incomeaccountcode, fpsyear)
+            VALUES
+                ('{currentProject}', 'Project MO Current', '{currentProgram}', 'Cust', 0::money, 0::money, 'Active', 'General',
+                 'Contract', 0, {currentCostCentre}, 'OPC-CUR', 'SAC-CUR', 'IA-CUR', {harness.FpsYear}),
+                ('{priorProject}', 'Project MO Prior', '{priorProgram}', 'Cust', 0::money, 0::money, 'Active', 'General',
+                 'Contract', 0, {priorCostCentre}, 'OPC-OLD', 'SAC-OLD', 'IA-OLD', {harness.FpsYear - 1});
+
+            INSERT INTO fps.tblkpprofitcentre (profitcentre, profitcentrename, division)
+            VALUES ('{harness.Id("PC2")}', 'Profit Centre Current', (SELECT divname FROM fps.tlkpdivision LIMIT 1)),
+                   ('{harness.Id("PC3")}', 'Profit Centre Prior', (SELECT divname FROM fps.tlkpdivision LIMIT 1));
+
+            INSERT INTO fps.costcentre (costcentre, profitcentre, fpsyear)
+            VALUES ({currentCostCentre}, '{harness.Id("PC2")}', {harness.FpsYear}),
+                   ({priorCostCentre}, '{harness.Id("PC3")}', {harness.FpsYear - 1});
+
+            INSERT INTO fps.workgroup (workgroup, profitcentre, costcentre, fpsyear)
+                 VALUES ('{currentWorkGroup}', '{harness.Id("PC2")}', {currentCostCentre}, {harness.FpsYear}),
+                     ('{priorWorkGroup}', '{harness.Id("PC3")}', {priorCostCentre}, {harness.FpsYear - 1});
+
+            INSERT INTO fps.tlkptestreqmt (testcode, buyer, unitprice, norequired, projectbuyercode, active, fpsyear)
+                 VALUES ('{currentTestCode}', '{currentProject}', 10::money, 1, '{currentProject}', 1, {harness.FpsYear}),
+                     ('{priorTestCode}', '{priorProject}', 10::money, 1, '{priorProject}', 1, {harness.FpsYear - 1});
+
+            INSERT INTO fps.monthlyoutput (buyer, workgroup, testcode, month, volume, fpsyear)
+                 VALUES ('{currentProject}', '{currentWorkGroup}', '{currentTestCode}', 1, 5, {harness.FpsYear}),
+                     ('{priorProject}', '{priorWorkGroup}', '{priorTestCode}', 1, 7, {harness.FpsYear - 1});
+        ");
+
+        var context = new RecreateSummariesExecutionContext(db, new NpgsqlConnection(), harness.FpsYear);
+        var step = new RefreshPeriodMoStep(period);
+
+        var result = await step.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.Equal(StepStatus.Success, result.Status);
+
+        var row = await db.RsPeriodMonthlyOutput.AsNoTracking()
+            .SingleAsync(x => x.Period == period && x.Project == currentProject);
+
+        Assert.Equal("OPC-CUR", row.OracleProjectCode);
+        Assert.Equal("SAC-CUR", row.SubAccountCode);
+        Assert.Equal(harness.Id("PC2"), row.Opc);
+        Assert.Equal((double)currentCostCentre, row.Occ ?? 0d);
+        Assert.Equal(currentWorkGroup, row.WorkGroup);
+        Assert.Equal(currentTestCode, row.TestCode);
+
+        var priorRows = await db.RsPeriodMonthlyOutput.AsNoTracking()
+            .Where(x => x.Period == period && x.Project == priorProject)
+            .ToListAsync();
+
+        Assert.Empty(priorRows);
+    }
 }
