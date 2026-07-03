@@ -1,4 +1,4 @@
-using Apha.FPSApps.Web.Models.Components.DataGrid;
+﻿using Apha.FPSApps.Web.Models.Components.DataGrid;
 using System.ComponentModel.DataAnnotations;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Models
