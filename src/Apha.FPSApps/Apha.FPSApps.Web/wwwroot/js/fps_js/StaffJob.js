@@ -16,7 +16,7 @@ var StaffJobConfig = {
 
 function addStaffJob(btn) {
     if (StaffJobConfig.requireJobCodeForAdd && !StaffJobConfig.getJobCode()) {
-        showGovukAlert('Please select a project first.');
+        showAlertMessage('Please select a project first.', AlertType.INFO);
         return;
     }
     $.ajax({
@@ -30,7 +30,7 @@ function addStaffJob(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while opening the form.');
+                showAlertMessage('An error occurred while opening the form.', AlertType.ERROR);
             }
         }
     });
@@ -61,7 +61,7 @@ function saveStaffJob() {
         success: function (result) {
             if (result.success) {
                 closeModal();
-                showGovukAlert(result.message).then(function () {                    
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                    
                     StaffJobConfig.onSaved();
                 });
             } else {
@@ -72,7 +72,7 @@ function saveStaffJob() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -92,7 +92,7 @@ function editStaffJob(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while fetching the record.');
+                showAlertMessage('An error occurred while fetching the record.', AlertType.ERROR);
             }
         }
     });
@@ -124,7 +124,7 @@ function updateStaffJob() {
         success: function (result) {
             if (result.success) {
                 closeModal();
-                showGovukAlert(result.message).then(function () {                   
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                   
                     StaffJobConfig.onUpdated();
                 });
             } else {
@@ -135,7 +135,7 @@ function updateStaffJob() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -151,15 +151,15 @@ function deleteStaffJob(btn) {
             data: { staffId: staffJobId, jobCode: StaffJobConfig.getJobCode() },
             success: function (response) {
                 if (response.success) {
-                    showGovukAlert('Deleted successfully.').then(function () {
+                    showAlertMessage('Deleted successfully.', AlertType.SUCCESS).then(function () {
                         StaffJobConfig.onDeleted();
                     });
                 } else {
-                    showGovukAlert(response.message);
+                    showAlertMessage(response.message, AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });

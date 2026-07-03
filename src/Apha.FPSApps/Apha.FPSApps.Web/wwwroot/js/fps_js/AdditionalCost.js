@@ -9,7 +9,7 @@ var AdditionalCostConfig = {
 function addAdditionalCost() {
     var jobCode = AdditionalCostConfig.getJobCode();
     if (AdditionalCostConfig.requireJobCodeForAdd && !jobCode) {
-        showGovukAlert('Please select a project first.');
+        showAlertMessage('Please select a project first.', AlertType.INFO);
         return;
     }
 
@@ -21,7 +21,7 @@ function addAdditionalCost() {
             $('#modalPopup').addClass('show');
         },
         error: function () {
-            showGovukAlert('An error occurred while loading the form.');
+            showAlertMessage('An error occurred while loading the form.', AlertType.ERROR);
         }
     });
 }
@@ -44,7 +44,7 @@ function saveAdditionalCost() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                showGovukAlert(result.message).then(function () {
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                     closeModal();
                     AdditionalCostConfig.onSaved();
                 });
@@ -56,7 +56,7 @@ function saveAdditionalCost() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -77,7 +77,7 @@ function editAdditionalCost(btn) {
             $('#modalPopup').addClass('show');
         },
         error: function () {
-            showGovukAlert('An error occurred while loading the form.');
+            showAlertMessage('An error occurred while loading the form.', AlertType.ERROR);
         }
     });
 }
@@ -101,7 +101,7 @@ function updateAdditionalCost() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                showGovukAlert(result.message).then(function () {
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                     closeModal();
                     AdditionalCostConfig.onUpdated();
                 });
@@ -113,7 +113,7 @@ function updateAdditionalCost() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while updating.');
+                showAlertMessage('An error occurred while updating.', AlertType.ERROR);
             }
         }
     });
@@ -133,15 +133,15 @@ function deleteAdditionalCost(btn) {
             data: { jobCode: jobCode, account: account, description: description },
             success: function (response) {
                 if (response.success) {
-                    showGovukAlert('Deleted successfully.').then(function () {
+                    showAlertMessage('Deleted successfully.', AlertType.SUCCESS).then(function () {
                         AdditionalCostConfig.onDeleted();
                     });
                 } else {
-                    showGovukAlert(response.message);
+                    showAlertMessage(response.message, AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
