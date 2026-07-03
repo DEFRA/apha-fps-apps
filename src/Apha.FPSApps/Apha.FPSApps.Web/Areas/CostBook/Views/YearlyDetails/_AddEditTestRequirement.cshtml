@@ -9,7 +9,7 @@
     <h5 class="modal-title">@(string.IsNullOrEmpty(Model.TestDescription) ? "Add" : "Edit") Test Requirement</h5>
     <button type="button" class="close project-close-btn" aria-label="Close" onclick="closeModal()">×</button>
 </div>
-<div class="modal-body">
+<div class="modal-body sup_overflow_y_400">
     <form id="testRequirementForm">
         @Html.AntiForgeryToken()
         <input asp-for="TestDescription" type="hidden" />
@@ -65,7 +65,11 @@
             <label asp-for="UnitPrice" class="govuk-label">
                 Unit Price
             </label>
-            <input asp-for="UnitPrice" type="text" readonly class="govuk-input" />
+            <div class="govuk-input__wrapper">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input asp-for="UnitPrice" type="text" readonly class="govuk-input" />
+            </div>
+            
             <span asp-validation-for="UnitPrice" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
@@ -81,8 +85,11 @@
             <label asp-for="TestCost" class="govuk-label">
                 Cost
             </label>
-            <input asp-for="TestCost" type="text" readonly class="govuk-input" />
-            <span asp-validation-for="TestCost" class="govuk-error-message" style="display:none;"></span>
+            <div class="govuk-input__wrapper">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input asp-for="TestCost" type="text" readonly class="govuk-input" />
+            </div>
+          <span asp-validation-for="TestCost" class="govuk-error-message" style="display:none;"></span>
         </div>
     </form>
 </div>

@@ -10,7 +10,7 @@
     <h5 class="modal-title">@(Model.ArIdentity == 0 ? "Add" : "Edit") Animal Requirement</h5>
     <button type="button" class="close project-close-btn" aria-label="Close" onclick="closeModal()">×</button>
 </div>
-<div class="modal-body">
+<div class="modal-body sup_overflow_y_400">
     <form id="animalRequirementForm">
         @Html.AntiForgeryToken()
         <input asp-for="ArIdentity" type="hidden" />
@@ -81,14 +81,20 @@
             <label asp-for="DailyRate" class="govuk-label">
                 Rate
             </label>
-            <input asp-for="DailyRate" type="text" readonly class="govuk-input" />
+            <div class="govuk-input__wrapper">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input asp-for="DailyRate" type="text" readonly class="govuk-input" />
+            </div>           
             <span asp-validation-for="DailyRate" class="govuk-error-message" style="display:none;"></span>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
             <label asp-for="AnimalCost" class="govuk-label">
                 Cost 
             </label>
-            <input asp-for="AnimalCost" type="text" readonly class="govuk-input" />
+            <div class="govuk-input__wrapper">
+                <div class="govuk-input__prefix" aria-hidden="true">£</div>
+                <input asp-for="AnimalCost" type="text" readonly class="govuk-input" />
+            </div>            
             <span asp-validation-for="AnimalCost" class="govuk-error-message" style="display:none;"></span>
         </div>
     </form>
