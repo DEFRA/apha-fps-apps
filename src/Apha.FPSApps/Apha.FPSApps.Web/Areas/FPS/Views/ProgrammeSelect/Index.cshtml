@@ -56,6 +56,7 @@
                                            class="govuk-input"
                                            style="width:220px;"
                                            placeholder="Filter project..."
+                                           value="@Model.ProjectSearch"
                                            aria-label="Filter project"
                                            oninput="reloadProjectsGrid()" />
                                 </div>
@@ -76,8 +77,9 @@
     <script>
         function filterProgramme() {
             var programNo = document.getElementById('programmeDropdown').value;
+            var projectSearch = document.getElementById('projectSearchInput')?.value ?? '';
             if (programNo) {
-                fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo=' + encodeURIComponent(programNo));
+                fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo=' + encodeURIComponent(programNo) + '&projectSearch=' + encodeURIComponent(projectSearch));
             }
         }
 
@@ -104,7 +106,16 @@
 
         function editProject(btn) {
             var parentProject = $(btn).data('id');
-            fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(parentProject));
+            var programNo = document.getElementById('programmeDropdown')?.value ?? '';
+            var projectSearch = document.getElementById('projectSearchInput')?.value ?? '';
+
+            var returnUrl = '@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })'
+                + '?programNo=' + encodeURIComponent(programNo)
+                + '&projectSearch=' + encodeURIComponent(projectSearch);
+
+            fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })'
+                + '?parentProject=' + encodeURIComponent(parentProject)
+                + '&returnUrl=' + encodeURIComponent(returnUrl));
         }
 
         document.addEventListener('DOMContentLoaded', function () {

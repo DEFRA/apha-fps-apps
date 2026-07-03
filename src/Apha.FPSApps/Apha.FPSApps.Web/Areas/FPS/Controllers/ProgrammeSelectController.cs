@@ -39,7 +39,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         /// <summary>
         /// Displays the Programme Manager - a read-only project selection interface
         /// </summary>
-        public async Task<IActionResult> Index(string? programNo = null)
+        public async Task<IActionResult> Index(string? programNo = null, string? projectSearch = null)
         {
             var programmeList = await GetProgrammeListAsync();
 
@@ -53,11 +53,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 await _appStateService.SetSessionAsync(SessionKeys.SelectedProgramNo, selectedProgramNo);
 
             var defaultRequest = new PaginationFilter<string>();
-            var grid = await BuildProjectsGridAsync(defaultRequest, selectedProgramNo);
+            var grid = await BuildProjectsGridAsync(defaultRequest, selectedProgramNo, projectSearch);
 
             var model = new ProgrammeSelectViewModel
             {
                 SelectedProgramNo = selectedProgramNo,
+                ProjectSearch = projectSearch ?? string.Empty,
                 ProgrammeList = programmeList,
                 ProjectsGrid = grid
             };
