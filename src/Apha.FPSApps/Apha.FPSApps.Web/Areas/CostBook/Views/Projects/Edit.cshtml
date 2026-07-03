@@ -1,4 +1,4 @@
-﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
+@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
 
 @{
     ViewData["Title"] = "Project Edit";
@@ -385,11 +385,11 @@
          $(document).ready(function () {
             @if (TempData["Success"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Success"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Success"])', AlertType.SUCCESS);</text>
             }
             @if (TempData["Error"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Error"])', AlertType.ERROR);</text>
             }
 
         });
@@ -404,7 +404,7 @@
 
                 var projectId = '@Html.Raw(Model.ProjectId)';
                 if (!projectId || projectId === '') {
-                    showGovukAlert('Project ID is missing. Cannot delete project.');
+                    showAlertMessage('Project ID is missing. Cannot delete project.', AlertType.INFO);
                     if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
                     document.body.style.cursor = 'default';
                     return;
@@ -419,17 +419,17 @@
                     },
                     success: function (response) {
                         if (response.success) {
-                            showGovukAlert('Project deleted successfully.').then(function () {
+                            showAlertMessage('Project deleted successfully.', AlertType.SUCCESS).then(function () {
                                 window.location.href = '@Url.Action("Index", "Projects", new { area = "CostBook" })';
                             });
                         } else {
-                            showGovukAlert('Failed to delete project: ' + (response.message || 'Unknown error'));
+                            showAlertMessage('Failed to delete project: ' + (response.message || 'Unknown error'), AlertType.ERROR);
                             if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
                             document.body.style.cursor = 'default';
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting the project.');
+                        showAlertMessage('An error occurred while deleting the project.', AlertType.ERROR);
                         if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
                         document.body.style.cursor = 'default';
                     }
@@ -476,7 +476,7 @@
                                             editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
                                             window.location.href = editUrl;
                                         } else {
-                                            showGovukAlert('Failed to recost project. Redirecting to edit page.').then(function () {
+                                            showAlertMessage('Failed to recost project. Redirecting to edit page.', AlertType.ERROR).then(function () {
                                                 var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
                                                 editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
                                                 window.location.href = editUrl;
@@ -484,7 +484,7 @@
                                         }
                                     },
                                     error: function () {
-                                        showGovukAlert('Error occurred during recost. Redirecting to edit page.').then(function () {
+                                        showAlertMessage('Error occurred during recost. Redirecting to edit page.', AlertType.ERROR).then(function () {
                                             var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
                                             editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
                                             window.location.href = editUrl;
@@ -499,12 +499,12 @@
                             }
                         });
                     } else {
-                        showGovukAlert('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+                        showAlertMessage('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'), AlertType.ERROR);
                         if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
                     }
                 },
                 error: function () {
-                    showGovukAlert('Failed to copy project. Please try again.');
+                    showAlertMessage('Failed to copy project. Please try again.', AlertType.ERROR);
                     if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
                 }
             });

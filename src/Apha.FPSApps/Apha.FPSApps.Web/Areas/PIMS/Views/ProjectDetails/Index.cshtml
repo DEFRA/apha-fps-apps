@@ -1,4 +1,4 @@
-﻿@using Apha.FPSApps.Web.Models.Components.DataGrid
+@using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.PIMS.Models.ProjectDetailsViewModel
 
 @{
@@ -726,12 +726,12 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    showGovukAlert(data.message);
+                    showAlertMessage(data.message, AlertType.SUCCESS);
                 } else {
-                    showGovukAlert(data.errors?.map(e => e.message).join(', ') || 'Failed to save PIMS details.');
+                    showAlertMessage(data.errors?.map(e => e.message).join(', ') || 'Failed to save PIMS details.', AlertType.ERROR);
                 }
             })
-            .catch(() => showGovukAlert('An error occurred while saving PIMS details.'));
+            .catch(() => showAlertMessage('An error occurred while saving PIMS details.', AlertType.ERROR));
         }
 
         // ── VBA: EndDate_BeforeUpdate — Yes/No confirm when changing an existing end date ──
@@ -770,7 +770,7 @@
             if (picker.value) {
                 var day = new Date(picker.value).getDate();
                 if (day !== 1) {
-                    showGovukAlert('Note, all calculations will use the first of this month as the start date.');
+                    showAlertMessage('Note, all calculations will use the first of this month as the start date.', AlertType.INFO);
                 }
             }
         }
@@ -781,7 +781,7 @@
             var picker   = document.getElementById(pickerId);
             var original = document.getElementById(bindingId).getAttribute('data-original-value') || '';
             if (picker.value && picker.value !== original) {
-                showGovukAlert('Please remember to update the A&F Report data for this project.');
+                showAlertMessage('Please remember to update the A&F Report data for this project.', AlertType.INFO);
             }
         }
 
@@ -808,7 +808,7 @@
                     isAddingNew = true;
                     currentEditIndex = null;
                 })
-                .catch(() => showGovukAlert('An error occurred while loading the comment form.'));
+                .catch(() => showAlertMessage('An error occurred while loading the comment form.', AlertType.ERROR));
         }
 
         function saveRecord() {
@@ -841,7 +841,7 @@
             .then(data => {
                 if (data.success) {
                     closeEditModal();
-                    showGovukAlert(data.message).then(function () {
+                    showAlertMessage(data.message, AlertType.SUCCESS).then(function () {
                         var gm = getCommentsGridManager();
                         if (gm) gm.reloadGrid({ page: 1 });
                     });
@@ -849,7 +849,7 @@
                     displayServerValidationErrors(data.errors, 'Failed to save comment.', '#editRecordModal');
                 }
             })
-            .catch(() => showGovukAlert('An error occurred while saving the comment.'));
+            .catch(() => showAlertMessage('An error occurred while saving the comment.', AlertType.ERROR));
         }
 
         function editComment(btn) {
@@ -864,7 +864,7 @@
                     isAddingNew = false;
                     currentEditIndex = commentno;
                 })
-                .catch(() => showGovukAlert('An error occurred while loading the comment form.'));
+                .catch(() => showAlertMessage('An error occurred while loading the comment form.', AlertType.ERROR));
         }
 
         function deleteComment(btn) {
@@ -879,15 +879,15 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        showGovukAlert(data.message).then(function () {
+                        showAlertMessage(data.message, AlertType.SUCCESS).then(function () {
                             var gm = getCommentsGridManager();
                             if (gm) gm.reloadGrid({ page: 1 });
                         });
                     } else {
-                        showGovukAlert(data.errors?.map(e => e.message).join(', ') || 'Failed to delete comment.');
+                        showAlertMessage(data.errors?.map(e => e.message).join(', ') || 'Failed to delete comment.', AlertType.ERROR);
                     }
                 })
-                .catch(() => showGovukAlert('An error occurred while deleting the comment.'));
+                .catch(() => showAlertMessage('An error occurred while deleting the comment.', AlertType.ERROR));
             });
         }
 

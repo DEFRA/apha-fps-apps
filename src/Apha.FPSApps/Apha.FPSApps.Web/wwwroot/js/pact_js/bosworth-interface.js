@@ -33,7 +33,7 @@ function downloadExcelReport(url, data) {
             window.URL.revokeObjectURL(downloadUrl);
         },
         error: function () {
-            showGovukAlert('An error occurred while exporting.');
+            showAlertMessage('An error occurred while exporting.', AlertType.ERROR);
         }
     });
 }
@@ -211,7 +211,7 @@ $(document).ready(function () {
     $('#export-project-link').on('click', function (e) {
         e.preventDefault();
         if (!selectedProjectValue) {
-            showGovukAlert('Please select a project first.');
+            showAlertMessage('Please select a project first.', AlertType.INFO);
             return;
         }
         downloadExcelReport(
@@ -223,7 +223,7 @@ $(document).ready(function () {
     $('#export-profit-centre-link').on('click', function (e) {
         e.preventDefault();
         if (!selectedProfitCentreValue) {
-            showGovukAlert('Please select a profit centre first.');
+            showAlertMessage('Please select a profit centre first.', AlertType.INFO);   
             return;
         }
         downloadExcelReport(
@@ -235,7 +235,7 @@ $(document).ready(function () {
     $('#export-workgroup-link').on('click', function (e) {
         e.preventDefault();
         if (!selectedWorkGroupValue) {
-            showGovukAlert('Please select a work group first.');
+            showAlertMessage('Please select a work group first.', AlertType.INFO);
             return;
         }
         downloadExcelReport(
@@ -246,7 +246,7 @@ $(document).ready(function () {
 
     $('#test-sale-capabilities-button').on('click', function () {
         if (!selectedSellingWorkGroupValue) {
-            showGovukAlert('Please select a Selling Workgroup first.');
+            showAlertMessage('Please select a Selling Workgroup first.', AlertType.INFO);
             return;
         }
         window.fpsNavigateTo('/PACT/BosworthInterface/ListTestCapability?workGroup=' + encodeURIComponent(selectedSellingWorkGroupValue));
@@ -265,7 +265,7 @@ $(document).ready(function () {
                 { parentProject: selectedBuyingProjectValue }
             );
         } else {
-            showGovukAlert('Please select a Selling Workgroup or a Buying Project first.');
+            showAlertMessage('Please select a Selling Workgroup or a Buying Project first.', AlertType.INFO);
         }
     });
 });

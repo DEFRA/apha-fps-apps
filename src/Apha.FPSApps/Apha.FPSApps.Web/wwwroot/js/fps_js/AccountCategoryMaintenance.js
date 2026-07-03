@@ -31,7 +31,7 @@ function addAccountCategory() {
             $.validator.unobtrusive.parse(form);
         },
         error: function () {
-            showGovukAlert('Failed to load form');
+            showAlertMessage('Failed to load form', AlertType.ERROR);
         }
     });
 }
@@ -50,7 +50,7 @@ function editAccountCategory(btn) {
             $.validator.unobtrusive.parse(form);
         },
         error: function () {
-            showGovukAlert('Failed to load form');
+            showAlertMessage('Failed to load form', AlertType.ERROR);
         }
     });
 }
@@ -68,13 +68,13 @@ function deleteAccountCategory(btn) {
                     if (accountCategoryGrid) {
                         accountCategoryGrid.reloadGrid({ page: 1 });
                     }
-                    showGovukAlert(response.message || 'Account category deleted successfully.');
+                    showAlertMessage(response.message || 'Account category deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showGovukAlert('Error: ' + (response.message || 'Failed to delete account category.'));
+                    showAlertMessage('Error: ' + (response.message || 'Failed to delete account category.'), AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting the account category.');
+                showAlertMessage('An error occurred while deleting the account category.', AlertType.ERROR);
             }
         });
     });
@@ -130,7 +130,7 @@ function saveAccountCategory(isEdit = false) {
                 if (accountCategoryGrid) {
                     accountCategoryGrid.reloadGrid({ page: 1 });
                 }
-                showGovukAlert(response.message || (isEdit ? 'Account category updated successfully.' : 'Account category added successfully.'));
+                showAlertMessage(response.message || (isEdit ? 'Account category updated successfully.' : 'Account category added successfully.'), AlertType.SUCCESS);
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#accountCategoryModalContent');
             }
@@ -139,7 +139,7 @@ function saveAccountCategory(isEdit = false) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#accountCategoryModalContent');
             } else {
-                showGovukAlert('An error occurred while saving the account category.');
+                showAlertMessage('An error occurred while saving the account category.', AlertType.ERROR);
             }
         }
     });

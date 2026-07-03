@@ -145,13 +145,13 @@
                 data: { parentproject: currentProject, formRequired: formRequired },
                 success: function (result) {
                     if (result.success) {
-                        showGovukAlert('Form Required setting updated successfully.');
+                        showAlertMessage('Form Required setting updated successfully.', AlertType.SUCCESS);
                     } else {
-                        showGovukAlert('Failed to update Form Required setting.');
+                        showAlertMessage('Failed to update Form Required setting.', AlertType.ERROR);
                     }
                 },
                 error: function () {
-                    showGovukAlert('An error occurred while updating the Form Required setting.');
+                    showAlertMessage('An error occurred while updating the Form Required setting.', AlertType.ERROR);
                 }
             });
         }
@@ -188,16 +188,16 @@
                     data: { parentproject: currentProject, number: number },
                     success: function (data) {
                         if (data.success) {
-                            showGovukAlert(data.message).then(function () {
+                            showAlertMessage(data.message, AlertType.SUCCESS).then(function () {
                                 var gm = window['gridManager_milestonesGrid'];
                                 if (gm) { gm.reloadGrid({ page: 1 }); }
                             });
                         } else {
-                            showGovukAlert(data.errors?.map(e => e.message).join(', ') || 'Delete failed. Please try again.');
+                            showAlertMessage(data.errors?.map(e => e.message).join(', ') || 'Delete failed. Please try again.', AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting the milestone.');
+                        showAlertMessage('An error occurred while deleting the milestone.', AlertType.ERROR);
                     }
                 });
             });
@@ -235,7 +235,7 @@
                 success: function (result) {
                     if (result.success) {
                         closeEditModal();
-                        showGovukAlert(result.message).then(function () {
+                        showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                             var gm = window['gridManager_milestonesGrid'];
                             if (gm) { gm.reloadGrid({ page: 1 }); }
                         });
@@ -278,16 +278,16 @@
                     data: { parentproject: currentProject, year: year },
                     success: function (data) {
                         if (data.success) {
-                            showGovukAlert(data.message).then(function () {
+                            showAlertMessage(data.message, AlertType.SUCCESS).then(function () {
                                 var gm = window['gridManager_milestoneFormDatesGrid'];
                                 if (gm) { gm.reloadGrid({ page: 1 }); }
                             });
                         } else {
-                            showGovukAlert(data.errors?.map(e => e.message).join(', ') || 'Delete failed. Please try again.');
+                            showAlertMessage(data.errors?.map(e => e.message).join(', ') || 'Delete failed. Please try again.', AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting the financial year record.');
+                        showAlertMessage('An error occurred while deleting the financial year record.', AlertType.ERROR);
                     }
                 });
             });
@@ -328,7 +328,7 @@
                 success: function (result) {
                     if (result.success) {
                         closeFormDatesModal();
-                        showGovukAlert(result.message).then(function () {
+                        showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                             var gm = window['gridManager_milestoneFormDatesGrid'];
                             if (gm) { gm.reloadGrid({ page: 1 }); }
                         });
