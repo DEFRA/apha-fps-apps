@@ -17,13 +17,13 @@
         <input type="hidden" id="AnimalType" name="AnimalType" value="@Model.AnimalType" />
         <div class="govuk-error-summary" role="alert"
              aria-labelledby="animalFormErrorTitle" tabindex="-1" style="display: none;">
-            <h2 class="govuk-error-summary__title" id="animalFormErrorTitle"></h2>
+            <h2 class="govuk-error-summary__title" id="animalFormErrorTitle">There is a problem</h2>
             <div class="govuk-error-summary__body">
                 <ul class="govuk-list govuk-error-summary__list"></ul>
             </div>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label class="govuk-label">
+            <label for="animalTypeSelect" class="govuk-label">
                 Animal Type <span class="sup_color_red">*</span>
             </label>
             <div style="position: relative; z-index: 50;">

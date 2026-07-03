@@ -16,13 +16,13 @@
         <input type="hidden" id="TestCode" name="TestCode" value="@Model.TestCode" />
         <div class="govuk-error-summary" role="alert"
              aria-labelledby="testFormErrorTitle" tabindex="-1" style="display: none;">
-            <h2 class="govuk-error-summary__title" id="testFormErrorTitle"></h2>
+            <h2 class="govuk-error-summary__title" id="testFormErrorTitle">There is a problem</h2>
             <div class="govuk-error-summary__body">
                 <ul class="govuk-list govuk-error-summary__list"></ul>
             </div>
         </div>
         <div class="govuk-form-group govuk-!-margin-bottom-4">
-            <label class="govuk-label">
+            <label for="testCodeSelect" class="govuk-label">
                 Code <span class="sup_color_red">*</span>
             </label>
             <div style="position: relative; z-index: 50;">
