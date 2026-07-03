@@ -11,6 +11,8 @@ namespace Apha.FPS.DataAccess.Repositories
 {
     public class ProjectRepository : BaseRepository, IProjectRepository
     {
+        private const string FilterKeyParentProject = "ParentProject";
+
         private readonly FpsDbContext _dbContext;
         private readonly IFpsRequestContext _requestContext;
 
@@ -43,6 +45,38 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<Project>> GetProjectsByProjectGroupAsync(PaginationParameters<string> query, string projectGroup)
         {
             var projectQuery = (from pg in _dbContext.ProjectGroupViews
+                                join pv in _dbContext.Projects on
+                                new { pg.ProjectGroupName } equals new { ProjectGroupName = pv.ProjectGroup }
+                                where EF.Functions.ILike(pg.UserEmail!, _requestContext.UserEmailId) && pg.ProjectGroupName == projectGroup
+                                select (new Project
+                                {
+                                    ParentProject = pv.ParentProject ?? string.Empty,
+                                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
+                                    Program = pv.Program ?? string.Empty,
+                                    Manager = pv.Manager,
+                                    Customer = pv.Customer ?? string.Empty,
+                                    Contract = pv.Contract ?? string.Empty,
+                                    Disease = pv.Disease ?? string.Empty,
+                                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                                    ProjectGroup = pv.ProjectGroup,
+                                    BudgetCvl = pv.BudgetCvl,
+                                    CustIncome = pv.CustIncome,
+                                    TransferIncome = pv.TransferIncome,
+                                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,
+                                    IsDefraProject = pv.IsDefraProject,
+                                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
+                                })).AsQueryable();
+
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedData<Project>> GetProjectsByProjectGroupProjectProfitabilityVLAAsync(PaginationParameters<string> query, string projectGroup)
+        {
+            var projectQuery = (from pg in _dbContext.ProjectGroupViews
                                join pv in _dbContext.Projects on
                                new { pg.ProjectGroupName } equals new { ProjectGroupName = pv.ProjectGroup }
                                where EF.Functions.ILike(pg.UserEmail!, _requestContext.UserEmailId) && pg.ProjectGroupName == projectGroup
@@ -56,6 +90,37 @@ namespace Apha.FPS.DataAccess.Repositories
         }
 
         public async Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
+        {
+            var projectQuery = _dbContext.ProjectViews
+                .AsNoTracking()
+                .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.Program == programNo)
+                .Select(pv => new Project
+                {
+                    ParentProject = pv.ParentProject ?? string.Empty,
+                    ProjectTitle = pv.ProjectTitle ?? string.Empty,
+                    Program = pv.Program ?? string.Empty,
+                    Manager = pv.Manager,
+                    Customer = pv.Customer ?? string.Empty,
+                    Contract = pv.Contract ?? string.Empty,
+                    Disease = pv.Disease ?? string.Empty,
+                    ProjectStatus = pv.ProjectStatus ?? string.Empty,
+                    ProjectGroup = pv.ProjectGroup,
+                    BudgetCvl = pv.BudgetCvl,
+                    CustIncome = pv.CustIncome ?? 0,
+                    TransferIncome = pv.TransferIncome ?? 0,
+                    PlanCaseWorkDebit = pv.PlanCaseWorkDebit,
+                    IsDefraProject = pv.IsDefraProject ?? 0,
+                    IncomeAccountCode = pv.IncomeAccountCode ?? string.Empty
+                }).AsQueryable();
+
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
+            projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+            return base.ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedData<Project>> GetProjectsByProgramProjectProfitabilityVLAAsync(PaginationParameters<string> query, string programNo)
         {
             var projectQuery = _dbContext.ProjectViews
                 .AsNoTracking()
@@ -405,7 +470,6 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-
         private static IQueryable<Project> ApplyProjectFilter(IQueryable<Project> query, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
@@ -417,7 +481,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+            if (dict.TryGetValue(FilterKeyParentProject, out var parentProject) && parentProject != null)
                 query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
 
             if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
@@ -472,14 +536,22 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return property switch
             {
-                "parentproject" => ApplyOrder(query, p => p.ParentProject, descending),
-                "projecttitle" => ApplyOrder(query, p => p.ProjectTitle, descending),
-                "program" => ApplyOrder(query, p => p.Program, descending),
-                "manager" => ApplyOrder(query, p => p.Manager, descending),
-                "budgetcvl" => ApplyOrder(query, p => p.BudgetCvl, descending),
-                "costcentre" => ApplyOrder(query, p => p.CostCentre, descending),
-                "oracleprojectcode" => ApplyOrder(query, p => p.OracleProjectCode, descending),
-                "subaccountcode" => ApplyOrder(query, p => p.SubAccountCode, descending),
+                "parentproject"    => ApplyOrder(query, p => p.ParentProject, descending),
+                "projecttitle"     => ApplyOrder(query, p => p.ProjectTitle, descending),
+                "program"          => ApplyOrder(query, p => p.Program, descending),
+                "manager"          => ApplyOrder(query, p => p.Manager, descending),
+                "projectgroup"     => ApplyOrder(query, p => p.ProjectGroup, descending),
+                "customer"         => ApplyOrder(query, p => p.Customer, descending),
+                "contract"         => ApplyOrder(query, p => p.Contract, descending),
+                "disease"          => ApplyOrder(query, p => p.Disease, descending),
+                "projectstatus"    => ApplyOrder(query, p => p.ProjectStatus, descending),
+                "budgetcvl"        => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "budgetext"        => ApplyOrder(query, p => p.CustIncome, descending),
+                "transferincome"   => ApplyOrder(query, p => p.TransferIncome, descending),
+                "plancaseworkdebit"=> ApplyOrder(query, p => p.PlanCaseWorkDebit, descending),
+                "costcentre"       => ApplyOrder(query, p => p.CostCentre, descending),
+                "oracleprojectcode"=> ApplyOrder(query, p => p.OracleProjectCode, descending),
+                "subaccountcode"   => ApplyOrder(query, p => p.SubAccountCode, descending),
                 _ => query.OrderBy(p => p.ParentProject)
             };
         }
@@ -500,7 +572,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+            if (dict.TryGetValue(FilterKeyParentProject, out var parentProject) && parentProject != null)
             {
                 queryProjects = queryProjects.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
             }
@@ -1267,14 +1339,14 @@ namespace Apha.FPS.DataAccess.Repositories
             UserId = userId
         };
 
-        private record ProjectProfitabilityEntry(
+        private sealed record ProjectProfitabilityEntry(
             string? ParentProject,
             decimal? BudgetCvl,
             decimal? Profit,
             string? ProjectStatus,
             string? Program);
 
-        private record VlaProjectEntry(
+        private sealed record VlaProjectEntry(
             string? ParentProject,
             decimal? BudgetCvl,
             string? ProjectStatus,
@@ -1429,7 +1501,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     && EF.Functions.ILike(pg.SectorName!, "%charge%")
                 select new
                 {                    
-                    sectorCharge = (pg.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m,
+                    sectorCharge = string.Equals((pg.SectorName ?? "").Trim(), "charge", StringComparison.OrdinalIgnoreCase) ? 1m : 0m,
                     JobCode = sj.JobCode,                    
                     PlannedHours = sj.PlannedHours,
                     ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate
@@ -1557,7 +1629,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var filterDict = ParseFilterDict(query.Filter);
             if (filterDict.TryGetValue("JobCode", out var jobCode))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{jobCode}%"));
-            if (filterDict.TryGetValue("ParentProject", out var parentProject))
+            if (filterDict.TryGetValue(FilterKeyParentProject, out var parentProject))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{parentProject}%"));
 
             var projects = await rawQuery
@@ -1625,7 +1697,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     && EF.Functions.ILike(pg.SectorName!, "%charge%")
                 select new
                 {
-                    sectorCharge = (pg.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m,
+                    sectorCharge = string.Equals((pg.SectorName ?? "").Trim(), "charge", StringComparison.OrdinalIgnoreCase) ? 1m : 0m,
                     JobCode = sj.JobCode,
                     PlannedHours = sj.PlannedHours,
                     ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate

@@ -261,7 +261,7 @@
 
     function showNotification(title, message, type) {
         var icon = type === 'success' ? '✓' : '✗';
-        alert(icon + ' ' + title + ': ' + message);
+        showAlertMessage(icon + ' ' + title + ': ' + message, AlertType.INFO);
     }
 
     function reloadGrid(gridId) {

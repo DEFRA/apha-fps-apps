@@ -63,7 +63,7 @@ $(document).ready(function () {
     // Project Maintenance button
     $('#projectMaintenanceBtn').on('click', function () {
         if (!selectedProjectCode) {
-            alert('Please select a project first.');
+            showAlertMessage('Please select a project first.', AlertType.INFO);
             return;
         }
         window.location.href = programMaintenanceConfig.projectMaintenanceUrl +
@@ -91,7 +91,7 @@ function loadProgram(programNo) {
             }
         },
         error: function () {
-            alert('An error occurred while loading the program.');
+            showAlertMessage('An error occurred while loading the program.', AlertType.ERROR);
         }
     });
 }
@@ -115,7 +115,7 @@ function saveProgram() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                alert(result.message);
+                showAlertMessage(result.message, AlertType.SUCCESS);
             } else {
                 // Server returns field names without the "Program." prefix (e.g. "ProgramNo"),
                 // but asp-for generates name="Program.ProgramNo", so we remap here so that
@@ -127,7 +127,7 @@ function saveProgram() {
             }
         },
         error: function () {
-            alert('An error occurred while saving.');
+            showAlertMessage('An error occurred while saving.', AlertType.ERROR);
         }
     });
 }

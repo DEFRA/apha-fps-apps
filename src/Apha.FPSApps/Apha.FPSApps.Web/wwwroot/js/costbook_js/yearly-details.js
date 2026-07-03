@@ -107,10 +107,10 @@ function deletetblProjectYear(btn) {
                     }
                 }
             } else {
-                showGovukAlert(d.message || 'Failed to delete project year.');
+                showAlertMessage(d.message || 'Failed to delete project year.', AlertType.ERROR);
             }
         })
-        .catch(function (err) { console.error('Delete year error:', err); showGovukAlert('Failed to delete project year.'); });
+        .catch(function (err) { console.error('Delete year error:', err); showAlertMessage('Failed to delete project year.', AlertType.ERROR); });
     });
 }
 
@@ -139,7 +139,7 @@ function bindAddYearForm(pid, year) {
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.success) { closeModal(); selectYear(pid, data.year); }
-            else { showGovukAlert('Failed to add project year.'); }
+            else { showAlertMessage('Failed to add project year.', AlertType.ERROR); }
         });
     });
 }
@@ -224,9 +224,9 @@ function saveStaff() {
     .then(function (d) {
         if (d.success) { closeModal(); loadStaffGrid(); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
-        else { showGovukAlert(d.message || 'Failed to save staff requirement.'); }
+        else { showAlertMessage(d.message || 'Failed to save staff requirement.', AlertType.ERROR); }
     })
-    .catch(function (err) { console.error('Staff save error:', err); showGovukAlert('Failed to save staff requirement.'); });
+    .catch(function (err) { console.error('Staff save error:', err); showAlertMessage('Failed to save staff requirement.', AlertType.ERROR); });
 }
 function deleteStaff(pid, year, srIdentity) {
     showGovukConfirm('Delete this staff entry?').then(function (result) {
@@ -291,9 +291,9 @@ function saveTest() {
     .then(function (d) {
         if (d.success) { closeModal(); loadTestGrid(); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
-        else { showGovukAlert(d.message || 'Failed to save test requirement.'); }
+        else { showAlertMessage(d.message || 'Failed to save test requirement.', AlertType.ERROR); }
     })
-    .catch(function (err) { console.error('Test save error:', err); showGovukAlert('Failed to save test requirement.'); });
+    .catch(function (err) { console.error('Test save error:', err); showAlertMessage('Failed to save test requirement.', AlertType.ERROR); });
 }
 function deleteTest(pid, year, testCode) {
     showGovukConfirm('Delete this test entry?').then(function (result) {
@@ -356,11 +356,13 @@ function saveAnimal() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadAnimalGrid(); }
+        if (d.success) {
+            showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadAnimalGrid(); });
+        }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
-        else { showGovukAlert(d.message || 'Failed to save animal requirement.'); }
+        else { showAlertMessage(d.message || 'Failed to save animal requirement.', AlertType.ERROR); }
     })
-    .catch(function (err) { console.error('Animal save error:', err); showGovukAlert('Failed to save animal requirement.'); });
+    .catch(function (err) { console.error('Animal save error:', err); showAlertMessage('Failed to save animal requirement.', AlertType.ERROR); });
 }
 function deleteAnimal(pid, year, arIdentity) {
     showGovukConfirm('Delete this animal entry?').then(function (result) {
@@ -370,7 +372,10 @@ function deleteAnimal(pid, year, arIdentity) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadAnimalGrid(); });
+        .then(function (d) {
+            if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadAnimalGrid(); }); }
+            else { showAlertMessage(d.message || 'Failed to delete animal entry.', AlertType.ERROR); }
+        });
     });
 }
 
@@ -425,9 +430,9 @@ function saveAdditionalCost() {
     .then(function (d) {
         if (d.success) { closeModal(); loadAdditionalCostGrid(); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
-        else { showGovukAlert(d.message || 'Failed to save additional cost.'); }
+        else { showAlertMessage(d.message || 'Failed to save additional cost.', AlertType.ERROR); }
     })
-    .catch(function (err) { console.error('Additional cost save error:', err); showGovukAlert('Failed to save additional cost.'); });
+    .catch(function (err) { console.error('Additional cost save error:', err); showAlertMessage('Failed to save additional cost.', AlertType.ERROR); });
 }
 function deleteAdditionalCost(pid, year, acIdentity) {
     showGovukConfirm('Delete this additional cost entry?').then(function (result) {
@@ -458,7 +463,7 @@ function saveYearRate(pid, year, row) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
         body: JSON.stringify(data)
-    }).then(function (r) { return r.json(); }).then(function (d) { if (!d.success) showGovukAlert('Failed to save rates.'); });
+    }).then(function (r) { return r.json(); }).then(function (d) { if (!d.success) showAlertMessage('Failed to save rates.', AlertType.ERROR); });
 }
 function openEditMarkupAndProfitModal(pid, yearVal) {
     fetch(yearlyDetailsUrls.editMarkupAndProfit + '?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal + '&programme=' + encodeURIComponent(programme))
@@ -482,7 +487,7 @@ function bindMarkupAndProfitForm(pid, yearVal) {
         .then(function (r) { return r.json(); })
         .then(function (d) {
             if (d.success) { closeModal(); loadMarkupAndProfitGrid(); }
-            else { showGovukAlert('Failed to save markup and profit rates.'); }
+            else { showAlertMessage('Failed to save markup and profit rates.', AlertType.ERROR); }
         });
     });
 }

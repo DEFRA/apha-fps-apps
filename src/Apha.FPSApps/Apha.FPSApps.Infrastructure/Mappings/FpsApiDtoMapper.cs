@@ -97,7 +97,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<SubAccountDto, SubAccountRes>()
                 .ForMember(d => d.SubAccount, o => o.MapFrom(s => s.SubAccount)).ReverseMap();
             CreateMap<CostCentreWorkgroupDto, CostCentreWorkgroupRes>().ReverseMap();
-            CreateMap<WorkGroupStaffDto, WorkGroupStaffRes>().ReverseMap();
+            CreateMap<PactStaffDto, PactStaffRes>().ReverseMap();
             CreateMap<WorkGroupPersonDto, WorkGroupPersonRes>().ReverseMap();
 
             // Resource Set-Up
@@ -150,6 +150,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<BidViewDto, BidViewRes>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
+
+            // UserPermission
+            CreateMap<UserDto, UserRes>().ReverseMap();
+            CreateMap<UserDto, UserReq>().ReverseMap();
+            CreateMap<UserPermissionDataDto, UserPermissionRes>().ReverseMap();
+            CreateMap<UserPermissionDataDto, UserPermissionReq>().ReverseMap();
+            CreateMap<PermissionOptionsDto, PermissionOptionsRes>().ReverseMap();
 
 
         }

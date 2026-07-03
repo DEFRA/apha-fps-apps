@@ -27,9 +27,8 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsProjectGroupApiClient FpsProjectGroup { get; }
         IFpsBudgetBidsApiClient FpsBudgetBids { get; }
         IFpsPurchasesApiClient FpsPurchases { get; }
+        IFpsUserApiClient FpsUserPermission { get; }
         IFpsGradeApiClient FpsGrade { get; }
-
-        // Income/Contribution from Time Sales (frmTimeSellerPC)
         IFpsTimeSellerPcApiClient FpsTimeSellerPc { get; }
     }
 }

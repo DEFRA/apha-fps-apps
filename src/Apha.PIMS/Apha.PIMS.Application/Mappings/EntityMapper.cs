@@ -46,6 +46,8 @@ namespace Apha.PIMS.Application.Mappings
             CreateMap<MilestoneFormDates, MilestoneFormDatesDto>().ReverseMap();
 
             CreateMap<LogMilestone, LogMilestoneDto>().ReverseMap();
+            CreateMap<RadTrackInvoice, RadTrackInvoiceDto>().ReverseMap();
+            CreateMap<RadTrackInvoiceTotals, RadTrackInvoiceTotalsDto>().ReverseMap();
         }
     }
 }

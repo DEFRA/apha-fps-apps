@@ -58,6 +58,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<RecreateSummaryLogDto, RecreateSummaryLogRes>().ReverseMap();
             CreateMap<ReleasePeriodDto, ReleasePeriodRes>().ReverseMap();
             CreateMap<ReleaseSummaryRes, ReleaseSummaryDto>();
+            CreateMap<TestPriceCheckDto, TestPriceCheckRes>().ReverseMap();
+            CreateMap<TestPriceCheckDto, TestPriceCheckReq>();
         }
     }
 }

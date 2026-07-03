@@ -80,7 +80,7 @@
                     <div class="govuk-input__wrapper">
                         <div class="govuk-input__prefix" aria-hidden="true">£</div>
                         <input type="number" class="govuk-input govuk-!-font-size-16"
-                               asp-for="Amount" step="0.01" placeholder="e.g., 1000" required />                        
+                               asp-for="Amount" step="0.01" placeholder="e.g., 1000" required  onkeydown="if(['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();"/>                        
                     </div>     
                     <span data-valmsg-for="Amount" class="govuk-error-message"></span>
                 </div>
