@@ -6,7 +6,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     /// <summary>
     /// DataGrid row item for Income/Contribution from Time Sales (frmTimeSellerPC).
     /// Column order matches the Access form layout:
-    ///   WG Grade | Work Group | PC Grade | Avail Hrs | Chrg Rate
+    ///   PC Grade | Work Group | WG Grade (displayed as "Grade") | Avail Hrs | Chrg Rate
     ///   ── Total Planned Time ──  PlanHrs | FEC | % Planned
     ///   ── Assured Planned Time ── App Hrs | App FEC | % Assured
     ///   ── Rate "Efficacy" Checker ── OHR | Total Cont
@@ -15,9 +15,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     {
         // ── Identity / ungrouped ────────────────────────────────────────────
 
-        [Display(Name = "WG Grade")]
+        [Display(Name = "PC Grade")]
         [GridColumn(Order = 1, Width = 100, Type = GridColumnType.Text, IsFilterable = true, IsVisible = false)]
-        public string? WgGrade { get; set; }
+        public string? ProfitCentreGrade { get; set; }
 
         [Display(Name = "WG")]
         [GridColumn(Order = 2, Width = 130, Type = GridColumnType.Text, IsFilterable = true)]
@@ -25,7 +25,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         [Display(Name = "Grade")]
         [GridColumn(Order = 3, Width = 100, Type = GridColumnType.Text, IsFilterable = true)]
-        public string? ProfitCentreGrade { get; set; }
+        public string? WgGrade { get; set; }
 
         [Display(Name = "Avail Hrs")]
         [GridColumn(Order = 4, Width = 85, Type = GridColumnType.DoubleNumber)]
