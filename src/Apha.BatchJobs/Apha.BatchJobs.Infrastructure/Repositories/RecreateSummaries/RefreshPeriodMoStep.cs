@@ -23,6 +23,13 @@ internal sealed class RefreshPeriodMoStep : RecreateSummariesExecutionStepBase
             .Where(x => x.Period == _period)
             .ExecuteDeleteAsync(cancellationToken);
 
+        // Keep the SERIAL sequence in sync with current table state.
+        await db.Database.ExecuteSqlRawAsync(@"
+            SELECT setval(
+                'fps.period_monthlyoutput_id_seq',
+                COALESCE((SELECT MAX(id) FROM fps.period_monthlyoutput), 0)
+            );", cancellationToken);
+
         return await db.Database.ExecuteSqlInterpolatedAsync($@"
             INSERT INTO fps.period_monthlyoutput
                 (period, project, oracleprojectcode, subaccountcode, isdefraproject, opc, occ, month, spc, workgroup, scc, testcode, volume, testprice, totalcost)
