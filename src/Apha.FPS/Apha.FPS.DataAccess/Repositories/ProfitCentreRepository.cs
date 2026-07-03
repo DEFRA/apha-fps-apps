@@ -24,7 +24,8 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var rows = await _dbContext.ProfitCentreViews
                 .AsNoTracking()
-                .Where(x => x.UserEmail != null && x.UserEmail.ToLower() == _requestContext.UserEmailId)
+                .Where(x => x.UserEmail != null
+                         && x.UserEmail.ToLower() == _requestContext.UserEmailId)
                 .OrderBy(x => x.ProfitCentreId)
                 .ToListAsync();
 

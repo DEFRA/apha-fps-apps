@@ -10,9 +10,9 @@ namespace Apha.FPSApps.Application.Services.FPS
     {
         private readonly IFpsApiClient _fpsApiClient;
 
-        public ProgramService(IFpsApiClient _ApiClient)
+        public ProgramService(IFpsApiClient fpsApiClient)
         {
-            _fpsApiClient = _ApiClient;
+            _fpsApiClient = fpsApiClient;
         }
 
         public async Task<ApiResponseDto<IEnumerable<ProgramDto>>> GetAllProgramsAsync()

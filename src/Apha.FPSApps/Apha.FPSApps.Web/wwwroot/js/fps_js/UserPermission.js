@@ -53,11 +53,11 @@ function loadPermissions(userId) {
                 $('#permissionPanelsContainer').show();
                 $('#saveToolbar').show();
             } else {
-                showGovukAlert(result.message || 'Failed to load permissions.');
+                showAlertMessage(result.message || 'Failed to load permissions.', AlertType.ERROR);
             }
         },
         error: function () {
-            showGovukAlert('An error occurred while loading permissions.');
+            showAlertMessage('An error occurred while loading permissions.', AlertType.ERROR);
         }
     });
 }
@@ -127,7 +127,7 @@ function getCheckedValues(panelId) {
 
 function savePermissions() {
     if (selectedUserId <= 0) {
-        showGovukAlert('Please select a user first.');
+        showAlertMessage('Please select a user first.', AlertType.INFO);
         return;
     }
 
@@ -147,15 +147,15 @@ function savePermissions() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                showGovukAlert(result.message || 'Permissions saved successfully.').then(function () {
+                showAlertMessage(result.message || 'Permissions saved successfully.', AlertType.SUCCESS).then(function () {
                     loadPermissions(selectedUserId);
                 });
             } else {
-                showGovukAlert(result.message || 'Failed to save permissions.');
+                showAlertMessage(result.message || 'Failed to save permissions.', AlertType.ERROR);
             }
         },
         error: function () {
-            showGovukAlert('An error occurred while saving permissions.');
+            showAlertMessage('An error occurred while saving permissions.', AlertType.ERROR);
         }
     });
 }
@@ -170,7 +170,7 @@ function addUser(btn) {
             $('#modalPopup').addClass("show");
         },
         error: function () {
-            showGovukAlert('An error occurred while loading the form.');
+            showAlertMessage('An error occurred while loading the form.', AlertType.ERROR);
         }
     });
 }
@@ -206,7 +206,7 @@ function saveUser() {
         success: function (result) {
             if (result.success) {
                 closeModal();
-                showGovukAlert(result.message || 'User created successfully.');
+                showAlertMessage(result.message || 'User created successfully.', AlertType.SUCCESS);
                 window['gridManager_userPermissionGrid'].reloadGrid({ page: 1 });
             } else {
                 displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
@@ -216,7 +216,7 @@ function saveUser() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -233,7 +233,7 @@ function editUser(btn) {
             $('#modalPopup').addClass("show");
         },
         error: function () {
-            showGovukAlert('An error occurred while loading the form.');
+            showAlertMessage('An error occurred while loading the form.', AlertType.ERROR);
         }
     });
 }
@@ -269,7 +269,7 @@ function updateUser() {
         success: function (result) {
             if (result.success) {
                 closeModal();
-                showGovukAlert(result.message || 'User updated successfully.');
+                showAlertMessage(result.message || 'User updated successfully.', AlertType.SUCCESS);
                 window['gridManager_userPermissionGrid'].reloadGrid({ page: 1 });
             } else {
                 displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
@@ -279,7 +279,7 @@ function updateUser() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -295,7 +295,7 @@ function deleteUser(btn) {
             data: { userId: userId },
             success: function (response) {
                 if (response.success) {
-                    showGovukAlert('User deleted successfully.').then(function () {
+                    showAlertMessage('User deleted successfully.', AlertType.SUCCESS).then(function () {
                         window['gridManager_userPermissionGrid'].reloadGrid({ page: 1 });
                         selectedUserId = 0;
                         $('#mupSelectedUser').val('No user selected');
@@ -303,11 +303,11 @@ function deleteUser(btn) {
                         $('#saveToolbar').hide();
                     });
                 } else {
-                    showGovukAlert('Error: ' + response.message);
+                    showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
@@ -364,7 +364,7 @@ function addFreeTextEntry(panelId) {
     }
 
     if (value.length > 2) {
-        showGovukAlert('Test owner code must be a maximum of 2 characters.');
+        showAlertMessage('Test owner code must be a maximum of 2 characters.', AlertType.INFO);
         return;
     }
 
@@ -377,7 +377,7 @@ function addFreeTextEntry(panelId) {
         }
     });
     if (existsInCheckboxes) {
-        showGovukAlert('This test owner code already exists in the list.');
+        showAlertMessage('This test owner code already exists in the list.', AlertType.INFO);
         return;
     }
 
@@ -390,7 +390,7 @@ function addFreeTextEntry(panelId) {
         }
     });
     if (existsInNewEntries) {
-        showGovukAlert('This test owner code has already been added.');
+        showAlertMessage('This test owner code has already been added.', AlertType.INFO);
         return;
     }
 

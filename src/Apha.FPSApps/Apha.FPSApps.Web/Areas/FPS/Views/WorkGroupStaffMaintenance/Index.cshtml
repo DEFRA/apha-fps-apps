@@ -1,0 +1,94 @@
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupStaffMaintenanceViewModel
+
+@{
+    ViewData["Title"] = "2025-2026 : WG Staff Maintenance";
+}
+
+<main id="main-content">
+    <div class="container-fluid">
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="fps-sr-breadcrumb-row">
+                    <div class="fps-sr-breadcrumb-flex">
+                        <div class="govuk-grid-column-full">
+                            <nav class="govuk-breadcrumbs" aria-label="Breadcrumb">
+                                <ol class="govuk-breadcrumbs__list">
+                                    <li class="govuk-breadcrumbs__list-item">
+                                        <a class="govuk-breadcrumbs__link"
+                                           href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a>
+                                    </li>
+                                    <li class="govuk-breadcrumbs__list-item">
+                                        <a class="govuk-breadcrumbs__link" href="#">MAB</a>
+                                    </li>
+                                    <li class="govuk-breadcrumbs__list-item">
+                                        <a class="govuk-breadcrumbs__link"
+                                           href="@Url.Action("Index", "DivisionMaintenance", new { area = "FPS" })">Maintenance Menu</a>
+                                    </li>
+                                    <li class="govuk-breadcrumbs__list-item" aria-current="page">
+                                        Maintain WG Staff
+                                    </li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full govuk-!-margin-left-3">
+                <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
+                    Work Group Staff
+                </h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <main class="main-content" style="padding:0;">
+                    <div class="container-fluid" style="padding:0;">
+                        <div class="row">
+                            <div class="container-fluid" style="padding-left:0px;">
+                                <div class="wgg-container-fluid">
+                                    <div class="wgg-layout-row">
+                                        @await Html.PartialAsync("_MaintenanceSideNav", "WorkGroupStaffMaintenance")
+
+                                        <div style="display:flex; flex-direction:column; flex:1 1 auto; min-width:0; margin:0 0px 5px 8px;">
+                                            <div class="govuk-grid-row">
+                                                <div class="govuk-grid-column-full mt-2">
+                                                    <div id="gridContainer_@Model.WGStaffGrid.GridId">
+                                                        @await Html.PartialAsync("_DataGrid", Model.WGStaffGrid)
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+@section Scripts {
+    <script src="~/js/ajax-form-validation.js"></script>
+    <script>
+        var WorkGroupStaffConfig = {
+            gridId: '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.WGStaffGrid.GridId)',
+            createUrl: '/FPS/WorkGroupStaffMaintenance/Create',
+            editUrl: '/FPS/WorkGroupStaffMaintenance/Edit',
+            updateUrl: '/FPS/WorkGroupStaffMaintenance/Edit',
+            deleteUrl: '/FPS/WorkGroupStaffMaintenance/Delete'
+        };
+    </script>
+    <script src="~/js/fps_js/WorkGroupStaffMaintenance.js"></script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

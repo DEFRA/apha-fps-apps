@@ -60,7 +60,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProfitCentreRepositoryTest
             string name = "Centre One",
             string division = "DIV1",
             string userEmail = "test@example.com") =>
-            new() { ProfitCentreId = id, ProfitCentreName = name, Division = division, UserEmail = userEmail };
+            new() { ProfitCentreId = id, ProfitCentreName = name, Division = division, UserEmail = userEmail, FpsYear = 2024 };
 
         private static ProfitCentre BuildEntity(
             string id = "PC01",
