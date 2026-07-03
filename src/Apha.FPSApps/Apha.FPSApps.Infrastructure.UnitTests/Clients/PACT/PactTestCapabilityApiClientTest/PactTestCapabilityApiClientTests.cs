@@ -344,7 +344,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
                 new PaginationDto { PageNumber = 2, PageSize = 5, TotalPages = 3, TotalRecords = 12 });
 
             _http.GetAsync<List<WgTestCapabilitiesWithDescriptionRes>>(Arg.Is<string>(url =>
-                url.Contains("api/v1/testcapability/paged/user-test-capabilities")
+                url.Contains("api/v1/testcapability/paged/wg-test-capabilities")
                 && url.Contains("workGroup=WG1")
                 && url.Contains("Page=2")
                 && url.Contains("PageSize=5")))
@@ -365,7 +365,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             Assert.Equal(12, result.Pagination.TotalRecords);
 
             await _http.Received(1).GetAsync<List<WgTestCapabilitiesWithDescriptionRes>>(Arg.Is<string>(url =>
-                url.Contains("api/v1/testcapability/paged/user-test-capabilities")));
+                url.Contains("api/v1/testcapability/paged/wg-test-capabilities")));
         }
 
         [Theory]
@@ -379,7 +379,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
             var expectedDto = ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>.SuccessResponse([]);
 
             _http.GetAsync<List<WgTestCapabilitiesWithDescriptionRes>>(Arg.Is<string>(url =>
-                url.Contains("api/v1/testcapability/paged/user-test-capabilities")
+                url.Contains("api/v1/testcapability/paged/wg-test-capabilities")
                 && !url.Contains("workGroup=")))
                 .Returns(apiResponse);
 
@@ -389,7 +389,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactTestCapabilityA
 
             Assert.True(result.Success);
             await _http.Received(1).GetAsync<List<WgTestCapabilitiesWithDescriptionRes>>(Arg.Is<string>(url =>
-                url.Contains("api/v1/testcapability/paged/user-test-capabilities")
+                url.Contains("api/v1/testcapability/paged/wg-test-capabilities")
                 && !url.Contains("workGroup=")));
         }
 
