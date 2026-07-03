@@ -23,39 +23,36 @@ internal sealed class RefreshPeriodMoStep : RecreateSummariesExecutionStepBase
             .Where(x => x.Period == _period)
             .ExecuteDeleteAsync(cancellationToken);
 
-        var rows = await (
-            from mo in db.RsMonthlyOutput.AsNoTracking()
-            join wg in db.RsWorkGroup.AsNoTracking() on mo.WorkGroup equals wg.WorkGroup
-            join tr in db.RsTlkpTestReqmt.AsNoTracking()
-                on new { Buyer = mo.Buyer, mo.TestCode }
-                equals new { Buyer = tr.ProjectBuyerCode, tr.TestCode }
-            join p in db.RsTlkpProject.AsNoTracking() on mo.Buyer equals p.ParentProject
-            where p.FpsYear == fpsYear
-            join cc0 in db.RsCostCentre.AsNoTracking()
-                on new { CostCentre = p.CostCentre, FpsYear = p.FpsYear }
-                equals new { CostCentre = (double?)cc0.CostCentre, cc0.FpsYear } into cc1
-            from cc in cc1.DefaultIfEmpty()
-            select new RsPeriodMonthlyOutputTable
-            {
-                Period = _period,
-                Project = p.ParentProject,
-                OracleProjectCode = p.OracleProjectCode,
-                SubAccountCode = p.SubAccountCode,
-                IsDefraProject = (p.IsDefraProject ?? 0) == 0 ? "No" : "Yes",
-                Opc = cc != null ? cc.ProfitCentre : null,
-                Occ = cc != null ? cc.CostCentre : null,
-                Month = mo.Month,
-                Spc = wg.ProfitCentre,
-                WorkGroup = wg.WorkGroup,
-                Scc = wg.CostCentre,
-                TestCode = mo.TestCode,
-                Volume = mo.Volume,
-                TestPrice = tr.UnitPrice,
-                TotalCost = tr.UnitPrice * (decimal?)mo.Volume
-            })
-            .ToListAsync(cancellationToken);
-
-        await db.RsPeriodMonthlyOutput.AddRangeAsync(rows, cancellationToken);
-        return await db.SaveChangesAsync(cancellationToken);
+        return await db.Database.ExecuteSqlInterpolatedAsync($@"
+            INSERT INTO fps.period_monthlyoutput
+                (period, project, oracleprojectcode, subaccountcode, isdefraproject, opc, occ, month, spc, workgroup, scc, testcode, volume, testprice, totalcost)
+            SELECT
+                {_period},
+                p.parentproject,
+                p.oracleprojectcode,
+                p.subaccountcode,
+                CASE WHEN COALESCE(p.isdefraproject, 0) = 0 THEN 'No' ELSE 'Yes' END,
+                c.profitcentre,
+                c.costcentre,
+                mo.month,
+                wg.profitcentre,
+                wg.workgroup,
+                wg.costcentre,
+                mo.testcode,
+                mo.volume,
+                tr.unitprice,
+                tr.unitprice * mo.volume::numeric
+            FROM fps.monthlyoutput AS mo
+            INNER JOIN fps.workgroup AS wg
+                ON mo.workgroup = wg.workgroup
+            INNER JOIN fps.tlkptestreqmt AS tr
+                ON mo.buyer = tr.projectbuyercode
+               AND mo.testcode = tr.testcode
+            INNER JOIN fps.tlkpproject AS p
+                ON mo.buyer = p.parentproject
+            LEFT JOIN fps.costcentre AS c
+                ON p.costcentre = c.costcentre
+               AND p.fpsyear = c.fpsyear
+            WHERE p.fpsyear = {fpsYear};", cancellationToken);
     }
 }
