@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — TestRequirementRCCostControllerTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - New xUnit test class for TestRequirementRCCostController (backend API controller)
- *   - Covers GetByTestCodeAsync, GetByKeyAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - NSubstitute used for ITestRequirementRCCostService and IMapper mocks
- *   - Tests cover success paths, not-found / KeyNotFoundException paths, and write-operation flows
- *
- * PRESERVED:
- *   - Composite PK semantics: TestCode + Buyer + ProfitCentre + FpsYear
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;

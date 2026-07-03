@@ -1,54 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — TestListVlaController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 11 — ViewModels + MVC Controller (Steps 16-17)
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - New MVC controller for Test List for VLA page (frmTestList + fsubTest_MainList)
- *   - Maps to JS prototype testList_VLA.js stage2 page with 5 DataGridComponent instances:
- *       1. Main test list grid (stage2TestListGrid) → CRUD via ITestListVlaService
- *       2. Test Requirements tab (stage2TestRequirementsGrid) → CRUD via ITestRequirementService
- *       3. Component Charges general tab (stage2ComponentGeneralGrid) → CRUD via IFpsApiClient.FpsTestRCCost
- *       4. Component Charges project tab (stage2ComponentProjectGrid) → CRUD via IFpsApiClient.FpsTestRequirementRCCost
- *       5. Suppliers/WorkGroups tab (stage2SuppliersGrid) → read-only via ITestCapabilityService
- *   - ITestListVlaService is the primary CRUD service (not IFpsApiClient directly)
- *   - Sub-resource tab services injected separately per handoff table
- *   - IFpsYearContext provides the required fpsYear business context (from year selector control)
- *   - No page-level filter dropdowns — HTML has no explicit <select> outside grid containers
- *   - DataGridConfig built explicitly for all five grids in Index()
- *
- * PRESERVED:
- *   - JS showAddButton: false is a prototype limitation — CRUD modals (vlaTestListModal,
- *     vlaDeleteModal, tabGridModal, tabDeleteModal) exist in HTML, so AllowAdd/Edit/Delete = true
- *   - Composite PK semantics: ItemCode+FpsYear for TestListVla; TestCode+ProfitCentre+FpsYear for TestRCCost;
- *     TestCode+Buyer+ProfitCentre+FpsYear for TestRequirementRCCost; TestCode+Buyer for TestRequirement
- *
- * PHASE 14 — PRE-BUILD SECURITY REVIEW (2026-07-01):
- *   FIXED:
- *   - Information disclosure: removed user-supplied parameter values from NotFound response bodies in
- *     EditTestListVla (GET), EditTestRequirement (GET), EditComponentChargeGeneral (GET), and
- *     EditComponentChargeProject (GET). Now returns generic NotFound() with no leaking message body.
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: IFpsApiClient.FpsTestRCCost and IFpsApiClient.FpsTestRequirementRCCost are
- *     injected via the aggregate IFpsApiClient — verify IFpsApiClient DI registration in ApiClientExtension.
- *   - TRANSFORMENGINE TODO: ITestCapabilityService.GetTestCapabilityByPortfolioAsync is reused for the
- *     Suppliers tab. Verify the portfolio/testCode filter mapping is correct for this page context.
- *   - TRANSFORMENGINE TODO: The summary computed fields (TotalRequired, ComponentTotal, VlaUnitPrice)
- *     shown in HTML prototype are computed client-side in JS — not rendered server-side here.
- *   - TRANSFORMENGINE TODO: Tab grid row selection (selecting a TestListVla row updates child grids)
- *     is implemented via client-side JS AJAX reload — the controller Load*Grid endpoints accept
- *     testCode as an optional parameter from the selected parent row.
- *   - TRANSFORMENGINE SECURITY TODO: [ValidateAntiForgeryToken] is absent from all [HttpPost] and
- *     [HttpDelete] state-changing actions. This is consistent with the existing FPS area controller
- *     pattern (zero FPS controllers use [ValidateAntiForgeryToken]) but is a security gap.
- *     To close it: add RequestVerificationToken header to the $.ajax calls in
- *     _AddEditTestListVla.cshtml and to the _DataGrid reloadGrid $.post call in
- *     Views/Shared/_DataGrid.cshtml, then add [ValidateAntiForgeryToken] to all state-changing
- *     actions here. Coordinate this change across all FPS area controllers at the same time.
- *     Tracked in Security Review section of transform-review-checklist.md.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
@@ -73,14 +22,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
     public class TestListVlaController : Controller
     {
         private readonly IMapper _mapper;
-        // TRANSFORMENGINE: Primary CRUD service — ITestListVlaService (not IFpsApiClient directly)
         private readonly ITestListVlaService _testListVlaService;
-        // TRANSFORMENGINE: Sub-resource services for tab grids
         private readonly ITestRequirementService _testRequirementService;
         private readonly ITestCapabilityService _testCapabilityService;
-        // TRANSFORMENGINE: Aggregate API client for TestRCCost and TestRequirementRCCost sub-clients
         private readonly IFpsApiClient _fpsApiClient;
-        // TRANSFORMENGINE: Year context — provides required fpsYear business parameter from year selector
         private readonly IFpsYearContext _fpsYearContext;
 
         public TestListVlaController(
@@ -101,7 +46,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── INDEX ─────────────────────────────────────────────────────────────
 
-        // TRANSFORMENGINE: Index — builds all 5 DataGridConfig instances explicitly; never leaves as new()
         public IActionResult Index()
         {
             var fpsYear = _fpsYearContext.Year;
@@ -110,7 +54,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 FpsYear = fpsYear,
 
-                // TRANSFORMENGINE: Main test list grid — JS stage2TestListGrid / testList_for_VLA_grid
                 // AllowAdd/Edit/Delete = true — CRUD modals exist in HTML prototype (vlaTestListModal, vlaDeleteModal)
                 TestListGrid = new DataGridConfig<TestListVlaItem>
                 {
@@ -132,7 +75,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Pagination          = new PaginationModel()
                 },
 
-                // TRANSFORMENGINE: Test Requirements tab grid — JS stage2TestRequirementsGrid
                 // AllowAdd/Edit/Delete = true — tabGridModal + tabDeleteModal exist in HTML prototype
                 TestRequirementsGrid = new DataGridConfig<TestRequirementItem>
                 {
@@ -154,7 +96,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Pagination          = new PaginationModel()
                 },
 
-                // TRANSFORMENGINE: Component Charges general tab grid — JS stage2ComponentGeneralGrid
                 // AllowAdd/Edit/Delete = true — tabGridModal + tabDeleteModal in HTML prototype
                 ComponentChargesGeneralGrid = new DataGridConfig<TestRCCostItem>
                 {
@@ -176,7 +117,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Pagination          = new PaginationModel()
                 },
 
-                // TRANSFORMENGINE: Component Charges project tab grid — JS stage2ComponentProjectGrid
                 // AllowAdd/Edit/Delete = true — tabGridModal + tabDeleteModal in HTML prototype
                 ComponentChargesProjectGrid = new DataGridConfig<TestRequirementRCCostItem>
                 {
@@ -198,7 +138,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Pagination          = new PaginationModel()
                 },
 
-                // TRANSFORMENGINE: Suppliers/WorkGroups tab grid — JS stage2SuppliersGrid
                 // Read-only listing of WorkGroups able to supply the selected test item
                 SuppliersGrid = new DataGridConfig<TestCapabilityItem>
                 {
@@ -222,7 +161,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── MAIN TEST LIST GRID ───────────────────────────────────────────────
 
-        // TRANSFORMENGINE: LoadTestListVlaGrid — fpsYear required; sourced from IFpsYearContext (year selector)
         [HttpPost]
         public async Task<IActionResult> LoadTestListVlaGrid(PaginationFilter<string> request)
         {
@@ -245,7 +183,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             var fpsYear = _fpsYearContext.Year;
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            // TRANSFORMENGINE: GetAllAsync requires fpsYear — sourced from IFpsYearContext (year selector control)
             var response = await _testListVlaService.GetAllAsync(query, fpsYear);
 
             var items = response.Success && response.Data != null
@@ -324,9 +261,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> EditTestListVla(string itemCode)
         {
             var fpsYear = _fpsYearContext.Year;
-            // TRANSFORMENGINE: GetByIdAsync requires itemCode + fpsYear (composite PK)
             var result = await _testListVlaService.GetByIdAsync(itemCode, fpsYear);
-            // TRANSFORMENGINE: Phase 14 security fix — generic NotFound(); parameter values removed to prevent information disclosure
             if (!result.Success)
                 return NotFound();
 
@@ -353,7 +288,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             var fpsYear = _fpsYearContext.Year;
             var dto = _mapper.Map<TestListVlaDto>(model);
-            // TRANSFORMENGINE: UpdateAsync requires itemCode + fpsYear (composite PK) + dto
             var result = await _testListVlaService.UpdateAsync(model.ItemCode, fpsYear, dto);
 
             return result.Success
@@ -371,7 +305,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> DeleteTestListVla(string itemCode)
         {
             var fpsYear = _fpsYearContext.Year;
-            // TRANSFORMENGINE: DeleteAsync requires itemCode + fpsYear (composite PK)
             var result = await _testListVlaService.DeleteAsync(itemCode, fpsYear);
             return result.Success
                 ? Json(new { success = true, message = "Test deleted successfully." })
@@ -386,7 +319,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── TEST REQUIREMENTS TAB GRID ────────────────────────────────────────
 
-        // TRANSFORMENGINE: LoadTestRequirementsGrid — testCode required from parent row selection
         [HttpPost]
         public async Task<IActionResult> LoadTestRequirementsGrid(
             PaginationFilter<string> request, string? testCode = null)
@@ -415,7 +347,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (!string.IsNullOrEmpty(testCode))
             {
-                // TRANSFORMENGINE: GetPagedTestReqmtAsync — testCode from parent TestListVla row selection
                 var response = await _testRequirementService.GetPagedTestReqmtAsync(query, testCode);
                 if (response.Success && response.Data != null)
                     items = _mapper.Map<List<TestRequirementItem>>(response.Data);
@@ -495,7 +426,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         public async Task<IActionResult> EditTestRequirement(string testCode, string buyer)
         {
             var result = await _testRequirementService.GetTestReqmtByIdAsync(testCode, buyer);
-            // TRANSFORMENGINE: Phase 14 security fix — generic NotFound(); parameter values removed to prevent information disclosure
             if (!result.Success)
                 return NotFound();
 
@@ -551,7 +481,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── COMPONENT CHARGES GENERAL TAB GRID ───────────────────────────────
 
-        // TRANSFORMENGINE: LoadComponentChargesGeneralGrid — testCode+fpsYear required from parent row selection
         [HttpPost]
         public async Task<IActionResult> LoadComponentChargesGeneralGrid(
             PaginationFilter<string> request, string? testCode = null)
@@ -580,7 +509,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (!string.IsNullOrEmpty(testCode))
             {
-                // TRANSFORMENGINE: GetByTestCodeAsync — testCode+fpsYear from parent row; accesses via IFpsApiClient aggregate
                 var response = await _fpsApiClient.FpsTestRCCost.GetByTestCodeAsync(testCode, fpsYear);
                 if (response.Success && response.Data != null)
                     items = _mapper.Map<List<TestRCCostItem>>(response.Data);
@@ -659,7 +587,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var fpsYear = _fpsYearContext.Year;
             var result = await _fpsApiClient.FpsTestRCCost.GetByKeyAsync(testCode, profitCentre, fpsYear);
-            // TRANSFORMENGINE: Phase 14 security fix — generic NotFound(); parameter values removed to prevent information disclosure
             if (!result.Success)
                 return NotFound();
 
@@ -717,7 +644,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── COMPONENT CHARGES PROJECT TAB GRID ───────────────────────────────
 
-        // TRANSFORMENGINE: LoadComponentChargesProjectGrid — testCode+fpsYear required from parent row selection
         [HttpPost]
         public async Task<IActionResult> LoadComponentChargesProjectGrid(
             PaginationFilter<string> request, string? testCode = null)
@@ -746,7 +672,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (!string.IsNullOrEmpty(testCode))
             {
-                // TRANSFORMENGINE: GetByTestCodeAsync — testCode+fpsYear from parent row; accesses via IFpsApiClient aggregate
                 var response = await _fpsApiClient.FpsTestRequirementRCCost.GetByTestCodeAsync(testCode, fpsYear);
                 if (response.Success && response.Data != null)
                     items = _mapper.Map<List<TestRequirementRCCostItem>>(response.Data);
@@ -826,7 +751,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var fpsYear = _fpsYearContext.Year;
             var result = await _fpsApiClient.FpsTestRequirementRCCost.GetByKeyAsync(testCode, buyer, profitCentre, fpsYear);
-            // TRANSFORMENGINE: Phase 14 security fix — generic NotFound(); parameter values removed to prevent information disclosure
             if (!result.Success)
                 return NotFound();
 
@@ -886,7 +810,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         // ── SUPPLIERS / WORKGROUPS TAB GRID ───────────────────────────────────
 
-        // TRANSFORMENGINE: LoadSuppliersGrid — testCode from parent row selection; read-only listing
         [HttpPost]
         public async Task<IActionResult> LoadSuppliersGrid(
             PaginationFilter<string> request, string? testCode = null)
@@ -915,7 +838,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
             if (!string.IsNullOrEmpty(testCode))
             {
-                // TRANSFORMENGINE: Reuse GetPagedTestCapabilityByPortfolioAsync — portfolio parameter
                 // maps to testCode here (capability items keyed by TestCode)
                 var response = await _testCapabilityService.GetPagedTestCapabilityByPortfolioAsync(query, testCode);
                 if (response.Success && response.Data != null)

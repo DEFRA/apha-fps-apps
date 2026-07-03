@@ -1,26 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - Registered 3 new scoped services in AddServices():
- *     ITestListVlaService / TestListVlaService
- *     ITestRCCostService / TestRCCostService
- *     ITestRequirementRCCostService / TestRequirementRCCostService
- *   - Registered 3 new scoped repositories in AddRepositories():
- *     ITestListVlaRepository / TestListVlaRepository
- *     ITestRCCostRepository / TestRCCostRepository
- *     ITestRequirementRCCostRepository / TestRequirementRCCostRepository
- *
- * PRESERVED:
- *   - All existing service and repository registrations (StaffJob through User)
- *   - IFpsRequestContext / FpsRequestContext scoped registration
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: none — fully automated.
- */
-
 using Apha.Common.Utilities.StateManagement;
 using Apha.Common.Utilities.ExcelExport;
 using Apha.FPS.Application.Interfaces;
@@ -71,13 +48,11 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupEmployeeService, WorkGroupEmployeeService>();
             services.AddScoped<IDivisionGradeService, DivisionGradeService>();
             services.AddScoped<IProjectStaffPlanService, ProjectStaffPlanService>();
-            // TRANSFORMENGINE: IGradeService/GradeService registered � Phase 5 frmMaintGrade migration
             services.AddScoped<IGradeService, GradeService>();
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
             services.AddScoped<IUserService, UserService>();
-            // TRANSFORMENGINE: TestListVla / TestRCCost / TestRequirementRCCost services registered — Phase 5 frmTestList migration
             services.AddScoped<ITestListVlaService, TestListVlaService>();
             services.AddScoped<ITestRCCostService, TestRCCostService>();
             services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
@@ -114,13 +89,11 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IWorkGroupEmployeeRepository, WorkGroupEmployeeRepository>();
             services.AddScoped<IDivisionGradeRepository, DivisionGradeRepository>();
             services.AddScoped<IProjectStaffPlanRepository, ProjectStaffPlanRepository>();
-            // TRANSFORMENGINE: IGradeRepository/GradeRepository registered � Phase 5 frmMaintGrade migration
             services.AddScoped<IGradeRepository, GradeRepository>();
             services.AddScoped<IProjectGroupStaffPlanRepository, ProjectGroupStaffPlanRepository>();
             services.AddScoped<IBudgetBidsRepository, BudgetBidsRepository>();
             services.AddScoped<IPurchasesRepository, PurchasesRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-            // TRANSFORMENGINE: TestListVla / TestRCCost / TestRequirementRCCost repositories registered — Phase 5 frmTestList migration
             services.AddScoped<ITestListVlaRepository, TestListVlaRepository>();
             services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
             services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();

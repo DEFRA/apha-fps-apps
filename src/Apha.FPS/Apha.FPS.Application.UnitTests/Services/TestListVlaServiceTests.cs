@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — TestListVlaServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - New xUnit test class for backend TestListVlaService (Application layer)
- *   - Covers GetAllAsync, GetAllByYearAsync, GetByKeyAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - NSubstitute used for ITestListVlaRepository and IMapper mocks
- *   - Tests cover happy paths, guard failures (null/whitespace args, invalid FpsYear),
- *     duplicate PK, existence checks, and owner constraint validation
- *
- * PRESERVED:
- *   - Composite PK semantics: ItemCode + FpsYear
- *   - Owner CHECK constraint values: PT/PA/SD/LT
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;

@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — TestRequirementRCCostRepositoryTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - New xUnit test class for TestRequirementRCCostRepository (DataAccess layer)
- *   - Uses Moq + RepositoryTestHelper.CreateMockDbContext<FpsDbContext>() and
- *     RepositoryTestHelper.CreateMockDbSet<T>() per established project pattern
- *   - Covers GetByTestCodeAsync, GetByKeyAsync, ExistsAsync, AddAsync, UpdateAsync, DeleteAsync
- *
- * PRESERVED:
- *   - Composite PK semantics: TestCode + Buyer + ProfitCentre + FpsYear
- *   - Established Moq + RepositoryTestHelper pattern (not NSubstitute for DataAccess tests)
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;

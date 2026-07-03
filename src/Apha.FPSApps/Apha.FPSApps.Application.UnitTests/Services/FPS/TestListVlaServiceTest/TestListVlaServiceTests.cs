@@ -1,21 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — TestListVlaServiceTests.cs (FPSApps frontend Application)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - New xUnit test class for the frontend TestListVlaService (thin delegate)
- *   - Verifies each of the 6 methods delegates exactly to IFpsApiClient.FpsTestListVla
- *   - NSubstitute used for IFpsApiClient and IFpsTestListVlaApiClient mocks
- *   - Covers happy path (success response), failure path, and Received(1) delegation verification
- *
- * PRESERVED:
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - Thin-delegate pattern: no business logic in service, only forwarding verified
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
@@ -39,7 +21,6 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.TestListVlaServiceTest
         {
             _fpsClient = Substitute.For<IFpsApiClient>();
             _testListVlaClient = Substitute.For<IFpsTestListVlaApiClient>();
-            // TRANSFORMENGINE: wire sub-client into aggregate client mock
             _fpsClient.FpsTestListVla.Returns(_testListVlaClient);
             _service = new TestListVlaService(_fpsClient);
         }

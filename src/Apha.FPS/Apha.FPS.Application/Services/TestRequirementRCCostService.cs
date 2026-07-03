@@ -1,30 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — TestRequirementRCCostService.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 3 — Application Layer - DTOs + Service Interfaces + EntityMapper + Services (Steps 4-6)
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - New service implementation for TestRequirementRCCost (project-specific component charges) CRUD operations
- *   - Orchestrates ITestRequirementRCCostRepository via async calls; no direct DbContext usage
- *   - Business guards extracted from fsubTestequirementRCPrice VBA logic and fps.tbltestrequirementrccost DDL:
- *     - Non-null / non-whitespace guard on TestCode, Buyer, and ProfitCentre
- *     - FpsYear positive-integer guard
- *     - Duplicate PK check before insert (ExistsAsync) -> InvalidOperationException
- *     - Route-key / body-key consistency check on UpdateAsync
- *     - Existence check before UpdateAsync -> KeyNotFoundException if not found
- *   - AutoMapper used for entity <-> DTO round-trips
- *
- * PRESERVED:
- *   - All async call chains (GetByTestCodeAsync, GetByKeyAsync, ExistsAsync, AddAsync, UpdateAsync, DeleteAsync)
- *   - Business conditional branches for duplicate check, existence check
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: FK validation (TestCode+Buyer+FpsYear in fps.tlkptestreqmt) requires
- *     a ITestRequirementRepository lookup — add when that repository is available.
- *   - TRANSFORMENGINE TODO: FK validation (TestCode+ProfitCentre+FpsYear in fps.tbltestrccost) requires
- *     ITestRCCostRepository lookup — add call to ITestRCCostRepository.GetByKeyAsync in CreateAsync/UpdateAsync.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
 using Apha.FPS.Core.Entities;
@@ -49,7 +22,6 @@ namespace Apha.FPS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: GetByTestCodeAsync — list all project charges for GET /api/v1/testrequirementrccost/{testCode}/{fpsYear}
         public async Task<IEnumerable<TestRequirementRCCostDto>> GetByTestCodeAsync(string testCode, int fpsYear)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(testCode);
@@ -60,7 +32,6 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<IEnumerable<TestRequirementRCCostDto>>(entities);
         }
 
-        // TRANSFORMENGINE: GetByKeyAsync — single record by composite PK for edit/delete confirmation
         public async Task<TestRequirementRCCostDto?> GetByKeyAsync(string testCode, string buyer, string profitCentre, int fpsYear)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(testCode);
@@ -73,7 +44,6 @@ namespace Apha.FPS.Application.Services
             return entity == null ? null : _mapper.Map<TestRequirementRCCostDto>(entity);
         }
 
-        // TRANSFORMENGINE: CreateAsync — POST /api/v1/testrequirementrccost
         //   Guards: null check, non-empty keys, FpsYear positive, duplicate PK check
         public async Task<TestRequirementRCCostDto> CreateAsync(TestRequirementRCCostDto dto)
         {
@@ -84,7 +54,6 @@ namespace Apha.FPS.Application.Services
             if (dto.FpsYear <= 0)
                 throw new ArgumentException("FpsYear must be a positive integer.", nameof(dto));
 
-            // TRANSFORMENGINE: Duplicate PK guard — avoids composite PK violation on fps.tbltestrequirementrccost
             var exists = await _repository.ExistsAsync(dto.TestCode, dto.Buyer, dto.ProfitCentre, dto.FpsYear);
             if (exists)
                 throw new InvalidOperationException(
@@ -96,7 +65,6 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<TestRequirementRCCostDto>(created);
         }
 
-        // TRANSFORMENGINE: UpdateAsync — PUT /api/v1/testrequirementrccost/{testCode}/{buyer}/{profitCentre}/{fpsYear}
         //   Guards: non-empty keys, route-key/body-key consistency, existence check
         public async Task<TestRequirementRCCostDto> UpdateAsync(string testCode, string buyer, string profitCentre, int fpsYear, TestRequirementRCCostDto dto)
         {
@@ -110,7 +78,6 @@ namespace Apha.FPS.Application.Services
             ArgumentException.ThrowIfNullOrWhiteSpace(dto.Buyer);
             ArgumentException.ThrowIfNullOrWhiteSpace(dto.ProfitCentre);
 
-            // TRANSFORMENGINE: Route-key / body-key consistency check — prevents silent mismatched updates
             if (!string.Equals(testCode, dto.TestCode, StringComparison.OrdinalIgnoreCase) ||
                 !string.Equals(buyer, dto.Buyer, StringComparison.OrdinalIgnoreCase) ||
                 !string.Equals(profitCentre, dto.ProfitCentre, StringComparison.OrdinalIgnoreCase) ||
@@ -118,7 +85,6 @@ namespace Apha.FPS.Application.Services
                 throw new ArgumentException(
                     "Route keys (testCode, buyer, profitCentre, fpsYear) must match the DTO body keys.");
 
-            // TRANSFORMENGINE: Existence check — fail fast if record not found before attempting update
             var existing = await _repository.GetByKeyAsync(testCode, buyer, profitCentre, fpsYear);
             if (existing == null)
                 throw new KeyNotFoundException(
@@ -130,7 +96,6 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<TestRequirementRCCostDto>(updated);
         }
 
-        // TRANSFORMENGINE: DeleteAsync — DELETE /api/v1/testrequirementrccost/{testCode}/{buyer}/{profitCentre}/{fpsYear}
         public async Task<bool> DeleteAsync(string testCode, string buyer, string profitCentre, int fpsYear)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(testCode);

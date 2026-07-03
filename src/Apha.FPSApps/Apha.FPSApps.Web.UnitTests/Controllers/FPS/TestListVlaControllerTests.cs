@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — TestListVlaControllerTests.cs (frontend MVC)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - New xUnit test class for the frontend MVC TestListVlaController (FPS area)
- *   - Covers Index, LoadTestListVlaGrid, CreateTestListVla (GET/POST), EditTestListVla (GET/POST),
- *     DeleteTestListVla, tab grid loaders, and sub-resource CRUD actions
- *   - NSubstitute for all dependencies: IMapper, ITestListVlaService, ITestRequirementService,
- *     ITestCapabilityService, IFpsApiClient, IFpsYearContext
- *
- * PRESERVED:
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - Frontend controller uses ITestListVlaService for main CRUD and IFpsApiClient for sub-resources
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;

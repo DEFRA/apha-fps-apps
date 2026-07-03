@@ -1,50 +1,3 @@
-@* TRANSFORMENGINE MIGRATION — TestListVla/Index.cshtml
-   Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
-   Migrated : 2026-07-01
-   Security review : Phase 14 — Pre-Build Security Review Gate (2026-07-01) — PASS (no changes required)
-
-   CHANGED:
-     - New Razor Index view for Test List for VLA (frmTestList + fsubTest_MainList)
-     - HTML prototype: source/ui/fps/test_lists_for_VLA.html
-     - JS prototype   : source/ui/fps/testList_VLA.js
-     - Main grid (testListVlaGrid) + 3-tab sub-grid panel (Test Requirements, Component Charges, Suppliers)
-     - GOV.UK tabs structure replicated from HTML prototype govuk-tabs div (3 panels)
-     - No page-level filter dropdowns — HTML has no explicit <select> outside grid containers
-     - Five DataGridConfig instances rendered via shared _DataGrid partial
-     - CRUD JS functions (add/edit/delete) for main grid and each tab grid
-     - Tab grid row-selection JS: clicking a TestListVla row updates child tab grid titles and reloads
-     - Component Charges tab shows computed summary fields: component-total and vla-unit-price
-
-   PRESERVED:
-     - HTML prototype breadcrumb row structure (fps-sr-breadcrumb-row)
-     - Tab IDs and panel IDs matching HTML prototype exactly
-     - Summary computed fields (stage2-component-total, stage2-vla-unit-price) in Component Charges tab
-
-   PHASE 14 SECURITY REVIEW FINDINGS (no code changes required):
-     - HTML encoding  : all Razor @-expressions auto-encode; no @Html.Raw() present — PASS
-     - Inline scripts : var selectedTestCode initialised to empty string (not from @Model or @ViewData);
-                        all runtime values sourced from jQuery .data() HTML attributes — PASS
-     - URL encoding   : encodeURIComponent() applied to every user-supplied value in AJAX DELETE URL
-                        query strings (itemCode, testCode, buyer, profitCentre) — PASS
-     - No secrets     : all AJAX endpoints use relative paths only; no hardcoded credentials,
-                        tenant IDs, or absolute environment-specific URLs — PASS
-     - $.ajax DELETE CSRF gap: AJAX DELETE calls do not include RequestVerificationToken header;
-                        [ValidateAntiForgeryToken] absent on MVC controller DELETE actions — this
-                        gap was recorded as FAIL/DEFERRED in the Phase 14 MVC controller batch and
-                        requires a coordinated JS + controller fix across all FPS area views — DEFERRED
-     - response.message in alert(): server-supplied error text surfaced to user via alert(); server-
-                        side already confirmed not to expose stack traces or connection strings
-                        (Phase 14 controller review PASS) — acceptable; low residual risk — NOTED
-
-   DEFERRED / REQUIRES HUMAN REVIEW:
-     - TRANSFORMENGINE TODO: selectedTestCode state is held in JS; on initial page load the sub-grids
-       are empty until the user clicks a TestListVla row — this mirrors the HTML prototype behaviour.
-     - TRANSFORMENGINE TODO: stage2-total-required field appears in JS updateStage2Summaries() but NOT
-       in the HTML prototype markup — omitted here; add if required.
-     - TRANSFORMENGINE TODO: CSRF/anti-forgery on AJAX DELETE and modal POST calls requires coordinated
-       fix across FPS area JS and [ValidateAntiForgeryToken] on MVC controller actions — tracked in
-       Phase 14 checklist as FAIL/DEFERRED; resolve before production deployment.
-*@
 @using Apha.FPSApps.Web.Models.Components.DataGrid
 @model Apha.FPSApps.Web.Areas.FPS.Models.TestListVlaViewModel
 
@@ -71,8 +24,6 @@
         </div>
 
         @* ── Main Test List grid ─────────────────────────────────────────────── *@
-        @* TRANSFORMENGINE: testListVlaGrid — matches controller GridId "testListVlaGrid";
-           AllowAdd/Edit/Delete=true; functions: addTestListVla, editTestListVla, deleteTestListVla *@
         <div class="govuk-grid-row sup_margin_left_right_10">
             <div class="govuk-grid-column-full sup_p_0">
                 <div id="gridContainer_testListVlaGrid">
@@ -99,8 +50,6 @@
                     </ul>
 
                     @* ── Tab: Test Requirements ─────────────────────────────── *@
-                    @* TRANSFORMENGINE: testRequirementsGrid — AllowAdd/Edit/Delete=true;
-                       functions: addTestRequirement, editTestRequirement, deleteTestRequirement *@
                     <div class="govuk-tabs__panel active" id="tab-test-requirements">
                         <div class="govuk-grid-row">
                             <div class="govuk-grid-column-full">
@@ -112,14 +61,12 @@
                     </div>
 
                     @* ── Tab: Component Charges ─────────────────────────────── *@
-                    @* TRANSFORMENGINE: componentChargesGeneralGrid + componentChargesProjectGrid side-by-side *@
                     <div class="govuk-tabs__panel" id="tab-component-charges">
                         <div class="govuk-grid-row sup_flex_row">
                             <div class="govuk-grid-column-one-half">
                                 <div id="gridContainer_componentChargesGeneralGrid">
                                     @await Html.PartialAsync("_DataGrid", Model.ComponentChargesGeneralGrid)
                                 </div>
-                                @* TRANSFORMENGINE: computed summary fields — populated by JS updateStage2Summaries() *@
                                 <div class="govuk-grid-row govuk-!-margin-top-2">
                                     <div class="govuk-grid-column-full">
                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-1"
@@ -146,7 +93,6 @@
                     </div>
 
                     @* ── Tab: Suppliers ─────────────────────────────────────── *@
-                    @* TRANSFORMENGINE: suppliersGrid — AllowAdd/Edit/Delete=false (read-only listing) *@
                     <div class="govuk-tabs__panel" id="tab-suppliers">
                         <div class="govuk-grid-row">
                             <div class="govuk-grid-column-full">
@@ -167,7 +113,6 @@
     <script src="~/js/common/_govuk_tabs.js"></script>
     <script>
         // ── State ───────────────────────────────────────────────────────────────
-        // TRANSFORMENGINE: selectedTestCode — carries parent row context to child tab grids
         var selectedTestCode = '';
 
         // ── Grid reload helpers ─────────────────────────────────────────────────
@@ -205,7 +150,6 @@
         }
 
         // ── Extra-filter methods (called automatically by _DataGrid on every reload) ──
-        // TRANSFORMENGINE: ExtraFilterMethod values set in controller DataGridConfig instances
 
         function getTestListVlaExtraFilters() {
             return {};
@@ -224,7 +168,6 @@
         }
 
         // ── Parent row selection (clicking a TestListVla row updates child grids) ──
-        // TRANSFORMENGINE: Mirrors JS highlightSelectedTopListRow + initializeTopListSelection()
 
         function selectTestListVlaRow(btn) {
             var itemCode = $(btn).data('id');
@@ -255,7 +198,6 @@
             });
         }
 
-        // TRANSFORMENGINE: Delete uses JS confirm() — no modal partial for DataGrid delete
         function deleteTestListVla(btn) {
             var itemCode = $(btn).data('id');
             if (confirm('Are you sure you want to delete this test record?')) {

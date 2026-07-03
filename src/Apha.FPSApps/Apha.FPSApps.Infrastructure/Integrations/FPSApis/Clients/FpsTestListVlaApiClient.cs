@@ -1,33 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsTestListVlaApiClient.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 9 — Infrastructure API Client Implementation (Step 14)
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - New HTTP API client created implementing IFpsTestListVlaApiClient
- *   - All HTTP calls routed via IFpsHttpExecutor to backend TestListVlaController
- *   - BaseUrl matches backend route: api/v1/testlistvla
- *   - Lookup endpoint: GET api/v1/testlistvla/lookup?fpsYear={year} (GetAllByYearAsync)
- *   - Paged list endpoint: GET api/v1/testlistvla?... (GetAllAsync)
- *   - Composite PK (itemCode + fpsYear) used in GetByIdAsync, UpdateAsync, DeleteAsync route segments
- *   - fpsYear appended as query parameter on paged list and lookup calls
- *   - Every HTTP call wrapped in try/catch(Exception) returning FailureResponse with InternalCodeError
- *   - Mapper used for all success-path response transformations (never manual construction)
- *   - _http and _mapper are private readonly (Sonar S2933)
- *   - InternalCodeError and BaseUrl are private const string (Sonar S1192)
- *
- * PRESERVED:
- *   - All 6 interface methods: GetAllAsync, GetAllByYearAsync, GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - Composite PK parameter ordering: itemCode before fpsYear (matches backend route template)
- *   - Required business context parameter fpsYear on list and lookup methods
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Confirm FpsApiDtoMapper includes TestListVlaRes → TestListVlaDto and
- *     TestListVlaDto → TestListVlaReq mappings before end-to-end testing.
- *   - TRANSFORMENGINE TODO: Confirm PaginationRes<TestListVlaRes> → ApiResponseDto<List<TestListVlaDto>>
- *     is handled by the mapper profile registered in Phase 10.
- */
-
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;
 using Apha.FPSApps.Application.Dtos;
@@ -50,10 +20,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        // TRANSFORMENGINE: InternalCodeError as private const — Sonar S1192 compliance
         private const string InternalCodeError = "INTERNAL_ERROR";
 
-        // TRANSFORMENGINE: BaseUrl matches backend TestListVlaController [Route("api/v{version:apiVersion}/testlistvla")]
         private const string BaseUrl = "api/v1/testlistvla";
 
         public FpsTestListVlaApiClient(IFpsHttpExecutor http, IMapper mapper)
@@ -62,7 +30,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        // TRANSFORMENGINE: GET api/v1/testlistvla — paged list; fpsYear appended as query param (required from page year-selector)
         public async Task<ApiResponseDto<List<TestListVlaDto>>> GetAllAsync(QueryParameters<string> query, int fpsYear)
         {
             try
@@ -84,7 +51,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/testlistvla/lookup?fpsYear={year} — unpaged lookup list for select-list population
         public async Task<ApiResponseDto<List<TestListVlaDto>>> GetAllByYearAsync(int fpsYear)
         {
             try
@@ -105,7 +71,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: GET api/v1/testlistvla/{itemCode}/{fpsYear} — single record by composite PK
         public async Task<ApiResponseDto<TestListVlaDto>> GetByIdAsync(string itemCode, int fpsYear)
         {
             try
@@ -126,7 +91,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: POST api/v1/testlistvla — create new VLA test record
         //   TestListVlaDto mapped to TestListVlaReq for the request body
         public async Task<ApiResponseDto<TestListVlaDto>> CreateAsync(TestListVlaDto dto)
         {
@@ -148,7 +112,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: PUT api/v1/testlistvla/{itemCode}/{fpsYear} — update VLA test record by composite PK
         //   itemCode and fpsYear placed in path; DTO body carries the full writable payload
         public async Task<ApiResponseDto<TestListVlaDto>> UpdateAsync(string itemCode, int fpsYear, TestListVlaDto dto)
         {
@@ -171,7 +134,6 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
-        // TRANSFORMENGINE: DELETE api/v1/testlistvla/{itemCode}/{fpsYear} — delete VLA test record by composite PK
         public async Task<ApiResponseDto<bool>> DeleteAsync(string itemCode, int fpsYear)
         {
             try

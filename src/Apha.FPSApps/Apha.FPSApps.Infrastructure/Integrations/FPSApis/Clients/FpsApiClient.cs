@@ -36,10 +36,8 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsPurchasesApiClient FpsPurchases { get; }
         public IFpsUserApiClient FpsUserPermission { get; }
 
-        // TRANSFORMENGINE: FpsGrade added
         public IFpsGradeApiClient FpsGrade { get; }
 
-        // TRANSFORMENGINE: Phase 7 — TestListVla, TestRCCost, TestRequirementRCCost sub-clients added (Phase 9 will wire concrete implementations)
         public IFpsTestListVlaApiClient FpsTestListVla { get; }
         public IFpsTestRCCostApiClient FpsTestRCCost { get; }
         public IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
@@ -73,9 +71,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsBudgetBids = new FpsBudgetBidsApiClient(http, mapper);
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
             FpsUserPermission = new FpsUserApiClient(http, mapper);
-            // TRANSFORMENGINE: FpsGrade wired
             FpsGrade = new FpsGradeApiClient(http, mapper);
-            // TRANSFORMENGINE: Phase 9 — FpsTestListVla, FpsTestRCCost, FpsTestRequirementRCCost concrete clients wired
             FpsTestListVla = new FpsTestListVlaApiClient(http, mapper);
             FpsTestRCCost = new FpsTestRCCostApiClient(http, mapper);
             FpsTestRequirementRCCost = new FpsTestRequirementRCCostApiClient(http, mapper);

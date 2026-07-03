@@ -1,22 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — TestRequirementRCCostServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - New xUnit test class for backend TestRequirementRCCostService (Application layer)
- *   - Covers GetByTestCodeAsync, GetByKeyAsync, CreateAsync, UpdateAsync, DeleteAsync
- *   - NSubstitute used for ITestRequirementRCCostRepository and IMapper mocks
- *   - Tests cover happy paths, guard failures (null/whitespace args, invalid FpsYear),
- *     duplicate PK (4-part composite), route-key consistency, and existence checks
- *
- * PRESERVED:
- *   - Composite PK semantics: TestCode + Buyer + ProfitCentre + FpsYear
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;

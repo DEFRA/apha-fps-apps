@@ -1,24 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsDbContext.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 4 — DataAccess Layer - DbContext + Map Files + Repository
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - Added DbSet<TestOrProduct> TestOrProducts
- *   - Added DbSet<TestRCCost> TestRCCosts
- *   - Added DbSet<TestRequirementRCCost> TestRequirementRCCosts
- *   - Registered TestOrProductMap, TestRCCostMap, TestRequirementRCCostMap via ApplyConfiguration
- *   - Applied HasQueryFilter(e => e.FpsYear == FilterFpsYear) to all three new entities
- *
- * PRESERVED:
- *   - All existing DbSet declarations and OnModelCreating registrations
- *   - IFpsRequestContext injection and FilterFpsYear property
- *   - All existing HasQueryFilter rules
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify TestOrProduct owner CHECK constraint (PT/PA/SD/LT)
- *     is enforced at service layer — not duplicated here.
- */
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -127,7 +106,6 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
 
-        // TRANSFORMENGINE: Phase 4 — New DbSets for TestListVla / TestRCCost / TestRequirementRCCost
         public virtual DbSet<TestOrProduct> TestOrProducts { get; set; }
         public virtual DbSet<TestRCCost> TestRCCosts { get; set; }
         public virtual DbSet<TestRequirementRCCost> TestRequirementRCCosts { get; set; }
@@ -352,7 +330,6 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new GradeMap());
             modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            // TRANSFORMENGINE: Phase 4 — TestListVla map registrations
             modelBuilder.ApplyConfiguration(new TestOrProductMap());
             modelBuilder.Entity<TestOrProduct>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 

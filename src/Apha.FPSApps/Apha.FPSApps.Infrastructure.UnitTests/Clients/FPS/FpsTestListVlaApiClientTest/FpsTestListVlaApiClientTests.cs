@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — FpsTestListVlaApiClientTests.cs (Infrastructure)
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-07-01
- *
- * CHANGED:
- *   - New xUnit test class for FpsTestListVlaApiClient (Infrastructure HTTP client layer)
- *   - Verifies URL construction, IFpsHttpExecutor calls, IMapper calls, and try/catch paths
- *   - NSubstitute for IFpsHttpExecutor and IMapper; NSubstitute.ExceptionExtensions for ThrowsAsync
- *   - Covers GetAllAsync, GetAllByYearAsync, GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync
- *
- * PRESERVED:
- *   - ApiResponse<T> (Common.Contracts) used for HTTP-layer mock responses
- *   - ApiResponseDto<T> (FPSApps.Application.Dtos) used for application-layer return type
- *   - INTERNAL_ERROR code used in exception paths
- *   - Naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *
- * DEFERRED: none — fully automated.
- */
-
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Utilities.Query;

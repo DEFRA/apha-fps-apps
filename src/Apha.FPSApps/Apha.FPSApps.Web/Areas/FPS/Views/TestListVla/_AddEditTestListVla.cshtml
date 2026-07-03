@@ -1,32 +1,6 @@
-@* TRANSFORMENGINE MIGRATION — TestListVla/_AddEditTestListVla.cshtml
-   Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
-   Migrated : 2026-07-01
-   CHANGED:
-     - New modal partial for Add/Edit TestListVla (frmTestList vlaTestListModal)
-     - Modal fields derived from HTML prototype vlaTestListModal and JS openVlaAddModal/openVlaEditModal:
-         vla-form-item-code  → ItemCode*   (visible PK; editable on Add; read-only on Edit via disabled)
-         vla-form-short-desc → ShortDescription
-         vla-form-description → ItemDescription*
-         vla-form-manager    → TestManager
-         vla-form-status     → JobStatus
-         vla-form-unit-price → UnitPriceVla* (number, £ prefix)
-         vla-form-default-price → DefraUnitPrice* (number, £ prefix)
-     - isEditMode computed from ItemCode (string PK: empty string = Add mode)
-     - FpsYear carried as hidden field for composite PK round-trip
-     - Save dispatches to CreateTestListVla (POST) or EditTestListVla (POST) based on isEditMode
-   PRESERVED:
-     - Two-column layout from HTML prototype (ItemCode | Short Desc), (Manager | Status), (UnitPrice | DefaultPrice)
-     - Full-width Description row
-     - aria-required semantics and govuk-input__wrapper £ prefix for currency fields
-     - govuk modal header / body / footer structure mirroring existing FPS partials
-   DEFERRED / REQUIRES HUMAN REVIEW:
-     - TRANSFORMENGINE TODO: owner, chargeMethod, priceAhvg fields from TestListVlaDto are not in the HTML
-       prototype modal — omitted. Add hidden fields or additional rows if the service layer requires them.
-*@
 @model Apha.FPSApps.Web.Areas.FPS.Models.TestListVlaItem
 
 @{
-    // TRANSFORMENGINE: isEditMode — ItemCode is string PK; empty = Add, populated = Edit
     var isEditMode = !string.IsNullOrEmpty(Model.ItemCode);
     var title      = isEditMode ? "Edit Test" : "Add Test";
     var saveLabel  = isEditMode ? "Update" : "Save";
@@ -51,7 +25,6 @@
     <form class="row" id="formTestListVla">
         @Html.AntiForgeryToken()
 
-        @* TRANSFORMENGINE: Hidden fields — composite PK (FpsYear not in modal inputs) *@
         <input type="hidden" id="hdnIsEdit" value="@isEditMode.ToString().ToLower()" />
         <input type="hidden" asp-for="FpsYear" id="hdnFpsYear" />
 
@@ -61,7 +34,6 @@
                 <div class="govuk-form-group sup_margin_bottom_10">
                     <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
                            for="ItemCode">ItemCode <span aria-hidden="true">*</span></label>
-                    @* TRANSFORMENGINE: ItemCode is visible PK — editable on Add, disabled on Edit *@
                     @if (isEditMode)
                     {
                         <input class="govuk-input govuk-!-font-size-16"
@@ -188,7 +160,6 @@
 </div>
 
 <script>
-    // TRANSFORMENGINE: saveTestListVla — dispatches POST to CreateTestListVla or EditTestListVla
     function saveTestListVla() {
         var isEdit = document.getElementById('hdnIsEdit').value === 'true';
         var itemCode = document.getElementById('ItemCode').value || '';
@@ -204,7 +175,6 @@
             FpsYear:          parseInt(document.getElementById('hdnFpsYear').value, 10) || 0
         };
 
-        // TRANSFORMENGINE: required field client-side guard (mirrors HTML aria-required)
         if (!dto.ItemCode || !dto.ItemDescription) {
             alert('ItemCode and Description are required.');
             return;
