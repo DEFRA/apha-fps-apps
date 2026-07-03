@@ -36,7 +36,7 @@ function saveWorkGroupEmail() {
     var data = form.serializeObject ? form.serializeObject() : Object.fromEntries(new FormData(form[0]));
 
     if (data.sendEmail === undefined || data.sendEmail === '') {
-        showAlertMessage('Please select Yes or No for SendEmail.', AlertType.ERROR);
+        showAlertMessage('Please select Yes or No for SendEmail.', AlertType.INFO);
         return;
     }
 

@@ -189,12 +189,12 @@ function editTimeCode(btn) {
     var workGroup = $row.find('[data-property="WorkGroup"]').text().trim();
 
     if (!timeCode) {
-        showAlertMessage('Error: Could not get Time Code from button', AlertType.ERROR);
+        showAlertMessage('Error: Time Code is not set', AlertType.ERROR);
         return;
     }
 
     if (!workGroup) {
-        showAlertMessage('Error: Could not get Work Group from row. Please ensure the grid has loaded correctly.', AlertType.ERROR);
+        showAlertMessage('Error: Work Group is not set.', AlertType.ERROR);
         return;
     }
 
