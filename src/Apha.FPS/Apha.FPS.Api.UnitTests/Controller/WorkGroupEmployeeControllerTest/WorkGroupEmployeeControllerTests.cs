@@ -78,6 +78,25 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
                 _controller.GetWorkGroupEmployeeAsync(query, DefaultWgGrade));
         }
 
+        [Fact]
+        public async Task GetWorkGroupEmployeeForStaffAsync_WithNullWgGrade_UsesEmptyStringAndReturnsOk()
+        {
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var mapped = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<WorkGroupEmployeeDto>([], new PaginationDto());
+            var expectedRes = new PaginationRes<WorkGroupEmployeeRes>();
+
+            _mapperMock.Map<QueryParameters<string>>(query).Returns(mapped);
+            _serviceMock.GetWorkGroupEmployeeForStaffAsync(mapped, string.Empty).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<WorkGroupEmployeeRes>>(serviceResult).Returns(expectedRes);
+
+            var result = await _controller.GetWorkGroupEmployeeForStaffAsync(query, null);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            okResult.Value.Should().Be(expectedRes);
+            await _serviceMock.Received(1).GetWorkGroupEmployeeForStaffAsync(mapped, string.Empty);
+        }
+
         #endregion
 
         #region GetWorkGroupEmployeeByIdAsync Tests
@@ -101,7 +120,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
             var result = await _controller.GetWorkGroupEmployeeByIdAsync(DefaultPactId);
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
             okResult.Value.Should().Be(expectedRes);
             await _serviceMock.Received(1).GetWorkGroupEmployeeByIdAsync(DefaultPactId);
         }
@@ -115,6 +134,48 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
                 _controller.GetWorkGroupEmployeeByIdAsync(DefaultPactId));
+        }
+
+        #endregion
+
+        #region CreateWorkGroupEmployeeForStaffAsync Tests
+
+        [Fact]
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WithValidRequest_ReturnsOk()
+        {
+            // Arrange
+            var req         = new WorkGroupEmployeeReq { PactId = DefaultPactId, HrsPaid = 40.0 };
+            var dto         = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade };
+            var createdDto  = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade };
+            var expectedRes = new WorkGroupEmployeeRes { PactId = DefaultPactId };
+
+            _mapperMock.Map<WorkGroupEmployeeDto>(req).Returns(dto);
+            _serviceMock.CreateWorkGroupEmployeeForStaffAsync(dto).Returns(createdDto);
+            _mapperMock.Map<WorkGroupEmployeeRes>(createdDto).Returns(expectedRes);
+
+            // Act
+            var result = await _controller.CreateWorkGroupEmployeeForStaffAsync(req);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            okResult.Value.Should().Be(expectedRes);
+            await _serviceMock.Received(1).CreateWorkGroupEmployeeForStaffAsync(dto);
+        }
+
+        [Fact]
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var req = new WorkGroupEmployeeReq { PactId = DefaultPactId };
+            var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade };
+
+            _mapperMock.Map<WorkGroupEmployeeDto>(req).Returns(dto);
+            _serviceMock.CreateWorkGroupEmployeeForStaffAsync(dto)
+                .ThrowsAsync(new InvalidOperationException("Duplicate PactId."));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _controller.CreateWorkGroupEmployeeForStaffAsync(req));
         }
 
         #endregion
@@ -138,7 +199,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
             var result = await _controller.UpdateWorkGroupEmployeeAsync(req);
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
             okResult.Value.Should().Be(expectedRes);
             await _serviceMock.Received(1).UpdateWorkGroupEmployeeAsync(dto);
         }
@@ -157,6 +218,39 @@ namespace Apha.FPS.Api.UnitTests.Controller.WorkGroupEmployeeControllerTest
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
                 _controller.UpdateWorkGroupEmployeeAsync(req));
+        }
+
+        [Fact]
+        public async Task UpdateWorkGroupEmployeeForStaffAsync_WithValidRequest_ReturnsOk()
+        {
+            var req = new WorkGroupEmployeeReq { PactId = DefaultPactId, HrsPaid = 40.0 };
+            var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId };
+            var updatedDto = new WorkGroupEmployeeDto { PactId = DefaultPactId };
+            var expectedRes = new WorkGroupEmployeeRes { PactId = DefaultPactId };
+
+            _mapperMock.Map<WorkGroupEmployeeDto>(req).Returns(dto);
+            _serviceMock.UpdateWorkGroupEmployeeForStaffAsync(dto).Returns(updatedDto);
+            _mapperMock.Map<WorkGroupEmployeeRes>(updatedDto).Returns(expectedRes);
+
+            var result = await _controller.UpdateWorkGroupEmployeeForStaffAsync(req);
+
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            okResult.Value.Should().Be(expectedRes);
+            await _serviceMock.Received(1).UpdateWorkGroupEmployeeForStaffAsync(dto);
+        }
+
+        [Fact]
+        public async Task UpdateWorkGroupEmployeeForStaffAsync_WhenServiceThrows_PropagatesException()
+        {
+            var req = new WorkGroupEmployeeReq { PactId = DefaultPactId };
+            var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId };
+
+            _mapperMock.Map<WorkGroupEmployeeDto>(req).Returns(dto);
+            _serviceMock.UpdateWorkGroupEmployeeForStaffAsync(dto)
+                .ThrowsAsync(new KeyNotFoundException("Employee not found."));
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+                _controller.UpdateWorkGroupEmployeeForStaffAsync(req));
         }
 
         #endregion

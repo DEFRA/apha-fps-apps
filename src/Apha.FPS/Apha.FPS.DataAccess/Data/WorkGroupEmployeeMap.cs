@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.FPS.DataAccess.Data
 {
-    public class WgEmployeeMap : IEntityTypeConfiguration<WorkGroupEmployee>
+    public class WorkGroupEmployeeMap : IEntityTypeConfiguration<WorkGroupEmployee>
     {
 
 
