@@ -49,6 +49,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         public async Task<IActionResult> Index()
         {
+            TempData["NavigationSource"] = "ProjectMaintenance";
             var defaultRequest = new PaginationFilter<string> { Filter = "{}" };
             var gridConfig = await BuildPactProjectCodeGridAsync(defaultRequest);
             return View(new ProjectListViewModel { ProjectGrid = gridConfig });
@@ -149,6 +150,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         public async Task<IActionResult> Details([FromRoute(Name = "id")] string parentProject)
         {
             TempData["PactOrigin"] = "Project";
+            ViewBag.NavigationSource = TempData["NavigationSource"]?.ToString();
             var projectResponse = await _projectService.GetProjectByIdAsync(parentProject);
             if (!projectResponse.Success || projectResponse.Data == null)
                 return NotFound();
