@@ -175,7 +175,8 @@ public static class ServiceCollectionSetup
 
         foreach (var jobType in jobTypes)
         {
-            services.AddScoped(typeof(IBatchJob), jobType);
+            services.AddScoped(jobType);
+            services.AddScoped(typeof(IBatchJob), sp => (IBatchJob)sp.GetRequiredService(jobType));
         }
     }
 }
