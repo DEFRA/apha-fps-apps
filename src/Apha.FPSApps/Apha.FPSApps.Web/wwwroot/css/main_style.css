@@ -1543,3 +1543,99 @@ textarea {
 .isListWidth {
     width: 15vw;
 }
+
+.govuk-body.isInfo {
+    background: #fff !important;
+    border: 3px solid #1d70b8 !important;
+    padding: 0 !important;
+
+    h2 {
+        background: #1d70b8 !important;
+        color: #fff !important;
+        font-size: 1.1875rem;
+        margin: 0 !important;
+        padding: 10px !important;
+    }
+
+    p {
+        padding: 10px !important;
+    }
+
+    .govuk-button:first-child {
+        background: #1d70b8 !important;
+        border: 1px solid #1d70b8 !important;
+        color: #fff !important;
+    }
+}
+
+.govuk-body.isSuccess {
+    background: #fff !important;
+    border: 3px solid #00703c !important;
+    padding: 0 !important;
+
+    h2 {
+        background: #00703c !important;
+        color: #fff !important;
+        font-size: 1.1875rem;
+        margin: 0 !important;
+        padding: 10px !important;
+    }
+
+    p {
+        padding: 10px !important;
+    }
+
+    .govuk-button {
+        background: #00703c !important;
+        border: 1px solid #00703c !important;
+        color: #fff !important;
+    }
+}
+
+.govuk-body.isDanger {
+    background: #fff !important;
+    border: 3px solid #d4351c !important;
+    padding: 0 !important;
+
+    h2 {
+        background: #d4351c !important;
+        color: #fff !important;
+        font-size: 1.1875rem;
+        margin: 0 !important;
+        padding: 10px !important;
+    }
+
+    p {
+        padding: 10px !important;
+    }
+
+    .govuk-button:first-child {
+        background: #d4351c !important;
+        border: 1px solid #d4351c !important;
+        color: #fff !important;
+    }
+}
+
+.govuk-body.isWarning {
+    background: #fff !important;
+    border: 3px solid #f47738 !important;
+    padding: 0 !important;
+
+    h2 {
+        background: #f47738 !important;
+        color: #0b0c0c !important;
+        font-size: 1.1875rem;
+        margin: 0 !important;
+        padding: 10px !important;
+    }
+
+    p {
+        padding: 10px !important;
+    }
+
+    .govuk-button:first-child {
+        background: #f47738 !important;
+        border: 1px solid #f47738 !important;
+        color: #0b0c0c !important;
+    }
+}

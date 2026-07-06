@@ -1,0 +1,425 @@
+@model Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupEmployeeStaffItem
+
+@{
+    var isEditMode = ViewData["IsEditMode"] is bool mode
+        ? mode
+        : !string.IsNullOrWhiteSpace(Model?.PactId);
+    var title = isEditMode ? "Edit WG Staff" : "Add WG Staff";
+    var saveLabel = isEditMode ? "Update" : "Save";
+}
+
+<div class="modal-header">
+    <h5 class="modal-title" id="wgStaffModalTitle">@title</h5>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+
+<div class="modal-body" style="overflow-y:auto; max-height:calc(80vh - 120px);">
+    <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title"
+         tabindex="-1" style="display:none;">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list"></ul>
+        </div>
+    </div>
+
+    <form id="formMaintWGStaff" class="row g-2">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" id="hdnIsEdit" value="@(isEditMode ? "true" : "false")" />
+        <input type="hidden" id="SpNumber" asp-for="SpNumber" />
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="PactId">
+                    PACT Id: <span class="sup_color_red">*</span>
+                </label>
+                @if (isEditMode)
+                {
+                    <input class="govuk-input govuk-!-font-size-16"
+                           id="PactId"
+                           asp-for="PactId"
+                           type="number"
+                           min="1"
+                           required
+                           readonly />
+                }
+                else
+                {
+                    <input class="govuk-input govuk-!-font-size-16"
+                           id="PactId"
+                           asp-for="PactId"
+                           type="number"
+                           min="1"
+                           required />
+                }
+                <span asp-validation-for="PactId" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Name">
+                    Staff Name: <span class="sup_color_red">*</span>
+                </label>
+                <input type="hidden" id="Name" asp-for="Name" required />
+                <div id="staff-name-dropdown" class="govuk-form-group govuk-!-margin-bottom-0">
+                    <input type="text"
+                           id="staff-name-input"
+                           value="-- Select Staff --"
+                           class="dropdown-input down-arrow-img govuk-input govuk-!-font-size-16"
+                           readonly
+                           aria-label="Staff Name"
+                           onclick="toggleWgStaffNameDropdown()" />
+
+                    <div class="dropdown-panel" id="staff-name-panel" style="display:none; width:100%; min-width:580px; top:100%; left:0; max-height:220px; overflow-y:auto;">
+                        <input type="text"
+                               class="search-box govuk-input govuk-!-font-size-16"
+                               id="staff-name-search"
+                               placeholder="Type to search staff"
+                               oninput="filterWgStaffNameTable(this.value)" />
+                        <table class="period-dropdown__table govuk-table govuk-!-font-size-16" style="table-layout:fixed; margin-bottom:0;">
+                            <colgroup>
+                                <col style="width:65%;" />
+                                <col style="width:35%;" />
+                            </colgroup>
+                            <thead class="govuk-table__head">
+                                <tr class="govuk-table__row">
+                                    <th class="govuk-table__header">Name</th>
+                                    <th class="govuk-table__header">SPNumber</th>
+                                </tr>
+                            </thead>
+                            <tbody class="govuk-table__body" id="staffNameTableBody">
+                                @foreach (var staff in (Model?.StaffLookupOptions ?? System.Linq.Enumerable.Empty<Apha.FPSApps.Web.Areas.FPS.Models.WorkGroupStaffLookupItem>())
+                                   .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                                   .GroupBy(x => x.Name)
+                                   .Select(g => g.First()))
+                                {
+                                    <tr class="govuk-table__row staff-name-row"
+                                        data-pactid="@staff.PactId"
+                                        data-name="@staff.Name"
+                                        data-spnumber="@staff.SpNumber"
+                                        style="cursor:pointer;"
+                                        onclick="selectWgStaffName(this)">
+                                        <td class="govuk-table__cell" style="overflow:hidden; text-overflow:ellipsis;">@staff.Name</td>
+                                        <td class="govuk-table__cell" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@staff.SpNumber</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <span asp-validation-for="Name" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="WorkGroupGrade">
+                    WG Grade: <span class="sup_color_red">*</span>
+                </label>
+                <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                        id="WorkGroupGrade"
+                        asp-for="WorkGroupGrade"
+                        required>
+                    <option value="">-- Select WG Grade --</option>
+                    @foreach (var wgGrade in (Model?.WgGradeOptions ?? System.Linq.Enumerable.Empty<string>()))
+                    {
+                        <option value="@wgGrade">@wgGrade</option>
+                    }
+                </select>
+                <span asp-validation-for="WorkGroupGrade" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="PersonStatus">
+                    Status: <span class="sup_color_red">*</span>
+                </label>
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="PersonStatus"
+                       asp-for="PersonStatus"
+                       type="text"
+                       maxlength="10"
+                       required />
+                <span asp-validation-for="PersonStatus" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="PersonClass">
+                    Class:
+                </label>
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="PersonClass"
+                       asp-for="PersonClass"
+                       type="text"
+                       maxlength="10" />
+                <span asp-validation-for="PersonClass" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HrsPaid">
+                    HrsPaid: <span class="sup_color_red">*</span>
+                </label>
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="HrsPaid"
+                       asp-for="HrsPaid"
+                       type="number"
+                       step="0.01"
+                       required
+                       value="@(Model?.HrsPaid ?? 0)" />
+                <span asp-validation-for="HrsPaid" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Leave">
+                    Leave: <span class="sup_color_red">*</span>
+                </label>
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="Leave"
+                       asp-for="Leave"
+                       type="number"
+                       step="0.01"
+                       required
+                       value="@(Model?.Leave ?? 0)" />
+                <span asp-validation-for="Leave" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="SickSpecial">
+                    SickSpecial: <span class="sup_color_red">*</span>
+                </label>
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="SickSpecial"
+                       asp-for="SickSpecial"
+                       type="number"
+                       step="0.01"
+                       required
+                       value="@(Model?.SickSpecial ?? 0)" />
+                <span asp-validation-for="SickSpecial" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HrsAvail">
+                    HrsAvail: <span class="sup_color_red">*</span>
+                </label>
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="HrsAvail"
+                       asp-for="HrsAvail"
+                       type="number"
+                       step="0.01"
+                       required
+                       value="@(Model?.HrsAvail ?? 0)" />
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="MakeAvailable">
+                    Available?:
+                </label>
+                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                    <div class="govuk-checkboxes__item">
+                        <input class="govuk-checkboxes__input" id="MakeAvailable" asp-for="MakeAvailable" type="checkbox" />
+                        <label class="govuk-label govuk-checkboxes__label" for="MakeAvailable">Yes</label>
+                    </div>
+                </div>
+                <span asp-validation-for="MakeAvailable" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="TimeRecorder">
+                    Time recorder?:
+                </label>
+                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                    <div class="govuk-checkboxes__item">
+                        <input class="govuk-checkboxes__input" id="TimeRecorder" asp-for="TimeRecorder" type="checkbox" />
+                        <label class="govuk-label govuk-checkboxes__label" for="TimeRecorder">Yes</label>
+                    </div>
+                </div>
+                <span asp-validation-for="TimeRecorder" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="StartDate">
+                    Start Date:
+                </label>
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="StartDate"
+                       asp-for="StartDate"
+                       type="date"
+                       value="@(Model?.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                       autocomplete="off" />
+                <span asp-validation-for="StartDate" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="EndDate">
+                    End Date:
+                </label>
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="EndDate"
+                       asp-for="EndDate"
+                       type="date"
+                       value="@(Model?.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)"
+                       autocomplete="off" />
+                <span asp-validation-for="EndDate" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="govuk-form-group sup_margin_0">
+                <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="HoursPerWeek">
+                    Hours per week:
+                </label>
+                <input class="govuk-input govuk-!-font-size-16"
+                       id="HoursPerWeek"
+                       asp-for="HoursPerWeek"
+                       type="number"
+                       step="0.01" />
+                <span asp-validation-for="HoursPerWeek" class="govuk-error-message" style="display:none;"></span>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer sup_flex_space_center">
+    <button class="govuk-button govuk-button--secondary sup_margin_0"
+            data-module="govuk-button"
+            onclick="closeModal()">Cancel</button>
+    <button class="govuk-button sup_margin_0"
+            data-module="govuk-button"
+            type="button"
+            onclick="saveMaintWGStaff()">@saveLabel</button>
+</div>
+
+<script>
+    function toggleWgStaffNameDropdown() {
+        var dropdown = document.getElementById('staff-name-dropdown');
+        var input = document.getElementById('staff-name-input');
+        var panel = document.getElementById('staff-name-panel');
+        var search = document.getElementById('staff-name-search');
+        if (!dropdown || !input || !panel || !search) return;
+
+        var isHidden = panel.style.display === 'none' || panel.style.display === '';
+        if (isHidden) {
+            panel.style.display = 'block';
+            panel.style.width = input.offsetWidth + 'px';
+            search.focus();
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    function selectWgStaffName(row) {
+        var name = row.getAttribute('data-name') || '';
+        var spNumber = row.getAttribute('data-spnumber') || '';
+
+        var staffNameInput = document.getElementById('Name');
+        var spNumberInput = document.getElementById('SpNumber');
+
+        if (staffNameInput) {
+            staffNameInput.value = name;
+        }
+
+        if (spNumberInput) {
+            spNumberInput.value = spNumber;
+        }
+
+        var displayText = name + (spNumber ? ' - ' + spNumber : '');
+        var display = document.getElementById('staff-name-input');
+        if (display) {
+            display.value = displayText;
+        }
+
+        if (staffNameInput) {
+            staffNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+            staffNameInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+            var formGroup = staffNameInput.closest('.govuk-form-group');
+            if (formGroup) {
+                formGroup.classList.remove('govuk-form-group--error');
+                var validationMessage = formGroup.querySelector('[data-valmsg-for="Name"]');
+                if (validationMessage) {
+                    validationMessage.textContent = '';
+                    validationMessage.style.display = 'none';
+                    validationMessage.classList.remove('field-validation-error');
+                    validationMessage.classList.add('field-validation-valid');
+                }
+            }
+        }
+
+        document.getElementById('staff-name-panel').style.display = 'none';
+        document.getElementById('staff-name-search').value = '';
+        filterWgStaffNameTable('');
+    }
+
+    function filterWgStaffNameTable(query) {
+        var rows = document.querySelectorAll('#staffNameTableBody .staff-name-row');
+        var lower = (query || '').trim().toLowerCase();
+
+        rows.forEach(function (row) {
+            var name = (row.getAttribute('data-name') || '').toLowerCase();
+            var spNumber = (row.getAttribute('data-spnumber') || '').toLowerCase();
+            var rowText = (row.textContent || '').toLowerCase();
+            var matches = !lower || name.includes(lower) || spNumber.includes(lower) || rowText.includes(lower);
+            row.style.display = matches ? '' : 'none';
+        });
+    }
+
+    function recalculateHrsAvail() {
+        var hrsPaid = parseFloat(document.getElementById('HrsPaid')?.value || '0') || 0;
+        var leave = parseFloat(document.getElementById('Leave')?.value || '0') || 0;
+        var sickSpecial = parseFloat(document.getElementById('SickSpecial')?.value || '0') || 0;
+
+        var hrsAvail = hrsPaid - leave - sickSpecial;
+        var hrsAvailInput = document.getElementById('HrsAvail');
+        if (hrsAvailInput) {
+            hrsAvailInput.value = hrsAvail.toFixed(2);
+        }
+    }
+
+    (function initialiseWgStaffModalDropdowns() {
+        var initialName = document.getElementById('Name')?.value || '';
+        var initialSpNumber = document.getElementById('SpNumber')?.value || '';
+
+        if (initialName) {
+            var display = document.getElementById('staff-name-input');
+            if (display) {
+                display.value = initialName + (initialSpNumber ? ' - ' + initialSpNumber : '');
+            }
+        }
+
+        ['HrsPaid', 'Leave', 'SickSpecial'].forEach(function (fieldId) {
+            var input = document.getElementById(fieldId);
+            if (input) {
+                input.addEventListener('input', recalculateHrsAvail);
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            var dropdown = document.getElementById('staff-name-dropdown');
+            var panel = document.getElementById('staff-name-panel');
+            if (dropdown && panel && !dropdown.contains(e.target)) {
+                panel.style.display = 'none';
+            }
+        });
+    })();
+</script>

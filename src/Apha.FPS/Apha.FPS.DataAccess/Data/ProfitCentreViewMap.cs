@@ -23,6 +23,7 @@ namespace Apha.FPS.DataAccess.Data
             builder.Property(e => e.UserId).HasColumnName("user_id");
             builder.Property(e => e.Dt2Username).HasColumnName("dt2username");
             builder.Property(e => e.UserEmail).HasColumnName("useremail");
+            builder.Property(e => e.FpsYear).HasColumnName("fpsyear");
         }
     }
 }

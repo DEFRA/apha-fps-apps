@@ -46,6 +46,28 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
             int fpsYear = DefaultFpsYear)
             => CreateRepositoryWithMocks(testCapabilities, fpsYear).Repo;
 
+        private static TestCapabilityRepository CreateRepositoryForWgTestCapabilitiesWithDescription(
+            IEnumerable<TestCapability> testCapabilities,
+            IEnumerable<TestorProduct> testorProducts,
+            int fpsYear = DefaultFpsYear)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+            var testCapabilitiesDbSet = RepositoryTestHelper.CreateMockDbSet(testCapabilities);
+            var testorProductsDbSet = RepositoryTestHelper.CreateMockDbSet(testorProducts);
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+            RepositoryTestHelper.SetupDbSetOperations(testCapabilitiesDbSet);
+            RepositoryTestHelper.SetupDbSetOperations(testorProductsDbSet);
+
+            mockContext.Setup(x => x.TestCapabilities).Returns(testCapabilitiesDbSet.Object);
+            mockContext.Setup(x => x.TestorProducts).Returns(testorProductsDbSet.Object);
+
+            return new TestCapabilityRepository(mockContext.Object, fpsRequestContext);
+        }
+
         #region GetPagedByWorkGroupAsync
 
         [Fact]
@@ -949,6 +971,341 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
             Assert.Equal(2, result.Data.Count);
             Assert.Equal(5, result.PaginationData.TotalRecords);
             Assert.Equal(2, result.PaginationData.PageNumber);
+        }
+
+        #endregion
+
+        #region GetPagedUserTestCapabilitiesAsync
+
+        [Fact]
+        public async Task GetPagedUserTestCapabilitiesAsync_WithMatchingJoin_DefaultSortsByTestCodeAscending()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC2", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG2", TestCode = "TC3", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Desc 1", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC2", ItemDescription = "Desc 2", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC3", ItemDescription = "Desc 3", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal("TC1", result.Data.ElementAt(0).TestCode);
+            Assert.Equal("TC2", result.Data.ElementAt(1).TestCode);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedUserTestCapabilitiesAsync_WithDuplicateJoinRows_ReturnsJoinedRows()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Desc 1", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Equal(2, result.Data.Count);
+            Assert.All(result.Data, x => Assert.Equal("TC1", x.TestCode));
+        }
+
+        [Fact]
+        public async Task GetPagedUserTestCapabilitiesAsync_FilterByWorkGroup_AppliesFilter()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC2", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Desc 1", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC2", ItemDescription = "Desc 2", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"WorkGroup\":\"WG1\"}"
+            };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Equal(2, result.Data.Count);
+            Assert.All(result.Data, x => Assert.Equal("WG1", x.WorkGroup));
+        }
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_FilterByTestCode_AppliesFilter()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "BLOOD", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "URINE", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "BLOOD", ItemDescription = "Blood test", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "URINE", ItemDescription = "Urine test", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"TestCode\":\"BLO\"}"
+            };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("BLOOD", result.Data.First().TestCode);
+        }
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_FilterByItemDescription_AppliesFilter()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC2", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Alpha Desc", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC2", ItemDescription = "Beta Desc", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"ItemDescription\":\"Alpha\"}"
+            };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Single(result.Data);
+            Assert.Equal("TC1", result.Data.First().TestCode);
+            Assert.Equal("Alpha Desc", result.Data.First().ItemDescription);
+        }
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_NullFilter_ReturnsAllForWorkGroup()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC2", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Desc 1", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC2", ItemDescription = "Desc 2", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_WhitespaceFilter_ReturnsAllForWorkGroup()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC2", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Desc 1", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC2", ItemDescription = "Desc 2", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "   " };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetPagedUserTestCapabilitiesAsync_FilterJsonNull_IgnoresFilter()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Desc 1", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "null" };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedUserTestCapabilitiesAsync_FilterUnknownAndWhitespaceValues_IgnoresNonUsableFilters()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC2", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Desc 1", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC2", ItemDescription = "Desc 2", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                Filter = "{\"Unknown\":\"value\",\"WorkGroup\":\"   \",\"TestCode\":\"\",\"ItemDescription\":\"   \"}"
+            };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_SortByAscending_UsesEfPropertySort()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC2", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Desc 1", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC2", ItemDescription = "Desc 2", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "TestCode",
+                Descending = false
+            };
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1"));
+        }
+
+        [Fact]
+        public async Task GetPagedUserTestCapabilitiesAsync_SortByDescending_UsesEfPropertySort()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC2", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Desc 1", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC2", ItemDescription = "Desc 2", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1,
+                PageSize = 10,
+                SortBy = "TestCode",
+                Descending = true
+            };
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1"));
+        }
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_Paging_ReturnsCorrectPageAndMetadata()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC1", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC2", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC3", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear },
+                new() { WorkGroup = "WG1", TestCode = "TC4", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "TC1", ItemDescription = "Desc 1", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC2", ItemDescription = "Desc 2", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC3", ItemDescription = "Desc 3", FpsYear = DefaultFpsYear },
+                new() { ItemCode = "TC4", ItemDescription = "Desc 4", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string> { Page = 2, PageSize = 2 };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal("TC3", result.Data.First().TestCode);
+            Assert.Equal(4, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.PageNumber);
+            Assert.Equal(2, result.PaginationData.PageSize);
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
+        [Fact]
+        public async Task GetPagedUserTestCapabilitiesAsync_NoMatchingJoinRows_ReturnsEmpty()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC_NO_PRODUCT", PlanPortfolio = "PP1", FpsYear = DefaultFpsYear }
+            };
+            var testorProducts = new List<TestorProduct>
+            {
+                new() { ItemCode = "DIFFERENT_CODE", ItemDescription = "Desc", FpsYear = DefaultFpsYear }
+            };
+
+            var repo = CreateRepositoryForWgTestCapabilitiesWithDescription(capabilities, testorProducts);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
         }
 
         #endregion

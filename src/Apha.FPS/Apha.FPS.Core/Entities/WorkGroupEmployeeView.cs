@@ -1,9 +1,5 @@
 namespace Apha.FPS.Core.Entities
 {
-    /// <summary>
-    /// EF entity mapped to view vtblwgemployee.
-    /// Also used as LINQ join result shape (Name is populated by repository join with Employee).
-    /// </summary>
     public class WorkGroupEmployeeView
     {
         public string? PactId { get; set; }
@@ -24,8 +20,6 @@ namespace Apha.FPS.Core.Entities
         public int? UserId { get; set; }
         public string? Dt2Username { get; set; }
         public string? UserEmail { get; set; }
-
-        /// <summary>Computed from Employee join; not mapped to the database view.</summary>
         public string? Name { get; set; }
     }
 }

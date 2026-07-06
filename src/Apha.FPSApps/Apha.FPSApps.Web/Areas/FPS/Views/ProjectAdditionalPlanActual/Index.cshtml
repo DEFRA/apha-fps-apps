@@ -5,27 +5,12 @@
 }
 
 <div class="container-fluid">
-    <!-- Breadcrumb and project selector -->
+    <!-- Project selector -->
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-full">
             <div class="row fps-sr-breadcrumb-row">
-                <div class="fps-sr-breadcrumb-flex">
-                    <div class="col-md-8">
-                        <nav class="govuk-breadcrumbs" aria-label="Breadcrumb">
-                            <ol class="govuk-breadcrumbs__list">
-                                <li class="govuk-breadcrumbs__list-item">
-                                    <a class="govuk-breadcrumbs__link" href="@Url.Action("Index", "Home", new { area = "FPS" })">Home</a>
-                                </li>
-                                <li class="govuk-breadcrumbs__list-item">Programme Management</li>
-                                <li class="govuk-breadcrumbs__list-item">Plan Projects</li>
-                                <li class="govuk-breadcrumbs__list-item">
-                                    <a class="govuk-breadcrumbs__link" href="@Url.Action("Index", "PlanProjectIndividually", new { area = "FPS" })">Plan Project Individually</a>
-                                </li>
-                                <li class="govuk-breadcrumbs__list-item" aria-current="page">Plan vs Actual - Additional Costs</li>
-                            </ol>
-                        </nav>
-                    </div>
-                    <div class="col-md-4 pva-project-wrap">
+                <div class="fps-sr-breadcrumb-flex" style="display: flex; justify-content: flex-end;">
+                    <div class="pva-project-wrap">
                         <label class="fw-bold me-2" for="projectSelect">Select a Project:</label>
                         <select id="projectSelect" asp-items="Model.ProjectList" asp-for="SelectedProjectCode"
                                 class="govuk-select" style="min-width: 200px;">
@@ -259,13 +244,13 @@
                                                 if (result.success) {
                                                     window['gridManager_@Model.ActualAdditionalCostGrid.GridId'].reloadGrid({ page: 1 });
                                                     refreshActualCost();
-                                                    showGovukAlert('Record deleted successfully.');
+                                                    showAlertMessage('Record deleted successfully.', AlertType.SUCCESS);
                                                 } else {
-                                                    showGovukAlert('Delete failed: ' + (result.message || 'Unknown error'));
+                                                    showAlertMessage('Delete failed: ' + (result.message || 'Unknown error'), AlertType.ERROR);
                                                 }
                                             },
                                             error: function () {
-                                                showGovukAlert('An error occurred while deleting the record.');
+                                                showAlertMessage('An error occurred while deleting the record.', AlertType.ERROR);
                                             }
                                         });
                                     });

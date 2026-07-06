@@ -1,4 +1,4 @@
-﻿@* Single unified view for both Add and Edit operations *@
+@* Single unified view for both Add and Edit operations *@
 @model Apha.FPSApps.Web.Areas.FPS.Models.ProgrammeNewProjectViewModel
 @{
     var isEditMode = ViewBag.IsEditMode ?? !string.IsNullOrEmpty(Model.ParentProject);
@@ -10,19 +10,6 @@
 
 <main id="main-content">
     <div class="container-fluid">
-        <!-- Breadcrumb section -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                        <div class="col-md-6">
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Title section -->
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
@@ -441,7 +428,7 @@
                 submitForm(formId, isEdit, parentProject);
             } catch (e) {
                 console.error('submitProject error:', e);
-                showGovukAlert('An error occurred: ' + e.message);
+                showAlertMessage('An error occurred: ' + e.message, AlertType.ERROR);
             }
         };
 
@@ -468,7 +455,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message || 'Project deleted successfully.').then(function () {
+                        showAlertMessage(result.message || 'Project deleted successfully.', AlertType.SUCCESS).then(function () {
                             window.location.href = result.redirectUrl;
                         });
                     } else {
@@ -480,7 +467,7 @@
 
         window.changeProjectCode = function (oldCode, newCode) {
             if (!oldCode || !newCode) {
-                showGovukAlert('Both old and new project codes are required.');
+                showAlertMessage('Both old and new project codes are required.', AlertType.INFO);
                 return;
             }
             showGovukConfirm('Are you sure you want to change project code from "' + oldCode + '" to "' + newCode + '"? This will update all related records.').then(function (confirmed) {
@@ -493,7 +480,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message || 'Project code changed successfully.').then(function () {
+                        showAlertMessage(result.message || 'Project code changed successfully.', AlertType.SUCCESS).then(function () {
                             window.location.href = result.redirectUrl;
                         });
                     } else {
@@ -502,7 +489,7 @@
                 })
                 .catch(function (err) {
                     console.error('Error:', err);
-                    showGovukAlert('An error occurred while changing project code.');
+                    showAlertMessage('An error occurred while changing project code.', AlertType.ERROR);
                 });
             });
         };
@@ -559,11 +546,11 @@
                         }
                     });
                     if (!isEdit && result.data && result.data.parentProject) {
-                        showGovukAlert(result.message || 'Project created successfully.').then(function () {
+                        showAlertMessage(result.message || 'Project created successfully.', AlertType.SUCCESS).then(function () {
                             window.location.href = '@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(result.data.parentProject);
                         });
                     } else {
-                        showGovukAlert(result.message || 'Project updated successfully.');
+                        showAlertMessage(result.message || 'Project updated successfully.', AlertType.SUCCESS);
                     }
                 } else {
                     displayServerValidationErrors(result.errors, result.message, '#main-content');
@@ -571,7 +558,7 @@
             })
             .catch(function (err) {
                 console.error('Error:', err);
-                showGovukAlert('An error occurred while submitting the form.');
+                showAlertMessage('An error occurred while submitting the form.', AlertType.ERROR);
             });
         }
 
