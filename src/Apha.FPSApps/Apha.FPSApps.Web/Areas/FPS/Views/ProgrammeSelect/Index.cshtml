@@ -33,12 +33,12 @@
                                             aria-label="Select a Programme">
                                         <option value="">-- Select Programme --</option>
                                     </select>
-                                    <label class="govuk-label govuk-!-margin-bottom-0" for="projectSearchInput" style="white-space:nowrap; font-weight:bold;">Project</label>
-                                    <input type="text" id="projectSearchInput"
+                                    <label class="govuk-label govuk-!-margin-bottom-0" for="projectNameInput" style="white-space:nowrap; font-weight:bold;">Project</label>
+                                    <input type="text" id="projectNameInput"
                                            class="govuk-input"
                                            style="width:220px;"
                                            placeholder="Filter project..."
-                                           value="@Model.ProjectSearch"
+                                           value="@Model.ProjectName"
                                            aria-label="Filter project"
                                            oninput="reloadProjectsGrid()" />
                                 </div>
@@ -59,15 +59,15 @@
     <script>
         function filterProgramme() {
             var programNo = document.getElementById('programmeDropdown').value;
-            var projectSearch = document.getElementById('projectSearchInput')?.value ?? '';
+            var projectName = document.getElementById('projectNameInput')?.value ?? '';
             if (programNo) {
-                fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo=' + encodeURIComponent(programNo) + '&projectSearch=' + encodeURIComponent(projectSearch));
+                fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo=' + encodeURIComponent(programNo) + '&projectName=' + encodeURIComponent(projectName));
             }
         }
 
         function getProjectsExtraFilters() {
             return {
-                projectSearch: document.getElementById('projectSearchInput')?.value ?? ''
+                projectName: document.getElementById('projectNameInput')?.value ?? ''
             };
         }
 
@@ -89,11 +89,11 @@
         function editProject(btn) {
             var parentProject = $(btn).data('id');
             var programNo = document.getElementById('programmeDropdown')?.value ?? '';
-            var projectSearch = document.getElementById('projectSearchInput')?.value ?? '';
+            var projectName = document.getElementById('projectNameInput')?.value ?? '';
 
             var returnUrl = '@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })'
                 + '?programNo=' + encodeURIComponent(programNo)
-                + '&projectSearch=' + encodeURIComponent(projectSearch);
+                + '&projectName=' + encodeURIComponent(projectName);
 
             fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })'
                 + '?parentProject=' + encodeURIComponent(parentProject)

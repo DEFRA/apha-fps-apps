@@ -28,7 +28,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         /// <summary>
         /// Current project text filter value.
         /// </summary>
-        public string ProjectSearch { get; set; } = string.Empty;
+        public string ProjectName { get; set; } = string.Empty;
 
         /// <summary>
         /// DataGrid configuration for the projects table
