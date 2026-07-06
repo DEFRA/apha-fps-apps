@@ -121,7 +121,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new StaffJobMap());
             modelBuilder.Entity<StaffJob>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            modelBuilder.ApplyConfiguration(new WgEmployeeMap());
+            modelBuilder.ApplyConfiguration(new WorkGroupEmployeeMap());
             modelBuilder.Entity<WorkGroupEmployee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new EmployeeMap());
@@ -144,6 +144,7 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
             modelBuilder.ApplyConfiguration(new ProfitCentreViewMap());
+            modelBuilder.Entity<ProfitCentreView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new ProfitCentreGradeViewMap());
             modelBuilder.Entity<ProfitCentreGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new WorkGroupGradeViewMap());

@@ -8,6 +8,9 @@ namespace Apha.FPSApps.Web.Mappings
     {
         public PactViewModelMapper() 
         {
+            CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
+            CreateMap<ProjectDto, Project>().ReverseMap();
+            CreateMap<ProfitCentreDto, ProfitCentre>().ReverseMap();
             CreateMap<PactProjectViewModel, ProjectDto>().ReverseMap();
             CreateMap<ProjectJobCodeViewModel, JobCodeDto>().ReverseMap();
             CreateMap<JobCodeViewModel, JobCodeDto>().ReverseMap();
@@ -141,6 +144,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ReleasePeriodDto, PeriodMonth>().ReverseMap();
 
             CreateMap<ReleasePeriodDto, ReleasePeriodItem>().ReverseMap();
+
+            CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionItem>().ReverseMap();
         }
     }
 }

@@ -1,6 +1,7 @@
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Services;
+using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -315,6 +316,85 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
 
         #endregion
 
+        #region GetPagedWgTestCapabilitiesWithDescriptionAsync
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_ValidInput_ReturnsMappedPaginatedResultWithDtoProperties()
+        {
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "TestCode", Descending = true, Filter = "{\"TestCode\":\"TC\"}" };
+            var mappedParams = new PaginationParameters<string> { Page = 2, PageSize = 5, SortBy = "TestCode", Descending = true, Filter = "{\"TestCode\":\"TC\"}" };
+
+            var entities = new List<WgTestCapabilitiesWithDescription>
+            {
+                new() { WorkGroup = "WG1", TestCode = "TC001", ItemDescription = "Item 1" },
+                new() { WorkGroup = "WG1", TestCode = "TC002", ItemDescription = "Item 2" }
+            };
+            var pagedData = new PagedData<WgTestCapabilitiesWithDescription>(entities, new PaginationData
+            {
+                PageNumber = 2,
+                PageSize = 5,
+                TotalPages = 3,
+                TotalRecords = 12
+            });
+
+            var expected = new PaginatedResult<WgTestCapabilitiesWithDescriptionDto>
+            {
+                Data = new List<WgTestCapabilitiesWithDescriptionDto>
+                {
+                    new() { WorkGroup = "WG1", TestCode = "TC001", ItemDescription = "Item 1" },
+                    new() { WorkGroup = "WG1", TestCode = "TC002", ItemDescription = "Item 2" }
+                },
+                PaginationData = new PaginationDto
+                {
+                    PageNumber = 2,
+                    PageSize = 5,
+                    TotalPages = 3,
+                    TotalRecords = 12
+                }
+            };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(mappedParams);
+            _testCapabilityRepo.GetPagedWgTestCapabilitiesWithDescriptionAsync(mappedParams, "WG1").Returns(pagedData);
+            _mapper.Map<PaginatedResult<WgTestCapabilitiesWithDescriptionDto>>(pagedData).Returns(expected);
+
+            var result = await _sut.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            result.Should().Be(expected);
+            result.Data.Should().HaveCount(2);
+            result.Data!.First().WorkGroup.Should().Be("WG1");
+            result.Data.First().TestCode.Should().Be("TC001");
+            result.Data.First().ItemDescription.Should().Be("Item 1");
+            result.PaginationData.PageNumber.Should().Be(2);
+            result.PaginationData.PageSize.Should().Be(5);
+            result.PaginationData.TotalPages.Should().Be(3);
+            result.PaginationData.TotalRecords.Should().Be(12);
+
+            _mapper.Received(1).Map<PaginationParameters<string>>(query);
+            await _testCapabilityRepo.Received(1).GetPagedWgTestCapabilitiesWithDescriptionAsync(mappedParams, "WG1");
+            _mapper.Received(1).Map<PaginatedResult<WgTestCapabilitiesWithDescriptionDto>>(pagedData);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_InvalidWorkGroup_ThrowsBusinessValidationErrorException(string? workGroup)
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(
+                () => _sut.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, workGroup!));
+
+            ex.Errors.Should().ContainSingle();
+            ex.Errors[0].Code.Should().Be("WORKGROUP_REQUIRED");
+            ex.Errors[0].Message.Should().Be("Work Group is required");
+
+            await _testCapabilityRepo.DidNotReceive()
+                .GetPagedWgTestCapabilitiesWithDescriptionAsync(Arg.Any<PaginationParameters<string>>(), Arg.Any<string>());
+        }
+
+        #endregion
+
         #region GetPagedTestCapabilityByPortfolioAsync — ItemDescription Filter and Sort
 
         [Fact]
@@ -328,18 +408,18 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             };
             var mappedParams = new PaginationParameters<string>();
             var entities = new List<TestCapability>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
-                new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
             var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 3 });
             var dtos = new List<TestCapabilityDto>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1" },
-                new() { TestCode = "TC3", WorkGroup = "WG1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1" }
+     };
             var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
             var descriptions = new Dictionary<string, string?>
             {
@@ -370,14 +450,14 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             };
             var mappedParams = new PaginationParameters<string>();
             var entities = new List<TestCapability>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
             var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 1 });
             var dtos = new List<TestCapabilityDto>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" }
+     };
             var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
             var descriptions = new Dictionary<string, string?> { ["TC1"] = "ALPHA Test" };
 
@@ -403,14 +483,14 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             };
             var mappedParams = new PaginationParameters<string>();
             var entities = new List<TestCapability>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
             var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 1 });
             var dtos = new List<TestCapabilityDto>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" }
+     };
             var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
             var descriptions = new Dictionary<string, string?> { ["TC1"] = "Alpha Test" };
 
@@ -436,18 +516,18 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             };
             var mappedParams = new PaginationParameters<string>();
             var entities = new List<TestCapability>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
-                new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
             var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 3 });
             var dtos = new List<TestCapabilityDto>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1" },
-                new() { TestCode = "TC3", WorkGroup = "WG1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1" }
+     };
             var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
             var descriptions = new Dictionary<string, string?>
             {
@@ -478,18 +558,18 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             };
             var mappedParams = new PaginationParameters<string>();
             var entities = new List<TestCapability>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
-                new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
             var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 3 });
             var dtos = new List<TestCapabilityDto>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1" },
-                new() { TestCode = "TC3", WorkGroup = "WG1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1" }
+     };
             var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
             var descriptions = new Dictionary<string, string?>
             {
@@ -520,16 +600,16 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             };
             var mappedParams = new PaginationParameters<string>();
             var entities = new List<TestCapability>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
             var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 2 });
             var dtos = new List<TestCapabilityDto>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" }
+     };
             var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
             var descriptions = new Dictionary<string, string?>
             {
@@ -562,18 +642,18 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             };
             var mappedParams = new PaginationParameters<string>();
             var entities = new List<TestCapability>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
-                new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
             var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 3 });
             var dtos = new List<TestCapabilityDto>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1" },
-                new() { TestCode = "TC3", WorkGroup = "WG1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" },
+         new() { TestCode = "TC3", WorkGroup = "WG1" }
+     };
             var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
             var descriptions = new Dictionary<string, string?>
             {
@@ -605,16 +685,16 @@ namespace Apha.PACT.Application.UnitTests.Services.TestCapabilityServiceTest
             };
             var mappedParams = new PaginationParameters<string>();
             var entities = new List<TestCapability>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1", PlanPortfolio = "PP1" }
+     };
             var pagedData = new PagedData<TestCapability>(entities, new PaginationData { TotalRecords = 2 });
             var dtos = new List<TestCapabilityDto>
-            {
-                new() { TestCode = "TC1", WorkGroup = "WG1" },
-                new() { TestCode = "TC2", WorkGroup = "WG1" }
-            };
+     {
+         new() { TestCode = "TC1", WorkGroup = "WG1" },
+         new() { TestCode = "TC2", WorkGroup = "WG1" }
+     };
             var pagedResult = new PaginatedResult<TestCapabilityDto> { Data = dtos };
             var descriptions = new Dictionary<string, string?>
             {
