@@ -41,8 +41,7 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<YearMaster, YearMasterDto>().ReverseMap();
             CreateMap<Division, DivisionDto>().ReverseMap();
             CreateMap<DivisionGrade, DivisionGradeDto>().ReverseMap();
-
-            // TRANSFORMENGINE: Grade <-> GradeDto — ForMember required: Grade.DescLong <-> GradeDto.Description (field rename)
+          
             CreateMap<Grade, GradeDto>()
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.DescLong))
                 .ReverseMap()
@@ -71,20 +70,16 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<ProfitCentreGrade, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGrade, WorkgroupGradeDto>().ReverseMap();
             CreateMap<WorkGroupGradeView, WorkgroupGradeDto>().ReverseMap();
+           
             CreateMap<WorkGroupEmployee, WorkGroupEmployeeDto>().ReverseMap();
             CreateMap<WorkGroupEmployeeView, WorkGroupEmployeeDto>().ReverseMap();
             CreateMap<PactStaff, PactStaffDto>().ReverseMap();
             CreateMap<ProjectProfitabilityView, ProjectProfitabilityDto>().ReverseMap();
             CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
 
-            // TRANSFORMENGINE: new mapping â€” frmJobcodeTotalsVLA migration (Phase 3)
-            //   Property names are aligned between entity and DTO; no ForMember overrides needed.
-            //   Covers: Id, JobCode, Program, Customer, Manager, Status, StaffCosts, TestCost,
-            //   AnimalCosts, AdditionalCosts, TotalCosts, Budget, Profit, TargetProfit, OffTarget.
+            //ProjectProfitabilityVlaView
             CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
-              
 
-            // UserPermission
             CreateMap<User, UserDto>().ReverseMap();
 
             // BudgetResourceLevel

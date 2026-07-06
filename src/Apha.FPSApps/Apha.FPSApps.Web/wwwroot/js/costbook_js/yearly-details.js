@@ -222,7 +222,7 @@ function saveStaff() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadStaffGrid(); }
+        if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadStaffGrid(); }); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
         else { showAlertMessage(d.message || 'Failed to save staff requirement.', AlertType.ERROR); }
     })
@@ -236,7 +236,10 @@ function deleteStaff(pid, year, srIdentity) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadStaffGrid(); });
+            .then(function (d) {
+                if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadStaffGrid(); }); }
+                else { showAlertMessage(d.message || 'Failed to delete Staff entry.', AlertType.ERROR); }
+            });
     });
 }
 
@@ -289,7 +292,7 @@ function saveTest() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadTestGrid(); }
+        if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadTestGrid(); }); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
         else { showAlertMessage(d.message || 'Failed to save test requirement.', AlertType.ERROR); }
     })
@@ -303,8 +306,11 @@ function deleteTest(pid, year, testCode) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadTestGrid(); });
-    });
+            .then(function (d) {
+                if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadTestGrid(); }); }
+                else { showAlertMessage(d.message || 'Failed to delete Test entry.', AlertType.ERROR); }
+            });
+    })
 }
 
 // ── Animals ────────────────────────────────────────────────────────
@@ -428,7 +434,7 @@ function saveAdditionalCost() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadAdditionalCostGrid(); }
+        if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadAdditionalCostGrid(); }); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
         else { showAlertMessage(d.message || 'Failed to save additional cost.', AlertType.ERROR); }
     })
@@ -442,7 +448,10 @@ function deleteAdditionalCost(pid, year, acIdentity) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadAdditionalCostGrid(); });
+            .then(function (d) {
+                if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadAdditionalCostGrid(); }); }
+                else { showAlertMessage(d.message || 'Failed to delete Additional cost entry.', AlertType.ERROR); }
+            });
     });
 }
 
