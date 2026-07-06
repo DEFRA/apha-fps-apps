@@ -110,6 +110,7 @@ function loadProfileData(parentProject) {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { position: 'top' } },
                     scales: {
                         x: {
@@ -180,6 +181,7 @@ function loadCumulativeData(parentProject) {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { position: 'top' } },
                     scales: {
                         x: {
@@ -206,7 +208,7 @@ let _modalProject = '';
 
 function addProjectMonth() {
     const project = document.getElementById('ParentProject').value;
-    if (!project) { alert('Please select a project first.'); return; }
+    if (!project) { showAlertMessage('Please select a project first.', AlertType.INFO); return; }
     openCostProfileModal(project, 0);
 }
 
@@ -246,7 +248,7 @@ function saveProjectMonth() {
         costProfile: parseFloat(form.querySelector('[name="CostProfile"]')?.value) || null
     };
 
-    if (!payload.monthNo) { alert('Please enter a month number.'); return; }
+    if (!payload.monthNo) { showAlertMessage('Please enter a month number.', AlertType.INFO); return; }
 
     $.ajax({
         url: '/PACT/ProjectProfile/SaveProjectMonth',
@@ -260,7 +262,7 @@ function saveProjectMonth() {
                 loadProfileData(_modalProject);
                 loadCumulativeData(_modalProject);
             } else {
-                alert(res.message || 'Failed to save.');
+                showAlertMessage(res.message || 'Failed to save.', AlertType.ERROR);
             }
         }
     });
@@ -278,7 +280,7 @@ function deleteProjectMonth(btn) {
             if (res.success) {
                 loadCostProfileGrid(project);
             } else {
-                alert(res.message || 'Failed to delete.');
+                showAlertMessage(res.message || 'Failed to delete.', AlertType.ERROR);
             }
         }
     });

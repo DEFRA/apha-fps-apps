@@ -71,7 +71,7 @@ function addSubContract() {
             $('#modalPopup').addClass('show');
         })
         .fail(function(xhr, status, error) {
-            alert('Error loading form: ' + error);
+            showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
         });
 }
 
@@ -82,7 +82,7 @@ function editSubContract(btn) {
         $('#modalPopup').addClass('show');
     })
     .fail(function(xhr, status, error) {
-        alert('Error loading form: ' + error);
+        showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
     });
 }
 
@@ -97,12 +97,12 @@ function deleteSubContract(btn) {
             success: function (response) {
                 if (response.success) {
                     reloadSubContractsGrid();
-                    showGovukAlert('SubContract deleted successfully.');
+                    showAlertMessage('SubContract deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showGovukAlert('Error: ' + response.message);
+                    showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                 }
             },
-            error: function () { showGovukAlert('An error occurred while deleting.'); }
+            error: function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
         });
     });
 }
@@ -121,6 +121,31 @@ function saveSubContract() {
         if (data[f] === '' || data[f] === undefined) data[f] = null;
     });
 
+    // Validate Amount field against PostgreSQL money limits
+    if (data.Amount !== null && data.Amount !== undefined) {
+        var amount = parseFloat(data.Amount);
+        var maxMoney = 92233720368547758.07;
+
+        if (isNaN(amount)) {
+            showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
+            return;
+        }
+        if (amount < 0 || amount > maxMoney) {
+            showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
+            return;
+        }
+
+        // Check decimal places
+        var decimalPart = amount.toString().split('.')[1];
+        if (decimalPart && decimalPart.length > 2) {
+            showAlertMessage('Amount must have at most 2 decimal places.', AlertType.INFO);
+            return;
+        }
+
+        // Ensure we send a proper decimal, not scientific notation
+        data.Amount = amount;
+    }
+
     $.ajax({
         url: '/PACT/SubContract/SaveSubContract',
         type: 'POST',
@@ -129,14 +154,14 @@ function saveSubContract() {
         success: function (response) {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
-                showGovukAlert(response.message || 'SubContract saved successfully.');
+                showAlertMessage(response.message || 'SubContract saved successfully.', AlertType.SUCCESS);
                 reloadSubContractsGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
             }
         },
         error: function () { 
-            showGovukAlert('An error occurred while saving.'); 
+            showAlertMessage('An error occurred while saving.', AlertType.ERROR); 
         }
     });
 }

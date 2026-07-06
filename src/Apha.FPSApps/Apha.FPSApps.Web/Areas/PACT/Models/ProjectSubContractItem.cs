@@ -5,9 +5,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 {
     public class ProjectSubContractItem
     {
-        [GridColumn(Type = GridColumnType.ReadOnly, IsVisible = false)]
-        public int SubContCounter { get; set; }
-
         [Required(ErrorMessage = "Project is required")]
         [Display(Name = "Project")]
         [GridColumn(Order = 1, Width = 381, Type = GridColumnType.Text, IsFilterable = true)]
@@ -33,6 +30,6 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         [Display(Name = "Counter")]
         [GridColumn(Order = 6, Width = 119, Type = GridColumnType.Number)]
-        public int Counter { get; set; }
+        public int SubContCounter { get; set; }
     }
 }

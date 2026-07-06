@@ -27,5 +27,11 @@ namespace Apha.FPS.Application.Services
             var contracts = await _contractRepository.GetAllContractsByUserAsync();
             return _mapper.Map<IEnumerable<ContractDto>>(contracts);
         }
+
+        public async Task<IEnumerable<ContractDto>> GetAllPactContractsAsync()
+        {
+            var contracts = await _contractRepository.GetAllPactContractsAsync();
+            return _mapper.Map<IEnumerable<ContractDto>>(contracts);
+        }
     }
 }

@@ -748,5 +748,394 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
         }
 
         #endregion
+
+        #region GetProjectsByProgramProjectProfitabilityVLAAsync Tests
+
+        /// <summary>
+        /// Creates a ProjectRepository wired with ProjectViews (and optionally Projects + ProjectGroupViews)
+        /// so that GetProjectsByProgramProjectProfitabilityVLAAsync and
+        /// GetProjectsByProjectGroupProjectProfitabilityVLAAsync can be exercised.
+        /// </summary>
+        private static ProjectRepository CreateRepositoryForVlaQuery(
+            IEnumerable<ProjectView>? projectViews = null,
+            IEnumerable<Project>? projects = null,
+            IEnumerable<ProjectGroupView>? projectGroupViews = null,
+            string userEmailId = "test@example.com",
+            int fpsYear = 2024)
+        {
+            var mockRequestContext = new Mock<IFpsRequestContext>();
+            mockRequestContext.Setup(x => x.UserEmailId).Returns(userEmailId);
+            mockRequestContext.Setup(x => x.FpsYear).Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
+
+            mockContext.Setup(x => x.ProjectViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(projectViews ?? Enumerable.Empty<ProjectView>()).Object);
+            mockContext.Setup(x => x.Projects)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(projects ?? Enumerable.Empty<Project>()).Object);
+            mockContext.Setup(x => x.ProjectGroupViews)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(projectGroupViews ?? Enumerable.Empty<ProjectGroupView>()).Object);
+            mockContext.Setup(x => x.Programs)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<Program>()).Object);
+            mockContext.Setup(x => x.StaffJobs)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<StaffJob>()).Object);
+            mockContext.Setup(x => x.WorkGroupEmployees)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkGroupEmployee>()).Object);
+            mockContext.Setup(x => x.WorkgroupGrades)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<WorkgroupGrade>()).Object);
+            mockContext.Setup(x => x.ProfitCentreGrades)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<ProfitCentreGrade>()).Object);
+            mockContext.Setup(x => x.AdditionalCosts)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<AdditionalCost>()).Object);
+            mockContext.Setup(x => x.TestRequirements)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<TestRequirement>()).Object);
+            mockContext.Setup(x => x.AnimalRequests)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<AnimalRequest>()).Object);
+            mockContext.Setup(x => x.Animals)
+                .Returns(RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<Animal>()).Object);
+
+            return new ProjectRepository(mockContext.Object, mockRequestContext.Object);
+        }
+
+        private static ProjectView MakeProjectView(
+            string code,
+            string program = "P001",
+            string userEmail = "test@example.com",
+            string? projectTitle = null,
+            string? manager = null,
+            decimal? budgetCvl = null) => new()
+        {
+            ParentProject  = code,
+            ProjectTitle   = projectTitle ?? code,
+            Program        = program,
+            UserEmail      = userEmail,
+            Manager        = manager,
+            BudgetCvl      = budgetCvl,
+            Customer       = string.Empty,
+            ProjectStatus  = "Approved",
+            Disease        = string.Empty,
+            Contract       = string.Empty,
+            IsDefraProject = 0
+        };
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_ReturnsOnlyProjectsMatchingProgramAndUser()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeProjectView("PP001", "P001"),
+                MakeProjectView("PP002", "P001"),
+                MakeProjectView("PP003", "P002"),                        // different program
+                MakeProjectView("PP004", "P001", "other@example.com")   // different user
+            };
+            var repo = CreateRepositoryForVlaQuery(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramProjectProfitabilityVLAAsync(query, "P001");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Equal("P001", p.Program));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_ReturnsEmpty_WhenNoProgramMatches()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeProjectView("PP001", "P001")
+            };
+            var repo = CreateRepositoryForVlaQuery(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramProjectProfitabilityVLAAsync(query, "P999");
+
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_ReturnsEmpty_WhenNoMatchingUser()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeProjectView("PP001", "P001", "other@example.com")
+            };
+            var repo = CreateRepositoryForVlaQuery(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramProjectProfitabilityVLAAsync(query, "P001");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_FilterByParentProject_ReturnsMatching()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeProjectView("PP001", "P001"),
+                MakeProjectView("PP002", "P001"),
+                MakeProjectView("XX003", "P001")
+            };
+            var repo = CreateRepositoryForVlaQuery(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"ParentProject\":\"PP\"}"
+            };
+
+            var result = await repo.GetProjectsByProgramProjectProfitabilityVLAAsync(query, "P001");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("PP", p.ParentProject));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_FilterByProjectTitle_ReturnsMatching()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeProjectView("PP001", "P001", projectTitle: "FMD Survey"),
+                MakeProjectView("PP002", "P001", projectTitle: "TB Eradication"),
+                MakeProjectView("PP003", "P001", projectTitle: "FMD Outbreak")
+            };
+            var repo = CreateRepositoryForVlaQuery(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"ProjectTitle\":\"FMD\"}"
+            };
+
+            var result = await repo.GetProjectsByProgramProjectProfitabilityVLAAsync(query, "P001");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("FMD", p.ProjectTitle));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_SortsByParentProjectAscending_ByDefault()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                MakeProjectView("CC003", "P001"),
+                MakeProjectView("AA001", "P001"),
+                MakeProjectView("BB002", "P001")
+            };
+            var repo = CreateRepositoryForVlaQuery(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramProjectProfitabilityVLAAsync(query, "P001");
+
+            var data = result.Data.ToList();
+            Assert.Equal("AA001", data[0].ParentProject);
+            Assert.Equal("BB002", data[1].ParentProject);
+            Assert.Equal("CC003", data[2].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_PagingIsApplied()
+        {
+            var projectViews = Enumerable.Range(1, 8)
+                .Select(i => MakeProjectView($"PP{i:D3}", "P001"))
+                .ToList();
+            var repo = CreateRepositoryForVlaQuery(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 3);
+
+            var result = await repo.GetProjectsByProgramProjectProfitabilityVLAAsync(query, "P001");
+
+            Assert.Equal(3, result.Data.Count());
+            Assert.Equal(8, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProgramProjectProfitabilityVLAAsync_MapsFieldsCorrectly()
+        {
+            var projectViews = new List<ProjectView>
+            {
+                new()
+                {
+                    ParentProject  = "PP001",
+                    ProjectTitle   = "Alpha Project",
+                    Program        = "P001",
+                    Manager        = "John Smith",
+                    Customer       = "DEFRA",
+                    BudgetCvl      = 4500m,
+                    IsDefraProject = 1,
+                    UserEmail      = "test@example.com",
+                    Disease        = "FMD",
+                    Contract       = "C1",
+                    ProjectStatus  = "Approved"
+                }
+            };
+            var repo = CreateRepositoryForVlaQuery(projectViews: projectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            var result = await repo.GetProjectsByProgramProjectProfitabilityVLAAsync(query, "P001");
+
+            var project = Assert.Single(result.Data);
+            Assert.Equal("PP001",         project.ParentProject);
+            Assert.Equal("Alpha Project", project.ProjectTitle);
+            Assert.Equal("P001",          project.Program);
+            Assert.Equal(4500m,           project.BudgetCvl);
+        }
+
+        #endregion
+
+        #region GetProjectsByProjectGroupProjectProfitabilityVLAAsync Tests
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_ReturnsProjectsForGroup()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "test@example.com" }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectGroup = "Group1", ProjectTitle = "Alpha", Program = "P001", Customer = "DEFRA",  Contract = "C1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "INC1" },
+                new() { ParentProject = "PP002", ProjectGroup = "Group1", ProjectTitle = "Beta",  Program = "P001", Customer = "APHA",   Contract = "C2", Disease = "D2", ProjectStatus = "Active", IncomeAccountCode = "INC2" },
+                new() { ParentProject = "PP003", ProjectGroup = "Group2", ProjectTitle = "Gamma", Program = "P001", Customer = "EA",     Contract = "C3", Disease = "D3", ProjectStatus = "Active", IncomeAccountCode = "INC3" }
+            };
+            var repo = CreateRepositoryForVlaQuery(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, "Group1");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Equal("Group1", p.ProjectGroup));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_ReturnsEmpty_WhenGroupHasNoProjects()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "EmptyGroup", UserEmail = "test@example.com" }
+            };
+            var repo = CreateRepositoryForVlaQuery(projects: new List<Project>(), projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, "EmptyGroup");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_ReturnsEmpty_WhenNoMatchingUser()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "other@example.com" }  // different user
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectGroup = "Group1", ProjectTitle = "Alpha", Program = "P001", Customer = "DEFRA", Contract = "C1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "INC1" }
+            };
+            var repo = CreateRepositoryForVlaQuery(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, "Group1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_FilterByParentProject_ReturnsMatching()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "test@example.com" }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectGroup = "Group1", ProjectTitle = "Alpha", Program = "P001", Customer = "DEFRA", Contract = "C1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "INC1" },
+                new() { ParentProject = "PP002", ProjectGroup = "Group1", ProjectTitle = "Beta",  Program = "P001", Customer = "APHA",  Contract = "C2", Disease = "D2", ProjectStatus = "Active", IncomeAccountCode = "INC2" },
+                new() { ParentProject = "XX003", ProjectGroup = "Group1", ProjectTitle = "Gamma", Program = "P001", Customer = "EA",    Contract = "C3", Disease = "D3", ProjectStatus = "Active", IncomeAccountCode = "INC3" }
+            };
+            var repo = CreateRepositoryForVlaQuery(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ParentProject\":\"PP\"}"
+            };
+
+            var result = await repo.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, "Group1");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("PP", p.ParentProject));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_FilterByProjectTitle_ReturnsMatching()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "test@example.com" }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "PP001", ProjectGroup = "Group1", ProjectTitle = "FMD Survey",     Program = "P001", Customer = "DEFRA", Contract = "C1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "INC1" },
+                new() { ParentProject = "PP002", ProjectGroup = "Group1", ProjectTitle = "TB Eradication", Program = "P001", Customer = "APHA",  Contract = "C2", Disease = "D2", ProjectStatus = "Active", IncomeAccountCode = "INC2" },
+                new() { ParentProject = "PP003", ProjectGroup = "Group1", ProjectTitle = "FMD Outbreak",   Program = "P001", Customer = "EA",    Contract = "C3", Disease = "D3", ProjectStatus = "Active", IncomeAccountCode = "INC3" }
+            };
+            var repo = CreateRepositoryForVlaQuery(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ProjectTitle\":\"FMD\"}"
+            };
+
+            var result = await repo.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, "Group1");
+
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("FMD", p.ProjectTitle));
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_PagingIsApplied()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "test@example.com" }
+            };
+            var projects = Enumerable.Range(1, 6).Select(i => new Project
+            {
+                ParentProject = $"PP00{i}", ProjectGroup = "Group1",
+                ProjectTitle  = $"Project {i}", Program = "P001",
+                Customer      = "DEFRA", Contract = "C", Disease = "D",
+                ProjectStatus = "Active", IncomeAccountCode = "INC"
+            }).ToList();
+            var repo = CreateRepositoryForVlaQuery(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 2 };
+
+            var result = await repo.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, "Group1");
+
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(6, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetProjectsByProjectGroupProjectProfitabilityVLAAsync_SortsByParentProjectAscending_ByDefault()
+        {
+            var projectGroupViews = new List<ProjectGroupView>
+            {
+                new() { ProjectGroupName = "Group1", UserEmail = "test@example.com" }
+            };
+            var projects = new List<Project>
+            {
+                new() { ParentProject = "CC003", ProjectGroup = "Group1", ProjectTitle = "Gamma", Program = "P001", Customer = "EA",    Contract = "C3", Disease = "D3", ProjectStatus = "Active", IncomeAccountCode = "INC3" },
+                new() { ParentProject = "AA001", ProjectGroup = "Group1", ProjectTitle = "Alpha", Program = "P001", Customer = "DEFRA", Contract = "C1", Disease = "D1", ProjectStatus = "Active", IncomeAccountCode = "INC1" },
+                new() { ParentProject = "BB002", ProjectGroup = "Group1", ProjectTitle = "Beta",  Program = "P001", Customer = "APHA",  Contract = "C2", Disease = "D2", ProjectStatus = "Active", IncomeAccountCode = "INC2" }
+            };
+            var repo = CreateRepositoryForVlaQuery(projects: projects, projectGroupViews: projectGroupViews);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, "Group1");
+
+            var data = result.Data.ToList();
+            Assert.Equal("AA001", data[0].ParentProject);
+            Assert.Equal("BB002", data[1].ParentProject);
+            Assert.Equal("CC003", data[2].ParentProject);
+        }
+
+        #endregion
     }
 }

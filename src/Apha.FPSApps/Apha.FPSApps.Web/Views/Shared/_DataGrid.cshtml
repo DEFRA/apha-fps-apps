@@ -466,8 +466,9 @@
             // Pagination click
             $(gridContainerSelector).off('click', '.pagination a, .pagination span').on('click', '.pagination a, .pagination span', function (e) {
                 e.preventDefault();
+                if ($(this).hasClass('pagination--disabled') || $(this).attr('aria-disabled') === 'true') return;
                 var pageNo = $(this).data('pageno');
-                if ($(this).prop('disabled') || !pageNo || isNaN(pageNo) || pageNo < 1) return;
+                if (!pageNo || isNaN(pageNo) || pageNo < 1) return;
 
                 gridManager.reloadGrid({ page: pageNo });
             });

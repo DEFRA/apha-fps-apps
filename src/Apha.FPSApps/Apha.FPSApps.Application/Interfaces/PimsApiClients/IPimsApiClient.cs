@@ -8,5 +8,6 @@
         IPimsProposedProjectApiClient PimsProposedProject { get; }
         IPimsProjectYearCostsApiClient PimsProjectYearCosts { get; }
         IPimsMilestoneApiClient PimsMilestone { get; }
+        IPimsRadTrackInvoiceApiClient PimsRadTrackInvoice { get; }
     }
 }

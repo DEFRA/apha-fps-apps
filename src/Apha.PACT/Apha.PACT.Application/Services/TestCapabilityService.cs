@@ -1,10 +1,12 @@
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
+using System.Text.Json;
 
 namespace Apha.PACT.Application.Services
 {
@@ -56,6 +58,9 @@ namespace Apha.PACT.Application.Services
                     if (descriptions.TryGetValue(dto.TestCode, out var desc))
                         dto.ItemDescription = desc;
                 }
+
+                if (HasItemDescriptionFilterOrSort(query))
+                    result.Data = ApplyItemDescriptionFilterAndSort(result.Data, query);
             }
 
             return result;
@@ -99,6 +104,50 @@ namespace Apha.PACT.Application.Services
             return _mapper.Map<TestCapabilityDto>(updated);
         }
 
+        private static IEnumerable<TestCapabilityDto> ApplyItemDescriptionFilterAndSort(
+            IEnumerable<TestCapabilityDto> data, QueryParameters<string> query)
+        {
+            if (!string.IsNullOrWhiteSpace(query.Filter))
+            {
+                var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(query.Filter);
+                if (filters != null
+                    && filters.TryGetValue("ItemDescription", out var itemDescFilter)
+                    && !string.IsNullOrWhiteSpace(itemDescFilter))
+                {
+                    data = data
+                        .Where(d => d.ItemDescription != null
+                            && d.ItemDescription.Contains(itemDescFilter, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                }
+            }
+
+            if (string.Equals(query.SortBy, "ItemDescription", StringComparison.OrdinalIgnoreCase))
+            {
+                data = query.Descending
+                    ? data.OrderByDescending(d => d.ItemDescription).ToList()
+                    : data.OrderBy(d => d.ItemDescription).ToList();
+            }
+
+            return data;
+        }
+
+        private static bool HasItemDescriptionFilterOrSort(QueryParameters<string> query)
+        {
+            if (string.Equals(query.SortBy, "ItemDescription", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (!string.IsNullOrWhiteSpace(query.Filter))
+            {
+                var filters = JsonSerializer.Deserialize<Dictionary<string, string>>(query.Filter);
+                if (filters != null
+                    && filters.TryGetValue("ItemDescription", out var value)
+                    && !string.IsNullOrWhiteSpace(value))
+                    return true;
+            }
+
+            return false;
+        }
+
         private static void ValidateRequiredFields(TestCapabilityDto dto)
         {
             var errors = new List<string>();
@@ -123,6 +172,19 @@ namespace Apha.PACT.Application.Services
                 throw new InvalidOperationException("Cannot delete, test requirements are dependant on this.");
 
             return await _testCapabilityRepository.DeleteAsync(testCode, workGroup);
+        }
+
+        public async Task<PaginatedResult<WgTestCapabilitiesWithDescriptionDto>> GetPagedWgTestCapabilitiesWithDescriptionAsync(QueryParameters<string> query, string workGroup)
+        {
+            var errors = new List<BusinessValidationError>();
+            if (string.IsNullOrWhiteSpace(workGroup))
+                errors.Add(new BusinessValidationError("Work Group is required", "WORKGROUP_REQUIRED"));
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _testCapabilityRepository.GetPagedWgTestCapabilitiesWithDescriptionAsync(parameters, workGroup);
+            return _mapper.Map<PaginatedResult<WgTestCapabilitiesWithDescriptionDto>>(pagedData);
         }
     }
 }

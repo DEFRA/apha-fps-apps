@@ -51,11 +51,12 @@
     @* Portfolio Maintenance button *@
     <div class="govuk-grid-column-one-third sup_p_0_mt_24">
         <div class="govuk-button-group sup_margin_0 sup_float_right">
-            <button type="button" class="govuk-button sup_margin_0 sup_p_8 sup_flex"
+            <a class="govuk-button sup_margin_0 sup_p_8 sup_flex"
+               asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index"
                     id="btnPortfolioMaintenance"
                     data-module="govuk-button" allow-edit="true">
                 &nbsp;Portfolio Maintenance
-            </button>
+            </a>
         </div>
     </div>
 
@@ -260,13 +261,13 @@
                 success: function (result) {
                     if (result.success) {
                         $('#modalPopup').removeClass('show');
-                        showGovukAlert(isEdit ? 'Record updated successfully.' : 'Record saved successfully.');
+                        showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                         reloadTestCapabilityGrid(currentFilterValue);
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
                     }
                 },
-                error: function () { showGovukAlert('Request failed. Please try again.'); }
+                error: function () { showAlertMessage('Request failed. Please try again.', AlertType.ERROR); }
             });
         }
 
@@ -284,12 +285,12 @@
                         if (result.success) {
                             reloadTestCapabilityGrid(currentFilterValue);
                             clearTestReqmtGrid();
-                            showGovukAlert('Test Capability record deleted successfully.');
+                            showAlertMessage('Test Capability record deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert(result.message ? result.message : 'Delete failed.');
+                            showAlertMessage(result.message ? result.message : 'Delete failed.', AlertType.ERROR);
                         }
                     },
-                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                    error: function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }
@@ -343,13 +344,13 @@
                 success: function (result) {
                     if (result.success) {
                         $('#modalPopup').removeClass('show');
-                        showGovukAlert(isEdit ? 'Record updated successfully.' : 'Record saved successfully.');
+                        showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                         reloadTestReqmtGrid(currentSelectedTestCode);
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
                     }
                 },
-                error: function () { showGovukAlert('Request failed. Please try again.'); }
+                error: function () { showAlertMessage('Request failed. Please try again.', AlertType.ERROR); }
             });
         }
 
@@ -365,12 +366,12 @@
                     success: function (result) {
                         if (result.success) {
                             reloadTestReqmtGrid(currentSelectedTestCode);
-                            showGovukAlert('Test Requirement record deleted successfully.');
+                            showAlertMessage('Test Requirement record deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert(result.message ? result.message : 'Delete failed.');
+                            showAlertMessage(result.message ? result.message : 'Delete failed.', AlertType.ERROR);
                         }
                     },
-                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                    error: function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }

@@ -16,6 +16,7 @@ namespace Apha.FPS.Core.Interfaces
         Task<PagedData<Project>> GetPagedProjectsAsync(PaginationParameters<string> query);
         Task<PagedData<ProjectView>> GetPagedProjectsByUserAsync(PaginationParameters<string> query);
         Task<PagedData<PactProjectView>> GetPagedPactProjectsAsync(PaginationParameters<string> query);
+        Task<PagedData<PactProjectView>> GetPagedPactProjectsByProgramAsync(PaginationParameters<string> query, string programNo);
         Task<Project?> GetProjectByIdAsync(string parentProject);
         Task<Project> CreateProjectAsync(Project project);
         Task<Project> UpdateProjectAsync(Project project);
@@ -26,6 +27,8 @@ namespace Apha.FPS.Core.Interfaces
         Task<bool> HasAssociatedJobCodesAsync(string parentProject);
         Task<PagedData<Project>> GetProjectsByProgramAsync(PaginationParameters<string> query, string programNo);
         Task<PagedData<Project>> GetProjectsByProjectGroupAsync(PaginationParameters<string> query, string projectGroup);
+        Task<PagedData<Project>> GetProjectsByProgramProjectProfitabilityVLAAsync(PaginationParameters<string> query, string programNo);
+        Task<PagedData<Project>> GetProjectsByProjectGroupProjectProfitabilityVLAAsync(PaginationParameters<string> query, string projectGroup);
 
         // ProgrammeNewProject operations
         Task<bool> CheckProjectExistsAsync(string newProject);

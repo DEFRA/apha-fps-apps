@@ -43,6 +43,9 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<AccountCode> AccountCodes { get; set; }
         public virtual DbSet<SubAccount> SubAccounts { get; set; }
         public virtual DbSet<UserCategory> UserCategories { get; set; }
+        public virtual DbSet<Category> Categories { get; set; }
+        public virtual DbSet<UserTestOwner> UserTestOwners { get; set; }
+        public virtual DbSet<UserProjectGroup> UserProjectGroups { get; set; }
         public virtual DbSet<StaffActiveView> StaffActiveView { get; set; }
         public virtual DbSet<WorkgroupGradeGeneralView> WorkgroupGradeGeneralViews { get; set; }
 
@@ -118,7 +121,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new StaffJobMap());
             modelBuilder.Entity<StaffJob>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            modelBuilder.ApplyConfiguration(new WgEmployeeMap());
+            modelBuilder.ApplyConfiguration(new WorkGroupEmployeeMap());
             modelBuilder.Entity<WorkGroupEmployee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new EmployeeMap());
@@ -141,6 +144,7 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
             modelBuilder.ApplyConfiguration(new ProfitCentreViewMap());
+            modelBuilder.Entity<ProfitCentreView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new ProfitCentreGradeViewMap());
             modelBuilder.Entity<ProfitCentreGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new WorkGroupGradeViewMap());
@@ -176,6 +180,14 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new UserCategoryMap());
             modelBuilder.Entity<UserCategory>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new CategoryMap());
+
+            modelBuilder.ApplyConfiguration(new UserTestOwnerMap());
+            modelBuilder.Entity<UserTestOwner>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new UserProjectGroupMap());
+            modelBuilder.Entity<UserProjectGroup>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new StaffActiveViewMap());
             modelBuilder.Entity<StaffActiveView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);

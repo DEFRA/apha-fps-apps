@@ -6,25 +6,7 @@
 
 <main id="main-content">
     <div class="container-fluid">
-        <!-- Breadcrumb -->
         <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div class="row fps-sr-breadcrumb-row">
-                    <div class="fps-sr-breadcrumb-flex">
-                        <div class="col-md-8">
-                            <nav class="govuk-breadcrumbs" aria-label="Breadcrumb">
-                                <ol class="govuk-breadcrumbs__list">
-                                    <li class="govuk-breadcrumbs__list-item">
-                                        <a class="govuk-breadcrumbs__link" asp-area="FPS" asp-controller="Home" asp-action="Index">Home</a>
-                                    </li>
-                                    <li class="govuk-breadcrumbs__list-item">Programme Management</li>
-                                    <li class="govuk-breadcrumbs__list-item" aria-current="page">Select Program</li>
-                                </ol>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="govuk-grid-column-full">
                 <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
                     Programme Management
@@ -51,11 +33,12 @@
                                             aria-label="Select a Programme">
                                         <option value="">-- Select Programme --</option>
                                     </select>
-                                    <label class="govuk-label govuk-!-margin-bottom-0" for="projectSearchInput" style="white-space:nowrap; font-weight:bold;">Project</label>
-                                    <input type="text" id="projectSearchInput"
+                                    <label class="govuk-label govuk-!-margin-bottom-0" for="projectNameInput" style="white-space:nowrap; font-weight:bold;">Project</label>
+                                    <input type="text" id="projectNameInput"
                                            class="govuk-input"
                                            style="width:220px;"
                                            placeholder="Filter project..."
+                                           value="@Model.ProjectName"
                                            aria-label="Filter project"
                                            oninput="reloadProjectsGrid()" />
                                 </div>
@@ -76,14 +59,15 @@
     <script>
         function filterProgramme() {
             var programNo = document.getElementById('programmeDropdown').value;
+            var projectName = document.getElementById('projectNameInput')?.value ?? '';
             if (programNo) {
-                fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo=' + encodeURIComponent(programNo));
+                fpsNavigateTo('@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })?programNo=' + encodeURIComponent(programNo) + '&projectName=' + encodeURIComponent(projectName));
             }
         }
 
         function getProjectsExtraFilters() {
             return {
-                projectSearch: document.getElementById('projectSearchInput')?.value ?? ''
+                projectName: document.getElementById('projectNameInput')?.value ?? ''
             };
         }
 
@@ -104,7 +88,16 @@
 
         function editProject(btn) {
             var parentProject = $(btn).data('id');
-            fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })' + '?parentProject=' + encodeURIComponent(parentProject));
+            var programNo = document.getElementById('programmeDropdown')?.value ?? '';
+            var projectName = document.getElementById('projectNameInput')?.value ?? '';
+
+            var returnUrl = '@Url.Action("Index", "ProgrammeSelect", new { area = "FPS" })'
+                + '?programNo=' + encodeURIComponent(programNo)
+                + '&projectName=' + encodeURIComponent(projectName);
+
+            fpsNavigateTo('@Url.Action("Edit", "Project", new { area = "FPS" })'
+                + '?parentProject=' + encodeURIComponent(parentProject)
+                + '&returnUrl=' + encodeURIComponent(returnUrl));
         }
 
         document.addEventListener('DOMContentLoaded', function () {

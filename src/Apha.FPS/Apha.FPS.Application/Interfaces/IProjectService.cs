@@ -11,6 +11,7 @@ namespace Apha.FPS.Application.Interfaces
         Task<PaginatedResult<ProjectDto>> GetPagedProjectsAsync(QueryParameters<string> query);
         Task<PaginatedResult<ProjectDto>> GetPagedProjectsByUserAsync(QueryParameters<string> query);
         Task<PaginatedResult<ProjectDto>> GetPagedPactProjectsAsync(QueryParameters<string> query);
+        Task<PaginatedResult<ProjectDto>> GetPagedPactProjectsByProgramAsync(QueryParameters<string> query, string programNo);
         Task<ProjectDto?> GetProjectByIdAsync(string parentProject);
         Task<ProjectDto> CreateProjectAsync(ProjectDto projectDto);
         Task<ProjectDto> UpdateProjectAsync(ProjectDto projectDto);
@@ -20,6 +21,8 @@ namespace Apha.FPS.Application.Interfaces
         Task<bool> DeleteProjectAsync(string parentProject);
         Task<PaginatedResult<ProjectDto>> GetProjectsByProgramAsync(QueryParameters<string> query, string programNo);
         Task<PaginatedResult<ProjectDto>> GetProjectsByProjectGroupAsync(QueryParameters<string> query, string projectGroup);
+        Task<PaginatedResult<ProjectDto>> GetProjectsByProgramProjectProfitabilityVLAAsync(QueryParameters<string> query, string programNo);
+        Task<PaginatedResult<ProjectDto>> GetProjectsByProjectGroupProjectProfitabilityVLAAsync(QueryParameters<string> query, string projectGroup);
 
         // ProgrammeNewProject operations
         Task<bool> CheckProjectExistsAsync(string newProject);

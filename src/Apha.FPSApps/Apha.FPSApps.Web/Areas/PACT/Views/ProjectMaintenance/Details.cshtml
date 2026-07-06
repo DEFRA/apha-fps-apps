@@ -10,9 +10,17 @@
 <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-full">
         <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
-            Project Maintenance (not portfolios)
-            <a asp-area="PACT" asp-controller="ProjectMaintenance" asp-action="Index" 
-               class="govuk-back-link sup_align_right">Back</a>
+            Project Maintenance (not portfolios) 
+            @if (ViewBag.NavigationSource == "WorkGroupValidTimeCode")
+            {
+                <a asp-area="PACT" asp-controller="WorkGroupValidTimeCode" asp-action="Index" asp-route-workGroup="@TempData["SelectedWorkGroup"]"
+                   class="govuk-back-link sup_align_right">Back</a>
+            }
+            else
+            {
+                <a asp-area="PACT" asp-controller="ProgramMaintenance" asp-action="Index"
+                   class="govuk-back-link sup_align_right">Back</a>
+            }
         </h1>
     </div>
 </div>
@@ -200,51 +208,73 @@
                         </div>
                         <div class="sup_financial_area_wrapper govuk-grid-row">
                             <div class="govuk-grid-column-one-half">
-                                <div class="govuk-form-group sup_margin_bottom_10">
-                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.BudgetCvl">Budget-CVL</label>
+                                <div class="govuk-form-group sup_margin_bottom_10">                                   
+                                    <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.BudgetCvl">Budget-cvl</label>
+                                    <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.BudgetCvl"
-                                           type="number" step="0.01" readonly/>
+                                           type="number" step="0.01" max="92233720368547758.07" readonly/>
+                                           </div>
                                     <span asp-validation-for="Project.BudgetCvl" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
                                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.TransferIncome">Transfer Inc</label>
+                                    <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.TransferIncome"
-                                           type="number" step="0.01" />
+                                           type="number" step="0.01" min="0" max="92233720368547758.07"  onkeydown="if(['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();" />
+                                           </div>
                                     <span asp-validation-for="Project.TransferIncome" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
                                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.BudgetExt">Budget-Ext</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.BudgetExt"
-                                           type="number" step="0.01" />
+                                           type="number" step="0.01" min="0" max="92233720368547758.07"  onkeydown="if(['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();"/>
+                                           </div>
                                     <span asp-validation-for="Project.BudgetExt" class="govuk-error-message"></span>
                                 </div>
                                 <div class="govuk-form-group sup_margin_bottom_10">
                                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.PvsIncome">PVS Inc</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.PvsIncome"
-                                           type="number" step="0.01" />
+                                           type="number" step="0.01" min="0" max="92233720368547758.07"  onkeydown="if(['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();" />
+                                           </div>
                                     <span asp-validation-for="Project.PvsIncome" class="govuk-error-message"></span>
                                 </div>
                             </div>
                             <div class="govuk-grid-column-one-half">
                                 <div class="govuk-form-group sup_margin_bottom_10"
                                      style="padding-top:0; padding-bottom:0;">
+
                                     <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipEoy">WIP-EOY</label>
+                                    <div class="govuk-input__wrapper">
+                                        <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                     <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipEoy"
-                                           type="number" step="0.01" />
+                                           type="number" step="0.01" min="0" max="92233720368547758.07"  onkeydown="if(['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();" />
+                                     </div>
                                     <span asp-validation-for="Project.WipEoy" class="govuk-error-message"></span>
                                 </div>
                                 <!-- WIP-Limit + WIP_Cur side by side -->
                                 <div style="display:flex; justify-content:flex-start; gap:26px;">
                                     <div class="govuk-form-group sup_margin_bottom_10">
                                         <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipLimit">WIP-Limit</label>
+                                        <div class="govuk-input__wrapper">
+                                            <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipLimit"
-                                               type="number" step="0.01" />
+                                               type="number" step="0.01" min="0" max="92233720368547758.07"  onkeydown="if(['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();"/>
+                                               </div>
                                         <span asp-validation-for="Project.WipLimit" class="govuk-error-message"></span>
                                     </div>
                                     <div class="govuk-form-group sup_margin_bottom_10">
                                         <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.WipCurrent">WIP_Cur</label>
+                                        <div class="govuk-input__wrapper">
+                                    <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                         <input class="govuk-input govuk-!-font-size-16" asp-for="Project.WipCurrent"
-                                               type="number" step="0.01" />
+                                               type="number" step="0.01" min="0" max="92233720368547758.07"  onkeydown="if(['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();" />
+                                               </div>
                                         <span asp-validation-for="Project.WipCurrent" class="govuk-error-message"></span>
                                     </div>
                                 </div>
@@ -254,8 +284,11 @@
                                     <div>
                                         <div class="govuk-form-group">
                                             <label class="govuk-label govuk-!-font-weight-bold" asp-for="Project.FecCost">Forecast</label>
+                                            <div class="govuk-input__wrapper">
+                                                <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                             <input class="govuk-input govuk-!-font-size-16" asp-for="Project.FecCost"
-                                                   type="number" step="0.01" />
+                                                   type="number" step="0.01" min="0" max="92233720368547758.07"  onkeydown="if(['e', 'E', '+', '-'].includes(event.key)) event.preventDefault();"/>
+                                                   </div>
                                             <span asp-validation-for="Project.FecCost" class="govuk-error-message"></span>
                                         </div>
                                     </div>
@@ -340,15 +373,44 @@
             var form = $('#projectDetailForm');
             var data = {};
             var decimalFields = ['BudgetCvl', 'TransferIncome', 'BudgetExt', 'PvsIncome', 'WipEoy', 'WipLimit', 'WipCurrent', 'FecCost'];
+            var editableDecimalFields = ['TransferIncome', 'BudgetExt', 'PvsIncome', 'WipEoy', 'WipLimit', 'WipCurrent', 'FecCost'];
+            var maxMoney = 92233720368547758.07;
+            var validationError = null;
+
             form.serializeArray().forEach(function(item) {
+                if (validationError) return; // Skip if already failed
+
                 var key = item.name.startsWith('Project.') ? item.name.substring('Project.'.length) : item.name;
                 if (decimalFields.indexOf(key) !== -1) {
                     var parsed = parseFloat(item.value);
+
+                    // Only validate editable fields (skip BudgetCvl as it's readonly)
+                    if (editableDecimalFields.indexOf(key) !== -1 && !isNaN(parsed)) {
+                        if (parsed < 0 || parsed > maxMoney) {
+                            validationError = key + '  value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.';
+                            return;
+                        }
+
+                        // Check decimal places
+                        var decimalPart = parsed.toString().split('.')[1];
+                        if (decimalPart && decimalPart.length > 2) {
+        validationError = key + '  value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.';
+                            return;
+                        }
+                    }
+
                     data[key] = isNaN(parsed) ? 0 : parsed;
                 } else {
                     data[key] = item.value;
                 }
             });
+
+            // Stop if validation failed
+            if (validationError) {
+                showAlertMessage(validationError, AlertType.INFO);
+                return;
+            }
+
             data.IsDefraProject = $('#IsDefraProject').is(':checked') ? -1 : 0;
             data.Finished = $('#Finished').is(':checked') ? 1 : 0;
             clearValidationErrors('#projectDetailForm');
@@ -359,12 +421,12 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        alert('Project updated successfully.');
+                        showAlertMessage('Project updated successfully.', AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#projectDetailForm');
                     }
                 },
-                error: function() { alert('An error occurred while saving.'); }
+                error: function() { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
 
@@ -396,12 +458,12 @@
                         if (response.success) {
                             getJobCodeGridManager()?.reloadGrid({ page: 1 });
                             reloadTimeCodeGrid(null);
-                            showGovukAlert('JobCode deleted successfully.');
+                            showAlertMessage('JobCode deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
-                    error: function() { showGovukAlert('An error occurred while deleting.'); }
+                    error: function() { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }
@@ -434,14 +496,14 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        alert(successMsg);
+                        showAlertMessage(successMsg, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         getJobCodeGridManager()?.reloadGrid({ page: 1 });
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#jobCodeForm');
                     }
                 },
-                error: function() { alert('An error occurred while saving.'); }
+        error: function() { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
 
@@ -471,7 +533,7 @@
         }
 
         function addTimeCode() {
-            if (!selectedJobCodeId) { alert('Please select a job code first.'); return; }
+            if (!selectedJobCodeId) { showAlertMessage('Please select a job code first.',AlertType.INFO); return; }
             $.get('/PACT/ProjectMaintenance/CreateTimeCode',
                 { parentProject: decodeURIComponent(parentProject), jobCodeId: selectedJobCodeId },
                 function(html) {
@@ -503,12 +565,12 @@
                     success: function(response) {
                         if (response.success) {
                             reloadTimeCodeGrid(selectedJobCodeId);
-                            showGovukAlert('Time code deleted successfully.');
+                            showAlertMessage('Time code deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
-                    error: function() { showGovukAlert('An error occurred while deleting.'); }
+                    error: function() { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }
@@ -530,14 +592,14 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        alert(successMsg);
+                        showAlertMessage(successMsg, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         reloadTimeCodeGrid(selectedJobCodeId);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#timeCodeForm');
                     }
                 },
-                error: function() { alert('An error occurred while saving.'); }
+                error: function() { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
 
@@ -572,12 +634,12 @@
                             if (data.CopyWorkGroup) {
                                 reloadTimeCodeGrid(jobCodeId);
                             }
-                            showGovukAlert('JobCode copied successfully.');
+                            showAlertMessage('JobCode copied successfully.', AlertType.SUCCESS);
                         } else {
                             displayServerValidationErrors(response.errors, response.message, '#formAddJobcode');
                         }
                     },
-                    error: function() { showGovukAlert('An error occurred while copying.'); }
+                    error: function() { showAlertMessage('An error occurred while copying.', AlertType.ERROR); }
                 });
             });
         }
@@ -585,9 +647,9 @@
         // ── Bulk Copy Work Group ──────────────────────────────────────────────
 
         function copyBulkWorkGroup(selection) {
-            if (!selectedJobCodeId) { showGovukAlert('Please select a job code first.'); return; }
+            if (!selectedJobCodeId) { showAlertMessage('Please select a job code first.', AlertType.INFO); return; }
             if (!selection || !selection.ids || selection.ids.length === 0) {
-                showGovukAlert('Please select at least one work group to copy.'); return;
+                showAlertMessage('Please select at least one work group to copy.', AlertType.INFO); return;
             }
 
             $.get('/PACT/ProjectMaintenance/CopyWorkGroupPartial',
@@ -616,7 +678,7 @@
                         });
 
                         if (container.find('.cwg-wg').length === 0) {
-                            showGovukAlert('No work groups found in selected rows.');
+                            showAlertMessage('No work groups found in selected rows.', AlertType.INFO);
                             return;
                         }
                     }
@@ -654,12 +716,12 @@
                             if (response.success) {
                                 $('#modalPopup').removeClass('show');
                                 reloadTimeCodeGrid(selectedJobCodeId);
-                                showGovukAlert('All work groups copied successfully.');
+                                showAlertMessage('All work groups copied successfully.', AlertType.SUCCESS);
                             } else {
                                 displayServerValidationErrors(response.errors, response.message, '#copyWorkGroupForm');
                             }
                         },
-                        error: function() { showGovukAlert('An error occurred while copying.'); }
+                        error: function() { showAlertMessage('An error occurred while copying.', AlertType.ERROR); }
                     });
                 });
             } else {
@@ -669,7 +731,7 @@
                     workGroups.push($(this).val());
                 });
 
-                if (workGroups.length === 0) { showGovukAlert('No work groups to copy.'); return; }
+                if (workGroups.length === 0) { showAlertMessage('No work groups to copy.', AlertType.INFO); return; }
 
                 showGovukConfirm('Copy ' + workGroups.length + ' work group(s) from "' + sourceJobCode + '" to "' + targetJobCode + '"?').then(function(confirmed) {
                     if (!confirmed) return;
@@ -687,12 +749,12 @@
                             if (response.success) {
                                 $('#modalPopup').removeClass('show');
                                 reloadTimeCodeGrid(selectedJobCodeId);
-                                showGovukAlert('Work group(s) copied successfully.');
+                                showAlertMessage('Work group(s) copied successfully.', AlertType.SUCCESS);
                             } else {
                                 displayServerValidationErrors(response.errors, response.message, '#copyWorkGroupForm');
                             }
                         },
-                        error: function() { showGovukAlert('An error occurred while copying.'); }
+                        error: function() { showAlertMessage('An error occurred while copying.', AlertType.ERROR); }
                     });
                 });
             }
@@ -701,9 +763,9 @@
         // ── Bulk Delete Time Codes ────────────────────────────────────────────
 
         function deleteBulkTimeCode(selection) {
-            if (!selectedJobCodeId) { showGovukAlert('Please select a job code first.'); return; }
+            if (!selectedJobCodeId) { showAlertMessage('Please select a job code first.', AlertType.INFO); return; }
             if (!selection || !selection.ids || selection.ids.length === 0) {
-                showGovukAlert('Please select at least one time code row to delete.'); return;
+                showAlertMessage('Please select at least one time code row to delete.', AlertType.INFO); return;
             }
 
             if (selection.isAll) {
@@ -717,12 +779,12 @@
                         success: function(response) {
                             if (response.success) {
                                 reloadTimeCodeGrid(selectedJobCodeId);
-                                showGovukAlert('All time codes deleted successfully.');
+                                showAlertMessage('All time codes deleted successfully.', AlertType.SUCCESS);
                             } else {
-                                showGovukAlert('Error: ' + (response.message || 'Delete failed.'));
+                                showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
                             }
                         },
-                        error: function() { showGovukAlert('An error occurred while deleting.'); }
+                        error: function() { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                     });
                 });
             } else {
@@ -736,7 +798,7 @@
                     }
                 });
 
-                if (items.length === 0) { showGovukAlert('No rows selected for deletion.'); return; }
+                if (items.length === 0) { showAlertMessage('No rows selected for deletion.', AlertType.INFO); return; }
 
                 showGovukConfirm('Delete ' + items.length + ' selected time code(s)?').then(function(confirmed) {
                     if (!confirmed) return;
@@ -751,12 +813,12 @@
                         success: function(response) {
                             if (response.success) {
                                 reloadTimeCodeGrid(selectedJobCodeId);
-                                showGovukAlert(items.length + ' time code(s) deleted successfully.');
+                                showAlertMessage(items.length + ' time code(s) deleted successfully.', AlertType.SUCCESS);
                             } else {
-                                showGovukAlert('Error: ' + (response.message || 'Delete failed.'));
+                                showAlertMessage('Error: ' + (response.message || 'Delete failed.'), AlertType.ERROR);
                             }
                         },
-                        error: function() { showGovukAlert('An error occurred while deleting.'); }
+                        error: function() { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                     });
                 });
             }

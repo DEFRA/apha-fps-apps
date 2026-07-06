@@ -135,7 +135,7 @@
                     $('#modalPopup').addClass('show');
                 },
                 error: function () {
-                    showGovukAlert('An error occurred while loading the edit form.');
+                    showAlertMessage('An error occurred while loading the edit form.', AlertType.ERROR);
                 }
             });
         }
@@ -165,7 +165,7 @@
                 success: function (response) {
                     if (response.success) {
                          closeModal();
-                        showGovukAlert(response.message).then(function () {                           
+                        showAlertMessage(response.message, AlertType.SUCCESS).then(function () {                           
                             reloadTestPriceCheckGrid();
                         });
                     } else {
@@ -176,7 +176,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });

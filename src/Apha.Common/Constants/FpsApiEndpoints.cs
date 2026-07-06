@@ -37,6 +37,7 @@ namespace Apha.Common.Constants
         public const string GetAllDiseases = "api/v1/disease";
         public const string GetAllCustomers = "api/v1/customer";
         public const string GetAllContracts = "api/v1/contract";
+        public const string GetAllPactContracts = "api/v1/contract/pact";
         public const string GetContractsByUser = "api/v1/contract/by-user";
 
         // Division
@@ -81,6 +82,7 @@ namespace Apha.Common.Constants
         public const string GetAllProjectsPaged = "api/v1/project/paged/all";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";
+        public const string GetPagedPactProjectsByProgram = "api/v1/project/pactview/by-program?programNo={0}";
         public const string GetProjectById = "api/v1/project/{0}";
         public const string CreateProject = "api/v1/project";
         public const string UpdateProject = "api/v1/project";
@@ -90,6 +92,8 @@ namespace Apha.Common.Constants
         public const string DeleteProject = "api/v1/project/{0}";
         public const string GetProjectsByProgram = "api/v1/project/paged?programNo={0}";
         public const string GetProjectsByProjectGroup = "api/v1/project/paged/by-project-group?projectGroup={0}";
+        public const string GetProjectsByProgramVla = "api/v1/project/paged-vla?programNo={0}";
+        public const string GetProjectsByProjectGroupVla = "api/v1/project/paged-vla/by-project-group?projectGroup={0}";
 
         // Project Group
         public const string GetAllProjectGroups = "api/v1/projectgroup";
@@ -186,8 +190,11 @@ namespace Apha.Common.Constants
 
         // Resource Set-Up — WG Staff
         public const string GetWgStaff = "api/v1/wgstaff?wgGrade={0}";
+        public const string GetWgStaffForStaff = "api/v1/wgstaff/staff?wgGrade={0}";
         public const string GetWgEmployeeById = "api/v1/wgstaff/{0}";
         public const string UpdateWgEmployee = "api/v1/wgstaff";
+        public const string CreateWgEmployeeForStaff = "api/v1/wgstaff/staff";
+        public const string UpdateWgEmployeeForStaff = "api/v1/wgstaff/staff";
         public const string DeleteWgEmployee = "api/v1/wgstaff/{0}";
         public const string DeleteWgGrade = "api/v1/wggrades/{0}";
 
@@ -221,5 +228,17 @@ namespace Apha.Common.Constants
         public const string CreateGenericPurchase = "api/v1/purchases";
         public const string UpdateGenericPurchase = "api/v1/purchases";
         public const string DeleteGenericPurchase = "api/v1/purchases?WorkGroupName={0}&account={1}&itemDescription={2}";
+
+        // User Permission
+        public const string GetAllUsers = "api/v1/user/users";
+        public const string GetPagedUsers = "api/v1/user/users/paged";
+        public const string GetPagedNonSuperUsers = "api/v1/user/users/paged/nonsuperusers";
+        public const string GetUserById = "api/v1/user/users/{0}";
+        public const string CreateUser = "api/v1/user/users";
+        public const string UpdateUser = "api/v1/user/users";
+        public const string DeleteUser = "api/v1/user/users/{0}";
+        public const string GetUserPermissions = "api/v1/user/{0}/permissions";
+        public const string SaveUserPermissions = "api/v1/user/{0}/permissions";
+        public const string GetPermissionOptions = "api/v1/user/options";
     }
 }

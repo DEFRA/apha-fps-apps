@@ -243,11 +243,20 @@ namespace Apha.PACT.DataAccess.Repository
             if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
                 queryTimeCode = queryTimeCode.Where(x => x.ParentProject != null && EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
 
+            if (dict.TryGetValue("Project", out var project) && project != null)
+                queryTimeCode = queryTimeCode.Where(x => x.ParentProject != null && EF.Functions.ILike(x.ParentProject, $"%{project}%"));
+
             if (dict.TryGetValue("WorkGroup", out var workGroup) && workGroup != null)
                 queryTimeCode = queryTimeCode.Where(x => x.WorkGroup != null && EF.Functions.ILike(x.WorkGroup, $"%{workGroup}%"));
 
             if (dict.TryGetValue("JobCode", out var jobCode) && jobCode != null)
                 queryTimeCode = queryTimeCode.Where(x => x.JobCode != null && EF.Functions.ILike(x.JobCode, $"%{jobCode}%"));
+
+            if (dict.TryGetValue("TestCode", out var testCode) && testCode != null)
+                queryTimeCode = queryTimeCode.Where(x => x.TestCode != null && EF.Functions.ILike(x.TestCode, $"%{testCode}%"));
+
+            if (dict.TryGetValue("Portfolio", out var portfolio) && portfolio != null)
+                queryTimeCode = queryTimeCode.Where(x => x.Portfolio != null && EF.Functions.ILike(x.Portfolio, $"%{portfolio}%"));
 
             return queryTimeCode;
         }
@@ -271,6 +280,9 @@ namespace Apha.PACT.DataAccess.Repository
                 "parentproject" => ApplyOrder(query, i => i.ParentProject, descending),
                 "jobcode" => ApplyOrder(query, i => i.JobCode, descending),
                 "active" => ApplyOrder(query, i => i.Active, descending),
+                "testcode" => ApplyOrder(query, i => i.TestCode, descending),
+                "portfolio" => ApplyOrder(query, i => i.Portfolio, descending),
+                "project" => ApplyOrder(query, i => i.ParentProject, descending),
                 _ => query.OrderBy(e => e.TimeCode)
             };
         }
