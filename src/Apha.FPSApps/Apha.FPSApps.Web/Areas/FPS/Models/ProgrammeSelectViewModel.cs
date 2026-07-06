@@ -26,6 +26,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public List<ProgrammeSelectProjectItem> Projects { get; set; } = new List<ProgrammeSelectProjectItem>();
 
         /// <summary>
+        /// Current project text filter value.
+        /// </summary>
+        public string ProjectName { get; set; } = string.Empty;
+
+        /// <summary>
         /// DataGrid configuration for the projects table
         /// </summary>
         public DataGridConfig<ProgrammeSelectProjectItem>? ProjectsGrid { get; set; }

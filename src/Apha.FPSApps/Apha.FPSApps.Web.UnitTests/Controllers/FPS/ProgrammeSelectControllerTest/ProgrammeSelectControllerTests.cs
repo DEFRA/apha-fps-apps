@@ -355,7 +355,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgrammeSelectControllerTe
         }
 
         [Fact]
-        public async Task LoadProjectsGrid_WithProjectSearch_FiltersResultsServerSide()
+        public async Task LoadProjectsGrid_WithProjectName_FiltersResultsServerSide()
         {
             // Arrange — mock returns only the API-filtered results (server-side filtering now)
             var request = new PaginationFilter<string>();
@@ -382,7 +382,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ProgrammeSelectControllerTe
         }
 
         [Fact]
-        public async Task LoadProjectsGrid_WithNullProjectSearch_ReturnsAllProjects()
+        public async Task LoadProjectsGrid_WithNullProjectName_ReturnsAllProjects()
         {
             // Arrange
             var request = new PaginationFilter<string>();
