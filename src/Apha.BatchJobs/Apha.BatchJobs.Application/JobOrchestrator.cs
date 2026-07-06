@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Configuration;
+using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
@@ -90,7 +91,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
 
         var shouldAutoCreateInitiated =
             runMode == RunMode.Scheduled
-            && string.Equals(jobName, "MABArchive", StringComparison.OrdinalIgnoreCase);
+            && string.Equals(jobName, BatchJobNames.MabArchive, StringComparison.OrdinalIgnoreCase);
 
         if (existingExecution == null && shouldAutoCreateInitiated)
         {
@@ -157,13 +158,21 @@ public sealed class JobOrchestrator : IJobOrchestrator
         }
 
         var jobQueueId = existingExecution.JobQueueId;
+        var lockName = ResolveLockName(jobName);
         _logger.LogInformation(
             "[Worker → DB] ✓ Fetched Initiated record | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | CurrentStatus={CurrentStatus}",
             jobName, jobExecutionId, jobQueueId, existingExecution.Status);
 
-        _logger.LogInformation("Acquiring execution lock for '{JobName}' | JobExecutionId={JobExecutionId}...", jobName, jobExecutionId);
+        _logger.LogInformation(
+            "Acquiring execution lock for '{LockName}' (requested job '{JobName}') | JobExecutionId={JobExecutionId}...",
+            lockName,
+            jobName,
+            jobExecutionId);
         var lockAcquired = await _lockRepository.TryAcquireLockAsync(
-            jobName, jobQueueId, _lockTimeoutSeconds, cancellationToken);
+            lockName,
+            jobQueueId,
+            _lockTimeoutSeconds,
+            cancellationToken);
 
         if (!lockAcquired)
         {
@@ -424,13 +433,22 @@ public sealed class JobOrchestrator : IJobOrchestrator
             // Step 5 — Release lock (always)
             try
             {
-                await _lockRepository.ReleaseLockAsync(jobName, jobQueueId, CancellationToken.None);
-                _logger.LogInformation("Lock released for '{JobName}' | JobQueueId={JobQueueId}", jobName, jobQueueId);
+                await _lockRepository.ReleaseLockAsync(lockName, jobQueueId, CancellationToken.None);
+                _logger.LogInformation(
+                    "Lock released for '{LockName}' (requested job '{JobName}') | JobQueueId={JobQueueId}",
+                    lockName,
+                    jobName,
+                    jobQueueId);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not release lock for '{JobName}' | JobQueueId={JobQueueId} — lock will expire after {Timeout}s",
-                    jobName, jobQueueId, _lockTimeoutSeconds);
+                _logger.LogWarning(
+                    ex,
+                    "Could not release lock for '{LockName}' (requested job '{JobName}') | JobQueueId={JobQueueId} — lock will expire after {Timeout}s",
+                    lockName,
+                    jobName,
+                    jobQueueId,
+                    _lockTimeoutSeconds);
             }
         }
 
@@ -453,6 +471,16 @@ public sealed class JobOrchestrator : IJobOrchestrator
             throw jobException;
 
         return new JobExecutionResult(jobQueueId, jobName, status, finalDuration, executionId);
+    }
+
+    private static string ResolveLockName(string jobName)
+    {
+        return jobName switch
+        {
+            BatchJobNames.YearEndDataSetup => BatchJobNames.YearEndLock,
+            BatchJobNames.YearEndCutover => BatchJobNames.YearEndLock,
+            _ => jobName
+        };
     }
 
     /// <summary>

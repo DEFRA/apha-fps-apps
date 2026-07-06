@@ -1,0 +1,51 @@
+using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
+using Apha.BatchJobs.Domain.Constants;
+using Apha.BatchJobs.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
+
+namespace Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd;
+
+/// <summary>
+/// Year End Data Setup batch job handler scaffold.
+/// Execution logic will be added in the service layer in a later slice.
+/// </summary>
+public sealed class YearEndDataSetupJobHandler : IBatchJob
+{
+    private readonly ILogger<YearEndDataSetupJobHandler> _logger;
+    private readonly ICorrelationService _correlationService;
+    private readonly IYearEndDataSetupService _service;
+
+    public string Name => BatchJobNames.YearEndDataSetup;
+
+    public string IdempotencyStrategy => "ApprovedRowClaimWithYearEndLock";
+
+    public string? ScheduleExpression => null;
+
+    public string? ScheduleDescription => "Manual approval-triggered Year End Data Setup";
+
+    public int? MaxExecutionSeconds => 10800;
+
+    public YearEndDataSetupJobHandler(
+        IYearEndDataSetupService service,
+        ICorrelationService correlationService,
+        ILogger<YearEndDataSetupJobHandler> logger)
+    {
+        _service = service ?? throw new ArgumentNullException(nameof(service));
+        _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task ExecuteAsync(CancellationToken cancellationToken = default)
+    {
+        var context = YearEndExecutionContext.FromEnvironment(_correlationService.GetCorrelationId());
+
+        _logger.LogInformation(
+            "YearEndDataSetup handler invoked | CorrelationId={CorrelationId} | TargetFpsYear={TargetFpsYear} | CurrentFpsYear={CurrentFpsYear}",
+            context.CorrelationId,
+            context.TargetFpsYear,
+            context.CurrentFpsYear);
+
+        await _service.ExecuteAsync(context, cancellationToken);
+    }
+}

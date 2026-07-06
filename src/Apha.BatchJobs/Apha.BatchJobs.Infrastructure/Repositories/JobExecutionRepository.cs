@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
+using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -43,40 +44,65 @@ public class JobExecutionRepository : IJobExecutionRepository
             record.Status,
             record.FpsYear);
 
-        // Check if an Initiated row already exists for this jobExecutionId (manual job path)
         var existingRow = await _context.TblJobQueue
+            .AsNoTracking()
             .FirstOrDefaultAsync(q => q.JobExecutionId == record.JobExecutionId, cancellationToken);
 
         if (existingRow != null)
         {
-            // UPDATE the Initiated row to Running
-            var statusId = await EnsureStatusAsync(existingRow.JobId, record.Status.ToString(), cancellationToken);
-            var previousStatus = existingRow.StatusId;
-            existingRow.StatusId = statusId;
-            existingRow.StartDateTime = record.StartedAt;
-            existingRow.RequestedBy = record.UserId;
-            if (record.FpsYear.HasValue)
-            {
-                existingRow.FpsYear = record.FpsYear.Value;
-            }
-            existingRow.UpdatedAt = now;
+            var expectedPickupStatus = IsYearEndJob(record.JobName)
+                ? JobStatus.Approved
+                : JobStatus.Initiated;
 
-            // Ensure the record's JobQueueId matches the persisted row
-            record.JobQueueId = existingRow.JobQueueId;
+            var expectedStatusId = await EnsureStatusAsync(existingRow.JobId, expectedPickupStatus.ToString(), cancellationToken);
+            var runningStatusId = await EnsureStatusAsync(existingRow.JobId, JobStatus.Running.ToString(), cancellationToken);
+
+            var updateRows = await _context.TblJobQueue
+                .Where(q => q.JobExecutionId == record.JobExecutionId && q.StatusId == expectedStatusId)
+                .ExecuteUpdateAsync(updates => updates
+                    .SetProperty(q => q.StatusId, _ => runningStatusId)
+                    .SetProperty(q => q.StartDateTime, _ => record.StartedAt)
+                    .SetProperty(q => q.RequestedBy, _ => record.UserId)
+                    .SetProperty(q => q.UpdatedAt, _ => now)
+                    .SetProperty(
+                        q => q.FpsYear,
+                        q => record.FpsYear.HasValue ? record.FpsYear.Value : q.FpsYear),
+                    cancellationToken);
+
+            if (updateRows == 0)
+            {
+                var currentStatus = await (
+                    from q in _context.TblJobQueue
+                    join s in _context.TblJobStatus on q.StatusId equals s.StatusId
+                    where q.JobExecutionId == record.JobExecutionId
+                    select s.Status)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                throw new InvalidOperationException(
+                    $"Cannot transition JobExecutionId {record.JobExecutionId} to Running. " +
+                    $"Expected status '{expectedPickupStatus}' but found '{currentStatus ?? "Unknown"}'.");
+            }
+
+            var claimedRow = await _context.TblJobQueue
+                .AsNoTracking()
+                .FirstAsync(q => q.JobExecutionId == record.JobExecutionId, cancellationToken);
+
+            record.JobQueueId = claimedRow.JobQueueId;
 
             _context.TblJobQueueLog.Add(new TblJobQueueLog
             {
-                JobQueueId = existingRow.JobQueueId,
-                StatusId = statusId,
+                JobQueueId = claimedRow.JobQueueId,
+                StatusId = runningStatusId,
                 PerformedBy = record.UserId,
                 LogTime = now,
-                Note = "Worker started execution - Initiated → Running"
+                Note = BuildStartTransitionNote(expectedPickupStatus)
             });
 
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
-                "[Worker → DB] ✓ Initiated → Running transition complete | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | StartDateTime={StartDateTime}",
+                "[Worker → DB] ✓ {ExpectedPickupStatus} → Running transition complete | JobName={JobName} | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | StartDateTime={StartDateTime}",
+                expectedPickupStatus,
                 record.JobName,
                 record.JobExecutionId,
                 record.JobQueueId,
@@ -421,4 +447,20 @@ public class JobExecutionRepository : IJobExecutionRepository
         JobStatus.Cancelled => "Execution cancelled",
         _ => $"Status changed to {status}"
     };
+
+    private static string BuildStartTransitionNote(JobStatus previousStatus)
+    {
+        return previousStatus switch
+        {
+            JobStatus.Initiated => "Worker started execution - Initiated → Running",
+            JobStatus.Approved => "Worker started execution - Approved → Running",
+            _ => $"Worker started execution - {previousStatus} → Running"
+        };
+    }
+
+    private static bool IsYearEndJob(string jobName)
+    {
+        return string.Equals(jobName, BatchJobNames.YearEndDataSetup, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(jobName, BatchJobNames.YearEndCutover, StringComparison.OrdinalIgnoreCase);
+    }
 }

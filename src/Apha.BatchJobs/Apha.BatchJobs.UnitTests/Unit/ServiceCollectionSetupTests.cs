@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Application.DependencyInjection;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ public sealed class ServiceCollectionSetupTests
     [Fact]
     public void CreateDefaultServices_ShouldRegisterExpectedFoundationServices()
     {
+        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
         var batchJobsRoot = GetBatchJobsRoot();
         var services = ServiceCollectionSetup.CreateDefaultServices(batchJobsRoot);
         using var serviceProvider = services.BuildServiceProvider();
@@ -20,11 +22,14 @@ public sealed class ServiceCollectionSetupTests
         var jobFactory = serviceProvider.GetRequiredService<IBatchJobFactory>();
         Assert.Contains("HealthCheck", jobFactory.GetAvailableJobs());
         Assert.Equal("HealthCheck", jobFactory.Create("HealthCheck").Name);
+        Assert.Contains("YearEndDataSetup", jobFactory.GetAvailableJobs());
+        Assert.Contains("YearEndCutover", jobFactory.GetAvailableJobs());
     }
 
     [Fact]
     public void CreateDefaultServices_AllRegisteredJobs_ShouldDeclareExplicitIdempotencyStrategy()
     {
+        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
         var batchJobsRoot = GetBatchJobsRoot();
         var services = ServiceCollectionSetup.CreateDefaultServices(batchJobsRoot);
         using var serviceProvider = services.BuildServiceProvider();
@@ -43,13 +48,14 @@ public sealed class ServiceCollectionSetupTests
     [Fact]
     public void CreateDefaultServices_ManualAdhocJobs_ShouldHaveNoScheduleExpression()
     {
+        using var _ = new EnvironmentVariableScope("BATCH_JOB_PARAMETERS_JSON", "{\"month\":\"2026-07\"}");
         var batchJobsRoot = GetBatchJobsRoot();
         var services = ServiceCollectionSetup.CreateDefaultServices(batchJobsRoot);
         using var serviceProvider = services.BuildServiceProvider();
 
         var jobs = serviceProvider.GetServices<IBatchJob>().ToList();
 
-        var manualJobNames = new[] { "HealthCheck", "FECProcess", "RecreateSummary" };
+        var manualJobNames = new[] { "HealthCheck", "FECProcess", "RecreateSummary", "YearEndDataSetup", "YearEndCutover" };
         foreach (var jobName in manualJobNames)
         {
             var matchingJobs = jobs.Where(j => string.Equals(j.Name, jobName, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -150,6 +156,40 @@ public sealed class ServiceCollectionSetupTests
         Assert.All(ordered, l => Assert.EndsWith("Loader", l.GetType().Name, StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void ConfigureBatchJobServices_ShouldRegisterYearEndDataSetupStepsInExpectedOrder()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:FPSConnectionString"] = "Host=localhost;Port=5432;Database=batch_jobs_foundation_db;Username=postgres;Password=LOCAL_DB_PASSWORD"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        ServiceCollectionSetup.ConfigureBatchJobServices(services, config);
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var steps = serviceProvider.GetServices<IYearEndDataSetupStep>().ToList();
+
+        Assert.Equal(
+            new[]
+            {
+                "ValidateYearEndContextStep",
+                "ValidateYearScopedSchemaStep",
+                "CreatePlannedYearStep",
+                "CopyFpsYearScopedTablesStep",
+                "CopyMabArchiveYearScopedTablesStep",
+                "PeriodSetupStep",
+                "ProjectFinancialResetStep",
+                "ConfiguredPlanningResetStep",
+                "InactiveEmployeeCleanupStep",
+                "TargetYearEmptyTablesStep",
+                "FinalValidationStep"
+            },
+            steps.Select(s => s.Name));
+    }
+
     private static string GetBatchJobsRoot()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);
@@ -179,6 +219,24 @@ public sealed class ServiceCollectionSetupTests
         }
 
         throw new DirectoryNotFoundException("Could not locate the Apha.BatchJobs.Worker directory with appsettings.json.");
+    }
+
+    private sealed class EnvironmentVariableScope : IDisposable
+    {
+        private readonly string _name;
+        private readonly string? _originalValue;
+
+        public EnvironmentVariableScope(string name, string value)
+        {
+            _name = name;
+            _originalValue = Environment.GetEnvironmentVariable(name);
+            Environment.SetEnvironmentVariable(name, value);
+        }
+
+        public void Dispose()
+        {
+            Environment.SetEnvironmentVariable(_name, _originalValue);
+        }
     }
 }
 

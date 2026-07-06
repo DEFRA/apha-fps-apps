@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
 using Apha.BatchJobs.Domain.Configuration;
@@ -92,6 +93,19 @@ public static class ServiceCollectionSetup
         services.AddScoped<IExecutionYearContext, ExecutionYearContext>();
         services.AddSingleton(config);
         services.AddSingleton<ICorrelationService, CorrelationService>();
+        services.AddScoped<IYearEndDataSetupStep, ValidateYearEndContextStep>();
+        services.AddScoped<IYearEndDataSetupStep, ValidateYearScopedSchemaStep>();
+        services.AddScoped<IYearEndDataSetupStep, CreatePlannedYearStep>();
+        services.AddScoped<IYearEndDataSetupStep, CopyFpsYearScopedTablesStep>();
+        services.AddScoped<IYearEndDataSetupStep, CopyMabArchiveYearScopedTablesStep>();
+        services.AddScoped<IYearEndDataSetupStep, PeriodSetupStep>();
+        services.AddScoped<IYearEndDataSetupStep>(_ => new PlaceholderYearEndDataSetupStep("ProjectFinancialResetStep"));
+        services.AddScoped<IYearEndDataSetupStep>(_ => new PlaceholderYearEndDataSetupStep("ConfiguredPlanningResetStep"));
+        services.AddScoped<IYearEndDataSetupStep>(_ => new PlaceholderYearEndDataSetupStep("InactiveEmployeeCleanupStep"));
+        services.AddScoped<IYearEndDataSetupStep>(_ => new PlaceholderYearEndDataSetupStep("TargetYearEmptyTablesStep"));
+        services.AddScoped<IYearEndDataSetupStep>(_ => new PlaceholderYearEndDataSetupStep("FinalValidationStep"));
+        services.AddScoped<IYearEndDataSetupService, YearEndDataSetupService>();
+        services.AddScoped<IYearEndCutoverService, YearEndCutoverService>();
 
         services.AddScoped<Func<Func<Task>, Task>>(sp =>
         {

@@ -1,4 +1,5 @@
 ﻿using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Enums;
 using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Application.DependencyInjection;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using Serilog;
 using System.Globalization;
+using System.Text.Json;
 
 var requestedJobArg = args.Length > 0
     ? args[0]
@@ -19,7 +21,7 @@ var requestedJobArg = args.Length > 0
 // HealthCheck is a pure process liveness probe — no DB, no orchestrator, no execution contract.
 // The API must never create an Initiated record for HealthCheck invocations.
 if (string.IsNullOrWhiteSpace(requestedJobArg)
-    || string.Equals(requestedJobArg, "HealthCheck", StringComparison.OrdinalIgnoreCase))
+    || string.Equals(requestedJobArg, BatchJobNames.HealthCheck, StringComparison.OrdinalIgnoreCase))
 {
     Console.WriteLine("HealthCheck OK");
     return 0;
@@ -151,7 +153,7 @@ try
         jobTimeoutSeconds);
 
     // Get job name from args or environment variable
-    var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? "HealthCheck");
+    var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? BatchJobNames.HealthCheck);
     var runModeEnv = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "Manual";
     var runMode = Enum.TryParse<RunMode>(runModeEnv, ignoreCase: true, out var parsedMode) ? parsedMode : RunMode.Manual;
     // External/API correlation key for tracing across trigger -> worker -> status.
@@ -273,11 +275,16 @@ try
 
         if (!isWorkerManagedMabArchiveScheduledRun)
         {
-            await ValidatePreCreatedInitiatedRecordAsync(
+            var targetFpsYear = TryExtractTargetFpsYearFromParameters(
+                Environment.GetEnvironmentVariable("BATCH_JOB_PARAMETERS_JSON"),
+                logger);
+
+            await ValidatePreCreatedExecutionRecordAsync(
                 jobName,
                 jobExecutionId,
                 executionRepository,
                 logger,
+                targetFpsYear,
                 linkedCts.Token);
         }
         else
@@ -645,18 +652,24 @@ static bool LooksLikeTemplatePlaceholder(string? value)
     return trimmed.Length > 2 && trimmed[0] == '<' && trimmed[^1] == '>';
 }
 
-static async Task ValidatePreCreatedInitiatedRecordAsync(
+static async Task ValidatePreCreatedExecutionRecordAsync(
     string requestedJobName,
     Guid jobExecutionId,
     IJobExecutionRepository executionRepository,
     Microsoft.Extensions.Logging.ILogger logger,
+    int? targetFpsYear,
     CancellationToken cancellationToken)
 {
     var existingExecution = await executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
+    var expectedPickupStatus = IsYearEndJob(requestedJobName)
+        ? JobStatus.Approved
+        : JobStatus.Initiated;
+
     if (existingExecution is null)
     {
         throw new InvalidOperationException(
-            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has no pre-created Initiated row. API must insert Initiated before worker start.");
+            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has no pre-created {expectedPickupStatus} row. " +
+            $"API must insert and prepare {expectedPickupStatus} before worker start.");
     }
 
     if (!string.Equals(existingExecution.JobName, requestedJobName, StringComparison.OrdinalIgnoreCase))
@@ -671,13 +684,21 @@ static async Task ValidatePreCreatedInitiatedRecordAsync(
         existingExecution.JobQueueId,
         existingExecution.Status);
 
-    if (existingExecution.Status == JobStatus.Initiated)
+    if (targetFpsYear.HasValue && existingExecution.FpsYear.HasValue && existingExecution.FpsYear.Value != targetFpsYear.Value)
+    {
+        throw new InvalidOperationException(
+            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has fpsyear '{existingExecution.FpsYear.Value}' " +
+            $"but trigger requested targetFpsYear '{targetFpsYear.Value}'.");
+    }
+
+    if (existingExecution.Status == expectedPickupStatus)
     {
         logger.LogInformation(
-            "Execution contract pre-check passed | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | JobName={JobName}",
+            "Execution contract pre-check passed | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | JobName={JobName} | ExpectedPickupStatus={ExpectedPickupStatus}",
             jobExecutionId,
             existingExecution.JobQueueId,
-            requestedJobName);
+            requestedJobName,
+            expectedPickupStatus);
         return;
     }
 
@@ -689,7 +710,8 @@ static async Task ValidatePreCreatedInitiatedRecordAsync(
 
     var isTerminal = existingExecution.Status is JobStatus.Completed
         or JobStatus.Failed
-        or JobStatus.Cancelled;
+        or JobStatus.Cancelled
+        or JobStatus.Rejected;
 
     if (isTerminal)
     {
@@ -698,6 +720,53 @@ static async Task ValidatePreCreatedInitiatedRecordAsync(
     }
 
     throw new InvalidOperationException(
-        $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is in an unexpected status '{existingExecution.Status}' (JobQueueId={existingExecution.JobQueueId}). Expected: Initiated, Running, Completed, or Failed.");
+        $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is in an unexpected status '{existingExecution.Status}' " +
+        $"(JobQueueId={existingExecution.JobQueueId}). Expected pickup status: '{expectedPickupStatus}'.");
+}
+
+static int? TryExtractTargetFpsYearFromParameters(string? parametersJson, Microsoft.Extensions.Logging.ILogger logger)
+{
+    if (string.IsNullOrWhiteSpace(parametersJson))
+    {
+        return null;
+    }
+
+    try
+    {
+        using var doc = JsonDocument.Parse(parametersJson);
+        if (!doc.RootElement.TryGetProperty("targetFpsYear", out var targetYearElement))
+        {
+            return null;
+        }
+
+        if (targetYearElement.ValueKind == JsonValueKind.Number && targetYearElement.TryGetInt32(out var targetYearAsNumber))
+        {
+            return targetYearAsNumber;
+        }
+
+        if (targetYearElement.ValueKind == JsonValueKind.String
+            && int.TryParse(targetYearElement.GetString(), out var targetYearAsString))
+        {
+            return targetYearAsString;
+        }
+
+        logger.LogWarning(
+            "Ignoring non-integer targetFpsYear from BATCH_JOB_PARAMETERS_JSON | TargetFpsYearRawKind={TargetFpsYearRawKind}",
+            targetYearElement.ValueKind);
+    }
+    catch (JsonException ex)
+    {
+        logger.LogWarning(
+            ex,
+            "Ignoring invalid BATCH_JOB_PARAMETERS_JSON while reading targetFpsYear.");
+    }
+
+    return null;
+}
+
+static bool IsYearEndJob(string jobName)
+{
+    return string.Equals(jobName, BatchJobNames.YearEndDataSetup, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(jobName, BatchJobNames.YearEndCutover, StringComparison.OrdinalIgnoreCase);
 }
 

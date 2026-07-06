@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application;
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Configuration;
 using Apha.BatchJobs.Domain.Entities;
 using Apha.BatchJobs.Domain.Enums;
@@ -132,6 +133,52 @@ public sealed class JobOrchestratorTests
         // Assert
         Assert.NotNull(capturedCreateRecord);
         Assert.Equal(requestedAtUtc, capturedCreateRecord!.RequestedAtUtc);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenYearEndDataSetup_UsesSharedYearEndLockName()
+    {
+        // Arrange
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns(BatchJobNames.YearEndDataSetup);
+
+        _factory.Create(BatchJobNames.YearEndDataSetup).Returns(job);
+        _lockRepo.TryAcquireLockAsync(BatchJobNames.YearEndLock, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(42);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        // Act
+        await _orchestrator.RunAsync(BatchJobNames.YearEndDataSetup, RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        // Assert
+        await _lockRepo.Received(1).TryAcquireLockAsync(BatchJobNames.YearEndLock, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).ReleaseLockAsync(BatchJobNames.YearEndLock, Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenYearEndCutover_UsesSharedYearEndLockName()
+    {
+        // Arrange
+        var job = Substitute.For<IBatchJob>();
+        job.Name.Returns(BatchJobNames.YearEndCutover);
+
+        _factory.Create(BatchJobNames.YearEndCutover).Returns(job);
+        _lockRepo.TryAcquireLockAsync(BatchJobNames.YearEndLock, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                 .Returns(true);
+        _execRepo.CreateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(42);
+        _execRepo.UpdateExecutionRecordAsync(Arg.Any<JobExecutionRecord>(), Arg.Any<CancellationToken>())
+                 .Returns(Task.CompletedTask);
+
+        // Act
+        await _orchestrator.RunAsync(BatchJobNames.YearEndCutover, RunMode.Manual, Guid.NewGuid(), "test-user");
+
+        // Assert
+        await _lockRepo.Received(1).TryAcquireLockAsync(BatchJobNames.YearEndLock, Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await _lockRepo.Received(1).ReleaseLockAsync(BatchJobNames.YearEndLock, Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

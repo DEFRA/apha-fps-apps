@@ -1,4 +1,5 @@
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Domain.Constants;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Apha.BatchJobs.Application.Factory;
@@ -85,8 +86,8 @@ public sealed class BatchJobFactory : IBatchJobFactory
             name = name[..^"Handler".Length];
 
         // Keep historical capitalization used by callers.
-        if (string.Equals(name, "MabArchive", StringComparison.Ordinal))
-            return "MABArchive";
+        if (string.Equals(name, nameof(BatchJobNames.MabArchive), StringComparison.Ordinal))
+            return BatchJobNames.MabArchive;
 
         return name;
     }
