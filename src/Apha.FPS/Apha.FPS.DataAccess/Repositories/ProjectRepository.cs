@@ -215,6 +215,21 @@ namespace Apha.FPS.DataAccess.Repositories
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
+        public async Task<PagedData<PactProjectView>> GetPagedPactProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
+        {
+            var projectQuery = _dbContext.PactProjectViews
+                .AsNoTracking()
+                .Where(p => p.Program == programNo).AsQueryable();
+
+            projectQuery = ApplyPactProjectFilter(projectQuery, query.Filter);
+
+            projectQuery = (IQueryable<PactProjectView>)ApplyPactProjectSorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
         //Create Project with trigger code
         public async Task<Project> CreateProjectAsync(Project project)
         {

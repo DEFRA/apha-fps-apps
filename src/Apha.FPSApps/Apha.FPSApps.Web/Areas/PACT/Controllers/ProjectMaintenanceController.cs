@@ -161,7 +161,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var statuses = await _projectService.GetAllStatusesAsync();
             var diseases = await _projectService.GetAllDiseasesAsync();
             var customers = await _projectService.GetAllCustomersAsync();
-            var contracts = await _projectService.GetAllContractsAsync();
+            var contracts = await _projectService.GetAllPactContractsAsync();
             var managers = await _employeeService.GetAllPactManagersAsync();
 
             var viewModel = new ProjectMaintenanceViewModel

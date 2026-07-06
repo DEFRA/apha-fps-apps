@@ -85,6 +85,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
 
+        public async Task<ApiResponseDto<List<ProjectDto>>> GetPagedPactProjectsByProgramAsync(QueryParameters<string> query, string programNo)
+        {
+            var url = QueryStringHelper.AddQueryString(string.Format(FpsApiEndpoints.GetPagedPactProjectsByProgram, Uri.EscapeDataString(programNo)), query);
+            var response = await _http.GetAsync<List<ProjectRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<List<ProjectDto>>>(response);
+            return ApiResponseDto<List<ProjectDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
         public async Task<ApiResponseDto<ProjectDto>> GetProjectByIdAsync(string parentProject)
         {
             var response = await _http.GetAsync<ProjectRes>(string.Format(FpsApiEndpoints.GetProjectById, Uri.EscapeDataString(parentProject)));

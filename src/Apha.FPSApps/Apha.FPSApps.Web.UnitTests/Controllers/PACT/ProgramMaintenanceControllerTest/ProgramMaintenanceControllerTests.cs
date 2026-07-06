@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
         {
             // Arrange
             SetupProgramList();
-            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P001")
+            _projectService.GetPagedPactProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P001")
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsGridMapper();
 
@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
                 new() { ProgramNo = "P002", ProgramName = "Two" }
             };
             SetupProgramList(programs);
-            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P002")
+            _projectService.GetPagedPactProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P002")
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsGridMapper();
 
@@ -74,7 +74,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
         {
             // Arrange
             SetupProgramList();
-            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+            _projectService.GetPagedPactProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsGridMapper();
 
@@ -91,9 +91,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
         public async Task Index_ProgramListEmpty_ReturnsViewWithEmptySelection()
         {
             // Arrange
-            _programService.GetAllProgramsAsync()
+            _programService.GetAllProgramsForAllUsersAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse([]));
-            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+            _projectService.GetPagedPactProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsGridMapper();
 
@@ -117,7 +117,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
                 new() { ProgramNo = "P002", ProgramName = "Two" }
             };
             SetupProgramList(programs);
-            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
+            _projectService.GetPagedPactProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), Arg.Any<string>())
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsGridMapper();
 
@@ -269,7 +269,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
         {
             // Arrange
             var request = new PaginationFilter<string> { Filter = "{}" };
-            _projectService.GetProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P001")
+            _projectService.GetPagedPactProjectsByProgramAsync(Arg.Any<QueryParameters<string>>(), "P001")
                 .Returns(ApiResponseDto<List<ProjectDto>>.SuccessResponse([], new PaginationDto()));
             SetupProjectsGridMapper();
 
@@ -324,7 +324,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.ProgramMaintenanceControll
         private void SetupProgramList(List<ProgramDto>? programs = null)
         {
             programs ??= [new ProgramDto { ProgramNo = "P001", ProgramName = "Program One" }];
-            _programService.GetAllProgramsAsync()
+            _programService.GetAllProgramsForAllUsersAsync()
                 .Returns(ApiResponseDto<IEnumerable<ProgramDto>>.SuccessResponse(programs));
         }
 
