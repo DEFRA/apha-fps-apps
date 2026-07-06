@@ -157,7 +157,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private async Task<List<SelectListItem>> GetProgramListInternalAsync()
         {
-            var response = await _programService.GetAllProgramsAsync();
+            var response = await _programService.GetAllProgramsForAllUsersAsync();
             if (!response.Success || response.Data == null)
                 return [];
 
@@ -176,7 +176,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                              ?? new Dictionary<string, string>();
 
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _projectService.GetProjectsByProgramAsync(query, programNo);
+            var response = await _projectService.GetPagedPactProjectsByProgramAsync(query, programNo);
 
             var items = response.Data != null
                 ? _mapper.Map<List<ProgramProjectItem>>(response.Data)
