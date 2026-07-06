@@ -99,11 +99,11 @@ public static class ServiceCollectionSetup
         services.AddScoped<IYearEndDataSetupStep, CopyFpsYearScopedTablesStep>();
         services.AddScoped<IYearEndDataSetupStep, CopyMabArchiveYearScopedTablesStep>();
         services.AddScoped<IYearEndDataSetupStep, PeriodSetupStep>();
-        services.AddScoped<IYearEndDataSetupStep>(_ => new PlaceholderYearEndDataSetupStep("ProjectFinancialResetStep"));
-        services.AddScoped<IYearEndDataSetupStep>(_ => new PlaceholderYearEndDataSetupStep("ConfiguredPlanningResetStep"));
-        services.AddScoped<IYearEndDataSetupStep>(_ => new PlaceholderYearEndDataSetupStep("InactiveEmployeeCleanupStep"));
-        services.AddScoped<IYearEndDataSetupStep>(_ => new PlaceholderYearEndDataSetupStep("TargetYearEmptyTablesStep"));
-        services.AddScoped<IYearEndDataSetupStep>(_ => new PlaceholderYearEndDataSetupStep("FinalValidationStep"));
+        services.AddScoped<IYearEndDataSetupStep, ProjectFinancialResetStep>();
+        services.AddScoped<IYearEndDataSetupStep, ConfiguredPlanningResetStep>();
+        services.AddScoped<IYearEndDataSetupStep, InactiveEmployeeCleanupStep>();
+        services.AddScoped<IYearEndDataSetupStep, TargetYearEmptyTablesStep>();
+        services.AddScoped<IYearEndDataSetupStep, FinalValidationStep>();
         services.AddScoped<IYearEndDataSetupService, YearEndDataSetupService>();
         services.AddScoped<IYearEndCutoverService, YearEndCutoverService>();
 

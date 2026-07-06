@@ -699,6 +699,12 @@ static async Task ValidatePreCreatedExecutionRecordAsync(
             existingExecution.JobQueueId,
             requestedJobName,
             expectedPickupStatus);
+
+        if (IsYearEndJob(requestedJobName))
+        {
+            await ValidateApprovalMetadataAsync(requestedJobName, jobExecutionId, executionRepository, logger, cancellationToken);
+        }
+
         return;
     }
 
@@ -722,6 +728,39 @@ static async Task ValidatePreCreatedExecutionRecordAsync(
     throw new InvalidOperationException(
         $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is in an unexpected status '{existingExecution.Status}' " +
         $"(JobQueueId={existingExecution.JobQueueId}). Expected pickup status: '{expectedPickupStatus}'.");
+}
+
+static async Task ValidateApprovalMetadataAsync(
+    string requestedJobName,
+    Guid jobExecutionId,
+    IJobExecutionRepository executionRepository,
+    Microsoft.Extensions.Logging.ILogger logger,
+    CancellationToken cancellationToken)
+{
+    var metadata = await executionRepository.GetApprovalMetadataAsync(jobExecutionId, cancellationToken);
+
+    if (metadata is null)
+    {
+        logger.LogWarning(
+            "Skipping Year End approval metadata check because fps.job_queue approval columns are not yet provisioned (see CR025) | JobName={JobName} | JobExecutionId={JobExecutionId}",
+            requestedJobName,
+            jobExecutionId);
+        return;
+    }
+
+    if (string.IsNullOrWhiteSpace(metadata.ApprovedBy) || !metadata.ApprovedAtUtc.HasValue)
+    {
+        throw new InvalidOperationException(
+            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' for job '{requestedJobName}' is Approved " +
+            "but is missing approval metadata (approved_by/approved_at_utc) in fps.job_queue.");
+    }
+
+    logger.LogInformation(
+        "Year End approval metadata verified | JobName={JobName} | JobExecutionId={JobExecutionId} | ApprovedBy={ApprovedBy} | ApprovedAtUtc={ApprovedAtUtc}",
+        requestedJobName,
+        jobExecutionId,
+        metadata.ApprovedBy,
+        metadata.ApprovedAtUtc);
 }
 
 static int? TryExtractTargetFpsYearFromParameters(string? parametersJson, Microsoft.Extensions.Logging.ILogger logger)

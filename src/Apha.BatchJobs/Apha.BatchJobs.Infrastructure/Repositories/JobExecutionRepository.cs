@@ -6,6 +6,8 @@ using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Data;
+using System.Data.Common;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories;
 
@@ -237,6 +239,62 @@ public class JobExecutionRepository : IJobExecutionRepository
     }
 
     /// <inheritdoc />
+    public async Task<JobExecutionRecord?> GetLastExecutionByFpsYearAsync(string jobName, int fpsYear, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(jobName))
+            throw new ArgumentException("Job name cannot be null or empty.", nameof(jobName));
+
+        var last = await (
+            from q in _context.TblJobQueue
+            join m in _context.TblJobMaster on q.JobId equals m.JobId
+            join s in _context.TblJobStatus on q.StatusId equals s.StatusId
+            where m.JobName == jobName && q.FpsYear == fpsYear
+            orderby q.StartDateTime descending
+            select new
+            {
+                m.JobName,
+                q.JobExecutionId,
+                q.JobQueueId,
+                q.RequestedBy,
+                q.RequestedAtUtc,
+                q.FpsYear,
+                q.StartDateTime,
+                q.EndDateTime,
+                s.Status,
+                q.ErrorMessage
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (last == null)
+            return null;
+
+        var parsedStatus = Enum.TryParse<JobStatus>(last.Status, true, out var status)
+            ? status
+            : JobStatus.Failed;
+
+        return new JobExecutionRecord
+        {
+            ExecutionId = 0,
+            JobName = last.JobName,
+            JobExecutionId = last.JobExecutionId,
+            JobQueueId = last.JobQueueId,
+            UserId = last.RequestedBy,
+            JobType = JobType.Unknown,
+            RunMode = RunMode.Manual,
+            Status = parsedStatus,
+            RequestedAtUtc = last.RequestedAtUtc,
+            FpsYear = last.FpsYear,
+            StartedAt = last.StartDateTime ?? DateTime.UtcNow,
+            CompletedAt = last.EndDateTime,
+            DurationSeconds = last.EndDateTime.HasValue && last.StartDateTime.HasValue
+                ? (int)(last.EndDateTime.Value - last.StartDateTime.Value).TotalSeconds
+                : null,
+            ErrorMessage = last.ErrorMessage,
+            RetryAttempts = 0
+        };
+    }
+
+    /// <inheritdoc />
     public async Task<JobExecutionRecord?> GetExecutionByJobExecutionIdAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
     {
         var execution = await (
@@ -412,6 +470,102 @@ public class JobExecutionRepository : IJobExecutionRepository
             where q.JobExecutionId == jobExecutionId && s.Status == nameof(JobStatus.Failed)
             select q.JobQueueId)
             .AnyAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<JobQueueApprovalMetadata?> GetApprovalMetadataAsync(Guid jobExecutionId, CancellationToken cancellationToken = default)
+    {
+        if (jobExecutionId == Guid.Empty)
+            throw new ArgumentException("Job execution ID cannot be empty.", nameof(jobExecutionId));
+
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        if (!await AllApprovalColumnsExistAsync(connection, cancellationToken))
+        {
+            _logger.LogInformation(
+                "Year End job_queue approval metadata columns are not yet provisioned in this environment (see CR025) | JobExecutionId={JobExecutionId}",
+                jobExecutionId);
+            return null;
+        }
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT configuration_json, approved_by, approved_at_utc,
+                   rejected_by, rejected_at_utc, rejection_reason,
+                   triggered_by, triggered_at_utc
+            FROM fps.job_queue
+            WHERE jobexecutionid = @jobexecutionid;";
+        AddParameter(command, "jobexecutionid", jobExecutionId);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return new JobQueueApprovalMetadata(
+            reader.IsDBNull(0) ? null : reader.GetString(0),
+            reader.IsDBNull(1) ? null : reader.GetString(1),
+            reader.IsDBNull(2) ? null : reader.GetDateTime(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3),
+            reader.IsDBNull(4) ? null : reader.GetDateTime(4),
+            reader.IsDBNull(5) ? null : reader.GetString(5),
+            reader.IsDBNull(6) ? null : reader.GetString(6),
+            reader.IsDBNull(7) ? null : reader.GetDateTime(7));
+    }
+
+    private static readonly string[] ApprovalMetadataColumns =
+    {
+        "configuration_json",
+        "approved_by",
+        "approved_at_utc",
+        "rejected_by",
+        "rejected_at_utc",
+        "rejection_reason",
+        "triggered_by",
+        "triggered_at_utc"
+    };
+
+    private static async Task<bool> AllApprovalColumnsExistAsync(DbConnection connection, CancellationToken cancellationToken)
+    {
+        foreach (var column in ApprovalMetadataColumns)
+        {
+            if (!await ColumnExistsAsync(connection, column, cancellationToken))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static async Task<bool> ColumnExistsAsync(DbConnection connection, string column, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'fps'
+                  AND table_name = 'job_queue'
+                  AND column_name = @column
+            );";
+        AddParameter(command, "column", column);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is bool exists && exists;
+    }
+
+    private static void AddParameter(DbCommand command, string name, object value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value;
+        command.Parameters.Add(parameter);
     }
 
     private async Task<int> EnsureJobMasterAsync(string jobName, CancellationToken cancellationToken)

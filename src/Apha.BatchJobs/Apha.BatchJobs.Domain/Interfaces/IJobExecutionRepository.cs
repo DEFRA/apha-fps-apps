@@ -31,6 +31,16 @@ public interface IJobExecutionRepository
     Task<JobExecutionRecord?> GetLastExecutionAsync(string jobName, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets the most recent execution record for a given job scoped to a specific FPS year.
+    /// Used by Year End Cutover to confirm the latest YearEndDataSetup run for the target
+    /// year actually completed before allowing cutover to proceed (spec Section 20.1).
+    /// </summary>
+    /// <param name="jobName">The name of the job.</param>
+    /// <param name="fpsYear">The FPS year to scope the lookup to.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<JobExecutionRecord?> GetLastExecutionByFpsYearAsync(string jobName, int fpsYear, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets an execution record by its external execution identifier.
     /// </summary>
     /// <param name="jobExecutionId">External job execution id.</param>
@@ -74,4 +84,12 @@ public interface IJobExecutionRepository
     /// <param name="cancellationToken">Cancellation token.</param>
     Task<bool> IsExecutionMarkedFailedAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Reads the Year End approval/configuration audit columns for a job_queue row.
+    /// Returns null when the row does not exist, or when the approval metadata columns
+    /// have not yet been provisioned on fps.job_queue in this environment (see CR025).
+    /// </summary>
+    /// <param name="jobExecutionId">External job execution identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<JobQueueApprovalMetadata?> GetApprovalMetadataAsync(Guid jobExecutionId, CancellationToken cancellationToken = default);
 }
