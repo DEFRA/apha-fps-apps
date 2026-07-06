@@ -95,5 +95,19 @@ namespace Apha.PACT.Api.Controllers
             var deleted = await _service.DeleteTestCapabilityAsync(testCode, workGroup);
             return Ok(deleted);
         }
+
+        /// <summary>
+        /// Retrieves user test capabilities for the specified workgroup.
+        /// </summary>
+        /// <param name="workGroup">The workgroup to filter by.</param>
+        /// <returns>
+        /// <c>200 OK</c> with an <see cref="IEnumerable{UserTestCapabilityRes}"/> containing matching records.
+        /// </returns>
+        [HttpGet("paged/wg-test-capabilities")]
+        public async Task<IActionResult> GetPagedWgTestCapabilitiesWithDescriptionAsync([FromQuery] QueryParameters<string> query, [FromQuery] string workGroup)
+        {
+            var result = await _service.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, workGroup);
+            return Ok(_mapper.Map<PaginationRes<WgTestCapabilitiesWithDescriptionRes>>(result));
+        }
     }
 }

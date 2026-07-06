@@ -120,6 +120,34 @@ namespace Apha.PACT.DataAccess.Repository
                 .AnyAsync(t => t.TestCode == testCode && t.PlanPortfolio == portfolio);
         }
 
+        public async Task<PagedData<WgTestCapabilitiesWithDescription>> GetPagedWgTestCapabilitiesWithDescriptionAsync(PaginationParameters<string> query, string workGroup)
+        {
+            var baseQuery = _context.TestCapabilities.AsNoTracking()
+                .Where(testCapability => testCapability.WorkGroup == workGroup)
+                .Join(_context.TestorProducts.AsNoTracking(),
+                    testCapability => testCapability.TestCode,
+                    testProduct => testProduct.ItemCode,
+                    (testCapability, testProduct) => new WgTestCapabilitiesWithDescription
+                    {
+                        WorkGroup = testCapability.WorkGroup,
+                        TestCode = testCapability.TestCode,
+                        ItemDescription = testProduct.ItemDescription
+                    })
+                .Distinct()
+                .AsQueryable();
+
+            baseQuery = ApplyUserTestCapabilityFilter(baseQuery, query.Filter);
+
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
+                baseQuery = query.Descending
+                    ? baseQuery.OrderByDescending(e => EF.Property<object>(e, query.SortBy))
+                    : baseQuery.OrderBy(e => EF.Property<object>(e, query.SortBy));
+            else
+                baseQuery = baseQuery.OrderBy(t => t.TestCode);
+
+            return await ApplyPaging(baseQuery, query.Page, query.PageSize);
+        }
+
         private static IQueryable<TestCapability> ApplyTestCapabilityFilter(
             IQueryable<TestCapability> query, string? filterJson)
         {
@@ -136,6 +164,26 @@ namespace Apha.PACT.DataAccess.Repository
 
             if (filters.TryGetValue("PlanPortfolio", out string? portfolio) && !string.IsNullOrWhiteSpace(portfolio))
                 query = query.Where(t => EF.Functions.ILike(t.PlanPortfolio, $"%{portfolio}%"));
+
+            return query;
+        }
+
+        private static IQueryable<WgTestCapabilitiesWithDescription> ApplyUserTestCapabilityFilter(
+            IQueryable<WgTestCapabilitiesWithDescription> query, string? filterJson)
+        {
+            if (string.IsNullOrWhiteSpace(filterJson)) return query;
+
+            var filters = JsonConvert.DeserializeObject<Dictionary<string, string>>(filterJson);
+            if (filters is null) return query;
+
+            if (filters.TryGetValue(nameof(WgTestCapabilitiesWithDescription.WorkGroup), out var workGroup) && !string.IsNullOrWhiteSpace(workGroup))
+                query = query.Where(t => EF.Functions.ILike(t.WorkGroup!, $"%{workGroup}%"));
+
+            if (filters.TryGetValue(nameof(WgTestCapabilitiesWithDescription.TestCode), out var testCode) && !string.IsNullOrWhiteSpace(testCode))
+                query = query.Where(t => EF.Functions.ILike(t.TestCode!, $"%{testCode}%"));
+
+            if (filters.TryGetValue(nameof(WgTestCapabilitiesWithDescription.ItemDescription), out var itemDescription) && !string.IsNullOrWhiteSpace(itemDescription))
+                query = query.Where(t => EF.Functions.ILike(t.ItemDescription!, $"%{itemDescription}%"));
 
             return query;
         }
