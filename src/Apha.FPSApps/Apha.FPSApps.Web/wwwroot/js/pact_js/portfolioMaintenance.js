@@ -113,7 +113,7 @@ $(document).ready(function () {
         }).done(function (res) {
             if (res.success) {
                 clearValidationErrors('#portfolioDetailForm');
-                showAlertMessage(res.message || 'Saved successfully.', AlertType.ERROR);
+                showAlertMessage(res.message || 'Portfolio saved successfully.', AlertType.SUCCESS);
             } else {
                 displayServerValidationErrors(res.errors, res.message, '#portfolioDetailForm');
             }
@@ -283,7 +283,7 @@ function saveConstituentTest() {
         if (res.success) {
             $('#modalPopup').removeClass('show');
             loadConstituentTestGrid(currentParentProject);
-            showAlertMessage(res.message || 'Test added.', AlertType.SUCCESS);
+            showAlertMessage(res.message || 'Test added successfully.', AlertType.SUCCESS);
         } else {
             displayServerValidationErrors(res.errors, res.message, '#formAddTest');
         }
@@ -307,7 +307,7 @@ function deleteConstituentTest(btn) {
                     $('#txtSelectedPortfolioTest').val('');
                     loadTimeCodeGrid(currentParentProject, '');
                 }
-                showAlertMessage(res.message || 'Deleted.', AlertType.SUCCESS);
+                showAlertMessage(res.message || 'Test deleted successfully.', AlertType.SUCCESS);
             } else {
                 showAlertMessage('Error: ' + (res.message || 'Delete failed.'), AlertType.ERROR);
             }
@@ -388,7 +388,7 @@ function savePortfolioTimeCode() {
         if (res.success) {
             $('#modalPopup').removeClass('show');
             loadTimeCodeGrid(currentParentProject, currentTestCode);
-            showAlertMessage(res.message || 'Work group added.', AlertType.SUCCESS);
+            showAlertMessage(res.message || 'Work group added successfully.', AlertType.SUCCESS);
         } else {
             displayServerValidationErrors(res.errors, res.message, '#timeCodeForm');
         }
@@ -429,7 +429,7 @@ function updatePortfolioTimeCode() {
         if (res.success) {
             $('#modalPopup').removeClass('show');
             loadTimeCodeGrid(currentParentProject, currentTestCode);
-            showAlertMessage(res.message || 'Work group updated.', AlertType.SUCCESS);
+            showAlertMessage(res.message || 'Work group updated successfully.', AlertType.SUCCESS);
         } else {
             displayServerValidationErrors(res.errors, res.message, '#timeCodeForm');
         }
@@ -448,7 +448,7 @@ function deletePortfolioTimeCode(btn) {
         }).done(function (res) {
             if (res.success) {
                 loadTimeCodeGrid(currentParentProject, currentTestCode);
-                showAlertMessage(res.message || 'Deleted.', AlertType.SUCCESS);
+                showAlertMessage(res.message || 'Time Code deleted successfully.', AlertType.SUCCESS);
             } else {
                 showAlertMessage('Error: ' + (res.message || 'Delete failed.'), AlertType.ERROR);
             }

@@ -13,34 +13,35 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
        
         [Display(Name = "Item Description")]
         [StringLength(200)]
-        [GridColumn(Order = 3, Width = 200, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 2, Width = 200, Type = GridColumnType.Text, IsFilterable = true)]
         public string? ItemDescription { get; set; }
 
         [Display(Name = "Short Description")]
         [StringLength(18)]
-        [GridColumn(Order = 2, Width = 150, Type = GridColumnType.Text)]
+        [GridColumn(Order = 3, Width = 150, Type = GridColumnType.Text)]
         public string? ShortDescription { get; set; }
 
 
         [Display(Name = "Owner")]
         [Required(ErrorMessage = "Owner is required")]
         [StringLength(2)]
-        [GridColumn(Order = 5, Width = 80, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 4, Width = 80, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Owner { get; set; }
 
         [Display(Name = "Test Manager")]
         [StringLength(50)]
-        [GridColumn(Order = 4, Width = 100, Type = GridColumnType.Text, IsFilterable = true)]
+        [GridColumn(Order = 5, Width = 100, Type = GridColumnType.Text, IsFilterable = true)]
         public string? TestManager { get; set; }
        
-        [Display(Name = "Unit Price")]
+        [Display(Name = "Non Defra Unit Price")]
         [GridColumn(Order = 9, Width = 100, Type = GridColumnType.GbpValue)]
         public decimal? UnitPriceVla { get; set; }
 
-        [Display(Name = "DEFRA Unit Price")]
-        [Required(ErrorMessage = "DEFRA Unit Price is required")]
+        [Display(Name = "Defra Unit Price")]
+        [Required(ErrorMessage = "Defra Unit Price is required")]
         [GridColumn(Order = 8, Width = 100, Type = GridColumnType.GbpValue)]
         public decimal DefraUnitPrice { get; set; }
+        [GridColumn(IsVisible = false)]
         public int FpsYear { get; set; }
     }
 }

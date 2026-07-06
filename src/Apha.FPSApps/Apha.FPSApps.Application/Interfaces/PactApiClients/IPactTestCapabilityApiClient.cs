@@ -13,5 +13,6 @@ namespace Apha.FPSApps.Application.Interfaces.PactApiClients
         Task<ApiResponseDto<TestCapabilityDto>> CreateTestCapabilityAsync(TestCapabilityDto dto);
         Task<ApiResponseDto<TestCapabilityDto>> UpdateTestCapabilityAsync(TestCapabilityDto dto);
         Task<ApiResponseDto<bool>> DeleteTestCapabilityAsync(string testCode, string workGroup);
+        Task<ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>> GetPagedWgTestCapabilitiesWithDescriptionAsync(QueryParameters<string> query, string workGroup);
     }
 }

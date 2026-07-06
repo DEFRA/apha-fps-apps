@@ -127,11 +127,11 @@ function saveSubContract() {
         var maxMoney = 92233720368547758.07;
 
         if (isNaN(amount)) {
-            showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.INFO);
+            showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
             return;
         }
         if (amount < 0 || amount > maxMoney) {
-            showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.INFO);
+            showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
             return;
         }
 

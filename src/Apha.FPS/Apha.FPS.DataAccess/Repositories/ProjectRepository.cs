@@ -597,6 +597,11 @@ namespace Apha.FPS.DataAccess.Repositories
                 queryProjects = queryProjects.Where(x => EF.Functions.ILike(x.ProjectTitle, $"%{projectTitle}%"));
             }
 
+            if(dict.TryGetValue("Manager", out var manager) && manager != null)
+            {
+                queryProjects = queryProjects.Where(x => x.Manager != null && EF.Functions.ILike(x.Manager, $"%{manager}%"));
+            }
+
             return queryProjects;
         }
 
@@ -616,6 +621,7 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 "parentproject" => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
                 "projecttitle"  => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
+                "manager"       => ApplyPactProjectOrder(query, i => i.Manager, descending),
                 _ => query.OrderBy(e => e.ParentProject)
             };
         }
