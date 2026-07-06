@@ -113,5 +113,19 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             var dto = _mapper.Map<ApiResponseDto<List<TestCapabilityDto>>>(response);
             return ApiResponseDto<List<TestCapabilityDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
+
+        public async Task<ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>> GetPagedWgTestCapabilitiesWithDescriptionAsync(QueryParameters<string> query, string workGroup)
+        {
+            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetPagedWgTestCapabilitiesWithDescription, query);
+            if (!string.IsNullOrWhiteSpace(workGroup))
+                url += $"&workGroup={Uri.EscapeDataString(workGroup)}";
+
+            var response = await _http.GetAsync<List<WgTestCapabilitiesWithDescriptionRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>>(response);
+
+            var failureResponse = _mapper.Map<ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>>(response);
+            return ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>.FailureResponse(failureResponse.Errors, failureResponse.Meta);
+        }
     }
 }

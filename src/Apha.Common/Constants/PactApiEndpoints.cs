@@ -99,6 +99,7 @@ namespace Apha.Common.Constants
         public const string CreateTestCapability = "api/v1/testcapability/testcapability";
         public const string UpdateTestCapability = "api/v1/testcapability/testcapability";
         public const string DeleteTestCapability = "api/v1/testcapability/testcapability/{0}/{1}";
+        public const string GetPagedWgTestCapabilitiesWithDescription = "api/v1/testcapability/paged/wg-test-capabilities";
 
         // Test Requirement
         public const string GetPagedTestReqmt = "api/v1/testrequirement/paged/{0}";
@@ -133,5 +134,11 @@ namespace Apha.Common.Constants
 
         // Work Group Report Email
         public const string SendEmails = "api/v1/workgroupreport/send";
+
+        // Bosworth Interface
+        public const string GetTimePurchaseProject = "api/v1/bosworth-interface/time-purchase-project";
+        public const string GetTimeSaleProfitCentre = "api/v1/bosworth-interface/time-sale-profit-centre";
+        public const string GetTestSaleSellingWorkgroup = "api/v1/bosworth-interface/test-sale-selling-workgroup";
+        public const string GetTestSaleBuyingProject = "api/v1/bosworth-interface/test-sale-buying-project";
     }
 }

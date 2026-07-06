@@ -1,6 +1,7 @@
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
+using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
@@ -123,6 +124,19 @@ namespace Apha.PACT.Application.Services
                 throw new InvalidOperationException("Cannot delete, test requirements are dependant on this.");
 
             return await _testCapabilityRepository.DeleteAsync(testCode, workGroup);
+        }
+
+        public async Task<PaginatedResult<WgTestCapabilitiesWithDescriptionDto>> GetPagedWgTestCapabilitiesWithDescriptionAsync(QueryParameters<string> query, string workGroup)
+        {
+            var errors = new List<BusinessValidationError>();
+            if (string.IsNullOrWhiteSpace(workGroup))
+                errors.Add(new BusinessValidationError("Work Group is required", "WORKGROUP_REQUIRED"));
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
+
+            var parameters = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _testCapabilityRepository.GetPagedWgTestCapabilitiesWithDescriptionAsync(parameters, workGroup);
+            return _mapper.Map<PaginatedResult<WgTestCapabilitiesWithDescriptionDto>>(pagedData);
         }
     }
 }

@@ -1,0 +1,13 @@
+using Apha.FPSApps.Web.Models.Components.DataGrid;
+
+namespace Apha.FPSApps.Web.Areas.PACT.Models
+{
+    public class BosworthInterfaceViewModel
+    {
+        public List<WorkGroup> WorkGroupOptions { get; set; } = [];
+        public List<Project> ProjectOptions { get; set; } = [];
+        public List<ProfitCentre> ProfitCentreOptions { get; set; } = [];
+        public DataGridConfig<WgTestCapabilitiesWithDescriptionItem> CapabilitiesGrid { get; set; } = new DataGridConfig<WgTestCapabilitiesWithDescriptionItem>();
+        public string? WorkGroup { get; set; }
+    }
+}
