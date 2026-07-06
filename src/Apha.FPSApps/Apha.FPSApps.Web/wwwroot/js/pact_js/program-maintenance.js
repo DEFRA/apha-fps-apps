@@ -108,6 +108,9 @@ function saveProgram() {
         Directorate: $('#Program_Directorate').val()
     };
 
+    // Store the currently selected program value before saving
+    var currentlySelectedProgramNo = $('#selectedProgramNo').val();
+
     clearValidationErrors('#programDetailForm');
     $.ajax({
         url: programMaintenanceConfig.saveProgramUrl,
@@ -116,6 +119,8 @@ function saveProgram() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
+                // Reload the dropdown to get updated program list
+                reloadProgramsDropDown(currentlySelectedProgramNo);
                 showAlertMessage(result.message, AlertType.SUCCESS);
             } else {
                 // Server returns field names without the "Program." prefix (e.g. "ProgramNo"),
@@ -137,6 +142,28 @@ function loadProjectsGrid(programNo) {
     if (window['gridManager_projectsGrid']) {
         window['gridManager_projectsGrid'].reloadGrid({ page: 1 });
     }
+}
+
+function reloadProgramsDropDown(selectedProgramNo) {
+    $.ajax({
+        url: programMaintenanceConfig.getProgramListUrl,
+        type: 'GET',
+        success: function (result) {
+            if (result.success && result.data) {
+                // Update the global programListData with fresh data
+                programListData = result.data;
+                programmSelectDropdown.updateData(programListData);
+                programmSelectDropdown.setValue(selectedProgramNo);
+
+                loadProgram(selectedProgramNo);
+                loadProjectsGrid(selectedProgramNo);
+               
+           } 
+        },
+        error: function (xhr, status, error) {
+            showAlertMessage('Failed to reload programs dropdown: ' + error, AlertType.ERROR);
+        }
+    });
 }
 
 function getProjectsGridExtraFilters() {
@@ -197,7 +224,7 @@ function populateInitalRecordOnPageLoad() {
         const firstrecord = programListData[0].Value;
         const programmSelectDropdown_input = document.getElementById('programmSelectDropdown_input');
         if (programmSelectDropdown_input && firstrecord) {
-            programmSelectDropdown_input.value = firstrecord;
+            programmSelectDropdown.setValue(firstrecord);
             loadProgram(firstrecord);
         }
     }
