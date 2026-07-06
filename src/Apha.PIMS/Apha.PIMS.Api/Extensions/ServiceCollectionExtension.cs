@@ -1,4 +1,23 @@
-﻿using Apha.Common.Utilities.ExcelExport;
+﻿/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
+ * Migrated : 2026-07-06
+ *
+ * CHANGED:
+ *   - Added scoped service registrations for 14 new Phase 5 resource families:
+ *     IReportService, IReportGroupService, IReportGroupLinkService,
+ *     IProjectManagerService, IProgramManagerLinkService, IProfitCentreManagerLinkService,
+ *     ISettingService, IAccessUserService, IAccessLevelService, IAccessUserLevelService,
+ *     IAccessSystemService, IFrequencyService, IReviewItemService, IRadTrackProgService
+ *   - Added scoped repository registrations for all corresponding repository pairs
+ *
+ * PRESERVED:
+ *   - All existing service and repository registrations (ProjectList, Milestone, RadTrackInvoice, etc.)
+ *   - IFPSYearContext, AppStateService, ExcelExportService registrations unchanged
+ *
+ * DEFERRED: none — fully automated.
+ */
+using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.PIMS.Application.Interfaces;
 using Apha.PIMS.Application.Services;
@@ -27,6 +46,33 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<IProjectYearCostsService, ProjectYearCostsService>();
             services.AddScoped<IMilestoneService, MilestoneService>();
             services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
+
+            // TRANSFORMENGINE: Phase 5 additions — Report, ReportGroup, ReportGroupLink
+            services.AddScoped<IReportService, ReportService>();
+            services.AddScoped<IReportGroupService, ReportGroupService>();
+            services.AddScoped<IReportGroupLinkService, ReportGroupLinkService>();
+
+            // TRANSFORMENGINE: Phase 5 additions — ProjectManager, ProgramManagerLink, ProfitCentreManagerLink
+            services.AddScoped<IProjectManagerService, ProjectManagerService>();
+            services.AddScoped<IProgramManagerLinkService, ProgramManagerLinkService>();
+            services.AddScoped<IProfitCentreManagerLinkService, ProfitCentreManagerLinkService>();
+
+            // TRANSFORMENGINE: Phase 5 additions — Setting
+            services.AddScoped<ISettingService, SettingService>();
+
+            // TRANSFORMENGINE: Phase 5 additions — Access* services
+            services.AddScoped<IAccessUserService, AccessUserService>();
+            services.AddScoped<IAccessLevelService, AccessLevelService>();
+            services.AddScoped<IAccessUserLevelService, AccessUserLevelService>();
+            services.AddScoped<IAccessSystemService, AccessSystemService>();
+
+            // TRANSFORMENGINE: Phase 5 additions — Frequency, ReviewItem
+            services.AddScoped<IFrequencyService, FrequencyService>();
+            services.AddScoped<IReviewItemService, ReviewItemService>();
+
+            // TRANSFORMENGINE: Phase 5 additions — RadTrackProg (Programme Tab); natural string PK (program varchar(10))
+            services.AddScoped<IRadTrackProgService, RadTrackProgService>();
+
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -40,6 +86,33 @@ namespace Apha.PIMS.Api.Extensions
             services.AddScoped<IProjectYearCostsRepository, ProjectYearCostsRepository>();
             services.AddScoped<IMilestoneRepository, MilestoneRepository>();
             services.AddScoped<IRadTrackInvoiceRepository, RadTrackInvoiceRepository>();
+
+            // TRANSFORMENGINE: Phase 5 additions — Report, ReportGroup, ReportGroupLink
+            services.AddScoped<IReportRepository, ReportRepository>();
+            services.AddScoped<IReportGroupRepository, ReportGroupRepository>();
+            services.AddScoped<IReportGroupLinkRepository, ReportGroupLinkRepository>();
+
+            // TRANSFORMENGINE: Phase 5 additions — ProjectManager, ProgramManagerLink, ProfitCentreManagerLink
+            services.AddScoped<IProjectManagerRepository, ProjectManagerRepository>();
+            services.AddScoped<IProgramManagerLinkRepository, ProgramManagerLinkRepository>();
+            services.AddScoped<IProfitCentreManagerLinkRepository, ProfitCentreManagerLinkRepository>();
+
+            // TRANSFORMENGINE: Phase 5 additions — Setting
+            services.AddScoped<ISettingRepository, SettingRepository>();
+
+            // TRANSFORMENGINE: Phase 5 additions — Access* repositories
+            services.AddScoped<IAccessUserRepository, AccessUserRepository>();
+            services.AddScoped<IAccessLevelRepository, AccessLevelRepository>();
+            services.AddScoped<IAccessUserLevelRepository, AccessUserLevelRepository>();
+            services.AddScoped<IAccessSystemRepository, AccessSystemRepository>();
+
+            // TRANSFORMENGINE: Phase 5 additions — Frequency, ReviewItem
+            services.AddScoped<IFrequencyRepository, FrequencyRepository>();
+            services.AddScoped<IReviewItemRepository, ReviewItemRepository>();
+
+            // TRANSFORMENGINE: Phase 5 additions — RadTrackProg (Programme Tab); natural string PK (program varchar(10))
+            services.AddScoped<IRadTrackProgRepository, RadTrackProgRepository>();
+
             return services;
         }
     }

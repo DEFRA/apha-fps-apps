@@ -1,0 +1,163 @@
+<!-- TRANSFORMENGINE MIGRATION — _AddEditAccessUserLevel.cshtml
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-07-06
+     CHANGED:
+       - MS Access frmMaintainance adminAccessEditModal -> Razor partial
+       - Fields derived from admin.js adminAccessEditModal: adminAccessUser (select -> Ntlogin),
+         adminAccessLevel (select -> Accesslevelid); composite PK Systemid hidden
+       - ACCESS_LEVELS from admin.js: Admin, Maintenance, Programme Manager, Read Only
+       - ADMIN_USER_NAME_OPTIONS from admin.js used as static user dropdown options
+       - No Update (AllowEdit handled via new record only); Systemid=0 means Add
+       - Anti-forgery token included; saveAccessUserLevel() calls /PIMS/Maintenance/SaveAccessUserLevel
+     DEFERRED:
+       - TRANSFORMENGINE TODO: user list and access levels should be loaded from lookup endpoints
+         in production; static list from admin.js used here as placeholder -->
+@model Apha.FPSApps.Web.Areas.PIMS.Models.AccessUserLevelItem
+
+@{
+    var isEditMode = Model.Systemid != 0;
+    var title = isEditMode ? "Edit User Access" : "Add User Access";
+    var saveLabel = isEditMode ? "Update" : "Save";
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title" style="margin: 0;">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body" style="padding-top: 5px;">
+    <form class="row" id="formAccessUserLevel">
+        @Html.AntiForgeryToken()
+
+        @* TRANSFORMENGINE: Triple composite PK — all three parts hidden *@
+        <input type="hidden" asp-for="Systemid" id="hdnAccessSystemid" />
+        <input type="hidden" id="hdnAccessIsEdit" value="@isEditMode.ToString().ToLower()" />
+
+        <div class="govuk-error-summary ra-form-error-banner ra-hidden"
+             id="adminAccessDbError" role="alert" aria-labelledby="adminAccessDbErrorTitle" tabindex="-1">
+            <h2 class="govuk-error-summary__title govuk-!-font-size-14" id="adminAccessDbErrorTitle">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <p class="govuk-body govuk-!-font-size-14" id="adminAccessDbErrorText"></p>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            @* User — adminAccessUser select in HTML modal *@
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="adminAccessUserGroup">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="adminAccessUser">
+                        User<span class="ra-required-star" aria-hidden="true"> *</span>
+                    </label>
+                    @* TRANSFORMENGINE: Ntlogin -> adminAccessUser select.
+                       User name options from admin.js ADMIN_USER_NAME_OPTIONS (static);
+                       Ntlogin carries the selected value. *@
+                    <select class="govuk-select govuk-!-font-size-16 ra-select-full"
+                            asp-for="Ntlogin"
+                            id="adminAccessUser"
+                            aria-required="true"
+                            aria-describedby="adminAccessUserError">
+                        <option value="">-- Select User --</option>
+                        @{
+                            var userOptions = new[]
+                            {
+                                "Martin, Steve", "Gage, Amanda", "Fowler, Ayesha",
+                                "Ritchie, Stephanie", "Northcott, Emma", "Narayanan, Vidhya",
+                                "Butler, Tom", "Foxon, Janee", "Jackson, George",
+                                "Moran, Michaela", "Bateman, Rebecca", "Moore, Tony",
+                                "Bell, Howard", "Lambert, Abby"
+                            };
+                            foreach (var u in userOptions)
+                            {
+                                if (Model.Ntlogin == u)
+                                {
+                                    <option value="@u" selected>@u</option>
+                                }
+                                else
+                                {
+                                    <option value="@u">@u</option>
+                                }
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="Ntlogin" class="govuk-error-message" id="adminAccessUserError" style="display:none;"></span>
+                </div>
+            </div>
+
+            @* Access Level — adminAccessLevel select in HTML modal *@
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="adminAccessLevelGroup">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="adminAccessLevel">
+                        Access Level<span class="ra-required-star" aria-hidden="true"> *</span>
+                    </label>
+                    @* TRANSFORMENGINE: Accesslevelid -> adminAccessLevel select.
+                       ACCESS_LEVELS from admin.js: Admin, Maintenance, Programme Manager, Read Only.
+                       Integer Accesslevelid mapped; values are placeholder indices — confirm against DB. *@
+                    <select class="govuk-select govuk-!-font-size-16"
+                            asp-for="Accesslevelid"
+                            id="adminAccessLevel"
+                            aria-required="true"
+                            aria-describedby="adminAccessLevelError">
+                        <option value="0">-- Select --</option>
+                        @{
+                            var accessLevels = new[] { "Admin", "Maintenance", "Programme Manager", "Read Only" };
+                            for (int i = 0; i < accessLevels.Length; i++)
+                            {
+                                int levelId = i + 1;
+                                if (Model.Accesslevelid == levelId)
+                                {
+                                    <option value="@levelId" selected>@accessLevels[i]</option>
+                                }
+                                else
+                                {
+                                    <option value="@levelId">@accessLevels[i]</option>
+                                }
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="Accesslevelid" class="govuk-error-message" id="adminAccessLevelError" style="display:none;"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12" style="text-align: right; margin-top: 10px;">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary sup_margin_0"
+                    onclick="closeModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button sup_margin_0"
+                    onclick="saveAccessUserLevel()">
+                @saveLabel
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function saveAccessUserLevel() {
+            var dbError     = document.getElementById('adminAccessDbError');
+            var dbErrorText = document.getElementById('adminAccessDbErrorText');
+            if (dbError) dbError.classList.add('ra-hidden');
+
+            $.post({
+                url: '/PIMS/Maintenance/SaveAccessUserLevel',
+                data: $('#formAccessUserLevel').serialize(),
+                success: function (data) {
+                    if (data.success) {
+                        closeModal();
+                        reloadAccessUserLevelsGrid();
+                    } else {
+                        var msg = data.message || 'Save failed.';
+                        if (dbErrorText) dbErrorText.textContent = msg;
+                        if (dbError) dbError.classList.remove('ra-hidden');
+                    }
+                },
+                error: function () {
+                    if (dbErrorText) dbErrorText.textContent = 'An error occurred while saving.';
+                    if (dbError) dbError.classList.remove('ra-hidden');
+                }
+            });
+        }
+    </script>
+}

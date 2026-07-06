@@ -48,6 +48,21 @@ namespace Apha.PIMS.DataAccess.Data
 
         // Lookup: tblradtrackcontract — used by RadTrackInvoice contract dropdown.
         public virtual DbSet<RadTrackContract> RadTrackContracts { get; set; }
+
+        // TRANSFORMENGINE: Phase 4 — new DbSets for Report/ReportGroup/Link, ProgramManagerLink, ProfitCentreManagerLink, Setting, Access*, Frequency, ReviewItem
+        public virtual DbSet<Report> Reports { get; set; }
+        public virtual DbSet<ReportGroup> ReportGroups { get; set; }
+        public virtual DbSet<ReportGroupLink> ReportGroupLinks { get; set; }
+        public virtual DbSet<ProgramManagerLink> ProgramManagerLinks { get; set; }
+        public virtual DbSet<ProfitCentreManagerLink> ProfitCentreManagerLinks { get; set; }
+        public virtual DbSet<Setting> Settings { get; set; }
+        public virtual DbSet<AccessUser> AccessUsers { get; set; }
+        public virtual DbSet<AccessLevel> AccessLevels { get; set; }
+        public virtual DbSet<AccessUserLevel> AccessUserLevels { get; set; }
+        public virtual DbSet<AccessSystem> AccessSystems { get; set; }
+        public virtual DbSet<Frequency> Frequencies { get; set; }
+        public virtual DbSet<ReviewItem> ReviewItems { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("en_GB.utf8");           
@@ -82,6 +97,20 @@ namespace Apha.PIMS.DataAccess.Data
             // TRANSFORMENGINE: Added Phase 4 — register RadTrackInvoiceMap for mabarchive.tblradtrackinvoice.
             modelBuilder.ApplyConfiguration(new RadTrackInvoiceMap());
             modelBuilder.ApplyConfiguration(new RadTrackContractMap());
+
+            // TRANSFORMENGINE: Phase 4 batch — register 12 new map configurations
+            modelBuilder.ApplyConfiguration(new ReportMap());
+            modelBuilder.ApplyConfiguration(new ReportGroupMap());
+            modelBuilder.ApplyConfiguration(new ReportGroupLinkMap());
+            modelBuilder.ApplyConfiguration(new ProgramManagerLinkMap());
+            modelBuilder.ApplyConfiguration(new ProfitCentreManagerLinkMap());
+            modelBuilder.ApplyConfiguration(new SettingMap());
+            modelBuilder.ApplyConfiguration(new AccessUserMap());
+            modelBuilder.ApplyConfiguration(new AccessLevelMap());
+            modelBuilder.ApplyConfiguration(new AccessUserLevelMap());
+            modelBuilder.ApplyConfiguration(new AccessSystemMap());
+            modelBuilder.ApplyConfiguration(new FrequencyMap());
+            modelBuilder.ApplyConfiguration(new ReviewItemMap());
         }
     }
 }

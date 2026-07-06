@@ -9,5 +9,23 @@
         IPimsProjectYearCostsApiClient PimsProjectYearCosts { get; }
         IPimsMilestoneApiClient PimsMilestone { get; }
         IPimsRadTrackInvoiceApiClient PimsRadTrackInvoice { get; }
+
+        // TRANSFORMENGINE: Phase 7 sub-clients — maintenance form API surfaces (Report, ReportGroup, ReportGroupLink, ProjectManager, etc.)
+        IPimsReportApiClient PimsReport { get; }
+        IPimsReportGroupApiClient PimsReportGroup { get; }
+        IPimsReportGroupLinkApiClient PimsReportGroupLink { get; }
+        IPimsProjectManagerApiClient PimsProjectManager { get; }
+        IPimsProgramManagerLinkApiClient PimsProgramManagerLink { get; }
+        IPimsProfitCentreManagerLinkApiClient PimsProfitCentreManagerLink { get; }
+        IPimsSettingApiClient PimsSetting { get; }
+        IPimsAccessUserApiClient PimsAccessUser { get; }
+        IPimsAccessLevelApiClient PimsAccessLevel { get; }
+        IPimsAccessUserLevelApiClient PimsAccessUserLevel { get; }
+        IPimsAccessSystemApiClient PimsAccessSystem { get; }
+        IPimsFrequencyApiClient PimsFrequency { get; }
+
+        // TRANSFORMENGINE: Phase 7 — ReviewItem and RadTrackProg sub-clients (Other Tab + Programme Tab CRUD)
+        IPimsReviewItemApiClient PimsReviewItem { get; }
+        IPimsRadTrackProgApiClient PimsRadTrackProg { get; }
     }
 }

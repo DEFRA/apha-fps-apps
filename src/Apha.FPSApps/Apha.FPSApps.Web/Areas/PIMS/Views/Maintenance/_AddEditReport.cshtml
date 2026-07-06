@@ -1,0 +1,212 @@
+<!-- TRANSFORMENGINE MIGRATION — _AddEditReport.cshtml
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-07-06
+     CHANGED:
+       - MS Access frmMaintainance maintenance edit modal -> Razor partial
+       - Fields derived from HTML maintenanceEditModal: editName, editDescription, editReportHelp,
+         editMailComment, editMailTitle, editOrder, editEmailable (checkbox)
+       - Bound to ReportItem model via asp-for Tag Helpers
+       - Uses shared #modalPopup / #modaPopupBody pattern (no inline modal)
+       - Anti-forgery token included; SaveReport() calls /PIMS/Maintenance/SaveReport
+     DEFERRED:
+       - TRANSFORMENGINE TODO: confirm ReportItem fields are in AutoMapper CreateMap -->
+@model Apha.FPSApps.Web.Areas.PIMS.Models.ReportItem
+
+@{
+    var isEditMode = Model.Id != 0;
+    var title = isEditMode ? "Edit Report" : "Add Report";
+    var saveLabel = isEditMode ? "Update" : "Save";
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title" style="margin: 0;">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body" style="padding-top: 5px;">
+    <form class="row" id="formReport">
+        @Html.AntiForgeryToken()
+
+        @* TRANSFORMENGINE: Hidden PK — Id submitted for edit operations *@
+        <input type="hidden" asp-for="Id" id="hdnReportId" />
+        <input type="hidden" id="hdnReportIsEdit" value="@isEditMode.ToString().ToLower()" />
+
+        <div class="govuk-error-summary ra-form-error-banner ra-hidden"
+             id="reportDbError" role="alert" aria-labelledby="reportDbErrorTitle" tabindex="-1">
+            <h2 class="govuk-error-summary__title govuk-!-font-size-14" id="reportDbErrorTitle">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <p class="govuk-body govuk-!-font-size-14" id="reportDbErrorText"></p>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            @* Name (editName) *@
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="editNameGroup">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Reportname">
+                        Name: <span class="ra-required-star" aria-hidden="true">*</span>
+                    </label>
+                    @* TRANSFORMENGINE: Reportname -> editName in HTML modal *@
+                    <input class="govuk-input govuk-!-font-size-16"
+                           asp-for="Reportname"
+                           id="editName"
+                           type="text"
+                           aria-required="true"
+                           aria-describedby="editNameError" />
+                    <span asp-validation-for="Reportname" class="govuk-error-message" id="editNameError" style="display:none;"></span>
+                </div>
+            </div>
+
+            @* Description (editDescription) *@
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="editDescriptionGroup">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Reportdescription">
+                        Description: <span class="ra-required-star" aria-hidden="true">*</span>
+                    </label>
+                    @* TRANSFORMENGINE: Reportdescription -> editDescription in HTML modal *@
+                    <input class="govuk-input govuk-!-font-size-16"
+                           asp-for="Reportdescription"
+                           id="editDescription"
+                           type="text"
+                           aria-required="true"
+                           aria-describedby="editDescriptionError" />
+                    <span asp-validation-for="Reportdescription" class="govuk-error-message" id="editDescriptionError" style="display:none;"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            @* Report Help (editReportHelp) — textarea *@
+            <div class="govuk-grid-column-full">
+                <div class="govuk-form-group sup_margin_bottom_10" id="editReportHelpGroup">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Reporthelp">
+                        Report Help: <span class="ra-required-star" aria-hidden="true">*</span>
+                    </label>
+                    @* TRANSFORMENGINE: Reporthelp -> editReportHelp textarea in HTML modal *@
+                    <textarea class="govuk-textarea govuk-!-font-size-16 sup_margin_0"
+                              asp-for="Reporthelp"
+                              id="editReportHelp"
+                              rows="3"
+                              aria-required="true"
+                              aria-describedby="editReportHelpError"></textarea>
+                    <span asp-validation-for="Reporthelp" class="govuk-error-message" id="editReportHelpError" style="display:none;"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            @* Mail Comment (editMailComment) *@
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="editMailCommentGroup">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Mailcomment">
+                        Mail Comment: <span class="ra-required-star" aria-hidden="true">*</span>
+                    </label>
+                    @* TRANSFORMENGINE: Mailcomment -> editMailComment in HTML modal *@
+                    <input class="govuk-input govuk-!-font-size-16"
+                           asp-for="Mailcomment"
+                           id="editMailComment"
+                           type="text"
+                           aria-required="true"
+                           aria-describedby="editMailCommentError" />
+                    <span asp-validation-for="Mailcomment" class="govuk-error-message" id="editMailCommentError" style="display:none;"></span>
+                </div>
+            </div>
+
+            @* Mail Title (editMailTitle) *@
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="editMailTitleGroup">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Mailtitle">
+                        Mail Title: <span class="ra-required-star" aria-hidden="true">*</span>
+                    </label>
+                    @* TRANSFORMENGINE: Mailtitle -> editMailTitle in HTML modal *@
+                    <input class="govuk-input govuk-!-font-size-16"
+                           asp-for="Mailtitle"
+                           id="editMailTitle"
+                           type="text"
+                           aria-required="true"
+                           aria-describedby="editMailTitleError" />
+                    <span asp-validation-for="Mailtitle" class="govuk-error-message" id="editMailTitleError" style="display:none;"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="govuk-grid-row">
+            @* Order (editOrder) *@
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10" id="editOrderGroup">
+                    <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Sortorder">
+                        Order:
+                    </label>
+                    @* TRANSFORMENGINE: Sortorder -> editOrder in HTML modal *@
+                    <input class="govuk-input govuk-input--width-30 govuk-!-font-size-16"
+                           asp-for="Sortorder"
+                           id="editOrder"
+                           type="number"
+                           min="0"
+                           aria-describedby="editOrderError" />
+                    <span asp-validation-for="Sortorder" class="govuk-error-message" id="editOrderError" style="display:none;"></span>
+                </div>
+            </div>
+
+            @* Emailable checkbox (editEmailable) *@
+            <div class="govuk-grid-column-one-half">
+                <div class="govuk-form-group sup_margin_bottom_10">
+                    <div class="govuk-checkboxes govuk-checkboxes--small govuk-!-padding-top-4">
+                        <div class="govuk-checkboxes__item">
+                            @* TRANSFORMENGINE: Emailable -> editEmailable checkbox in HTML modal *@
+                            <input class="govuk-checkboxes__input"
+                                   asp-for="Emailable"
+                                   id="editEmailable"
+                                   type="checkbox" />
+                            <label class="govuk-label govuk-checkboxes__label govuk-!-font-size-16 sup_label_auto_width"
+                                   asp-for="Emailable">
+                                Email-able
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12" style="text-align: right; margin-top: 10px;">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary sup_margin_0"
+                    onclick="closeModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button sup_margin_0"
+                    onclick="saveReport()">
+                @saveLabel
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function saveReport() {
+            var dbError     = document.getElementById('reportDbError');
+            var dbErrorText = document.getElementById('reportDbErrorText');
+            if (dbError) dbError.classList.add('ra-hidden');
+
+            $.post({
+                url: '/PIMS/Maintenance/SaveReport',
+                data: $('#formReport').serialize(),
+                success: function (data) {
+                    if (data.success) {
+                        closeModal();
+                        reloadReportsGrid();
+                    } else {
+                        var msg = data.message || 'Save failed.';
+                        if (dbErrorText) dbErrorText.textContent = msg;
+                        if (dbError) dbError.classList.remove('ra-hidden');
+                    }
+                },
+                error: function () {
+                    if (dbErrorText) dbErrorText.textContent = 'An error occurred while saving.';
+                    if (dbError) dbError.classList.remove('ra-hidden');
+                }
+            });
+        }
+    </script>
+}

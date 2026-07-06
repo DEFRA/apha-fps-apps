@@ -1,0 +1,113 @@
+<!-- TRANSFORMENGINE MIGRATION — _AddEditAccessUser.cshtml
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-07-06
+     CHANGED:
+       - MS Access frmMaintainance adminUserEditModal -> Razor partial
+       - Fields derived from admin.js adminUserEditModal: adminUserNTLogin (text -> Ntlogin),
+         adminUserName (text -> Username); composite PK Systemid hidden
+       - Anti-forgery token included; saveAccessUser() calls /PIMS/Maintenance/SaveAccessUser
+     DEFERRED:
+       - TRANSFORMENGINE TODO: confirm AccessUserItem.Dt2login handling — not shown in modal -->
+@model Apha.FPSApps.Web.Areas.PIMS.Models.AccessUserItem
+
+@{
+    var isEditMode = Model.Systemid != 0;
+    var title = isEditMode ? "Edit User" : "Add User";
+    var saveLabel = isEditMode ? "Update" : "Save";
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title" style="margin: 0;">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body" style="padding-top: 5px;">
+    <form class="row" id="formAccessUser">
+        @Html.AntiForgeryToken()
+
+        @* TRANSFORMENGINE: Composite PK — Systemid hidden; Ntlogin also posted as editable field *@
+        <input type="hidden" asp-for="Systemid" id="hdnUserSystemid" />
+        <input type="hidden" id="hdnUserIsEdit" value="@isEditMode.ToString().ToLower()" />
+
+        <div class="govuk-error-summary ra-form-error-banner ra-hidden"
+             id="adminUserDbError" role="alert" aria-labelledby="adminUserDbErrorTitle" tabindex="-1">
+            <h2 class="govuk-error-summary__title govuk-!-font-size-14" id="adminUserDbErrorTitle">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <p class="govuk-body govuk-!-font-size-14" id="adminUserDbErrorText"></p>
+            </div>
+        </div>
+
+        @* NTLogin — adminUserNTLogin in HTML modal *@
+        <div class="govuk-form-group sup_margin_bottom_10" id="adminUserNTLoginGroup">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Ntlogin">
+                NTLogin<span class="ra-required-star" aria-hidden="true"> *</span>
+            </label>
+            @* TRANSFORMENGINE: Ntlogin -> adminUserNTLogin in HTML modal *@
+            <input class="govuk-input govuk-!-font-size-16"
+                   asp-for="Ntlogin"
+                   id="adminUserNTLogin"
+                   type="text"
+                   aria-required="true"
+                   aria-describedby="adminUserNTLoginError"
+                   autocomplete="off" />
+            <span asp-validation-for="Ntlogin" class="govuk-error-message" id="adminUserNTLoginError" style="display:none;"></span>
+        </div>
+
+        @* UserName — adminUserName in HTML modal *@
+        <div class="govuk-form-group sup_margin_bottom_10" id="adminUserNameGroup">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Username">
+                UserName<span class="ra-required-star" aria-hidden="true"> *</span>
+            </label>
+            @* TRANSFORMENGINE: Username -> adminUserName in HTML modal *@
+            <input class="govuk-input govuk-!-font-size-16"
+                   asp-for="Username"
+                   id="adminUserName"
+                   type="text"
+                   aria-required="true"
+                   aria-describedby="adminUserNameError"
+                   autocomplete="off" />
+            <span asp-validation-for="Username" class="govuk-error-message" id="adminUserNameError" style="display:none;"></span>
+        </div>
+
+        <div class="col-12" style="text-align: right; margin-top: 10px;">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary sup_margin_0"
+                    onclick="closeModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button sup_margin_0"
+                    onclick="saveAccessUser()">
+                @saveLabel
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function saveAccessUser() {
+            var dbError     = document.getElementById('adminUserDbError');
+            var dbErrorText = document.getElementById('adminUserDbErrorText');
+            if (dbError) dbError.classList.add('ra-hidden');
+
+            $.post({
+                url: '/PIMS/Maintenance/SaveAccessUser',
+                data: $('#formAccessUser').serialize(),
+                success: function (data) {
+                    if (data.success) {
+                        closeModal();
+                        reloadAccessUsersGrid();
+                    } else {
+                        var msg = data.message || 'Save failed.';
+                        if (dbErrorText) dbErrorText.textContent = msg;
+                        if (dbError) dbError.classList.remove('ra-hidden');
+                    }
+                },
+                error: function () {
+                    if (dbErrorText) dbErrorText.textContent = 'An error occurred while saving.';
+                    if (dbError) dbError.classList.remove('ra-hidden');
+                }
+            });
+        }
+    </script>
+}

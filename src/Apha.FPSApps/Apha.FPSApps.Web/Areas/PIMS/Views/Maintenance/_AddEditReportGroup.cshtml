@@ -1,0 +1,115 @@
+<!-- TRANSFORMENGINE MIGRATION — _AddEditReportGroup.cshtml
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-07-06
+     CHANGED:
+       - MS Access frmMaintainance group edit modal -> Razor partial
+       - Fields derived from HTML groupEditModal: groupReportGroup (select — Description),
+         groupEditRecordId (hidden Groupid)
+       - Bound to ReportGroupItem model via asp-for Tag Helpers
+       - Anti-forgery token included; SaveReportGroup() calls /PIMS/Maintenance/SaveReportGroup
+     DEFERRED:
+       - TRANSFORMENGINE TODO: Report group options are static in HTML prototype; confirm if
+         they should be loaded dynamically from a lookup endpoint in production -->
+@model Apha.FPSApps.Web.Areas.PIMS.Models.ReportGroupItem
+
+@{
+    var isEditMode = Model.Groupid != 0;
+    var title = isEditMode ? "Edit Report Group" : "Add Report Group";
+    var saveLabel = isEditMode ? "Update" : "Save";
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title" style="margin: 0;">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body" style="padding-top: 5px;">
+    <form class="row" id="formReportGroup">
+        @Html.AntiForgeryToken()
+
+        @* TRANSFORMENGINE: Hidden PK — Groupid submitted for edit operations *@
+        <input type="hidden" asp-for="Groupid" id="hdnGroupid" />
+        <input type="hidden" id="hdnGroupIsEdit" value="@isEditMode.ToString().ToLower()" />
+
+        <div class="govuk-error-summary ra-form-error-banner ra-hidden"
+             id="groupDbError" role="alert" aria-labelledby="groupDbErrorTitle" tabindex="-1">
+            <h2 class="govuk-error-summary__title govuk-!-font-size-16" id="groupDbErrorTitle">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <p class="govuk-body govuk-!-font-size-16" id="groupDbErrorText"></p>
+            </div>
+        </div>
+
+        @* Report Group description (groupReportGroup select in HTML modal) *@
+        <div class="govuk-form-group" id="groupFormGroup">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" asp-for="Description">
+                Report Group: <span class="ra-required-star" aria-hidden="true">*</span>
+            </label>
+            @* TRANSFORMENGINE: Description -> groupReportGroup select in HTML modal.
+               Static options from HTML prototype; prefer asp-items if a lookup endpoint is created. *@
+            <select class="govuk-select govuk-!-font-size-16 ra-select-full"
+                    asp-for="Description"
+                    id="groupReportGroup"
+                    aria-required="true"
+                    aria-describedby="groupReportGroupError">
+                <option value="">-- Select Report Group --</option>
+                @{
+                    var groups = new[] { "EU", "Annual & Final", "Deliverables", "Invoicing",
+                                         "Milestones", "Programme & Project Monitoring", "Surveilance Contracts" };
+                    foreach (var g in groups)
+                    {
+                        if (Model.Description == g)
+                        {
+                            <option value="@g" selected>@g</option>
+                        }
+                        else
+                        {
+                            <option value="@g">@g</option>
+                        }
+                    }
+                }
+            </select>
+            <span asp-validation-for="Description" class="govuk-error-message" id="groupReportGroupError" style="display:none;"></span>
+        </div>
+
+        <div class="col-12" style="text-align: right; margin-top: 10px;">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary sup_margin_0"
+                    onclick="closeModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button sup_margin_0"
+                    onclick="saveReportGroup()">
+                @saveLabel
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function saveReportGroup() {
+            var dbError     = document.getElementById('groupDbError');
+            var dbErrorText = document.getElementById('groupDbErrorText');
+            if (dbError) dbError.classList.add('ra-hidden');
+
+            $.post({
+                url: '/PIMS/Maintenance/SaveReportGroup',
+                data: $('#formReportGroup').serialize(),
+                success: function (data) {
+                    if (data.success) {
+                        closeModal();
+                        reloadReportGroupsGrid();
+                    } else {
+                        var msg = data.message || 'Save failed.';
+                        if (dbErrorText) dbErrorText.textContent = msg;
+                        if (dbError) dbError.classList.remove('ra-hidden');
+                    }
+                },
+                error: function () {
+                    if (dbErrorText) dbErrorText.textContent = 'An error occurred while saving.';
+                    if (dbError) dbError.classList.remove('ra-hidden');
+                }
+            });
+        }
+    </script>
+}

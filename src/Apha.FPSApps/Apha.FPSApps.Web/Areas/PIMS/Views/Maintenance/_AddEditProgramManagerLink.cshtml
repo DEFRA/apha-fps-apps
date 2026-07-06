@@ -1,0 +1,132 @@
+<!-- TRANSFORMENGINE MIGRATION — _AddEditProgramManagerLink.cshtml
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-07-06
+     CHANGED:
+       - MS Access frmMaintainance mgrAssignEditModal (Program assignment) -> Razor partial
+       - Fields derived from HTML mgrAssignEditModal: mgrAssignValue (select -> Program),
+         manager context passed via hidden field
+       - AllowEdit=false — Add only; no Update on composite link
+       - Anti-forgery token included; saveProgramManagerLink() POSTs JSON to SaveProgramManagerLink
+     DEFERRED:
+       - TRANSFORMENGINE TODO: Programme options loaded dynamically in HTML; confirm lookup endpoint
+         for programme list in production -->
+@model Apha.FPSApps.Web.Areas.PIMS.Models.ProgramManagerLinkItem
+
+@{
+    var title = "Add Program";
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title" style="margin: 0;">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body" style="padding-top: 5px;">
+    <form class="row" id="formProgramManagerLink">
+        @Html.AntiForgeryToken()
+
+        @* TRANSFORMENGINE: Manager context carried from Index page via hidden field *@
+        <input type="hidden" asp-for="Manager" id="hdnLinkManager" />
+
+        <div class="govuk-error-summary ra-form-error-banner ra-hidden"
+             id="mgrAssignDbError" role="alert" aria-labelledby="mgrAssignDbErrorTitle" tabindex="-1">
+            <h2 class="govuk-error-summary__title govuk-!-font-size-14" id="mgrAssignDbErrorTitle">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <p class="govuk-body govuk-!-font-size-14" id="mgrAssignDbErrorText"></p>
+            </div>
+        </div>
+
+        @* Programme select — mgrAssignValue in HTML modal *@
+        <div class="govuk-form-group" id="mgrAssignValueGroup">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="mgrAssignValue">
+                <span id="mgrAssignLabel">Program:</span> <span class="ra-required-star" aria-hidden="true">*</span>
+            </label>
+            @* TRANSFORMENGINE: Program -> mgrAssignValue select.
+               Options from HTML prototype programme list (static); populated dynamically in the original JS. *@
+            <select class="govuk-select govuk-!-font-size-16 ra-select-full"
+                    asp-for="Program"
+                    id="mgrAssignValue"
+                    aria-required="true"
+                    aria-describedby="mgrAssignValueError">
+                <option value="">-- Select --</option>
+                @{
+                    var programmes = new[]
+                    {
+                        "APHA_MISC","ASU","ASUMisc","B&M","Bact","BactMisc","BactTest","Bee Insp",
+                        "BOVINE_TB","BPUMisc","BTB","BTUMisc","ClubFive","Comm","Commercial","CSG",
+                        "DoES","DSG","END_RES","END_SURV","EU Exit","EU_PROG","FES_RES","FES_SURV",
+                        "FS_SURV","FSZ_RES","FSZ_RESMVN","GM","HPE_PROG","IMT","IT_SURV","IT_WB",
+                        "MISC","NFC","NI_PROG","PHSI","PLANT_HEALTH","RABIES","SA_SURV","SHE",
+                        "TBSE","VIG","WB_SURV","WLD_HEALTH","ZOO_PROG"
+                    };
+                    foreach (var p in programmes)
+                    {
+                        if (Model.Program == p)
+                        {
+                            <option value="@p" selected>@p</option>
+                        }
+                        else
+                        {
+                            <option value="@p">@p</option>
+                        }
+                    }
+                }
+            </select>
+            <span asp-validation-for="Program" class="govuk-error-message" id="mgrAssignValueError" style="display:none;"></span>
+        </div>
+
+        <div class="col-12" style="text-align: right; margin-top: 10px;">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary sup_margin_0"
+                    onclick="closeModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button sup_margin_0"
+                    onclick="saveProgramManagerLink()">
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function saveProgramManagerLink() {
+            var dbError     = document.getElementById('mgrAssignDbError');
+            var dbErrorText = document.getElementById('mgrAssignDbErrorText');
+            if (dbError) dbError.classList.add('ra-hidden');
+
+            var program = document.getElementById('mgrAssignValue')?.value || '';
+            var manager = document.getElementById('hdnLinkManager')?.value || '';
+
+            if (!program) {
+                if (dbErrorText) dbErrorText.textContent = 'Please select a programme.';
+                if (dbError) dbError.classList.remove('ra-hidden');
+                return;
+            }
+
+            // TRANSFORMENGINE: SaveProgramManagerLink expects JSON body (ProgramManagerLinkDto)
+            $.ajax({
+                url: '/PIMS/Maintenance/SaveProgramManagerLink',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify({ program: program, manager: manager }),
+                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').first().val() },
+                success: function (data) {
+                    if (data.success) {
+                        closeModal();
+                        reloadProgramManagerLinksGrid();
+                    } else {
+                        var msg = data.message || 'Save failed.';
+                        if (dbErrorText) dbErrorText.textContent = msg;
+                        if (dbError) dbError.classList.remove('ra-hidden');
+                    }
+                },
+                error: function () {
+                    if (dbErrorText) dbErrorText.textContent = 'An error occurred while saving.';
+                    if (dbError) dbError.classList.remove('ra-hidden');
+                }
+            });
+        }
+    </script>
+}

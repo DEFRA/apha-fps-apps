@@ -1,0 +1,111 @@
+<!-- TRANSFORMENGINE MIGRATION — _AddEditProfitCentreManagerLink.cshtml
+     Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 12 — Razor Views (Step 18)
+     Migrated : 2026-07-06
+     CHANGED:
+       - MS Access frmMaintainance mgrAssignEditModal (Resource Centre assignment) -> Razor partial
+       - Fields derived from HTML mgrAssignEditModal (reused for Resource Centre): mgrAssignValue
+         (select -> Profitcentre), manager context via hidden field
+       - AllowEdit=false — Add only; no Update on composite link
+       - Anti-forgery token included; saveProfitCentreManagerLink() POSTs JSON to SaveProfitCentreManagerLink
+     DEFERRED:
+       - TRANSFORMENGINE TODO: Resource Centre options loaded dynamically in HTML; confirm lookup
+         endpoint for profit centre list in production -->
+@model Apha.FPSApps.Web.Areas.PIMS.Models.ProfitCentreManagerLinkItem
+
+@{
+    var title = "Add Resource Centre";
+}
+
+<div class="modal-header flex-space-center">
+    <h3 class="modal-title" style="margin: 0;">@title</h3>
+    <button type="button" class="btn-close btn-red" onclick="closeModal()">X</button>
+</div>
+<div class="modal-body" style="padding-top: 5px;">
+    <form class="row" id="formProfitCentreManagerLink">
+        @Html.AntiForgeryToken()
+
+        @* TRANSFORMENGINE: Manager context carried from Index page via hidden field *@
+        <input type="hidden" asp-for="Manager" id="hdnPcLinkManager" />
+
+        <div class="govuk-error-summary ra-form-error-banner ra-hidden"
+             id="pcAssignDbError" role="alert" aria-labelledby="pcAssignDbErrorTitle" tabindex="-1">
+            <h2 class="govuk-error-summary__title govuk-!-font-size-14" id="pcAssignDbErrorTitle">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <p class="govuk-body govuk-!-font-size-14" id="pcAssignDbErrorText"></p>
+            </div>
+        </div>
+
+        @* Resource Centre select — mgrAssignValue (reused) in HTML modal *@
+        <div class="govuk-form-group" id="pcAssignValueGroup">
+            <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16" for="pcAssignValue">
+                <span id="pcAssignLabel">Resource Centre:</span> <span class="ra-required-star" aria-hidden="true">*</span>
+            </label>
+            @* TRANSFORMENGINE: Profitcentre -> mgrAssignValue select (Resource Centre variant).
+               Options populated dynamically in original JS — text input used here; update to
+               asp-items when lookup endpoint is available. *@
+            <input class="govuk-input govuk-!-font-size-16 ra-select-full"
+                   asp-for="Profitcentre"
+                   id="pcAssignValue"
+                   type="text"
+                   aria-required="true"
+                   aria-describedby="pcAssignValueError"
+                   placeholder="Enter resource centre" />
+            <span asp-validation-for="Profitcentre" class="govuk-error-message" id="pcAssignValueError" style="display:none;"></span>
+        </div>
+
+        <div class="col-12" style="text-align: right; margin-top: 10px;">
+            <button type="button"
+                    class="govuk-button govuk-button--secondary sup_margin_0"
+                    onclick="closeModal()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="govuk-button sup_margin_0"
+                    onclick="saveProfitCentreManagerLink()">
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function saveProfitCentreManagerLink() {
+            var dbError     = document.getElementById('pcAssignDbError');
+            var dbErrorText = document.getElementById('pcAssignDbErrorText');
+            if (dbError) dbError.classList.add('ra-hidden');
+
+            var profitcentre = document.getElementById('pcAssignValue')?.value?.trim() || '';
+            var manager      = document.getElementById('hdnPcLinkManager')?.value || '';
+
+            if (!profitcentre) {
+                if (dbErrorText) dbErrorText.textContent = 'Please enter a resource centre.';
+                if (dbError) dbError.classList.remove('ra-hidden');
+                return;
+            }
+
+            // TRANSFORMENGINE: SaveProfitCentreManagerLink expects JSON body (ProfitCentreManagerLinkDto)
+            $.ajax({
+                url: '/PIMS/Maintenance/SaveProfitCentreManagerLink',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify({ profitcentre: profitcentre, manager: manager }),
+                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').first().val() },
+                success: function (data) {
+                    if (data.success) {
+                        closeModal();
+                        reloadProfitCentreManagerLinksGrid();
+                    } else {
+                        var msg = data.message || 'Save failed.';
+                        if (dbErrorText) dbErrorText.textContent = msg;
+                        if (dbError) dbError.classList.remove('ra-hidden');
+                    }
+                },
+                error: function () {
+                    if (dbErrorText) dbErrorText.textContent = 'An error occurred while saving.';
+                    if (dbError) dbError.classList.remove('ra-hidden');
+                }
+            });
+        }
+    </script>
+}

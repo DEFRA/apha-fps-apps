@@ -1,0 +1,416 @@
+/*
+ * TRANSFORMENGINE MIGRATION — AccessUserServiceTests.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
+ * Migrated : 2026-07-06
+ *
+ * CHANGED:
+ *   - New xUnit test class for Apha.PIMS.Application.Services.AccessUserService
+ *   - Composite PK (systemid int + ntlogin string)
+ *   - Covers: GetAllAsync, GetBySystemIdAsync, GetByNtLoginAsync, GetByIdAsync,
+ *             CreateAsync (dup-guard), UpdateAsync, DeleteAsync, ExistsAsync
+ *   - Uses NSubstitute for IAccessUserRepository and IMapper
+ *
+ * PRESERVED:
+ *   - Duplicate-user guard: InvalidOperationException when systemid+ntlogin already exists
+ *   - System isolation: GetBySystemId scoped by systemid
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - none — fully automated.
+ */
+using Apha.PIMS.Application.Dtos;
+using Apha.PIMS.Application.Services;
+using Apha.PIMS.Core.Entities;
+using Apha.PIMS.Core.Interfaces;
+using AutoMapper;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
+
+namespace Apha.PIMS.Application.UnitTests.Services.AccessUserServiceTest
+{
+    public class AccessUserServiceTests
+    {
+        private readonly IAccessUserRepository _repository;
+        private readonly IMapper _mapper;
+        private readonly AccessUserService _service;
+
+        public AccessUserServiceTests()
+        {
+            _repository = Substitute.For<IAccessUserRepository>();
+            _mapper     = Substitute.For<IMapper>();
+            _service    = new AccessUserService(_repository, _mapper);
+        }
+
+        // ── helpers ───────────────────────────────────────────────────────────────
+
+        private static AccessUser MakeEntity(int systemid = 1, string ntlogin = "DOM\\user1") =>
+            new AccessUser { Systemid = systemid, Ntlogin = ntlogin, Username = "User One" };
+
+        private static AccessUserDto MakeDto(int systemid = 1, string ntlogin = "DOM\\user1") =>
+            new AccessUserDto { Systemid = systemid, Ntlogin = ntlogin, Username = "User One" };
+
+        // ── Constructor ───────────────────────────────────────────────────────────
+
+        #region Constructor
+
+        [Fact]
+        public void Constructor_NullRepository_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => new AccessUserService(null!, _mapper));
+        }
+
+        [Fact]
+        public void Constructor_NullMapper_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => new AccessUserService(_repository, null!));
+        }
+
+        #endregion
+
+        // ── GetAllAsync ───────────────────────────────────────────────────────────
+
+        #region GetAllAsync
+
+        [Fact]
+        public async Task GetAllAsync_RepositoryReturnsEntities_ReturnsMappedDtoList()
+        {
+            // Arrange
+            var entities = new List<AccessUser> { MakeEntity(1, "dom\\u1"), MakeEntity(1, "dom\\u2") };
+            var dtos     = new List<AccessUserDto> { MakeDto(1, "dom\\u1"), MakeDto(1, "dom\\u2") };
+            _repository.GetAllAsync().Returns(entities);
+            _mapper.Map<List<AccessUserDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _service.GetAllAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+            await _repository.Received(1).GetAllAsync();
+        }
+
+        [Fact]
+        public async Task GetAllAsync_RepositoryReturnsEmptyList_ReturnsEmptyDtoList()
+        {
+            // Arrange
+            _repository.GetAllAsync().Returns(new List<AccessUser>());
+            _mapper.Map<List<AccessUserDto>>(Arg.Any<List<AccessUser>>()).Returns(new List<AccessUserDto>());
+
+            // Act
+            var result = await _service.GetAllAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        // ── GetBySystemIdAsync ────────────────────────────────────────────────────
+
+        #region GetBySystemIdAsync
+
+        [Fact]
+        public async Task GetBySystemIdAsync_RepositoryReturnsEntities_ReturnsMappedList()
+        {
+            // Arrange
+            var entities = new List<AccessUser> { MakeEntity(2, "dom\\u1") };
+            var dtos     = new List<AccessUserDto> { MakeDto(2, "dom\\u1") };
+            _repository.GetBySystemIdAsync(2).Returns(entities);
+            _mapper.Map<List<AccessUserDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _service.GetBySystemIdAsync(2);
+
+            // Assert
+            Assert.Single(result);
+            await _repository.Received(1).GetBySystemIdAsync(2);
+        }
+
+        [Fact]
+        public async Task GetBySystemIdAsync_RepositoryReturnsEmpty_ReturnsEmptyList()
+        {
+            // Arrange
+            _repository.GetBySystemIdAsync(99).Returns(new List<AccessUser>());
+            _mapper.Map<List<AccessUserDto>>(Arg.Any<List<AccessUser>>()).Returns(new List<AccessUserDto>());
+
+            // Act
+            var result = await _service.GetBySystemIdAsync(99);
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        // ── GetByNtLoginAsync ─────────────────────────────────────────────────────
+
+        #region GetByNtLoginAsync
+
+        [Fact]
+        public async Task GetByNtLoginAsync_ValidNtlogin_ReturnsMappedList()
+        {
+            // Arrange
+            const string ntlogin = "dom\\jsmith";
+            var entities = new List<AccessUser> { MakeEntity(1, ntlogin) };
+            var dtos     = new List<AccessUserDto> { MakeDto(1, ntlogin) };
+            _repository.GetByNtLoginAsync(ntlogin).Returns(entities);
+            _mapper.Map<List<AccessUserDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _service.GetByNtLoginAsync(ntlogin);
+
+            // Assert
+            Assert.Single(result);
+            await _repository.Received(1).GetByNtLoginAsync(ntlogin);
+        }
+
+        [Fact]
+        public async Task GetByNtLoginAsync_EmptyNtlogin_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByNtLoginAsync(""));
+        }
+
+        [Fact]
+        public async Task GetByNtLoginAsync_WhitespaceNtlogin_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByNtLoginAsync("   "));
+        }
+
+        #endregion
+
+        // ── GetByIdAsync ──────────────────────────────────────────────────────────
+
+        #region GetByIdAsync
+
+        [Fact]
+        public async Task GetByIdAsync_EntityExists_ReturnsMappedDto()
+        {
+            // Arrange
+            const string ntlogin = "dom\\user";
+            var entity = MakeEntity(1, ntlogin);
+            var dto    = MakeDto(1, ntlogin);
+            _repository.GetByIdAsync(1, ntlogin).Returns(entity);
+            _mapper.Map<AccessUserDto>(entity).Returns(dto);
+
+            // Act
+            var result = await _service.GetByIdAsync(1, ntlogin);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(ntlogin, result!.Ntlogin);
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_EntityNotFound_ReturnsNull()
+        {
+            // Arrange
+            _repository.GetByIdAsync(Arg.Any<int>(), Arg.Any<string>()).Returns((AccessUser?)null);
+
+            // Act
+            var result = await _service.GetByIdAsync(99, "dom\\unknown");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_EmptyNtlogin_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.GetByIdAsync(1, ""));
+        }
+
+        #endregion
+
+        // ── CreateAsync ───────────────────────────────────────────────────────────
+
+        #region CreateAsync
+
+        [Fact]
+        public async Task CreateAsync_ValidDto_ReturnsMappedCreatedDto()
+        {
+            // Arrange
+            const string ntlogin = "dom\\newuser";
+            var dto     = MakeDto(1, ntlogin);
+            var entity  = MakeEntity(1, ntlogin);
+            var created = MakeEntity(1, ntlogin);
+            var result_dto = MakeDto(1, ntlogin);
+            _repository.ExistsAsync(1, ntlogin).Returns(false);
+            _mapper.Map<AccessUser>(dto).Returns(entity);
+            _repository.AddAsync(entity).Returns(created);
+            _mapper.Map<AccessUserDto>(created).Returns(result_dto);
+
+            // Act
+            var result = await _service.CreateAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(ntlogin, result.Ntlogin);
+            await _repository.Received(1).AddAsync(entity);
+        }
+
+        [Fact]
+        public async Task CreateAsync_DuplicateUserExists_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var dto = MakeDto(1, "dom\\existing");
+            _repository.ExistsAsync(1, "dom\\existing").Returns(true);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAsync(dto));
+        }
+
+        [Fact]
+        public async Task CreateAsync_NullDto_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.CreateAsync(null!));
+        }
+
+        [Fact]
+        public async Task CreateAsync_EmptyNtlogin_ThrowsArgumentException()
+        {
+            var dto = new AccessUserDto { Systemid = 1, Ntlogin = "" };
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.CreateAsync(dto));
+        }
+
+        [Fact]
+        public async Task CreateAsync_DoesNotCallAdd_WhenUserAlreadyExists()
+        {
+            // Arrange
+            var dto = MakeDto(1, "dom\\existing");
+            _repository.ExistsAsync(1, "dom\\existing").Returns(true);
+
+            // Act + ignore exception
+            try { await _service.CreateAsync(dto); } catch { }
+
+            // Assert
+            await _repository.DidNotReceive().AddAsync(Arg.Any<AccessUser>());
+        }
+
+        #endregion
+
+        // ── UpdateAsync ───────────────────────────────────────────────────────────
+
+        #region UpdateAsync
+
+        [Fact]
+        public async Task UpdateAsync_EntityExists_ReturnsMappedUpdatedDto()
+        {
+            // Arrange
+            const string ntlogin = "dom\\user";
+            var dto     = MakeDto(1, ntlogin);
+            var entity  = MakeEntity(1, ntlogin);
+            var updated = MakeEntity(1, ntlogin);
+            var result_dto = MakeDto(1, ntlogin);
+            _repository.ExistsAsync(1, ntlogin).Returns(true);
+            _mapper.Map<AccessUser>(dto).Returns(entity);
+            _repository.UpdateAsync(entity).Returns(updated);
+            _mapper.Map<AccessUserDto>(updated).Returns(result_dto);
+
+            // Act
+            var result = await _service.UpdateAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+            await _repository.Received(1).UpdateAsync(entity);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_EntityNotFound_ThrowsKeyNotFoundException()
+        {
+            // Arrange
+            _repository.ExistsAsync(Arg.Any<int>(), Arg.Any<string>()).Returns(false);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.UpdateAsync(MakeDto(99, "dom\\x")));
+        }
+
+        [Fact]
+        public async Task UpdateAsync_NullDto_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _service.UpdateAsync(null!));
+        }
+
+        [Fact]
+        public async Task UpdateAsync_EmptyNtlogin_ThrowsArgumentException()
+        {
+            var dto = new AccessUserDto { Systemid = 1, Ntlogin = "" };
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.UpdateAsync(dto));
+        }
+
+        #endregion
+
+        // ── DeleteAsync ───────────────────────────────────────────────────────────
+
+        #region DeleteAsync
+
+        [Fact]
+        public async Task DeleteAsync_EntityExists_CallsRepositoryDelete()
+        {
+            // Arrange
+            const string ntlogin = "dom\\user";
+            _repository.ExistsAsync(1, ntlogin).Returns(true);
+            _repository.DeleteAsync(1, ntlogin).Returns(Task.CompletedTask);
+
+            // Act
+            await _service.DeleteAsync(1, ntlogin);
+
+            // Assert
+            await _repository.Received(1).DeleteAsync(1, ntlogin);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_EntityNotFound_ThrowsKeyNotFoundException()
+        {
+            // Arrange
+            _repository.ExistsAsync(Arg.Any<int>(), Arg.Any<string>()).Returns(false);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.DeleteAsync(99, "dom\\unknown"));
+        }
+
+        [Fact]
+        public async Task DeleteAsync_EmptyNtlogin_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteAsync(1, ""));
+        }
+
+        #endregion
+
+        // ── ExistsAsync ───────────────────────────────────────────────────────────
+
+        #region ExistsAsync
+
+        [Fact]
+        public async Task ExistsAsync_EntityExists_ReturnsTrue()
+        {
+            // Arrange
+            _repository.ExistsAsync(1, "dom\\user").Returns(true);
+
+            // Act
+            var result = await _service.ExistsAsync(1, "dom\\user");
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_EntityNotFound_ReturnsFalse()
+        {
+            // Arrange
+            _repository.ExistsAsync(Arg.Any<int>(), Arg.Any<string>()).Returns(false);
+
+            // Act
+            var result = await _service.ExistsAsync(99, "dom\\unknown");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task ExistsAsync_EmptyNtlogin_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => _service.ExistsAsync(1, ""));
+        }
+
+        #endregion
+    }
+}

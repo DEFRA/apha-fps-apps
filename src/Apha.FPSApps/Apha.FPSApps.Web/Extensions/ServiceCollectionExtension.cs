@@ -1,3 +1,21 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 10 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-07-06
+ *
+ * CHANGED:
+ *   - Added AddScoped<IMaintenanceService, MaintenanceService>() registration in AddServices()
+ *     for the frmMaintenance (PIMS Admin Maintenance) aggregate service
+ *
+ * PRESERVED:
+ *   - All existing FPS, PACT, Costbook, and PIMS service registrations unchanged
+ *   - Alphabetical ordering within the PIMS service block preserved
+ *   - AddRepositories() method left empty (no repository DI required for frontend services)
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - DEFERRED: none — fully automated.
+ */
+
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -59,6 +77,8 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
             services.AddScoped<IAccountCategoryService, AccountCategoryService>();
             // PIMS
+            // TRANSFORMENGINE: IMaintenanceService -> MaintenanceService registered — frmMaintenance aggregate facade (Phase 10)
+            services.AddScoped<IMaintenanceService, MaintenanceService>();
             services.AddScoped<IProjectListService, ProjectListService>();
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
             services.AddScoped<IProjectCommentService, ProjectCommentService>();
