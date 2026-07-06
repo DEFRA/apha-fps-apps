@@ -42,7 +42,7 @@ function reloadFailedGrid() {
 
 function addSubContractRms() {
     if (!currentRmsMonth) {
-        showGovukAlert('Please select a period first.');
+        showAlertMessage('Please select a period first.', AlertType.INFO);
         return;
     }
 
@@ -55,7 +55,7 @@ function addSubContractRms() {
             $('#modalPopup').addClass('show');
         },
         error: function () {
-            showGovukAlert('Error loading form.');
+            showAlertMessage('Error loading form.', AlertType.ERROR);
         }
     });
 }
@@ -72,7 +72,7 @@ function editSubContractRms(btn) {
             $('#modalPopup').addClass('show');
         },
         error: function () {
-            showGovukAlert('Error loading form.');
+            showAlertMessage('Error loading form.', AlertType.ERROR);
         }
     });
 }
@@ -89,13 +89,13 @@ function deleteSubContractRms(btn) {
             success: function (response) {
                 if (response.success) {
                     reloadRmsGrid();
-                    showGovukAlert('SubContract deleted successfully.');
+                    showAlertMessage('SubContract deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showGovukAlert('Error: ' + response.message);
+                    showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
@@ -126,14 +126,14 @@ function saveProjectCost() {
         success: function (response) {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
-                showGovukAlert(response.message || 'SubContract saved successfully.');
+                showAlertMessage(response.message || 'SubContract saved successfully.', AlertType.SUCCESS);
                 reloadRmsGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
             }
         },
         error: function () {
-            showGovukAlert('An error occurred while saving.');
+            showAlertMessage('An error occurred while saving.', AlertType.ERROR);
         }
     });
 }
@@ -161,17 +161,17 @@ function downloadSubContractRmsTemplate() {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
 
-            showGovukAlert('Template downloaded successfully. Please use the template to import Sub-Contract RMS data.');
+            showAlertMessage('Template downloaded successfully. Please use the template to import Sub-Contract RMS data.', AlertType.INFO);
         },
         error: function () {
-            showGovukAlert('Template download failed. Please try again.');
+            showAlertMessage('Template download failed. Please try again.', AlertType.ERROR);
         }
     });
 }
 
 function importSubContractRms(file) {
     if (!file) {
-        showGovukAlert('Please select an Excel file to import.');
+        showAlertMessage('Please select an Excel file to import.', AlertType.INFO);
         return;
     }
 
@@ -187,15 +187,15 @@ function importSubContractRms(file) {
         success: function (response) {
             if (response.success) {
                 const msg = response.message || ('Import completed successfully. ' + (response.passedCount || 0) + 'records successfully validated and is now live');
-                showGovukAlert(msg);
+                showAlertMessage(msg, AlertType.SUCCESS);
                 reloadRmsGrid();
                 reloadFailedGrid();
             } else {
-                showGovukAlert(response.message || 'Import failed.');
+                showAlertMessage(response.message || 'Import failed.', AlertType.ERROR);
             }
         },
         error: function () {
-            showGovukAlert('An error occurred while importing file.');
+            showAlertMessage('An error occurred while importing file.', AlertType.ERROR);
         }
     });
 }
@@ -210,13 +210,13 @@ function deleteAllFailedSubContractRms() {
             success: function (response) {
                 if (response.success) {
                     reloadFailedGrid();
-                    showGovukAlert('Failed records deleted successfully.');
+                    showAlertMessage('Failed records deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showGovukAlert(response.message || 'Failed to delete failed records.');
+                    showAlertMessage(response.message || 'Failed to delete failed records.', AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting failed records.');
+                showAlertMessage('An error occurred while deleting failed records.', AlertType.ERROR);
             }
         });
     });
@@ -234,7 +234,7 @@ function editFailedSubContractRms(btn) {
             $('#modalPopup').addClass('show');
         },
         error: function () {
-            showGovukAlert('Error loading form.');
+            showAlertMessage('Error loading form.', AlertType.ERROR);
         }
     });
 }
@@ -251,13 +251,13 @@ function deleteFailedSubContractRms(btn) {
             success: function (response) {
                 if (response.success) {
                     reloadFailedGrid();
-                    showGovukAlert('Failed record deleted successfully.');
+                    showAlertMessage('Failed record deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showGovukAlert('Error: ' + response.message);
+                    showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });
@@ -289,7 +289,7 @@ function saveFailedSubContractRms() {
         success: function (response) {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
-                showGovukAlert(response.message || 'Failed record saved successfully.');
+                showAlertMessage(response.message || 'Failed record saved successfully.', AlertType.SUCCESS);
                 reloadFailedGrid();
                 if (response.movedToSubContract) {
                     reloadRmsGrid();
@@ -299,7 +299,7 @@ function saveFailedSubContractRms() {
             }
         },
         error: function () {
-            showGovukAlert('An error occurred while saving.');
+            showAlertMessage('An error occurred while saving.', AlertType.ERROR);
         }
     });
 }
@@ -309,7 +309,7 @@ function exportFailedSubContractRms() {
     const exportUrl = '/PACT/SubContractRms/ExportFailedSubContractRms';
 
     if (!gridManager) {
-        showGovukAlert('Failed to export: grid manager not found.');
+        showAlertMessage('Failed to export.', AlertType.ERROR);
         return;
     }
 
@@ -337,7 +337,7 @@ function exportFailedSubContractRms() {
             window.URL.revokeObjectURL(url);
         },
         error: function () {
-            showGovukAlert('Failed to export failed records.');
+            showAlertMessage('Failed to export failed records.', AlertType.ERROR);
         }
     });
 }
