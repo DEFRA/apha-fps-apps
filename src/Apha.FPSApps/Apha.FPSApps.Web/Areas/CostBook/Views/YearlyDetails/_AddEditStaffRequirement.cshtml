@@ -32,8 +32,15 @@
             <div style="position: relative; z-index: 50;">
                 <input type="text" id="wgGradeSelect" placeholder="-- Select Grade --" autocomplete="off"
                        class="govuk-input govuk-!-font-size-16 down-arrow-img" style="width: 100%; cursor: pointer;"
-                       value="@Model.WgGrade" readonly />
-                <div id="wgGradeDropdownPanel" style="display:none; position:absolute; top:100%; left:0; width:100%;
+                       value="@Model.WgGrade" 
+                       tabindex="0" 
+                       role="combobox" 
+                       aria-haspopup="listbox" 
+                       aria-expanded="false" readonly />
+                <div id="wgGradeDropdownPanel" 
+                     role="listbox" 
+                     aria-label="WG Grade selection list"
+                     style="display:none; position:absolute; top:100%; left:0; width:100%;
                         max-height:220px; overflow-y:auto; background:#fff; border:1px solid #b1b4b6;
                         box-shadow:0 4px 8px rgba(0,0,0,.2); z-index:2000;">
                     <input type="text" id="wgGradeSearchBox" placeholder="Type to search grade"
@@ -54,6 +61,8 @@
                                     data-payrate="@(p.PayRate?.ToString("F2") ?? "")"
                                     data-npr="@(p.Npr?.ToString("F2") ?? "")"
                                     data-ohr="@(p.Ohr?.ToString("F2") ?? "")"
+                                    tabindex="0"
+                                    role="option"
                                     style="cursor:pointer;">
                                     <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@p.WgGrade</td>
                                     <td style="padding:6px 8px; border-bottom:1px solid #f3f2f1;">@(p.ChargeRate?.ToString("F2") ?? "N/A")</td>
