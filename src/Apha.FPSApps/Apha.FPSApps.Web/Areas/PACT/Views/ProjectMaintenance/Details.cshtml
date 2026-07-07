@@ -421,8 +421,12 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        showAlertMessage('Project updated successfully.', AlertType.SUCCESS);
-                    } else {
+                        showAlertMessage('Project updated successfully.', AlertType.SUCCESS)
+                        .then(function () {
+                            window.location.reload();
+                        });
+                    }
+                    else {
                         displayServerValidationErrors(response.errors, response.message, '#projectDetailForm');
                     }
                 },
