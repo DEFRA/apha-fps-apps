@@ -58,6 +58,9 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IAppStateService, AppStateService>();
             services.AddScoped<IAdditionalCostService, AdditionalCostService>();
             services.AddScoped<IAccountCategoryService, AccountCategoryService>();
+            services.AddScoped<ICostBookAccountGroupService, CostBookAccountGroupService>();
+            services.AddScoped<ICostBookCapsStaffService, CostBookCapsStaffService>();
+            services.AddScoped<ICostBookMaintenanceService, CostBookMaintenanceService>();
             // PIMS
             services.AddScoped<IProjectListService, ProjectListService>();
             services.AddScoped<IProjectDetailsService, ProjectDetailsService>();
