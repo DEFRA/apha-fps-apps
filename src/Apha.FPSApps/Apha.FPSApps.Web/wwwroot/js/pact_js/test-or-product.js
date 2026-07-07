@@ -76,7 +76,7 @@
         $('#isEdit').val('false');
         $('#originalItemCode').val('');
         $('#testForm')[0].reset();
-        $('#itemCode').prop('readonly', false);
+        $('#itemCode').prop('disabled', false);
 
         setRequiredFields();
         populateOwnerDropdown();
@@ -88,7 +88,7 @@
         var itemCode = $(btn).data('id');
 
         if (!itemCode) {
-            showNotification('Error', 'Item code not found', 'error');
+            showAlertMessage('Item code not found', AlertType.ERROR);
             return;
         }
 
@@ -146,12 +146,13 @@
                     }, 50);
                 } else {
                     setRequiredFields();
-                    showNotification('Error', response.message, 'error');
+                    showAlertMessage('Error: '+ response.message, AlertType.ERROR);
                 }
             },
             error: function () {
                 setRequiredFields();
-                showNotification('Error', 'Failed to load test/product details', 'error');
+                showAlertMessage('Error: ' + 'Failed to load test/product details', AlertType.ERROR);
+
             }
         });
     }
@@ -211,7 +212,7 @@
                     if (response.errors) {
                         displayServerValidationErrors(response.errors, response.message, '#testModal');
                     } else {
-                        showNotification('Error', response.message, 'error');
+                        showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                     }
                 }
             },
@@ -220,7 +221,7 @@
                     displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message || 'There is a problem', '#testModal');
                 } else {
                     var message = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred while saving';
-                    showNotification('Error', message || 'An error occurred while saving', 'error');
+                    showAlertMessage('Error: ' + message || 'An error occurred while saving', AlertType.ERROR);
                 }
             }
         });
@@ -230,7 +231,7 @@
         var itemCode = $(btn).data('id');
 
         if (!itemCode) {
-            showNotification('Error', 'Item code not found', 'error');
+            showAlertMessage('Error: ' + 'Item code not found', AlertType.ERROR);
             return;
         }
         showGovukConfirm('Are you sure you want to delete test/product ' + itemCode + '?').then(function (confirmed) {
@@ -245,23 +246,18 @@
                         reloadGrid('testGrid');
                         showAlertMessage(response.message, AlertType.SUCCESS);
                     } else {
-                        showNotification('Error', response.message, 'error');
+                        showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                     }
                 },
                 error: function (xhr) {
                     var message = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred while deleting';
-                    showNotification('Error', message || 'An error occurred while deleting', 'error');
+                    showAlertMessage('Error: ' + message || 'An error occurred while deleting', AlertType.ERROR);
                 }
             });
         });
     }
 
     // ── Utilities ─────────────────────────────────────────────────────────────
-
-    function showNotification(title, message, type) {
-        var icon = type === 'success' ? '✓' : '✗';
-        showAlertMessage(icon + ' ' + title + ': ' + message, AlertType.INFO);
-    }
 
     function reloadGrid(gridId) {
         var gridManager = window['gridManager_' + gridId];
