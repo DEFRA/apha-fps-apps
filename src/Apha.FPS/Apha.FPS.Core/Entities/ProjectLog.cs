@@ -35,13 +35,13 @@ namespace Apha.FPS.Core.Entities
         public DateTime? DateTime { get; set; }
         public string? UserId { get; set; }
         public string? InsertDelete { get; set; }
-        public string JobCode { get; set; } = null!;
+        public string? JobCode { get; set; }
         public short? IsDefraProject { get; set; }
         public double? CostCentre { get; set; }
         public string? OracleProjectCode { get; set; }
         public string? SubAccountCode { get; set; }
         public string? ProjectGroup { get; set; }
         public string? IncomeAccountCode { get; set; }
-        public int FpsYear { get; set; }
+        public int? FpsYear { get; set; }
     }
 }

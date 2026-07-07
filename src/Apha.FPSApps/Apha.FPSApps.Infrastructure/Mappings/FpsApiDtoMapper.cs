@@ -147,12 +147,6 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
             // Audit logs are read-only so no .ReverseMap() — frontend never writes back to backend audit tables.
-
-            // ProjectLog: Res has 33 properties; Dto has 41 (extra: SequenceNo, JobCode, IsDefraProject,
-            //   FpsYear, CostCentre, OracleProjectCode, SubAccountCode, ProjectGroup, IncomeAccountCode).
-            //   Extra Dto fields remain default-valued after mapping — acceptable for audit grid display.
-            //   ProjectLogRes.CaseworkSub maps to ProjectLogDto.CaseWorkSub (casing difference).
-            //   ProjectLogRes.PlanCaseworkDebit maps to ProjectLogDto.PlanCaseWorkDebit (casing difference).
             CreateMap<ProjectLogRes, ProjectLogDto>()
                 .ForMember(d => d.CaseWorkSub, o => o.MapFrom(s => s.CaseworkSub))
                 .ForMember(d => d.PlanCaseWorkDebit, o => o.MapFrom(s => s.PlanCaseworkDebit));
