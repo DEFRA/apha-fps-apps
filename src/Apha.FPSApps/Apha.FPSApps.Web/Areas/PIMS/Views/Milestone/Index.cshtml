@@ -24,19 +24,11 @@
                 <div class="milestones-toolbar">
                     <div class="sup_flex_align_center sup_flex_gap_10 sup_margin_left_20">
                         <label class="govuk-label font-size-16" for="projectSelectGrid">Project</label>
-                        <select class="govuk-select font-size-16 govuk-!-margin-right-3" id="projectSelectGrid"
+                        <select asp-for="Parentproject"
+                                asp-items="Model.ProjectOptions"
+                                class="govuk-select font-size-16 govuk-!-margin-right-3"
+                                id="projectSelectGrid"
                                 onchange="onProjectChanged(this.value)">
-                            @foreach (var opt in Model.ProjectOptions)
-                            {
-                                if (opt.Value == parentproject)
-                                {
-                                    <option value="@opt.Value" selected>@opt.Text</option>
-                                }
-                                else
-                                {
-                                    <option value="@opt.Value">@opt.Text</option>
-                                }
-                            }
                         </select>
                     </div>
                     <div>
@@ -105,7 +97,7 @@
 <div id="milestoneModalContainer"></div>
 <div id="milestoneFormDatesModalContainer"></div>
 @Html.AntiForgeryToken()
-
+<input type="hidden" id="hdnTypeLookUp" value="@Model.TypeLookUp" />
 <script src="~/js/ajax-form-validation.js"></script>
 
 @section Scripts {
@@ -114,18 +106,26 @@
         var currentProject = '@Html.Raw(parentproject)';
 
         function onProjectChanged(project) {
-            currentProject = project;
-            $.get('@Url.Action("GetFormRequired", "Milestone", new { area = "PIMS" })',
-                { parentproject: project },
-                function (data) {
-                    var chk = document.getElementById('chkMilestoneDeliverable');
-                    if (chk) { chk.checked = data.formRequired === true; }
-                });
-            var gmMilestone = window['gridManager_milestonesGrid'];
-            if (gmMilestone) { gmMilestone.reloadGrid({ page: 1 }); }
-            var gmFormDates = window['gridManager_milestoneFormDatesGrid'];
-            if (gmFormDates) { gmFormDates.reloadGrid({ page: 1 }); }
-        }
+             currentProject = project;
+
+             var logOfUpdatesBtn = document.getElementById('logOfUpdatesBtn');
+             if (logOfUpdatesBtn) {
+                 logOfUpdatesBtn.href = '@Url.Action("LogIndex", "Milestone", new { area = "PIMS" })' + '?project=' + encodeURIComponent(project);
+             }
+
+             $.get('@Url.Action("GetFormRequired", "Milestone", new { area = "PIMS" })',
+                 { parentproject: project },
+                 function (data) {
+                     var chk = document.getElementById('chkMilestoneDeliverable');
+                     if (chk) { chk.checked = data.formRequired === true; }
+                     var hdnTypeLookUp = document.getElementById('hdnTypeLookUp');
+                     if (hdnTypeLookUp) { hdnTypeLookUp.value = data.typeLookUp; }
+                 });
+             var gmMilestone = window['gridManager_milestonesGrid'];
+             if (gmMilestone) { gmMilestone.reloadGrid({ page: 1 }); }
+             var gmFormDates = window['gridManager_milestoneFormDatesGrid'];
+             if (gmFormDates) { gmFormDates.reloadGrid({ page: 1 }); }
+         }
 
         function getMilestoneExtraFilters() {
             return { parentproject: currentProject };
@@ -158,8 +158,10 @@
 
         // ── Milestone CRUD ───────────────────────────────────────────────────
         function addMilestone() {
+
+             var typeLookUp = document.getElementById('hdnTypeLookUp')?.value || 'M';
             $.get('@Url.Action("GetAddEditMilestonePartial", "Milestone", new { area = "PIMS" })',
-                { parentproject: currentProject },
+                { parentproject: currentProject, typeLookUp: typeLookUp },
                 function (html) {
                     $('#milestoneModalContainer').html(html);
                     var modal = document.getElementById('editRecordModal');
@@ -169,8 +171,9 @@
 
         function editMilestone(btn) {
             var number = $(btn).data('id');
+            var typeLookUp = document.getElementById('hdnTypeLookUp')?.value || 'M';
             $.get('@Url.Action("GetAddEditMilestonePartial", "Milestone", new { area = "PIMS" })',
-                { parentproject: currentProject, number: number },
+                { parentproject: currentProject, number: number, typeLookUp: typeLookUp },
                 function (html) {
                     $('#milestoneModalContainer').html(html);
                     var modal = document.getElementById('editRecordModal');

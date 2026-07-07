@@ -116,5 +116,15 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             var dto = _mapper.Map<ApiResponseDto<List<ProjectListMilestoneDto>>>(response);
             return ApiResponseDto<List<ProjectListMilestoneDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
+        public async Task<ApiResponseDto<ProjectDetailsMilestoneDto>> GetProjectsDetailsForMilestoneAsync(string parentproject)
+        {
+            var response = await _http.GetAsync<ProjectDetailsMilestoneRes>(string.Format(PimsApiEndpoints.GetProjectsDetailsForMilestone, parentproject));
+
+            if (response.Success && response.Data != null)
+                return _mapper.Map<ApiResponseDto<ProjectDetailsMilestoneDto>>(response);
+
+            var dto = _mapper.Map<ApiResponseDto<ProjectDetailsMilestoneDto>>(response);
+            return ApiResponseDto<ProjectDetailsMilestoneDto>.FailureResponse(dto.Errors, dto.Meta);
+        }
     }
  }
