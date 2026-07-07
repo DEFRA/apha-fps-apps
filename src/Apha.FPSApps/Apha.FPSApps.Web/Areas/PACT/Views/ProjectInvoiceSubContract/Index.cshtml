@@ -205,10 +205,10 @@
                 data: JSON.stringify(data),
                 success: function (response) {
                     if (response.success) {
-                        showAlertMessage(response.message, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         getInvoicesGridManager()?.reloadGrid({ page: 1 });
                         refreshInvoiceTotalAmount();
+                        showAlertMessage(response.message, AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#invoiceForm');
                     }
@@ -304,10 +304,10 @@
                 data: JSON.stringify(data),
                 success: function (response) {
                     if (response.success) {
-                        showAlertMessage(response.message, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         getSubContractsGridManager()?.reloadGrid({ page: 1 });
                         refreshSubContractTotalAmount();
+                        showAlertMessage(response.message, AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#subContractForm');
                     }
