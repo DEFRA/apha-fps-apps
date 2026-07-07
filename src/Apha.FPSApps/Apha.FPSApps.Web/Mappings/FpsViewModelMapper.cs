@@ -103,6 +103,9 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
 
+            // Total Business Overheads
+            CreateMap<TotalBusinessOverheadsViewModel, TotalBusinessOverheadsDto>().ReverseMap();
+
             // Misc Project Data
             CreateMap<ProjectDto, ProjectMiscItem>()
                 .ForMember(d => d.ParentProject, o => o.MapFrom(s => s.ParentProject))
