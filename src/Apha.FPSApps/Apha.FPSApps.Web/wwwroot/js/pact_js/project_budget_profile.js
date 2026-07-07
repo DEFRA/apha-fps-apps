@@ -110,6 +110,7 @@ function loadProfileData(parentProject) {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { position: 'top' } },
                     scales: {
                         x: {
@@ -180,6 +181,7 @@ function loadCumulativeData(parentProject) {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { position: 'top' } },
                     scales: {
                         x: {
