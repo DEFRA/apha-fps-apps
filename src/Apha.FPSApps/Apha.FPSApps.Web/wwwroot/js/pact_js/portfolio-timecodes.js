@@ -78,8 +78,8 @@ function deleteJobCode(btn) {
             data: { jobCodeId: jobCodeId, parentProject: currentParentProject },
             success: function (response) {
                 if (response.success) {
-                    showAlertMessage(response.message || 'Job code deleted successfully.', AlertType.SUCCESS);
                     refreshJobCodeGrid();
+                    showAlertMessage(response.message || 'Job code deleted successfully.', AlertType.SUCCESS);
 
                     // If the deleted job code was selected, clear the time code grid
                     if (currentJobCodeId === jobCodeId) {
@@ -123,12 +123,12 @@ function saveJobCode() {
         success: function (response) {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
+                refreshJobCodeGrid();
                 if (isEdit) {
                     showAlertMessage(response.message || 'Job code updated successfully.', AlertType.SUCCESS);
                 } else {
                     showAlertMessage(response.message || 'Job code saved successfully.', AlertType.SUCCESS);
                 }
-                refreshJobCodeGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#jobCodeForm');
             }
@@ -248,8 +248,8 @@ function deleteTimeCode(btn) {
             },
             success: function (response) {
                 if (response.success) {
-                    showAlertMessage(response.message || 'Time code deleted successfully.', AlertType.SUCCESS);
                     refreshTimeCodeGrid();
+                    showAlertMessage(response.message || 'Time code deleted successfully.', AlertType.SUCCESS);
                 } else {
                     showAlertMessage('Error: ' + (response.message || 'Failed to delete time code'), AlertType.ERROR);
                 }
@@ -298,12 +298,12 @@ function saveTimeCode() {
         success: function (response) {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
+                refreshTimeCodeGrid();
                 if (isEdit) {
                     showAlertMessage(response.message || 'Time code updated successfully.', AlertType.SUCCESS);
                 } else { 
                     showAlertMessage(response.message || 'Time code saved successfully.', AlertType.SUCCESS);
                 }
-                refreshTimeCodeGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#timeCodeForm');
             }

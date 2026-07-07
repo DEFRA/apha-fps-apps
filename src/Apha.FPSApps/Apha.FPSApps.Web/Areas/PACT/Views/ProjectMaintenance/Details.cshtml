@@ -421,8 +421,12 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        showAlertMessage('Project updated successfully.', AlertType.SUCCESS);
-                    } else {
+                        showAlertMessage('Project updated successfully.', AlertType.SUCCESS)
+                        .then(function () {
+                            window.location.reload();
+                        });
+                    }
+                    else {
                         displayServerValidationErrors(response.errors, response.message, '#projectDetailForm');
                     }
                 },
@@ -496,9 +500,9 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        showAlertMessage(successMsg, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         getJobCodeGridManager()?.reloadGrid({ page: 1 });
+                        showAlertMessage(successMsg, AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#jobCodeForm');
                     }
@@ -592,9 +596,9 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        showAlertMessage(successMsg, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         reloadTimeCodeGrid(selectedJobCodeId);
+                        showAlertMessage(successMsg, AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#timeCodeForm');
                     }

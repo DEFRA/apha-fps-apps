@@ -58,42 +58,26 @@ $(document).ready(function () {
         }
     });
 
-    // ── Check for portfolio parameter and auto-select ─────────────────────
-    var urlParams = new URLSearchParams(window.location.search);
-    var portfolioParam = urlParams.get('portfolio');
+    // ── Check for preselected value (ViewBag) or URL parameter and auto-select ──
+    var selectedFromViewBag = (typeof preselectedPortfolio !== 'undefined' && preselectedPortfolio)
+        ? String(preselectedPortfolio)
+        : '';
 
-    if (portfolioParam) {
-        // Use a slight delay to ensure all event handlers are fully bound
-        setTimeout(function() {
-            // Find the matching row in the dropdown
-            var $matchingRow = $rows.filter(function() {
-                return $(this).data('value') === portfolioParam;
-            });
+    if (selectedFromViewBag && portfolioSelectDropdown) {
+        portfolioSelectDropdown.setValue(selectedFromViewBag);
+    } else {
+        var urlParams = new URLSearchParams(window.location.search);
+        var portfolioParam = urlParams.get('portfolio');
 
-            if ($matchingRow.length > 0) {
-                // Manually simulate the row click behavior
-                var value = $matchingRow.data('value');
-                var label = $matchingRow.data('label');
-
-                // Update the input display value
-                $input.val(label || value);
-
-                // Close the panel
-                $panel.removeClass('open');
-
-                // Clear search
-                $('#portfolioDropdownPanel .select-search-box').val('');
-                $rows.show();
-
-                // Load the portfolio data
-                loadPortfolioData(value);
-            }
-        }, 100);
+        if (portfolioParam && portfolioSelectDropdown) {
+            portfolioSelectDropdown.setValue(portfolioParam);
+        }
     }
 
     // ── Save portfolio form ───────────────────────────────────────────────────
     $('#btnSavePortfolio').on('click', function () {
         clearValidationErrors('#portfolioDetailForm');
+
         var payload = {
             parentProject: $('#hdnParentProject').val(),
             projectTitle: $('#txtProjectTitle').val(),
@@ -113,7 +97,11 @@ $(document).ready(function () {
         }).done(function (res) {
             if (res.success) {
                 clearValidationErrors('#portfolioDetailForm');
-                showAlertMessage(res.message || 'Portfolio saved successfully.', AlertType.SUCCESS);
+                showAlertMessage(res.message || 'Portfolio saved successfully.', AlertType.SUCCESS)
+                    .then(function () {
+                        let selectedparentProject = $('#hdnParentProject').val();
+                        loadPortfolioData(selectedparentProject);
+                    });
             } else {
                 displayServerValidationErrors(res.errors, res.message, '#portfolioDetailForm');
             }
@@ -169,6 +157,18 @@ $(document).ready(function () {
 // ── Wrap a plain message string into the errors-array format ─────────────
 function errMsg(msg) { return [{ field: '', message: msg }]; }
 
+function formatToTwoDecimals(value) {
+    if (value === null || value === undefined) return '';
+
+    var text = String(value).trim();
+    if (!text) return '';
+
+    var numberValue = Number(text);
+    if (Number.isNaN(numberValue)) return text;
+
+    return numberValue.toFixed(2);
+}
+
 // ── Update a nav link href, preserving existing query params ─────────────
 function updateNavHref(id, parentProject) {
     var current = $(id).attr('href') || '';
@@ -198,8 +198,8 @@ function loadPortfolioData(parentProject) {
                 $('#chkFinished').prop('checked', d.finished === -1 || d.finished === true);
                 $('#dpProgramme').val(d.program || '');
                 $('#dpManager').val(d.manager || '');
-                $('#txtBudgetCvl').val(d.budgetCvl || '');
-                $('#txtTransferIncome').val(d.transferIncome || '');
+                $('#txtBudgetCvl').val(formatToTwoDecimals(d.budgetCvl || '0'));
+                $('#txtTransferIncome').val(formatToTwoDecimals(d.transferIncome || '0'));
                 $('#txtComments').val(d.comments || '');
 
                 // Update sidebar nav links — preserves existing query params (e.g. year)

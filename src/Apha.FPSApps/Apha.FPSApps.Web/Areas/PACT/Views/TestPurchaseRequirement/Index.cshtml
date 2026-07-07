@@ -30,7 +30,8 @@
                     <a class="govuk-back-link"
                        asp-area="PACT"
                        asp-controller="PortfolioMaintenance"
-                       asp-action="Index">Back</a>
+                       asp-action="Index"
+                    asp-route-portfolio="@Model.ParentProject">Back</a>
                 }
                 else
                 {
