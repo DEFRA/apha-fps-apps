@@ -1,34 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — SetUpStaffResourcesController.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 8 — Pre-Build Security Review Gate
- * Migrated : 2026-07-07
- *
- * CHANGED (Phase 5 — original migration):
- *   - MS Access frmSetUpStaffResources → ASP.NET Core 10 MVC Controller (Areas/FPS)
- *   - Index(resourceCentre) loads ResourceCentres dropdown + optionally GradeList + empty StaffGrid
- *   - LoadStaffGrid(PaginationFilter, wgGrade) → AJAX POST returning _DataGrid partial
- *   - GetGradesByResourceCentre(resourceCentre) → AJAX GET returning JSON grade list
- *   - Edit [GET] loads SetUpStaffResourcesItem via GetWorkGroupEmployeeByIdForStaffAsync
- *   - Edit [POST] saves via UpdateWorkGroupEmployeeForStaffAsync
- *   - PopulateResourceCentresAsync() private helper extracts profit centre dropdown logic
- *   - [Authorize] + [AuthorizeForScopes] applied to whole controller
- *   - Injected: IMapper, IWorkGroupEmployeeService, IProfitCentreService, IWorkGroupGradeService
- *
- * CHANGED (Phase 8 — security fixes):
- *   - [ValidateAntiForgeryToken] added to Edit [POST] — CSRF protection for the staff save endpoint
- *   - [IgnoreAntiforgeryToken] added to LoadStaffGrid — explicit opt-out for read-only JSON AJAX POST
- *     (no form context available at grid reload time; matches BudgetResourceLevelController pattern)
- *
- * PRESERVED:
- *   - All field/property names match SetUpStaffResourcesViewModel and SetUpStaffResourcesItem exactly
- *   - DataGrid ops: AllowAdd=false, AllowEdit=true, AllowDelete=false (Edit-only form)
- *   - URL routes match BindGridUrl in ViewModel: /FPS/SetUpStaffResources/LoadStaffGrid
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: Verify EditFunction JS name matches Index.cshtml JS function name
- *   - TRANSFORMENGINE TODO: Verify _EditStaffModal partial view path when Phase 6 view is created
- */
-
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -53,33 +22,30 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IProfitCentreService _profitCentreService;
         private readonly IWorkGroupGradeService _workGroupGradeService;
 
-        // TRANSFORMENGINE: Constructor — guard-clause null-checks on all injected services
         public SetUpStaffResourcesController(
             IMapper mapper,
             IWorkGroupEmployeeService workGroupEmployeeService,
             IProfitCentreService profitCentreService,
             IWorkGroupGradeService workGroupGradeService)
         {
-            _mapper                   = mapper                   ?? throw new ArgumentNullException(nameof(mapper));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _workGroupEmployeeService = workGroupEmployeeService ?? throw new ArgumentNullException(nameof(workGroupEmployeeService));
-            _profitCentreService      = profitCentreService      ?? throw new ArgumentNullException(nameof(profitCentreService));
-            _workGroupGradeService    = workGroupGradeService    ?? throw new ArgumentNullException(nameof(workGroupGradeService));
+            _profitCentreService = profitCentreService ?? throw new ArgumentNullException(nameof(profitCentreService));
+            _workGroupGradeService = workGroupGradeService ?? throw new ArgumentNullException(nameof(workGroupGradeService));
         }
 
-        // TRANSFORMENGINE: Index — loads ResourceCentres dropdown; if resourceCentre supplied, loads GradeList too
         [HttpGet]
         public async Task<IActionResult> Index(string? resourceCentre = null)
         {
-            var resourceCentres  = await PopulateResourceCentresAsync();
-            var selectedRc       = resourceCentre ?? string.Empty;
+            var resourceCentres = await PopulateResourceCentresAsync();
+            var selectedRc = resourceCentre ?? string.Empty;
 
             var viewModel = new SetUpStaffResourcesViewModel
             {
-                ResourceCentres        = resourceCentres,
+                ResourceCentres = resourceCentres,
                 SelectedResourceCentre = selectedRc
             };
 
-            // TRANSFORMENGINE: Cascade — load grade list when resource centre is selected on page load
             if (!string.IsNullOrWhiteSpace(selectedRc))
             {
                 var gradesResponse = await _workGroupGradeService.GetWorkGroupGradeAsync(selectedRc);
@@ -89,30 +55,26 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 }
             }
 
-            // TRANSFORMENGINE: StaffGrid — Edit-only (AllowAdd=false, AllowDelete=false, AllowEdit=true)
             viewModel.StaffGrid = new DataGridConfig<SetUpStaffResourcesItem>
             {
-                GridId             = "ssrStaffGrid",
-                Title              = "Staff",
+                GridId = "ssrStaffGrid",
+                Title = "Staff",
                 ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "PactId",
-                AllowAdd           = false,
-                AllowEdit          = true,
-                EditFunction       = "editSsrStaff",
-                AllowDelete        = false,
-                BindGridUrl        = "/FPS/SetUpStaffResources/LoadStaffGrid",
-                Data               = new List<SetUpStaffResourcesItem>(),
-                Columns            = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
-                Pagination         = new PaginationModel()
+                ShowPagination = true,
+                KeyProperty = "PactId",
+                AllowAdd = false,
+                AllowEdit = true,
+                EditFunction = "editSsrStaff",
+                AllowDelete = false,
+                BindGridUrl = "/FPS/SetUpStaffResources/LoadStaffGrid",
+                Data = new List<SetUpStaffResourcesItem>(),
+                Columns = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
+                Pagination = new PaginationModel()
             };
 
             return View(viewModel);
         }
 
-        // TRANSFORMENGINE: LoadStaffGrid — AJAX POST, filtered by wgGrade; ModelState.IsValid guard
-        // TRANSFORMENGINE: [IgnoreAntiforgeryToken] — grid reload is a read-only JSON POST with no form context.
-        //   Explicit opt-out matches BudgetResourceLevelController pattern in this codebase.
         [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> LoadStaffGrid(PaginationFilter<string> request, string wgGrade)
@@ -123,7 +85,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     success = false,
                     message = "Invalid request data",
-                    errors  = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
             }
 
@@ -133,41 +95,40 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var response        = await _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(queryParameters, wgGrade);
+            var response = await _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(queryParameters, wgGrade);
 
             if (!response.Success)
             {
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load staff data." });
             }
 
-            var rawData    = response.Data ?? new List<WorkGroupEmployeeStaffDto>();
+            var rawData = response.Data ?? new List<WorkGroupEmployeeStaffDto>();
             var staffItems = rawData.Select(d => _mapper.Map<SetUpStaffResourcesItem>(d)).ToList();
 
             var paginationModel = _mapper.Map<PaginationModel>(response.Pagination) ?? new PaginationModel();
-            paginationModel.SortColumn    = request.SortBy;
+            paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
             var gridConfig = new DataGridConfig<SetUpStaffResourcesItem>
             {
-                GridId             = "ssrStaffGrid",
-                Title              = "Staff",
+                GridId = "ssrStaffGrid",
+                Title = "Staff",
                 ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "PactId",
-                AllowAdd           = false,
-                AllowEdit          = true,
-                EditFunction       = "editSsrStaff",
-                AllowDelete        = false,
-                BindGridUrl        = "/FPS/SetUpStaffResources/LoadStaffGrid",
-                Data               = staffItems,
-                Columns            = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
-                Pagination         = paginationModel
+                ShowPagination = true,
+                KeyProperty = "PactId",
+                AllowAdd = false,
+                AllowEdit = true,
+                EditFunction = "editSsrStaff",
+                AllowDelete = false,
+                BindGridUrl = "/FPS/SetUpStaffResources/LoadStaffGrid",
+                Data = staffItems,
+                Columns = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
+                Pagination = paginationModel
             };
 
             return PartialView("_DataGrid", gridConfig);
         }
 
-        // TRANSFORMENGINE: GetGradesByResourceCentre — AJAX GET; returns JSON grade list for resource centre
         [HttpGet]
         public async Task<IActionResult> GetGradesByResourceCentre(string resourceCentre)
         {
@@ -189,7 +150,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return Json(new { success = true, data = grades });
         }
 
-        // TRANSFORMENGINE: Edit [GET] — loads staff item by PactId via GetWorkGroupEmployeeByIdForStaffAsync
         [HttpGet]
         public async Task<IActionResult> Edit(string pactId)
         {
@@ -208,9 +168,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_EditStaffModal", item);
         }
 
-        // TRANSFORMENGINE: Edit [POST] — saves staff via UpdateWorkGroupEmployeeForStaffAsync
-        // TRANSFORMENGINE: [ValidateAntiForgeryToken] — CSRF protection. Token emitted by @Html.AntiForgeryToken()
-        //   in _EditStaffModal.cshtml and sent as RequestVerificationToken header from saveSetUpStaffResources().
+       
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit([FromBody] WorkGroupEmployeeStaffDto model)
@@ -226,7 +184,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 {
                     success = false,
                     message = "Please correct the errors below.",
-                    errors  = ModelState
+                    errors = ModelState
                         .Where(kvp => kvp.Value!.Errors.Any())
                         .SelectMany(kvp => kvp.Value!.Errors.Select(e => new { field = kvp.Key, message = e.ErrorMessage }))
                 });
@@ -242,12 +200,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             {
                 success = false,
                 message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to update staff record.",
-                errors  = (response.Errors ?? new List<ApiErrorDto>())
+                errors = (response.Errors ?? new List<ApiErrorDto>())
                     .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
             });
         }
 
-        // TRANSFORMENGINE: PopulateResourceCentresAsync — private helper; builds SelectListItem list from ProfitCentreDto
         private async Task<List<SelectListItem>> PopulateResourceCentresAsync()
         {
             var result = await _profitCentreService.GetProfitCentresAsync();
@@ -257,7 +214,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .Select(p => new SelectListItem
                     {
                         Value = p.ProfitCentreId,
-                        Text  = $"{p.ProfitCentreId} - {p.ProfitCentreName}"
+                        Text = $"{p.ProfitCentreId} - {p.ProfitCentreName}"
                     })
                     .ToList();
             }
