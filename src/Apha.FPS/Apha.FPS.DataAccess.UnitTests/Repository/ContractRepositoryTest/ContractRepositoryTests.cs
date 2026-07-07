@@ -174,5 +174,37 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ContractRepositoryTest
         }
 
         #endregion
+
+        #region GetAllPactContractsAsync
+
+        [Fact]
+        public async Task GetAllPactContractsAsync_ReturnsContracts_WhenUserEmailMatchesAndCategoryMatches()
+        {
+            // Arrange
+            var contracts = new List<Contract>
+            {
+                new() { ContractNo = "C001", Category = "CAT_A" },
+                new() { ContractNo = "C002", Category = "CAT_B" }
+            };
+            var userCategories = new List<UserCategory>
+            {
+                new() { UserId = 1, Category = "CAT_A" },
+                new() { UserId = 1, Category = "CAT_B" }
+            };
+            var users = new List<User>
+            {
+                new() { UserId = 1, UserEmail = DefaultUserEmail }
+            };
+            var repo = CreateRepository(contracts, userCategories, users);
+
+            // Act
+            var result = await repo.GetAllPactContractsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count());
+        } 
+
+        #endregion
     }
 }

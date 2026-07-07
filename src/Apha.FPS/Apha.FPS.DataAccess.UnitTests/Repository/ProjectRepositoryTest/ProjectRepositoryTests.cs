@@ -1914,6 +1914,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
 
         #endregion
 
+        #region UpdateFpsPortfolioDetailsAsync Tests
         [Fact]
         public async Task UpdateFpsPortfolioDetailsAsync_EmptyRepository_ReturnsNull()
         {
@@ -1999,6 +2000,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("PRESERVED", result.IncomeAccountCode);
             Assert.Equal(999m, result.BudgetCvl);
         }
+        #endregion
 
         #region CreateProjectAsync Tests
 
@@ -2779,6 +2781,219 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectRepositoryTest
             Assert.Equal("BB002", items[1].ParentProject);
             Assert.Equal("CC003", items[2].ParentProject);
         }
+
+        #endregion
+
+        #region GetPagedPactProjectsByProgramAsync Tests
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_ReturnsEmpty_WhenNoProgramMatches()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P001" }
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P999");
+
+            // Assert
+            Assert.Empty(result.Data);
+            Assert.Equal(0, result.PaginationData.TotalRecords);
+        }        
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_MapsFieldsCorrectly()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project", Program = "P001", BudgetCvl = 1500m, IsDefraProject = 1 }
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            var project = Assert.Single(result.Data);
+            Assert.Equal("PP001", project.ParentProject);
+            Assert.Equal("Alpha Project", project.ProjectTitle);
+            Assert.Equal("P001", project.Program);
+            Assert.Equal(1500m, project.BudgetCvl);
+            Assert.Equal((short)1, project.IsDefraProject);
+        }        
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_FilterByJobCode_ReturnsMatchingProjects()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha", Program = "P001" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta",  Program = "P001" },
+                new() { ParentProject = "XY003", ProjectTitle = "Gamma", Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"ParentProject\":\"PP\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("PP", p.ParentProject));
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_FilterByJobDescription_ReturnsMatchingProjects()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "FMD Survey",     Program = "P001" },
+                new() { ParentProject = "PP002", ProjectTitle = "TB Eradication", Program = "P001" },
+                new() { ParentProject = "PP003", ProjectTitle = "FMD Outbreak",   Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10)
+            {
+                Filter = "{\"ProjectTitle\":\"FMD\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+            Assert.All(result.Data, p => Assert.Contains("FMD", p.ProjectTitle));
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_SortsByParentProjectAscending_ByDefault()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "CC003", ProjectTitle = "Gamma", Program = "P001" },
+                new() { ParentProject = "AA001", ProjectTitle = "Alpha", Program = "P001" },
+                new() { ParentProject = "BB002", ProjectTitle = "Beta",  Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10); // SortBy = "" by default
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            var items = result.Data.ToList();
+            Assert.Equal("AA001", items[0].ParentProject);
+            Assert.Equal("BB002", items[1].ParentProject);
+            Assert.Equal("CC003", items[2].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_SortsByParentProjectDescending_WhenDescendingIsTrue()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "AA001", ProjectTitle = "Alpha", Program = "P001" },
+                new() { ParentProject = "CC003", ProjectTitle = "Gamma", Program = "P001" },
+                new() { ParentProject = "BB002", ProjectTitle = "Beta",  Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(sortBy: "parentproject", descending: true, page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            var items = result.Data.ToList();
+            Assert.Equal("CC003", items[0].ParentProject);
+            Assert.Equal("BB002", items[1].ParentProject);
+            Assert.Equal("AA001", items[2].ParentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_SortsByProjectTitleAscending()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "PP003", ProjectTitle = "Gamma Survey", Program = "P001" },
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Survey", Program = "P001" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Survey",  Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(sortBy: "projecttitle", descending: false, page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            var items = result.Data.ToList();
+            Assert.Equal("PP001", items[0].ParentProject); // Alpha
+            Assert.Equal("PP002", items[1].ParentProject); // Beta
+            Assert.Equal("PP003", items[2].ParentProject); // Gamma
+        }        
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_AppliesPaging_ReturnsCorrectPage()
+        {
+            // Arrange
+            var pactProjectViews = new List<PactProjectView>
+            {
+                new() { ParentProject = "AA001", Program = "P001" },
+                new() { ParentProject = "BB002", Program = "P001" },
+                new() { ParentProject = "CC003", Program = "P001" },
+                new() { ParentProject = "DD004", Program = "P001" },
+                new() { ParentProject = "EE005", Program = "P001" },
+            };
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 2, pageSize: 2);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            Assert.Equal(2, result.Data.Count());
+            Assert.Equal(5, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.PageNumber);
+            Assert.Equal(2, result.PaginationData.PageSize);
+            Assert.Equal(3, result.PaginationData.TotalPages);
+            Assert.Equal("CC003", result.Data.First().ParentProject);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_ReturnsPaginationMetadata_Correctly()
+        {
+            // Arrange
+            var pactProjectViews = Enumerable.Range(1, 15)
+                .Select(i => new PactProjectView
+                {
+                    ParentProject = $"PP{i:D3}",
+                    ProjectTitle = $"Project {i}",
+                    Program = "P001"
+                }).ToList();
+            var repo = CreateRepository(pactProjectViews: pactProjectViews);
+            var query = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            // Act
+            var result = await repo.GetPagedPactProjectsByProgramAsync(query, "P001");
+
+            // Assert
+            Assert.Equal(15, result.PaginationData.TotalRecords);
+            Assert.Equal(10, result.Data.Count());
+            Assert.Equal(2, result.PaginationData.TotalPages);
+        }
+
 
         #endregion
 

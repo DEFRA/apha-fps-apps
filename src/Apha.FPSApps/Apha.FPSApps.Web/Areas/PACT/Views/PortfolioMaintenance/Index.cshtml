@@ -315,7 +315,8 @@
 }
 @section Scripts {
      <script>
-        const portfolioOptionsListData =   @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.PortfolioOptions));
+        const portfolioOptionsListData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.PortfolioOptions));
+        const preselectedPortfolio = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.SelectedPortfolio as string ?? string.Empty));
     </script>
     <script src="~/js/ajax-form-validation.js"></script>
     <script src="~/js/common/multicolumn-dropdown.component.js"></script>
