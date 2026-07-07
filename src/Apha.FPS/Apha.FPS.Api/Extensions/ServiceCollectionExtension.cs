@@ -53,6 +53,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
+            services.AddScoped<IUserService, UserService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -91,6 +92,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IBudgetBidsRepository, BudgetBidsRepository>();
             services.AddScoped<IPurchasesRepository, PurchasesRepository>();
             services.AddScoped<IProjectAuditTrailRepository, ProjectAuditTrailRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
             return services;
 
         }

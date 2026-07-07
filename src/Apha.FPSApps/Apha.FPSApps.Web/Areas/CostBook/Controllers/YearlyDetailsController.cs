@@ -355,7 +355,7 @@ public class YearlyDetailsController : Controller
         var response = await _service.AddAnimalRequirementAsync(decodedProjectId, year, dto);
         if (!response.Success)
             return Json(new { success = false, errors = MapApiErrors(response.Errors) });
-        return Json(new { success = true });
+        return Json(new { success = true, message = "Animal Record Added Successfully" });
     }
 
     [HttpGet]
@@ -384,14 +384,16 @@ public class YearlyDetailsController : Controller
         var response = await _service.UpdateAnimalRequirementAsync(decodedProjectId, year, arIdentity, dto);
         if (!response.Success)
             return Json(new { success = false, errors = MapApiErrors(response.Errors) });
-        return Json(new { success = true });
+        return Json(new { success = true, message = "Animal Record Updated Successfully" });
     }
 
     [HttpDelete]
     public async Task<IActionResult> DeleteAnimal(string projectId, int year, int arIdentity)
     {
         var response = await _service.DeleteAnimalRequirementAsync(HttpUtility.UrlDecode(projectId), year, arIdentity);
-        return Json(new { success = response.Success && response.Data });
+        if (!response.Success || !response.Data)
+            return Json(new { success = false, message = "Failed to delete animal entry." });
+        return Json(new { success = true, message = "Animal Record Deleted Successfully" });
     }
 
     // ── ADDITIONAL COST CRUD ──────────────────────────────────────────────

@@ -14,13 +14,13 @@ public class StaffRequirementDto
     public string WgGrade { get; set; } = null!;
     
     public string? Name { get; set; }
-    [Required(ErrorMessage = "Hours is required.")]
+    
     public double? Nohours { get; set; }
-    [Required(ErrorMessage = "Days is required.")]
+    
     public double? Nodays { get; set; }
     [Required(ErrorMessage = "Rate is required.")]
     public double? Chargerate { get; set; }
-    [Required(ErrorMessage = "Cost is required.")]
+    
     public double? StaffCost { get; set; }
     public double? Payrate { get; set; }
     public double? Npr { get; set; }

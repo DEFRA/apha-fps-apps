@@ -12,9 +12,9 @@ public class TestRequirementDto
     public string TestCode { get; set; } = null!;
     
     public double? NumberOfTests { get; set; }
-    [Required(ErrorMessage = "Unit Price is required.")]
+    
     public double? UnitPrice { get; set; }
-    [Required(ErrorMessage = "Test Cost is required.")]
+   
     public double? TestCost { get; set; }
     public string? TestDescription { get; set; }
 }

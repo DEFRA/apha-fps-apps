@@ -165,6 +165,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
 
             // AdditionalCostLog: all property names and types align — convention mapping suffices.
             CreateMap<AdditionalCostLogRes, AdditionalCostLogDto>();
+            // UserPermission
+            CreateMap<UserDto, UserRes>().ReverseMap();
+            CreateMap<UserDto, UserReq>().ReverseMap();
+            CreateMap<UserPermissionDataDto, UserPermissionRes>().ReverseMap();
+            CreateMap<UserPermissionDataDto, UserPermissionReq>().ReverseMap();
+            CreateMap<PermissionOptionsDto, PermissionOptionsRes>().ReverseMap();
+
 
         }
     }

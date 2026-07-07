@@ -3768,3 +3768,245 @@ body,
     }
 }
 
+/* ===== Maintain User Permissions ===== */
+.fps-mup-page {
+    padding: 0 8px 8px 8px;
+    display: flex;
+    flex-direction: column;
+    min-height: 72vh;
+}
+
+.fps-mup-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fps-mup-help {
+    margin-top: auto;
+    margin-bottom: 0;
+    padding: 14px 0 0 0;
+}
+
+.fps-mup-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+
+.fps-mup-search-group {
+    flex: 1 1 auto;
+    min-width: 220px;
+}
+
+.fps-mup-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .fps-mup-toolbar-actions .govuk-button {
+        padding: 8px 12px;
+    }
+
+.fps-mup-users-panel {
+    width: 100%;
+}
+
+.fps-mup-permissions-panel {
+    width: 100%;
+}
+
+.fps-mup-permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+    gap: 10px;
+    align-items: start;
+}
+
+.fps-mup-list-panel {
+    min-width: 0;
+    border-left: 1px solid #b1b4b6;
+    padding-left: 10px;
+}
+
+    .fps-mup-list-panel:first-child {
+        border-left: none;
+        padding-left: 0;
+    }
+
+.fps-mup-panel-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 4px 8px;
+}
+
+    .fps-mup-panel-actions .govuk-link {
+        font-size: 14px;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .fps-mup-panel-actions .govuk-hint {
+        color: #1d70b8;
+        font-size: 15px;
+        font-weight: bold;
+    }
+
+.fps-mup-checkbox-list {
+    width: 100%;
+    min-height: 200px;
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 0;
+    background: #fff;
+}
+
+.fps-mup-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.3;
+    border-bottom: 1px solid #f0f0f0;
+    margin: 0;
+    transition: background 0.1s;
+}
+
+    .fps-mup-checkbox-label:last-child {
+        border-bottom: none;
+    }
+
+    .fps-mup-checkbox-label:hover {
+        background-color: #e8f0fe;
+    }
+
+.fps-mup-checkbox {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    accent-color: #1d70b8;
+    cursor: pointer;
+    margin: 0;
+}
+
+.fps-mup-checkbox-text {
+    color: #0b0c0c;
+    user-select: none;
+}
+
+/* Free-text entry for permission panels */
+.fps-mup-freetext-container {
+    padding: 6px 8px;
+    border-top: 1px solid #b1b4b6;
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+}
+
+.fps-mup-freetext-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fps-mup-freetext-input {
+    flex: 1;
+    height: 30px;
+    font-size: 14px;
+    padding: 4px 8px;
+    border: 1px solid #b1b4b6;
+    text-transform: uppercase;
+}
+
+.fps-mup-freetext-add-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background-color: #00703c;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+    .fps-mup-freetext-add-btn:hover {
+        background-color: #005a30;
+    }
+
+.fps-mup-freetext-entry-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.fps-mup-freetext-entry-input {
+    flex: 1;
+    height: 28px;
+    font-size: 14px;
+    padding: 4px 8px;
+    border: 1px solid #b1b4b6;
+    background-color: #f3f2f1;
+    text-transform: uppercase;
+}
+
+.fps-mup-freetext-remove-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background-color: #d4351c;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+    .fps-mup-freetext-remove-btn:hover {
+        background-color: #942514;
+    }
+
+@media (max-width: 1200px) {
+    .fps-mup-permissions-grid {
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .fps-mup-page {
+        min-height: auto;
+    }
+
+    .fps-mup-toolbar-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .fps-mup-permissions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
