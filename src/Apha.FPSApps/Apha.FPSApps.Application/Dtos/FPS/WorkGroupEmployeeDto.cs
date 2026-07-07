@@ -1,4 +1,24 @@
-﻿namespace Apha.FPSApps.Application.Dtos.FPS
+/*
+ * TRANSFORMENGINE MIGRATION — WorkGroupEmployeeDto.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 1 — Frontend DTOs + API Client Interfaces
+ * Migrated : 2026-07-07
+ *
+ * CHANGED:
+ *   - Frontend DTO created mirroring Apha.FPS.Application.Dtos.WorkGroupEmployeeDto (base fields subset)
+ *   - Namespace scoped to Apha.FPSApps.Application.Dtos.FPS (frontend application layer)
+ *   - Extended staff-planning fields (TimeRecorder, StartDate, EndDate, HoursPerWeek) separated into
+ *     WorkGroupEmployeeStaffDto to reflect the two distinct backend endpoints
+ *
+ * PRESERVED:
+ *   - All property names exactly match backend DTO (PactId, SpNumber, WorkGroupGrade, Name, PersonStatus,
+ *     PersonClass, HrsPaid, Leave, SickSpecial, HrsAvail, MakeAvailable)
+ *   - Property types and nullability annotations preserved verbatim
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Re-verify field parity if backend WorkGroupEmployeeDto gains new columns
+ */
+
+namespace Apha.FPSApps.Application.Dtos.FPS
 {
     public class WorkGroupEmployeeDto
     {

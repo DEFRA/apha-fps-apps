@@ -1,3 +1,33 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ServiceCollectionExtension.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 4 — AutoMapper Profiles + DI Registration (Step 15)
+ * Migrated : 2026-07-07
+ *
+ * CHANGED:
+ *   - Added TRANSFORMENGINE migration header (Phase 4 verification pass)
+ *   - Verified IWorkGroupEmployeeService -> WorkGroupEmployeeService registered (AddScoped)
+ *   - Verified IProfitCentreService -> ProfitCentreService registered (AddScoped)
+ *   - Verified IWorkGroupGradeService -> WorkGroupGradeService registered (AddScoped)
+ *   - All required SetUpStaffResources services confirmed present; no new registrations needed
+ *
+ * PRESERVED:
+ *   - All existing service registrations (StaffJob, Program, Employee, Project, ProjectJobCode,
+ *     PactTimeCodeValid, AnimalPlan, Setting, CostBook services, Grade, YearMaster, Division,
+ *     WorkGroupGrade, ProjectInvoice, ProjectSubContract, Month, CalenderMonth, TestCapability,
+ *     TestRequirement, TimeCostCalcs, ExcelExport, AppState, AdditionalCost, AccountCategory,
+ *     PIMS services, ProfitCentre, ProfitCentreGrade, WorkGroupEmployee, TestorProduct,
+ *     MonthlyOutput, PactMonthlyOutput, PactMonthlyTime, ProjectProfile, ProjectMonth,
+ *     WorkGroupReportEmail, WorkGroup, DivisionGrade, ProjectStaffPlan, ProjectGroupStaffPlan,
+ *     SummarisedWgTime, Animal, User, RecreateAndReleaseSummary, BudgetBids, Purchases,
+ *     ReleaseSummary, PlanStaffZTCode, BosworthInterface)
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: IWorkGroupGradeService is registered TWICE (lines ~49 and ~72) — harmless
+ *     at runtime (last wins) but should be deduplicated during a cleanup pass.
+ *   - TRANSFORMENGINE TODO: ICalenderMonthService is registered TWICE (lines ~54 and ~81) — same issue.
+ *   - TRANSFORMENGINE TODO: IProjectService is registered TWICE (lines ~31 and ~33) — same issue.
+ */
+
 using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
@@ -67,6 +97,9 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IMilestoneService, MilestoneService>();
             services.AddScoped<IRadTrackInvoiceService, RadTrackInvoiceService>();
 
+            // TRANSFORMENGINE: Phase 4 VERIFIED — all SetUpStaffResources services registered:
+            //   IProfitCentreService (Resource Centre dropdown), IWorkGroupGradeService (Grade listbox),
+            //   IWorkGroupEmployeeService (Staff grid CRUD). No new registrations required.
             services.AddScoped<IProfitCentreService, ProfitCentreService>();
             services.AddScoped<IProfitCentreGradeService, ProfitCentreGradeService>();
             services.AddScoped<IWorkGroupGradeService, WorkGroupGradeService>();

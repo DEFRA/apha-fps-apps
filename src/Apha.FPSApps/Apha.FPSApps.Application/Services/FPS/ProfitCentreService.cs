@@ -1,3 +1,22 @@
+/*
+ * TRANSFORMENGINE MIGRATION — ProfitCentreService.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 2 — Frontend Service Interface + Implementation (Steps 12-13)
+ * Migrated : 2026-07-07
+ *
+ * CHANGED:
+ *   - Frontend service implementation created as thin delegate forwarding to IFpsApiClient.FpsProfitCentre
+ *   - Implements IProfitCentreService; injects IFpsApiClient (Sonar S2933: private readonly enforced)
+ *   - All 8 method bodies are single-line return await delegates — no business logic
+ *
+ * PRESERVED:
+ *   - All method signatures match IProfitCentreService / IFpsProfitCentreApiClient exactly
+ *   - GetAllProfitCentresAsync() returns IEnumerable<ProfitCentreDto> — type preserved from backend contract
+ *   - UpdateProfitCentreSettingsAsync() multi-param signature preserved
+ *   - GetPagedProfitCenterCostSummaryAsync() double monthNumber parameter preserved
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - none — fully automated thin-delegate pattern
+ */
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
@@ -8,6 +27,7 @@ namespace Apha.FPSApps.Application.Services.FPS
 {
     public class ProfitCentreService : IProfitCentreService
     {
+        // TRANSFORMENGINE: S2933 — private readonly field, injected via constructor
         private readonly IFpsApiClient _fpsClient;
 
         public ProfitCentreService(IFpsApiClient fpsClient)
@@ -15,6 +35,7 @@ namespace Apha.FPSApps.Application.Services.FPS
             _fpsClient = fpsClient;
         }
 
+        // TRANSFORMENGINE: Thin delegate — forwards to _fpsClient.FpsProfitCentre (no logic)
         public async Task<ApiResponseDto<List<ProfitCentreDto>>> GetProfitCentresAsync()
         {
             return await _fpsClient.FpsProfitCentre.GetProfitCentresAsync();

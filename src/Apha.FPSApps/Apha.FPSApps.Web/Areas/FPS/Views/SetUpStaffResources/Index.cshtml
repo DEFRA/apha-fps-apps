@@ -1,0 +1,393 @@
+@* TRANSFORMENGINE MIGRATION — Index.cshtml (SetUpStaffResources)
+   Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-frontend  Phase 8 — Pre-Build Security Review Gate
+   Migrated : 2026-07-07
+   CHANGED (Phase 6 — original migration):
+     - MS Access WorkGroupStaff.frm + WorkGroupStaff.html prototype → ASP.NET Core MVC Razor view
+     - Resource Centre <select> onchange → asp-items from Model.ResourceCentres + JS ssrUpdateResourceCentre()
+     - Grade/WorkGroup listbox → server-rendered <ul> with JS-driven selection; dynamic load via AJAX
+     - DataGridComponent({ gridId:'ssrGrid' }) → shared _DataGrid partial (Model.StaffGrid)
+     - Inline edit modal → uses shared #modalPopup/#modaPopupBody via $.get() + _EditStaffModal partial
+     - ssrPlanPersonOntoZT() → navigates to PlanStaffZTCode area route
+     - Summary fields (ssrSummaryGrade, ssrWorkHrs, ssrPersonSelected) → JS-updated read-only inputs
+   CHANGED (Phase 8 — security fixes):
+     - saveSetUpStaffResources() now reads @Html.AntiForgeryToken() value from #ssrEditForm and sends
+       it as 'RequestVerificationToken' header in the $.ajax POST, satisfying [ValidateAntiForgeryToken]
+       on the controller Edit [POST] endpoint
+     - Redundant ?pactId= query-string on the AJAX POST URL removed (pactId is already in the JSON body)
+   PRESERVED:
+     - Complete DOM structure, CSS classes, IDs, and inline styles from HTML prototype
+     - ssr-* CSS class names, aria attributes, layout hierarchy (heading-row, cc-layout-row, sidenav)
+     - All JS function names and logic from setup_staff_resources.js adapted to MVC reload patterns
+     - Resource Centre option values (Bact, B&M, Build, BTB, DoES, IDBAC, IMT, LabT, Path, SIU, SLSD, SSP, Viro, Wildlife)
+   DEFERRED:
+     - TRANSFORMENGINE TODO: ssrPlanPersonOntoZT() redirect target route — confirm PlanStaffZTCode controller route
+     - TRANSFORMENGINE TODO: AJAX grade list reload (ssrUpdateResourceCentre) calls /FPS/SetUpStaffResources/GetGradesByResourceCentre *@
+
+@using Apha.FPSApps.Web.Models.Components.DataGrid
+@model Apha.FPSApps.Web.Areas.FPS.Models.SetUpStaffResourcesViewModel
+
+@{
+    ViewData["Title"] = "2025-2026 : Set Up Staff Resources";
+}
+
+<main class="govuk-main-wrapper govuk-!-padding-top-0" id="main-content" role="main">
+    <div class="container-fluid">
+
+        @* ── Title + Resource Centre heading row ──────────────────────────────────── *@
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+                <div class="ssr-heading-row">
+                    <h1 class="govuk-heading-s sup_border-bottom ssr-main-title">
+                        Set Up Staff Resources
+                    </h1>
+                    <div class="ssr-heading-controls">
+                        @* TRANSFORMENGINE: Resource Centre <select> — asp-items replaces hard-coded <option> list;
+                           populated from Model.ResourceCentres (IProfitCentreService.GetAllProfitCentresAsync()) *@
+                        <label for="resourceCentreSelect" class="govuk-label govuk-!-margin-bottom-0">Select a Resource Center:</label>
+                        <select class="govuk-select ssr-resource-select"
+                                id="resourceCentreSelect"
+                                aria-label="Select a Resource Center"
+                                asp-for="SelectedResourceCentre"
+                                asp-items="Model.ResourceCentres"
+                                onchange="ssrUpdateResourceCentre()">
+                            <option value="">-- Select a Resource Center --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ── Main content — side nav + two-column layout ──────────────────────────── *@
+        <div class="govuk-grid-row">
+            <div class="cc-container-fluid">
+                <div class="cc-layout-row">
+
+                    @* TRANSFORMENGINE: sidenav populated by JS; empty nav preserved as placeholder *@
+                    <nav class="sidenav flex-column flex-shrink-0 govuk-!-padding-left-2"
+                         id="shortnav"
+                         aria-label="WorkGroup Resources navigation"></nav>
+
+                    <div class="cc-content-column">
+                        <div class="govuk-grid-row">
+                            <div class="govuk-grid-column-full">
+
+                                <div class="govuk-grid-row sup_margin_left_right_10 sup_margin_bottom_10">
+                                    <div class="govuk-grid-column-full sup_p_0">
+
+                                        @* ── WorkGroup Selection section ──────────────────────────────── *@
+                                        <section class="ssr-workgroup-section sup_border" aria-labelledby="ssr-workgroup-title">
+                                            <h2 class="govuk-heading-s ssr-section-title" id="ssr-workgroup-title">
+                                                Staff in Work Group: <span id="ssrSelectedCentreName">@Model.SelectedResourceCentre</span>
+                                            </h2>
+
+                                            <div class="ssr-top-layout">
+
+                                                @* ── Grade list (left panel) ─────────────────────────────── *@
+                                                <div class="ssr-grade-panel">
+                                                    <div class="ssr-grade-header">
+                                                        <span class="govuk-label govuk-!-font-weight-bold govuk-!-margin-bottom-0">Grade</span>
+                                                    </div>
+                                                    @* TRANSFORMENGINE: Grade list — server-rendered from Model.GradeList;
+                                                       JS ssrSelectWorkGroup() handles click/active-item highlighting.
+                                                       Reloaded via AJAX on Resource Centre change. *@
+                                                    <ul class="ssr-grade-list" id="ssrGradeList" role="listbox" aria-label="Select workgroup grade">
+                                                        @foreach (var grade in Model.GradeList)
+                                                        {
+                                                            <li class="ssr-grade-item @(grade == Model.SelectedGrade ? "ssr-grade-item--active" : "")"
+                                                                role="option"
+                                                                aria-selected="@(grade == Model.SelectedGrade ? "true" : "false")"
+                                                                onclick="ssrSelectWorkGroup('@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(grade))')">
+                                                                @grade
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                </div>
+
+                                                @* ── Right panel — Selected WorkGroup input + Staff grid ─── *@
+                                                <div class="ssr-right-panel">
+                                                    <div class="govuk-form-group ssr-wg-input-group">
+                                                        <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-font-weight-bold">Selected WorkGroup...</label>
+                                                        @* TRANSFORMENGINE: readonly input — value bound from Model.SelectedWorkgroup *@
+                                                        <input type="text"
+                                                               id="ssrSelectedWorkgroup"
+                                                               class="govuk-input ssr-wg-input"
+                                                               value="@Model.SelectedWorkgroup"
+                                                               readonly
+                                                               aria-label="Selected workgroup" />
+                                                    </div>
+
+                                                    @* TRANSFORMENGINE: Staff grid — _DataGrid partial replaces DataGridComponent.
+                                                       AllowAdd:false, AllowEdit:true, AllowDelete:false per JS prototype.
+                                                       GridId:'ssrStaffGrid' matches HTML prototype container #ssrStaffGrid. *@
+                                                    <div id="gridContainer_ssrStaffGrid">
+                                                        @await Html.PartialAsync("_DataGrid", Model.StaffGrid)
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </section>
+
+                                        @* ── Summary and Person Selected row ──────────────────────────── *@
+                                        <div class="ssr-bottom-row">
+                                            <div class="ssr-summary-box">
+                                                <div class="ssr-summary-field">
+                                                    <span class="govuk-label govuk-!-font-weight-bold ssr-summary-label">Summary for<br>Grade:</span>
+                                                    @* TRANSFORMENGINE: ssrSummaryGrade — readonly, JS-updated on row selection *@
+                                                    <input type="text"
+                                                           id="ssrSummaryGrade"
+                                                           class="govuk-input ssr-summary-input text-AlignRight"
+                                                           value="@Model.SummaryGrade"
+                                                           readonly
+                                                           aria-label="Summary grade" />
+                                                </div>
+                                                <div class="ssr-summary-field">
+                                                    <span class="govuk-label govuk-!-font-weight-bold ssr-summary-label">WorkHrs at Staff<br>Level:</span>
+                                                    @* TRANSFORMENGINE: ssrWorkHrs — readonly, JS-updated (sum of HrsAvail for grade) *@
+                                                    <input type="text"
+                                                           id="ssrWorkHrs"
+                                                           class="govuk-input ssr-summary-input text-AlignRight"
+                                                           value="@Model.SummaryWorkHrs"
+                                                           readonly
+                                                           aria-label="Work hours at staff level" />
+                                                </div>
+                                            </div>
+
+                                            <div class="ssr-person-box">
+                                                <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Person Selected</h3>
+                                                @* TRANSFORMENGINE: ssrPersonSelected — readonly, JS-updated on grid row click *@
+                                                <input type="text"
+                                                       id="ssrPersonSelected"
+                                                       class="govuk-input ssr-person-input govuk-!-font-weight-bold govuk-!-margin-bottom-2"
+                                                       value="@Model.SelectedPersonName"
+                                                       readonly
+                                                       aria-label="Selected person" />
+                                                <hr class="ssr-person-divider" />
+                                                @* TRANSFORMENGINE: ssrPlanPersonOntoZT() → navigates to PlanStaffZTCode/Index *@
+                                                <button type="button"
+                                                        class="govuk-button govuk-button--start"
+                                                        data-module="govuk-button"
+                                                        onclick="ssrPlanPersonOntoZT()">
+                                                    Plan Person onto ZT Codes
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        // ── Module state ────────────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: ssrCurrentCentre / ssrCurrentGrade track selection state client-side.
+        //   Initial values set from server-rendered model to support page-load restore.
+        var ssrCurrentCentre = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedResourceCentre))';
+        var ssrCurrentGrade  = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedGrade))';
+
+        // ── Resource Centre change ──────────────────────────────────────────────────────
+        // TRANSFORMENGINE: ssrUpdateResourceCentre() — fires on <select> onchange.
+        //   Calls /FPS/SetUpStaffResources/GetGradesByResourceCentre?profitCentre=<value> (AJAX)
+        //   to reload grade list, then reloads staff grid with new context.
+        function ssrUpdateResourceCentre() {
+            var sel = document.getElementById('resourceCentreSelect');
+            var nameEl = document.getElementById('ssrSelectedCentreName');
+            ssrCurrentCentre = sel ? sel.value : '';
+
+            if (!ssrCurrentCentre) {
+                if (nameEl) nameEl.textContent = '';
+                ssrCurrentGrade = '';
+                var list = document.getElementById('ssrGradeList');
+                if (list) list.innerHTML = '';
+                document.getElementById('ssrSelectedWorkgroup').value = '';
+                ssrClearSummary();
+                return;
+            }
+
+            if (nameEl) nameEl.textContent = ssrCurrentCentre;
+            ssrCurrentGrade = '';
+
+            // TRANSFORMENGINE: AJAX reload of grade list panel
+            $.get('/FPS/SetUpStaffResources/GetGradesByResourceCentre',
+                { profitCentre: ssrCurrentCentre },
+                function (grades) {
+                    ssrRenderGradeList(grades);
+                    ssrClearSummary();
+                    reloadSetUpStaffResourcesGrid();
+                }
+            ).fail(function () {
+                console.error('GetGradesByResourceCentre failed for: ' + ssrCurrentCentre);
+            });
+        }
+
+        // ── Grade list render ───────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: ssrRenderGradeList() — replaces HTML prototype ssrRenderWorkGroupList().
+        //   Receives array of grade strings from AJAX endpoint.
+        function ssrRenderGradeList(grades) {
+            var list = document.getElementById('ssrGradeList');
+            if (!list) return;
+            list.innerHTML = '';
+            (grades || []).forEach(function (wg) {
+                var li = document.createElement('li');
+                li.className = 'ssr-grade-item';
+                li.textContent = wg;
+                li.setAttribute('role', 'option');
+                li.setAttribute('aria-selected', 'false');
+                li.addEventListener('click', function () { ssrSelectWorkGroup(wg); });
+                list.appendChild(li);
+            });
+            if (grades && grades.length > 0) {
+                ssrSelectWorkGroup(grades[0]);
+            }
+        }
+
+        // ── WorkGroup (Grade) selection ─────────────────────────────────────────────────
+        // TRANSFORMENGINE: ssrSelectWorkGroup() — updates active item, reloads staff grid.
+        //   Replaces JS prototype's ssrSelectWorkGroup() which updated DataGridComponent directly;
+        //   MVC version reloads _DataGrid partial via gm.reloadGrid({ page:1 }).
+        function ssrSelectWorkGroup(wg) {
+            ssrCurrentGrade = wg;
+
+            document.querySelectorAll('#ssrGradeList .ssr-grade-item').forEach(function (li) {
+                var active = li.textContent.trim() === wg;
+                li.classList.toggle('ssr-grade-item--active', active);
+                li.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+
+            var wgInput = document.getElementById('ssrSelectedWorkgroup');
+            if (wgInput) wgInput.value = wg;
+
+            ssrClearSummary();
+            reloadSetUpStaffResourcesGrid();
+        }
+
+        // ── Grid reload ─────────────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: ALWAYS use gm.reloadGrid({ page: 1 }) — NOT gm.reload()
+        function reloadSetUpStaffResourcesGrid() {
+            var gm = window['gridManager_ssrStaffGrid'];
+            if (gm) { gm.reloadGrid({ page: 1 }); }
+        }
+
+        // ── Extra filter method (called automatically by _DataGrid on every reload) ─────
+        // TRANSFORMENGINE: ssrGetStaffExtraFilters() — supplies resourceCentre + grade filters
+        //   to the LoadStaffGrid endpoint (bound as ExtraFilterMethod in DataGridConfig).
+        function ssrGetStaffExtraFilters() {
+            return {
+                resourceCentre: ssrCurrentCentre || '',
+                grade: ssrCurrentGrade || ''
+            };
+        }
+
+        // ── Edit (called from DataGrid edit button) ─────────────────────────────────────
+        // TRANSFORMENGINE: editSetUpStaffResources() — loads _EditStaffModal partial into #modaPopupBody.
+        //   Replaces JS prototype's ssrOpenEditModal() which populated an inline modal directly.
+        function editSetUpStaffResources(btn) {
+            var id = $(btn).data('id');
+            $.get('/FPS/SetUpStaffResources/Edit', { pactId: id }, function (html) {
+                $('#modaPopupBody').html(html);
+                $('#modalPopup').addClass('show');
+            }).fail(function () {
+                alert('Failed to load edit form. Please try again.');
+            });
+        }
+
+        // ── Save (called from _EditStaffModal.cshtml) ───────────────────────────────────
+        // TRANSFORMENGINE: saveSetUpStaffResources() — POSTs modal form data as JSON to Edit endpoint.
+        //   Collects editable fields only (Name, HrsPaid, Leave, SickSpecial, MakeAvailable).
+        //   GradeCode + SpNumber are read-only; AtWork (HrsAvail) is computed — excluded from payload.
+        // TRANSFORMENGINE (Phase 8 security fix): reads RequestVerificationToken from the hidden
+        //   anti-forgery input rendered by @Html.AntiForgeryToken() in #ssrEditForm and sends it
+        //   as a request header so [ValidateAntiForgeryToken] on the controller POST is satisfied.
+        function saveSetUpStaffResources() {
+            var pactId    = document.getElementById('hdnPactId')?.value || '';
+            var name      = document.getElementById('ssrEditName')?.value || '';
+            var hrsPaid   = parseFloat(document.getElementById('ssrEditHrsPaid')?.value) || 0;
+            var leave     = parseFloat(document.getElementById('ssrEditLeave')?.value)   || 0;
+            var sickSp    = parseFloat(document.getElementById('ssrEditSickSp')?.value)  || 0;
+            var atWork    = hrsPaid - leave - sickSp;
+            var planable  = document.getElementById('ssrEditPlanable')?.checked ? 1 : 0;
+
+            // TRANSFORMENGINE (Phase 8): read anti-forgery token from the form rendered by the partial
+            var aftInput = document.querySelector('#ssrEditForm input[name="__RequestVerificationToken"]');
+            var aft = aftInput ? aftInput.value : '';
+
+            var dto = {
+                PactId:       pactId,
+                Name:         name,
+                HrsPaid:      hrsPaid,
+                Leave:        leave,
+                SickSpecial:  sickSp,
+                HrsAvail:     atWork,
+                MakeAvailable: planable
+            };
+
+            $.ajax({
+                url: '/FPS/SetUpStaffResources/Edit',
+                type: 'POST',
+                data: JSON.stringify(dto),
+                contentType: 'application/json; charset=utf-8',
+                headers: { 'RequestVerificationToken': aft },
+                success: function (data) {
+                    if (data.success) {
+                        closeModal();
+                        reloadSetUpStaffResourcesGrid();
+                    } else {
+                        alert('Save failed: ' + (data.message || 'Unknown error.'));
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while saving. Please try again.');
+                }
+            });
+        }
+
+        // ── Close modal ─────────────────────────────────────────────────────────────────
+        function closeModal() {
+            $('#modaPopupBody').html('');
+            $('#modalPopup').removeClass('show');
+        }
+
+        // ── Summary panel ───────────────────────────────────────────────────────────────
+        // TRANSFORMENGINE: ssrClearSummary() — resets all three summary inputs
+        function ssrClearSummary() {
+            var gradeEl  = document.getElementById('ssrSummaryGrade');
+            var workEl   = document.getElementById('ssrWorkHrs');
+            var personEl = document.getElementById('ssrPersonSelected');
+            if (gradeEl)  gradeEl.value  = '';
+            if (workEl)   workEl.value   = '0';
+            if (personEl) personEl.value = '';
+        }
+
+        // TRANSFORMENGINE: ssrSelectPerson() — called by DataGrid RowSelectFunction on row click.
+        //   Updates Person Selected + Summary Grade inputs from grid row data attributes.
+        function ssrSelectPerson(btn) {
+            var name      = $(btn).data('name')  || '';
+            var gradeCode = $(btn).data('grade') || '';
+            var personEl  = document.getElementById('ssrPersonSelected');
+            var gradeEl   = document.getElementById('ssrSummaryGrade');
+            if (personEl) personEl.value = name;
+            if (gradeEl)  gradeEl.value  = gradeCode;
+        }
+
+        // ── Plan Person onto ZT Codes ───────────────────────────────────────────────────
+        // TRANSFORMENGINE: ssrPlanPersonOntoZT() — navigates to PlanStaffZTCode page.
+        //   TRANSFORMENGINE TODO: confirm exact route for PlanStaffZTCode controller once available.
+        function ssrPlanPersonOntoZT() {
+            var person = document.getElementById('ssrPersonSelected');
+            if (!person || !person.value) {
+                alert('Please select a person first.');
+                return;
+            }
+            window.location.href = '@Url.Action("Index", "PlanStaffZTCode", new { area = "FPS" })';
+        }
+    </script>
+}
