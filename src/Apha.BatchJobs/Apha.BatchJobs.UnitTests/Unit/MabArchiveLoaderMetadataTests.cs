@@ -1,4 +1,7 @@
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
+using Apha.BatchJobs.Domain.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Apha.BatchJobs.UnitTests;
 
@@ -37,8 +40,16 @@ public class MabArchiveLoaderMetadataTests
 
         Assert.Equal(24, executionLoaderTypes.Count);
 
+        // Some loaders (e.g. MyStaffLoader, CR-028) take constructor dependencies (IOptions<MabArchiveSettings>,
+        // ILogger<T>) instead of being parameterless. ActivatorUtilities resolves those from a minimal DI
+        // container while still constructing the parameterless loaders directly.
+        using var serviceProvider = new ServiceCollection()
+            .AddLogging()
+            .Configure<MabArchiveSettings>(_ => { })
+            .BuildServiceProvider();
+
         var loaders = executionLoaderTypes
-            .Select(t => (IMabArchiveLoader)Activator.CreateInstance(t)!)
+            .Select(t => (IMabArchiveLoader)ActivatorUtilities.CreateInstance(serviceProvider, t))
             .OrderBy(l => l.Sequence)
             .ToList();
 

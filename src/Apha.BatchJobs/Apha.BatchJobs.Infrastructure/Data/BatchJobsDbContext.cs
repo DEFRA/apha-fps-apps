@@ -163,6 +163,8 @@ public class BatchJobsDbContext : DbContext
     internal DbSet<MaDstMyStaff> MaDstMyStaff { get; set; }
     internal DbSet<MaSrcWorkGroup> MaSrcWorkGroup { get; set; }
     internal DbSet<MaDstMyWorkGroup> MaDstMyWorkGroup { get; set; }
+    internal DbSet<MaSrcTblUsers> MaSrcTblUsers { get; set; }
+    internal DbSet<MaSrcTblUserProfitCentre> MaSrcTblUserProfitCentre { get; set; }
     internal DbSet<MaSrcTblAnimals> MaSrcTblAnimals { get; set; }
     internal DbSet<MaDstMyTblAnimals> MaDstMyTblAnimals { get; set; }
     internal DbSet<MaDstMyTlkpProjectAll> MaDstMyTlkpProjectAll { get; set; }
@@ -728,7 +730,12 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<MaDstMyProjInvoice>(entity =>
         {
             entity.ToTable("my_proj_invoice", schema: "mabarchive");
-            entity.HasKey(e => new { e.Year, e.InvoiceCounter, e.ProjectParent, e.Month });
+            // Real DB primary key is (year, projectparent, invoicecounter) -- see
+            // dbscript/schemas/02mabarchive/01tables/my_proj_invoice.sql (pk_my_proj_invoice).
+            // Month is NOT part of the key and IS nullable there; it was incorrectly included in the EF
+            // key previously, which forced Month non-nullable in this entity and caused the loader to
+            // silently drop legacy rows with a null month (CR-028).
+            entity.HasKey(e => new { e.Year, e.ProjectParent, e.InvoiceCounter });
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.ProjectParent).HasColumnName("projectparent");
             entity.Property(e => e.Month).HasColumnName("month");
@@ -1246,6 +1253,25 @@ public class BatchJobsDbContext : DbContext
             entity.Property(e => e.Cos90).HasColumnName("cos90");
             entity.Property(e => e.CostCentreOld).HasColumnName("costcentreold");
             entity.Property(e => e.EmailRecipient).HasColumnName("email_recipient");
+        });
+
+        // CR-028: supports the ported sp_AddMY_Staff ProfitCentre authorization filter (see MyStaffLoader).
+        modelBuilder.Entity<MaSrcTblUsers>(entity =>
+        {
+            entity.ToView("tblusers", schema: "fps");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.UserName).HasColumnName("username");
+        });
+
+        // CR-028: supports the ported sp_AddMY_Staff ProfitCentre authorization filter (see MyStaffLoader).
+        modelBuilder.Entity<MaSrcTblUserProfitCentre>(entity =>
+        {
+            entity.ToView("tbluser_profitcentre", schema: "fps");
+            entity.HasKey(e => new { e.ProfitCentre, e.UserId });
+            entity.Property(e => e.ProfitCentre).HasColumnName("profitcentre");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
         });
 
         modelBuilder.Entity<MaSrcTblAnimals>(entity =>

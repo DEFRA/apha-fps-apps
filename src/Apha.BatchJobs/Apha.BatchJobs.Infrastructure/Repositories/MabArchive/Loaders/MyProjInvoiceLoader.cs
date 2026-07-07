@@ -11,15 +11,17 @@ internal sealed class MyProjInvoiceLoader : MabArchiveExecutionLoaderBase
 
     protected override async Task<int> LoadCoreAsync(BatchJobsDbContext context, int year, CancellationToken cancellationToken)
     {
+        // Month is nullable on both source and destination (dbscript/schemas/02mabarchive/01tables/my_proj_invoice.sql);
+        // it is not part of the real DB primary key, so null-month rows are archived exactly as legacy
+        // sp_AddMY_Proj_Invoice did (CR-028 -- a prior EF key mismatch had incorrectly excluded them).
         var rows = await context.MaSrcProjInvoice
             .AsNoTracking()
             .Where(i => i.FpsYear == year)
-            .Where(i => i.Month.HasValue)
             .Select(i => new MaDstMyProjInvoice
             {
                 Year = year,
                 ProjectParent = i.ProjectParent,
-                Month = i.Month!.Value,
+                Month = i.Month,
                 Amount = i.Amount,
                 CostOfWork = i.CostOfWork,
                 Wip = i.Wip,

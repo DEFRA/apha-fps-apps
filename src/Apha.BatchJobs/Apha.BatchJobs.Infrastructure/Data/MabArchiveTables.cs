@@ -216,7 +216,7 @@ internal sealed class MaDstMyProjInvoice
 {
     public int Year { get; set; }
     public required string ProjectParent { get; set; }
-    public int Month { get; set; }
+    public int? Month { get; set; }
     public decimal? Amount { get; set; }
     public decimal? CostOfWork { get; set; }
     public decimal? Wip { get; set; }
@@ -654,6 +654,21 @@ internal sealed class MaSrcWorkGroup
     public short? Cos90 { get; set; }
     public double? CostCentreOld { get; set; }
     public string? EmailRecipient { get; set; }
+}
+
+// CR-028: supports the ported sp_AddMY_Staff ProfitCentre authorization filter (see MyStaffLoader).
+internal sealed class MaSrcTblUsers
+{
+    public int UserId { get; set; }
+    public string? UserName { get; set; }
+}
+
+// CR-028: supports the ported sp_AddMY_Staff ProfitCentre authorization filter (see MyStaffLoader).
+internal sealed class MaSrcTblUserProfitCentre
+{
+    public required string ProfitCentre { get; set; }
+    public int UserId { get; set; }
+    public int? FpsYear { get; set; }
 }
 
 internal sealed class MaDstMyWorkGroup
