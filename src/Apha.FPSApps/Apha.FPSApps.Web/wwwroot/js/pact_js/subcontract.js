@@ -49,7 +49,7 @@ function reloadSubContractsGrid() {
             $('#gridContainer_subContractsGrid').html(html);
         },
         error: function () {
-            console.error('Failed to load SubContracts grid.');
+            showAlertMessage('Failed to load SubContracts grid.', AlertType.ERROR);
         }
     });
 }

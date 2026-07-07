@@ -111,7 +111,7 @@
                     $('#originalItemCode').val(itemCode);
 
                     // Populate form fields — support both PascalCase and camelCase
-                    $('#itemCode').val(data.ItemCode || data.itemCode || '').prop('readonly', true);
+                    $('#itemCode').val(data.ItemCode || data.itemCode || '').prop('disabled', true);
                     $('#shortDescription').val(data.ShortDescription || data.shortDescription || '');
                     $('#itemDescription').val(data.ItemDescription || data.itemDescription || '');
                     $('#testManager').val(data.TestManager || data.testManager || '');
@@ -205,8 +205,8 @@
             success: function (response) {
                 if (response.success) {
                     closeTestModal();
-                    showNotification('Success', response.message, 'success');
                     reloadGrid('testGrid');
+                    showAlertMessage(response.message, AlertType.SUCCESS);
                 } else {
                     if (response.errors) {
                         displayServerValidationErrors(response.errors, response.message, '#testModal');
@@ -233,27 +233,26 @@
             showNotification('Error', 'Item code not found', 'error');
             return;
         }
+        showGovukConfirm('Are you sure you want to delete test/product ' + itemCode + '?').then(function (confirmed) {
+            if (!confirmed) return;
 
-        if (!confirm('Are you sure you want to delete test/product ' + itemCode + '?')) {
-            return;
-        }
-
-        $.ajax({
-            url: urls.delete,
-            type: 'POST',
-            data: { itemCode: itemCode },
-            success: function (response) {
-                if (response.success) {
-                    showNotification('Success', response.message, 'success');
-                    reloadGrid('testGrid');
-                } else {
-                    showNotification('Error', response.message, 'error');
+            $.ajax({
+                url: urls.delete,
+                type: 'POST',
+                data: { itemCode: itemCode },
+                success: function (response) {
+                    if (response.success) {
+                        reloadGrid('testGrid');
+                        showAlertMessage(response.message, AlertType.SUCCESS);
+                    } else {
+                        showNotification('Error', response.message, 'error');
+                    }
+                },
+                error: function (xhr) {
+                    var message = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred while deleting';
+                    showNotification('Error', message || 'An error occurred while deleting', 'error');
                 }
-            },
-            error: function (xhr) {
-                var message = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred while deleting';
-                showNotification('Error', message || 'An error occurred while deleting', 'error');
-            }
+            });
         });
     }
 
