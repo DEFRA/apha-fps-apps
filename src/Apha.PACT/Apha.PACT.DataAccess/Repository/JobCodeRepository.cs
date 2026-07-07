@@ -59,7 +59,8 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.JobCodes
                 .AsNoTracking()
-                .FirstOrDefaultAsync(j => j.JobCodeId == jobCodeId);
+                .FirstOrDefaultAsync(j => !string.IsNullOrEmpty(j.JobCodeId) && !string.IsNullOrEmpty(jobCodeId) 
+                && j.JobCodeId.ToLower() == jobCodeId.ToLower());
         }
 
         public async Task<IEnumerable<string>> GetTypesAsync()

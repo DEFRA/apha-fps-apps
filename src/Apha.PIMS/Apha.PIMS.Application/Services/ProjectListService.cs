@@ -42,5 +42,10 @@ namespace Apha.PIMS.Application.Services
             List<ProjectListMilestone> entities = await _repository.GetAllProjectsForMilestone();
             return _mapper.Map<List<ProjectListMilestoneDto>>(entities);
         }
+        public async Task<ProjectDetailsMilestoneDto?> GetProjectsDetailsForMilestoneAsync(string parentproject)
+        {
+            ProjectDetailsMilestone? entity = await _repository.GetProjectsDetailsForMilestoneAsync(parentproject);
+            return entity is null ? null : _mapper.Map<ProjectDetailsMilestoneDto>(entity);
+        }
     }
 }

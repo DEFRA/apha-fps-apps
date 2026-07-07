@@ -300,6 +300,9 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 pagination = new PaginationModel();
             }
 
+            pagination.SortColumn = request.SortBy;
+            pagination.SortDirection = request.Descending;
+
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}") ?? [];
 
             return new DataGridConfig<PortfolioTimeCodeViewModel>

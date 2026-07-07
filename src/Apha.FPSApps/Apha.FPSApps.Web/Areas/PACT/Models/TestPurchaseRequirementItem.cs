@@ -17,7 +17,8 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
 
         [Display(Name = "Unit Price")]
         [DisplayFormat(DataFormatString = "{0:F2}", ApplyFormatInEditMode = true)]
-        [Range(0, double.MaxValue, ErrorMessage = "Unit Price must be 0 or greater.")]
+        [Range(0, 92233720368547758.07, ErrorMessage = "Unit Price must be between 0 and 92,233,720,368,547,758.07.")]
+        [RegularExpression(@"^\d{1,17}(\.\d{0,2})?$", ErrorMessage = "Unit Price must have at most 2 decimal places.")]
         [GridColumn(Order = 3, Width = 110, Type = GridColumnType.GbpValue)]
         public decimal? UnitPrice { get; set; }
 

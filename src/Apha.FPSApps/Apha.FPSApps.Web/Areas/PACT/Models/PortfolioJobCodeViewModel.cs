@@ -34,12 +34,5 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         [StringLength(255)]        
         [GridColumn(Order = 2, Width = 296, Type = GridColumnType.Text, IsFilterable = true)]
         public string? JobCodeName { get; set; }
-
-        [Display(Name = "Active")]
-        public bool Active { get; set; } = true;
-
-        [Display(Name = "Time Code")]
-        [StringLength(50)]
-        public string? TimeCode { get; set; }
     }
 }

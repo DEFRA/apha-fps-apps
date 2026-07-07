@@ -13,5 +13,9 @@ namespace Apha.FPS.Application.Dtos
         public double SickSpecial { get; set; }
         public double HrsAvail { get; set; }
         public int MakeAvailable { get; set; }
+        public int TimeRecorder { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public double? HoursPerWeek { get; set; }
     }
 }
