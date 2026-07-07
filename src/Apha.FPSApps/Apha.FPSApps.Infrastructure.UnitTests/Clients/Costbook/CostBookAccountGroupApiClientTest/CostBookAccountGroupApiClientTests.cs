@@ -95,7 +95,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookAccount
             var result = await _client.GetAccountGroupAsync("CSG/1");
 
             Assert.True(result.Success);
-            _http.Received(1).GetAsync<AccountGroupRes>(Arg.Is<string>(s => s.Contains("CSG%2F1") || s.Contains("CSG%2f1")));
+            await _http.Received(1).GetAsync<AccountGroupRes>(Arg.Is<string>(s => s.Contains("CSG%2F1") || s.Contains("CSG%2f1")));
             _mapper.Received(1).Map<ApiResponseDto<AccountGroupDto>>(apiResponse);
         }
 
@@ -113,18 +113,18 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookAccount
 
             var addResult = await _client.AddAccountGroupAsync(dto);
             Assert.True(addResult.Success);
-            _http.Received(1).PostAsync<AccountGroupReq, AccountGroupRes>(Arg.Any<string>(), req);
+            await _http.Received(1).PostAsync<AccountGroupReq, AccountGroupRes>(Arg.Any<string>(), req);
 
             _http.PutAsync<AccountGroupReq, AccountGroupRes>(Arg.Any<string>(), req).Returns(apiResponse);
             _mapper.Map<ApiResponseDto<AccountGroupDto>>(apiResponse).Returns(mapped);
             var updateResult = await _client.UpdateAccountGroupAsync(dto.Csg7Group!, dto);
             Assert.True(updateResult.Success);
-            _http.Received(1).PutAsync<AccountGroupReq, AccountGroupRes>(Arg.Any<string>(), req);
+            await _http.Received(1).PutAsync<AccountGroupReq, AccountGroupRes>(Arg.Any<string>(), req);
 
             _http.DeleteAsync<object>(Arg.Any<string>()).Returns(new ApiResponse<object> { Success = true });
             var delResult = await _client.DeleteAccountGroupAsync(dto.Csg7Group!);
             Assert.True(delResult.Success);
-            _http.Received(1).DeleteAsync<object>(Arg.Any<string>());
+            await _http.Received(1).DeleteAsync<object>(Arg.Any<string>());
         }
 
         [Fact]

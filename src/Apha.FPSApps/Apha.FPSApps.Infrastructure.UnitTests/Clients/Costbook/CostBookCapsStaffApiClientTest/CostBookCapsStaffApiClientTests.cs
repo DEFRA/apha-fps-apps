@@ -74,7 +74,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookCapsSta
             var result = await _client.GetCapsStaffByMNumberAsync("M/1");
 
             Assert.True(result.Success);
-            _http.Received(1).GetAsync<StaffRes>(Arg.Is<string>(s => s.Contains("M%2F1") || s.Contains("M%2f1")));
+            await _http.Received(1).GetAsync<StaffRes>(Arg.Is<string>(s => s.Contains("M%2F1") || s.Contains("M%2f1")));
             _mapper.Received(1).Map<ApiResponseDto<StaffDto>>(apiResponse);
         }
 
@@ -92,7 +92,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookCapsSta
 
             var addResult = await _client.AddCapsStaffAsync(dto);
             Assert.True(addResult.Success);
-            _http.Received(1).PostAsync<StaffReq, StaffRes>(Arg.Any<string>(), req);
+            await _http.Received(1).PostAsync<StaffReq, StaffRes>(Arg.Any<string>(), req);
 
             var updateResponse = new ApiResponse<StaffRes> { Success = true, Data = new StaffRes() };
             _http.PutAsync<StaffReq, StaffRes>(Arg.Any<string>(), req).Returns(updateResponse);
@@ -101,12 +101,12 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookCapsSta
 
             var updateResult = await _client.UpdateCapsStaffAsync(dto.Mnumber!, dto);
             Assert.True(updateResult.Success);
-            _http.Received(1).PutAsync<StaffReq, StaffRes>(Arg.Any<string>(), req);
+            await _http.Received(1).PutAsync<StaffReq, StaffRes>(Arg.Any<string>(), req);
 
             _http.DeleteAsync<object>(Arg.Any<string>()).Returns(new ApiResponse<object> { Success = true });
             var deleteResult = await _client.DeleteCapsStaffAsync(dto.Mnumber!);
             Assert.True(deleteResult.Success);
-            _http.Received(1).DeleteAsync<object>(Arg.Any<string>());
+            await _http.Received(1).DeleteAsync<object>(Arg.Any<string>());
         }
 
         [Fact]

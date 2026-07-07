@@ -4,7 +4,6 @@ using Apha.Costbook.Api.Controllers;
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Interfaces;
 using Apha.Costbook.Application.Pagination;
-using Apha.Costbook.Core.Pagination;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -159,12 +158,12 @@ namespace Apha.Costbook.Api.UnitTests.Controllers.MaintenanceControllerTest
             // Arrange
             var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
             var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var pagedData = new PagedData<AccountCategoryMaintenanceDto>(
+            var pagedData = new PaginatedResult<AccountCategoryMaintenanceDto>(
                 new List<AccountCategoryMaintenanceDto>
                 {
                     new AccountCategoryMaintenanceDto { AccShortName = "ACC01", Csg7Group = "CSG001" }
                 },
-                new PaginationData { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 1 });
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 1 });
             var pagedRes = new PaginationRes<AccountCategoryMaintenanceRes>();
 
             _mapper.Map<QueryParameters<string>>(query).Returns(queryParams);

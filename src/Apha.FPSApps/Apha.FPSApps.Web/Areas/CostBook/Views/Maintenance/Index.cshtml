@@ -772,12 +772,21 @@
         return;
         }
 
+        var yearVal = (document.getElementById('inflCurrentFinancialYear').value || '').trim();
+        var yearNum = parseInt(yearVal, 10);
+        if (!/^\d{4}$/.test(yearVal) || yearNum < 2001 || yearNum > 2100) {
+        displayServerValidationErrors(
+        [{ field: 'inflCurrentFinancialYear', message: 'Enter a valid 4-digit year between 2001 and 2100' }],
+        'There is a problem', $form);
+        return;
+        }
+
         var dto = {
         inflationAnimals: parseFloat(document.getElementById('inflAnimals').value),
         inflationExceptionalCosts: parseFloat(document.getElementById('inflExceptionalCosts').value),
         inflationStaff: parseFloat(document.getElementById('inflStaff').value),
         inflationTests: parseFloat(document.getElementById('inflTests').value),
-        currentFinancialYear: parseInt(document.getElementById('inflCurrentFinancialYear').value, 10),
+        currentFinancialYear: yearNum,
         workingHoursInDay: parseFloat(document.getElementById('inflWorkingHoursInDay').value),
         workingDaysInYear: parseFloat(document.getElementById('inflWorkingDaysInYear').value)
         };

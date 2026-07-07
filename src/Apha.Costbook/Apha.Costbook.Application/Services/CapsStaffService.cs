@@ -33,13 +33,12 @@ namespace Apha.Costbook.Application.Services
             if (queryParameters == null)
                 throw new ArgumentException("Query parameters must not be null.", nameof(queryParameters));
 
-           
             var coreParams = _mapper.Map<PaginationParameters<string>>(queryParameters);
             var pagedData = await _repository.GetPaginatedAsync(coreParams);
 
-           
-            var pagedResult = _mapper.Map<PaginatedResult<StaffDto>>(pagedData);
-            return pagedResult;
+            return new PaginatedResult<StaffDto>(
+                _mapper.Map<List<StaffDto>>(pagedData.Data),
+                _mapper.Map<PaginationDto>(pagedData.PaginationData));
         }
 
         

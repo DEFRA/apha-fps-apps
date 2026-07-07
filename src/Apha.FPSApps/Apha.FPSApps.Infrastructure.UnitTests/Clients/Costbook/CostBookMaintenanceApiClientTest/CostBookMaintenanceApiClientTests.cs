@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookMainten
             var result = await _client.UpdateSettingsAsync(dto);
 
             Assert.True(result.Success);
-            _http.Received(1).PutAsync<MaintenanceSettingsReq, MaintenanceSettingsRes>(Arg.Any<string>(), req);
+            await _http.Received(1).PutAsync<MaintenanceSettingsReq, MaintenanceSettingsRes>(Arg.Any<string>(), req);
             _mapper.Received(1).Map<ApiResponseDto<MaintenanceSettingsDto>>(apiResponse);
         }
 
@@ -71,7 +71,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookMainten
 
             Assert.True(result.Success);
             Assert.Same(mapped, result.Data);
-            _http.Received(1).GetAsync<List<AccountCategoryMaintenanceRes>>(Arg.Any<string>());
+            await _http.Received(1).GetAsync<List<AccountCategoryMaintenanceRes>>(Arg.Any<string>());
         }
 
         [Fact]
@@ -128,7 +128,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.Costbook.CostBookMainten
             var result = await _client.UpdateAccountCategoryAsync(dto.AccShortName!, dto);
 
             Assert.True(result.Success);
-            _http.Received(1).PutAsync<AccountCategoryMaintenanceReq, AccountCategoryMaintenanceRes>(Arg.Any<string>(), req);
+            await _http.Received(1).PutAsync<AccountCategoryMaintenanceReq, AccountCategoryMaintenanceRes>(Arg.Any<string>(), req);
             _mapper.Received(1).Map<ApiResponseDto<AccountCategoryMaintenanceDto>>(apiResponse);
         }
     }

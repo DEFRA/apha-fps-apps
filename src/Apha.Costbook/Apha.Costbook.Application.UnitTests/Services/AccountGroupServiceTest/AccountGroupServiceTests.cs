@@ -1,25 +1,9 @@
-/*
- * TRANSFORMENGINE MIGRATION — AccountGroupServiceTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - New xUnit test class for Apha.Costbook.Application.Services.AccountGroupService
- *   - Tests GetAllAsync, GetByCsg7GroupAsync, AddAsync, UpdateAsync, DeleteAsync
- *   - Uses NSubstitute for IAccountGroupRepository and IMapper
- *
- * PRESERVED:
- *   - Test naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - Business guard behaviour (ArgumentException, KeyNotFoundException) tested explicitly
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: none — fully automated.
- */
-
 using Apha.Costbook.Application.Dtos;
+using Apha.Costbook.Application.Pagination;
 using Apha.Costbook.Application.Services;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
+using Apha.Costbook.Core.Pagination;
 using AutoMapper;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -84,6 +68,47 @@ namespace Apha.Costbook.Application.UnitTests.Services.AccountGroupServiceTest
             // Assert
             Assert.NotNull(result);
             Assert.Empty(result);
+        }
+
+        #endregion
+
+        // ── GetPaginatedAsync ─────────────────────────────────────────────────
+
+        #region GetPaginatedAsync Tests
+
+        [Fact]
+        public async Task GetPaginatedAsync_ValidParameters_ReturnsMappedPaginatedResult()
+        {
+            // Arrange
+            var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var coreParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var accountGroups = new List<AccountGroup>
+            {
+                new AccountGroup { Csg7group = "CSG001", Useinflation = true }
+            };
+            var accountGroupDtos = new List<AccountGroupDto>
+            {
+                new AccountGroupDto { Csg7group = "CSG001", Useinflation = true }
+            };
+            var paginationData = new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
+            var pagedData = new PagedData<AccountGroup>(accountGroups, paginationData);
+
+            _mapper.Map<PaginationParameters<string>>(queryParameters).Returns(coreParams);
+            _repository.GetPaginatedAsync(coreParams).Returns(pagedData);
+            _mapper.Map<List<AccountGroupDto>>(pagedData.Data).Returns(accountGroupDtos);
+            _mapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+            // Act
+            var result = await _service.GetPaginatedAsync(queryParameters);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Data);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            _mapper.Received(1).Map<List<AccountGroupDto>>(pagedData.Data);
+            _mapper.Received(1).Map<PaginationDto>(pagedData.PaginationData);
+            await _repository.Received(1).GetPaginatedAsync(coreParams);
         }
 
         #endregion

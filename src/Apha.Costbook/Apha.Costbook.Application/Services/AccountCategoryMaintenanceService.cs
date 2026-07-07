@@ -25,13 +25,13 @@ namespace Apha.Costbook.Application.Services
         }
 
         
-        public async Task<PagedData<AccountCategoryMaintenanceDto>> GetPaginatedAsync(QueryParameters<string> query)
+        public async Task<PaginatedResult<AccountCategoryMaintenanceDto>> GetPaginatedAsync(QueryParameters<string> query)
         {
             var parameters = _mapper.Map<PaginationParameters<string>>(query);
             var data = await _repository.GetPaginatedAsync(parameters);
-            return new PagedData<AccountCategoryMaintenanceDto>(
+            return new PaginatedResult<AccountCategoryMaintenanceDto>(
                 _mapper.Map<List<AccountCategoryMaintenanceDto>>(data.Data),
-                data.PaginationData);
+                _mapper.Map<PaginationDto>(data.PaginationData));
         }
 
         

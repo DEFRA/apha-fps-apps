@@ -1,6 +1,5 @@
 using Apha.Costbook.Application.Dtos;
 using Apha.Costbook.Application.Pagination;
-using Apha.Costbook.Core.Pagination;
 
 namespace Apha.Costbook.Application.Interfaces
 {
@@ -8,7 +7,7 @@ namespace Apha.Costbook.Application.Interfaces
     {       
         Task<List<AccountGroupDto>> GetAllAccountGroupAsync();
 
-        Task<PagedData<AccountGroupDto>> GetPaginatedAsync(QueryParameters<string> query);
+        Task<PaginatedResult<AccountGroupDto>> GetPaginatedAsync(QueryParameters<string> query);
 
         Task<AccountGroupDto?> GetByCsg7GroupAsync(string csg7Group);
 

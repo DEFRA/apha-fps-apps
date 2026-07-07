@@ -82,16 +82,16 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
             // Arrange
             var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
             var coreParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
-            var pagedData = new PagedData<Staff>(
-                new List<Staff> { new Staff { Mnumber = "M001", Name = "Alice" } },
-                new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 });
-            var paginatedResult = new PaginatedResult<StaffDto>(
-                new List<StaffDto> { new StaffDto { Mnumber = "M001", Name = "Alice" } },
-                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 });
+            var staffEntities = new List<Staff> { new Staff { Mnumber = "M001", Name = "Alice" } };
+            var staffDtos = new List<StaffDto> { new StaffDto { Mnumber = "M001", Name = "Alice" } };
+            var paginationData = new PaginationData { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 1, TotalPages = 1 };
+            var pagedData = new PagedData<Staff>(staffEntities, paginationData);
 
             _mapper.Map<PaginationParameters<string>>(queryParameters).Returns(coreParams);
             _repository.GetPaginatedAsync(coreParams).Returns(pagedData);
-            _mapper.Map<PaginatedResult<StaffDto>>(pagedData).Returns(paginatedResult);
+            _mapper.Map<List<StaffDto>>(pagedData.Data).Returns(staffDtos);
+            _mapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
 
             // Act
             var result = await _service.GetPaginatedAsync(queryParameters);
@@ -99,6 +99,9 @@ namespace Apha.Costbook.Application.UnitTests.Services.CapsStaffServiceTest
             // Assert
             Assert.NotNull(result);
             Assert.Single(result.Data);
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            _mapper.Received(1).Map<List<StaffDto>>(pagedData.Data);
+            _mapper.Received(1).Map<PaginationDto>(pagedData.PaginationData);
             await _repository.Received(1).GetPaginatedAsync(coreParams);
         }
 
