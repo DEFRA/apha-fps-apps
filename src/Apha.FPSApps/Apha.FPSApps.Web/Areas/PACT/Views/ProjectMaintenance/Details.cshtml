@@ -10,9 +10,17 @@
 <div class="govuk-grid-row sup_margin_left_right_0">
     <div class="govuk-grid-column-full">
         <h1 class="govuk-grid-row govuk-heading-s sup_border-bottom" style="padding:10px 0 0px 10px">
-            Project Maintenance (not
-            portfolios) <a  asp-area="PACT" asp-controller="ProgramMaintenance" asp-action="Index"
-                           class="govuk-back-link sup_align_right">Back</a>
+            Project Maintenance (not portfolios) 
+            @if (ViewBag.NavigationSource == "WorkGroupValidTimeCode")
+            {
+                <a asp-area="PACT" asp-controller="WorkGroupValidTimeCode" asp-action="Index" asp-route-workGroup="@TempData["SelectedWorkGroup"]"
+                   class="govuk-back-link sup_align_right">Back</a>
+            }
+            else
+            {
+                <a asp-area="PACT" asp-controller="ProgramMaintenance" asp-action="Index"
+                   class="govuk-back-link sup_align_right">Back</a>
+            }
         </h1>
     </div>
 </div>
@@ -413,8 +421,12 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        showAlertMessage('Project updated successfully.', AlertType.SUCCESS);
-                    } else {
+                        showAlertMessage('Project updated successfully.', AlertType.SUCCESS)
+                        .then(function () {
+                            window.location.reload();
+                        });
+                    }
+                    else {
                         displayServerValidationErrors(response.errors, response.message, '#projectDetailForm');
                     }
                 },
@@ -488,9 +500,9 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        showAlertMessage(successMsg, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         getJobCodeGridManager()?.reloadGrid({ page: 1 });
+                        showAlertMessage(successMsg, AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#jobCodeForm');
                     }
@@ -584,9 +596,9 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     if (response.success) {
-                        showAlertMessage(successMsg, AlertType.SUCCESS);
                         $('#modalPopup').removeClass('show');
                         reloadTimeCodeGrid(selectedJobCodeId);
+                        showAlertMessage(successMsg, AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#timeCodeForm');
                     }

@@ -32,7 +32,7 @@
             </select>
         </div>
         <div class="govuk-grid-column-one-half sup_text_align_right">
-            <a asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index"
+            <a asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index" asp-route-portfolio="@Model.SelectedPortfolio"
                class="govuk-back-link">Back</a>
         </div>
     </div>

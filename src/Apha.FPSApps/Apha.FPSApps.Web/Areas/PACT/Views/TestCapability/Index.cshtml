@@ -51,11 +51,12 @@
     @* Portfolio Maintenance button *@
     <div class="govuk-grid-column-one-third sup_p_0_mt_24">
         <div class="govuk-button-group sup_margin_0 sup_float_right">
-            <button type="button" class="govuk-button sup_margin_0 sup_p_8 sup_flex"
+            <a class="govuk-button sup_margin_0 sup_p_8 sup_flex"
+               asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index"
                     id="btnPortfolioMaintenance"
                     data-module="govuk-button" allow-edit="true">
                 &nbsp;Portfolio Maintenance
-            </button>
+            </a>
         </div>
     </div>
 
@@ -132,6 +133,9 @@
                 currentFilterValue = workgroupParam;
                 // Load the grid with the workgroup
                 reloadTestCapabilityGrid(workgroupParam);
+            } else {
+                // Select first row if grid is already loaded on page load
+                selectFirstTestCapabilityRow();
             }
         });
 
@@ -157,6 +161,21 @@
             clearTestReqmtGrid();
         }
 
+        // ── Helper: Select first row in Test Capability grid ──────────────────
+        function selectFirstTestCapabilityRow() {
+            setTimeout(function() {
+                var firstRow = $('#gridContainer_testCapabilityGrid tbody tr[data-id]:first');
+                if (firstRow.length > 0) {
+                    // Remove selected-row class from all rows
+                    $('#gridContainer_testCapabilityGrid tbody tr').removeClass('selected-row');
+                    // Add selected-row class to first row (applies light blue background)
+                    firstRow.addClass('selected-row');
+                    // Trigger the row select function
+                    onTestCapabilityRowSelect(firstRow);
+                }
+            }, 100);
+        }
+
         // ── Grid 1: reload ─────────────────────────────────────────────────────
         function reloadTestCapabilityGrid(filterValue) {
             $.ajax({
@@ -172,9 +191,10 @@
                 },
                 success: function (html) {
                     $('#gridContainer_testCapabilityGrid').html(html);
+                    selectFirstTestCapabilityRow();
                 },
                 error: function () {
-                    console.error('Failed to load Test Capability grid.');
+                        showAlertMessage('Failed to load Test Capability grid.', AlertType.ERROR);
                 }
             });
         }
@@ -203,7 +223,7 @@
                     $('#gridContainer_testReqmtGrid').html(html);
                 },
                 error: function () {
-                    console.error('Failed to load Test Reqmt grid.');
+                        showAlertMessage('Failed to load Test Reqmt grid', AlertType.ERROR);
                 }
             });
         }
@@ -260,8 +280,8 @@
                 success: function (result) {
                     if (result.success) {
                         $('#modalPopup').removeClass('show');
-                        showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                         reloadTestCapabilityGrid(currentFilterValue);
+                        showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
                     }
@@ -343,8 +363,8 @@
                 success: function (result) {
                     if (result.success) {
                         $('#modalPopup').removeClass('show');
-                        showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                         reloadTestReqmtGrid(currentSelectedTestCode);
+                        showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
                     }

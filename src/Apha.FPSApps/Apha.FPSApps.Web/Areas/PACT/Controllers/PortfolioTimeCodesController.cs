@@ -389,6 +389,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
                 model.JobCode = null;
             }
 
+            if (!model.Active)
+                ModelState.AddModelError(
+                       nameof(model.Active),
+                       "The time code must be active.");
+
             if (!ModelState.IsValid)
                 return Json(new
                 {

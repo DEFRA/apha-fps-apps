@@ -38,5 +38,7 @@ namespace Apha.FPSApps.Application.Services.PACT
 
         public async Task<ApiResponseDto<List<WorkGroupDto>>> GetAllWorkGroupsAsync()
             => await _pactClient.PactWorkGroup.GetAllWorkGroupsAsync();
+        public Task<ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>> GetPagedWgTestCapabilitiesWithDescriptionAsync(QueryParameters<string> query, string workGroup)
+            => _pactClient.PactWorkGroupTestCapability.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, workGroup);
     }
 }

@@ -153,7 +153,18 @@ namespace Apha.PIMS.DataAccess.Repository
             Expression<Func<Milestone, T>> keySelector,
             bool descending)
             => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+        private static IQueryable<StagingMilestone> ApplyStagingSorting(IQueryable<StagingMilestone> query, string? sortBy, bool descending)
+        {
+            if (string.IsNullOrEmpty(sortBy) || string.Equals(sortBy, "number", StringComparison.OrdinalIgnoreCase))
+                return ApplyStagingOrder(query, m => m.Number, descending);
 
+            return query.OrderBy(m => m.Number);
+        }
+        private static IQueryable<StagingMilestone> ApplyStagingOrder<T>(
+            IQueryable<StagingMilestone> query,
+            Expression<Func<StagingMilestone, T>> keySelector,
+            bool descending)
+            => descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         public async Task<bool> UpdateFormRequiredAsync(string parentproject, bool formRequired)
         {
             int rows = await _dbContext.ProjectRadTrackData
@@ -236,5 +247,226 @@ namespace Apha.PIMS.DataAccess.Repository
                 ChangedBy            = changedBy,
                 UpdateType           = updateType
             };
+
+        // ── Staging / Import ─────────────────────────────────────────────────
+        public async Task<PagedData<StagingMilestone>> GetAllStagingRowsAsync(PaginationParameters<string> parameters)
+        {
+
+            IQueryable<StagingMilestone> query = _dbContext.StagingMilestones
+               .AsNoTracking();
+
+            //query = ApplyFilter(query, parameters.Filter);
+            query = ApplyStagingSorting(query, parameters.SortBy, parameters.Descending);
+
+
+            return await ApplyPaging(query, parameters.Page, parameters.PageSize);
+
+
+        }
+
+        public async Task<List<StagingMilestone>> GetStagingRowsAsync(string? project)
+        {
+            IQueryable<StagingMilestone> query = _dbContext.StagingMilestones.AsNoTracking();
+            if (!string.IsNullOrWhiteSpace(project))
+                query = query.Where(s => s.Project == project);
+            return await query.ToListAsync();
+        }
+
+        public async Task<StagingMilestone> AddStagingRowAsync(StagingMilestone entity)
+        {
+            _dbContext.StagingMilestones.Add(entity);
+            await _dbContext.SaveChangesAsync();
+            return entity;
+        }
+
+        public async Task<StagingMilestone> UpdateStagingRowAsync(StagingMilestone entity)
+        {
+            _dbContext.StagingMilestones.Update(entity);
+            await _dbContext.SaveChangesAsync();
+            return entity;
+        }
+
+        public async Task<bool> DeleteStagingRowAsync(int id)
+        {
+            int rows = await _dbContext.StagingMilestones
+                .Where(s => s.Id == id)
+                .ExecuteDeleteAsync();
+            return rows > 0;
+        }
+
+        public async Task<int> ClearStagingAsync(string project)
+            => await _dbContext.StagingMilestones
+                .ExecuteDeleteAsync();
+
+        public async Task ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode)
+        {
+            List<StagingMilestone> rows = await _dbContext.StagingMilestones
+                .Where(s => s.Project == project)
+                .ToListAsync();
+
+            foreach (StagingMilestone row in rows)
+            {
+                // Skip fully empty rows
+                if (string.IsNullOrWhiteSpace(row.Description) &&
+                    //string.IsNullOrWhiteSpace(row.AltDescription) &&
+                    string.IsNullOrWhiteSpace(row.Number)
+                    //&& string.IsNullOrWhiteSpace(row.AltNumber)
+                    )
+                {
+                    _dbContext.StagingMilestones.Remove(row);
+                    continue;
+                }
+
+                //// Deliverable mode: swap alt fields into primary fields
+                //if (isDeliverableMode && string.IsNullOrWhiteSpace(row.Number) && !string.IsNullOrWhiteSpace(row.AltNumber))
+                //{
+                //    row.Description = row.AltDescription;
+                //    row.DateDue     = DateTime.TryParse(row.AltDate, out DateTime altDt) ? altDt : row.DateDue;
+                //    row.Number      = row.AltNumber;
+                //}
+
+                row.TypeId = typeId;
+                row.Note = null;
+
+                // Deliverable mode: auto-assign next number when number is missing
+                //if (isDeliverableMode && string.IsNullOrWhiteSpace(row.Number) && year.HasValue)
+                //    row.Number = await GetNextMilestoneNumberAsync(project, year.Value);
+
+                // Validate date
+                if (row.DateDue == default)
+                    row.Note = (row.Note ?? string.Empty) + "(*Please check this date*)";
+
+                // Validate number format: must match YY/NN
+                if (!string.IsNullOrWhiteSpace(row.Number) &&
+                    !System.Text.RegularExpressions.Regex.IsMatch(row.Number.Trim(), @"^\d{2}/\d{2}$"))
+                {
+                    row.Note = (row.Note ?? string.Empty) + " Please check this number format.";
+                }
+                else if (!string.IsNullOrWhiteSpace(row.Number))
+                {
+                    string trimmed = row.Number.Trim();
+                    bool exists = await _dbContext.Milestones
+                        .AnyAsync(m => m.Project == project && m.Number == trimmed);
+                    if (exists)
+                        row.Note = (row.Note ?? string.Empty) + " This Project Milestone already exists.";
+                    else
+                        row.Number = trimmed;
+                }
+            }
+
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<int> ImportStagingAsync(string project, string? changedBy)
+        {
+            List<StagingMilestone> validRows = await _dbContext.StagingMilestones
+                .AsNoTracking()
+                .Where(s => s.Project == project && s.Note == null)
+                .ToListAsync();
+
+            if (validRows.Count == 0)
+                return 0;
+
+            List<Milestone> newMilestones = validRows.Select(s => new Milestone
+            {
+                Project = project,
+                Number = s.Number!,
+                Description = s.Description,
+                DateDue = DateTime.SpecifyKind(s.DateDue, DateTimeKind.Unspecified),
+                IdType = s.TypeId
+            }).ToList();
+
+            await _dbContext.Milestones.AddRangeAsync(newMilestones);
+            await _dbContext.SaveChangesAsync();
+
+            foreach (Milestone m in newMilestones)
+            {
+                try
+                {
+                    _dbContext.LogMilestones.Add(BuildLogEntry(m, 'I', changedBy));
+                }
+                catch { /* log write failure must not affect the import */ }
+            }
+
+            try { await _dbContext.SaveChangesAsync(); }
+            catch { /* log write failure must not affect the import */ }
+
+            return newMilestones.Count;
+        }
+
+        public async Task<int> ImportWithOverwriteAsync(string project, string? changedBy)
+        {
+            // Set project on all staging rows first
+            await _dbContext.StagingMilestones
+                .Where(s => s.Project == null || s.Project == string.Empty)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Project, project));
+
+            // Find staging rows that match an existing milestone (by project + number)
+            List<StagingMilestone> stagingRows = await _dbContext.StagingMilestones
+                .AsNoTracking()
+                .Where(s => s.Project == project)
+                .ToListAsync();
+
+            int updated = 0;
+            foreach (StagingMilestone stagingRow in stagingRows)
+            {
+                Milestone? existing = await _dbContext.Milestones
+                    .FirstOrDefaultAsync(m => m.Project == project && m.Number == stagingRow.Number);
+
+                if (existing is null)
+                    continue;
+
+                existing.DateDue = DateTime.SpecifyKind(stagingRow.DateDue, DateTimeKind.Unspecified);
+                existing.Description = stagingRow.Description;
+                _dbContext.Milestones.Update(existing);
+                await _dbContext.SaveChangesAsync();
+
+                try
+                {
+                    _dbContext.LogMilestones.Add(BuildLogEntry(existing, 'U', changedBy));
+                    await _dbContext.SaveChangesAsync();
+                }
+                catch { /* log write failure must not affect the overwrite */ }
+
+                await _dbContext.StagingMilestones
+                    .Where(s => s.Project == project && s.Number == stagingRow.Number)
+                    .ExecuteDeleteAsync();
+
+                updated++;
+            }
+
+            return updated;
+        }
+
+        public async Task<string> GetNextMilestoneNumberAsync(string project, int year)
+        {
+            string yr2d = year.ToString()[^2..];
+
+            string? latestInMilestone = await _dbContext.Milestones
+                .AsNoTracking()
+                .Where(m => m.Project == project && m.Number != null && m.Number.StartsWith(yr2d))
+                .MaxAsync(m => m.Number);
+
+            string? latestInStaging = await _dbContext.StagingMilestones
+                .AsNoTracking()
+                .Where(s => s.Number != null && s.Number.StartsWith(yr2d))
+                .MaxAsync(s => s.Number);
+
+            if (string.IsNullOrEmpty(latestInMilestone) && string.IsNullOrEmpty(latestInStaging))
+                return $"{yr2d}/01";
+
+            int milestoneSeq = ParseSeq(latestInMilestone);
+            int stagingSeq = ParseSeq(latestInStaging);
+            int next = Math.Max(milestoneSeq, stagingSeq) + 1;
+            return $"{yr2d}/{next:D2}";
+        }
+
+        private static int ParseSeq(string? number)
+        {
+            if (string.IsNullOrWhiteSpace(number)) return 0;
+            int slash = number.IndexOf('/');
+            if (slash < 0 || slash >= number.Length - 1) return 0;
+            return int.TryParse(number[(slash + 1)..], out int seq) ? seq : 0;
+        }
     }
 }

@@ -127,11 +127,11 @@ function saveInvoice() {
             var parsedValue = parseFloat(fieldValue);
 
             if (isNaN(parsedValue)) {
-                showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.INFO);
+                showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                 return;
             }
             if (parsedValue < 0 || parsedValue > maxMoney) {
-                showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.INFO);
+                showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                 return;
             }
 

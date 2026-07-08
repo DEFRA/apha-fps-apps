@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using System.Security.Claims;
 
 namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
 {
@@ -884,6 +885,416 @@ namespace Apha.PIMS.Api.UnitTests.Controllers.MilestoneControllerTest
 
             await _service.Received(1).GetLogMilestonesAsync(parameters, null, null, null);
             _mapper.DidNotReceive().Map<PaginationRes<LogMilestoneRes>>(Arg.Any<PaginatedResult<LogMilestoneDto>>());
+        }
+
+        #endregion
+
+        #region GetAllStagingRows
+
+        [Fact]
+        public async Task GetAllStagingRows_ReturnsOkResult_WithMappedPaginatedResult()
+        {
+            // Arrange
+            var parameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var dtos = new List<StagingMilestoneDto>
+            {
+                new() { Id = 1, Project = "PP001", Number = "M1" },
+                new() { Id = 2, Project = "PP001", Number = "M2" }
+            };
+            var paginatedResult = new PaginatedResult<StagingMilestoneDto>(dtos, new PaginationDto { TotalRecords = 2 });
+
+            var resList = new List<StagingMilestoneRes>
+            {
+                new() { Id = 1, Project = "PP001", Number = "M1" },
+                new() { Id = 2, Project = "PP001", Number = "M2" }
+            };
+            var paginationRes = new PaginationRes<StagingMilestoneRes>(resList, new Pagination { TotalRecords = 2 });
+
+            _service.GetAllStagingRowsAsync(parameters).Returns(paginatedResult);
+            _mapper.Map<PaginationRes<StagingMilestoneRes>>(paginatedResult).Returns(paginationRes);
+
+            // Act
+            var result = await _controller.GetAllStagingRows(parameters);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(paginationRes, okResult.Value);
+            await _service.Received(1).GetAllStagingRowsAsync(parameters);
+            _mapper.Received(1).Map<PaginationRes<StagingMilestoneRes>>(paginatedResult);
+        }
+
+        [Fact]
+        public async Task GetAllStagingRows_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var parameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            _service.GetAllStagingRowsAsync(parameters).Throws(new Exception("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllStagingRows(parameters));
+            await _service.Received(1).GetAllStagingRowsAsync(parameters);
+            _mapper.DidNotReceive().Map<PaginationRes<StagingMilestoneRes>>(Arg.Any<PaginatedResult<StagingMilestoneDto>>());
+        }
+
+        #endregion
+
+        #region GetStagingRows
+
+        [Fact]
+        public async Task GetStagingRows_ReturnsOkResult_WithMappedList()
+        {
+            // Arrange
+            const string project = "PP001";
+            var dtos = new List<StagingMilestoneDto> { new() { Id = 1, Project = project, Number = "M1" } };
+            var resList = new List<StagingMilestoneRes> { new() { Id = 1, Project = project, Number = "M1" } };
+
+            _service.GetStagingRowsAsync(project).Returns(dtos);
+            _mapper.Map<List<StagingMilestoneRes>>(dtos).Returns(resList);
+
+            // Act
+            var result = await _controller.GetStagingRows(project);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(resList, okResult.Value);
+            await _service.Received(1).GetStagingRowsAsync(project);
+        }
+
+        [Fact]
+        public async Task GetStagingRows_WithNullProject_PassesNullToService()
+        {
+            // Arrange
+            var dtos = new List<StagingMilestoneDto>();
+            var resList = new List<StagingMilestoneRes>();
+
+            _service.GetStagingRowsAsync(null).Returns(dtos);
+            _mapper.Map<List<StagingMilestoneRes>>(dtos).Returns(resList);
+
+            // Act
+            await _controller.GetStagingRows(null);
+
+            // Assert
+            await _service.Received(1).GetStagingRowsAsync(Arg.Is<string?>(p => p == null));
+        }
+
+        [Fact]
+        public async Task GetStagingRows_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            _service.GetStagingRowsAsync(null).Throws(new Exception("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetStagingRows());
+            await _service.Received(1).GetStagingRowsAsync(null);
+            _mapper.DidNotReceive().Map<List<StagingMilestoneRes>>(Arg.Any<List<StagingMilestoneDto>>());
+        }
+
+        #endregion
+
+        #region AddStagingRow
+
+        [Fact]
+        public async Task AddStagingRow_ReturnsOkResult_WithMappedDto()
+        {
+            // Arrange
+            const int year = 2025;
+            var request = new StagingMilestoneReq { Project = "PP001", Number = "M1", Description = "Test" };
+            var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1", Description = "Test" };
+            var savedDto = new StagingMilestoneDto { Id = 10, Project = "PP001", Number = "M1", Description = "Test" };
+            var savedRes = new StagingMilestoneRes { Id = 10, Project = "PP001", Number = "M1", Description = "Test" };
+
+            _mapper.Map<StagingMilestoneDto>(request).Returns(dto);
+            _service.AddStagingRowAsync(dto, year).Returns(savedDto);
+            _mapper.Map<StagingMilestoneRes>(savedDto).Returns(savedRes);
+
+            // Act
+            var result = await _controller.AddStagingRow(year, request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(savedRes, okResult.Value);
+            await _service.Received(1).AddStagingRowAsync(dto, year);
+            _mapper.Received(1).Map<StagingMilestoneRes>(savedDto);
+        }
+
+        [Fact]
+        public async Task AddStagingRow_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            var request = new StagingMilestoneReq { Project = "PP001", Number = "M1" };
+            var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
+
+            _mapper.Map<StagingMilestoneDto>(request).Returns(dto);
+            _service.AddStagingRowAsync(dto, 2025).Throws(new Exception("Validation error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.AddStagingRow(2025, request));
+            await _service.Received(1).AddStagingRowAsync(dto, 2025);
+            _mapper.DidNotReceive().Map<StagingMilestoneRes>(Arg.Any<StagingMilestoneDto>());
+        }
+
+        #endregion
+
+        #region UpdateStagingRow
+
+        [Fact]
+        public async Task UpdateStagingRow_ReturnsOkResult_WithMappedDto_AndSetsId()
+        {
+            // Arrange
+            const int id = 44;
+            var request = new StagingMilestoneReq { Project = "PP001", Number = "M1", Description = "Updated" };
+            var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1", Description = "Updated" };
+            var updatedDto = new StagingMilestoneDto { Id = id, Project = "PP001", Number = "M1", Description = "Updated" };
+            var updatedRes = new StagingMilestoneRes { Id = id, Project = "PP001", Number = "M1", Description = "Updated" };
+
+            _mapper.Map<StagingMilestoneDto>(request).Returns(dto);
+            _service.UpdateStagingRowAsync(dto).Returns(updatedDto);
+            _mapper.Map<StagingMilestoneRes>(updatedDto).Returns(updatedRes);
+
+            // Act
+            var result = await _controller.UpdateStagingRow(id, request);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(updatedRes, okResult.Value);
+            Assert.Equal(id, dto.Id);
+            await _service.Received(1).UpdateStagingRowAsync(dto);
+        }
+
+        [Fact]
+        public async Task UpdateStagingRow_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            const int id = 44;
+            var request = new StagingMilestoneReq { Project = "PP001", Number = "M1" };
+            var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
+
+            _mapper.Map<StagingMilestoneDto>(request).Returns(dto);
+            _service.UpdateStagingRowAsync(dto).Throws(new Exception("Not found"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.UpdateStagingRow(id, request));
+            Assert.Equal(id, dto.Id);
+            await _service.Received(1).UpdateStagingRowAsync(dto);
+        }
+
+        #endregion
+
+        #region DeleteStagingRow
+
+        [Fact]
+        public async Task DeleteStagingRow_ReturnsOkResult_WhenDeleted()
+        {
+            // Arrange
+            const int id = 10;
+            _service.DeleteStagingRowAsync(id).Returns(true);
+
+            // Act
+            var result = await _controller.DeleteStagingRow(id);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _service.Received(1).DeleteStagingRowAsync(id);
+        }
+
+        [Fact]
+        public async Task DeleteStagingRow_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            const int id = 10;
+            _service.DeleteStagingRowAsync(id).Throws(new Exception("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.DeleteStagingRow(id));
+            await _service.Received(1).DeleteStagingRowAsync(id);
+        }
+
+        #endregion
+
+        #region ClearStaging
+
+        [Fact]
+        public async Task ClearStaging_ReturnsOkResult_WithDeletedCount()
+        {
+            // Arrange
+            const string project = "PP001";
+            _service.ClearStagingAsync(project).Returns(3);
+
+            // Act
+            var result = await _controller.ClearStaging(project);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _service.Received(1).ClearStagingAsync(project);
+        }
+
+        [Fact]
+        public async Task ClearStaging_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            const string project = "PP001";
+            _service.ClearStagingAsync(project).Throws(new Exception("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.ClearStaging(project));
+            await _service.Received(1).ClearStagingAsync(project);
+        }
+
+        #endregion
+
+        #region ValidateStaging
+
+        [Fact]
+        public async Task ValidateStaging_ReturnsOkResult_WithMappedRows_AndCallsServiceMethods()
+        {
+            // Arrange
+            const string project = "PP001";
+            const string typeId = "M";
+            const bool isDeliverableMode = true;
+            var rows = new List<StagingMilestoneDto> { new() { Id = 1, Project = project, Number = "M1" } };
+            var rowsRes = new List<StagingMilestoneRes> { new() { Id = 1, Project = project, Number = "M1" } };
+
+            _service.ValidateStagingAsync(project, typeId, isDeliverableMode).Returns(Task.CompletedTask);
+            _service.GetStagingRowsAsync(project).Returns(rows);
+            _mapper.Map<List<StagingMilestoneRes>>(rows).Returns(rowsRes);
+
+            // Act
+            var result = await _controller.ValidateStaging(project, typeId, isDeliverableMode);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(rowsRes, okResult.Value);
+            await _service.Received(1).ValidateStagingAsync(project, typeId, isDeliverableMode);
+            await _service.Received(1).GetStagingRowsAsync(project);
+        }
+
+        [Fact]
+        public async Task ValidateStaging_WhenValidationThrows_PropagatesException_AndDoesNotFetchRows()
+        {
+            // Arrange
+            const string project = "PP001";
+            _service.ValidateStagingAsync(project, null, false).Throws(new Exception("Validation failed"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.ValidateStaging(project));
+            await _service.Received(1).ValidateStagingAsync(project, null, false);
+            await _service.DidNotReceive().GetStagingRowsAsync(Arg.Any<string?>());
+        }
+
+        #endregion
+
+        #region ImportStaging
+
+        [Fact]
+        public async Task ImportStaging_ReturnsOkResult_AndPassesTruncatedChangedBy()
+        {
+            // Arrange
+            const string project = "PP001";
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "ABCDEFGHIJKL") }, "TestAuth");
+            _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(identity);
+
+            _service.ImportStagingAsync(project, "ABCDEFGHIJ").Returns(5);
+
+            // Act
+            var result = await _controller.ImportStaging(project);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _service.Received(1).ImportStagingAsync(project, "ABCDEFGHIJ");
+        }
+
+        [Fact]
+        public async Task ImportStaging_WhenNoIdentity_PassesNullChangedBy()
+        {
+            // Arrange
+            const string project = "PP001";
+            _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
+            _service.ImportStagingAsync(project, null).Returns(1);
+
+            // Act
+            await _controller.ImportStaging(project);
+
+            // Assert
+            await _service.Received(1).ImportStagingAsync(project, null);
+        }
+
+        [Fact]
+        public async Task ImportStaging_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            const string project = "PP001";
+            _service.ImportStagingAsync(project, Arg.Any<string?>()).Throws(new Exception("Import failed"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.ImportStaging(project));
+            await _service.Received(1).ImportStagingAsync(project, Arg.Any<string?>());
+        }
+
+        #endregion
+
+        #region ImportWithOverwrite
+
+        [Fact]
+        public async Task ImportWithOverwrite_ReturnsOkResult_AndPassesTruncatedChangedBy()
+        {
+            // Arrange
+            const string project = "PP001";
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "USERLONGNAME") }, "TestAuth");
+            _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(identity);
+
+            _service.ImportWithOverwriteAsync(project, "USERLONGNA").Returns(7);
+
+            // Act
+            var result = await _controller.ImportWithOverwrite(project);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _service.Received(1).ImportWithOverwriteAsync(project, "USERLONGNA");
+        }
+
+        [Fact]
+        public async Task ImportWithOverwrite_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            const string project = "PP001";
+            _service.ImportWithOverwriteAsync(project, Arg.Any<string?>()).Throws(new Exception("Overwrite failed"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.ImportWithOverwrite(project));
+            await _service.Received(1).ImportWithOverwriteAsync(project, Arg.Any<string?>());
+        }
+
+        #endregion
+
+        #region GetNextMilestoneNumber
+
+        [Fact]
+        public async Task GetNextMilestoneNumber_ReturnsOkResult_WithNextNumber()
+        {
+            // Arrange
+            const string project = "PP001";
+            const int year = 2025;
+            _service.GetNextMilestoneNumberAsync(project, year).Returns("M42");
+
+            // Act
+            var result = await _controller.GetNextMilestoneNumber(project, year);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            await _service.Received(1).GetNextMilestoneNumberAsync(project, year);
+        }
+
+        [Fact]
+        public async Task GetNextMilestoneNumber_WhenServiceThrowsException_PropagatesException()
+        {
+            // Arrange
+            const string project = "PP001";
+            const int year = 2025;
+            _service.GetNextMilestoneNumberAsync(project, year).Throws(new Exception("Database error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetNextMilestoneNumber(project, year));
+            await _service.Received(1).GetNextMilestoneNumberAsync(project, year);
         }
 
         #endregion

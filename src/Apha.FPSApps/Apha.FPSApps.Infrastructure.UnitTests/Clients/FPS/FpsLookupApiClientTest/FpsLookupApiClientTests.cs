@@ -230,5 +230,57 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsLookupApiClientTe
         }
 
         #endregion
+
+        #region GetAllPactContractsAsync Tests
+
+        [Fact]
+        public async Task GetAllPactContractsAsync_WithSuccessResponse_ReturnsMappedContractList()
+        {
+            // Arrange
+            var contractList = new List<ContractRes> { new() { ContractNo = "C001" }, new() { ContractNo = "C002" } };
+            var apiResponse = new ApiResponse<List<ContractRes>> { Success = true, Data = contractList };
+            var expectedDto = ApiResponseDto<List<ContractDto>>.SuccessResponse(
+                new List<ContractDto> { new() { ContractNo = "C001" }, new() { ContractNo = "C002" } }
+            );
+
+            _http.GetAsync<List<ContractRes>>("api/v1/contract/pact").Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ContractDto>>>(apiResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetAllPactContractsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _http.Received(1).GetAsync<List<ContractRes>>("api/v1/contract/pact");
+        }
+
+        [Fact]
+        public async Task GetAllPactContractsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiError> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var apiResponse = new ApiResponse<List<ContractRes>> { Success = false, Errors = errors };
+            var mappedResponse = new ApiResponseDto<List<ContractDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<ContractRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ContractDto>>>(apiResponse).Returns(mappedResponse);
+
+            // Act
+            var result = await _client.GetAllPactContractsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
     }
 }

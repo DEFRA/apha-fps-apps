@@ -183,6 +183,15 @@ namespace Apha.FPS.Api.Controllers
             return Ok(_mapper.Map<PaginationRes<ProjectRes>>(pagedResult));
         }
 
+        [HttpGet("pactview/by-program")]
+        public async Task<ActionResult<PaginationRes<ProjectRes>>> GetPagedPactProjectsByProgramAsync(
+    [FromQuery] QueryParameters<string> query,
+    [FromQuery] string programNo)
+        {
+            var pagedResult = await _projectService.GetPagedPactProjectsByProgramAsync(query, programNo);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(pagedResult));
+        }
+
         [HttpGet("pactview/all")]
         public async Task<ActionResult<List<ProjectRes>>> GetAllPactProjectsAsync()
         {
