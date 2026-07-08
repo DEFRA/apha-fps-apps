@@ -240,8 +240,7 @@
                 var query = Object.keys(params)
                     .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
                     .join('&');
-
-                window.location.href = exportUrl + '?' + query;
+                window.fpsNavigateTo(exportUrl + '?' + query);
             });
         }
 
