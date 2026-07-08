@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
@@ -20,18 +21,21 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         private readonly IMapper _mapper;
         private readonly IWorkGroupEmployeeService _workGroupEmployeeService;
         private readonly IProfitCentreService _profitCentreService;
+        private readonly IWorkGroupService _workGroupService;
         private readonly IWorkGroupGradeService _workGroupGradeService;
 
         public SetUpStaffResourcesController(
             IMapper mapper,
             IWorkGroupEmployeeService workGroupEmployeeService,
             IProfitCentreService profitCentreService,
-            IWorkGroupGradeService workGroupGradeService)
+            IWorkGroupGradeService workGroupGradeService,
+            IWorkGroupService workGroupService)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _workGroupEmployeeService = workGroupEmployeeService ?? throw new ArgumentNullException(nameof(workGroupEmployeeService));
             _profitCentreService = profitCentreService ?? throw new ArgumentNullException(nameof(profitCentreService));
             _workGroupGradeService = workGroupGradeService ?? throw new ArgumentNullException(nameof(workGroupGradeService));
+            _workGroupService = workGroupService ?? throw new ArgumentNullException(nameof(workGroupService));
         }
 
         [HttpGet]
@@ -67,6 +71,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editSsrStaff",
                 AllowDelete = false,
                 BindGridUrl = "/FPS/SetUpStaffResources/LoadStaffGrid",
+                ExtraFilterMethod = "ssrGetStaffExtraFilters",
                 Data = new List<SetUpStaffResourcesItem>(),
                 Columns = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
                 Pagination = new PaginationModel()
@@ -95,7 +100,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             }
 
             var queryParameters = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(queryParameters, wgGrade);
+            var response = await _workGroupEmployeeService.GetAllActiveWorkGroupEmployeesAsync(queryParameters, wgGrade);
 
             if (!response.Success)
             {
@@ -121,6 +126,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 EditFunction = "editSsrStaff",
                 AllowDelete = false,
                 BindGridUrl = "/FPS/SetUpStaffResources/LoadStaffGrid",
+                ExtraFilterMethod = "ssrGetStaffExtraFilters",
                 Data = staffItems,
                 Columns = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
                 Pagination = paginationModel
@@ -130,24 +136,45 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetGradesByResourceCentre(string resourceCentre)
+        public async Task<IActionResult> GetGroupsByResourceCentre(string resourceCentre)
         {
             if (string.IsNullOrWhiteSpace(resourceCentre))
             {
                 return Json(new { success = false, message = "Resource Centre is required." });
             }
 
-            var response = await _workGroupGradeService.GetWorkGroupGradeAsync(resourceCentre);
+            var response = await _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(resourceCentre);
             if (!response.Success)
             {
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load grades." });
             }
 
-            var grades = (response.Data ?? new List<WorkgroupGradeDto>())
-                .Select(g => new { value = g.WgGrade, text = $"{g.WgGrade} - {g.Workgroup}" })
-                .ToList();
+            var workgroups = response.Data != null ?
+                [.. response.Data.Select(w => w.WorkGroupName).OrderBy(w => w)] :
+                new List<string>();
 
-            return Json(new { success = true, data = grades });
+            return Json(new { success = true, data = workgroups });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetGradesByGroups(string workGroup)
+        {
+            if (string.IsNullOrWhiteSpace(workGroup))
+            {
+                return Json(new { success = false, message = "Resource Centre is required." });
+            }
+
+            var response = await _workGroupGradeService.GetWorkgroupGradesByWorkGroupAsync(workGroup);
+            if (!response.Success)
+            {
+                return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load grades." });
+            }
+
+            var gradeCodes = response.Data != null ?
+                response.Data.Select(w => w.WgGrade).OrderBy(w => w).ToList() :
+                new List<string>();
+
+            return Json(new { success = true, data = gradeCodes });
         }
 
         [HttpGet]

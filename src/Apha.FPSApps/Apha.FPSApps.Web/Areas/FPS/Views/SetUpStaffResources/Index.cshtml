@@ -18,7 +18,7 @@
                                 aria-label="Select a Resource Center"
                                 asp-for="SelectedResourceCentre"
                                 asp-items="Model.ResourceCentres"
-                                onchange="ssrUpdateResourceCentre()">
+                                onchange="LoadGroupsByResourceCentre()">
                             <option value="">-- Select a Resource Center --</option>
                         </select>
                     </div>
@@ -66,12 +66,12 @@
                                                 <div class="ssr-right-panel">
                                                     <div class="govuk-form-group ssr-wg-input-group">
                                                         <label for="ssrSelectedWorkgroup" class="govuk-label govuk-!-font-weight-bold">Selected WorkGroup...</label>
-                                                        <input type="text"
-                                                               id="ssrSelectedWorkgroup"
-                                                               class="govuk-input ssr-wg-input"
-                                                               value="@Model.SelectedWorkgroup"
-                                                               readonly
-                                                               aria-label="Selected workgroup" />
+                                                        <select class="govuk-select ssr-resource-select"
+                                                                id="workGroupSelect"
+                                                                aria-label="Select a Work Group"
+                                                                onchange="LoadGradeByGroup()">
+                                                            <option value="">-- Select a Work Group --</option>
+                                                        </select>
                                                     </div>
                                                     <div id="gridContainer_ssrStaffGrid">
                                                         @await Html.PartialAsync("_DataGrid", Model.StaffGrid)
@@ -139,7 +139,7 @@
         var ssrCurrentCentre = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedResourceCentre))';
         var ssrCurrentGrade  = '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.SelectedGrade))';
 
-        function ssrUpdateResourceCentre() {
+        function LoadGroupsByResourceCentre() {
             var sel = document.getElementById('resourceCentreSelect');
             var nameEl = document.getElementById('ssrSelectedCentreName');
             ssrCurrentCentre = sel ? sel.value : '';
@@ -157,23 +157,65 @@
             if (nameEl) nameEl.textContent = ssrCurrentCentre;
             ssrCurrentGrade = '';
 
-            $.get('/FPS/SetUpStaffResources/GetGradesByResourceCentre',
-                { profitCentre: ssrCurrentCentre },
-                function (grades) {
-                    ssrRenderGradeList(grades);
-                    ssrClearSummary();
-                    reloadSetUpStaffResourcesGrid();
+            BindGroupDropdownList([]);
+            
+            $.get('/FPS/SetUpStaffResources/GetGroupsByResourceCentre',
+                { resourceCentre: ssrCurrentCentre },
+                function (response) {
+                    if (response && response.success) {
+                        BindGroupDropdownList(response.data);
+                    } else {
+                        console.warn('GetGroupsByResourceCentre: ' + (response && response.message ? response.message : 'No data returned'));
+                    }
                 }
             ).fail(function () {
-                console.error('GetGradesByResourceCentre failed for: ' + ssrCurrentCentre);
+                console.error('GetGroupsByResourceCentre failed for: ' + ssrCurrentCentre);
             });
         }
 
-        function ssrRenderGradeList(grades) {
+        function BindGroupDropdownList(workgroups) {
+            var select = document.getElementById('workGroupSelect');
+            if (!select) return;
+            select.innerHTML = '';
+            var defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '-- Select a Work Group --';
+            select.appendChild(defaultOpt);
+            (workgroups || []).forEach(function (wg) {
+                var opt = document.createElement('option');
+                opt.value = wg;
+                opt.textContent = wg;
+                select.appendChild(opt);
+            });
+            if (workgroups && workgroups.length > 0) {
+                select.value = workgroups[0];
+            }
+        }
+
+        function LoadGradeByGroup()
+        {
+             var sel = document.getElementById('workGroupSelect');
+             selectedCurrentGroup = sel ? sel.value : '';
+
+              $.get('/FPS/SetUpStaffResources/GetGradesByGroups',
+                { workGroup: selectedCurrentGroup },
+                function (response) {
+                    if (response && response.success) {
+                        BindGradeList(response.data);
+                    } else {
+                        console.warn('GetGradesByGroups: ' + (response && response.message ? response.message : 'No data returned'));
+                    }
+                }
+            ).fail(function () {
+                console.error('GetGradesByGroups failed for: ' + selectedCurrentGroup);
+            });
+        }
+
+        function BindGradeList(workgroups) {
             var list = document.getElementById('ssrGradeList');
             if (!list) return;
             list.innerHTML = '';
-            (grades || []).forEach(function (wg) {
+            (workgroups || []).forEach(function (wg) {
                 var li = document.createElement('li');
                 li.className = 'ssr-grade-item';
                 li.textContent = wg;
@@ -182,8 +224,14 @@
                 li.addEventListener('click', function () { ssrSelectWorkGroup(wg); });
                 list.appendChild(li);
             });
-            if (grades && grades.length > 0) {
-                ssrSelectWorkGroup(grades[0]);
+            if (workgroups && workgroups.length > 0) {
+                ssrSelectWorkGroup(workgroups[0]);
+            } else {
+                ssrCurrentGrade = '';
+                var wgInput = document.getElementById('ssrSelectedWorkgroup');
+                if (wgInput) wgInput.value = '';
+                ssrClearSummary();
+                reloadSetUpStaffResourcesGrid();
             }
         }
 
@@ -209,13 +257,10 @@
         }
 
         function ssrGetStaffExtraFilters() {
-            return {
-                resourceCentre: ssrCurrentCentre || '',
-                grade: ssrCurrentGrade || ''
-            };
+            return { wgGrade: ssrCurrentGrade || '' };
         }
 
-        function editSetUpStaffResources(btn) {
+        function editSsrStaff(btn) {
             var id = $(btn).data('id');
             $.get('/FPS/SetUpStaffResources/Edit', { pactId: id }, function (html) {
                 $('#modaPopupBody').html(html);

@@ -32,6 +32,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
     public class SetUpStaffResourcesItem
     {
         // TRANSFORMENGINE: PactId — hidden key, not visible in JS columns array (used for Edit routing only)
+        [GridColumn(IsVisible = false)]
         public string PactId { get; set; } = null!;
 
         // TRANSFORMENGINE: SpNumber — read-only in modal (ssrEditSpNo readonly), maps to JS field 'spNo'
@@ -40,6 +41,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string SpNumber { get; set; } = null!;
 
         // TRANSFORMENGINE: WorkGroupGrade — not visible in JS columns array; used in modal GradeCode (ssrEditGradeCode, readonly)
+        [GridColumn(IsVisible = false)]
         public string WorkGroupGrade { get; set; } = null!;
 
         // TRANSFORMENGINE: Name — editable in modal (ssrEditName), maps to JS field 'name'

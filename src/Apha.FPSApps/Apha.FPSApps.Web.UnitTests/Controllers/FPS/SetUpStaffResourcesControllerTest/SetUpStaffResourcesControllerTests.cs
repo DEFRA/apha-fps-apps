@@ -21,7 +21,9 @@
 
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
@@ -45,6 +47,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
         private readonly IWorkGroupEmployeeService _workGroupEmployeeService;
         private readonly IProfitCentreService _profitCentreService;
         private readonly IWorkGroupGradeService _workGroupGradeService;
+        private readonly IWorkGroupService _workGroupService;
         private readonly SetUpStaffResourcesController _controller;
 
         public SetUpStaffResourcesControllerTests()
@@ -53,12 +56,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
             _workGroupEmployeeService = Substitute.For<IWorkGroupEmployeeService>();
             _profitCentreService      = Substitute.For<IProfitCentreService>();
             _workGroupGradeService    = Substitute.For<IWorkGroupGradeService>();
+            _workGroupService         = Substitute.For<IWorkGroupService>();
 
             _controller = new SetUpStaffResourcesController(
                 _mapper,
                 _workGroupEmployeeService,
                 _profitCentreService,
-                _workGroupGradeService);
+                _workGroupGradeService,
+                _workGroupService);
         }
 
         // TRANSFORMENGINE: Helper — serialise JsonResult.Value → JsonElement for property assertions
@@ -103,28 +108,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
         public void Constructor_WithNullMapper_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new SetUpStaffResourcesController(
-                null!, _workGroupEmployeeService, _profitCentreService, _workGroupGradeService));
+                null!, _workGroupEmployeeService, _profitCentreService, _workGroupGradeService, _workGroupService));
         }
 
         [Fact]
         public void Constructor_WithNullWorkGroupEmployeeService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new SetUpStaffResourcesController(
-                _mapper, null!, _profitCentreService, _workGroupGradeService));
+                _mapper, null!, _profitCentreService, _workGroupGradeService, _workGroupService));
         }
 
         [Fact]
         public void Constructor_WithNullProfitCentreService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new SetUpStaffResourcesController(
-                _mapper, _workGroupEmployeeService, null!, _workGroupGradeService));
+                _mapper, _workGroupEmployeeService, null!, _workGroupGradeService, _workGroupService));
         }
 
         [Fact]
         public void Constructor_WithNullWorkGroupGradeService_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new SetUpStaffResourcesController(
-                _mapper, _workGroupEmployeeService, _profitCentreService, null!));
+                _mapper, _workGroupEmployeeService, _profitCentreService, null!, _workGroupService));
         }
 
         #endregion
@@ -302,7 +307,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
             var queryParameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(queryParameters, DefaultWgGrade)
+            _workGroupEmployeeService.GetAllActiveWorkGroupEmployeesAsync(queryParameters, DefaultWgGrade)
                 .Returns(apiResponse);
             _mapper.Map<SetUpStaffResourcesItem>(Arg.Any<WorkGroupEmployeeStaffDto>())
                 .Returns(staffItems[0]);
@@ -317,7 +322,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
             var gridConfig    = Assert.IsType<DataGridConfig<SetUpStaffResourcesItem>>(partialResult.Model);
             Assert.Single(gridConfig.Data);
             await _workGroupEmployeeService.Received(1)
-                .GetWorkGroupEmployeeForStaffAsync(queryParameters, DefaultWgGrade);
+                .GetAllActiveWorkGroupEmployeesAsync(queryParameters, DefaultWgGrade);
         }
 
         [Fact]
@@ -329,7 +334,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
             var apiResponse     = ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.SuccessResponse(new List<WorkGroupEmployeeStaffDto>());
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(queryParameters, DefaultWgGrade)
+            _workGroupEmployeeService.GetAllActiveWorkGroupEmployeesAsync(queryParameters, DefaultWgGrade)
                 .Returns(apiResponse);
             _mapper.Map<PaginationModel>(Arg.Any<object>())
                 .Returns(new PaginationModel());
@@ -352,7 +357,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
             var errors          = new List<ApiErrorDto> { new() { Message = "Load failed", Code = "ERR" } };
 
             _mapper.Map<QueryParameters<string>>(request).Returns(queryParameters);
-            _workGroupEmployeeService.GetWorkGroupEmployeeForStaffAsync(queryParameters, DefaultWgGrade)
+            _workGroupEmployeeService.GetAllActiveWorkGroupEmployeesAsync(queryParameters, DefaultWgGrade)
                 .Returns(ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
@@ -366,51 +371,55 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
 
         #endregion
 
-        #region GetGradesByResourceCentre Tests
+        #region GetGroupsByResourceCentre Tests
 
         [Fact]
-        public async Task GetGradesByResourceCentre_WithValidResourceCentre_ReturnsJsonWithGradeList()
+        public async Task GetGroupsByResourceCentre_WithValidResourceCentre_ReturnsJsonWithGradeList()
         {
             // Arrange
-            var grades = BuildGradeList();
-            _workGroupGradeService.GetWorkGroupGradeAsync(DefaultResourceCentre)
-                .Returns(ApiResponseDto<List<WorkgroupGradeDto>>.SuccessResponse(grades));
+            var workgroups = new List<WorkGroupViewDto>
+            {
+                new() { WorkGroupName = "WG-Alpha" },
+                new() { WorkGroupName = "WG-Beta" }
+            };
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(DefaultResourceCentre)
+                .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(workgroups));
 
             // Act
-            var result = await _controller.GetGradesByResourceCentre(DefaultResourceCentre);
+            var result = await _controller.GetGroupsByResourceCentre(DefaultResourceCentre);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value      = GetJsonResultElement(jsonResult);
             Assert.True(value.GetProperty("success").GetBoolean());
-            await _workGroupGradeService.Received(1).GetWorkGroupGradeAsync(DefaultResourceCentre);
+            await _workGroupService.Received(1).GetWorkGroupsByProfitCentreForBudgetAsync(DefaultResourceCentre);
         }
 
         [Theory]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task GetGradesByResourceCentre_WithEmptyOrWhitespaceResourceCentre_ReturnsJsonWithSuccessFalse(string rc)
+        public async Task GetGroupsByResourceCentre_WithEmptyOrWhitespaceResourceCentre_ReturnsJsonWithSuccessFalse(string rc)
         {
             // Act
-            var result = await _controller.GetGradesByResourceCentre(rc);
+            var result = await _controller.GetGroupsByResourceCentre(rc);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value      = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
-            await _workGroupGradeService.DidNotReceive().GetWorkGroupGradeAsync(Arg.Any<string>());
+            await _workGroupService.DidNotReceive().GetWorkGroupsByProfitCentreForBudgetAsync(Arg.Any<string>());
         }
 
         [Fact]
-        public async Task GetGradesByResourceCentre_WhenServiceFails_ReturnsJsonWithSuccessFalse()
+        public async Task GetGroupsByResourceCentre_WhenServiceFails_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
             var errors = new List<ApiErrorDto> { new() { Message = "Grade load failed", Code = "ERR" } };
-            _workGroupGradeService.GetWorkGroupGradeAsync(DefaultResourceCentre)
-                .Returns(ApiResponseDto<List<WorkgroupGradeDto>>.FailureResponse(errors, new ApiMetaDto()));
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(DefaultResourceCentre)
+                .Returns(ApiResponseDto<List<WorkGroupViewDto>>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.GetGradesByResourceCentre(DefaultResourceCentre);
+            var result = await _controller.GetGroupsByResourceCentre(DefaultResourceCentre);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -419,14 +428,14 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
         }
 
         [Fact]
-        public async Task GetGradesByResourceCentre_ServiceReturnsEmptyList_ReturnsJsonWithSuccessTrueAndEmptyData()
+        public async Task GetGroupsByResourceCentre_ServiceReturnsEmptyList_ReturnsJsonWithSuccessTrueAndEmptyData()
         {
             // Arrange
-            _workGroupGradeService.GetWorkGroupGradeAsync(DefaultResourceCentre)
-                .Returns(ApiResponseDto<List<WorkgroupGradeDto>>.SuccessResponse(new List<WorkgroupGradeDto>()));
+            _workGroupService.GetWorkGroupsByProfitCentreForBudgetAsync(DefaultResourceCentre)
+                .Returns(ApiResponseDto<List<WorkGroupViewDto>>.SuccessResponse(new List<WorkGroupViewDto>()));
 
             // Act
-            var result = await _controller.GetGradesByResourceCentre(DefaultResourceCentre);
+            var result = await _controller.GetGroupsByResourceCentre(DefaultResourceCentre);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);

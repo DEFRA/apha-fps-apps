@@ -93,6 +93,28 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             }
         }
 
+        // TRANSFORMENGINE: GET api/v1/wgstaff/activestaff?wgGrade={0} → WgStaffController.GetAllActiveWorkGroupEmployeesAsync
+        public async Task<ApiResponseDto<List<WorkGroupEmployeeStaffDto>>> GetAllActiveWorkGroupEmployeesAsync(QueryParameters<string> query, string wgGrade)
+        {
+            try
+            {
+                var baseUrl = string.Format(FpsApiEndpoints.GetActiveWgStaffForStaff, Uri.EscapeDataString(wgGrade));
+                var url = QueryStringHelper.AddQueryString(baseUrl, query);
+                var response = await _http.GetAsync<List<WorkGroupEmployeeRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeStaffDto>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkGroupEmployeeStaffDto>>>(response);
+                return ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve all active WorkGroupEmployee data", Code = InternalCodeError } },
+                    new ApiMetaDto());
+            }
+        }
+
         // TRANSFORMENGINE: GET api/v1/wgstaff/{pactId} → WgStaffController.GetWorkGroupEmployeeByIdAsync
         public async Task<ApiResponseDto<WorkGroupEmployeeDto>> GetWorkGroupEmployeeByIdAsync(string pactId)
         {

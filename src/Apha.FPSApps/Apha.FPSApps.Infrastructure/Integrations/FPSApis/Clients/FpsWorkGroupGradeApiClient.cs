@@ -216,5 +216,26 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
                     new ApiMetaDto());
             }
         }
+
+        // TRANSFORMENGINE: GET api/v1/wggrades/byworkgroup?workGroup={0} → WgGradesController.GetWorkgroupGradesByWorkGroupAsync
+        public async Task<ApiResponseDto<List<WorkgroupGradeDto>>> GetWorkgroupGradesByWorkGroupAsync(string workGroup)
+        {
+            try
+            {
+                var url = string.Format(FpsApiEndpoints.GetWgGradesByWorkGroup, Uri.EscapeDataString(workGroup));
+                var response = await _http.GetAsync<List<WorkgroupGradeRes>>(url);
+                if (response.Success)
+                    return _mapper.Map<ApiResponseDto<List<WorkgroupGradeDto>>>(response);
+
+                var responseDto = _mapper.Map<ApiResponseDto<List<WorkgroupGradeDto>>>(response);
+                return ApiResponseDto<List<WorkgroupGradeDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
+            }
+            catch (Exception)
+            {
+                return ApiResponseDto<List<WorkgroupGradeDto>>.FailureResponse(
+                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve WorkgroupGrades by workgroup", Code = InternalCodeError } },
+                    new ApiMetaDto());
+            }
+        }
     }
 }
