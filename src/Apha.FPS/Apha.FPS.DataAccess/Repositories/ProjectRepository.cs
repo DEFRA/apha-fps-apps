@@ -622,6 +622,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 "parentproject" => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
                 "projecttitle"  => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
                 "manager"       => ApplyPactProjectOrder(query, i => i.Manager, descending),
+                "projectstatus" => ApplyPactProjectOrder(query, i => i.ProjectStatus, descending),
                 _ => query.OrderBy(e => e.ParentProject)
             };
         }
