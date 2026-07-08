@@ -21,5 +21,18 @@ namespace Apha.FPSApps.Application.Interfaces.PimsApiClients
         Task<ApiResponseDto<object>> DeleteMilestoneFormDatesAsync(string parentProject, short year);
 
         Task<ApiResponseDto<List<LogMilestoneDto>>> GetLogMilestonesAsync(QueryParameters<string> parameters, string? project, string? numberPart1, string? numberPart2);
+
+        // Staging / Import
+
+        Task<ApiResponseDto<List<StagingMilestoneDto>>> GetAllStagingRowsAsync(QueryParameters<string> parameters);
+        Task<ApiResponseDto<List<StagingMilestoneDto>>> GetStagingRowsAsync(string? project);
+        Task<ApiResponseDto<StagingMilestoneDto>> AddStagingRowAsync(StagingMilestoneDto dto, int year);
+        Task<ApiResponseDto<StagingMilestoneDto>> UpdateStagingRowAsync(int id, StagingMilestoneDto dto);
+        Task<ApiResponseDto<object>> DeleteStagingRowAsync(int id);
+        Task<ApiResponseDto<object>> ClearStagingAsync(string project);
+        Task<ApiResponseDto<List<StagingMilestoneDto>>> ValidateStagingAsync(string project, string? typeId, bool isDeliverableMode);
+        Task<ApiResponseDto<object>> ImportStagingAsync(string project);
+        Task<ApiResponseDto<object>> ImportWithOverwriteAsync(string project);
+        
     }
 }

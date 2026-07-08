@@ -137,6 +137,8 @@
                 // Select first row if grid is already loaded on page load
                 selectFirstTestCapabilityRow();
             }
+
+            wireTestReqmtExportButton();
         });
 
         // ── WorkGroup dropdown change ──────────────────────────────────────────
@@ -207,6 +209,42 @@
             reloadTestReqmtGrid(currentSelectedTestCode);
         }
 
+        function wireTestReqmtExportButton() {
+            var exportButtonSelector = '#' + testReqmtGridId + '_exportBtn';
+            var $exportButton = $(exportButtonSelector);
+            if ($exportButton.length === 0) {
+                return;
+            }
+
+            $exportButton.off('click').on('click', function () {
+                var hasRows = $('#tbl_' + testReqmtGridId + ' tbody tr[data-id]').length > 0;
+                if (!hasRows) {
+                    $(this).removeData('export-url').attr('data-export-url', '');
+                    showAlertMessage('Please select a Test Capability record before exporting.', AlertType.INFO);
+                    return;
+                }
+
+                var exportUrl = $(this).data('export-url');
+                if (!exportUrl) {
+                    showAlertMessage('Please select a Test Capability record before exporting.', AlertType.INFO);
+                    return;
+                }
+
+                var reqmtGridManager = getReqmtGridManager();
+                var currentExtraFilters = getTestReqmtExtraFilters();
+                var params = $.extend(
+                    { filter: JSON.stringify(reqmtGridManager ? reqmtGridManager.getFilterModel() : {}) },
+                    currentExtraFilters
+                );
+
+                var query = Object.keys(params)
+                    .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+                    .join('&');
+
+                window.location.href = exportUrl + '?' + query;
+            });
+        }
+
         // ── Grid 2: reload ─────────────────────────────────────────────────────
         function reloadTestReqmtGrid(testCode) {
             $.ajax({
@@ -221,6 +259,7 @@
                 },
                 success: function (html) {
                     $('#gridContainer_testReqmtGrid').html(html);
+                    wireTestReqmtExportButton();
                 },
                 error: function () {
                         showAlertMessage('Failed to load Test Reqmt grid', AlertType.ERROR);
@@ -231,6 +270,12 @@
         function clearTestReqmtGrid() {
             currentSelectedTestCode = null;
             document.getElementById('divTestcode').value = '';
+
+            var exportButtonSelector = '#' + testReqmtGridId + '_exportBtn';
+            $(exportButtonSelector)
+                .removeData('export-url')
+                .attr('data-export-url', '');
+
             $('#tbl_' + testReqmtGridId + ' tbody').html(
                 '<tr><td colspan="100" class="govuk-table__cell" ' +
                 'style="text-align:center;color:#505a5f;font-style:italic;padding:16px;">' +
@@ -315,7 +360,13 @@
         }
 
         // ── Grid 2 CRUD ────────────────────────────────────────────────────────
-        function addTestReqmt() {           
+        function addTestReqmt() {
+            var hasRows = $('#tbl_' + testReqmtGridId + ' tbody tr[data-id]').length > 0;
+            if (!hasRows || !currentSelectedTestCode) {
+                showAlertMessage('Please select a Test Capability record before adding the test requirement', AlertType.INFO);
+                return;
+            }
+
             $.get('/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
                 function (html) {
                     $('#modaPopupBody').html(html);
