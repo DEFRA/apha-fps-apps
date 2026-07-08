@@ -15,17 +15,20 @@ namespace Apha.PACT.Application.Services
         private readonly ITestCapabilityRepository _testCapabilityRepository;
         private readonly ITestRequirementRepository _testReqmtRepository;
         private readonly ITestorProductRepository _testorProductRepository;
+        private readonly IMonthlyOutputRepository _monthlyOutputRepository;
         private readonly IMapper _mapper;
 
         public TestCapabilityService(
             ITestCapabilityRepository testCapabilityRepository,
             ITestRequirementRepository testReqmtRepository,
             ITestorProductRepository testorProductRepository,
+            IMonthlyOutputRepository monthlyOutputRepository,
             IMapper mapper)
         {
             _testCapabilityRepository = testCapabilityRepository;
             _testReqmtRepository = testReqmtRepository;
             _testorProductRepository = testorProductRepository;
+            _monthlyOutputRepository = monthlyOutputRepository;
             _mapper = mapper;
         }
 
@@ -170,6 +173,10 @@ namespace Apha.PACT.Application.Services
             var hasReqmts = await _testReqmtRepository.ExistsByTestBuyerCodeAsync(testCode + workGroup);
             if (hasReqmts)
                 throw new InvalidOperationException("Cannot delete, test requirements are dependant on this.");
+
+            var hasMonthlyOutputs = await _monthlyOutputRepository.ExistsByTestCodeAndWorkGroupAsync(testCode, workGroup);
+            if (hasMonthlyOutputs)
+                throw new InvalidOperationException("Cannot delete, monthly outputs are dependant on this.");
 
             return await _testCapabilityRepository.DeleteAsync(testCode, workGroup);
         }
