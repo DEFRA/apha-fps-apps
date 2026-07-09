@@ -51,10 +51,11 @@
 
         <!-- Type -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Type">Type:</label>            
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Type">Type:<span class="sup_color_red">*</span></label>            
             <select asp-for="Type" asp-items="ViewBag.Types" class="govuk-select govuk-!-font-size-16">
                 <option value="">--select type--</option>
             </select>
+            <span asp-validation-for="Type" class="govuk-error-message"></span>
         </div>
 
         <!-- Work Group -->

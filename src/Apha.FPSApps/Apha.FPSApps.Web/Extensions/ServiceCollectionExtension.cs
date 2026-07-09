@@ -91,11 +91,11 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
+            services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
             services.AddScoped<IPlanStaffZTCodeService, PlanStaffZTCodeService>();
-            // IProjectAuditTrailService is the frontend application-layer service; it delegates to
-            // IFpsProjectAuditTrailApiClient (registered in AddRepositories() below).
             services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
+            services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

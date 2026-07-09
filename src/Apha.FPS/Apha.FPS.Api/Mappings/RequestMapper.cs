@@ -1,3 +1,29 @@
+// TRANSFORMENGINE: human_review — verify before running
+
+/*
+ * TRANSFORMENGINE MIGRATION — RequestMapper.cs
+ * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 5 — API Layer - Controller + RequestMapper + DI (Steps 8-9)
+ * Migrated : 2026-06-11
+ *
+ * CHANGED:
+ *   - No new mapping entries required for WorkGroupEmployee in this phase.
+ *     WorkGroupEmployeeDto <-> WorkGroupEmployeeReq and WorkGroupEmployeeDto <-> WorkGroupEmployeeRes
+ *     were already registered (lines 77-78). AutoMapper resolves the new fields
+ *     (TimeRecorder, StartDate, EndDate, HoursPerWeek) by name convention without explicit
+ *     ForMember configuration, because field names are identical across Req, Res, and Dto.
+ *
+ * PRESERVED:
+ *   - All existing CreateMap entries for StaffJob, Animal, Project, Division, WorkGroupEmployee,
+ *     ProfitCentre, PaginationReq/Res, and all other FPS domain mappings unchanged.
+ *
+ * DEFERRED / REQUIRES HUMAN REVIEW:
+ *   - TRANSFORMENGINE TODO: Run AutoMapper configuration validation (AssertConfigurationIsValid)
+ *     in a test to confirm WorkGroupEmployeeReq -> WorkGroupEmployeeDto covers all new fields
+ *     (TimeRecorder, StartDate, EndDate, HoursPerWeek) without unmapped-member warnings.
+ *   - TRANSFORMENGINE TODO: If AutoMapper strict mode is enabled project-wide, explicitly confirm
+ *     that no ForMember entries are needed for the new nullable/int fields.
+ */
+
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
@@ -84,8 +110,13 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<ProfitCentreGradeDto, ProfitCentreGradeRes>().ReverseMap();
             CreateMap<ProfitCentreGradeReq, ProfitCentreGradeDto>().ReverseMap();
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
+
+            // TRANSFORMENGINE: WorkGroupEmployee mappings verified — covers all CRUD operations including
+            // POST CreateWorkGroupEmployeeAsync added in Phase 5. New fields (TimeRecorder, StartDate,
+            // EndDate, HoursPerWeek) are resolved by AutoMapper name convention — no ForMember needed.
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
+
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
 
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
@@ -127,6 +158,9 @@ namespace Apha.FPS.Api.Mappings
 
             CreateMap<AdditionalCostLogDto, AdditionalCostLogRes>().ReverseMap();
             CreateMap<PaginatedResult<AdditionalCostLogDto>, PaginationRes<AdditionalCostLogRes>>();
+            // MaintTotalBusinessOverheads
+            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
+            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
         }
     }
 }

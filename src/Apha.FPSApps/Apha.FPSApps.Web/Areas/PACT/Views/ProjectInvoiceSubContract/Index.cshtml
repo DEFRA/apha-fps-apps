@@ -138,12 +138,12 @@
                         if (response.success) {
                             getInvoicesGridManager()?.reloadGrid({ page: 1 });
                             refreshInvoiceTotalAmount();
-                            showGovukAlert('Invoice deleted successfully.');
+                            showAlertMessage('Invoice deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
-                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                    error: function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }
@@ -177,18 +177,18 @@
                     var parsedValue = parseFloat(fieldValue);
 
                     if (isNaN(parsedValue)) {
-        showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+                        showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                         return;
                     }
                     if (parsedValue < 0 || parsedValue > maxMoney) {
-        showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+                        showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                         return;
                     }
 
                     // Check decimal places
                     var decimalPart = parsedValue.toString().split('.')[1];
                     if (decimalPart && decimalPart.length > 2) {
-        showGovukAlert(fieldName.replace(/([A-Z])/g, ' $1').trim() + ' must have at most 2 decimal places.');
+        showAlertMessage(fieldName.replace(/([A-Z])/g, ' $1').trim() + ' must have at most 2 decimal places.', AlertType.INFO);
                         return;
                     }
 
@@ -205,15 +205,15 @@
                 data: JSON.stringify(data),
                 success: function (response) {
                     if (response.success) {
-                        alert(response.message);
                         $('#modalPopup').removeClass('show');
                         getInvoicesGridManager()?.reloadGrid({ page: 1 });
                         refreshInvoiceTotalAmount();
+                        showAlertMessage(response.message, AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#invoiceForm');
                     }
                 },
-                error: function () { alert('An error occurred while saving.'); }
+        error: function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
 
@@ -248,12 +248,12 @@
                         if (response.success) {
                             getSubContractsGridManager()?.reloadGrid({ page: 1 });
                             refreshSubContractTotalAmount();
-                            showGovukAlert('Sub-contract deleted successfully.');
+                            showAlertMessage('Sub-contract deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
-                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                    error: function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }
@@ -277,18 +277,18 @@
                 var maxMoney = 92233720368547758.07;
 
                 if (isNaN(amount)) {
-        showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+        showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                     return;
                 }
                 if (amount < 0 || amount > maxMoney) {
-                    showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+                    showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                     return;
                 }
 
                 // Check decimal places
                 var decimalPart = amount.toString().split('.')[1];
                 if (decimalPart && decimalPart.length > 2) {
-                    showGovukAlert('Amount must have at most 2 decimal places.');
+                    showAlertMessage('Amount must have at most 2 decimal places.', AlertType.INFO);
                     return;
                 }
 
@@ -304,15 +304,15 @@
                 data: JSON.stringify(data),
                 success: function (response) {
                     if (response.success) {
-                        alert(response.message);
                         $('#modalPopup').removeClass('show');
                         getSubContractsGridManager()?.reloadGrid({ page: 1 });
                         refreshSubContractTotalAmount();
+                        showAlertMessage(response.message, AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(response.errors, response.message, '#subContractForm');
                     }
                 },
-                error: function () { alert('An error occurred while saving.'); }
+        error: function () { showAlertMessage('An error occurred while saving.', AlertType.ERROR); }
             });
         }
 

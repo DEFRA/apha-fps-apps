@@ -420,6 +420,83 @@ namespace Apha.FPS.Api.UnitTests.Controller.ProjectControllerTest
 
         #endregion
 
+        #region GetPagedPactProjectsByProgramAsync
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_HappyPath_ReturnsOk()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var projectDtos = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Project" }
+            };
+            var paginationDto = new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 1, TotalRecords = 2 };
+            var serviceResult = new PaginatedResult<ProjectDto>(projectDtos, paginationDto);
+            var mappedResult = new PaginationRes<ProjectRes>
+            {
+                Data = new List<ProjectRes>
+                {
+                    new() { ParentProject = "PP001", ProjectTitle = "Alpha Project" },
+                    new() { ParentProject = "PP002", ProjectTitle = "Beta Project" }
+                }
+            };
+
+            _serviceMock.GetPagedPactProjectsByProgramAsync(query, programNo).Returns(serviceResult);
+            _mapperMock.Map<PaginationRes<ProjectRes>>(serviceResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetPagedPactProjectsByProgramAsync(query, programNo);
+
+            // Assert
+            var actionResult = Assert.IsType<ActionResult<PaginationRes<ProjectRes>>>(result);
+            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+            Assert.Equal(mappedResult, okResult.Value);
+            await _serviceMock.Received(1).GetPagedPactProjectsByProgramAsync(query, programNo);
+        }        
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_WhenServiceThrows_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            _serviceMock.GetPagedPactProjectsByProgramAsync(query, programNo)
+                .Throws(new Exception("Service error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetPagedPactProjectsByProgramAsync(query, programNo));
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_EmptyProjectList_ReturnsOkWithEmptyData()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var emptyResult = new PaginatedResult<ProjectDto>(
+                Enumerable.Empty<ProjectDto>(),
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalPages = 0, TotalRecords = 0 }
+            );
+            var mappedResult = new PaginationRes<ProjectRes> { Data = new List<ProjectRes>() };
+
+            _serviceMock.GetPagedPactProjectsByProgramAsync(query, programNo).Returns(emptyResult);
+            _mapperMock.Map<PaginationRes<ProjectRes>>(emptyResult).Returns(mappedResult);
+
+            // Act
+            var result = await _controller.GetPagedPactProjectsByProgramAsync(query, programNo);
+
+            // Assert            
+            var actionResult = Assert.IsType<ActionResult<PaginationRes<ProjectRes>>>(result);
+            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+
+            Assert.Equal(mappedResult, okResult.Value);
+        }
+
+        #endregion
+
         #region GetAllPactProjectsAsync
 
         [Fact]

@@ -6,7 +6,9 @@ using Apha.FPSApps.Web.Areas.PACT.Controllers;
 using Apha.FPSApps.Web.Areas.PACT.Models;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using NSubstitute;
 
 namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupValidTimeCodeControllerTest
@@ -22,6 +24,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.WorkGroupValidTimeCodeCont
             _mapper = Substitute.For<IMapper>();
             _workGroupService = Substitute.For<IWorkGroupService>();
             _controller = new WorkGroupValidTimeCodeController(_mapper, _workGroupService);
+            _controller.TempData = new TempDataDictionary(
+                new DefaultHttpContext(),
+                Substitute.For<ITempDataProvider>());
         }
 
         // ── Helpers ────────────────────────────────────────────────────────────

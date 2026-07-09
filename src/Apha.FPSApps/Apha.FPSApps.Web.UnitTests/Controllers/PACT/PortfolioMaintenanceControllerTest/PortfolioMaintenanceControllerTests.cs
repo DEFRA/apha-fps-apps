@@ -486,7 +486,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.PortfolioMaintenanceContro
         {
             var model = new PortfolioTimeCodeViewModel
             {
-                WorkGroup = "WG1", TimeCode = "TC1", ParentProject = "PP1"
+                WorkGroup = "WG1", TimeCode = "TC1", ParentProject = "PP1", Active = true
             };
             _mapper.Map<TimeCodeValidDto>(model).Returns(new TimeCodeValidDto { TimeCode = "TC1" });
             _timeCodeService.CreateTimeCodeValidAsync(Arg.Any<TimeCodeValidDto>())

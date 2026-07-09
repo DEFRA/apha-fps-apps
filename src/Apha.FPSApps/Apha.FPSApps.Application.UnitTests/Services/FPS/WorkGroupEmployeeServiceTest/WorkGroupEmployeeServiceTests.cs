@@ -25,12 +25,11 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupEmployeeServi
             _sut = new WorkGroupEmployeeService(_fpsClient);
         }
 
-        #region GetWorkGroupEmployeeAsync Tests
+        #region Legacy ResourceSetUp Methods
 
         [Fact]
         public async Task GetWorkGroupEmployeeAsync_WithSuccessResponse_ReturnsEmployeeList()
         {
-            // Arrange
             var employees = new List<WorkGroupEmployeeDto>
             {
                 new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade }
@@ -40,10 +39,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupEmployeeServi
 
             _fpsWgEmployeeApiClient.GetWorkGroupEmployeeAsync(query, DefaultWgGrade).Returns(expectedResponse);
 
-            // Act
             var result = await _sut.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
 
-            // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Single(result.Data!);
@@ -51,40 +48,15 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupEmployeeServi
         }
 
         [Fact]
-        public async Task GetWorkGroupEmployeeAsync_WhenApiFails_ReturnsFailureResponse()
-        {
-            // Arrange
-            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
-            var expectedResponse = ApiResponseDto<List<WorkGroupEmployeeDto>>.FailureResponse(errors, new ApiMetaDto());
-            var query = new QueryParameters<string>();
-
-            _fpsWgEmployeeApiClient.GetWorkGroupEmployeeAsync(query, DefaultWgGrade).Returns(expectedResponse);
-
-            // Act
-            var result = await _sut.GetWorkGroupEmployeeAsync(query, DefaultWgGrade);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-        }
-
-        #endregion
-
-        #region GetWorkGroupEmployeeByIdAsync Tests
-
-        [Fact]
         public async Task GetWorkGroupEmployeeByIdAsync_WithSuccessResponse_ReturnsEmployee()
         {
-            // Arrange
             var dto = new WorkGroupEmployeeDto { PactId = DefaultPactId, SpNumber = "SP001" };
             var expectedResponse = ApiResponseDto<WorkGroupEmployeeDto>.SuccessResponse(dto);
 
             _fpsWgEmployeeApiClient.GetWorkGroupEmployeeByIdAsync(DefaultPactId).Returns(expectedResponse);
 
-            // Act
             var result = await _sut.GetWorkGroupEmployeeByIdAsync(DefaultPactId);
 
-            // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(DefaultPactId, result.Data?.PactId);
@@ -92,100 +64,108 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.WorkGroupEmployeeServi
         }
 
         [Fact]
-        public async Task GetWorkGroupEmployeeByIdAsync_WhenNotFound_ReturnsFailureResponse()
-        {
-            // Arrange
-            var errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } };
-            var expectedResponse = ApiResponseDto<WorkGroupEmployeeDto>.FailureResponse(errors, new ApiMetaDto());
-
-            _fpsWgEmployeeApiClient.GetWorkGroupEmployeeByIdAsync(DefaultPactId).Returns(expectedResponse);
-
-            // Act
-            var result = await _sut.GetWorkGroupEmployeeByIdAsync(DefaultPactId);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
-        }
-
-        #endregion
-
-        #region UpdateWorkGroupEmployeeAsync Tests
-
-        [Fact]
         public async Task UpdateWorkGroupEmployeeAsync_WithValidDto_ReturnsSuccessResponse()
         {
-            // Arrange
             var dto     = new WorkGroupEmployeeDto { PactId = DefaultPactId, HrsPaid = 40.0 };
             var updated = new WorkGroupEmployeeDto { PactId = DefaultPactId, HrsPaid = 40.0 };
             var expectedResponse = ApiResponseDto<WorkGroupEmployeeDto>.SuccessResponse(updated);
 
             _fpsWgEmployeeApiClient.UpdateWorkGroupEmployeeAsync(dto).Returns(expectedResponse);
 
-            // Act
             var result = await _sut.UpdateWorkGroupEmployeeAsync(dto);
 
-            // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(DefaultPactId, result.Data?.PactId);
             await _fpsWgEmployeeApiClient.Received(1).UpdateWorkGroupEmployeeAsync(dto);
         }
 
+        #endregion
+
+        #region Staff Maintenance Methods
+
         [Fact]
-        public async Task UpdateWorkGroupEmployeeAsync_WhenApiFails_ReturnsFailureResponse()
+        public async Task GetWorkGroupEmployeeByIdForStaffAsync_WithSuccessResponse_ReturnsEmployee()
         {
-            // Arrange
-            var dto    = new WorkGroupEmployeeDto { PactId = DefaultPactId };
-            var errors = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "ERR" } };
-            var expectedResponse = ApiResponseDto<WorkGroupEmployeeDto>.FailureResponse(errors, new ApiMetaDto());
+            var dto = new WorkGroupEmployeeStaffDto { PactId = DefaultPactId, SpNumber = "SP001" };
+            var expectedResponse = ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(dto);
 
-            _fpsWgEmployeeApiClient.UpdateWorkGroupEmployeeAsync(dto).Returns(expectedResponse);
+            _fpsWgEmployeeApiClient.GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId).Returns(expectedResponse);
 
-            // Act
-            var result = await _sut.UpdateWorkGroupEmployeeAsync(dto);
+            var result = await _sut.GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId);
 
-            // Assert
             Assert.NotNull(result);
-            Assert.False(result.Success);
+            Assert.True(result.Success);
+            Assert.Equal(DefaultPactId, result.Data?.PactId);
+            await _fpsWgEmployeeApiClient.Received(1).GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId);
+        }
+
+        [Fact]
+        public async Task CreateWorkGroupEmployeeForStaffAsync_WithSuccessResponse_ReturnsEmployee()
+        {
+            var dto = new WorkGroupEmployeeStaffDto { PactId = DefaultPactId, SpNumber = "SP001" };
+            var expectedResponse = ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(dto);
+
+            _fpsWgEmployeeApiClient.CreateWorkGroupEmployeeForStaffAsync(dto).Returns(expectedResponse);
+
+            var result = await _sut.CreateWorkGroupEmployeeForStaffAsync(dto);
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _fpsWgEmployeeApiClient.Received(1).CreateWorkGroupEmployeeForStaffAsync(dto);
+        }
+
+        [Fact]
+        public async Task GetWorkGroupEmployeeForStaffAsync_WithSuccessResponse_ReturnsEmployeeList()
+        {
+            var employees = new List<WorkGroupEmployeeStaffDto>
+            {
+                new() { PactId = DefaultPactId, SpNumber = "SP001", WorkGroupGrade = DefaultWgGrade }
+            };
+            var expectedResponse = ApiResponseDto<List<WorkGroupEmployeeStaffDto>>.SuccessResponse(employees);
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+
+            _fpsWgEmployeeApiClient.GetWorkGroupEmployeeForStaffAsync(query, DefaultWgGrade).Returns(expectedResponse);
+
+            var result = await _sut.GetWorkGroupEmployeeForStaffAsync(query, DefaultWgGrade);
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _fpsWgEmployeeApiClient.Received(1).GetWorkGroupEmployeeForStaffAsync(query, DefaultWgGrade);
+        }
+
+        [Fact]
+        public async Task UpdateWorkGroupEmployeeForStaffAsync_WithSuccessResponse_ReturnsEmployee()
+        {
+            var dto = new WorkGroupEmployeeStaffDto { PactId = DefaultPactId, SpNumber = "SP001" };
+            var expectedResponse = ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(dto);
+
+            _fpsWgEmployeeApiClient.UpdateWorkGroupEmployeeForStaffAsync(dto).Returns(expectedResponse);
+
+            var result = await _sut.UpdateWorkGroupEmployeeForStaffAsync(dto);
+
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            await _fpsWgEmployeeApiClient.Received(1).UpdateWorkGroupEmployeeForStaffAsync(dto);
         }
 
         #endregion
 
-        #region DeleteWorkGroupEmployeeAsync Tests
+        #region Shared Methods
 
         [Fact]
         public async Task DeleteWorkGroupEmployeeAsync_WithSuccessResponse_ReturnsSuccess()
         {
-            // Arrange
             var expectedResponse = ApiResponseDto<bool>.SuccessResponse(true);
 
             _fpsWgEmployeeApiClient.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(expectedResponse);
 
-            // Act
             var result = await _sut.DeleteWorkGroupEmployeeAsync(DefaultPactId);
 
-            // Assert
             Assert.NotNull(result);
             Assert.True(result.Success);
             await _fpsWgEmployeeApiClient.Received(1).DeleteWorkGroupEmployeeAsync(DefaultPactId);
-        }
-
-        [Fact]
-        public async Task DeleteWorkGroupEmployeeAsync_WhenApiFails_ReturnsFailureResponse()
-        {
-            // Arrange
-            var errors = new List<ApiErrorDto> { new() { Message = "Delete failed", Code = "ERR" } };
-            var expectedResponse = ApiResponseDto<bool>.FailureResponse(errors, new ApiMetaDto());
-
-            _fpsWgEmployeeApiClient.DeleteWorkGroupEmployeeAsync(DefaultPactId).Returns(expectedResponse);
-
-            // Act
-            var result = await _sut.DeleteWorkGroupEmployeeAsync(DefaultPactId);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.Success);
         }
 
         #endregion

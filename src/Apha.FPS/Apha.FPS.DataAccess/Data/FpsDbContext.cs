@@ -105,6 +105,7 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Bid> Bids { get; set; }
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
+        public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -121,7 +122,7 @@ namespace Apha.FPS.DataAccess.Data
             modelBuilder.ApplyConfiguration(new StaffJobMap());
             modelBuilder.Entity<StaffJob>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-            modelBuilder.ApplyConfiguration(new WgEmployeeMap());
+            modelBuilder.ApplyConfiguration(new WorkGroupEmployeeMap());
             modelBuilder.Entity<WorkGroupEmployee>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
             modelBuilder.ApplyConfiguration(new EmployeeMap());
@@ -144,6 +145,7 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new ProfitCentreMap());
             modelBuilder.ApplyConfiguration(new ProfitCentreViewMap());
+            modelBuilder.Entity<ProfitCentreView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new ProfitCentreGradeViewMap());
             modelBuilder.Entity<ProfitCentreGradeView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
             modelBuilder.ApplyConfiguration(new WorkGroupGradeViewMap());
@@ -324,6 +326,9 @@ namespace Apha.FPS.DataAccess.Data
 
             modelBuilder.ApplyConfiguration(new GradeMap());
             modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
+            modelBuilder.ApplyConfiguration(new TotalBusinessOverheadsMap());
+            modelBuilder.Entity<TotalBusinessOverheads>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

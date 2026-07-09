@@ -65,7 +65,7 @@ function addInvoice() {
             $('#modalPopup').addClass('show');
         })
         .fail(function(xhr, status, error) {
-            alert('Error loading form: ' + error);
+            showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
         });
 }
 
@@ -76,7 +76,7 @@ function editInvoice(btn) {
         $('#modalPopup').addClass('show');
     })
     .fail(function(xhr, status, error) {
-        alert('Error loading form: ' + error);
+        showAlertMessage('Error loading form: ' + error, AlertType.ERROR);
     });
 }
 
@@ -91,12 +91,12 @@ function deleteInvoice(btn) {
             success: function (response) {
                 if (response.success) {
                     reloadInvoicesGrid();
-                    showGovukAlert('Invoice deleted successfully.');
+                    showAlertMessage('Invoice deleted successfully.', AlertType.SUCCESS);
                 } else {
-                    showGovukAlert('Error: ' + response.message);
+                    showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                 }
             },
-            error: function () { showGovukAlert('An error occurred while deleting.'); }
+            error: function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
         });
     });
 }
@@ -127,18 +127,18 @@ function saveInvoice() {
             var parsedValue = parseFloat(fieldValue);
 
             if (isNaN(parsedValue)) {
-                showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+                showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                 return;
             }
             if (parsedValue < 0 || parsedValue > maxMoney) {
-                showGovukAlert('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.');
+                showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                 return;
             }
 
             // Check decimal places
             var decimalPart = parsedValue.toString().split('.')[1];
             if (decimalPart && decimalPart.length > 2) {
-                showGovukAlert(fieldName.replace(/([A-Z])/g, ' $1').trim() + ' must have at most 2 decimal places.');
+                showAlertMessage(fieldName.replace(/([A-Z])/g, ' $1').trim() + ' must have at most 2 decimal places.', AlertType.INFO);
                 return;
             }
 
@@ -155,14 +155,14 @@ function saveInvoice() {
         success: function (response) {
             if (response.success) {
                 $('#modalPopup').removeClass('show');
-                showGovukAlert(response.message || 'Invoice saved successfully.');
+                showAlertMessage(response.message || 'Invoice saved successfully.', AlertType.SUCCESS);
                 reloadInvoicesGrid();
             } else {
                 displayServerValidationErrors(response.errors, response.message, '#modaPopupBody');
             }
         },
         error: function () { 
-            showGovukAlert('An error occurred while saving.'); 
+            showAlertMessage('An error occurred while saving.', AlertType.ERROR); 
         }
     });
 }

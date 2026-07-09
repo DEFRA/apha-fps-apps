@@ -296,7 +296,7 @@ function initWorkGroupPeoplePage() {
     // ── Show Time by JobCode and Month button ──────────────────────────────
     $('#btnShowTimeByJob').on('click', function () {
         if (!currentWorkGroup) {
-            showGovukAlert('Please select a person first.');
+            showAlertMessage('Please select a person first.', AlertType.INFO);
             return;
         }
 
@@ -311,7 +311,7 @@ function initWorkGroupPeoplePage() {
         if (!currentWorkGroup) {
             $input.addClass('govuk-input--error');
             $error.show();
-            showGovukAlert('Please select a Work Group first.');
+            showAlertMessage('Please select a Work Group first.', AlertType.INFO);
             return;
         }
         $input.removeClass('govuk-input--error');
@@ -326,7 +326,7 @@ function initWorkGroupPeoplePage() {
         if (!currentWorkGroup) {
             $input.addClass('govuk-input--error');
             $error.show();
-            showGovukAlert('Please select a Work Group first.');
+            showAlertMessage('Please select a Work Group first.', AlertType.INFO);
             return;
         }
         $input.removeClass('govuk-input--error');
@@ -341,7 +341,7 @@ function initWorkGroupPeoplePage() {
         if (!currentWorkGroup) {
             $input.addClass('govuk-input--error');
             $error.show();
-            showGovukAlert('Please select a Work Group first.');
+            showAlertMessage('Please select a Work Group first.', AlertType.INFO);
             return;
         }
         $input.removeClass('govuk-input--error');

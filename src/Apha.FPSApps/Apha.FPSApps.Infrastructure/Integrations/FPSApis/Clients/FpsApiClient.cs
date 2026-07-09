@@ -37,6 +37,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsUserApiClient FpsUserPermission { get; }
 
         public IFpsGradeApiClient FpsGrade { get; }
+        public IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
 
         public IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
 
@@ -71,6 +72,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsUserPermission = new FpsUserApiClient(http, mapper);
             FpsGrade = new FpsGradeApiClient(http, mapper);
             FpsProjectAuditTrail = new FpsProjectAuditTrailApiClient(http, mapper);
+            FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
         }
     }
 }

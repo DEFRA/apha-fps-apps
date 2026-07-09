@@ -250,6 +250,61 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.TestCapabilityService
         }
 
         #endregion
-        
+
+        #region GetPagedWgTestCapabilitiesWithDescriptionAsync
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_DelegatesToApiClient_ReturnsResultWithDtoAndPagination()
+        {
+            var query = new QueryParameters<string>
+            {
+                Page = 2,
+                PageSize = 5,
+                SortBy = "TestCode",
+                Descending = true,
+                Filter = "{\"TestCode\":\"TC\"}"
+            };
+
+            var expected = ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>.SuccessResponse(
+                [
+                    new WgTestCapabilitiesWithDescriptionDto { WorkGroup = "WG1", TestCode = "TC001", ItemDescription = "Item 1" },
+                    new WgTestCapabilitiesWithDescriptionDto { WorkGroup = "WG1", TestCode = "TC002", ItemDescription = "Item 2" }
+                ],
+                new PaginationDto { PageNumber = 2, PageSize = 5, TotalPages = 3, TotalRecords = 12 });
+
+            _apiClient.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1").Returns(expected);
+
+            var result = await _service.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.Equal(expected, result);
+            Assert.True(result.Success);
+            Assert.Equal("WG1", result.Data!.First().WorkGroup);
+            Assert.Equal("TC001", result.Data!.First().TestCode);
+            Assert.Equal("Item 1", result.Data!.First().ItemDescription);
+            Assert.Equal(2, result.Pagination!.PageNumber);
+            Assert.Equal(5, result.Pagination!.PageSize);
+            Assert.Equal(3, result.Pagination!.TotalPages);
+            Assert.Equal(12, result.Pagination!.TotalRecords);
+            await _apiClient.Received(1).GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+        }
+
+        [Fact]
+        public async Task GetPagedWgTestCapabilitiesWithDescriptionAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors = new List<ApiErrorDto> { new() { Code = "ERR", Message = "Failure" } };
+            var expected = ApiResponseDto<List<WgTestCapabilitiesWithDescriptionDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _apiClient.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1").Returns(expected);
+
+            var result = await _service.GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+
+            Assert.False(result.Success);
+            Assert.Equal("ERR", result.Errors!.First().Code);
+            await _apiClient.Received(1).GetPagedWgTestCapabilitiesWithDescriptionAsync(query, "WG1");
+        }
+
+        #endregion
+
     }
 }

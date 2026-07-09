@@ -3504,6 +3504,25 @@ body,
     height: auto !important;
 }
 
+.wg-staff-name-selectlike {
+    min-height: 40px;
+    border: 1px solid #0b0c0c;
+    border-radius: 0;
+    background-color: #fff;
+    background-image: url('/images/arrow-down.svg');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px 12px;
+    padding-right: 32px;
+}
+
+.wg-staff-name-selectlike:focus,
+.wg-staff-name-selectlike:focus-visible {
+    outline: 3px solid #ffdd00;
+    outline-offset: 0;
+    box-shadow: inset 0 0 0 2px;
+}
+
 .width-350{
 
     width:350px;
