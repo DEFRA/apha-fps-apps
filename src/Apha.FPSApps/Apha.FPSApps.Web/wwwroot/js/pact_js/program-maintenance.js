@@ -63,12 +63,13 @@ $(document).ready(function () {
     // Project Maintenance button
     $('#projectMaintenanceBtn').on('click', function () {
         if (!selectedProjectCode) {
-            alert('Please select a project first.');
+            showAlertMessage('Please select a project first.', AlertType.INFO);
             return;
         }
         window.location.href = programMaintenanceConfig.projectMaintenanceUrl +
             '/' + encodeURIComponent(selectedProjectCode);
     });
+    initializeMultiColumnDropdown();
 });
 
 function loadProgram(programNo) {
@@ -91,7 +92,7 @@ function loadProgram(programNo) {
             }
         },
         error: function () {
-            alert('An error occurred while loading the program.');
+            showAlertMessage('An error occurred while loading the program.', AlertType.ERROR);
         }
     });
 }
@@ -107,6 +108,9 @@ function saveProgram() {
         Directorate: $('#Program_Directorate').val()
     };
 
+    // Store the currently selected program value before saving
+    var currentlySelectedProgramNo = $('#selectedProgramNo').val();
+
     clearValidationErrors('#programDetailForm');
     $.ajax({
         url: programMaintenanceConfig.saveProgramUrl,
@@ -115,7 +119,9 @@ function saveProgram() {
         contentType: 'application/json; charset=utf-8',
         success: function (result) {
             if (result.success) {
-                alert(result.message);
+                // Reload the dropdown to get updated program list
+                reloadProgramsDropDown(currentlySelectedProgramNo);
+                showAlertMessage(result.message, AlertType.SUCCESS);
             } else {
                 // Server returns field names without the "Program." prefix (e.g. "ProgramNo"),
                 // but asp-for generates name="Program.ProgramNo", so we remap here so that
@@ -127,7 +133,7 @@ function saveProgram() {
             }
         },
         error: function () {
-            alert('An error occurred while saving.');
+            showAlertMessage('An error occurred while saving.', AlertType.ERROR);
         }
     });
 }
@@ -136,6 +142,28 @@ function loadProjectsGrid(programNo) {
     if (window['gridManager_projectsGrid']) {
         window['gridManager_projectsGrid'].reloadGrid({ page: 1 });
     }
+}
+
+function reloadProgramsDropDown(selectedProgramNo) {
+    $.ajax({
+        url: programMaintenanceConfig.getProgramListUrl,
+        type: 'GET',
+        success: function (result) {
+            if (result.success && result.data) {
+                // Update the global programListData with fresh data
+                programListData = result.data;
+                programmSelectDropdown.updateData(programListData);
+                programmSelectDropdown.setValue(selectedProgramNo);
+
+                loadProgram(selectedProgramNo);
+                loadProjectsGrid(selectedProgramNo);
+               
+           } 
+        },
+        error: function (xhr, status, error) {
+            showAlertMessage('Failed to reload programs dropdown: ' + error, AlertType.ERROR);
+        }
+    });
 }
 
 function getProjectsGridExtraFilters() {
@@ -170,12 +198,13 @@ function initializeMultiColumnDropdown() {
         data: programListData,
         displayField: 'Text',
         valueField: 'Value',
-        clearButtonClearsSelection:false,//this will only clear searchbox and not selected value
+        clearButtonClearsSelection: false,//this will only clear searchbox and not selected value
         callbacks: {
             onSelect: function (selectedItem, dropdown) {
                 selectedProgramm = selectedItem.Value;
-                loadProgram(selectedItem.Value); 
-                
+                $('#selectedProgramNo').val(selectedItem.Value);
+                loadProgram(selectedItem.Value);
+                loadProjectsGrid(selectedItem.Value);
             },
             onClear: function (dropdown) {
                 let initialRecord = dropdown.originalData[0].Value;
@@ -195,7 +224,7 @@ function populateInitalRecordOnPageLoad() {
         const firstrecord = programListData[0].Value;
         const programmSelectDropdown_input = document.getElementById('programmSelectDropdown_input');
         if (programmSelectDropdown_input && firstrecord) {
-            programmSelectDropdown_input.value = firstrecord;
+            programmSelectDropdown.setValue(firstrecord);
             loadProgram(firstrecord);
         }
     }
@@ -210,8 +239,7 @@ function clearSelectedProgramm() {
 
 
 // Auto-select the first project row after the projects grid reloads
-document.addEventListener('gridReloaded', function (e) {
-    initializeMultiColumnDropdown();
+document.addEventListener('gridReloaded', function (e) {    
    
     if (e.detail && e.detail.gridId === 'projectsGrid') {
         var $firstRow = $('#tbl_projectsGrid tbody tr[data-id]:first');

@@ -107,10 +107,10 @@ function deletetblProjectYear(btn) {
                     }
                 }
             } else {
-                showGovukAlert(d.message || 'Failed to delete project year.');
+                showAlertMessage(d.message || 'Failed to delete project year.', AlertType.ERROR);
             }
         })
-        .catch(function (err) { console.error('Delete year error:', err); showGovukAlert('Failed to delete project year.'); });
+        .catch(function (err) { console.error('Delete year error:', err); showAlertMessage('Failed to delete project year.', AlertType.ERROR); });
     });
 }
 
@@ -139,7 +139,7 @@ function bindAddYearForm(pid, year) {
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.success) { closeModal(); selectYear(pid, data.year); }
-            else { showGovukAlert('Failed to add project year.'); }
+            else { showAlertMessage('Failed to add project year.', AlertType.ERROR); }
         });
     });
 }
@@ -222,11 +222,11 @@ function saveStaff() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadStaffGrid(); }
+        if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadStaffGrid(); }); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
-        else { showGovukAlert(d.message || 'Failed to save staff requirement.'); }
+        else { showAlertMessage(d.message || 'Failed to save staff requirement.', AlertType.ERROR); }
     })
-    .catch(function (err) { console.error('Staff save error:', err); showGovukAlert('Failed to save staff requirement.'); });
+    .catch(function (err) { console.error('Staff save error:', err); showAlertMessage('Failed to save staff requirement.', AlertType.ERROR); });
 }
 function deleteStaff(pid, year, srIdentity) {
     showGovukConfirm('Delete this staff entry?').then(function (result) {
@@ -236,7 +236,10 @@ function deleteStaff(pid, year, srIdentity) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadStaffGrid(); });
+            .then(function (d) {
+                if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadStaffGrid(); }); }
+                else { showAlertMessage(d.message || 'Failed to delete Staff entry.', AlertType.ERROR); }
+            });
     });
 }
 
@@ -289,11 +292,11 @@ function saveTest() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadTestGrid(); }
+        if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadTestGrid(); }); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
-        else { showGovukAlert(d.message || 'Failed to save test requirement.'); }
+        else { showAlertMessage(d.message || 'Failed to save test requirement.', AlertType.ERROR); }
     })
-    .catch(function (err) { console.error('Test save error:', err); showGovukAlert('Failed to save test requirement.'); });
+    .catch(function (err) { console.error('Test save error:', err); showAlertMessage('Failed to save test requirement.', AlertType.ERROR); });
 }
 function deleteTest(pid, year, testCode) {
     showGovukConfirm('Delete this test entry?').then(function (result) {
@@ -303,8 +306,11 @@ function deleteTest(pid, year, testCode) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadTestGrid(); });
-    });
+            .then(function (d) {
+                if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadTestGrid(); }); }
+                else { showAlertMessage(d.message || 'Failed to delete Test entry.', AlertType.ERROR); }
+            });
+    })
 }
 
 // ── Animals ────────────────────────────────────────────────────────
@@ -356,11 +362,13 @@ function saveAnimal() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadAnimalGrid(); }
+        if (d.success) {
+            showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadAnimalGrid(); });
+        }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
-        else { showGovukAlert(d.message || 'Failed to save animal requirement.'); }
+        else { showAlertMessage(d.message || 'Failed to save animal requirement.', AlertType.ERROR); }
     })
-    .catch(function (err) { console.error('Animal save error:', err); showGovukAlert('Failed to save animal requirement.'); });
+    .catch(function (err) { console.error('Animal save error:', err); showAlertMessage('Failed to save animal requirement.', AlertType.ERROR); });
 }
 function deleteAnimal(pid, year, arIdentity) {
     showGovukConfirm('Delete this animal entry?').then(function (result) {
@@ -370,7 +378,10 @@ function deleteAnimal(pid, year, arIdentity) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadAnimalGrid(); });
+        .then(function (d) {
+            if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadAnimalGrid(); }); }
+            else { showAlertMessage(d.message || 'Failed to delete animal entry.', AlertType.ERROR); }
+        });
     });
 }
 
@@ -423,11 +434,11 @@ function saveAdditionalCost() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadAdditionalCostGrid(); }
+        if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadAdditionalCostGrid(); }); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
-        else { showGovukAlert(d.message || 'Failed to save additional cost.'); }
+        else { showAlertMessage(d.message || 'Failed to save additional cost.', AlertType.ERROR); }
     })
-    .catch(function (err) { console.error('Additional cost save error:', err); showGovukAlert('Failed to save additional cost.'); });
+    .catch(function (err) { console.error('Additional cost save error:', err); showAlertMessage('Failed to save additional cost.', AlertType.ERROR); });
 }
 function deleteAdditionalCost(pid, year, acIdentity) {
     showGovukConfirm('Delete this additional cost entry?').then(function (result) {
@@ -437,7 +448,10 @@ function deleteAdditionalCost(pid, year, acIdentity) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadAdditionalCostGrid(); });
+            .then(function (d) {
+                if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadAdditionalCostGrid(); }); }
+                else { showAlertMessage(d.message || 'Failed to delete Additional cost entry.', AlertType.ERROR); }
+            });
     });
 }
 
@@ -458,7 +472,7 @@ function saveYearRate(pid, year, row) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
         body: JSON.stringify(data)
-    }).then(function (r) { return r.json(); }).then(function (d) { if (!d.success) showGovukAlert('Failed to save rates.'); });
+    }).then(function (r) { return r.json(); }).then(function (d) { if (!d.success) showAlertMessage('Failed to save rates.', AlertType.ERROR); });
 }
 function openEditMarkupAndProfitModal(pid, yearVal) {
     fetch(yearlyDetailsUrls.editMarkupAndProfit + '?projectId=' + encodeURIComponent(pid) + '&year=' + yearVal + '&programme=' + encodeURIComponent(programme))
@@ -482,7 +496,7 @@ function bindMarkupAndProfitForm(pid, yearVal) {
         .then(function (r) { return r.json(); })
         .then(function (d) {
             if (d.success) { closeModal(); loadMarkupAndProfitGrid(); }
-            else { showGovukAlert('Failed to save markup and profit rates.'); }
+            else { showAlertMessage('Failed to save markup and profit rates.', AlertType.ERROR); }
         });
     });
 }
@@ -630,31 +644,113 @@ function initWgGradeDropdown() {
     var searchBox = document.getElementById('wgGradeSearchBox');
     if (!input || !panel) return;
 
+    // Prevent typing in display input but allow focus
+    input.addEventListener('input', function (e) {
+        e.preventDefault();
+        this.value = this.getAttribute('data-current-value') || '';
+    });
+    input.addEventListener('beforeinput', function (e) {
+        if (e.inputType !== 'insertReplacementText') {
+            e.preventDefault();
+        }
+    });
+
+    // Store current value
+    if (input.value) {
+        input.setAttribute('data-current-value', input.value);
+    }
+
+    function openDropdown() {
+        panel.style.display = 'block';
+        input.setAttribute('aria-expanded', 'true');
+        if (searchBox) { 
+            searchBox.value = ''; 
+            filterWgGradeRows(''); 
+            searchBox.focus(); 
+        }
+    }
+
+    function closeDropdown() {
+        panel.style.display = 'none';
+        input.setAttribute('aria-expanded', 'false');
+    }
+
     input.addEventListener('click', function (e) {
         e.stopPropagation();
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        if (panel.style.display === 'block' && searchBox) { searchBox.value = ''; filterWgGradeRows(''); searchBox.focus(); }
+        if (panel.style.display === 'none') {
+            openDropdown();
+        } else {
+            closeDropdown();
+        }
     });
+
+    // Add keyboard support for opening dropdown
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            openDropdown();
+        }
+    });
+
     if (searchBox) {
         searchBox.addEventListener('click', function (e) { e.stopPropagation(); });
         searchBox.addEventListener('input', function () { filterWgGradeRows(this.value.toLowerCase()); });
+
+        // Add keyboard support for search box
+        searchBox.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeDropdown();
+                input.focus();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                var firstVisible = document.querySelector('#wgGradeDropdownBody tr:not([style*="display: none"])');
+                if (firstVisible) firstVisible.focus();
+            }
+        });
     }
+
     document.querySelectorAll('#wgGradeDropdownBody tr').forEach(function (row) {
         row.addEventListener('click', function () {
             var grade      = this.getAttribute('data-value');
             var chargeRate = this.getAttribute('data-chargeratewithinflamation') || this.getAttribute('data-chargerate');
             input.value = grade;
+            input.setAttribute('data-current-value', grade);
             document.getElementById('WgGrade').value    = grade;
             document.getElementById('Chargerate').value = chargeRate;
             document.getElementById('Payrate').value    = this.getAttribute('data-payrate');
             document.getElementById('Npr').value        = this.getAttribute('data-npr');
             document.getElementById('Ohr').value        = this.getAttribute('data-ohr');
             calcStaffCost();
-            panel.style.display = 'none';
+            closeDropdown();
+            input.focus();
         });
+
+        // Add keyboard navigation for rows
+        row.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+                input.focus();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                var next = this.nextElementSibling;
+                while (next && next.style.display === 'none') next = next.nextElementSibling;
+                if (next) next.focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                var prev = this.previousElementSibling;
+                while (prev && prev.style.display === 'none') prev = prev.previousElementSibling;
+                if (prev) prev.focus();
+                else if (searchBox) searchBox.focus();
+            }
+        });
+
         row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
         row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
     });
+
     var hoursInput = document.getElementById('Nohours');
     if (hoursInput) {
         ['input', 'change', 'keyup', 'keydown', 'paste'].forEach(function (evt) {
@@ -668,7 +764,7 @@ function initWgGradeDropdown() {
         });
     }
     document.addEventListener('click', function (e) {
-        if (input && panel && !input.contains(e.target) && !panel.contains(e.target)) panel.style.display = 'none';
+        if (input && panel && !input.contains(e.target) && !panel.contains(e.target)) closeDropdown();
     });
 }
 function filterWgGradeRows(term) {

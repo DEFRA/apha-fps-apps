@@ -20,6 +20,7 @@
         IPactMonthlyTimeApiClient PactMonthlyTime { get; }
         IPactRecreateAndReleaseSummaryLogApiClient PactRecreateSummaryLog { get; }
         IPactReleaseSummaryApiClient PactReleaseSummary { get; }
+        IPactBosworthInterfaceApiClient PactBosworthInterface { get; }
         IPactBatchJobApiClient PactBatchJob { get; }
     }
 }

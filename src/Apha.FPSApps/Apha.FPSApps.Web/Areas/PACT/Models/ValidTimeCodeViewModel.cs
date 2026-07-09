@@ -68,15 +68,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? OriginalWorkGroup { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            // Business Rule: Active must be true (checkbox must be checked)
-            if (!Active)
-            {
-                yield return new ValidationResult(
-                    "The Active checkbox must be checked.",
-                    new[] { nameof(Active) });
-            }
-
+        {  
             var hasJobCode = !string.IsNullOrWhiteSpace(JobCode);
             var hasPortfolio = !string.IsNullOrWhiteSpace(Portfolio);
             var hasTestCode = !string.IsNullOrWhiteSpace(TestCode);

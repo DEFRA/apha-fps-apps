@@ -1232,6 +1232,293 @@ namespace Apha.PIMS.Application.UnitTests.Services.MilestoneServiceTest
         }
 
         #endregion
+
+        #region GetAllStagingRowsAsync
+
+        [Fact]
+        public async Task GetAllStagingRowsAsync_WithValidData_ReturnsMappedPaginatedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+            var entities = new List<StagingMilestone>
+            {
+                new() { Id = 1, Project = "PP001", Number = "M1" },
+                new() { Id = 2, Project = "PP001", Number = "M2" }
+            };
+            var pagedData = new PagedData<StagingMilestone>(entities, new PaginationData { TotalRecords = 2 });
+            var dtos = new List<StagingMilestoneDto>
+            {
+                new() { Id = 1, Project = "PP001", Number = "M1" },
+                new() { Id = 2, Project = "PP001", Number = "M2" }
+            };
+            var paginationDto = new PaginationDto { TotalRecords = 2 };
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetAllStagingRowsAsync(paginationParams).Returns(pagedData);
+            _mockMapper.Map<List<StagingMilestoneDto>>(pagedData.Data).Returns(dtos);
+            _mockMapper.Map<PaginationDto>(pagedData.PaginationData).Returns(paginationDto);
+
+            // Act
+            var result = await _sut.GetAllStagingRowsAsync(query);
+
+            // Assert
+            result.Data.Should().HaveCount(2);
+            result.PaginationData.TotalRecords.Should().Be(2);
+            await _mockRepository.Received(1).GetAllStagingRowsAsync(paginationParams);
+        }
+
+        [Fact]
+        public async Task GetAllStagingRowsAsync_WhenRepositoryThrowsException_PropagatesException()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string>(page: 1, pageSize: 10);
+
+            _mockMapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _mockRepository.GetAllStagingRowsAsync(paginationParams)
+                .Returns(Task.FromException<PagedData<StagingMilestone>>(new Exception("DB error")));
+
+            // Act
+            var ex = await Assert.ThrowsAsync<Exception>(() => _sut.GetAllStagingRowsAsync(query));
+
+            // Assert
+            ex.Message.Should().Be("DB error");
+        }
+
+        #endregion
+
+        #region GetStagingRowsAsync
+
+        [Fact]
+        public async Task GetStagingRowsAsync_ReturnsMappedList()
+        {
+            // Arrange
+            var entities = new List<StagingMilestone> { new() { Id = 1, Project = "PP001", Number = "M1" } };
+            var dtos = new List<StagingMilestoneDto> { new() { Id = 1, Project = "PP001", Number = "M1" } };
+
+            _mockRepository.GetStagingRowsAsync("PP001").Returns(entities);
+            _mockMapper.Map<List<StagingMilestoneDto>>(entities).Returns(dtos);
+
+            // Act
+            var result = await _sut.GetStagingRowsAsync("PP001");
+
+            // Assert
+            result.Should().ContainSingle(r => r.Number == "M1");
+            await _mockRepository.Received(1).GetStagingRowsAsync("PP001");
+        }
+
+        [Fact]
+        public async Task GetStagingRowsAsync_WithNullProject_PassesNullToRepository()
+        {
+            // Arrange
+            _mockRepository.GetStagingRowsAsync(null).Returns(new List<StagingMilestone>());
+            _mockMapper.Map<List<StagingMilestoneDto>>(Arg.Any<List<StagingMilestone>>()).Returns(new List<StagingMilestoneDto>());
+
+            // Act
+            await _sut.GetStagingRowsAsync(null);
+
+            // Assert
+            await _mockRepository.Received(1).GetStagingRowsAsync(Arg.Is<string?>(p => p == null));
+        }
+
+        #endregion
+
+        #region AddStagingRowAsync
+
+        [Fact]
+        public async Task AddStagingRowAsync_AssignsNextNumber_WhenNumberMissingAndProjectProvided()
+        {
+            // Arrange
+            var dto = new StagingMilestoneDto
+            {
+                Project = "PP001",
+                Number = null,
+                Description = "Desc",
+                DateDue = new DateTime(2025, 1, 31)
+            };
+            var entity = new StagingMilestone { Project = "PP001", Number = "M9", Description = "Desc", DateDue = dto.DateDue };
+            var created = new StagingMilestone { Project = "PP001", Number = "M9", Description = "Desc", DateDue = dto.DateDue };
+            var resultDto = new StagingMilestoneDto { Project = "PP001", Number = "M9", Description = "Desc", DateDue = dto.DateDue };
+
+            _mockRepository.GetNextMilestoneNumberAsync("PP001", 2025).Returns("M9");
+            _mockMapper.Map<StagingMilestone>(dto).Returns(entity);
+            _mockRepository.AddStagingRowAsync(entity).Returns(created);
+            _mockMapper.Map<StagingMilestoneDto>(created).Returns(resultDto);
+
+            // Act
+            var result = await _sut.AddStagingRowAsync(dto, 2025);
+
+            // Assert
+            result.Number.Should().Be("M9");
+            dto.Number.Should().Be("M9");
+            await _mockRepository.Received(1).GetNextMilestoneNumberAsync("PP001", 2025);
+            await _mockRepository.Received(1).AddStagingRowAsync(entity);
+        }
+
+        [Fact]
+        public async Task AddStagingRowAsync_ThrowsBusinessValidationError_WhenRequiredFieldsMissing()
+        {
+            // Arrange
+            var dto = new StagingMilestoneDto { Project = "PP001", Number = "", Description = "", DateDue = default };
+
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.AddStagingRowAsync(dto, 2025));
+
+            // Assert
+            ex.Errors.Should().Contain(e => e.Code == "DATE_DUE_REQUIRED");
+            ex.Errors.Should().Contain(e => e.Code == "NUMBER_REQUIRED");
+            ex.Errors.Should().Contain(e => e.Code == "DESCRIPTION_REQUIRED");
+            await _mockRepository.DidNotReceive().AddStagingRowAsync(Arg.Any<StagingMilestone>());
+        }
+
+        [Fact]
+        public async Task AddStagingRowAsync_SetsEntityDateDueKindToUnspecified()
+        {
+            // Arrange
+            var dto = new StagingMilestoneDto
+            {
+                Project = "PP001",
+                Number = "M1",
+                Description = "Desc",
+                DateDue = DateTime.SpecifyKind(new DateTime(2025, 1, 1), DateTimeKind.Utc)
+            };
+            var entity = new StagingMilestone { Project = "PP001", Number = "M1", Description = "Desc", DateDue = dto.DateDue };
+            var created = new StagingMilestone { Project = "PP001", Number = "M1", Description = "Desc", DateDue = dto.DateDue };
+            var resultDto = new StagingMilestoneDto { Project = "PP001", Number = "M1", Description = "Desc", DateDue = dto.DateDue };
+
+            _mockMapper.Map<StagingMilestone>(dto).Returns(entity);
+            _mockRepository.AddStagingRowAsync(entity).Returns(created);
+            _mockMapper.Map<StagingMilestoneDto>(created).Returns(resultDto);
+
+            // Act
+            await _sut.AddStagingRowAsync(dto, 2025);
+
+            // Assert
+            entity.DateDue.Kind.Should().Be(DateTimeKind.Unspecified);
+        }
+
+        #endregion
+
+        #region UpdateStagingRowAsync
+
+        [Fact]
+        public async Task UpdateStagingRowAsync_ThrowsBusinessValidationError_WhenRequiredFieldsMissing()
+        {
+            // Arrange
+            var dto = new StagingMilestoneDto { Id = 0, Number = "", Description = "", DateDue = default };
+
+            // Act
+            var ex = await Assert.ThrowsAsync<BusinessValidationErrorException>(() => _sut.UpdateStagingRowAsync(dto));
+
+            // Assert
+            ex.Errors.Should().Contain(e => e.Code == "ID_REQUIRED");
+            ex.Errors.Should().Contain(e => e.Code == "NUMBER_REQUIRED");
+            ex.Errors.Should().Contain(e => e.Code == "DATE_DUE_REQUIRED");
+            ex.Errors.Should().Contain(e => e.Code == "DESCRIPTION_REQUIRED");
+            await _mockRepository.DidNotReceive().UpdateStagingRowAsync(Arg.Any<StagingMilestone>());
+        }
+
+        [Fact]
+        public async Task UpdateStagingRowAsync_SetsDateDueToUnspecifiedAndClearsNote()
+        {
+            // Arrange
+            var dto = new StagingMilestoneDto
+            {
+                Id = 10,
+                Number = "M1",
+                Description = "Updated",
+                DateDue = DateTime.SpecifyKind(new DateTime(2025, 2, 2), DateTimeKind.Utc),
+                Note = "Old note"
+            };
+            var entity = new StagingMilestone { Id = 10, Number = "M1", Description = "Updated", DateDue = dto.DateDue, Note = "Old note" };
+            var updated = new StagingMilestone { Id = 10, Number = "M1", Description = "Updated", DateDue = dto.DateDue, Note = null };
+            var resultDto = new StagingMilestoneDto { Id = 10, Number = "M1", Description = "Updated" };
+
+            _mockMapper.Map<StagingMilestone>(dto).Returns(entity);
+            _mockRepository.UpdateStagingRowAsync(entity).Returns(updated);
+            _mockMapper.Map<StagingMilestoneDto>(updated).Returns(resultDto);
+
+            // Act
+            var result = await _sut.UpdateStagingRowAsync(dto);
+
+            // Assert
+            result.Id.Should().Be(10);
+            entity.DateDue.Kind.Should().Be(DateTimeKind.Unspecified);
+            entity.Note.Should().BeNull();
+            await _mockRepository.Received(1).UpdateStagingRowAsync(entity);
+        }
+
+        #endregion
+
+        #region Staging and Import Delegation
+
+        [Fact]
+        public async Task DeleteStagingRowAsync_DelegatesToRepository()
+        {
+            _mockRepository.DeleteStagingRowAsync(7).Returns(true);
+
+            var result = await _sut.DeleteStagingRowAsync(7);
+
+            result.Should().BeTrue();
+            await _mockRepository.Received(1).DeleteStagingRowAsync(7);
+        }
+
+        [Fact]
+        public async Task ClearStagingAsync_DelegatesToRepository()
+        {
+            _mockRepository.ClearStagingAsync("PP001").Returns(4);
+
+            var result = await _sut.ClearStagingAsync("PP001");
+
+            result.Should().Be(4);
+            await _mockRepository.Received(1).ClearStagingAsync("PP001");
+        }
+
+        [Fact]
+        public async Task ValidateStagingAsync_DelegatesToRepository()
+        {
+            _mockRepository.ValidateStagingAsync("PP001", "M", true).Returns(Task.CompletedTask);
+
+            await _sut.ValidateStagingAsync("PP001", "M", true);
+
+            await _mockRepository.Received(1).ValidateStagingAsync("PP001", "M", true);
+        }
+
+        [Fact]
+        public async Task ImportStagingAsync_DelegatesToRepository()
+        {
+            _mockRepository.ImportStagingAsync("PP001", "USER1").Returns(3);
+
+            var result = await _sut.ImportStagingAsync("PP001", "USER1");
+
+            result.Should().Be(3);
+            await _mockRepository.Received(1).ImportStagingAsync("PP001", "USER1");
+        }
+
+        [Fact]
+        public async Task ImportWithOverwriteAsync_DelegatesToRepository()
+        {
+            _mockRepository.ImportWithOverwriteAsync("PP001", "USER1").Returns(2);
+
+            var result = await _sut.ImportWithOverwriteAsync("PP001", "USER1");
+
+            result.Should().Be(2);
+            await _mockRepository.Received(1).ImportWithOverwriteAsync("PP001", "USER1");
+        }
+
+        [Fact]
+        public async Task GetNextMilestoneNumberAsync_DelegatesToRepository()
+        {
+            _mockRepository.GetNextMilestoneNumberAsync("PP001", 2025).Returns("M42");
+
+            var result = await _sut.GetNextMilestoneNumberAsync("PP001", 2025);
+
+            result.Should().Be("M42");
+            await _mockRepository.Received(1).GetNextMilestoneNumberAsync("PP001", 2025);
+        }
+
+        #endregion
     }
 }
 

@@ -51,11 +51,12 @@
     @* Portfolio Maintenance button *@
     <div class="govuk-grid-column-one-third sup_p_0_mt_24">
         <div class="govuk-button-group sup_margin_0 sup_float_right">
-            <button type="button" class="govuk-button sup_margin_0 sup_p_8 sup_flex"
+            <a class="govuk-button sup_margin_0 sup_p_8 sup_flex"
+               asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index"
                     id="btnPortfolioMaintenance"
                     data-module="govuk-button" allow-edit="true">
                 &nbsp;Portfolio Maintenance
-            </button>
+            </a>
         </div>
     </div>
 
@@ -132,7 +133,12 @@
                 currentFilterValue = workgroupParam;
                 // Load the grid with the workgroup
                 reloadTestCapabilityGrid(workgroupParam);
+            } else {
+                // Select first row if grid is already loaded on page load
+                selectFirstTestCapabilityRow();
             }
+
+            wireTestReqmtExportButton();
         });
 
         // ── WorkGroup dropdown change ──────────────────────────────────────────
@@ -157,6 +163,21 @@
             clearTestReqmtGrid();
         }
 
+        // ── Helper: Select first row in Test Capability grid ──────────────────
+        function selectFirstTestCapabilityRow() {
+            setTimeout(function() {
+                var firstRow = $('#gridContainer_testCapabilityGrid tbody tr[data-id]:first');
+                if (firstRow.length > 0) {
+                    // Remove selected-row class from all rows
+                    $('#gridContainer_testCapabilityGrid tbody tr').removeClass('selected-row');
+                    // Add selected-row class to first row (applies light blue background)
+                    firstRow.addClass('selected-row');
+                    // Trigger the row select function
+                    onTestCapabilityRowSelect(firstRow);
+                }
+            }, 100);
+        }
+
         // ── Grid 1: reload ─────────────────────────────────────────────────────
         function reloadTestCapabilityGrid(filterValue) {
             $.ajax({
@@ -172,9 +193,10 @@
                 },
                 success: function (html) {
                     $('#gridContainer_testCapabilityGrid').html(html);
+                    selectFirstTestCapabilityRow();
                 },
                 error: function () {
-                    console.error('Failed to load Test Capability grid.');
+                        showAlertMessage('Failed to load Test Capability grid.', AlertType.ERROR);
                 }
             });
         }
@@ -185,6 +207,41 @@
             if (!currentSelectedTestCode) return;
             document.getElementById('divTestcode').value = currentSelectedTestCode;
             reloadTestReqmtGrid(currentSelectedTestCode);
+        }
+
+        function wireTestReqmtExportButton() {
+            var exportButtonSelector = '#' + testReqmtGridId + '_exportBtn';
+            var $exportButton = $(exportButtonSelector);
+            if ($exportButton.length === 0) {
+                return;
+            }
+
+            $exportButton.off('click').on('click', function () {
+                var hasRows = $('#tbl_' + testReqmtGridId + ' tbody tr[data-id]').length > 0;
+                if (!hasRows) {
+                    $(this).removeData('export-url').attr('data-export-url', '');
+                    showAlertMessage('Please select a Test Capability record before exporting.', AlertType.INFO);
+                    return;
+                }
+
+                var exportUrl = $(this).data('export-url');
+                if (!exportUrl) {
+                    showAlertMessage('Please select a Test Capability record before exporting.', AlertType.INFO);
+                    return;
+                }
+
+                var reqmtGridManager = getReqmtGridManager();
+                var currentExtraFilters = getTestReqmtExtraFilters();
+                var params = $.extend(
+                    { filter: JSON.stringify(reqmtGridManager ? reqmtGridManager.getFilterModel() : {}) },
+                    currentExtraFilters
+                );
+
+                var query = Object.keys(params)
+                    .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
+                    .join('&');
+                window.fpsNavigateTo(exportUrl + '?' + query);
+            });
         }
 
         // ── Grid 2: reload ─────────────────────────────────────────────────────
@@ -201,9 +258,10 @@
                 },
                 success: function (html) {
                     $('#gridContainer_testReqmtGrid').html(html);
+                    wireTestReqmtExportButton();
                 },
                 error: function () {
-                    console.error('Failed to load Test Reqmt grid.');
+                        showAlertMessage('Failed to load Test Reqmt grid', AlertType.ERROR);
                 }
             });
         }
@@ -211,6 +269,12 @@
         function clearTestReqmtGrid() {
             currentSelectedTestCode = null;
             document.getElementById('divTestcode').value = '';
+
+            var exportButtonSelector = '#' + testReqmtGridId + '_exportBtn';
+            $(exportButtonSelector)
+                .removeData('export-url')
+                .attr('data-export-url', '');
+
             $('#tbl_' + testReqmtGridId + ' tbody').html(
                 '<tr><td colspan="100" class="govuk-table__cell" ' +
                 'style="text-align:center;color:#505a5f;font-style:italic;padding:16px;">' +
@@ -260,13 +324,13 @@
                 success: function (result) {
                     if (result.success) {
                         $('#modalPopup').removeClass('show');
-                        showGovukAlert(isEdit ? 'Record updated successfully.' : 'Record saved successfully.');
                         reloadTestCapabilityGrid(currentFilterValue);
+                        showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
                     }
                 },
-                error: function () { showGovukAlert('Request failed. Please try again.'); }
+                error: function () { showAlertMessage('Request failed. Please try again.', AlertType.ERROR); }
             });
         }
 
@@ -284,18 +348,24 @@
                         if (result.success) {
                             reloadTestCapabilityGrid(currentFilterValue);
                             clearTestReqmtGrid();
-                            showGovukAlert('Test Capability record deleted successfully.');
+                            showAlertMessage('Test Capability record deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert(result.message ? result.message : 'Delete failed.');
+                            showAlertMessage(result.message ? result.message : 'Delete failed.', AlertType.ERROR);
                         }
                     },
-                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                    error: function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }
 
         // ── Grid 2 CRUD ────────────────────────────────────────────────────────
-        function addTestReqmt() {           
+        function addTestReqmt() {
+            var hasRows = $('#tbl_' + testReqmtGridId + ' tbody tr[data-id]').length > 0;
+            if (!hasRows || !currentSelectedTestCode) {
+                showAlertMessage('Please select a Test Capability record before adding the test requirement', AlertType.INFO);
+                return;
+            }
+
             $.get('/PACT/TestCapability/CreateTestReqmt?testCode=' + encodeURIComponent(currentSelectedTestCode),
                 function (html) {
                     $('#modaPopupBody').html(html);
@@ -343,13 +413,13 @@
                 success: function (result) {
                     if (result.success) {
                         $('#modalPopup').removeClass('show');
-                        showGovukAlert(isEdit ? 'Record updated successfully.' : 'Record saved successfully.');
                         reloadTestReqmtGrid(currentSelectedTestCode);
+                        showAlertMessage(isEdit ? 'Record updated successfully.' : 'Record saved successfully.', AlertType.SUCCESS);
                     } else {
                         displayServerValidationErrors(result.errors, result.message, '#modaPopupBody');
                     }
                 },
-                error: function () { showGovukAlert('Request failed. Please try again.'); }
+                error: function () { showAlertMessage('Request failed. Please try again.', AlertType.ERROR); }
             });
         }
 
@@ -365,12 +435,12 @@
                     success: function (result) {
                         if (result.success) {
                             reloadTestReqmtGrid(currentSelectedTestCode);
-                            showGovukAlert('Test Requirement record deleted successfully.');
+                            showAlertMessage('Test Requirement record deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert(result.message ? result.message : 'Delete failed.');
+                            showAlertMessage(result.message ? result.message : 'Delete failed.', AlertType.ERROR);
                         }
                     },
-                    error: function () { showGovukAlert('An error occurred while deleting.'); }
+                    error: function () { showAlertMessage('An error occurred while deleting.', AlertType.ERROR); }
                 });
             });
         }

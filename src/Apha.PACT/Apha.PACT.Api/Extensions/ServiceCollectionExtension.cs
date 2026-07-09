@@ -40,6 +40,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddSingleton<IGraphEmailService, GraphEmailService>();
             services.AddScoped<IMonthlyTimeService, MonthlyTimeService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
+            services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
             services.AddScoped<IBatchJobService, BatchJobService>();
             services.AddSingleton<IEventPublisherService, EventBridgePublisherService>();
             return services;
@@ -64,6 +65,7 @@ namespace Apha.PACT.Api.Extensions
             services.AddScoped<IProjectProfileRepository, ProjectProfileRepository>();
             services.AddScoped<IMonthlyOutputRepository, MonthlyOutputRepository>();
             services.AddScoped<IRecreateAndReleaseSummaryRepository, RecreateAndReleaseSummaryRepository>();
+            services.AddScoped<IBosworthInterfaceRepository, BosworthInterfaceRepository>();
             services.AddScoped<IBatchJobRepository, BatchJobRepository>();
 
             return services;

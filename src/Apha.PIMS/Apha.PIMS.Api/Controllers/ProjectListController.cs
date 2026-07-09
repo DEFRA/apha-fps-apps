@@ -52,5 +52,11 @@ namespace Apha.PIMS.Api.Controllers
             List<ProjectListMilestoneDto> result = await _service.GetAllProjectsForMilestoneAsync();
             return Ok(_mapper.Map<List<ProjectListMilestoneRes>>(result));
         }
+        [HttpGet("ProjectDetailsMilestone/{parentproject}")]
+        public async Task<IActionResult> GetProjectsDetailsForMilestoneAsync(string parentproject)
+        {
+            ProjectDetailsMilestoneDto? result = await _service.GetProjectsDetailsForMilestoneAsync(parentproject);
+            return Ok(_mapper.Map<ProjectDetailsMilestoneRes>(result));
+        }
     }
 }

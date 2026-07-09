@@ -87,15 +87,21 @@
                             <label class="govuk-label font-size-16" asp-for="DateDue">
                                 Due <span class="sup_color_red">*</span>
                             </label>
-                            <div style="position:relative; display:inline-block; width:stretch;">
+                            <div style="position:relative; display:flex; align-items:center; width:stretch;">
                                 <input type="text"
                                        id="DateDueDisplay"
                                        class="govuk-input"
                                        value="@Model.DateDue?.ToString("dd/MM/yyyy")"
+                                       placeholder="dd/mm/yyyy"
+                                       maxlength="10"
                                        autocomplete="off"
-                                       onclick="openDatePicker('DateDuePicker')"
-                                       style="cursor:pointer; width:stretch;"
-                                       readonly>
+                                       oninput="formatDateInput(this)"
+                                       onblur="validateAndSyncDate('DateDueDisplay', 'DateDueBinding', 'DateDueError')"
+                                       style="flex:1;">
+                                <button type="button"
+                                        onclick="openDatePicker('DateDuePicker')"
+                                        style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                        aria-label="Open date picker for Due date">&#128197;</button>
                                 <input type="hidden"
                                        name="DateDue"
                                        id="DateDueBinding"
@@ -104,8 +110,9 @@
                                        id="DateDuePicker"
                                        value="@(Model.DateDue.HasValue ? Model.DateDue.Value.ToString("yyyy-MM-dd") : string.Empty)"
                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                       onchange="syncDateToText('DateDuePicker', 'DateDueDisplay', 'DateDueBinding')">
+                                       onchange="syncDateToText('DateDuePicker', 'DateDueDisplay', 'DateDueBinding', 'DateDueError')">
                             </div>
+                            <span id="DateDueError" class="govuk-error-message" style="display:none;"></span>
                             <span asp-validation-for="DateDue" class="govuk-error-message" style="display:none;"></span>
                         </div>
                     </div>
@@ -114,15 +121,21 @@
                             <label class="govuk-label font-size-16" asp-for="DateCompleted">
                                 Completed/Delivered
                             </label>
-                            <div style="position:relative; display:inline-block; width:stretch;">
+                            <div style="position:relative; display:flex; align-items:center; width:stretch;">
                                 <input type="text"
                                        id="DateCompletedDisplay"
                                        class="govuk-input"
                                        value="@Model.DateCompleted?.ToString("dd/MM/yyyy")"
+                                       placeholder="dd/mm/yyyy"
+                                       maxlength="10"
                                        autocomplete="off"
-                                       onclick="openDatePicker('DateCompletedPicker')"
-                                       style="cursor:pointer; width:stretch;"
-                                       readonly>
+                                       oninput="formatDateInput(this)"
+                                       onblur="validateAndSyncDate('DateCompletedDisplay', 'DateCompletedBinding', 'DateCompletedError')"
+                                       style="flex:1;">
+                                <button type="button"
+                                        onclick="openDatePicker('DateCompletedPicker')"
+                                        style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
+                                        aria-label="Open date picker for Completed date">&#128197;</button>
                                 <input type="hidden"
                                        name="DateCompleted"
                                        id="DateCompletedBinding"
@@ -131,8 +144,9 @@
                                        id="DateCompletedPicker"
                                        value="@(Model.DateCompleted.HasValue ? Model.DateCompleted.Value.ToString("yyyy-MM-dd") : string.Empty)"
                                        style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
-                                       onchange="syncDateToText('DateCompletedPicker', 'DateCompletedDisplay', 'DateCompletedBinding')">
+                                       onchange="syncDateToText('DateCompletedPicker', 'DateCompletedDisplay', 'DateCompletedBinding', 'DateCompletedError')">
                             </div>
+                            <span id="DateCompletedError" class="govuk-error-message" style="display:none;"></span>
                         </div>
                     </div>
                 </div>
@@ -199,7 +213,7 @@
         }
     }
 
-    function syncDateToText(pickerId, displayId, hiddenId) {
+    function syncDateToText(pickerId, displayId, hiddenId, errorId) {
         var picker = document.getElementById(pickerId);
         if (picker.value) {
             var parts = picker.value.split('-');
@@ -209,6 +223,71 @@
             document.getElementById(displayId).value = '';
             document.getElementById(hiddenId).value = '';
         }
+        if (errorId) {
+            var err = document.getElementById(errorId);
+            if (err) { err.style.display = 'none'; err.textContent = ''; }
+        }
+    }
+
+    function formatDateInput(input) {
+        var val = input.value.replace(/[^\d\/\-]/g, '');
+        if (val.length > 10) val = val.substring(0, 10);
+        input.value = val;
+    }
+
+    function validateAndSyncDate(displayId, hiddenId, errorId) {
+        var display = document.getElementById(displayId);
+        var hidden  = document.getElementById(hiddenId);
+        var errorEl = document.getElementById(errorId);
+        var val = display.value.trim();
+
+        if (!val) {
+            hidden.value = '';
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+            return;
+        }
+
+        if (/^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(val)) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not yyyy/mm/dd';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var usMatch = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (usMatch && parseInt(usMatch[2], 10) > 12) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format, not mm/dd/yyyy';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!match) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter the date in dd/mm/yyyy format';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var day   = parseInt(match[1], 10);
+        var month = parseInt(match[2], 10);
+        var year  = parseInt(match[3], 10);
+        var date  = new Date(year, month - 1, day);
+
+        if (date.getFullYear() !== year || date.getMonth() !== (month - 1) || date.getDate() !== day) {
+            hidden.value = '';
+            errorEl.textContent = 'Enter a valid date in dd/mm/yyyy format';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        var mm = String(month).padStart(2, '0');
+        var dd = String(day).padStart(2, '0');
+        hidden.value = year + '-' + mm + '-' + dd;
+        errorEl.style.display = 'none';
+        errorEl.textContent = '';
     }
 
     // Mutual-exclusion logic mirrors Access VBA AfterUpdate handlers

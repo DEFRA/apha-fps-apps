@@ -8,6 +8,9 @@ namespace Apha.FPSApps.Web.Mappings
     {
         public PactViewModelMapper() 
         {
+            CreateMap<WorkGroupDto, WorkGroup>().ReverseMap();
+            CreateMap<ProjectDto, Project>().ReverseMap();
+            CreateMap<ProfitCentreDto, ProfitCentre>().ReverseMap();
             CreateMap<PactProjectViewModel, ProjectDto>().ReverseMap();
             CreateMap<ProjectJobCodeViewModel, JobCodeDto>().ReverseMap();
             CreateMap<JobCodeViewModel, JobCodeDto>().ReverseMap();
@@ -19,11 +22,8 @@ namespace Apha.FPSApps.Web.Mappings
                 .ReverseMap()
                 .ForMember(dest => dest.ParentProject, opt => opt.MapFrom(src => src.ParentProject));
             CreateMap<ProjectInvoiceItem, ProjectInvoiceDto>().ReverseMap();
-            CreateMap<ProjectSubContractItem, ProjectSubContractDto>()
-                .ForMember(dest => dest.SubContCounter, opt => opt.MapFrom(src => src.Counter))
-                .ReverseMap()
-                .ForMember(dest => dest.Counter, opt => opt.MapFrom(src => src.SubContCounter));
-
+            CreateMap<InvoiceItem, ProjectInvoiceDto>().ReverseMap();
+            CreateMap<ProjectSubContractItem, ProjectSubContractDto>().ReverseMap();
             // Mapping for standalone SubContract page
             CreateMap<SubContractItem, ProjectSubContractDto>()
                 .ForMember(dest => dest.DailyRate, opt => opt.Ignore())
@@ -146,6 +146,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ReleasePeriodDto, PeriodMonth>().ReverseMap();
 
             CreateMap<ReleasePeriodDto, ReleasePeriodItem>().ReverseMap();
+
+            CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionItem>().ReverseMap();
         }
     }
 }

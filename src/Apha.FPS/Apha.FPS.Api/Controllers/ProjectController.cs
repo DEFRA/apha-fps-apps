@@ -104,6 +104,21 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves a paginated list of projects for a given programme (Project Profitability VLA).
+        /// </summary>
+        [HttpGet("paged-vla")]
+        public async Task<IActionResult> GetProjectsByProgramProjectProfitabilityVLAAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string programNo)
+        {
+            if (string.IsNullOrWhiteSpace(programNo))
+                return BadRequest("programNo is required.");
+
+            var result = await _projectService.GetProjectsByProgramProjectProfitabilityVLAAsync(query, programNo);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
+        /// <summary>
         /// Retrieves a paginated list of all projects.
         /// </summary>
         [HttpGet("paged/all")]
@@ -125,6 +140,21 @@ namespace Apha.FPS.Api.Controllers
                 return BadRequest("projectGroup is required.");
 
             var result = await _projectService.GetProjectsByProjectGroupAsync(query, projectGroup);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
+        }
+
+        /// <summary>
+        /// Retrieves a paginated list of projects for a given project group (Project Profitability VLA).
+        /// </summary>
+        [HttpGet("paged-vla/by-project-group")]
+        public async Task<IActionResult> GetProjectsByProjectGroupProjectProfitabilityVLAAsync(
+            [FromQuery] QueryParameters<string> query,
+            [FromQuery] string projectGroup)
+        {
+            if (string.IsNullOrWhiteSpace(projectGroup))
+                return BadRequest("projectGroup is required.");
+
+            var result = await _projectService.GetProjectsByProjectGroupProjectProfitabilityVLAAsync(query, projectGroup);
             return Ok(_mapper.Map<PaginationRes<ProjectRes>>(result));
         }
 
@@ -150,6 +180,15 @@ namespace Apha.FPS.Api.Controllers
     [FromQuery] QueryParameters<string> query)
         {
             var pagedResult = await _projectService.GetPagedPactProjectsAsync(query);
+            return Ok(_mapper.Map<PaginationRes<ProjectRes>>(pagedResult));
+        }
+
+        [HttpGet("pactview/by-program")]
+        public async Task<ActionResult<PaginationRes<ProjectRes>>> GetPagedPactProjectsByProgramAsync(
+    [FromQuery] QueryParameters<string> query,
+    [FromQuery] string programNo)
+        {
+            var pagedResult = await _projectService.GetPagedPactProjectsByProgramAsync(query, programNo);
             return Ok(_mapper.Map<PaginationRes<ProjectRes>>(pagedResult));
         }
 

@@ -14,7 +14,7 @@ var TestPlanJobConfig = {
 
 function addTestPlan(btn) {
     if (TestPlanJobConfig.requireJobCodeForAdd && !TestPlanJobConfig.getJobCode()) {
-        showGovukAlert('Please select a project first.');
+        showAlertMessage('Please select a project first.', AlertType.INFO);
         return;
     }
     $.ajax({
@@ -30,7 +30,7 @@ function addTestPlan(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while opening the form.');
+                showAlertMessage('An error occurred while opening the form.', AlertType.ERROR);
             }
         }
     });
@@ -59,7 +59,7 @@ function saveTestPlan() {
         success: function (result) {
             if (result.success) {
                 closeModal();
-                showGovukAlert(result.message).then(function () {                   
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                   
                     TestPlanJobConfig.onSaved();
                 });
             } else {
@@ -70,7 +70,7 @@ function saveTestPlan() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -91,7 +91,7 @@ function editTestPlan(btn) {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while fetching the record.');
+                showAlertMessage('An error occurred while fetching the record.', AlertType.ERROR);
             }
         }
     });
@@ -120,7 +120,7 @@ function updateTestPlan() {
         success: function (result) {
             if (result.success) {
                 closeModal();
-                showGovukAlert(result.message).then(function () {                  
+                showAlertMessage(result.message, AlertType.SUCCESS).then(function () {                  
                     TestPlanJobConfig.onUpdated();
                 });
             } else {
@@ -131,7 +131,7 @@ function updateTestPlan() {
             if (xhr.status === 400 && xhr.responseJSON) {
                 displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
             } else {
-                showGovukAlert('An error occurred while saving.');
+                showAlertMessage('An error occurred while saving.', AlertType.ERROR);
             }
         }
     });
@@ -148,15 +148,15 @@ function deleteTestPlan(btn) {
             data: { testCode: testCode, buyer: buyer },
             success: function (response) {
                 if (response.success) {
-                    showGovukAlert('Deleted successfully.').then(function () {
+                    showAlertMessage('Deleted successfully.', AlertType.SUCCESS).then(function () {
                         TestPlanJobConfig.onDeleted();
                     });
                 } else {
-                    showGovukAlert(response.message);
+                    showAlertMessage(response.message, AlertType.ERROR);
                 }
             },
             error: function () {
-                showGovukAlert('An error occurred while deleting.');
+                showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
             }
         });
     });

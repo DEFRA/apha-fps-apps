@@ -14,8 +14,12 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap(typeof(PaginationFilter<>), typeof(QueryParameters<>)).ReverseMap();
             CreateMap<StaffJobItemViewModel, StaffJobViewDto>().ReverseMap();
             CreateMap<PaginationModel, PaginationDto>().ReverseMap();
+            CreateMap<TestPriceCheckDto, TestPriceCheckItem>()
+                .ForMember(d => d.IsDefraProjectList, o => o.Ignore());
+            CreateMap<TestPriceCheckItem, TestPriceCheckDto>();
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
+            CreateMap<UserPermissionViewModel, UserDto>().ReverseMap();
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
@@ -43,6 +47,8 @@ namespace Apha.FPSApps.Web.Mappings
             // PortfolioNew
             CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
 
+            //Work Group Staff Maintenance
+            CreateMap<WorkGroupEmployeeStaffItem, WorkGroupEmployeeStaffDto>().ReverseMap();
             // Resource Set-Up
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 
@@ -96,6 +102,9 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<PlanStaffZTCodeItemViewModel, StaffJobDto>()
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
+
+            // Total Business Overheads
+            CreateMap<TotalBusinessOverheadsViewModel, TotalBusinessOverheadsDto>().ReverseMap();
 
             // Misc Project Data
             CreateMap<ProjectDto, ProjectMiscItem>()

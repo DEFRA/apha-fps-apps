@@ -9,6 +9,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         Task<ApiResponseDto<List<DiseaseDto>>> GetAllDiseasesAsync();
         Task<ApiResponseDto<List<CustomerDto>>> GetAllCustomersAsync();
         Task<ApiResponseDto<List<ContractDto>>> GetAllContractsAsync();
+        Task<ApiResponseDto<List<ContractDto>>> GetAllPactContractsAsync();
         Task<ApiResponseDto<List<ProjectGroupDto>>> GetAllProjectGroupsAsync();
     }
 }
