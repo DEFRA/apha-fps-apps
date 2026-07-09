@@ -94,7 +94,13 @@
 
         <!-- Active -->
         <div class="govuk-form-group sup_margin_bottom_10">
-            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Active">Active</label>
+            <label class="govuk-label govuk-!-font-weight-bold" asp-for="Active">
+                Active
+                @if (!isEdit)
+                {
+                    <span class="sup_color_red">* </span>
+                }
+            </label>
             <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
                 <div class="govuk-checkboxes__item">
                     <input class="govuk-checkboxes__input"
@@ -104,6 +110,7 @@
                     </label>
                 </div>
             </div>
+            <span asp-validation-for="Active" class="govuk-error-message"></span>
         </div>
 
     </form>

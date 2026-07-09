@@ -241,6 +241,49 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsProjectListApiC
 
         #endregion
 
+        #region GetProjectsDetailsForMilestoneAsync Tests
+
+        [Fact]
+        public async Task GetProjectsDetailsForMilestoneAsync_WhenSuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            var url = string.Format(PimsApiEndpoints.GetProjectsDetailsForMilestone, parentproject);
+            var httpResponse = new ApiResponse<ProjectDetailsMilestoneRes>
+            {
+                Success = true,
+                Data = new ProjectDetailsMilestoneRes
+                {
+                    Parentproject = parentproject,
+                    Program = "animalsurv",
+                    Formrequired = true
+                }
+            };
+            var expectedDto = ApiResponseDto<ProjectDetailsMilestoneDto>.SuccessResponse(
+                new ProjectDetailsMilestoneDto
+                {
+                    Parentproject = parentproject,
+                    Program = "animalsurv",
+                    Formrequired = true
+                });
+
+            _http.GetAsync<ProjectDetailsMilestoneRes>(url).Returns(httpResponse);
+            _mapper.Map<ApiResponseDto<ProjectDetailsMilestoneDto>>(httpResponse).Returns(expectedDto);
+
+            // Act
+            var result = await _client.GetProjectsDetailsForMilestoneAsync(parentproject);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(parentproject, result.Data.Parentproject);
+            Assert.True(result.Data.Formrequired);
+            await _http.Received(1).GetAsync<ProjectDetailsMilestoneRes>(url);
+        }
+
+        #endregion
+
         #region GetFpsProjectByIdAsync Tests
 
         [Fact]

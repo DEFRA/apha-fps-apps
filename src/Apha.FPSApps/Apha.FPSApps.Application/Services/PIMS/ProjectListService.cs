@@ -31,5 +31,8 @@ namespace Apha.FPSApps.Application.Services.PIMS
             => await _client.PimsProjectList.GetYearlyDetailsByProjectAsync(parentproject);
         public async Task<ApiResponseDto<List<ProjectListMilestoneDto>>> GetAllProjectsForMilestoneAsync()
           => await _client.PimsProjectList.GetAllProjectsForMilestoneAsync();
+
+        public async Task<ApiResponseDto<ProjectDetailsMilestoneDto>> GetProjectsDetailsForMilestoneAsync(string parentproject)
+         => await _client.PimsProjectList.GetProjectsDetailsForMilestoneAsync(parentproject);
     }
 }

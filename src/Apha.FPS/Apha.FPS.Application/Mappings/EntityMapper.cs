@@ -87,6 +87,11 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
 
+            // MaintTotalBusinessOverheads
+            CreateMap<TotalBusinessOverheads, TotalBusinessOverheadsDto>()
+                .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
+                .ReverseMap()
+                .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
         }
     }
 }
