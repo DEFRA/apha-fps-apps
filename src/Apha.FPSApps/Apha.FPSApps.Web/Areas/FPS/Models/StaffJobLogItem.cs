@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double PlannedHours { get; set; }
 
         [Display(Name = "Date_Time")]
-        [GridColumn(Width = 180, Type = GridColumnType.Date, IsFilterable = false)]
+        [GridColumn(Width = 180, Type = GridColumnType.DateTime, IsFilterable = false)]
         public DateTime? DateTime { get; set; }
 
         [Display(Name = "User_ID")]

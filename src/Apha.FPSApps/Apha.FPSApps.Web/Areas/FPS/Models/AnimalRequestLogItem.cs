@@ -30,7 +30,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public double NumberOfAnimals { get; set; }
 
         [Display(Name = "Date_Time")]
-        [GridColumn(Width = 170, Type = GridColumnType.Date, IsFilterable = false)]
+        [GridColumn(Width = 170, Type = GridColumnType.DateTime, IsFilterable = false)]
         public DateTime? DateTime { get; set; }
 
         [Display(Name = "User_ID")]

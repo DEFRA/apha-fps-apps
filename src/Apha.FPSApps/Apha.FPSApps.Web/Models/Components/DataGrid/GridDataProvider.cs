@@ -30,6 +30,9 @@ namespace Apha.FPSApps.Web.Models.Components.DataGrid
                     IsVisible = columnAttr?.IsVisible ?? true,
                     Width = columnAttr?.Width ?? 100,
                     ColumnType = columnAttr?.Type ?? GridColumnType.Text,
+                    DateFormat = (columnAttr?.Type ?? GridColumnType.Text) == GridColumnType.DateTime
+                        ? "dd/MM/yyyy HH:mm"
+                        : "dd/MM/yyyy",
                     IsFilterable = isFilterable,
                     FilterType = columnAttr?.Type,
                     FilterOptions = filterOptions
