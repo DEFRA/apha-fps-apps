@@ -1,4 +1,4 @@
-namespace Apha.Common.Contracts.FPS
+namespace Apha.Common.Contracts.PACT
 {
     public class TestReqBreakdownRes
     {

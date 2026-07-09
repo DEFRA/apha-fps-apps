@@ -65,7 +65,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<ReleaseSummaryDto, ReleaseSummaryRes>();
             CreateMap<TestPriceCheckDto, TestPriceCheckRes>().ReverseMap();            
             CreateMap<TestPriceCheckReq, TestPriceCheckDto>().ReverseMap();
-            CreateMap<TestReqBreakdownDto, Apha.Common.Contracts.FPS.TestReqBreakdownRes>().ReverseMap();
+            CreateMap<TestReqBreakdownDto, TestReqBreakdownRes>().ReverseMap();
         }
     }
 }
