@@ -1251,7 +1251,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
 
             // Assert
-            Assert.All(result.Data, item => Assert.Contains('@', item.UserId));
+            Assert.All(result.Data, item =>
+            {
+                Assert.NotNull(item.UserId);
+                Assert.Contains('@', item.UserId);
+            });
         }
 
         #endregion
