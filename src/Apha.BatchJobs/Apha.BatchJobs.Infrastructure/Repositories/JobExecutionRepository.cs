@@ -598,7 +598,6 @@ public class JobExecutionRepository : IJobExecutionRepository
     {
         JobStatus.Completed => "Execution completed",
         JobStatus.Failed => "Execution failed",
-        JobStatus.Cancelled => "Execution cancelled",
         _ => $"Status changed to {status}"
     };
 

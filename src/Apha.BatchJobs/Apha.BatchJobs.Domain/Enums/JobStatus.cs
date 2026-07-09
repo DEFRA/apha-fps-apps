@@ -3,7 +3,6 @@ namespace Apha.BatchJobs.Domain.Enums;
 /// <summary>
 /// Enumeration of job execution statuses.
 /// Current lifecycle: Initiated -> Approved -> Running -> Completed | Failed.
-/// Legacy value Cancelled is retained for backward compatibility with historical rows.
 /// </summary>
 public enum JobStatus
 {
@@ -33,12 +32,7 @@ public enum JobStatus
     Failed = 4,
 
     /// <summary>
-    /// Legacy status retained for historical compatibility.
-    /// </summary>
-    Cancelled = 5,
-
-    /// <summary>
     /// Request rejected by an approver and will not be executed.
     /// </summary>
-    Rejected = 6
+    Rejected = 5
 }

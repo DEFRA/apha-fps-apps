@@ -18,10 +18,22 @@ var requestedJobArg = args.Length > 0
     ? args[0]
     : Environment.GetEnvironmentVariable("BATCH_JOB_NAME");
 
+// A null/empty BATCH_JOB_NAME means the ECS container override did not inject the env var —
+// most likely an EventBridge input transformer misconfiguration (e.g. PascalCase JSON keys
+// not matching the camelCase paths $.detail.jobName expected by the transformer).
+// Surface this as a configuration error rather than silently passing as HealthCheck.
+if (string.IsNullOrWhiteSpace(requestedJobArg))
+{
+    Console.Error.WriteLine(
+        "ERROR [ConfigurationError]: BATCH_JOB_NAME is not set. " +
+        "Cannot determine which job to run. " +
+        "Verify the EventBridge input transformer maps $.detail.jobName → BATCH_JOB_NAME.");
+    return 2; // ExitCodeConfigurationError
+}
+
 // HealthCheck is a pure process liveness probe — no DB, no orchestrator, no execution contract.
 // The API must never create an Initiated record for HealthCheck invocations.
-if (string.IsNullOrWhiteSpace(requestedJobArg)
-    || string.Equals(requestedJobArg, BatchJobNames.HealthCheck, StringComparison.OrdinalIgnoreCase))
+if (string.Equals(requestedJobArg, BatchJobNames.HealthCheck, StringComparison.OrdinalIgnoreCase))
 {
     Console.WriteLine("HealthCheck OK");
     return 0;
@@ -716,7 +728,6 @@ static async Task ValidatePreCreatedExecutionRecordAsync(
 
     var isTerminal = existingExecution.Status is JobStatus.Completed
         or JobStatus.Failed
-        or JobStatus.Cancelled
         or JobStatus.Rejected;
 
     if (isTerminal)
