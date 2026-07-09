@@ -71,14 +71,17 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
             var filterDict = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(request?.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
 
+            // Cap the number of year columns/values to a sensible maximum (10)
+            var yearCount = Math.Min(pivot.Years.Count, 10);
+
             var rows = pivot.Rows.Select(r =>
             {
-                var row = ProjectCostsPivotRow.Create(pivot.Years.Count);
+                var row = ProjectCostsPivotRow.Create(yearCount);
                 row.Project = r.Project;
                 row.Category = r.Category;
                 row.Total = Fmt(r.Total);
 
-                for (int i = 0; i < pivot.Years.Count; i++)
+                for (int i = 0; i < yearCount; i++)
                 {
                     int year = pivot.Years[i];
                     decimal? value = r.YearlyAmounts.TryGetValue(year, out double v)
@@ -98,7 +101,7 @@ namespace Apha.FPSApps.Web.Areas.CostBook.Controllers
                 new() { PropertyName = "Total",    DisplayName = "Total",    ColumnType = GridColumnType.GbpValue, IsFilterable = false, Width = 100 }
             };
 
-            for (int i = 0; i < pivot.Years.Count; i++)
+            for (int i = 0; i < yearCount; i++)
             {
                 columns.Add(new DataGridColumn
                 {
