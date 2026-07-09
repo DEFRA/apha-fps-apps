@@ -17,13 +17,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public string Project { get; set; } = null!;
 
         [GridColumn(Order = 5, Width = 80, Type = GridColumnType.ReadOnly, IsFilterable = true)]
-        public string? Pc { get; set; }
+        public string? PC { get; set; }
 
         [GridColumn(Order = 6, Width = 120, Type = GridColumnType.ReadOnly, IsFilterable = true)]
         public string? WorkG { get; set; }
 
         [GridColumn(Order = 7, Width = 90, Type = GridColumnType.GbpValue)]
-        public decimal? WgPrice { get; set; }
+        public decimal? WGPrice { get; set; }
 
         [GridColumn(Order = 8, Width = 100, Type = GridColumnType.GbpValue)]
         public decimal? TotalCost { get; set; }
