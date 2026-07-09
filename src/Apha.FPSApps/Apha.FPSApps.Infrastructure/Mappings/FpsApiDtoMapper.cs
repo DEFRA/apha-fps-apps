@@ -151,7 +151,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
                 .ForMember(d => d.CaseWorkSub, o => o.MapFrom(s => s.CaseworkSub))
                 .ForMember(d => d.PlanCaseWorkDebit, o => o.MapFrom(s => s.PlanCaseworkDebit));
 
-            // StaffJobLog: Res.Name (staff display name resolved server-side) has no Dto counterpart — silently dropped.
+            // StaffJobLog: Res.Name (staff display name resolved server-side) maps to Dto.Name by convention.
             CreateMap<StaffJobLogRes, StaffJobLogDto>();
 
             // TestRequirementLog: type-coercion — Res.UnitPrice is double? but Dto.UnitPrice is decimal?;

@@ -3509,6 +3509,10 @@ body,
     width:350px;
 }
 
+.width-200 {
+    width: 200px;
+}
+
 .trl-intro-block {
     margin-bottom: 6px;
 }

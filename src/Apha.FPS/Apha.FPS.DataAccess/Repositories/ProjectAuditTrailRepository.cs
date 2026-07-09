@@ -26,7 +26,6 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var q = _dbContext.ProjectLogs
                 .AsNoTracking()
-                .IgnoreQueryFilters()
                 .Where(p => p.ParentProject == parentProject);
 
             if (fromDate.HasValue)
@@ -55,7 +54,7 @@ namespace Apha.FPS.DataAccess.Repositories
             DateTime? fromDate,
             DateTime? toDate)
         {
-            var q = from log in _dbContext.StaffJobLogs.AsNoTracking().IgnoreQueryFilters()
+            var q = from log in _dbContext.StaffJobLogs.AsNoTracking()
                     join jc in _dbContext.JobCodes.AsNoTracking()
                         on log.JobCode equals jc.JobCodeId
                     where jc.ParentProject == parentProject
@@ -77,7 +76,35 @@ namespace Apha.FPS.DataAccess.Repositories
             q = ApplyStaffJobLogSorting(q, query.SortBy, query.Descending);
 
             var result = await q.ToListAsync();
+
+            await PopulateStaffNamesAsync(result);
+
             return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        // fps.staffjob_log has no name column; resolve staff display names via a lookup
+        // against vtblstaff_general (StaffGeneralViews), mirroring StaffJobRepository's
+        // established staff-name enrichment pattern.
+        private async Task PopulateStaffNamesAsync(List<StaffJobLog> logs)
+        {
+            var staffIds = logs.Select(l => l.StaffId).Distinct().ToList();
+            if (staffIds.Count == 0)
+                return;
+
+            var staffNames = await _dbContext.StaffGeneralViews
+                .AsNoTracking()
+                .Where(s => s.StaffId != null && staffIds.Contains(s.StaffId))
+                .ToListAsync();
+
+            var staffNameMap = staffNames
+                .GroupBy(s => s.StaffId!)
+                .ToDictionary(g => g.Key, g => g.First().Name);
+
+            foreach (var log in logs)
+            {
+                if (staffNameMap.TryGetValue(log.StaffId, out var name))
+                    log.Name = name;
+            }
         }
 
         // jobcode column in testreq_log is derived from projectbuyercode; join to JobCodes on jobcode
@@ -87,7 +114,7 @@ namespace Apha.FPS.DataAccess.Repositories
             DateTime? fromDate,
             DateTime? toDate)
         {
-            var q = from log in _dbContext.TestRequirementLogs.AsNoTracking().IgnoreQueryFilters()
+            var q = from log in _dbContext.TestRequirementLogs.AsNoTracking()
                     join jc in _dbContext.JobCodes.AsNoTracking()
                         on log.JobCode equals jc.JobCodeId
                     where jc.ParentProject == parentProject
@@ -120,7 +147,7 @@ namespace Apha.FPS.DataAccess.Repositories
             DateTime? fromDate,
             DateTime? toDate)
         {
-            var q = from log in _dbContext.AnimalRequestLogs.AsNoTracking().IgnoreQueryFilters()
+            var q = from log in _dbContext.AnimalRequestLogs.AsNoTracking()
                     join jc in _dbContext.JobCodes.AsNoTracking()
                         on log.JobCode equals jc.JobCodeId
                     where jc.ParentProject == parentProject
@@ -153,7 +180,7 @@ namespace Apha.FPS.DataAccess.Repositories
             DateTime? fromDate,
             DateTime? toDate)
         {
-            var q = from log in _dbContext.AdditionalCostLogs.AsNoTracking().IgnoreQueryFilters()
+            var q = from log in _dbContext.AdditionalCostLogs.AsNoTracking()
                     join jc in _dbContext.JobCodes.AsNoTracking()
                         on log.JobCode equals jc.JobCodeId
                     where jc.ParentProject == parentProject
@@ -177,7 +204,60 @@ namespace Apha.FPS.DataAccess.Repositories
             q = ApplyAdditionalCostLogSorting(q, query.SortBy, query.Descending);
 
             var result = await q.ToListAsync();
+
+            await ResolveAdditionalCostLogUserEmailsAsync(result);
+
             return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        // fps.additionalcosts_log.user_id was historically populated with a raw login/username
+        // for some rows and, more recently, with the authenticated user's email address
+        // (AdditionalCostRepository / ProjectRepository both write _requestContext.UserEmailId).
+        // To guarantee the Exceptional Cost Changes grid's User_ID column always displays an
+        // email address, resolve any legacy, non-email UserId values against fps.tblusers
+        // (Username / Dt2Username -> UserEmail). This mirrors the StaffJobLog Name enrichment
+        // pattern below (PopulateStaffNamesAsync) and only mutates the in-memory, no-tracking
+        // result set — no changes are persisted back to the database.
+        private async Task ResolveAdditionalCostLogUserEmailsAsync(List<AdditionalCostLog> logs)
+        {
+            var rawUserIds = logs
+                .Where(l => !string.IsNullOrWhiteSpace(l.UserId) && !l.UserId!.Contains('@'))
+                .Select(l => l.UserId!.Trim())
+                .Distinct()
+                .ToList();
+
+            if (rawUserIds.Count == 0)
+                return;
+
+            var users = await _dbContext.Users
+                .AsNoTracking()
+                .Where(u => (u.Username != null && rawUserIds.Contains(u.Username))
+                         || (u.Dt2Username != null && rawUserIds.Contains(u.Dt2Username)))
+                .ToListAsync();
+
+            var emailByUsername = users
+                .Where(u => !string.IsNullOrWhiteSpace(u.Username) && !string.IsNullOrWhiteSpace(u.UserEmail))
+                .GroupBy(u => u.Username!.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First().UserEmail, StringComparer.OrdinalIgnoreCase);
+
+            var emailByDt2Username = users
+                .Where(u => !string.IsNullOrWhiteSpace(u.Dt2Username) && !string.IsNullOrWhiteSpace(u.UserEmail))
+                .GroupBy(u => u.Dt2Username!.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First().UserEmail, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var log in logs)
+            {
+                if (string.IsNullOrWhiteSpace(log.UserId) || log.UserId.Contains('@'))
+                    continue;
+
+                var key = log.UserId.Trim();
+
+                if (emailByUsername.TryGetValue(key, out var email))
+                    log.UserId = email;
+                else if (emailByDt2Username.TryGetValue(key, out var email2))
+                    log.UserId = email2;
+                // else: no matching fps.tblusers record found — legacy value is left as-is.
+            }
         }
 
         // ── Private sorting helpers ──────────────────────────────────────────────────────

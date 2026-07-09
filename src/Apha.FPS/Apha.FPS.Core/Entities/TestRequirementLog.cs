@@ -5,7 +5,7 @@ namespace Apha.FPS.Core.Entities
         public int SequenceNo { get; set; }
         public string? TestCode { get; set; }
         public string? Buyer { get; set; }
-        public decimal? UnitPrice { get; set; }
+        public double? UnitPrice { get; set; }
         public double? NoRequired { get; set; }
         public string? ProjectBuyerCode { get; set; }
         public string? TestBuyerCode { get; set; }

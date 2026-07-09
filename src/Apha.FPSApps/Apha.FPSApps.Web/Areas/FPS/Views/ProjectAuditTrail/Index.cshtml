@@ -42,11 +42,11 @@
                     <div class="trl-filter-row spc-filter-row-near">
 
                         <!-- Project filter -->
-                        <div class="govuk-form-group sup_margin_bottom_10">
+                        <div class="govuk-form-group trl-filter-group sup_margin_bottom_10">
                             <label class="govuk-label govuk-!-font-weight-bold govuk-!-font-size-16"
                                    for="filter-project"
                                    id="filter-project-label">Project</label>
-                            <select class="sup_margin_bottom_10 govuk-select govuk-!-font-size-16 sup_select_option_width_100"
+                            <select class="govuk-select govuk-!-font-size-16 sup_select_option_width_100"
                                     id="filter-project"
                                     name="filterProject"
                                     asp-for="ParentProject"
@@ -61,20 +61,10 @@
                                style="display:none">
                                 <span class="govuk-visually-hidden">Error:</span> Please select a project before searching.
                             </p>
-                            <div class="govuk-button-group sup_margin_0 trl-filter-actions-buttons trl-filter-buttons_alignment govuk-!-margin-top-2">
-                                <button type="button"
-                                        class="govuk-button sup_margin_0"
-                                        id="btnApplyProjectAuditFilters"
-                                        data-module="govuk-button">Search</button>
-                                <button type="button"
-                                        class="govuk-button sup_margin_0"
-                                        id="btnResetProjectAuditFilters"
-                                        data-module="govuk-button">Clear</button>
-                            </div>
                         </div>
 
                         <!-- Date of change fieldset -->
-                        <fieldset class="govuk-fieldset sup_margin_bottom_10 border-legend">
+                        <fieldset class="govuk-fieldset trl-filter-group sup_margin_bottom_10 border-legend">
                             <legend class="govuk-fieldset__legend govuk-!-font-weight-bold govuk-!-font-size-16">
                                 Date of change
                             </legend>
@@ -101,6 +91,21 @@
                                 </div>
                             </div>
                         </fieldset>
+
+                        <!-- Filter actions -->
+                        <div class="trl-filter-actions spc-filter-actions-near sup_margin_bottom_10">
+                            <span class="trl-filter-actions-label" aria-hidden="true">Actions</span>
+                            <div class="govuk-button-group sup_margin_0 trl-filter-actions-buttons">
+                                <button type="button"
+                                        class="govuk-button sup_margin_0"
+                                        id="btnApplyProjectAuditFilters"
+                                        data-module="govuk-button">Search</button>
+                                <button type="button"
+                                        class="govuk-button sup_margin_0"
+                                        id="btnResetProjectAuditFilters"
+                                        data-module="govuk-button">Clear</button>
+                            </div>
+                        </div>
 
                     </div>
                 </section>

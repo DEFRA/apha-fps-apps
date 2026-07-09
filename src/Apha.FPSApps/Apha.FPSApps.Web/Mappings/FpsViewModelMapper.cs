@@ -116,10 +116,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ProjectLogDto, ProjectLogItem>()
                 .ForMember(d => d.UserEmail, o => o.Ignore());
 
-            // Name is NOT in StaffJobLogDto (requires staff lookup join); Ignore() it.
             // UserEmail is NOT in StaffJobLogDto (requires UserId→email resolution); Ignore() it.
             CreateMap<StaffJobLogDto, StaffJobLogItem>()
-                .ForMember(d => d.Name, o => o.Ignore())
                 .ForMember(d => d.UserEmail, o => o.Ignore());
 
             // UserEmail is NOT in TestRequirementLogDto (requires UserId→email resolution); Ignore() it.

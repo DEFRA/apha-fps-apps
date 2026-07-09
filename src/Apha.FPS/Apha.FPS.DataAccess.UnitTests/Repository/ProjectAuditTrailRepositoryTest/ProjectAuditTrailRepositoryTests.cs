@@ -30,6 +30,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             IEnumerable<AnimalRequestLog>? animalRequestLogs = null,
             IEnumerable<AdditionalCostLog>? additionalCostLogs = null,
             IEnumerable<JobCode>? jobCodes = null,
+            IEnumerable<StaffGeneralView>? staffGeneralViews = null,
             int fpsYear = DefaultFpsYear)
         {
             var mockRequestContext = CreateMockRequestContext(fpsYear);
@@ -45,6 +46,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(staffJobLogs);
                 mockContext.Setup(x => x.StaffJobLogs).Returns(mockSet.Object);
+
+                // GetStaffJobLogsAsync enriches results with staff names via StaffGeneralViews;
+                // always configure it (defaulting to empty) so the lookup doesn't hit an unmocked DbSet.
+                var staffGeneralMockSet = RepositoryTestHelper.CreateMockDbSet(staffGeneralViews ?? Enumerable.Empty<StaffGeneralView>());
+                mockContext.Setup(x => x.StaffGeneralViews).Returns(staffGeneralMockSet.Object);
             }
 
             if (testRequirementLogs != null)
@@ -225,6 +231,54 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             Assert.NotNull(result);
             Assert.NotEmpty(result.Data);
             Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetStaffJobLogsAsync_ResolvesStaffNameFromStaffGeneralView()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = TestJobCode, ParentProject = TestProject }
+            };
+            var logs = new List<StaffJobLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, StaffId = "S001", PlannedHours = 8, FpsYear = DefaultFpsYear }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Jane Doe", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(staffJobLogs: logs, jobCodes: jobCodes, staffGeneralViews: staffGeneralViews);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("Jane Doe", Assert.Single(result.Data).Name);
+        }
+
+        [Fact]
+        public async Task GetStaffJobLogsAsync_NoMatchingStaffGeneralView_LeavesNameNull()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode>
+            {
+                new() { JobCodeId = TestJobCode, ParentProject = TestProject }
+            };
+            var logs = new List<StaffJobLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, StaffId = "S001", PlannedHours = 8, FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepository(staffJobLogs: logs, jobCodes: jobCodes, staffGeneralViews: []);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetStaffJobLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Null(Assert.Single(result.Data).Name);
         }
 
         [Fact]
@@ -821,11 +875,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             var logs = new List<TestRequirementLog>
             {
                 new() { SequenceNo = 1, JobCode = TestJobCode, TestCode = "TC1", Buyer = "BA",
-                        UnitPrice = 10m, NoRequired = 5,  ProjectBuyerCode = "PB1", TestBuyerCode = "TB1",
+                        UnitPrice = 10d, NoRequired = 5,  ProjectBuyerCode = "PB1", TestBuyerCode = "TB1",
                         Active = 0, InsertDelete = "I", UserId = "user1",
                         DateTime = new DateTime(2024, 1, 1), FpsYear = DefaultFpsYear },
                 new() { SequenceNo = 2, JobCode = TestJobCode, TestCode = "TC2", Buyer = "BB",
-                        UnitPrice = 20m, NoRequired = 10, ProjectBuyerCode = "PB2", TestBuyerCode = "TB2",
+                        UnitPrice = 20d, NoRequired = 10, ProjectBuyerCode = "PB2", TestBuyerCode = "TB2",
                         Active = 1, InsertDelete = "D", UserId = "user2",
                         DateTime = new DateTime(2024, 6, 1), FpsYear = DefaultFpsYear }
             };

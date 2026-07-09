@@ -19,7 +19,7 @@ namespace Apha.FPS.Application.UnitTests.Dtos
                 SequenceNo       = 7,
                 TestCode         = "TC001",
                 Buyer            = "BuyerOrg",
-                UnitPrice        = 250.50m,
+                UnitPrice        = 250.50,
                 NoRequired       = 12.5,
                 ProjectBuyerCode = "PBC100",
                 TestBuyerCode    = "TBC200",
@@ -35,7 +35,7 @@ namespace Apha.FPS.Application.UnitTests.Dtos
             dto.SequenceNo.Should().Be(7);
             dto.TestCode.Should().Be("TC001");
             dto.Buyer.Should().Be("BuyerOrg");
-            dto.UnitPrice.Should().Be(250.50m);
+            dto.UnitPrice.Should().Be(250.50);
             dto.NoRequired.Should().Be(12.5);
             dto.ProjectBuyerCode.Should().Be("PBC100");
             dto.TestBuyerCode.Should().Be("TBC200");
@@ -97,7 +97,7 @@ namespace Apha.FPS.Application.UnitTests.Dtos
             dto.SequenceNo       = 50;
             dto.TestCode         = "TC999";
             dto.Buyer            = "NewBuyer";
-            dto.UnitPrice        = 999.99m;
+            dto.UnitPrice        = 999.99;
             dto.NoRequired       = 100.0;
             dto.ProjectBuyerCode = "PBC999";
             dto.TestBuyerCode    = "TBC999";
@@ -112,7 +112,7 @@ namespace Apha.FPS.Application.UnitTests.Dtos
             dto.SequenceNo.Should().Be(50);
             dto.TestCode.Should().Be("TC999");
             dto.Buyer.Should().Be("NewBuyer");
-            dto.UnitPrice.Should().Be(999.99m);
+            dto.UnitPrice.Should().Be(999.99);
             dto.NoRequired.Should().Be(100.0);
             dto.ProjectBuyerCode.Should().Be("PBC999");
             dto.TestBuyerCode.Should().Be("TBC999");
@@ -154,7 +154,7 @@ namespace Apha.FPS.Application.UnitTests.Dtos
         [InlineData(99999.99)]
         public void UnitPrice_SetToBoundaryValues_ReturnsCorrectValue(double raw)
         {
-            var value = (decimal)raw;
+            var value = raw;
             var dto = new TestRequirementLogDto { UnitPrice = value };
 
             dto.UnitPrice.Should().Be(value);

@@ -4,6 +4,7 @@ namespace Apha.FPS.Application.Dtos
     {
         public int SequenceNo { get; set; }
         public string StaffId { get; set; } = null!;
+        public string? Name { get; set; }
         public string JobCode { get; set; } = null!;
         public double PlannedHours { get; set; }
         public DateTime? DateTime { get; set; }

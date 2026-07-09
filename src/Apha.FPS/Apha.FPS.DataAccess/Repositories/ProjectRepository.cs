@@ -842,7 +842,7 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 TestCode        = tr.TestCode,
                 Buyer           = tr.Buyer,
-                UnitPrice       = tr.UnitPrice,
+                UnitPrice       = (double?)tr.UnitPrice,
                 NoRequired      = tr.NoRequired,
                 ProjectBuyerCode = tr.ProjectBuyerCode,
                 TestBuyerCode   = tr.TestBuyerCode,
@@ -1075,7 +1075,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 {
                     TestCode        = tr.TestCode,
                     Buyer           = tr.Buyer,
-                    UnitPrice       = tr.UnitPrice,
+                    UnitPrice       = (double?)tr.UnitPrice,
                     NoRequired      = tr.NoRequired,
                     ProjectBuyerCode = tr.ProjectBuyerCode,
                     TestBuyerCode   = tr.TestBuyerCode,
@@ -1189,7 +1189,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 {
                     TestCode         = tr.TestCode,
                     Buyer            = tr.Buyer,
-                    UnitPrice        = tr.UnitPrice,
+                    UnitPrice        = (double?)tr.UnitPrice,
                     NoRequired       = tr.NoRequired,
                     ProjectBuyerCode = tr.ProjectBuyerCode,
                     TestBuyerCode    = tr.TestBuyerCode,
