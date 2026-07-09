@@ -23,8 +23,6 @@ namespace Apha.FPS.DataAccess.Repositories
         public async Task<PagedData<StaffJobView>> GetJobStaffCostAsync(PaginationParameters<string> query, string jobCode)
         {
             var queryStaffJob = await BuildJobStaffCostQueryAsync(jobCode);
-            // Apply filtering
-            queryStaffJob = ApplyStaffJobFilter(queryStaffJob, query.Filter);
 
             queryStaffJob = ApplySorting(queryStaffJob, query.SortBy, query.Descending);
 
@@ -42,6 +40,8 @@ namespace Apha.FPS.DataAccess.Repositories
                 if (item.StaffID != null && staffNameMap.TryGetValue(item.StaffID, out var name))
                     item.Name = name;
             }
+
+            result = ApplyStaffJobFilterInMemory(result, query.Filter);
 
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
@@ -343,32 +343,23 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        private static IQueryable<StaffJobView> ApplyStaffJobFilter(IQueryable<StaffJobView> queryStaffJob, string? filter)
+        private static List<StaffJobView> ApplyStaffJobFilterInMemory(List<StaffJobView> list, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
-            {
-                return queryStaffJob;
-            }
+                return list;
 
             dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
             if (filterModel == null)
-            {
-                return queryStaffJob;
-            }
+                return list;
 
             var dict = (IDictionary<string, object>)filterModel;
 
             if (dict.TryGetValue("Name", out var name) && name != null)
             {
-                queryStaffJob = queryStaffJob.Where(x => EF.Functions.ILike(x.Name!, $"%{name}%"));
+                var nameStr = name.ToString()!;
+                list = list.Where(x => x.Name != null && x.Name.Contains(nameStr, StringComparison.OrdinalIgnoreCase)).ToList();
             }
-
-            if (dict.TryGetValue("PlannedHours", out var plannedHours) && plannedHours != null)
-            {
-                queryStaffJob = queryStaffJob.Where(x => EF.Functions.ILike(x.PlannedHours.ToString(), $"%{plannedHours}%"));
-            }
-
-            return queryStaffJob;
+            return list;
         }
 
         public async Task<double> GetZtTotalHoursByStaffIdAsync(string staffId)
