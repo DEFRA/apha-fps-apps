@@ -110,8 +110,10 @@
                                                        value="@Model.SelectedPersonName"
                                                        readonly
                                                        aria-label="Selected person" />
+                                                <input type="hidden" id="ssrSelectedPersonId" value="" />
                                                 <hr class="ssr-person-divider" />
                                                 <button type="submit"
+                                                        id="planPersontoZTCodes"
                                                         class="govuk-button govuk-button--secondary"
                                                         data-module="govuk-button"
                                                         onclick="ssrPlanPersonOntoZT()">
@@ -187,9 +189,9 @@
                 opt.textContent = wg;
                 select.appendChild(opt);
             });
-            if (workgroups && workgroups.length > 0) {
-                select.value = workgroups[0];
-            }
+            // if (workgroups && workgroups.length > 0) {
+            //     select.value = workgroups[0];
+            // }
         }
 
         function LoadGradeByGroup()
@@ -269,7 +271,6 @@
                 alert('Failed to load edit form. Please try again.');
             });
         }
-
  
         function saveSetUpStaffResources() {
             var pactId    = document.getElementById('hdnPactId')?.value || '';
@@ -322,9 +323,11 @@
             var gradeEl  = document.getElementById('ssrSummaryGrade');
             var workEl   = document.getElementById('ssrWorkHrs');
             var personEl = document.getElementById('ssrPersonSelected');
+            var idEl     = document.getElementById('ssrSelectedPersonId');
             if (gradeEl)  gradeEl.value  = '';
             if (workEl)   workEl.value   = '0';
             if (personEl) personEl.value = '';
+            if (idEl)     idEl.value     = '';
         }
 
         function ssrSelectPerson(btn) {
@@ -336,13 +339,44 @@
             if (gradeEl)  gradeEl.value  = gradeCode;
         }
 
+        function ssrOnStaffRowSelect(row) {
+            var id       = $(row).data('id') || '';
+            var name     = $(row).find('td[data-property="Name"] span').text().trim();
+            var grade    = $(row).find('td[data-property="WorkGroupGrade"] span').text().trim();
+            var personEl = document.getElementById('ssrPersonSelected');
+            var idEl     = document.getElementById('ssrSelectedPersonId');
+            var gradeEl  = document.getElementById('ssrSummaryGrade');
+            if (personEl) personEl.value = name;
+            if (idEl)     idEl.value = id;
+            if (gradeEl && grade)  gradeEl.value = grade;
+        }
+
         function ssrPlanPersonOntoZT() {
             var person = document.getElementById('ssrPersonSelected');
+            var idEl   = document.getElementById('ssrSelectedPersonId');
             if (!person || !person.value) {
                 alert('Please select a person first.');
                 return;
             }
-            window.location.href = '@Url.Action("Index", "PlanStaffZTCode", new { area = "FPS" })';
+            var id  = idEl ? idEl.value : '';
+            var url = '@Url.Action("Index", "PlanStaffZTCode", new { area = "FPS" })';
+            if (id) url += '?staffId=' + encodeURIComponent(id);
+            window.location.href = url;
         }
+
+        function ssrSelectFirstStaffRow() {
+            var $first = $('#gridContainer_ssrStaffGrid table tbody tr.selectable-row:first');
+            if ($first.length && $first.data('id')) {
+                $('#gridContainer_ssrStaffGrid table tbody tr').removeClass('selected-row');
+                $first.addClass('selected-row');
+                ssrOnStaffRowSelect($first[0]);
+            }
+        }
+
+        document.addEventListener('gridReloaded', function (e) {
+            if (e.detail.gridId === 'ssrStaffGrid') {
+                ssrSelectFirstStaffRow();
+            }
+        });
     </script>
 }
