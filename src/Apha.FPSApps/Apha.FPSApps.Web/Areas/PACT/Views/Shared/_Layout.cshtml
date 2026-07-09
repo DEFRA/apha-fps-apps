@@ -1,8 +1,19 @@
+@using Apha.FPSApps.Application.Dtos.FPS
+@using Apha.FPSApps.Web.Constants
+@inject Apha.FPSApps.Web.Handler.IFpsYearContext FyContext
+@inject Apha.Common.Utilities.StateManagement.IAppStateService AppStateService
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @{
+        var allYears = await AppStateService.GetCacheValueAsync<IEnumerable<YearMasterDto>>(FpsCacheKeys.AllYears);
+        var fpsYearCode = allYears?.FirstOrDefault(y => y.FpsYear == FyContext.Year)?.FpsYearCode
+                          ?? FyContext.Year.ToString();
+        var pageTitle = ViewData["Title"]?.ToString();
+        ViewData["Title"] = $"{fpsYearCode} : {pageTitle}";
+    }
     <title>@ViewData["Title"]</title>
 
 

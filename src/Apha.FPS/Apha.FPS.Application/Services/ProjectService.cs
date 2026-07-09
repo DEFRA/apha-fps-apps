@@ -59,6 +59,13 @@ namespace Apha.FPS.Application.Services
             return _mapper.Map<PaginatedResult<ProjectDto>>(pagedProjects);
         }
 
+        public async Task<PaginatedResult<ProjectDto>> GetPagedPactProjectsByProgramAsync(QueryParameters<string> query, string programNo)
+        {
+            var pagedProjects = await _projectRepository.GetPagedPactProjectsByProgramAsync(
+                _mapper.Map<PaginationParameters<string>>(query), programNo);
+            return _mapper.Map<PaginatedResult<ProjectDto>>(pagedProjects);
+        }
+
         public async Task<ProjectDto?> GetProjectByIdAsync(string parentProject)
         {
             var project = await _projectRepository.GetProjectByIdAsync(parentProject);

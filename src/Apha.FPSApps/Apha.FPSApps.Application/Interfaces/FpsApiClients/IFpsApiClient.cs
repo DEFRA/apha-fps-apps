@@ -30,5 +30,6 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsUserApiClient FpsUserPermission { get; }
         // TRANSFORMENGINE: FpsGrade added
         IFpsGradeApiClient FpsGrade { get; }
+        IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
     }
 }

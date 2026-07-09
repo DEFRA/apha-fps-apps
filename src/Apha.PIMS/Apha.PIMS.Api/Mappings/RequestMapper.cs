@@ -71,6 +71,7 @@ namespace Apha.PIMS.Api.Mappings
 
             CreateMap<ProjectListViewDto, ProjectListRes>().ReverseMap();
             CreateMap<ProjectListMilestoneDto, ProjectListMilestoneRes>().ReverseMap();
+            CreateMap<ProjectDetailsMilestoneDto, ProjectDetailsMilestoneRes>().ReverseMap();
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
             CreateMap<ProposedProjectDto, ProposedProjectReq>().ReverseMap();
             CreateMap<ProposedProjectDto, ProposedProjectRes>().ReverseMap();
@@ -147,6 +148,8 @@ namespace Apha.PIMS.Api.Mappings
             // TRANSFORMENGINE: Phase 5 additions — RadTrackProg (Programme Tab); natural string PK (program varchar(10))
             CreateMap<RadTrackProgDto, RadTrackProgReq>().ReverseMap();
             CreateMap<RadTrackProgDto, RadTrackProgRes>().ReverseMap();
+            CreateMap<StagingMilestoneDto, StagingMilestoneReq>().ReverseMap();
+            CreateMap<StagingMilestoneDto, StagingMilestoneRes>().ReverseMap();
         }
     }
 }

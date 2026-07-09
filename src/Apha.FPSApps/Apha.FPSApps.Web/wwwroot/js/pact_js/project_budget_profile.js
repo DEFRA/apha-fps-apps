@@ -110,6 +110,7 @@ function loadProfileData(parentProject) {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { position: 'top' } },
                     scales: {
                         x: {
@@ -180,6 +181,7 @@ function loadCumulativeData(parentProject) {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { position: 'top' } },
                     scales: {
                         x: {
@@ -269,18 +271,20 @@ function saveProjectMonth() {
 function deleteProjectMonth(btn) {
     const monthNo = parseInt(btn.getAttribute('data-id')) || 0;
     const project = document.getElementById('ParentProject').value;
-    if (!confirm('Delete month ' + monthNo + '?')) return;
-
-    $.ajax({
-        url: '/PACT/ProjectProfile/DeleteProjectMonth?project=' + encodeURIComponent(project) + '&monthNo=' + monthNo,
-        method: 'DELETE',
-        success: function (res) {
-            if (res.success) {
-                loadCostProfileGrid(project);
-            } else {
-                showAlertMessage(res.message || 'Failed to delete.', AlertType.ERROR);
+    showGovukConfirm('Delete month ' + monthNo + '?').then(function (confirmed) {
+        if (!confirmed) return;
+        $.ajax({
+            url: '/PACT/ProjectProfile/DeleteProjectMonth?project=' + encodeURIComponent(project) + '&monthNo=' + monthNo,
+            method: 'DELETE',
+            success: function (res) {
+                if (res.success) {
+                    loadCostProfileGrid(project);
+                    showAlertMessage('Month deleted successfully.', AlertType.SUCCESS);
+                } else {
+                    showAlertMessage(res.message || 'Failed to delete.', AlertType.ERROR);
+                }
             }
-        }
+        });
     });
 }
 
