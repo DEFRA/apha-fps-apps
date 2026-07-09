@@ -10,10 +10,11 @@
 }
 
 .govuk-tabs__list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-bottom: 1px solid #b1b4b6;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-bottom: 1px solid #b1b4b6;
+    overflow: hidden;
 }
 
 .govuk-tabs__list-item {
