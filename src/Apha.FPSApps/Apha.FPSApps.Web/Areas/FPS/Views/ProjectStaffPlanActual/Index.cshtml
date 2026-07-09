@@ -5,36 +5,36 @@
 }
 
 <div class="container-fluid">
-    <!-- Breadcrumb and project selector -->
-    <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-            <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                    <div class="col-md-6">
-                        
-                    </div>
-                    <div style="display: flex; justify-content: flex-end;" class="col-md-6">
-                        <label class="fw-bold mt-2 me-2" for="projectSelect">Project:</label>
-                        <select id="projectSelect" asp-items="Model.ProjectList" asp-for="SelectedProjectCode"
-                                class="form-select form-select-sm" style="width: auto; min-width: 280px;">
-                            <option value="">-- Select Project --</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Title section -->
     <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
-            <div style="display:flex; align-items:center; justify-content:space-between;"
-                 class="sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
-                <h1 class="govuk-heading-s govuk-!-margin-bottom-0">Compare FPS Plan with PACT Actuals</h1>
-                <a asp-area="FPS"
-                   asp-controller="ProgramProject"
-                   asp-action="Index"
-                   class="govuk-back-link" style="margin-bottom:0;">Back</a>
+        <div class="govuk-grid-column-full sup_border-bottom">
+            <div class="govuk-grid-column-two-thirds">
+                <h1 class="govuk-heading-s govuk-!-margin-top-2">Compare FPS Plan with PACT Actuals</h1>               
+            </div>
+
+            <div class="govuk-grid-column-one-third">
+                <table class="govuk-table isAuto isFloatRight govuk-!-margin-0">
+                    <tbody class="govuk-table__body">
+                    <tr class="govuk-table__row">
+                            <td class="govuk-table__cell isBorderNone">
+		                    <label class="fw-bold mt-2 me-2 isFloatLeft" for="projectSelect">Project:</label>
+                    <select id="projectSelect" asp-items="Model.ProjectList" asp-for="SelectedProjectCode"
+                            class="form-select form-select-sm isFloatLeft isAuto" style="min-width: 280px;">
+                        <option value="">-- Select Project --</option>
+                    </select>
+	                    </td>
+
+                          <td class="govuk-table__cell isBorderNone">
+		                    <a asp-area="FPS"
+                asp-controller="ProgramProject"
+                asp-action="Index"
+                                   class="govuk-back-link govuk-!-margin-0">Back</a>
+	                    </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+               
             </div>
         </div>
     </div>
@@ -95,7 +95,8 @@
                                 <div class="govuk-input__prefix" aria-hidden="true">£</div>
                                 <input type="text" id="planned-total-cost" readonly
                                        class="govuk-input text-AlignRight"
-                                       value="@(Model.TotalPlannedCost.ToString("N2"))" style="width:140px;">
+                                           value="@(Model.TotalPlannedCost.ToString("N2"))" style="width:140px;"
+                                           aria-label="Total Planned Cost">
                             </div>
                         </div>
                     </div>

@@ -71,6 +71,7 @@
                         @if (Model.ShowCheckboxColumn)
                         {
                             <th scope="col" class="govuk-table__header sup_p_0">
+                                <span class="govuk-visually-hidden">Select row</span>
 
                                 <div class="govuk-checkboxes govuk-checkboxes--small sup_margin_0" data-module="govuk-checkboxes">
                                     <div class="govuk-checkboxes__item">
@@ -113,16 +114,17 @@
                     }
                     @if (hasFilterableColumns)
                     {
-                    <tr class="filter-row govuk-table__row">
+                     <tr class="filter-row govuk-table__row">
                         @if (Model.ShowCheckboxColumn)
                         {
-                            <th scope="col"></th>
+                            <th scope="col"><span class="govuk-visually-hidden">Selection filter</span></th>
                         }
                         @foreach (var column in Model.Columns)
                         {
                             if (column.IsVisible)
                             {
                                 <th scope="col">
+                                    <span class="govuk-visually-hidden">Filter @column.DisplayName</span>
                                     @if (column.IsFilterable)
                                     {
                                         var filterValue = Model.CurrentFilters != null && Model.CurrentFilters.ContainsKey(column.PropertyName)
@@ -131,7 +133,7 @@
 
                                         if (column.FilterType == GridColumnType.Dropdown && column.FilterOptions != null)
                                         {
-                                            <select class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName">
+                                            <select class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName" aria-label="Filter by @column.DisplayName">
                                                 <option value="">All</option>
                                                 @foreach (var option in column.FilterOptions)
                                                 {
@@ -143,7 +145,7 @@
                                         }
                                         else if (column.FilterType == GridColumnType.Checkbox)
                                         {
-                                            <select class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName">
+                                            <select class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName" aria-label="Filter by @column.DisplayName">
                                                 <option value="">All</option>
                                                 <option value="true" selected="@(filterValue == "true" ? "selected" : null)">True</option>
                                                 <option value="false" selected="@(filterValue == "false" ? "selected" : null)">False</option>
@@ -152,12 +154,12 @@
                                         //Add condition for datepicker
                                         else if (column.FilterType == GridColumnType.Date)
                                         {
-                                            <input type="date" class="grid-filter grid-date govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName"
+                                            <input type="date" class="grid-filter grid-date govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName" aria-label="Filter by @column.DisplayName"
                                                    value="@(!string.IsNullOrWhiteSpace(filterValue) ? Convert.ToDateTime(filterValue).ToString("yyyy-MM-dd") : "")" placeholder="Filter..." />
                                         }
                                         else
                                         {
-                                            <input type="text" class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName" value="@filterValue" placeholder="Filter..." />
+                                            <input type="text" class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName" aria-label="Filter by @column.DisplayName" value="@filterValue" placeholder="Filter..." />
                                         }
                                         }
                                     </th>
@@ -165,7 +167,7 @@
                                         }
                                         @if (Model.AllowEdit || Model.AllowDelete || Model.AllowView)
                                         {
-                                            <th scope="col"></th>
+                                            <th scope="col"><span class="govuk-visually-hidden">Actions filter</span></th>
                                         }
                                     </tr>
                     }
@@ -295,8 +297,8 @@
          <div class="sup_pagination_footer sup_p_0">
              <div class="sup_pagination_wrapper">
                  <div class="sup_margin_top_bottom_5_10 sup_flex_center">
-                     <label for="recordsPerPage" class="sup_margin_right_5">Records per page  </label>
-                     <select id="@($"{Model.GridId}_pageSize")" class="govuk-select govuk-select--width-2 sup_width_4em govuk-!-font-size-16">
+                     <label for="@($"{Model.GridId}_pageSize")" class="sup_margin_right_5">Records per page  </label>
+                     <select id="@($"{Model.GridId}_pageSize")" class="govuk-select govuk-select--width-2 sup_width_4em govuk-!-font-size-16" aria-label="Records per page">
                          @{
                              var sizes = new[] { 5, 10, 20, 50, 100 };
                              int currentSize = Model.Pagination?.PageSize ?? 5;

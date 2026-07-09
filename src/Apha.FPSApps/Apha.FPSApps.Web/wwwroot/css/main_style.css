@@ -1229,22 +1229,32 @@ label.required::after {
 }
 /* Content */
 .modal-content {
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
- 
-  .modal-header{
+    background: #fff;
+    border-radius: 10px;
+    border: 4px solid #0b0c0c;
     overflow: hidden;
-   
-    h3,h5{
-      float: left;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+
+    .modal-header {
+        overflow: hidden;
+
+        h3, h5 {
+            float: left;
+        }
+
+        .btn-close {
+            float: right;
+            border: none;
+            border-radius: 4px;
+            background: #ca3535;
+            cursor: pointer;
+            font-size: 30px;
+            line-height: 1;
+            padding: 4px;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
     }
-    .btn-close{
-      float: right;
-    }
-  }
- 
 }
  
 .modal-sm {
@@ -1638,4 +1648,10 @@ textarea {
         border: 1px solid #f47738 !important;
         color: #0b0c0c !important;
     }
+}
+.isBorderNone{
+    border:none;
+}
+.isAuto{
+    width: auto;
 }

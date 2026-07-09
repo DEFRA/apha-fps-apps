@@ -7,44 +7,34 @@
 
 <main id="main-content">
     <div class="container-fluid">
-        <!-- Breadcrumb section -->
-        <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
-                <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
-                    <div style="display: flex; font-size: 14px; align-items: center; justify-content: space-between;">
-                        <div class="col-md-8">
-                            
-                        </div>
-                        <div style="display: flex; justify-content: flex-end;" class="col-md-4">
-                            @if (Model.IsProjectGroupMode)
-                            {
-                                <label class="fw-bold mt-2" for="projectGroupSelect">Project Group: </label>
-                                <select id="projectGroupSelect" asp-items="Model.ProjectGroupList" asp-for="SelectedProjectGroup"
-                                        class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
-                                    <option value="">-- Select Project Group --</option>
-                                </select>
-                            }
-                            else
-                            {
-                                <label class="fw-bold mt-2" for="programmeSelect">Programme: </label>
-                                <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
-                                        class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
-                                    <option value="">-- Select Programme --</option>
-                                </select>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Title section -->
         <div class="govuk-grid-row">
-            <div class="govuk-grid-column-full">
+            <div class="govuk-grid-column-one-half">
                 <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">
                     @(Model.IsProjectGroupMode ? "Plan Project Group Individually" : "Plan Projects Individually")
                 </h1>
             </div>
+
+            <div class="govuk-grid-column-one-half govuk-!-text-align-right">
+                  @if (Model.IsProjectGroupMode)
+        {
+            <label class="fw-bold mt-2" for="projectGroupSelect">Project Group: </label>
+            <select id="projectGroupSelect" asp-items="Model.ProjectGroupList" asp-for="SelectedProjectGroup"
+                    class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
+                <option value="">-- Select Project Group --</option>
+            </select>
+        }
+        else
+        {
+                    <label class="fw-bold mt-2" for="programmprogrammeSelecteSelect">Programme: </label>
+            <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
+                    class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
+                <option value="">-- Select Programme --</option>
+            </select>
+        }
+             </div>
+
+
         </div>
 
         <div class="row">
@@ -82,20 +72,34 @@
 
                                     <div style="display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; margin: 0 0 5px 8px;">
 
+                                        <!-- Programme selector above grid (for non-ProjectGroup mode) -->
+                                        @* @if (!Model.IsProjectGroupMode)
+                                        {
+                                            <div class="govuk-grid-row">
+                                                <div class="govuk-grid-column-full">
+                                                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; justify-content: flex-end;">
+                                                        <label class="govuk-label--s" for="programmeSelect">Programme</label>
+                                                        <select id="programmeSelect" asp-items="Model.ProgrammeList" asp-for="SelectedProgramNo"
+                                                                class="govuk-select govuk-!-font-size-16" style="width: auto; min-width: 260px;">
+                                                            <option value="">-- Select Programme --</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        } *@
+
                                         <!-- Selected project bar -->
                                         <div class="govuk-grid-row">
-                                            <div class="govuk-grid-column-full mt-2">
-                                                <div class="project-code-section" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                                                    <label class="govuk-label--s" for="selected-project-input">Selected project</label>
-                                                    <input type="text" id="selected-project-input" value=""
-                                                           placeholder="Project" readonly
-                                                           class="govuk-input govuk-!-font-size-16"
-                                                           style="width:160px;">
-                                                    <input type="hidden" id="hdnSelectedProject" value="" />
-                                                        <button type="button" id="btnPlan" class="govuk-button sup_margin_0" style="display:none;" onclick="planThisProject()">
-                                                        <i class="fa fa-cogs" aria-hidden="true"></i> Plan
-                                                    </button>
-                                                </div>
+                                            <div class="govuk-grid-column-full mt-0">
+                                                <label class="govuk-label--s" for="selected-project-input">Selected project</label>
+                                                <input type="text" id="selected-project-input" value=""
+                                                       placeholder="Project" readonly
+                                                       class="govuk-input govuk-!-font-size-16"
+                                                       style="width:160px;">
+                                                <input type="hidden" id="hdnSelectedProject" value="" />
+                                                <button type="button" id="btnPlan" class="govuk-button sup_margin_0" style="display:none;" onclick="planThisProject()">
+                                                    <i class="fa fa-cogs" aria-hidden="true"></i> Plan
+                                                </button>
                                             </div>
                                         </div>
 
