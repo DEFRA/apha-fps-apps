@@ -17,13 +17,10 @@ internal sealed class CreateProjectMonthCaseworkStep : RecreateSummariesExecutio
             SELECT DISTINCT
                 q.project,
                 q.monthno,
-                pm.fpsyear,
+                q.fpsyear,
                 COALESCE(q.cwdebit::numeric, 0::numeric)::double precision,
                 COALESCE(q.cwcredit::numeric, 0::numeric)::double precision
             FROM fps.qryprojectmonthcw q
-            JOIN fps.projectmonth pm
-              ON pm.project = q.project
-             AND pm.monthno = q.monthno
-             AND pm.fpsyear = {context.FpsYear};", cancellationToken);
+            WHERE q.fpsyear = {context.FpsYear};", cancellationToken);
     }
 }

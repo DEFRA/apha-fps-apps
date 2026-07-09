@@ -1434,8 +1434,8 @@ public class BatchJobsDbContext : DbContext
             entity.ToTable("projectmonthcasework", schema: "fps");
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.MonthNo).HasColumnName("monthno");
-            entity.Property<int>("FpsYear").HasColumnName("fpsyear");
-            entity.HasKey("Project", "MonthNo", "FpsYear");
+            entity.Property(e => e.FpsYear).HasColumnName("fpsyear");
+            entity.HasKey(e => new { e.Project, e.MonthNo, e.FpsYear });
             entity.Property(e => e.CwDebit).HasColumnName("cwdebit");
             entity.Property(e => e.CwCredit).HasColumnName("cwcredit");
         });

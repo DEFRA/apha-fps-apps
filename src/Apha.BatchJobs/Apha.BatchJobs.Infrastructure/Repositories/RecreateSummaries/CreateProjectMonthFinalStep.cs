@@ -24,7 +24,7 @@ internal sealed class CreateProjectMonthFinalStep : RecreateSummariesExecutionSt
             join pm3 in db.RsProjectMonth3.AsNoTracking()
                 on new { pm2.Project, EndPeriod = pm2.MonthNo, pm2.FpsYear } equals new { pm3.Project, pm3.EndPeriod, pm3.FpsYear }
             join pmcw in db.RsProjectMonthCasework.AsNoTracking()
-                on new { pm2.Project, pm2.MonthNo, pm2.FpsYear } equals new { pmcw.Project, pmcw.MonthNo, FpsYear = EF.Property<int>(pmcw, "FpsYear") }
+                on new { pm2.Project, pm2.MonthNo, pm2.FpsYear } equals new { pmcw.Project, pmcw.MonthNo, pmcw.FpsYear }
             select new RsProjectMonthFinalTable
             {
                 Project = pm2.Project,
