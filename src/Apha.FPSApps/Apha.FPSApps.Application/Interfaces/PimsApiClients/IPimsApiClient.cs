@@ -9,5 +9,8 @@
         IPimsProjectYearCostsApiClient PimsProjectYearCosts { get; }
         IPimsMilestoneApiClient PimsMilestone { get; }
         IPimsRadTrackInvoiceApiClient PimsRadTrackInvoice { get; }
+
+        // TRANSFORMENGINE: New sub-client for YearlyFinancialData CRUD + pactcosts endpoint
+        IPimsYearlyFinancialDataApiClient PimsYearlyFinancialData { get; }
     }
 }
