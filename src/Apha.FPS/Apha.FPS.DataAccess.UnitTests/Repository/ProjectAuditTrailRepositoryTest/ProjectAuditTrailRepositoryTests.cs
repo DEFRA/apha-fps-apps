@@ -31,6 +31,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             IEnumerable<AdditionalCostLog>? additionalCostLogs = null,
             IEnumerable<JobCode>? jobCodes = null,
             IEnumerable<StaffGeneralView>? staffGeneralViews = null,
+            IEnumerable<User>? users = null,
             int fpsYear = DefaultFpsYear)
         {
             var mockRequestContext = CreateMockRequestContext(fpsYear);
@@ -69,6 +70,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             {
                 var mockSet = RepositoryTestHelper.CreateMockDbSet(additionalCostLogs);
                 mockContext.Setup(x => x.AdditionalCostLogs).Returns(mockSet.Object);
+
+                // GetAdditionalCostLogsAsync resolves legacy, non-email UserId values via a Users lookup;
+                // always configure it (defaulting to empty) so the lookup doesn't hit an unmocked DbSet.
+                var usersMockSet = RepositoryTestHelper.CreateMockDbSet(users ?? Enumerable.Empty<User>());
+                mockContext.Setup(x => x.Users).Returns(usersMockSet.Object);
             }
 
             if (jobCodes != null)
@@ -1130,6 +1136,122 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.ProjectAuditTrailRepositoryTe
             // Assert
             Assert.NotNull(result);
             Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        // ── GetAdditionalCostLogsAsync – UserId → email resolution ──────────────────
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_UserIdIsAlreadyEmail_LeavesValueUnchanged()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "already.email@example.com", FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("already.email@example.com", result.Data.Single().UserId);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_UserIdMatchesUsername_ResolvesToEmail()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "jbloggs", FpsYear = DefaultFpsYear }
+            };
+            var users = new List<User>
+            {
+                new() { UserId = 1, Username = "jbloggs", UserEmail = "j.bloggs@example.com" }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes, users: users);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("j.bloggs@example.com", result.Data.Single().UserId);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_UserIdMatchesDt2Username_ResolvesToEmail()
+        {
+            // Arrange
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "DOMAIN\\jbloggs", FpsYear = DefaultFpsYear }
+            };
+            var users = new List<User>
+            {
+                new() { UserId = 1, Dt2Username = "DOMAIN\\jbloggs", UserEmail = "j.bloggs@example.com" }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes, users: users);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("j.bloggs@example.com", result.Data.Single().UserId);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_UserIdHasNoMatchingUser_LeavesLegacyValueUnchanged()
+        {
+            // Arrange – simulates a legacy/orphaned user_id with no fps.tblusers match
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "orphanuser", FpsYear = DefaultFpsYear }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes, users: new List<User>());
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.Equal("orphanuser", result.Data.Single().UserId);
+        }
+
+        [Fact]
+        public async Task GetAdditionalCostLogsAsync_MixedUserIdValues_AllResolveToEmailWherePossible()
+        {
+            // Arrange – reproduces the reported bug: some rows already have email, others a raw username
+            var jobCodes = new List<JobCode> { new() { JobCodeId = TestJobCode, ParentProject = TestProject } };
+            var logs = new List<AdditionalCostLog>
+            {
+                new() { SequenceNo = 1, JobCode = TestJobCode, Account = "ACC1", Description = "Desc1",
+                        ItemCost = 100m, UserId = "already@example.com", FpsYear = DefaultFpsYear },
+                new() { SequenceNo = 2, JobCode = TestJobCode, Account = "ACC2", Description = "Desc2",
+                        ItemCost = 200m, UserId = "jbloggs", FpsYear = DefaultFpsYear }
+            };
+            var users = new List<User>
+            {
+                new() { UserId = 1, Username = "jbloggs", UserEmail = "j.bloggs@example.com" }
+            };
+            var repo  = CreateRepository(additionalCostLogs: logs, jobCodes: jobCodes, users: users);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetAdditionalCostLogsAsync(query, TestProject, null, null);
+
+            // Assert
+            Assert.All(result.Data, item => Assert.Contains('@', item.UserId));
         }
 
         #endregion
