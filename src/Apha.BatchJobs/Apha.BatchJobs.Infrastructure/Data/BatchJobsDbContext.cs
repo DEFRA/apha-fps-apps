@@ -1705,7 +1705,8 @@ public class BatchJobsDbContext : DbContext
         modelBuilder.Entity<RsPeriodTimeCostCalcsTable>(entity =>
         {
             entity.ToTable("period_timecostcalcs", schema: "fps");
-            entity.HasKey(e => new { e.Period, e.Project, e.Month, e.Name });
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
             entity.Property(e => e.Period).HasColumnName("period");
             entity.Property(e => e.Project).HasColumnName("project");
             entity.Property(e => e.OracleProjectCode).HasColumnName("oracleprojectcode");

@@ -423,6 +423,7 @@ internal sealed class RsTblWgEmployeeTable
 
 internal sealed class RsPeriodTimeCostCalcsTable
 {
+    public int Id { get; set; }
     public int Period { get; set; }
     public required string Project { get; set; }
     public string? OracleProjectCode { get; set; }
