@@ -1,4 +1,3 @@
-using Apha.BatchJobs.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
@@ -23,42 +22,36 @@ internal sealed class RefreshPeriodTccStep : RecreateSummariesExecutionStepBase
             .Where(x => x.Period == _period)
             .ExecuteDeleteAsync(cancellationToken);
 
-        var rows = await (
-            from tcc in db.RsTimeCostCalcs.AsNoTracking()
-            where tcc.FpsYear == fpsYear
-            join wg in db.RsWorkGroup.AsNoTracking() on tcc.WorkGroup equals wg.WorkGroup
-            join p in db.RsTlkpProject.AsNoTracking() on tcc.Project equals p.ParentProject
-            where p.FpsYear == fpsYear
-            join cc0 in db.RsCostCentre.AsNoTracking()
-                on new { CostCentre = p.CostCentre, FpsYear = p.FpsYear }
-                equals new { CostCentre = (double?)cc0.CostCentre, cc0.FpsYear } into cc1
-            from cc in cc1.DefaultIfEmpty()
-            join emp in db.RsTblWgEmployee.AsNoTracking() on tcc.StaffId equals emp.PactId
-            select new RsPeriodTimeCostCalcsTable
-            {
-                Period = _period,
-                Project = p.ParentProject,
-                OracleProjectCode = p.OracleProjectCode,
-                SubAccountCode = p.SubAccountCode,
-                Month = tcc.Month,
-                DefraProject = (p.IsDefraProject ?? 0) == 0 ? "No" : "Yes",
-                Occ = cc != null ? cc.CostCentre : null,
-                Opc = cc != null ? cc.ProfitCentre : null,
-                Spc = wg.ProfitCentre,
-                Scc = wg.CostCentre,
-                Name = tcc.Name ?? string.Empty,
-                GradeCode = tcc.GradeCode,
-                SpNumber = emp.SpNumber,
-                ChargeRate = tcc.ChargeRate,
-                Pay = tcc.Pay,
-                NonPay = tcc.NonPay,
-                Overhead = tcc.Overhead,
-                Time = tcc.Time,
-                TotalCost = (decimal?)tcc.Cost
-            })
-            .ToListAsync(cancellationToken);
-
-        await db.RsPeriodTimeCostCalcs.AddRangeAsync(rows, cancellationToken);
-        return await db.SaveChangesAsync(cancellationToken);
+        return await db.Database.ExecuteSqlInterpolatedAsync($@"
+INSERT INTO fps.period_timecostcalcs
+    (period, project, oracleprojectcode, subaccountcode, month, defraproject,
+     occ, opc, spc, scc, name, gradecode, spnumber, chargerate, pay, nonpay, overhead, time, totalcost)
+SELECT
+    {_period},
+    p.parentproject,
+    p.oracleprojectcode,
+    p.subaccountcode,
+    tcc.month,
+    CASE WHEN COALESCE(p.isdefraproject, 0) = 0 THEN 'No' ELSE 'Yes' END,
+    cc.costcentre,
+    cc.profitcentre,
+    wg.profitcentre,
+    wg.costcentre,
+    COALESCE(tcc.name, ''),
+    tcc.gradecode,
+    emp.spnumber,
+    tcc.chargerate,
+    tcc.pay,
+    tcc.nonpay,
+    tcc.overhead,
+    tcc.time,
+    tcc.cost::numeric::money
+FROM fps.timecostcalcs tcc
+JOIN fps.workgroup wg ON tcc.workgroup = wg.workgroup
+JOIN fps.tlkpproject p ON tcc.project = p.parentproject AND tcc.fpsyear = p.fpsyear
+LEFT JOIN fps.costcentre cc ON p.costcentre = cc.costcentre AND p.fpsyear = cc.fpsyear
+JOIN fps.tblwgemployee emp ON tcc.staffid = emp.pactid
+WHERE tcc.fpsyear = {fpsYear}
+", cancellationToken);
     }
 }
