@@ -312,7 +312,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         WorkGroup = wg.Workgroup,
                         SectorName = pp.SectorName,
                         Days = dutyHours != null ? (sj.PlannedHours ?? 0) / Convert.ToDouble(dutyHours) : 0
-                    }).Distinct().OrderBy(e => e.Name).AsQueryable();            
+                    }).Distinct().OrderBy(e => e.Name).AsQueryable();
         }
 
         private static IQueryable<StaffJobView> ApplySorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)
