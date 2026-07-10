@@ -53,8 +53,10 @@
                                                     <ul class="ssr-grade-list" id="ssrGradeList" role="listbox" aria-label="Select workgroup grade">
                                                         @foreach (var grade in Model.GradeList)
                                                         {
+                                                            var gradeCode = Model.GradeCodeMap.TryGetValue(grade, out var gc) ? gc : string.Empty;
                                                             <li class="ssr-grade-item @(grade == Model.SelectedGrade ? "ssr-grade-item--active" : "")"
                                                                 role="option"
+                                                                data-grade-code="@gradeCode"
                                                                 aria-selected="@(grade == Model.SelectedGrade ? "true" : "false")"
                                                                 onclick="ssrSelectWorkGroup('@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(grade))')">
                                                                 @grade
@@ -213,21 +215,25 @@
             });
         }
 
-        function BindGradeList(workgroups) {
+        function BindGradeList(grades) {
             var list = document.getElementById('ssrGradeList');
             if (!list) return;
             list.innerHTML = '';
-            (workgroups || []).forEach(function (wg) {
+            (grades || []).forEach(function (item) {
+                var wg        = typeof item === 'object' ? (item.wgGrade   || '') : item;
+                var gradeCode = typeof item === 'object' ? (item.gradeCode || '') : '';
                 var li = document.createElement('li');
                 li.className = 'ssr-grade-item';
                 li.textContent = wg;
                 li.setAttribute('role', 'option');
                 li.setAttribute('aria-selected', 'false');
+                li.setAttribute('data-grade-code', gradeCode);
                 li.addEventListener('click', function () { ssrSelectWorkGroup(wg); });
                 list.appendChild(li);
             });
-            if (workgroups && workgroups.length > 0) {
-                ssrSelectWorkGroup(workgroups[0]);
+            if (grades && grades.length > 0) {
+                var first = typeof grades[0] === 'object' ? grades[0].wgGrade : grades[0];
+                ssrSelectWorkGroup(first);
             } else {
                 ssrCurrentGrade = '';
                 var wgInput = document.getElementById('ssrSelectedWorkgroup');
@@ -250,6 +256,21 @@
             if (wgInput) wgInput.value = wg;
 
             ssrClearSummary();
+
+            // Bind GradeCode to ssrSummaryGrade and total AtWork to ssrWorkHrs
+            if (wg) {
+                $.get('/FPS/SetUpStaffResources/GetGradeStats', { wgGrade: wg }, function (data) {
+                    if (data.success) {
+                        var gradeEl = document.getElementById('ssrSummaryGrade');
+                        var workEl  = document.getElementById('ssrWorkHrs');
+                        if (gradeEl) gradeEl.value = data.wgGrade  || '';
+                        if (workEl)  workEl.value  = data.totalAtWork !== undefined ? data.totalAtWork : '0';
+                    }
+                }).fail(function () {
+                    console.warn('GetGradeStats failed for grade: ' + wg);
+                });
+            }
+
             reloadSetUpStaffResourcesGrid();
         }
 
@@ -273,25 +294,25 @@
         }
  
         function saveSetUpStaffResources() {
-            var pactId    = document.getElementById('hdnPactId')?.value || '';
-            var name      = document.getElementById('ssrEditName')?.value || '';
-            var hrsPaid   = parseFloat(document.getElementById('ssrEditHrsPaid')?.value) || 0;
-            var leave     = parseFloat(document.getElementById('ssrEditLeave')?.value)   || 0;
-            var sickSp    = parseFloat(document.getElementById('ssrEditSickSp')?.value)  || 0;
-            var atWork    = hrsPaid - leave - sickSp;
-            var planable  = document.getElementById('ssrEditPlanable')?.checked ? 1 : 0;
+            var pactId= document.getElementById('hdnPactId')?.value || '';
+            var name = document.getElementById('ssrEditName')?.value || '';
+            var hrsPaid = parseFloat(document.getElementById('ssrEditHrsPaid')?.value) || 0;
+            var leave = parseFloat(document.getElementById('ssrEditLeave')?.value)   || 0;
+            var sickSp= parseFloat(document.getElementById('ssrEditSickSp')?.value)  || 0;
+            var atWork= hrsPaid - leave - sickSp;
+            var planable= document.getElementById('ssrEditPlanable')?.checked ? 1 : 0;
 
             var aftInput = document.querySelector('#ssrEditForm input[name="__RequestVerificationToken"]');
             var aft = aftInput ? aftInput.value : '';
 
             var dto = {
-                PactId:       pactId,
-                Name:         name,
-                HrsPaid:      hrsPaid,
-                Leave:        leave,
-                SickSpecial:  sickSp,
-                HrsAvail:     atWork,
-                MakeAvailable: planable
+                PactId: pactId,
+                Name:name,
+                HrsPaid:hrsPaid,
+                Leave:leave,
+                SickSpecial:sickSp,
+                HrsAvail:atWork,
+                MakeAvailable:planable
             };
 
             $.ajax({

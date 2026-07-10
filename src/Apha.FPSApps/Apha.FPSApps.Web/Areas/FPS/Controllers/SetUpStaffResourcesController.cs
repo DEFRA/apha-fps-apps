@@ -55,7 +55,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 var gradesResponse = await _workGroupGradeService.GetWorkGroupGradeAsync(selectedRc);
                 if (gradesResponse.Success && gradesResponse.Data != null)
                 {
-                    viewModel.GradeList = gradesResponse.Data.Select(g => g.WgGrade).ToList();
+                    viewModel.GradeList    = gradesResponse.Data.Select(g => g.WgGrade).ToList();
+                    viewModel.GradeCodeMap = gradesResponse.Data
+                        .ToDictionary(g => g.WgGrade, g => g.GradeCode ?? string.Empty);
                 }
             }
 
@@ -174,11 +176,34 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load grades." });
             }
 
-            var gradeCodes = response.Data != null ?
-                response.Data.Select(w => w.WgGrade).OrderBy(w => w).ToList() :
-                new List<string>();
+            var gradeItems = response.Data != null
+                ? response.Data
+                    .OrderBy(w => w.WgGrade)
+                    .Select(w => new { wgGrade = w.WgGrade, gradeCode = w.GradeCode ?? string.Empty })
+                    .ToList<object>()
+                : new List<object>();
 
-            return Json(new { success = true, data = gradeCodes });
+            return Json(new { success = true, data = gradeItems });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetGradeStats(string wgGrade)
+        {
+            if (string.IsNullOrWhiteSpace(wgGrade))
+                return Json(new { success = false, message = "WG Grade is required." });
+
+            // Sum HrsAvail (AtWork) across all staff for this grade
+            var queryParams = new Apha.FPSApps.Application.Pagination.QueryParameters<string>
+            {
+                Page     = 1,
+                PageSize = 10_000
+            };
+            var staffResponse = await _workGroupEmployeeService.GetAllActiveWorkGroupEmployeesAsync(queryParams, wgGrade);
+            var totalAtWork = staffResponse.Success && staffResponse.Data != null
+                ? staffResponse.Data.Sum(s => s.HrsAvail)
+                : 0d;
+
+            return Json(new { success = true, wgGrade, totalAtWork });
         }
 
         [HttpGet]

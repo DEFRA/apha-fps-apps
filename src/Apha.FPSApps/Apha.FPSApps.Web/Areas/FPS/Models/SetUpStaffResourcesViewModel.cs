@@ -37,6 +37,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         //   Each entry is a WgGrade code shown in the left-panel listbox (ssrGradeList)
         public List<string> GradeList { get; set; } = new List<string>();
 
+        /// <summary>Maps each WgGrade to its GradeCode for summary box binding (ssrSummaryGrade).</summary>
+        public Dictionary<string, string> GradeCodeMap { get; set; } = new Dictionary<string, string>();
+
         /// <summary>Currently selected WorkGroup Grade code.</summary>
         public string SelectedGrade { get; set; } = string.Empty;
 
