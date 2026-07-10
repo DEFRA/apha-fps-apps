@@ -42,7 +42,6 @@ namespace Apha.FPS.DataAccess.Repositories
             }
 
             result = ApplyStaffJobFilter(result, query.Filter);
-
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
 
@@ -50,7 +49,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var query = await BuildJobStaffCostQueryAsync(jobCode);
             var result = (await query.ToListAsync()).Select(ComputeStaffCost).ToList();
-            return result.Sum(x => x.StaffCost) ?? 0m;
+            return result != null ? ((result.Sum(x => x.StaffCost)) ?? 0m) : 0m;
         }
 
         public async Task<List<StaffWorkgroupLookup>> GetStaffWorkgroupLookup()
@@ -290,8 +289,6 @@ namespace Apha.FPS.DataAccess.Repositories
                                   prg.UserId,
                                   prg.UserEmail
                               }).Distinct();
-
-            var test = projProgram.ToList();
 
             return (from sj in _dbContext.StaffJobTblViews
                     join s in _dbContext.StaffGeneralViews on sj.StaffId equals s.StaffId
