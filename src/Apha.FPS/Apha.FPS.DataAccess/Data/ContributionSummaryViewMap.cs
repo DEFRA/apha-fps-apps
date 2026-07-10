@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Apha.FPS.DataAccess.Data
 {
-    public class TimeSellerPcViewMap : IEntityTypeConfiguration<TimeSellerPcView>
+    public class ContributionSummaryViewMap : IEntityTypeConfiguration<ContributionSummaryView>
     {
-        public void Configure(EntityTypeBuilder<TimeSellerPcView> entity)
+        public void Configure(EntityTypeBuilder<ContributionSummaryView> entity)
         {
             entity
                 .HasNoKey()

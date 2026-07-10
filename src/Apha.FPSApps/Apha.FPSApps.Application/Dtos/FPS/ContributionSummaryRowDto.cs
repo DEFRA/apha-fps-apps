@@ -3,7 +3,7 @@ namespace Apha.FPSApps.Application.Dtos.FPS
     /// <summary>
     /// DTO for a single row in the Income/Contribution from Time Sales grid (frmTimeSellerPC).
     /// </summary>
-    public class TimeSellerPcRowDto
+    public class ContributionSummaryRowDto
     {
         public string? WgGrade { get; set; }
         public string? WorkGroup { get; set; }

@@ -7,13 +7,13 @@ using Moq;
 
 namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeSellerPcRepositoryTest
 {
-    public class TimeSellerPcRepositoryTests
+    public class ContributionSummaryRepositoryTests
     {
         private const string DefaultUserEmail = "test@example.com";
         private const string DefaultSellingPc = "ENV";
 
-        private static TimeSellerPcRepository CreateRepository(
-            IEnumerable<TimeSellerPcView>? views = null,
+        private static ContributionSummaryRepository CreateRepository(
+            IEnumerable<ContributionSummaryView>? views = null,
             string userEmail = DefaultUserEmail)
         {
             var mockRequestContext = new Mock<IFpsRequestContext>();
@@ -27,10 +27,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeSellerPcRepositoryTest
                 mockContext.Setup(x => x.VQryFrmTimeSellerPcViews).Returns(mockSet.Object);
             }
 
-            return new TimeSellerPcRepository(mockContext.Object, mockRequestContext.Object);
+            return new ContributionSummaryRepository(mockContext.Object, mockRequestContext.Object);
         }
 
-        private static TimeSellerPcView MakeView(
+        private static ContributionSummaryView MakeView(
             string  sellingPc = DefaultSellingPc,
             string  workGroup = "WG1",
             string  wgGrade   = "G1",
@@ -49,7 +49,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeSellerPcRepositoryTest
         public async Task GetBySellingPcAsync_ReturnsRowsForMatchingSellingPcAndUser()
         {
             // Arrange
-            var views = new List<TimeSellerPcView>
+            var views = new List<ContributionSummaryView>
             {
                 MakeView("ENV", "WG1", "G1"),
                 MakeView("ENV", "WG2", "G2"),
@@ -69,7 +69,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeSellerPcRepositoryTest
         public async Task GetBySellingPcAsync_ReturnsEmpty_WhenNoMatchingSellingPc()
         {
             // Arrange
-            var views = new List<TimeSellerPcView>
+            var views = new List<ContributionSummaryView>
             {
                 MakeView("ASU", "WG1", "G1"),
                 MakeView("DTE", "WG2", "G2")
@@ -104,7 +104,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeSellerPcRepositoryTest
         public async Task GetBySellingPcAsync_ExcludesRowsWithDifferentUserEmail()
         {
             // Arrange
-            var views = new List<TimeSellerPcView>
+            var views = new List<ContributionSummaryView>
             {
                 MakeView(userEmail: DefaultUserEmail),
                 MakeView(workGroup: "WG2", wgGrade: "G2", userEmail: "other@example.com")
@@ -123,7 +123,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeSellerPcRepositoryTest
         public async Task GetBySellingPcAsync_ExcludesRowsWithNullUserEmail()
         {
             // Arrange
-            var views = new List<TimeSellerPcView>
+            var views = new List<ContributionSummaryView>
             {
                 MakeView(userEmail: DefaultUserEmail),
                 MakeView(workGroup: "WG2", wgGrade: "G2", userEmail: null)
@@ -146,7 +146,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeSellerPcRepositoryTest
         public async Task GetBySellingPcAsync_IsOrderedByWorkGroupThenWgGrade()
         {
             // Arrange
-            var views = new List<TimeSellerPcView>
+            var views = new List<ContributionSummaryView>
             {
                 MakeView(workGroup: "WG2", wgGrade: "G1"),
                 MakeView(workGroup: "WG1", wgGrade: "G2"),

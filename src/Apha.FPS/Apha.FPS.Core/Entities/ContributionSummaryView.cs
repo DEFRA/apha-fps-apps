@@ -1,6 +1,6 @@
 namespace Apha.FPS.Core.Entities
 {
-    public partial class TimeSellerPcView
+    public partial class ContributionSummaryView
     {
         public decimal? ContTarget { get; set; }
 

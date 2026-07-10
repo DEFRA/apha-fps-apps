@@ -1,9 +1,9 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 
-namespace Apha.FPSApps.Application.Interfaces.FPS
+namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
 {
-    public interface IContributionSummaryService
+    public interface IFpsContributionSummaryApiClient
     {
         Task<ApiResponseDto<List<ContributionSummaryRowDto>>> GetRowsAsync(string sellingPc);
         Task<ApiResponseDto<ContributionSummaryTotalsDto>> GetTotalsAsync(string sellingPc);

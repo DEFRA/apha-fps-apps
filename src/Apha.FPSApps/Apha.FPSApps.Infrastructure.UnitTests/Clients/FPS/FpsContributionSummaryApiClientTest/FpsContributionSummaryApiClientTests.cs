@@ -10,24 +10,24 @@ using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiClientTest
 {
-    public class FpsTimeSellerPcApiClientTests
+    public class FpsContributionSummaryApiClientTests
     {
         private readonly IFpsHttpExecutor         _http;
         private readonly IMapper                  _mapper;
         private readonly FpsTimeSellerPcApiClient _client;
 
-        public FpsTimeSellerPcApiClientTests()
+        public FpsContributionSummaryApiClientTests()
         {
             _http   = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
             _client = new FpsTimeSellerPcApiClient(_http, _mapper);
         }
 
-        private static ApiResponse<List<TimeSellerPcRowRes>> MakeRowsApiResponse(bool success = true)
+        private static ApiResponse<List<ContributionSummaryRowRes>> MakeRowsApiResponse(bool success = true)
             => new()
             {
                 Success = success,
-                Data    = success ? new List<TimeSellerPcRowRes>
+                Data    = success ? new List<ContributionSummaryRowRes>
                 {
                     new() { WorkGroup = "WG1", WgGrade = "G1", Fec = 500m },
                     new() { WorkGroup = "WG2", WgGrade = "G2", Fec = 750m }
@@ -35,11 +35,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
                 Errors = success ? null : new List<ApiError> { new() { Message = "Not found", Code = "NOT_FOUND" } }
             };
 
-        private static ApiResponse<TimeSellerPcTotalsRes> MakeTotalsApiResponse(bool success = true)
+        private static ApiResponse<ContributionSummaryTotalsRes> MakeTotalsApiResponse(bool success = true)
             => new()
             {
                 Success = success,
-                Data    = success ? new TimeSellerPcTotalsRes { SellingPc = "ENV", TotalFec = 1250m } : null,
+                Data    = success ? new ContributionSummaryTotalsRes { SellingPc = "ENV", TotalFec = 1250m } : null,
                 Errors  = success ? null : new List<ApiError> { new() { Message = "Error", Code = "ERROR" } }
             };
 
@@ -51,15 +51,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
             // Arrange
             var sellingPc   = "ENV";
             var apiResponse = MakeRowsApiResponse();
-            var expectedDto = ApiResponseDto<List<TimeSellerPcRowDto>>.SuccessResponse(
-                new List<TimeSellerPcRowDto>
+            var expectedDto = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(
+                new List<ContributionSummaryRowDto>
                 {
                     new() { WorkGroup = "WG1" },
                     new() { WorkGroup = "WG2" }
                 });
 
-            _http.GetAsync<List<TimeSellerPcRowRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TimeSellerPcRowDto>>>(apiResponse).Returns(expectedDto);
+            _http.GetAsync<List<ContributionSummaryRowRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ContributionSummaryRowDto>>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetRowsAsync(sellingPc);
@@ -68,8 +68,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(2, result.Data?.Count);
-            await _http.Received(1).GetAsync<List<TimeSellerPcRowRes>>(Arg.Any<string>());
-            _mapper.Received(1).Map<ApiResponseDto<List<TimeSellerPcRowDto>>>(apiResponse);
+            await _http.Received(1).GetAsync<List<ContributionSummaryRowRes>>(Arg.Any<string>());
+            _mapper.Received(1).Map<ApiResponseDto<List<ContributionSummaryRowDto>>>(apiResponse);
         }
 
         [Fact]
@@ -78,16 +78,16 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
             // Arrange
             var sellingPc   = "ENV";
             var apiResponse = MakeRowsApiResponse();
-            var dto         = ApiResponseDto<List<TimeSellerPcRowDto>>.SuccessResponse(new List<TimeSellerPcRowDto>());
+            var dto         = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(new List<ContributionSummaryRowDto>());
 
-            _http.GetAsync<List<TimeSellerPcRowRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TimeSellerPcRowDto>>>(Arg.Any<ApiResponse<List<TimeSellerPcRowRes>>>()).Returns(dto);
+            _http.GetAsync<List<ContributionSummaryRowRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ContributionSummaryRowDto>>>(Arg.Any<ApiResponse<List<ContributionSummaryRowRes>>>()).Returns(dto);
 
             // Act
             await _client.GetRowsAsync(sellingPc);
 
             // Assert
-            await _http.Received(1).GetAsync<List<TimeSellerPcRowRes>>(
+            await _http.Received(1).GetAsync<List<ContributionSummaryRowRes>>(
                 Arg.Is<string>(url => url.Contains("timeseller")
                                    && url.Contains(sellingPc)
                                    && url.Contains("rows")));
@@ -98,15 +98,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
         {
             // Arrange
             var apiResponse    = MakeRowsApiResponse(success: false);
-            var mappedResponse = new ApiResponseDto<List<TimeSellerPcRowDto>>
+            var mappedResponse = new ApiResponseDto<List<ContributionSummaryRowDto>>
             {
                 Success = false,
                 Errors  = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } },
                 Meta    = new ApiMetaDto()
             };
 
-            _http.GetAsync<List<TimeSellerPcRowRes>>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<List<TimeSellerPcRowDto>>>(apiResponse).Returns(mappedResponse);
+            _http.GetAsync<List<ContributionSummaryRowRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<ContributionSummaryRowDto>>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.GetRowsAsync("ENV");
@@ -126,11 +126,11 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
             // Arrange
             var sellingPc   = "ENV";
             var apiResponse = MakeTotalsApiResponse();
-            var expectedDto = ApiResponseDto<TimeSellerPcTotalsDto>.SuccessResponse(
-                new TimeSellerPcTotalsDto { SellingPc = sellingPc, TotalFec = 1250m });
+            var expectedDto = ApiResponseDto<ContributionSummaryTotalsDto>.SuccessResponse(
+                new ContributionSummaryTotalsDto { SellingPc = sellingPc, TotalFec = 1250m });
 
-            _http.GetAsync<TimeSellerPcTotalsRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TimeSellerPcTotalsDto>>(apiResponse).Returns(expectedDto);
+            _http.GetAsync<ContributionSummaryTotalsRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ContributionSummaryTotalsDto>>(apiResponse).Returns(expectedDto);
 
             // Act
             var result = await _client.GetTotalsAsync(sellingPc);
@@ -139,8 +139,8 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.Equal(sellingPc, result.Data?.SellingPc);
-            await _http.Received(1).GetAsync<TimeSellerPcTotalsRes>(Arg.Any<string>());
-            _mapper.Received(1).Map<ApiResponseDto<TimeSellerPcTotalsDto>>(apiResponse);
+            await _http.Received(1).GetAsync<ContributionSummaryTotalsRes>(Arg.Any<string>());
+            _mapper.Received(1).Map<ApiResponseDto<ContributionSummaryTotalsDto>>(apiResponse);
         }
 
         [Fact]
@@ -149,17 +149,17 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
             // Arrange
             var sellingPc   = "ENV";
             var apiResponse = MakeTotalsApiResponse();
-            var dto         = ApiResponseDto<TimeSellerPcTotalsDto>.SuccessResponse(
-                new TimeSellerPcTotalsDto { SellingPc = sellingPc });
+            var dto         = ApiResponseDto<ContributionSummaryTotalsDto>.SuccessResponse(
+                new ContributionSummaryTotalsDto { SellingPc = sellingPc });
 
-            _http.GetAsync<TimeSellerPcTotalsRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TimeSellerPcTotalsDto>>(Arg.Any<ApiResponse<TimeSellerPcTotalsRes>>()).Returns(dto);
+            _http.GetAsync<ContributionSummaryTotalsRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ContributionSummaryTotalsDto>>(Arg.Any<ApiResponse<ContributionSummaryTotalsRes>>()).Returns(dto);
 
             // Act
             await _client.GetTotalsAsync(sellingPc);
 
             // Assert
-            await _http.Received(1).GetAsync<TimeSellerPcTotalsRes>(
+            await _http.Received(1).GetAsync<ContributionSummaryTotalsRes>(
                 Arg.Is<string>(url => url.Contains("timeseller")
                                    && url.Contains(sellingPc)
                                    && url.Contains("totals")));
@@ -170,15 +170,15 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
         {
             // Arrange
             var apiResponse    = MakeTotalsApiResponse(success: false);
-            var mappedResponse = new ApiResponseDto<TimeSellerPcTotalsDto>
+            var mappedResponse = new ApiResponseDto<ContributionSummaryTotalsDto>
             {
                 Success = false,
                 Errors  = new List<ApiErrorDto> { new() { Message = "Error", Code = "ERROR" } },
                 Meta    = new ApiMetaDto()
             };
 
-            _http.GetAsync<TimeSellerPcTotalsRes>(Arg.Any<string>()).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TimeSellerPcTotalsDto>>(apiResponse).Returns(mappedResponse);
+            _http.GetAsync<ContributionSummaryTotalsRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<ContributionSummaryTotalsDto>>(apiResponse).Returns(mappedResponse);
 
             // Act
             var result = await _client.GetTotalsAsync("ENV");

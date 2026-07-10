@@ -116,7 +116,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
         {
             using var ctx = CreateContext(Guid.NewGuid().ToString());
 
-            var entityType = ctx.Model.FindEntityType(typeof(TimeSellerPcView));
+            var entityType = ctx.Model.FindEntityType(typeof(ContributionSummaryView));
 
             Assert.NotNull(entityType);
             Assert.Null(entityType.FindPrimaryKey());
@@ -127,7 +127,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
         {
             using var ctx = CreateContext(Guid.NewGuid().ToString());
 
-            var entityType = ctx.Model.FindEntityType(typeof(TimeSellerPcView));
+            var entityType = ctx.Model.FindEntityType(typeof(ContributionSummaryView));
 
             Assert.NotNull(entityType);
             Assert.Equal("vqryfrmtimesellerpc", entityType.GetViewName());
@@ -135,30 +135,30 @@ namespace Apha.FPS.DataAccess.UnitTests.Data
         }
 
         [Theory]
-        [InlineData(nameof(TimeSellerPcView.ContTarget),        "conttarget")]
-        [InlineData(nameof(TimeSellerPcView.SellingPc),         "sellingpc")]
-        [InlineData(nameof(TimeSellerPcView.ChargeRate),        "chargerate")]
-        [InlineData(nameof(TimeSellerPcView.Ohr),               "ohr")]
-        [InlineData(nameof(TimeSellerPcView.SumOfGenBid),       "sumofgenbid")]
-        [InlineData(nameof(TimeSellerPcView.WorkGroup),         "workgroup")]
-        [InlineData(nameof(TimeSellerPcView.ProfitCentreGrade), "profitcentregrade")]
-        [InlineData(nameof(TimeSellerPcView.WgGrade),           "wggrade")]
-        [InlineData(nameof(TimeSellerPcView.AppHours),          "apphours")]
-        [InlineData(nameof(TimeSellerPcView.Hrs),               "hrs")]
-        [InlineData(nameof(TimeSellerPcView.AvHrs),             "avhrs")]
-        [InlineData(nameof(TimeSellerPcView.Fec),               "fec")]
-        [InlineData(nameof(TimeSellerPcView.AppFec),            "appfec")]
-        [InlineData(nameof(TimeSellerPcView.Contribution),      "contribution")]
-        [InlineData(nameof(TimeSellerPcView.FpsYear),           "fpsyear")]
-        [InlineData(nameof(TimeSellerPcView.UserId),            "user_id")]
-        [InlineData(nameof(TimeSellerPcView.Dt2Username),       "dt2username")]
-        [InlineData(nameof(TimeSellerPcView.UserEmail),         "useremail")]
+        [InlineData(nameof(ContributionSummaryView.ContTarget),        "conttarget")]
+        [InlineData(nameof(ContributionSummaryView.SellingPc),         "sellingpc")]
+        [InlineData(nameof(ContributionSummaryView.ChargeRate),        "chargerate")]
+        [InlineData(nameof(ContributionSummaryView.Ohr),               "ohr")]
+        [InlineData(nameof(ContributionSummaryView.SumOfGenBid),       "sumofgenbid")]
+        [InlineData(nameof(ContributionSummaryView.WorkGroup),         "workgroup")]
+        [InlineData(nameof(ContributionSummaryView.ProfitCentreGrade), "profitcentregrade")]
+        [InlineData(nameof(ContributionSummaryView.WgGrade),           "wggrade")]
+        [InlineData(nameof(ContributionSummaryView.AppHours),          "apphours")]
+        [InlineData(nameof(ContributionSummaryView.Hrs),               "hrs")]
+        [InlineData(nameof(ContributionSummaryView.AvHrs),             "avhrs")]
+        [InlineData(nameof(ContributionSummaryView.Fec),               "fec")]
+        [InlineData(nameof(ContributionSummaryView.AppFec),            "appfec")]
+        [InlineData(nameof(ContributionSummaryView.Contribution),      "contribution")]
+        [InlineData(nameof(ContributionSummaryView.FpsYear),           "fpsyear")]
+        [InlineData(nameof(ContributionSummaryView.UserId),            "user_id")]
+        [InlineData(nameof(ContributionSummaryView.Dt2Username),       "dt2username")]
+        [InlineData(nameof(ContributionSummaryView.UserEmail),         "useremail")]
         public void OnModelCreating_TimeSellerPcView_ColumnsMappedCorrectly(
             string propertyName, string expectedColumnName)
         {
             using var ctx = CreateContext(Guid.NewGuid().ToString());
 
-            var entityType = ctx.Model.FindEntityType(typeof(TimeSellerPcView));
+            var entityType = ctx.Model.FindEntityType(typeof(ContributionSummaryView));
             Assert.NotNull(entityType);
 
             var property = entityType.FindProperty(propertyName);

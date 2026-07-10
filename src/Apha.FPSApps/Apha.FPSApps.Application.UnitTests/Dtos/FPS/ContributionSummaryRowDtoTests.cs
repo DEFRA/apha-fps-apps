@@ -2,14 +2,14 @@ using Apha.FPSApps.Application.Dtos.FPS;
 
 namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
 {
-    public class TimeSellerPcRowDtoTests
+    public class ContributionSummaryRowDtoTests
     {
         #region Property Tests
 
         [Fact]
         public void Properties_SetAndGet_AllValues_ReturnsCorrectValues()
         {
-            var dto = new TimeSellerPcRowDto
+            var dto = new ContributionSummaryRowDto
             {
                 WgGrade             = "SG01",
                 WorkGroup           = "WG-ENV",
@@ -44,7 +44,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void NullableProperties_SetToNull_ReturnNull()
         {
-            var dto = new TimeSellerPcRowDto
+            var dto = new ContributionSummaryRowDto
             {
                 WgGrade             = null,
                 WorkGroup           = null,
@@ -79,7 +79,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void Properties_CanBeUpdatedAfterInitialisation()
         {
-            var dto = new TimeSellerPcRowDto { WgGrade = "OLD" };
+            var dto = new ContributionSummaryRowDto { WgGrade = "OLD" };
 
             dto.WgGrade           = "NEW";
             dto.WorkGroup         = "WG-BIO";
@@ -105,7 +105,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void DefaultValues_WhenConstructedWithNoArguments_AreExpected()
         {
-            var dto = new TimeSellerPcRowDto();
+            var dto = new ContributionSummaryRowDto();
 
             Assert.Null(dto.WgGrade);
             Assert.Null(dto.WorkGroup);
@@ -125,7 +125,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void WgGrade_SetToEmptyString_ReturnsEmptyString()
         {
-            var dto = new TimeSellerPcRowDto { WgGrade = string.Empty };
+            var dto = new ContributionSummaryRowDto { WgGrade = string.Empty };
 
             Assert.Equal(string.Empty, dto.WgGrade);
         }
@@ -136,7 +136,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [InlineData(2080.0)]
         public void Hrs_SetToBoundaryValues_ReturnsCorrectValue(double value)
         {
-            var dto = new TimeSellerPcRowDto { Hrs = value };
+            var dto = new ContributionSummaryRowDto { Hrs = value };
 
             Assert.Equal(value, dto.Hrs);
         }
@@ -148,7 +148,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         public void Fec_SetToBoundaryValues_ReturnsCorrectValue(double raw)
         {
             var value = (decimal)raw;
-            var dto   = new TimeSellerPcRowDto { Fec = value };
+            var dto   = new ContributionSummaryRowDto { Fec = value };
 
             Assert.Equal(value, dto.Fec);
         }
@@ -159,7 +159,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [InlineData(0.5)]
         public void PctPlanned_SetToBoundaryValues_ReturnsCorrectValue(double value)
         {
-            var dto = new TimeSellerPcRowDto { PctPlanned = value };
+            var dto = new ContributionSummaryRowDto { PctPlanned = value };
 
             Assert.Equal(value, dto.PctPlanned);
         }
@@ -170,7 +170,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [InlineData(0.75)]
         public void PctAssuredPlanned_SetToBoundaryValues_ReturnsCorrectValue(double value)
         {
-            var dto = new TimeSellerPcRowDto { PctAssuredPlanned = value };
+            var dto = new ContributionSummaryRowDto { PctAssuredPlanned = value };
 
             Assert.Equal(value, dto.PctAssuredPlanned);
         }

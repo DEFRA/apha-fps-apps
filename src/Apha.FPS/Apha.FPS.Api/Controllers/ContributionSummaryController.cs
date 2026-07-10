@@ -17,10 +17,10 @@ namespace Apha.FPS.Api.Controllers
     [Route("api/v{version:apiVersion}/timeseller")]
     public class ContributionSummaryController : ControllerBase
     {
-        private readonly ITimeSellerPcService _service;
+        private readonly IContributionSummaryService _service;
         private readonly IMapper _mapper;
 
-        public ContributionSummaryController(ITimeSellerPcService service, IMapper mapper)
+        public ContributionSummaryController(IContributionSummaryService service, IMapper mapper)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -40,7 +40,7 @@ namespace Apha.FPS.Api.Controllers
             ValidateSellingPc(sellingPc);
 
             var result = await _service.GetRowsAsync(sellingPc, cancellationToken);
-            return Ok(_mapper.Map<List<TimeSellerPcRowRes>>(result));
+            return Ok(_mapper.Map<List<ContributionSummaryRowRes>>(result));
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace Apha.FPS.Api.Controllers
             ValidateSellingPc(sellingPc);
 
             var result = await _service.GetTotalsAsync(sellingPc, cancellationToken);
-            return Ok(_mapper.Map<TimeSellerPcTotalsRes>(result));
+            return Ok(_mapper.Map<ContributionSummaryTotalsRes>(result));
         }
 
         private static void ValidateSellingPc(string sellingPc)

@@ -33,12 +33,12 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
                 new() { ProfitCentreId = "ASU", ProfitCentreName = "Animal Science" }
             ];
 
-        private static List<TimeSellerPcRowDto> MakeRowDtos(int count = 2)
+        private static List<ContributionSummaryRowDto> MakeRowDtos(int count = 2)
             => Enumerable.Range(1, count)
-                .Select(i => new TimeSellerPcRowDto { WorkGroup = $"WG{i}", WgGrade = $"G{i}", Fec = 100m * i })
+                .Select(i => new ContributionSummaryRowDto { WorkGroup = $"WG{i}", WgGrade = $"G{i}", Fec = 100m * i })
                 .ToList();
 
-        private static TimeSellerPcTotalsDto MakeTotalsDto(string sellingPc = "ENV")
+        private static ContributionSummaryTotalsDto MakeTotalsDto(string sellingPc = "ENV")
             => new() { SellingPc = sellingPc, TotalFec = 500m, TotalToRecover = 1200m, Surplus = -700m };
 
         private static PaginationFilter<string> MakeRequest(
@@ -48,19 +48,19 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
             bool descending = false)
             => new() { Page = page, PageSize = pageSize, Filter = filter, SortBy = sortBy, Descending = descending };
 
-        private void SetupRowsSuccess(string sellingPc, List<TimeSellerPcRowDto>? dtos = null)
+        private void SetupRowsSuccess(string sellingPc, List<ContributionSummaryRowDto>? dtos = null)
         {
             dtos ??= MakeRowDtos();
             _service.GetRowsAsync(sellingPc)
-                .Returns(ApiResponseDto<List<TimeSellerPcRowDto>>.SuccessResponse(dtos));
+                .Returns(ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(dtos));
         }
 
-        private void SetupMapper(List<TimeSellerPcRowDto>? dtos = null, List<ContributionSummaryRowItem>? items = null)
+        private void SetupMapper(List<ContributionSummaryRowDto>? dtos = null, List<ContributionSummaryRowItem>? items = null)
         {
             items ??= (dtos ?? MakeRowDtos())
                 .Select(d => new ContributionSummaryRowItem { WorkGroup = d.WorkGroup, WgGrade = d.WgGrade })
                 .ToList();
-            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<TimeSellerPcRowDto>>()).Returns(items);
+            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<ContributionSummaryRowDto>>()).Returns(items);
         }
 
         #region Index
@@ -163,9 +163,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
             // Arrange
             var sellingPc = "ENV";
             _service.GetRowsAsync(sellingPc)
-                .Returns(ApiResponseDto<List<TimeSellerPcRowDto>>.FailureResponse(
+                .Returns(ApiResponseDto<List<ContributionSummaryRowDto>>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error" } }, new ApiMetaDto()));
-            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<TimeSellerPcRowDto>>())
+            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<ContributionSummaryRowDto>>())
                 .Returns(new List<ContributionSummaryRowItem>());
 
             // Act
@@ -182,11 +182,11 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
         {
             // Arrange
             var sellingPc = "ENV";
-            var dtos  = Enumerable.Range(1, 15).Select(i => new TimeSellerPcRowDto { WorkGroup = $"WG{i:D2}", WgGrade = $"G{i}" }).ToList();
+            var dtos  = Enumerable.Range(1, 15).Select(i => new ContributionSummaryRowDto { WorkGroup = $"WG{i:D2}", WgGrade = $"G{i}" }).ToList();
             var items = dtos.Select(d => new ContributionSummaryRowItem { WorkGroup = d.WorkGroup, WgGrade = d.WgGrade }).ToList();
 
             SetupRowsSuccess(sellingPc, dtos);
-            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<TimeSellerPcRowDto>>()).Returns(items);
+            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<ContributionSummaryRowDto>>()).Returns(items);
 
             // Act — page 2, size 5
             var result = await _controller.LoadData(MakeRequest(page: 2, pageSize: 5), sellingPc);
@@ -216,7 +216,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
             };
 
             SetupRowsSuccess(sellingPc, dtos);
-            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<TimeSellerPcRowDto>>()).Returns(items);
+            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<ContributionSummaryRowDto>>()).Returns(items);
 
             // Act
             var result = await _controller.LoadData(
@@ -242,7 +242,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
             };
 
             SetupRowsSuccess(sellingPc, dtos);
-            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<TimeSellerPcRowDto>>()).Returns(items);
+            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<ContributionSummaryRowDto>>()).Returns(items);
 
             // Act
             var result = await _controller.LoadData(
@@ -273,7 +273,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
             };
 
             SetupRowsSuccess(sellingPc, dtos);
-            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<TimeSellerPcRowDto>>()).Returns(items);
+            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<ContributionSummaryRowDto>>()).Returns(items);
 
             // Act
             var result = await _controller.LoadData(
@@ -300,7 +300,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
             };
 
             SetupRowsSuccess(sellingPc, dtos);
-            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<TimeSellerPcRowDto>>()).Returns(items);
+            _mapper.Map<List<ContributionSummaryRowItem>>(Arg.Any<List<ContributionSummaryRowDto>>()).Returns(items);
 
             // Act
             var result = await _controller.LoadData(
@@ -324,7 +324,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
             var sellingPc = "ENV";
             var dto       = MakeTotalsDto(sellingPc);
             _service.GetTotalsAsync(sellingPc)
-                .Returns(ApiResponseDto<TimeSellerPcTotalsDto>.SuccessResponse(dto));
+                .Returns(ApiResponseDto<ContributionSummaryTotalsDto>.SuccessResponse(dto));
 
             // Act
             var result = await _controller.LoadTotals(sellingPc);
@@ -342,7 +342,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.ContributionSummaryControll
             // Arrange
             var sellingPc = "ENV";
             _service.GetTotalsAsync(sellingPc)
-                .Returns(ApiResponseDto<TimeSellerPcTotalsDto>.FailureResponse(
+                .Returns(ApiResponseDto<ContributionSummaryTotalsDto>.FailureResponse(
                     new List<ApiErrorDto> { new() { Message = "Error" } }, new ApiMetaDto()));
 
             // Act

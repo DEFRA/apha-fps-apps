@@ -20,6 +20,6 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
         public DataGridConfig<ContributionSummaryRowItem>? RowGrid { get; set; }
 
         /// <summary>Footer totals — null until a Selling PC is chosen.</summary>
-        public TimeSellerPcTotalsDto? Totals { get; set; }
+        public ContributionSummaryTotalsDto? Totals { get; set; }
     }
 }

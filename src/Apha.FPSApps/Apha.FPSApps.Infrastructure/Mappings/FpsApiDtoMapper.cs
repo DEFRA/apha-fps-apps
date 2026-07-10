@@ -139,8 +139,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
                       
 
             // Income/Contribution from Time Sales (frmTimeSellerPC)
-            CreateMap<TimeSellerPcRowDto, TimeSellerPcRowRes>().ReverseMap();
-            CreateMap<TimeSellerPcTotalsDto, TimeSellerPcTotalsRes>().ReverseMap();
+            CreateMap<ContributionSummaryRowDto, ContributionSummaryRowRes>().ReverseMap();
+            CreateMap<ContributionSummaryTotalsDto, ContributionSummaryTotalsRes>().ReverseMap();
 
             // BudgetResourceLevel
             CreateMap<BidDto, BidReq>().ReverseMap();

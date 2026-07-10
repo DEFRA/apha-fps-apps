@@ -41,7 +41,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
 
         // Income/Contribution from Time Sales (frmTimeSellerPC)
-        public IFpsTimeSellerPcApiClient FpsTimeSellerPc { get; }
+        public IFpsContributionSummaryApiClient FpsTimeSellerPc { get; }
 
         public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {

@@ -10,13 +10,13 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
     public class ContributionSummaryServiceTests
     {
         private readonly IFpsApiClient              _fpsClient;
-        private readonly IFpsTimeSellerPcApiClient  _apiClient;
+        private readonly IFpsContributionSummaryApiClient  _apiClient;
         private readonly ContributionSummaryService _service;
 
         public ContributionSummaryServiceTests()
         {
             _fpsClient = Substitute.For<IFpsApiClient>();
-            _apiClient = Substitute.For<IFpsTimeSellerPcApiClient>();
+            _apiClient = Substitute.For<IFpsContributionSummaryApiClient>();
             _fpsClient.FpsTimeSellerPc.Returns(_apiClient);
             _service   = new ContributionSummaryService(_fpsClient);
         }
@@ -30,12 +30,12 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
         {
             // Arrange
             var sellingPc = "ASU";
-            var rows = new List<TimeSellerPcRowDto>
+            var rows = new List<ContributionSummaryRowDto>
             {
                 new() { WgGrade = "G1", WorkGroup = "WG1", ProfitCentreGrade = "PCG1", Hrs = 100.0, Fec = 1000m },
                 new() { WgGrade = "G2", WorkGroup = "WG2", ProfitCentreGrade = "PCG2", Hrs = 200.0, Fec = 2000m }
             };
-            var response = ApiResponseDto<List<TimeSellerPcRowDto>>.SuccessResponse(rows);
+            var response = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(rows);
             _apiClient.GetRowsAsync(sellingPc).Returns(response);
 
             // Act
@@ -53,7 +53,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
         {
             // Arrange
             var sellingPc = "ENV";
-            var response  = ApiResponseDto<List<TimeSellerPcRowDto>>.SuccessResponse(new List<TimeSellerPcRowDto>());
+            var response  = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(new List<ContributionSummaryRowDto>());
             _apiClient.GetRowsAsync(sellingPc).Returns(response);
 
             // Act
@@ -70,7 +70,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
             // Arrange
             var sellingPc   = "ASU";
             var errors      = new List<ApiErrorDto> { new() { Code = "API_ERROR", Message = "API error" } };
-            var failResponse = ApiResponseDto<List<TimeSellerPcRowDto>>.FailureResponse(errors, new ApiMetaDto());
+            var failResponse = ApiResponseDto<List<ContributionSummaryRowDto>>.FailureResponse(errors, new ApiMetaDto());
             _apiClient.GetRowsAsync(sellingPc).Returns(failResponse);
 
             // Act
@@ -91,7 +91,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
         {
             // Arrange
             var sellingPc = "ASU";
-            var response  = ApiResponseDto<List<TimeSellerPcRowDto>>.SuccessResponse(new List<TimeSellerPcRowDto>());
+            var response  = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(new List<ContributionSummaryRowDto>());
             _apiClient.GetRowsAsync(sellingPc).Returns(response);
 
             // Act
@@ -109,7 +109,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
         public async Task GetRowsAsync_PassesCorrectSellingPcToApiClient(string sellingPc)
         {
             // Arrange
-            var response = ApiResponseDto<List<TimeSellerPcRowDto>>.SuccessResponse(new List<TimeSellerPcRowDto>());
+            var response = ApiResponseDto<List<ContributionSummaryRowDto>>.SuccessResponse(new List<ContributionSummaryRowDto>());
             _apiClient.GetRowsAsync(sellingPc).Returns(response);
 
             // Act
@@ -130,7 +130,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
         {
             // Arrange
             var sellingPc = "ASU";
-            var totals = new TimeSellerPcTotalsDto
+            var totals = new ContributionSummaryTotalsDto
             {
                 SellingPc        = sellingPc,
                 ContTarget       = 50000m,
@@ -145,7 +145,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
                 IsAsuMode        = true
             };
             _apiClient.GetTotalsAsync(sellingPc)
-                .Returns(ApiResponseDto<TimeSellerPcTotalsDto>.SuccessResponse(totals));
+                .Returns(ApiResponseDto<ContributionSummaryTotalsDto>.SuccessResponse(totals));
 
             // Act
             var result = await _service.GetTotalsAsync(sellingPc);
@@ -167,9 +167,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
         {
             // Arrange
             var sellingPc = "ENV";
-            var totals    = new TimeSellerPcTotalsDto { SellingPc = sellingPc, IsAsuMode = false, AnimalCosts = 0m };
+            var totals    = new ContributionSummaryTotalsDto { SellingPc = sellingPc, IsAsuMode = false, AnimalCosts = 0m };
             _apiClient.GetTotalsAsync(sellingPc)
-                .Returns(ApiResponseDto<TimeSellerPcTotalsDto>.SuccessResponse(totals));
+                .Returns(ApiResponseDto<ContributionSummaryTotalsDto>.SuccessResponse(totals));
 
             // Act
             var result = await _service.GetTotalsAsync(sellingPc);
@@ -187,7 +187,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
             var sellingPc   = "ASU";
             var errors      = new List<ApiErrorDto> { new() { Code = "ERROR", Message = "API error" } };
             _apiClient.GetTotalsAsync(sellingPc)
-                .Returns(ApiResponseDto<TimeSellerPcTotalsDto>.FailureResponse(errors, new ApiMetaDto()));
+                .Returns(ApiResponseDto<ContributionSummaryTotalsDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
             var result = await _service.GetTotalsAsync(sellingPc);
@@ -208,7 +208,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
             // Arrange
             var sellingPc = "ASU";
             _apiClient.GetTotalsAsync(sellingPc)
-                .Returns(ApiResponseDto<TimeSellerPcTotalsDto>.SuccessResponse(new TimeSellerPcTotalsDto()));
+                .Returns(ApiResponseDto<ContributionSummaryTotalsDto>.SuccessResponse(new ContributionSummaryTotalsDto()));
 
             // Act
             await _service.GetTotalsAsync(sellingPc);
@@ -226,7 +226,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
         {
             // Arrange
             _apiClient.GetTotalsAsync(sellingPc)
-                .Returns(ApiResponseDto<TimeSellerPcTotalsDto>.SuccessResponse(new TimeSellerPcTotalsDto()));
+                .Returns(ApiResponseDto<ContributionSummaryTotalsDto>.SuccessResponse(new ContributionSummaryTotalsDto()));
 
             // Act
             await _service.GetTotalsAsync(sellingPc);

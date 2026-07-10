@@ -3,7 +3,7 @@ namespace Apha.FPS.Application.Dtos
     /// <summary>
     /// DTO for the footer totals section of the Income/Contribution from Time Sales form (frmTimeSellerPC).
     /// </summary>
-    public class TimeSellerPcTotalsDto
+    public class ContributionSummaryTotalsDto
     {
         /// <summary>Selling profit centre code.</summary>
         public string SellingPc { get; set; } = null!;

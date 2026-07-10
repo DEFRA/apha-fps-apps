@@ -12,20 +12,20 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
 {
     public class ContributionSummaryControllerTests
     {
-        private readonly ITimeSellerPcService _serviceMock;
+        private readonly IContributionSummaryService _serviceMock;
         private readonly IMapper _mapperMock;
         private readonly ContributionSummaryController _controller;
 
         public ContributionSummaryControllerTests()
         {
-            _serviceMock = Substitute.For<ITimeSellerPcService>();
+            _serviceMock = Substitute.For<IContributionSummaryService>();
             _mapperMock  = Substitute.For<IMapper>();
             _controller  = new ContributionSummaryController(_serviceMock, _mapperMock);
         }
 
-        private static List<TimeSellerPcRowDto> MakeRowDtos(int count = 2)
+        private static List<ContributionSummaryRowDto> MakeRowDtos(int count = 2)
             => Enumerable.Range(1, count)
-                .Select(i => new TimeSellerPcRowDto
+                .Select(i => new ContributionSummaryRowDto
                 {
                     WorkGroup    = $"WG{i}",
                     WgGrade      = $"G{i}",
@@ -34,7 +34,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
                 })
                 .ToList();
 
-        private static TimeSellerPcTotalsDto MakeTotalsDto(string sellingPc = "ENV")
+        private static ContributionSummaryTotalsDto MakeTotalsDto(string sellingPc = "ENV")
             => new()
             {
                 SellingPc         = sellingPc,
@@ -58,14 +58,14 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
             // Arrange
             var sellingPc    = "ENV";
             var dtos         = MakeRowDtos(2);
-            var mappedResult = new List<TimeSellerPcRowRes>
+            var mappedResult = new List<ContributionSummaryRowRes>
             {
                 new() { WorkGroup = "WG1", WgGrade = "G1" },
                 new() { WorkGroup = "WG2", WgGrade = "G2" }
             };
 
             _serviceMock.GetRowsAsync(sellingPc, Arg.Any<CancellationToken>()).Returns(dtos);
-            _mapperMock.Map<List<TimeSellerPcRowRes>>(dtos).Returns(mappedResult);
+            _mapperMock.Map<List<ContributionSummaryRowRes>>(dtos).Returns(mappedResult);
 
             // Act
             var result = await _controller.GetRowsAsync(sellingPc, CancellationToken.None);
@@ -74,7 +74,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mappedResult, okResult.Value);
             await _serviceMock.Received(1).GetRowsAsync(sellingPc, Arg.Any<CancellationToken>());
-            _mapperMock.Received(1).Map<List<TimeSellerPcRowRes>>(dtos);
+            _mapperMock.Received(1).Map<List<ContributionSummaryRowRes>>(dtos);
         }
 
         [Fact]
@@ -83,17 +83,17 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
             // Arrange
             var sellingPc    = "ENV";
             var dtos         = MakeRowDtos(0);
-            var mappedResult = new List<TimeSellerPcRowRes>();
+            var mappedResult = new List<ContributionSummaryRowRes>();
 
             _serviceMock.GetRowsAsync(sellingPc, Arg.Any<CancellationToken>()).Returns(dtos);
-            _mapperMock.Map<List<TimeSellerPcRowRes>>(dtos).Returns(mappedResult);
+            _mapperMock.Map<List<ContributionSummaryRowRes>>(dtos).Returns(mappedResult);
 
             // Act
             var result = await _controller.GetRowsAsync(sellingPc, CancellationToken.None);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var value    = Assert.IsType<List<TimeSellerPcRowRes>>(okResult.Value);
+            var value    = Assert.IsType<List<ContributionSummaryRowRes>>(okResult.Value);
             Assert.Empty(value);
         }
 
@@ -149,7 +149,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
             // Arrange
             var sellingPc    = "ENV";
             var dto          = MakeTotalsDto(sellingPc);
-            var mappedResult = new TimeSellerPcTotalsRes
+            var mappedResult = new ContributionSummaryTotalsRes
             {
                 SellingPc         = sellingPc,
                 TotalFec          = 500m,
@@ -157,7 +157,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
             };
 
             _serviceMock.GetTotalsAsync(sellingPc, Arg.Any<CancellationToken>()).Returns(dto);
-            _mapperMock.Map<TimeSellerPcTotalsRes>(dto).Returns(mappedResult);
+            _mapperMock.Map<ContributionSummaryTotalsRes>(dto).Returns(mappedResult);
 
             // Act
             var result = await _controller.GetTotalsAsync(sellingPc, CancellationToken.None);
@@ -166,7 +166,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(mappedResult, okResult.Value);
             await _serviceMock.Received(1).GetTotalsAsync(sellingPc, Arg.Any<CancellationToken>());
-            _mapperMock.Received(1).Map<TimeSellerPcTotalsRes>(dto);
+            _mapperMock.Received(1).Map<ContributionSummaryTotalsRes>(dto);
         }
 
         [Fact]
@@ -175,7 +175,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
             // Arrange
             var sellingPc    = "ASU";
             var dto          = MakeTotalsDto(sellingPc);
-            var mappedResult = new TimeSellerPcTotalsRes
+            var mappedResult = new ContributionSummaryTotalsRes
             {
                 SellingPc   = sellingPc,
                 AnimalCosts = 150m,
@@ -183,7 +183,7 @@ namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
             };
 
             _serviceMock.GetTotalsAsync(sellingPc, Arg.Any<CancellationToken>()).Returns(dto);
-            _mapperMock.Map<TimeSellerPcTotalsRes>(dto).Returns(mappedResult);
+            _mapperMock.Map<ContributionSummaryTotalsRes>(dto).Returns(mappedResult);
 
             // Act
             var result = await _controller.GetTotalsAsync(sellingPc, CancellationToken.None);

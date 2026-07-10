@@ -8,19 +8,19 @@ namespace Apha.FPS.DataAccess.Repositories
     /// <summary>
     /// Repository for the Income/Contribution from Time Sales summary view (frmTimeSellerPC).
     /// </summary>
-    public class TimeSellerPcRepository : ITimeSellerPcRepository
+    public class ContributionSummaryRepository : IContributionSummaryRepository
     {
         private readonly FpsDbContext _dbContext;
         private readonly IFpsRequestContext _requestContext;
 
-        public TimeSellerPcRepository(FpsDbContext dbContext, IFpsRequestContext requestContext)
+        public ContributionSummaryRepository(FpsDbContext dbContext, IFpsRequestContext requestContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
         /// <inheritdoc/>
-        public async Task<List<TimeSellerPcView>> GetBySellingPcAsync(string sellingPc)
+        public async Task<List<ContributionSummaryView>> GetBySellingPcAsync(string sellingPc)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(sellingPc);
 

@@ -1,9 +1,6 @@
-namespace Apha.FPS.Application.Dtos
+namespace Apha.Common.Contracts.FPS
 {
-    /// <summary>
-    /// DTO for a single row in the Income/Contribution from Time Sales grid (frmTimeSellerPC).
-    /// </summary>
-    public class TimeSellerPcRowDto
+    public class ContributionSummaryRowRes
     {
         public string? WgGrade { get; set; }
 
@@ -27,14 +24,10 @@ namespace Apha.FPS.Application.Dtos
 
         public decimal? AppFec { get; set; }
 
-        /// <summary>
-        /// % Planned = Hrs / AvHrs. Null when AvHrs is zero (form showed "!" in that case).
-        /// </summary>
+        /// <summary>Hrs / AvHrs. Null when AvHrs is zero (rendered as "!" in the original form).</summary>
         public double? PctPlanned { get; set; }
 
-        /// <summary>
-        /// % Assured Planned = AppHours / AvHrs. Null when AvHrs is zero.
-        /// </summary>
+        /// <summary>AppHours / AvHrs. Null when AvHrs is zero.</summary>
         public double? PctAssuredPlanned { get; set; }
     }
 }

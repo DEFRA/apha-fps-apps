@@ -10,18 +10,18 @@ namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
 {
     public class ContributionSummaryServiceTests
     {
-        private readonly ITimeSellerPcRepository _mockRepository;
+        private readonly IContributionSummaryRepository _mockRepository;
         private readonly IAnimalRepository       _mockAnimalRepository;
         private readonly ContributionSummaryService     _sut;
 
         public ContributionSummaryServiceTests()
         {
-            _mockRepository       = Substitute.For<ITimeSellerPcRepository>();
+            _mockRepository       = Substitute.For<IContributionSummaryRepository>();
             _mockAnimalRepository = Substitute.For<IAnimalRepository>();
             _sut                  = new ContributionSummaryService(_mockRepository, _mockAnimalRepository);
         }
 
-        private static TimeSellerPcView MakeView(
+        private static ContributionSummaryView MakeView(
             string   sellingPc     = "ENV",
             string   workGroup     = "WG1",
             string   wgGrade       = "G1",
@@ -58,7 +58,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
         {
             // Arrange
             var sellingPc = "ENV";
-            var views     = new List<TimeSellerPcView> { MakeView(), MakeView(workGroup: "WG2", wgGrade: "G2") };
+            var views     = new List<ContributionSummaryView> { MakeView(), MakeView(workGroup: "WG2", wgGrade: "G2") };
             _mockRepository.GetBySellingPcAsync(sellingPc).Returns(views);
 
             // Act
@@ -186,7 +186,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
         {
             // Arrange
             var sellingPc = "ENV";
-            var views = new List<TimeSellerPcView>
+            var views = new List<ContributionSummaryView>
             {
                 MakeView(fec: 200m, contribution: 100m, appFec: 180m, contTarget: 1000m, sumOfGenBid: 200m),
                 MakeView(fec: 300m, contribution: 150m, appFec: 270m, contTarget: 1000m, sumOfGenBid: 200m)
@@ -216,7 +216,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
         {
             // Arrange
             var sellingPc = "ASU";
-            var views = new List<TimeSellerPcView>
+            var views = new List<ContributionSummaryView>
             {
                 MakeView(sellingPc: sellingPc, fec: 400m, appFec: 360m, contTarget: 1000m, sumOfGenBid: 200m)
             };
@@ -238,7 +238,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
         public async Task GetTotalsAsync_AsuIsCaseInsensitive()
         {
             // Arrange
-            var views = new List<TimeSellerPcView> { MakeView(sellingPc: "asu") };
+            var views = new List<ContributionSummaryView> { MakeView(sellingPc: "asu") };
             _mockRepository.GetBySellingPcAsync("asu").Returns(views);
             _mockAnimalRepository.GetGlobalAnimalCostAsync().Returns(100m);
 

@@ -2,14 +2,14 @@ using Apha.FPSApps.Application.Dtos.FPS;
 
 namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
 {
-    public class TimeSellerPcTotalsDtoTests
+    public class ContributionSummaryTotalsDtoTests
     {
         #region Property Tests
 
         [Fact]
         public void Properties_SetAndGet_AllValues_ReturnsCorrectValues()
         {
-            var dto = new TimeSellerPcTotalsDto
+            var dto = new ContributionSummaryTotalsDto
             {
                 SellingPc         = "ASU",
                 ContTarget        = 50000m,
@@ -40,7 +40,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void NullableProperties_SetToNull_ReturnNull()
         {
-            var dto = new TimeSellerPcTotalsDto
+            var dto = new ContributionSummaryTotalsDto
             {
                 SellingPc   = "ENV",
                 ContTarget  = null,
@@ -55,7 +55,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void Properties_CanBeUpdatedAfterInitialisation()
         {
-            var dto = new TimeSellerPcTotalsDto { SellingPc = "ENV" };
+            var dto = new ContributionSummaryTotalsDto { SellingPc = "ENV" };
 
             dto.SellingPc         = "ASU";
             dto.ContTarget        = 60000m;
@@ -89,7 +89,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void DefaultValues_WhenConstructedWithNoArguments_AreExpected()
         {
-            var dto = new TimeSellerPcTotalsDto();
+            var dto = new ContributionSummaryTotalsDto();
 
             Assert.Null(dto.ContTarget);
             Assert.Null(dto.SumOfGenBid);
@@ -106,7 +106,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void IsAsuMode_DefaultsToFalse()
         {
-            var dto = new TimeSellerPcTotalsDto();
+            var dto = new ContributionSummaryTotalsDto();
 
             Assert.False(dto.IsAsuMode);
         }
@@ -114,7 +114,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void IsAsuMode_SetToTrue_ReturnsTrue()
         {
-            var dto = new TimeSellerPcTotalsDto { IsAsuMode = true };
+            var dto = new ContributionSummaryTotalsDto { IsAsuMode = true };
 
             Assert.True(dto.IsAsuMode);
         }
@@ -122,7 +122,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void AnimalCosts_DefaultsToZero()
         {
-            var dto = new TimeSellerPcTotalsDto();
+            var dto = new ContributionSummaryTotalsDto();
 
             Assert.Equal(0m, dto.AnimalCosts);
         }
@@ -134,7 +134,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         public void Surplus_SetToBoundaryValues_ReturnsCorrectValue(double raw)
         {
             var value = (decimal)raw;
-            var dto   = new TimeSellerPcTotalsDto { Surplus = value };
+            var dto   = new ContributionSummaryTotalsDto { Surplus = value };
 
             Assert.Equal(value, dto.Surplus);
         }
@@ -146,7 +146,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         public void AssuredSurplus_SetToBoundaryValues_ReturnsCorrectValue(double raw)
         {
             var value = (decimal)raw;
-            var dto   = new TimeSellerPcTotalsDto { AssuredSurplus = value };
+            var dto   = new ContributionSummaryTotalsDto { AssuredSurplus = value };
 
             Assert.Equal(value, dto.AssuredSurplus);
         }
@@ -158,7 +158,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         public void AnimalCosts_SetToBoundaryValues_ReturnsCorrectValue(double raw)
         {
             var value = (decimal)raw;
-            var dto   = new TimeSellerPcTotalsDto { AnimalCosts = value };
+            var dto   = new ContributionSummaryTotalsDto { AnimalCosts = value };
 
             Assert.Equal(value, dto.AnimalCosts);
         }
@@ -170,7 +170,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         public void TotalFec_SetToBoundaryValues_ReturnsCorrectValue(double raw)
         {
             var value = (decimal)raw;
-            var dto   = new TimeSellerPcTotalsDto { TotalFec = value };
+            var dto   = new ContributionSummaryTotalsDto { TotalFec = value };
 
             Assert.Equal(value, dto.TotalFec);
         }
@@ -182,7 +182,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void NonAsuMode_AnimalCostsZeroAndIsAsuModeFalse()
         {
-            var dto = new TimeSellerPcTotalsDto
+            var dto = new ContributionSummaryTotalsDto
             {
                 SellingPc         = "ENV",
                 ContTarget        = 30000m,
@@ -205,7 +205,7 @@ namespace Apha.FPSApps.Application.UnitTests.Dtos.FPS
         [Fact]
         public void AsuMode_WithAnimalCostsAndIsAsuModeTrue()
         {
-            var dto = new TimeSellerPcTotalsDto
+            var dto = new ContributionSummaryTotalsDto
             {
                 SellingPc         = "ASU",
                 ContTarget        = 80000m,

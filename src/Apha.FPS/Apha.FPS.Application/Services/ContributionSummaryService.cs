@@ -7,15 +7,15 @@ namespace Apha.FPS.Application.Services
     /// <summary>
     /// Service for the Income/Contribution from Time Sales summary (frmTimeSellerPC).
     /// </summary>
-    public class ContributionSummaryService : ITimeSellerPcService
+    public class ContributionSummaryService : IContributionSummaryService
     {
         private const string AsuSellingPc = "ASU";
 
-        private readonly ITimeSellerPcRepository _repository;
+        private readonly IContributionSummaryRepository _repository;
         private readonly IAnimalRepository _animalRepository;
 
         public ContributionSummaryService(
-            ITimeSellerPcRepository repository,
+            IContributionSummaryRepository repository,
             IAnimalRepository animalRepository)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -23,7 +23,7 @@ namespace Apha.FPS.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<TimeSellerPcRowDto>> GetRowsAsync(
+        public async Task<List<ContributionSummaryRowDto>> GetRowsAsync(
             string sellingPc,
             CancellationToken cancellationToken = default)
         {
@@ -31,7 +31,7 @@ namespace Apha.FPS.Application.Services
 
             var rows = await _repository.GetBySellingPcAsync(sellingPc);
 
-            return rows.Select(r => new TimeSellerPcRowDto
+            return rows.Select(r => new ContributionSummaryRowDto
             {
                 WgGrade = r.WgGrade,
                 WorkGroup = r.WorkGroup,
@@ -56,7 +56,7 @@ namespace Apha.FPS.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task<TimeSellerPcTotalsDto> GetTotalsAsync(
+        public async Task<ContributionSummaryTotalsDto> GetTotalsAsync(
             string sellingPc,
             CancellationToken cancellationToken = default)
         {
@@ -89,7 +89,7 @@ namespace Apha.FPS.Application.Services
             // Surplus/Shortfall (Assured Time panel) = TotalAppFec - TotalToRecover
             var assuredSurplus = totalAppFec - totalToRecover;
 
-            return new TimeSellerPcTotalsDto
+            return new ContributionSummaryTotalsDto
             {
                 SellingPc = sellingPc,
                 ContTarget = contTarget,
