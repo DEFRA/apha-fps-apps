@@ -2950,5 +2950,346 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
         }
 
         #endregion
+
+        #region GetPlannedTestsByWorkgroupAsync
+
+        private static TestRequirementRepository CreateRepositoryWithBreakdownMocks(
+            IEnumerable<TestReqBreakdownView>? views = null,
+            int fpsYear = DefaultFpsYear)
+        {
+            var fpsRequestContext = Substitute.For<IFpsRequestContext>();
+            fpsRequestContext.FpsYear.Returns(fpsYear);
+
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(fpsRequestContext);
+
+            var breakdownMockSet = RepositoryTestHelper.CreateMockDbSet(views ?? []);
+            RepositoryTestHelper.SetupDbSetOperations(breakdownMockSet);
+
+            var testReqmtsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<TestRequirement>());
+            var monthlyOutputsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<MonthlyOutput>());
+            var testReqLogsMockSet = RepositoryTestHelper.CreateMockDbSet(new List<TestRequirementLog>());
+
+            RepositoryTestHelper.SetupSaveChanges(mockContext);
+
+            mockContext.Setup(x => x.TestReqBreakdownViews).Returns(breakdownMockSet.Object);
+            mockContext.Setup(x => x.TestRequirements).Returns(testReqmtsMockSet.Object);
+            mockContext.Setup(x => x.MonthlyOutputs).Returns(monthlyOutputsMockSet.Object);
+            mockContext.Setup(x => x.TestRequirementLogs).Returns(testReqLogsMockSet.Object);
+
+            return new TestRequirementRepository(mockContext.Object, fpsRequestContext);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_ReturnsAllRows_WhenNoFilter()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", WgPrice = 10m, TotalCost = 50m, FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", WgPrice = 5m,  TotalCost = 25m, FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_EmptyData_ReturnsEmptyResult()
+        {
+            var repo = CreateRepositoryWithBreakdownMocks();
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_NullFilter_ReturnsAll()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_WhitespaceFilter_ReturnsAll()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "   " };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Single(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_FilterByTestCode_ReturnsMatchingRows()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"TestCode\":\"BLO\"}"
+            };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("BLOOD", result.Data.First().TestCode);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_FilterByTestCode_EmptyValue_ReturnsAll()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"TestCode\":\"\"}"
+            };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_FilterByProject_ReturnsMatchingRows()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"Project\":\"PRJ001\"}"
+            };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("PRJ001", result.Data.First().Project);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_FilterByShortDescription_NullExcluded()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", ShortDescription = "Blood Sample", WorkG = "WG01", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ002", ShortDescription = null,           WorkG = "WG02", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ShortDescription\":\"Blood\"}"
+            };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("BLOOD", result.Data.First().TestCode);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_FilterByPc_NullExcluded()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", Pc = "PC01", WorkG = "WG01", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ002", Pc = null,   WorkG = "WG02", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"Pc\":\"PC01\"}"
+            };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("PC01", result.Data.First().Pc);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_FilterByWorkG_NullExcluded()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = null,   FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"WorkG\":\"WG01\"}"
+            };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("WG01", result.Data.First().WorkG);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_FilterByProgram_NullExcluded()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", Program = "PROG01", WorkG = "WG01", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ002", Program = null,     WorkG = "WG02", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"Program\":\"PROG01\"}"
+            };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("PROG01", result.Data.First().Program);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_CombinedFilters_AppliedCorrectly()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", Pc = "PC01", Program = "PROG01", FpsYear = DefaultFpsYear },
+                new() { TestCode = "BLOOD", Project = "PRJ002", WorkG = "WG01", Pc = "PC01", Program = "PROG01", FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ001", WorkG = "WG02", Pc = "PC02", Program = "PROG02", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"TestCode\":\"BLOOD\",\"Project\":\"PRJ001\",\"WorkG\":\"WG01\"}"
+            };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Single(result.Data);
+            Assert.Equal("BLOOD", result.Data.First().TestCode);
+            Assert.Equal("PRJ001", result.Data.First().Project);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_Paging_ReturnsCorrectPage()
+        {
+            var views = Enumerable.Range(1, 5).Select(i =>
+                new TestReqBreakdownView { TestCode = $"TEST{i:D3}", Project = $"PRJ{i:D3}", WorkG = "WG01", FpsYear = DefaultFpsYear }).ToList();
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string> { Page = 2, PageSize = 2 };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal(5, result.PaginationData.TotalRecords);
+            Assert.Equal(2, result.PaginationData.PageNumber);
+            Assert.Equal(3, result.PaginationData.TotalPages);
+        }
+
+        [Theory]
+        [InlineData("testcode",         false)]
+        [InlineData("testcode",         true)]
+        [InlineData("shortdescription", false)]
+        [InlineData("shortdescription", true)]
+        [InlineData("program",          false)]
+        [InlineData("program",          true)]
+        [InlineData("project",          false)]
+        [InlineData("project",          true)]
+        [InlineData("pc",               false)]
+        [InlineData("pc",               true)]
+        [InlineData("workg",            false)]
+        [InlineData("workg",            true)]
+        [InlineData("wgprice",          false)]
+        [InlineData("wgprice",          true)]
+        [InlineData("totalcost",        false)]
+        [InlineData("totalcost",        true)]
+        public async Task GetPlannedTestsByWorkgroupAsync_SortByKnownColumn_DoesNotThrow(string sortBy, bool descending)
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", WgPrice = 10m, TotalCost = 50m, FpsYear = DefaultFpsYear },
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", WgPrice = 5m,  TotalCost = 25m, FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = sortBy, Descending = descending };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task GetPlannedTestsByWorkgroupAsync_UnknownSortColumn_DefaultsToTestCodeSort(bool descending)
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", FpsYear = DefaultFpsYear },
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "UnknownColumn", Descending = descending };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetPlannedTestsByWorkgroupAsync_NoSortBy_DefaultsToOrderByTestCode()
+        {
+            var views = new List<TestReqBreakdownView>
+            {
+                new() { TestCode = "URINE", Project = "PRJ002", WorkG = "WG02", FpsYear = DefaultFpsYear },
+                new() { TestCode = "BLOOD", Project = "PRJ001", WorkG = "WG01", FpsYear = DefaultFpsYear }
+            };
+            var repo = CreateRepositoryWithBreakdownMocks(views);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
+
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal("BLOOD", result.Data.First().TestCode);
+            Assert.Equal("URINE", result.Data.ElementAt(1).TestCode);
+        }
+
+        #endregion
     }
 }
