@@ -23,7 +23,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<List<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
         {
-            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetBatchJobHistory, query);
+            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetRecreateSummaryBatchJobHistory, query);
             url += $"&jobName={Uri.EscapeDataString(jobName)}";
             var response = await _http.GetAsync<List<BatchJobHistoryRes>>(url);
 
@@ -40,7 +40,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<bool>> CanRunBatchJobAsync(string jobName)
         {
-            var url = $"{PactApiEndpoints.CanRunBatchJob}?jobName={Uri.EscapeDataString(jobName)}";
+            var url = $"{PactApiEndpoints.CanRunRecreateSummaryBatchJob}?jobName={Uri.EscapeDataString(jobName)}";
             var response = await _http.GetAsync<bool>(url);
 
             if (response.Success)
@@ -52,9 +52,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 
         public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerRecreateSummariesJobAsync(int month)
         {
-            var request = new TriggerRecreateSummariesReq { Month = month };
-            var response = await _http.PostAsync<TriggerRecreateSummariesReq, BatchJobEventTriggerRes>(
-                PactApiEndpoints.TriggerRecreateSummariesJob, request);
+            var request = new RecreateSummariesReq { Month = month };
+            var response = await _http.PostAsync<RecreateSummariesReq, BatchJobEventTriggerRes>(
+                PactApiEndpoints.TriggerRecreateSummariesBatchJob, request);
 
             if (response.Success && response.Data is not null)
                 return _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);
