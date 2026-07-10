@@ -61,31 +61,31 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
                 // Empty grids — data loaded via AJAX when the respective tab is clicked
                 DataGridConfig<AdditionalCostPlanItem> plansGrid =
-                    BuildEmptyGrid<AdditionalCostPlanItem>("additionalPlansGrid", "Additional Cost", "AcctCode", "/PIMS/ProjectYearCosts/LoadAdditionalPlansGrid");
+                    BuildEmptyGrid<AdditionalCostPlanItem>("additionalPlansGrid", "Additional Cost Plans", "AcctCode", "/PIMS/ProjectYearCosts/LoadAdditionalPlansGrid");
                 DataGridConfig<AdditionalCostActualItem> actualsGrid =
-                    BuildEmptyGrid<AdditionalCostActualItem>("additionalActualsGrid", "Additional Actuals", "AcctCode", "/PIMS/ProjectYearCosts/LoadAdditionalActualsGrid");
+                    BuildEmptyGrid<AdditionalCostActualItem>("additionalActualsGrid", "Additional Cost Actuals", "AcctCode", "/PIMS/ProjectYearCosts/LoadAdditionalActualsGrid");
                 DataGridConfig<AnimalCostPlanItem> animalPlansGrid =
-                    BuildEmptyGrid<AnimalCostPlanItem>("animalPlansGrid", "Animal Plan", "AnimalType", "/PIMS/ProjectYearCosts/LoadAnimalPlansGrid");
+                    BuildEmptyGrid<AnimalCostPlanItem>("animalPlansGrid", "Animal Plans", "AnimalType", "/PIMS/ProjectYearCosts/LoadAnimalPlansGrid");
                 DataGridConfig<AnimalCostActualItem> animalActualsGrid =
                     BuildEmptyGrid<AnimalCostActualItem>("animalActualsGrid", "Animal Actuals", "AcctCode", "/PIMS/ProjectYearCosts/LoadAnimalActualsGrid");
                 DataGridConfig<TestCostPlanItem> testPlansGrid =
-                    BuildEmptyGrid<TestCostPlanItem>("testPlansGrid", "Test Plan", "TestCode", "/PIMS/ProjectYearCosts/LoadTestPlansGrid");
+                    BuildEmptyGrid<TestCostPlanItem>("testPlansGrid", "Test Plans", "TestCode", "/PIMS/ProjectYearCosts/LoadTestPlansGrid");
                 DataGridConfig<TestCostActualItem> testActualsGrid =
                     BuildEmptyGrid<TestCostActualItem>("testActualsGrid", "Test Actuals", "TestCode", "/PIMS/ProjectYearCosts/LoadTestActualsGrid");
                 DataGridConfig<StaffCostPlanItem> staffPlansGrid =
-                    BuildEmptyGrid<StaffCostPlanItem>("staffPlansGrid", "Staff Plan", "WgGrade", "/PIMS/ProjectYearCosts/LoadStaffPlansGrid");
+                    BuildEmptyGrid<StaffCostPlanItem>("staffPlansGrid", "Staff Plans", "WgGrade", "/PIMS/ProjectYearCosts/LoadStaffPlansGrid");
                 DataGridConfig<StaffCostActualItem> staffActualsGrid =
                     BuildEmptyGrid<StaffCostActualItem>("staffActualsGrid", "Staff Actuals", "JobCode", "/PIMS/ProjectYearCosts/LoadStaffActualsGrid");
 
                 // Plan tab grids — lazy-loaded on first tab click
                 DataGridConfig<StaffCostPlanItem> planStaffGrid =
-                    BuildEmptyGrid<StaffCostPlanItem>("planStaffGrid", "Staff Plan", "WgGrade", "/PIMS/ProjectYearCosts/LoadPlanStaffGrid");
+                    BuildEmptyGrid<StaffCostPlanItem>("planStaffGrid", "Staff Plans", "WgGrade", "/PIMS/ProjectYearCosts/LoadPlanStaffGrid");
                 DataGridConfig<TestCostPlanItem> planTestGrid =
-                    BuildEmptyGrid<TestCostPlanItem>("planTestGrid", "Test Plan", "TestCode", "/PIMS/ProjectYearCosts/LoadPlanTestGrid");
+                    BuildEmptyGrid<TestCostPlanItem>("planTestGrid", "Test Plans", "TestCode", "/PIMS/ProjectYearCosts/LoadPlanTestGrid");
                 DataGridConfig<AnimalCostPlanItem> planAnimalGrid =
-                    BuildEmptyGrid<AnimalCostPlanItem>("planAnimalGrid", "Animal Plan", "AnimalType", "/PIMS/ProjectYearCosts/LoadPlanAnimalGrid");
+                    BuildEmptyGrid<AnimalCostPlanItem>("planAnimalGrid", "Animal Plans", "AnimalType", "/PIMS/ProjectYearCosts/LoadPlanAnimalGrid");
                 DataGridConfig<AdditionalCostPlanItem> planAdditionalGrid =
-                    BuildEmptyGrid<AdditionalCostPlanItem>("planAdditionalGrid", "Additional Cost Plan", "Account", "/PIMS/ProjectYearCosts/LoadPlanAdditionalGrid");
+                    BuildEmptyGrid<AdditionalCostPlanItem>("planAdditionalGrid", "Additional Cost Plans", "Account", "/PIMS/ProjectYearCosts/LoadPlanAdditionalGrid");
 
                 // Pact Pay tab grid — lazy-loaded on first tab click
                 DataGridConfig<PactPayItem> pactPayGrid =
@@ -182,7 +182,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<AdditionalCostPlanItem>
             {
                 GridId = "additionalPlansGrid",
-                Title = "Additional Cost",
+                Title = "Additional Cost Plans",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "AcctCode",
@@ -218,7 +218,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<AdditionalCostActualItem>
             {
                 GridId = "additionalActualsGrid",
-                Title = "Additional Actuals",
+                Title = "Additional Cost Actuals",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "AcctCode",
@@ -278,7 +278,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<AnimalCostPlanItem>
             {
                 GridId = "animalPlansGrid",
-                Title = "Animal Plan",
+                Title = "Animal Plans",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "AnimalType",
@@ -374,7 +374,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<TestCostPlanItem>
             {
                 GridId = "testPlansGrid",
-                Title = "Test Plan",
+                Title = "Test Plans",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "TestCode",
@@ -470,7 +470,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<StaffCostPlanItem>
             {
                 GridId = "staffPlansGrid",
-                Title = "Staff Plan",
+                Title = "Staff Plans",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "WgGrade",
@@ -622,7 +622,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<StaffCostPlanItem>
             {
                 GridId = "planStaffGrid",
-                Title = "Staff Plan",
+                Title = "Staff Plans",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "WgGrade",
@@ -658,7 +658,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<TestCostPlanItem>
             {
                 GridId = "planTestGrid",
-                Title = "Test Plan",
+                Title = "Test Plans",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "TestCode",
@@ -694,7 +694,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<AnimalCostPlanItem>
             {
                 GridId = "planAnimalGrid",
-                Title = "Animal Plan",
+                Title = "Animal Plans",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "AnimalType",
@@ -730,7 +730,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return new DataGridConfig<AdditionalCostPlanItem>
             {
                 GridId = "planAdditionalGrid",
-                Title = "Additional Cost Plan",
+                Title = "Additional Cost Plans",
                 ShowCheckboxColumn = false,
                 ShowPagination = true,
                 KeyProperty = "Account",

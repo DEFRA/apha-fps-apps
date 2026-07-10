@@ -9,5 +9,6 @@ namespace Apha.PIMS.Application.Interfaces
         Task<List<ProjectListViewDto>> GetAllProjectsForDropDownAsync();
         Task<List<ProjectsDto>> GetYearlyDetailsByProjectAsync(string parentproject);
         Task<List<ProjectListMilestoneDto>> GetAllProjectsForMilestoneAsync();
+        Task<ProjectDetailsMilestoneDto?> GetProjectsDetailsForMilestoneAsync(string parentproject);
     }
 }

@@ -180,13 +180,11 @@
         }
 
         function onInvContractChange() {
-            document.getElementById('invFilterProject').value = '';
-            document.getElementById('invFilterProgram').value = '';
-            applyInvoiceFilters();
+               document.getElementById('invFilterProgram').value = '';
+               applyInvoiceFilters();
         }
 
-        function onInvProgramChange() {
-            document.getElementById('invFilterProject').value = '';
+        function onInvProgramChange() {            
             document.getElementById('invFilterSurvContract').value = '';
             applyInvoiceFilters();
         }

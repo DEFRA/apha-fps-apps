@@ -32,8 +32,8 @@
             </select>
         </div>
         <div class="govuk-grid-column-one-half sup_text_align_right">
-            <a asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index"
-               class="govuk-back-link">Back</a>
+            <a asp-area="PACT" asp-controller="PortfolioMaintenance" asp-action="Index" asp-route-portfolio="@Model.SelectedPortfolio"
+               class="govuk-back-link sup_font_weight_700">Back</a>
         </div>
     </div>
 </div>
@@ -47,8 +47,7 @@
                asp-controller="PortfolioTimeCodes" 
                asp-action="NavigateToTestPurchaseRequirements" 
                asp-route-parentProject="@selectedPortfolio"
-               class="govuk-button sup_margin_0"
-               role="button">
+               class="govuk-button sup_margin_0">
                 <img src="~/images/list-solid-full_white.svg" alt="" aria-hidden="true" style="width: 16px; vertical-align: middle;" />
                 Test Purchase Requirements
             </a>
