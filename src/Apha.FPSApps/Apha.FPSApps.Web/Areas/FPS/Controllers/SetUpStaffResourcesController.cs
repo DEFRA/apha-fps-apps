@@ -56,7 +56,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 var gradesResponse = await _workGroupGradeService.GetWorkGroupGradeAsync(selectedRc);
                 if (gradesResponse.Success && gradesResponse.Data != null)
                 {
-                    viewModel.GradeList    = gradesResponse.Data.Select(g => g.WgGrade).ToList();
+                    viewModel.GradeList = gradesResponse.Data.Select(g => g.WgGrade).ToList();
                     viewModel.GradeCodeMap = gradesResponse.Data
                         .ToDictionary(g => g.WgGrade, g => g.GradeCode ?? string.Empty);
                 }
@@ -186,7 +186,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             return PartialView("_EditStaffModal", item);
         }
 
-       
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit([FromBody] WorkGroupEmployeeStaffDto model)
@@ -229,23 +229,23 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             Dictionary<string, string>? currentFilters = null) =>
             new()
             {
-                GridId             = "ssrStaffGrid",
-                Title              = "Staff",
+                GridId = "ssrStaffGrid",
+                Title = "Staff",
                 ShowCheckboxColumn = false,
-                ShowPagination     = true,
-                KeyProperty        = "PactId",
-                AllowAdd           = false,
-                AllowEdit          = true,
-                EditFunction       = "editSsrStaff",
-                AllowDelete        = false,
-                AllowRowSelection  = true,
-                RowSelectFunction  = "ssrOnStaffRowSelect",
-                BindGridUrl        = "/FPS/SetUpStaffResources/LoadStaffGrid",
-                ExtraFilterMethod  = "ssrGetStaffExtraFilters",
-                Data               = data,
-                Columns            = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
-                Pagination         = pagination,
-                CurrentFilters     = currentFilters ?? new Dictionary<string, string>()
+                ShowPagination = true,
+                KeyProperty = "PactId",
+                AllowAdd = false,
+                AllowEdit = true,
+                EditFunction = "editSsrStaff",
+                AllowDelete = false,
+                AllowRowSelection = true,
+                RowSelectFunction = "ssrOnStaffRowSelect",
+                BindGridUrl = "/FPS/SetUpStaffResources/LoadStaffGrid",
+                ExtraFilterMethod = "ssrGetStaffExtraFilters",
+                Data = data,
+                Columns = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
+                Pagination = pagination,
+                CurrentFilters = currentFilters ?? new Dictionary<string, string>()
             };
 
         private async Task<List<SelectListItem>> PopulateResourceCentresAsync()
