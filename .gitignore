@@ -17,6 +17,10 @@ appsettings.local.json
 # Local scratch/diagnostic tools - never checked in
 /temp/
 
+# BatchJobs local docs and nested gitignore - not for source control
+src/Apha.BatchJobs/docs/
+src/Apha.BatchJobs/.gitignore
+
 # Visual Studio cache
 .vs/
 .vscode/
