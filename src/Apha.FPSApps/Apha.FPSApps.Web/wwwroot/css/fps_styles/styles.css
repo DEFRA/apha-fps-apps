@@ -3892,6 +3892,9 @@ body,
 @media (max-width: 1200px) {
     .fps-cs-summary-grid {
         grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
+}
+
 /* ===== Maintain User Permissions ===== */
 .fps-mup-page {
     padding: 0 8px 8px 8px;
@@ -4121,6 +4124,8 @@ body,
 
 @media (max-width: 768px) {
     .fps-cs-summary-grid {
+        grid-template-columns: 1fr;
+    }
     .fps-mup-page {
         min-height: auto;
     }
