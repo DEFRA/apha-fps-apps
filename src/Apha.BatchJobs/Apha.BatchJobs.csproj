@@ -20,38 +20,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Archive\**\*.cs" />
-    <Compile Remove="AppMod-Wave1-Analysis\**\*.cs" />
-    <Compile Remove="ReImagineAnalysis_v4\**\*.cs" />
     <Compile Remove="docs\**\*.cs" />
     <Compile Remove="docs\legacy\**\*.cs" />
     <Compile Remove="Apha.BatchJobs.UnitTests\**\*.cs" />
-    <Compile Remove="Apha.BatchJobs.Api\**\*.cs" />
     <Compile Remove="Apha.BatchJobs.Worker\**\*.cs" />
-    <Compile Remove="Apha.BatchJobs.Triggering\**\*.cs" />
-    <Compile Remove="Apha.BatchJobs.Fps.Api\**\*.cs" />
-    <Compile Remove="Apha.BatchJobs.Pact.Api\**\*.cs" />
-    <Compile Remove="Apha.BatchJobs.SampleUi\**\*.cs" />
-    <EmbeddedResource Remove="Archive\**\*" />
-    <EmbeddedResource Remove="ReImagineAnalysis_v4\**\*" />
     <EmbeddedResource Remove="docs\**\*" />
     <EmbeddedResource Remove="docs\legacy\**\*" />
     <EmbeddedResource Remove="Apha.BatchJobs.UnitTests\**\*" />
-    <EmbeddedResource Remove="Apha.BatchJobs.Api\**\*" />
     <EmbeddedResource Remove="Apha.BatchJobs.Worker\**\*" />
-    <EmbeddedResource Remove="Apha.BatchJobs.Triggering\**\*" />
-    <EmbeddedResource Remove="Apha.BatchJobs.Fps.Api\**\*" />
-    <EmbeddedResource Remove="Apha.BatchJobs.Pact.Api\**\*" />
-    <EmbeddedResource Remove="Apha.BatchJobs.SampleUi\**\*" />
     <None Remove="Apha.BatchJobs.UnitTests\**\*" />
-    <None Remove="Apha.BatchJobs.Api\**\*" />
     <None Remove="Apha.BatchJobs.Worker\**\*" />
-    <None Remove="Apha.BatchJobs.Triggering\**\*" />
-    <None Remove="Apha.BatchJobs.Fps.Api\**\*" />
-    <None Remove="Apha.BatchJobs.Pact.Api\**\*" />
-    <None Remove="Apha.BatchJobs.SampleUi\**\*" />
-    <None Include="Archive\**\*" />
-    <None Include="ReImagineAnalysis_v4\**\*" />
     <None Include="docs\**\*" />
   </ItemGroup>
 
@@ -59,12 +37,10 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="appsettings.Development.json">
+    <None Update="appsettings.Local.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Apha.BatchJobs.Infrastructure\Sql\RecreateSummaries\**\*.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+
   </ItemGroup>
 
   <ItemGroup>
@@ -75,7 +51,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />

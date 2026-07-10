@@ -6,13 +6,6 @@ namespace Apha.BatchJobs.Domain.Configuration;
 public sealed class BatchJobSettings
 {
     /// <summary>
-    /// Maximum number of concurrent jobs that can run simultaneously.
-    /// Current runtime model is one ECS task per job execution, so this
-    /// setting is intentionally out-of-scope for now.
-    /// </summary>
-    public int MaxConcurrentJobs { get; set; } = 5;
-
-    /// <summary>
     /// Job execution timeout in seconds.
     /// </summary>
     public int JobTimeout { get; set; } = 0;

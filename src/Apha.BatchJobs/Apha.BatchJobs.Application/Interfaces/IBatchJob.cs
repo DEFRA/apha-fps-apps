@@ -15,7 +15,7 @@ public interface IBatchJob
     /// <summary>
     /// Gets the optional schedule expression for EventBridge Scheduler.
     /// Format: cron expression (e.g., "0 20 ? * MON-SAT" for Mon-Sat 8pm).
-    /// Set to null for auto/user-triggered jobs (RecreateSummaries, FECProcess).
+    /// Set to null for auto/user-triggered jobs (RecreateSummaries, BulkRates, YearEnd).
     /// </summary>
     string? ScheduleExpression => null;
 

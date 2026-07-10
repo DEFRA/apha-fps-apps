@@ -1,5 +1,6 @@
 using Apha.BatchJobs.Application.Factory;
 using Apha.BatchJobs.Application.Interfaces;
+using Apha.BatchJobs.Application.Jobs.ManualJobs.BulkRates.Services;
 using Apha.BatchJobs.Application.Jobs.ManualJobs.YearEnd.Services;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive;
 using Apha.BatchJobs.Application.Jobs.ScheduledJobs.MABArchive.Services;
@@ -10,10 +11,12 @@ using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Infrastructure.Data;
 using Apha.BatchJobs.Infrastructure.Context;
 using Apha.BatchJobs.Infrastructure.Repositories;
+using Apha.BatchJobs.Infrastructure.Repositories.BulkRates;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive;
 using Apha.BatchJobs.Infrastructure.Repositories.MabArchive.Loaders;
 using Apha.BatchJobs.Infrastructure.Repositories.RecreateSummaries;
 using Apha.BatchJobs.Infrastructure.Services;
+using Apha.BatchJobs.Infrastructure.Services.BulkRates;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -106,6 +109,12 @@ public static class ServiceCollectionSetup
         services.AddScoped<IYearEndDataSetupStep, FinalValidationStep>();
         services.AddScoped<IYearEndDataSetupService, YearEndDataSetupService>();
         services.AddScoped<IYearEndCutoverService, YearEndCutoverService>();
+
+        // BulkRates — repositories and per-stream services
+        services.AddScoped<IBulkRatesRepository, BulkRatesRepository>();
+        services.AddScoped<IBulkTestRatesService, BulkTestRatesService>();
+        services.AddScoped<IBulkStaffRatesService, BulkStaffRatesService>();
+        services.AddScoped<IBulkAnimalRatesService, BulkAnimalRatesService>();
 
         services.AddScoped<Func<Func<Task>, Task>>(sp =>
         {

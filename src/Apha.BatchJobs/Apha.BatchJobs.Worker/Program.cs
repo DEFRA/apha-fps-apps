@@ -673,7 +673,7 @@ static async Task ValidatePreCreatedExecutionRecordAsync(
     CancellationToken cancellationToken)
 {
     var existingExecution = await executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
-    var expectedPickupStatus = IsYearEndJob(requestedJobName)
+    var expectedPickupStatus = IsApprovalBasedJob(requestedJobName)
         ? JobStatus.Approved
         : JobStatus.Initiated;
 
@@ -712,7 +712,7 @@ static async Task ValidatePreCreatedExecutionRecordAsync(
             requestedJobName,
             expectedPickupStatus);
 
-        if (IsYearEndJob(requestedJobName))
+        if (IsApprovalBasedJob(requestedJobName))
         {
             await ValidateApprovalMetadataAsync(requestedJobName, jobExecutionId, executionRepository, logger, cancellationToken);
         }
@@ -818,5 +818,13 @@ static bool IsYearEndJob(string jobName)
 {
     return string.Equals(jobName, BatchJobNames.YearEndDataSetup, StringComparison.OrdinalIgnoreCase)
         || string.Equals(jobName, BatchJobNames.YearEndCutover, StringComparison.OrdinalIgnoreCase);
+}
+
+static bool IsApprovalBasedJob(string jobName)
+{
+    return IsYearEndJob(jobName)
+        || string.Equals(jobName, BatchJobNames.BulkTestRatesUpdate, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(jobName, BatchJobNames.BulkStaffRatesUpdate, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(jobName, BatchJobNames.BulkAnimalRatesUpdate, StringComparison.OrdinalIgnoreCase);
 }
 

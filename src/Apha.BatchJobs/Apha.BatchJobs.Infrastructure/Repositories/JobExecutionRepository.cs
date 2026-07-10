@@ -52,7 +52,7 @@ public class JobExecutionRepository : IJobExecutionRepository
 
         if (existingRow != null)
         {
-            var expectedPickupStatus = IsYearEndJob(record.JobName)
+            var expectedPickupStatus = IsApprovalBasedJob(record.JobName)
                 ? JobStatus.Approved
                 : JobStatus.Initiated;
 
@@ -615,5 +615,13 @@ public class JobExecutionRepository : IJobExecutionRepository
     {
         return string.Equals(jobName, BatchJobNames.YearEndDataSetup, StringComparison.OrdinalIgnoreCase)
             || string.Equals(jobName, BatchJobNames.YearEndCutover, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsApprovalBasedJob(string jobName)
+    {
+        return IsYearEndJob(jobName)
+            || string.Equals(jobName, BatchJobNames.BulkTestRatesUpdate, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(jobName, BatchJobNames.BulkStaffRatesUpdate, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(jobName, BatchJobNames.BulkAnimalRatesUpdate, StringComparison.OrdinalIgnoreCase);
     }
 }
