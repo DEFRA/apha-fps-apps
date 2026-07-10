@@ -1,4 +1,4 @@
-namespace Apha.FPSApps.Application.Dtos.FPS
+namespace Apha.FPSApps.Application.Dtos.PACT
 {
     public class TestReqBreakdownDto
     {

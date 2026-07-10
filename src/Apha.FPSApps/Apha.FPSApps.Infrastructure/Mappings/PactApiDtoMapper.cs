@@ -60,6 +60,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ReleaseSummaryRes, ReleaseSummaryDto>();
             CreateMap<TestPriceCheckDto, TestPriceCheckRes>().ReverseMap();
             CreateMap<TestPriceCheckDto, TestPriceCheckReq>();
+            CreateMap<TestReqBreakdownRes, TestReqBreakdownDto>().ReverseMap();
         }
     }
 }

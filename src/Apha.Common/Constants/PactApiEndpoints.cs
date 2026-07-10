@@ -100,6 +100,9 @@ namespace Apha.Common.Constants
         public const string UpdateTestCapability = "api/v1/testcapability/testcapability";
         public const string DeleteTestCapability = "api/v1/testcapability/testcapability/{0}/{1}";
 
+        // Test Requirement Breakdown
+        public const string GetPagedTestReqBreakdown = "api/v1/testorproduct/testreqbreakdown";
+
         // Test Requirement
         public const string GetPagedTestReqmt = "api/v1/testrequirement/paged/{0}";
         public const string GetPagedBySupplierTestCode = "api/v1/testrequirement/supplier/paged/{0}";

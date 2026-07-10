@@ -1,21 +1,21 @@
 using Apha.FPSApps.Application.Dtos;
-using Apha.FPSApps.Application.Dtos.FPS;
+using Apha.FPSApps.Application.Dtos.PACT;
 using Apha.FPSApps.Application.Interfaces.FPS;
-using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+using Apha.FPSApps.Application.Interfaces.PactApiClients;
 using Apha.FPSApps.Application.Pagination;
 
 namespace Apha.FPSApps.Application.Services.FPS
 {
     public class TestReqBreakdownService : ITestReqBreakdownService
     {
-        private readonly IFpsApiClient _fpsClient;
+        private readonly IPactApiClient _pactClient;
 
-        public TestReqBreakdownService(IFpsApiClient fpsClient)
+        public TestReqBreakdownService(IPactApiClient pactClient)
         {
-            _fpsClient = fpsClient;
+            _pactClient = pactClient;
         }
 
         public async Task<ApiResponseDto<List<TestReqBreakdownDto>>> GetPlannedTestsByWorkgroupAsync(QueryParameters<string> query)
-            => await _fpsClient.FpsTestReqBreakdown.GetPlannedTestsByWorkgroupAsync(query);
+            => await _pactClient.PactTestRequirement.GetPlannedTestsByWorkgroupAsync(query);
     }
 }
