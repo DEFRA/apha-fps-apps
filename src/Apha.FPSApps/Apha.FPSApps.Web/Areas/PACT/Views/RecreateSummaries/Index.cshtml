@@ -11,19 +11,51 @@
     </div>
 </div>
 
-<div class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
+<div id="recreate-form-scope" class="govuk-grid-row sup_margin_left_right_0 sup_margin_top_10">
     <div class="govuk-grid-column-three-quarters govuk-!-padding-2">
+
+        @* Error summary — shown for validation and server errors *@
+        <div class="govuk-error-summary" role="alert" tabindex="-1" style="display:none;" aria-labelledby="recreate-error-summary-title">
+            <h2 class="govuk-error-summary__title" id="recreate-error-summary-title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list"></ul>
+            </div>
+        </div>
+
+        @* Success banner — shown in green at the same position on job trigger success *@
+        <div id="recreate-success-banner"
+             class="govuk-notification-banner govuk-notification-banner--success"
+             role="alert"
+             aria-labelledby="recreate-success-banner-title"
+             style="display:none;">
+            <div class="govuk-notification-banner__header">
+                <h2 class="govuk-notification-banner__title" id="recreate-success-banner-title">Success</h2>
+            </div>
+            <div class="govuk-notification-banner__content">
+                <p id="recreate-success-banner-message" class="govuk-body"></p>
+            </div>
+        </div>
+
         <table class="govuk-table govuk-!-margin-bottom-0 isCustomPivotGrid">
             <tbody class="govuk-table__body">
                 <tr class="govuk-table__row">
                     <td class="govuk-table__cell sup_border_0">
-                        <label class="govuk-label govuk-!-margin-bottom-1 isFontBold">
-                            Select Summary Period:
-                        </label>
-                        <div id="select-period-container" style="min-width:280px;"></div>
+                        @* Bug 2 + 3 fix: govuk-form-group wrapper, named hidden input, valmsg span *@
+                        <div class="govuk-form-group" id="month-form-group">
+                            <label class="govuk-label govuk-!-margin-bottom-1 isFontBold" for="month">
+                                Select Summary Period:
+                            </label>
+                            @* Hidden input with name="month" so validation library can locate the field *@
+                            <input type="hidden" id="month" name="month" />
+                            <div id="select-period-container" style="min-width:280px;"></div>
+                            @* Inline error span below the field (Bug 2 fix) *@
+                            <span data-valmsg-for="month"
+                                  class="govuk-error-message field-validation-valid"
+                                  style="display:none;"></span>
+                        </div>
                     </td>
                     <td class="govuk-table__cell sup_border_0 govuk-!-padding-left-3 recreate-summaries__action-cell">
-                        <div class="govuk-button-group govuk-!-margin-bottom-0 govuk-!-margin-top-4">
+                        <div class="govuk-button-group govuk-!-margin-bottom-0">
                             <button type="button"
                                     id="btnCreateSummary"
                                     class="govuk-button govuk-!-margin-bottom-0"
@@ -40,8 +72,6 @@
         </table>
     </div>
 </div>
-
-<div id="triggerNotification" class="govuk-!-margin-top-4" style="display:none;"></div>
 
 <div class="govuk-grid-row sup_margin_left_right_0 govuk-!-margin-top-4" id="summary-history-section">
     <div class="govuk-grid-column-full govuk-!-padding-2">
@@ -66,8 +96,11 @@
     ));
 </script>
 <script src="~/js/common/multicolumn-dropdown.component.js"></script>
+    <script src="~/js/ajax-form-validation.js"></script>
 <script>
+        
     var selectPeriodDropdown = null;
+    var SCOPE = '#recreate-form-scope';   // single container for all validation calls
 
     document.addEventListener('DOMContentLoaded', function () {
         selectPeriodDropdown = new MultiColumnDropdownComponent({
@@ -86,25 +119,40 @@
             clearButtonClearsSelection: true,
             callbacks: {
                 onSelect: function (selectedItem) {
-                    // display as "period - monthName" in the input
+                    // sync value to the named hidden input so validation library can find it
+                    document.getElementById('month').value = selectedItem.value || '';
+                    // display as "period - monthName" in the visible input
                     var input = document.getElementById('selectPeriodDropdown_input');
                     if (input) input.value = selectedItem.period + ' - ' + selectedItem.monthName;
+                    // clear any existing month error when user makes a selection (Bug 4 fix)
+                    clearValidationErrors(SCOPE);
                 },
-                onClear: function () { }
+                onClear: function () {
+                    document.getElementById('month').value = '';
+                }
             }
         });
     });
 
-    // ── Trigger job ───────────────────────────────────────────────────────
+    // ── Trigger job ───────────────────────────────────────────────────────────
     function triggerCreateSummary() {
-        const hiddenInput = document.getElementById('selectPeriodDropdown_value');
-        const monthVal = hiddenInput ? parseInt(hiddenInput.value, 10) : NaN;
-        if (!monthVal) {
-            showNotification('Please select a summary period.', 'error');
+        clearValidationErrors(SCOPE);
+        hideSuccessBanner();   // hide any previous success before each new attempt
+
+        var monthVal = parseInt(document.getElementById('month').value, 10);
+
+        if (!monthVal || isNaN(monthVal)) {
+            // Field-level error — library writes it inline below the dropdown
+            // because name="month" exists inside the scope
+            displayServerValidationErrors(
+                [{ field: 'month', message: 'Please select a summary period.' }],
+                'There is a problem',
+                SCOPE
+            );
             return;
         }
 
-        const btn = document.getElementById('btnCreateSummary');
+        var btn = document.getElementById('btnCreateSummary');
         btn.disabled = true;
         btn.setAttribute('aria-disabled', 'true');
 
@@ -116,16 +164,26 @@
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                showNotification('Job triggered successfully.', 'success');
+                showSuccessBanner('Job triggered successfully.');
                 refreshHistoryGrid();
             } else {
-                showNotification(data.message ?? 'Failed to trigger the job.', 'error');
+                // server returned a failure message — show in error summary
+                // field is omitted so the library routes it to .govuk-error-summary
+                displayServerValidationErrors(
+                    [{ field: '', message: data.message ?? 'Failed to trigger the job.' }],
+                    'There is a problem',
+                    SCOPE
+                );
                 btn.disabled = false;
                 btn.removeAttribute('aria-disabled');
             }
         })
         .catch(() => {
-            showNotification('An unexpected error occurred.', 'error');
+            displayServerValidationErrors(
+                [{ field: '', message: 'An unexpected error occurred. Please try again.' }],
+                'There is a problem',
+                SCOPE
+            );
             btn.disabled = false;
             btn.removeAttribute('aria-disabled');
         });
@@ -144,16 +202,17 @@
         .then(html => { container.innerHTML = html; });
     }
 
-    // ── Notification banner ───────────────────────────────────────────────
-    function showNotification(message, type) {
-        const el = document.getElementById('triggerNotification');
-        const successClass = type === 'success' ? 'govuk-notification-banner--success' : '';
-        el.innerHTML = `<div class="govuk-notification-banner ${successClass}" role="region" aria-label="Notice">
-            <div class="govuk-notification-banner__content">
-                <p class="govuk-body">${message}</p>
-            </div>
-        </div>`;
-        el.style.display = 'block';
+    // ── Success banner helpers ─────────────────────────────────────────────
+    function showSuccessBanner(message) {
+        var banner = document.getElementById('recreate-success-banner');
+        document.getElementById('recreate-success-banner-message').textContent = message;
+        banner.style.display = '';
+        banner.focus();
+    }
+
+    function hideSuccessBanner() {
+        var banner = document.getElementById('recreate-success-banner');
+        if (banner) banner.style.display = 'none';
     }
 
     function getAntiForgeryToken() {
