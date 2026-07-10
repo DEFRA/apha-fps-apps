@@ -204,7 +204,6 @@ namespace Apha.Common.Constants
         // Project profitability (merged into project route)
         public const string GetProjectProfitability = "api/v1/project/profitability/{0}";
         public const string GetProjectGroupProfitability = "api/v1/project/profitability/by-project-group/{0}";
-        // TRANSFORMENGINE: new endpoint — Phase 9 API client binds to backend GET api/v1/project/profitability-vla
         public const string GetProjectProfitabilityVla = "api/v1/project/profitability-vla";
 
         // WorkgroupGrade Maintainence
@@ -227,6 +226,12 @@ namespace Apha.Common.Constants
         // Income/Contribution from Time Sales (frmTimeSellerPC)
         public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows";
         public const string GetContributionSummaryTotals = "api/v1/timeseller/{0}/totals";
+        // Project Audit Trail (frmProjectChangesLog → api/v1/projectaudittrail)
+        public const string GetProjectLogs = "api/v1/projectaudittrail/projectlogs";
+        public const string GetStaffJobLogs = "api/v1/projectaudittrail/staffjoblogs";
+        public const string GetTestRequirementLogs = "api/v1/projectaudittrail/testrequirementlogs";
+        public const string GetAnimalRequestLogs = "api/v1/projectaudittrail/animalrequestlogs";
+        public const string GetAdditionalCostLogs = "api/v1/projectaudittrail/additionalcostlogs";
 
         // Generic Bid — Purchases
         public const string GetGenericPurchases     = "api/v1/purchases";

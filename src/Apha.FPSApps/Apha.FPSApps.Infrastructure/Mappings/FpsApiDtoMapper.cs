@@ -115,6 +115,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
 
             // ProjectProfitabilityVla
+            //   ForMember(Id) handles int->int? coercion: Id=GetValueOrDefault(0) on reverse.
+            //   TotalCount is on Res only; silently ignored in Res->Dto direction (see DEFERRED note above).
             CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
                 .ForMember(d => d.Project, o => o.MapFrom(s => s.JobCode))
                 .ForMember(d => d.Id, o => o.MapFrom(s => s.Id.GetValueOrDefault(0)))
@@ -149,6 +151,25 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
+            // Audit logs are read-only so no .ReverseMap() — frontend never writes back to backend audit tables.
+            CreateMap<ProjectLogRes, ProjectLogDto>()
+                .ForMember(d => d.CaseWorkSub, o => o.MapFrom(s => s.CaseworkSub))
+                .ForMember(d => d.PlanCaseWorkDebit, o => o.MapFrom(s => s.PlanCaseworkDebit));
+
+            // StaffJobLog: Res.Name (staff display name resolved server-side) maps to Dto.Name by convention.
+            CreateMap<StaffJobLogRes, StaffJobLogDto>();
+
+            // TestRequirementLog: type-coercion — Res.UnitPrice is double? but Dto.UnitPrice is decimal?;
+            //   Res.NoRequired is int? but Dto.NoRequired is double?. Explicit ForMember casts applied.
+            CreateMap<TestRequirementLogRes, TestRequirementLogDto>()
+                .ForMember(d => d.UnitPrice, o => o.MapFrom(s => s.UnitPrice.HasValue ? (decimal?)Convert.ToDecimal(s.UnitPrice.Value) : null))
+                .ForMember(d => d.NoRequired, o => o.MapFrom(s => s.NoRequired.HasValue ? (double?)Convert.ToDouble(s.NoRequired.Value) : null));
+
+            // AnimalRequestLog: all property names and types align — convention mapping suffices.
+            CreateMap<AnimalRequestLogRes, AnimalRequestLogDto>();
+
+            // AdditionalCostLog: all property names and types align — convention mapping suffices.
+            CreateMap<AdditionalCostLogRes, AdditionalCostLogDto>();
             // UserPermission
             CreateMap<UserDto, UserRes>().ReverseMap();
             CreateMap<UserDto, UserReq>().ReverseMap();

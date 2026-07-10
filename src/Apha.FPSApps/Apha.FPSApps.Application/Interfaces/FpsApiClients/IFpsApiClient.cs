@@ -30,6 +30,7 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsUserApiClient FpsUserPermission { get; }
         IFpsGradeApiClient FpsGrade { get; }
         IFpsContributionSummaryApiClient FpsTimeSellerPc { get; }
+        IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
         IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
     }
 }
