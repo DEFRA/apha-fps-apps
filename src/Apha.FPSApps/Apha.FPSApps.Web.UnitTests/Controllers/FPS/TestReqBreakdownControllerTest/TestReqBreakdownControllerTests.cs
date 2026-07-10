@@ -215,6 +215,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestReqBreakdownControllerT
 
             var partial = Assert.IsType<PartialViewResult>(result);
             var grid    = Assert.IsType<DataGridConfig<TestReqBreakdownItem>>(partial.Model);
+            Assert.NotNull(grid.CurrentFilters);
             Assert.True(grid.CurrentFilters.ContainsKey("TestCode"));
             Assert.Equal("BLOOD", grid.CurrentFilters["TestCode"]);
         }
