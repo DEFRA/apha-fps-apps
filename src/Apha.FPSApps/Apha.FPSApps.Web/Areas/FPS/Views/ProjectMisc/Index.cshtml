@@ -10,13 +10,6 @@
 
         <div class="govuk-grid-row">
             <div class="govuk-grid-column-full">
-                <div class="row fps-sr-breadcrumb-row">
-                    <div class="fps-sr-breadcrumb-flex sup_context_row">
-                        <div class="col-md-8 sup_context_placeholder"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="govuk-grid-column-full">
                 <h1 class="govuk-heading-s sup_border-bottom govuk-!-margin-top-2 govuk-!-padding-bottom-2 govuk-!-padding-left-4">Misc Project Data</h1>
             </div>
         </div>
@@ -51,7 +44,7 @@
                     $('#modalPopup').addClass('show');
                 },
                 error: function () {
-                    showGovukAlert('An error occurred while loading the form.');
+                    showAlertMessage('An error occurred while loading the form.', AlertType.ERROR);
                 }
             });
         }
@@ -80,7 +73,7 @@
                 data: JSON.stringify(payload),
                 success: function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message);
+                        showAlertMessage(result.message, AlertType.SUCCESS);
                         closeModal();
                         window['gridManager_projectMiscGrid'].reloadGrid({ page: 1 });
                     } else {
@@ -91,7 +84,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });
@@ -107,15 +100,15 @@
                     data: { parentProject: parentProject },
                     success: function (response) {
                         if (response.success) {
-                            showGovukAlert('Deleted successfully').then(function () {
+                            showAlertMessage('Deleted successfully', AlertType.SUCCESS).then(function () {
                                 window['gridManager_projectMiscGrid'].reloadGrid({ page: 1 });
                             });
                         } else {
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting.');
+                        showAlertMessage('An error occurred while deleting.', AlertType.ERROR);
                     }
                 });
             });

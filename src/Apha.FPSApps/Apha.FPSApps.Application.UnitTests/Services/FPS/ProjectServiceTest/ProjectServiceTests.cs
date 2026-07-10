@@ -388,6 +388,101 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
 
         #endregion
 
+        #region GetPagedPactProjectsByProgramAsync Tests
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_WithSuccessResponse_ReturnsProjectList()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var projects = new List<ProjectDto>
+            {
+                new() { ParentProject = "PP001", ProjectTitle = "Alpha Project", Program = "P001" },
+                new() { ParentProject = "PP002", ProjectTitle = "Beta Project",  Program = "P001" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                projects,
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 2 }
+            );
+
+            _fpsProjectApiClient.GetPagedPactProjectsByProgramAsync(query, programNo).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetPagedPactProjectsByProgramAsync(query, programNo);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsProjectApiClient.Received(1).GetPagedPactProjectsByProgramAsync(query, programNo);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_WithEmptyResult_ReturnsSuccessWithEmptyList()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(
+                new List<ProjectDto>(),
+                new PaginationDto { PageNumber = 1, PageSize = 10, TotalRecords = 0 }
+            );
+
+            _fpsProjectApiClient.GetPagedPactProjectsByProgramAsync(query, programNo).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetPagedPactProjectsByProgramAsync(query, programNo);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Empty(result.Data!);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var programNo = "P001";
+            var errors = new List<ApiErrorDto>
+            {
+                new() { Message = "API Error", Code = "API_ERROR" }
+            };
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.FailureResponse(errors, new ApiMetaDto());
+
+            _fpsProjectApiClient.GetPagedPactProjectsByProgramAsync(query, programNo).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetPagedPactProjectsByProgramAsync(query, programNo);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+        }
+
+        [Fact]
+        public async Task GetPagedPactProjectsByProgramAsync_CallsFpsProjectApiClient_WithCorrectArguments()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 2, PageSize = 5, SortBy = "parentproject" };
+            var programNo = "P002";
+            var expectedResponse = ApiResponseDto<List<ProjectDto>>.SuccessResponse(new List<ProjectDto>());
+
+            _fpsProjectApiClient.GetPagedPactProjectsByProgramAsync(query, programNo).Returns(expectedResponse);
+
+            // Act
+            await _projectService.GetPagedPactProjectsByProgramAsync(query, programNo);
+
+            // Assert
+            await _fpsProjectApiClient.Received(1).GetPagedPactProjectsByProgramAsync(query, programNo);
+        }
+
+        #endregion
+
         #region GetProjectByIdAsync Tests
 
         [Fact]
@@ -779,6 +874,45 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ProjectServiceTest
 
             // Act
             var result = await _projectService.GetAllContractsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.Success);
+            Assert.NotNull(result.Errors);
+        }
+
+        #endregion
+
+        #region GetAllPactContractsAsync Tests
+
+        [Fact]
+        public async Task GetAllPactContractsAsync_WithSuccessResponse_ReturnsContractList()
+        {
+            // Arrange
+            var contracts = new List<ContractDto> { new() { ContractNo = "C001" }, new() { ContractNo = "C002" } };
+            var expectedResponse = ApiResponseDto<List<ContractDto>>.SuccessResponse(contracts);
+            _fpsLookupApiClient.GetAllPactContractsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllPactContractsAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.Equal(2, result.Data?.Count);
+            await _fpsLookupApiClient.Received(1).GetAllPactContractsAsync();
+        }
+
+        [Fact]
+        public async Task GetAllPactContractsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors = new List<ApiErrorDto> { new() { Message = "API Error", Code = "API_ERROR" } };
+            var expectedResponse = ApiResponseDto<List<ContractDto>>.FailureResponse(errors, new ApiMetaDto());
+            _fpsLookupApiClient.GetAllPactContractsAsync().Returns(expectedResponse);
+
+            // Act
+            var result = await _projectService.GetAllPactContractsAsync();
 
             // Assert
             Assert.NotNull(result);

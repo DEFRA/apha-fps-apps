@@ -48,8 +48,10 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
 
             string project = parentproject ?? viewModel.ProjectOptions.FirstOrDefault()?.Value ?? string.Empty;
             viewModel.Parentproject = project;
-            viewModel.FormRequired = allProjects.Data?
-                .FirstOrDefault(p => p.Parentproject == project)?.Formrequired ?? false;
+
+            var matchedProject = allProjects.Data?.FirstOrDefault(p => p.Parentproject == project);
+            viewModel.FormRequired = matchedProject?.Formrequired ?? false;
+            viewModel.TypeLookUp = matchedProject?.Program?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
 
             PaginationFilter<string> defaultRequest = new() { Filter = "{}" };
             viewModel.MilestonesGrid = await BuildMilestonesGridAsync(project, defaultRequest);
@@ -204,7 +206,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
             return PartialView("_DataGrid", gridConfig);
         }
         [HttpGet]
-        public async Task<IActionResult> GetAddEditMilestonePartial(string parentproject, string? number = null)
+        public async Task<IActionResult> GetAddEditMilestonePartial(string parentproject, string? number = null, char? typeLookUp = null)
         {
             var decodedId = HttpUtility.UrlDecode(number);
             MilestoneItem model = new() { Project = parentproject };
@@ -216,7 +218,7 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                     model = _mapper.Map<MilestoneItem>(result.Data);
             }
 
-            List<SelectListItem> typeOptions = await GetMilestoneTypeOptionsAsync();
+            List<SelectListItem> typeOptions = await GetMilestoneTypeOptionsAsync(typeLookUp);
             ViewBag.MilestoneTypeOptions = typeOptions;
             ViewBag.IsAddingNew = string.IsNullOrWhiteSpace(number);
             return PartialView("_AddEditMilestone", model);
@@ -331,11 +333,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
         [HttpGet]
         public async Task<IActionResult> GetFormRequired(string parentproject)
         {
-            ApiResponseDto<List<ProjectListMilestoneDto>> allProjects =
-                await _projectListService.GetAllProjectsForMilestoneAsync();
-            bool formRequired = allProjects.Data?
-                .FirstOrDefault(p => p.Parentproject == parentproject)?.Formrequired ?? false;
-            return Json(new { formRequired });
+            ApiResponseDto<ProjectDetailsMilestoneDto> allProjects =
+                await _projectListService.GetProjectsDetailsForMilestoneAsync(parentproject);
+            var matchedProject = allProjects.Data;
+            bool formRequired = matchedProject?.Formrequired ?? false;
+            char typeLookUp = matchedProject?.Program?.EndsWith("surv", StringComparison.OrdinalIgnoreCase) == true ? 'D' : 'M';
+            return Json(new { formRequired, typeLookUp });
         }
 
         // ── Log Milestones DataGrid ──────────────────────────────────────────
@@ -406,11 +409,12 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Controllers
                 .Select(p => new SelectListItem(p.Parentproject, p.Parentproject))
                 .ToList() ?? [];
         }
-        private async Task<List<SelectListItem>> GetMilestoneTypeOptionsAsync()
+        private async Task<List<SelectListItem>> GetMilestoneTypeOptionsAsync(char? typeLookUp = null)
         {
             ApiResponseDto<List<MilestoneTypeDto>> types =
                 await _milestoneService.GetMilestoneTypesAsync();
             return types.Data?
+                .Where(t => typeLookUp == null || t.MilestoneDeliverable == typeLookUp)
                 .Select(t => new SelectListItem(t.Type, t.IdType.ToString()))
                 .ToList() ?? [];
         }

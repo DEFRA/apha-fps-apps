@@ -10,7 +10,7 @@
             <div class="sup_margin_tb_5 sup_padding_right_8 govuk-grid-column-one-half">
                 <div>
                     <input type="text" id="txtselectedWorkgroup" class="govuk-input govuk-!-font-size-16"
-                           value="@Model.SelectedWorkgroup" readonly disabled />
+                           value="@Model.SelectedWorkgroup" aria-label="Work Group" disabled />
                 </div>
             </div>
         </div>
@@ -19,7 +19,7 @@
             asp-controller="WorkGroupPeople"
             asp-action="Index"
             asp-route-workGroup="@Model.SelectedWorkgroup"
-            class="govuk-back-link sup_align_right sup_margin_0">Back</a>
+               class="govuk-back-link sup_align_right sup_margin_0 sup_font_weight_700">Back</a>
         </div>
     </div>
 </div>

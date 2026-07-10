@@ -37,36 +37,34 @@ namespace Apha.FPSApps.Infrastructure.Mappings
                 .ReverseMap()
                 .ForMember(d => d.CustIncome, o => o.MapFrom(s => s.BudgetExt));
             CreateMap<ProjectDto, ProjectRes>().ReverseMap();
-
+            
             // FPS Lookups
             CreateMap<StatusDto, StatusRes>().ReverseMap();
             CreateMap<DiseaseDto, DiseaseRes>().ReverseMap();
             CreateMap<CustomerDto, CustomerRes>().ReverseMap();
             CreateMap<ContractDto, ContractRes>().ReverseMap();
             CreateMap<ProjectGroupDto, ProjectGroupRes>().ReverseMap();
-
-
-
+            
             // FPS Animal Plan
             CreateMap<AnimalCostViewDto, AnimalCostViewRes>().ReverseMap();
             CreateMap<AnimalDto, AnimalRes>().ReverseMap();
             CreateMap<AnimalRequestDto, AnimalRequestReq>().ReverseMap();
             CreateMap<AnimalRequestDto, AnimalRequestRes>().ReverseMap();
-
+            
             // FPS Animal Master
             CreateMap<AnimalDto, AnimalReq>().ReverseMap();
-
+            
             // YEar Master
             CreateMap<YearMasterDto, YearMasterRes>().ReverseMap();
             CreateMap<YearMasterDto, YearMasterReq>().ReverseMap();
 
             // Testor Product
             CreateMap<TestorProductDto, Apha.Common.Contracts.FPS.TestorProductRes>().ReverseMap();
-
+            
             // View Project Plan vs Actual Staff
             CreateMap<TimeCostCalcsViewDto, TimeCostCalcsViewRes>().ReverseMap();
             CreateMap<TimeCostCalcsTotalsDto, TimeCostCalcsTotalsRes>().ReverseMap();
-
+            
             // Division
             CreateMap<DivisionDto, DivisionRes>().ReverseMap();
             CreateMap<DivisionDto, DivisionReq>().ReverseMap();
@@ -75,8 +73,8 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<DivisionGradeDto, DivisionGradeRes>().ReverseMap();
             CreateMap<DivisionGradeDto, DivisionGradeReq>().ReverseMap();
 
-            // TRANSFORMENGINE: Grade mappings added � Phase 10 (Step 15a)
             // Grade CRUD: maps frontend GradeDto to/from backend GradeReq (POST/PUT) and GradeRes (GET/POST/PUT responses)
+            // Grade Mappings
             CreateMap<GradeDto, GradeReq>().ReverseMap();
             CreateMap<GradeDto, GradeRes>().ReverseMap();
 
@@ -110,12 +108,13 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<WorkgroupGradeDto, WorkgroupGradeRes>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeReq>().ReverseMap();
             CreateMap<WorkGroupEmployeeDto, WorkGroupEmployeeRes>().ReverseMap();
+            CreateMap<WorkGroupEmployeeStaffDto, WorkGroupEmployeeReq>().ReverseMap();
+            CreateMap<WorkGroupEmployeeStaffDto, WorkGroupEmployeeRes>().ReverseMap();
 
             // ProjectProfitability
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityRes>().ReverseMap();
 
             // ProjectProfitabilityVla
-            // TRANSFORMENGINE: Project<->JobCode ForMember required — VlaRes.Project maps to VlaDto.JobCode;
             //   ForMember(Id) handles int->int? coercion: Id=GetValueOrDefault(0) on reverse.
             //   TotalCount is on Res only; silently ignored in Res->Dto direction (see DEFERRED note above).
             CreateMap<ProjectProfitabilityVlaDto, ProjectProfitabilityVlaRes>()
@@ -124,6 +123,7 @@ namespace Apha.FPSApps.Infrastructure.Mappings
                 .ReverseMap()
                 .ForMember(d => d.JobCode, o => o.MapFrom(s => s.Project))
                 .ForMember(d => d.Id, o => o.MapFrom(s => (int?)s.Id));
+
 
             // Staff Plan view
             CreateMap<ProjectStaffPlanViewDto, ProjectStaffPlanViewRes>().ReverseMap();
@@ -136,7 +136,6 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // WorkgroupGrade  
             CreateMap<WorkgroupGradeDto, WorkgroupGradeReq>().ReverseMap();
 
-
             // Job Code (ZT lookup) - now served from PACT API
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
                       
@@ -148,7 +147,37 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
+            // Audit logs are read-only so no .ReverseMap() — frontend never writes back to backend audit tables.
+            CreateMap<ProjectLogRes, ProjectLogDto>()
+                .ForMember(d => d.CaseWorkSub, o => o.MapFrom(s => s.CaseworkSub))
+                .ForMember(d => d.PlanCaseWorkDebit, o => o.MapFrom(s => s.PlanCaseworkDebit));
+
+            // StaffJobLog: Res.Name (staff display name resolved server-side) maps to Dto.Name by convention.
+            CreateMap<StaffJobLogRes, StaffJobLogDto>();
+
+            // TestRequirementLog: type-coercion — Res.UnitPrice is double? but Dto.UnitPrice is decimal?;
+            //   Res.NoRequired is int? but Dto.NoRequired is double?. Explicit ForMember casts applied.
+            CreateMap<TestRequirementLogRes, TestRequirementLogDto>()
+                .ForMember(d => d.UnitPrice, o => o.MapFrom(s => s.UnitPrice.HasValue ? (decimal?)Convert.ToDecimal(s.UnitPrice.Value) : null))
+                .ForMember(d => d.NoRequired, o => o.MapFrom(s => s.NoRequired.HasValue ? (double?)Convert.ToDouble(s.NoRequired.Value) : null));
+
+            // AnimalRequestLog: all property names and types align — convention mapping suffices.
+            CreateMap<AnimalRequestLogRes, AnimalRequestLogDto>();
+
+            // AdditionalCostLog: all property names and types align — convention mapping suffices.
+            CreateMap<AdditionalCostLogRes, AdditionalCostLogDto>();
+            // UserPermission
+            CreateMap<UserDto, UserRes>().ReverseMap();
+            CreateMap<UserDto, UserReq>().ReverseMap();
+            CreateMap<UserPermissionDataDto, UserPermissionRes>().ReverseMap();
+            CreateMap<UserPermissionDataDto, UserPermissionReq>().ReverseMap();
+            CreateMap<PermissionOptionsDto, PermissionOptionsRes>().ReverseMap();
+
+            // Total Business Overheads
+            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
+            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
 
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
+@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
 
 @{
     ViewData["Title"] = "Project Edit";
@@ -228,7 +228,7 @@
                             <!-- Start Date + Is Defra Project -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label for="StartdateDisplay" class="govuk-label label_width mb-0 pt-1">Start Date:</label>
-                                <div class="me-4">
+                                <div >
                                     <div class="margin_left_5" style="position:relative; display:flex; align-items:center;">
                                         <input type="text"
                                                id="StartdateDisplay"
@@ -250,14 +250,21 @@
                                         <input type="date"
                                                id="StartdatePicker"
                                                value="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                                               tabindex="-1"
+                                               aria-hidden="true"
+                                               aria-label="Start date calendar picker"
                                                style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                onchange="syncDateToText('StartdatePicker', 'StartdateDisplay', 'StartdateBinding', 'StartdateError')">
                                     </div>
                                     <span id="StartdateError" class="govuk-error-message" style="display:none;"></span>
                                     <span asp-validation-for="StartDate" class="govuk-error-message"></span>
                                 </div>
-                                        <label asp-for="IsDefraProject" class="govuk-label label_width mb-0 pt-1">Is Defra Project?:</label>
+                                    
                                 <div class="d-flex align-items-center gap-2 margin_left_5">
+                                    <label asp-for="IsDefraProject" class="govuk-label  mb-0 pt-1" style="
+                                    min-width: 160px;
+                                    text-align: right;
+                                    ">Is Defra Project?:</label>
                                             <select asp-for="IsDefraProject" asp-items="Model.AvailableDefraProjectOptions" class="govuk-select" style="min-width: 80px;"></select>
                                             <span class="warning-text" style="font-size:13px; width:217px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
                                                 Changing this option will recost existing projects with current rates.
@@ -282,7 +289,7 @@
 
                             <!-- Submitted By Firstname + Prepared By -->
                             <div class="govuk-form-group d-flex align-items-start mb-2" >
-                                                <label asp-for="SubmittedByFName" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word; margin-left: -16px;">Submitted By - Firstname:</label>
+                                                <label asp-for="SubmittedByFName" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word; ">Submitted By - Firstname:</label>
                                 <div class="me-4">
                                     <input asp-for="SubmittedByFName" class="govuk-input width-200 margin_left_5">
                                                         <span asp-validation-for="SubmittedByFName" class="govuk-error-message"></span>
@@ -304,7 +311,7 @@
                                     <input asp-for="SubmittedByLName" class="govuk-input width-200 margin_left_5">
                                                             <span asp-validation-for="SubmittedByLName" class="govuk-error-message"></span>
                                 </div>
-                                <label for="chkInflation" class="govuk-label label_width mb-0 pt-1">Include Inflation?:</label>
+                                <label class="govuk-label label_width mb-0 pt-1" >Include Inflation?:</label>
                                 <div class="d-flex align-items-center gap-2 margin_left_5">
                       
                                     <div class="govuk-checkboxes govuk-checkboxes--small">
@@ -315,7 +322,9 @@
                                                    value="-1"
                                                    class="govuk-checkboxes__input"
                                             @(Model.Inflation.HasValue && Model.Inflation.Value == -1 ? "checked=\"checked\"" : "") />
-                                            <label class="govuk-checkboxes__label" for="chkInflation"></label>
+                                            <label class="govuk-checkboxes__label" for="chkInflation">
+                                                <span class="govuk-visually-hidden">Include Inflation</span>
+                                            </label>
                                         </div>
                                     </div>
                                     <span class="warning-text" style="font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
@@ -349,6 +358,9 @@
                                         <input type="date"
                                                id="DateOfSubmissionPicker"
                                                value="@Model.DateOfSubmission?.ToString("yyyy-MM-dd")"
+                                               tabindex="-1"
+                                               aria-hidden="true"
+                                               aria-label="Date of submission calendar picker"
                                                style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                onchange="syncDateToText('DateOfSubmissionPicker', 'DateOfSubmissionDisplay', 'DateOfSubmissionBinding', 'DateOfSubmissionError')">
                                     </div>
@@ -385,11 +397,11 @@
          $(document).ready(function () {
             @if (TempData["Success"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Success"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Success"])', AlertType.SUCCESS);</text>
             }
             @if (TempData["Error"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Error"])', AlertType.ERROR);</text>
             }
 
         });
@@ -404,7 +416,7 @@
 
                 var projectId = '@Html.Raw(Model.ProjectId)';
                 if (!projectId || projectId === '') {
-                    showGovukAlert('Project ID is missing. Cannot delete project.');
+                    showAlertMessage('Project ID is missing. Cannot delete project.', AlertType.INFO);
                     if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
                     document.body.style.cursor = 'default';
                     return;
@@ -419,17 +431,17 @@
                     },
                     success: function (response) {
                         if (response.success) {
-                            showGovukAlert('Project deleted successfully.').then(function () {
+                            showAlertMessage('Project deleted successfully.', AlertType.SUCCESS).then(function () {
                                 window.location.href = '@Url.Action("Index", "Projects", new { area = "CostBook" })';
                             });
                         } else {
-                            showGovukAlert('Failed to delete project: ' + (response.message || 'Unknown error'));
+                            showAlertMessage('Failed to delete project: ' + (response.message || 'Unknown error'), AlertType.ERROR);
                             if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
                             document.body.style.cursor = 'default';
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting the project.');
+                        showAlertMessage('An error occurred while deleting the project.', AlertType.ERROR);
                         if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
                         document.body.style.cursor = 'default';
                     }
@@ -476,7 +488,7 @@
                                             editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
                                             window.location.href = editUrl;
                                         } else {
-                                            showGovukAlert('Failed to recost project. Redirecting to edit page.').then(function () {
+                                            showAlertMessage('Failed to recost project. Redirecting to edit page.', AlertType.ERROR).then(function () {
                                                 var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
                                                 editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
                                                 window.location.href = editUrl;
@@ -484,7 +496,7 @@
                                         }
                                     },
                                     error: function () {
-                                        showGovukAlert('Error occurred during recost. Redirecting to edit page.').then(function () {
+                                        showAlertMessage('Error occurred during recost. Redirecting to edit page.', AlertType.ERROR).then(function () {
                                             var editUrl = '@Url.Action("Edit", "Projects", new { area = "CostBook", id = "PLACEHOLDER" })';
                                             editUrl = editUrl.replace('PLACEHOLDER', encodeURIComponent(newId));
                                             window.location.href = editUrl;
@@ -499,12 +511,12 @@
                             }
                         });
                     } else {
-                        showGovukAlert('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+                        showAlertMessage('Failed to copy project: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'), AlertType.ERROR);
                         if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
                     }
                 },
                 error: function () {
-                    showGovukAlert('Failed to copy project. Please try again.');
+                    showAlertMessage('Failed to copy project. Please try again.', AlertType.ERROR);
                     if (copyBtn) { copyBtn.disabled = false; copyBtn.textContent = 'Copy'; }
                 }
             });

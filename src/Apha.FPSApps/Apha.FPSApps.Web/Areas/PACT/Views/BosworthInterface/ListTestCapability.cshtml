@@ -1,0 +1,13 @@
+﻿@model Apha.FPSApps.Web.Areas.PACT.Models.BosworthInterfaceViewModel
+
+@{
+    ViewData["Title"] = "List Test Capabilities";
+}
+
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <div id="gridContainer_wgTestCapabilitiesGrid">
+            @await Html.PartialAsync("_DataGrid", Model.CapabilitiesGrid)
+        </div>
+    </div>
+</div>

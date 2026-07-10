@@ -26,6 +26,7 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.WGPrice, o => o.MapFrom(s => s.WgPrice));
             CreateMap<ProgramViewModel, ProgramDto>().ReverseMap();
             CreateMap<AnimalMaintenanceViewModel, AnimalDto>().ReverseMap();
+            CreateMap<UserPermissionViewModel, UserDto>().ReverseMap();
             CreateMap<EmployeeViewModel, EmployeeDto>().ReverseMap();
             CreateMap<StaffJobViewDto, StaffJobDto>().ReverseMap();
             CreateMap<ProjectDto, ProjectViewModel>().ReverseMap();
@@ -53,6 +54,8 @@ namespace Apha.FPSApps.Web.Mappings
             // PortfolioNew
             CreateMap<ProjectDto, PortfolioNewViewModel>().ReverseMap();
 
+            //Work Group Staff Maintenance
+            CreateMap<WorkGroupEmployeeStaffItem, WorkGroupEmployeeStaffDto>().ReverseMap();
             // Resource Set-Up
             CreateMap<WorkGroupEmployeeItem, WorkGroupEmployeeDto>().ReverseMap();
 
@@ -71,7 +74,6 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<ProjectProfitabilityDto, ProjectProfitabilityItem>().ReverseMap();
 
             // ProjectProfitabilityVla
-            // TRANSFORMENGINE: convention-mapped — all property names on ProjectProfitabilityVlaItem
             //   are expected to match ProjectProfitabilityVlaDto exactly (JobCode, Program, Customer,
             //   Manager, Status, StaffCosts, TestCost, AnimalCosts, AdditionalCosts, TotalCosts,
             //   Budget, Profit, TargetProfit, OffTarget, Id).
@@ -107,6 +109,9 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
 
+            // Total Business Overheads
+            CreateMap<TotalBusinessOverheadsViewModel, TotalBusinessOverheadsDto>().ReverseMap();
+
             // Misc Project Data
             CreateMap<ProjectDto, ProjectMiscItem>()
                 .ForMember(d => d.ParentProject, o => o.MapFrom(s => s.ParentProject))
@@ -115,6 +120,29 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.OracleProjectCode, o => o.MapFrom(s => s.OracleProjectCode))
                 .ForMember(d => d.SubAccountCode, o => o.MapFrom(s => s.SubAccountCode))
                 .ReverseMap();
+
+            // all 5 *LogItem ViewModel types are created in Phase 11.
+            // Audit log items are read-only grid rows — .ReverseMap() is intentionally omitted.
+
+            // UserEmail is NOT in ProjectLogDto (requires backend UserId→email resolution); Ignore() it.
+            CreateMap<ProjectLogDto, ProjectLogItem>()
+                .ForMember(d => d.UserEmail, o => o.Ignore());
+
+            // UserEmail is NOT in StaffJobLogDto (requires UserId→email resolution); Ignore() it.
+            CreateMap<StaffJobLogDto, StaffJobLogItem>()
+                .ForMember(d => d.UserEmail, o => o.Ignore());
+
+            // UserEmail is NOT in TestRequirementLogDto (requires UserId→email resolution); Ignore() it.
+            CreateMap<TestRequirementLogDto, TestRequirementLogItem>()
+                .ForMember(d => d.UserEmail, o => o.Ignore());
+
+            // UserEmail is NOT in AnimalRequestLogDto (requires UserId→email resolution); Ignore() it.
+            CreateMap<AnimalRequestLogDto, AnimalRequestLogItem>()
+                .ForMember(d => d.UserEmail, o => o.Ignore());
+
+            // UserEmail is NOT in AdditionalCostLogDto (requires UserId→email resolution); Ignore() it.
+            CreateMap<AdditionalCostLogDto, AdditionalCostLogItem>()
+                .ForMember(d => d.UserEmail, o => o.Ignore());
         }
     }
 }

@@ -513,6 +513,37 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.ProjectListServiceTes
 
         #endregion
 
+        #region GetProjectsDetailsForMilestoneAsync Tests
+
+        [Fact]
+        public async Task GetProjectsDetailsForMilestoneAsync_WithValidParentProject_ReturnsProjectDetails()
+        {
+            // Arrange
+            var parentproject = "PP001";
+            var details = new ProjectDetailsMilestoneDto
+            {
+                Parentproject = parentproject,
+                Program = "animalsurv",
+                Formrequired = true
+            };
+            var expectedResponse = ApiResponseDto<ProjectDetailsMilestoneDto>.SuccessResponse(details);
+
+            _pimsProjectListApiClient.GetProjectsDetailsForMilestoneAsync(parentproject).Returns(expectedResponse);
+
+            // Act
+            var result = await _projectListService.GetProjectsDetailsForMilestoneAsync(parentproject);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(parentproject, result.Data.Parentproject);
+            Assert.True(result.Data.Formrequired);
+            await _pimsProjectListApiClient.Received(1).GetProjectsDetailsForMilestoneAsync(parentproject);
+        }
+
+        #endregion
+
         #region Constructor Tests
 
         [Fact]

@@ -5,7 +5,6 @@
 }
 
 <div class="container-fluid">
-    <!-- Breadcrumb and project selector -->
     <div class="govuk-grid-row">
         <div class="govuk-grid-column-full">
             <div style="padding: 5px 5px; border-bottom: 1px solid #b4b4b4" class="row">
@@ -255,13 +254,13 @@
                         if (result.success) {
                             window['gridManager_@Model.ActualAnimalCostGrid.GridId'].reloadGrid({ page: 1 });
                             refreshActualCost();
-                            showGovukAlert('Record deleted successfully.');
+                            showAlertMessage('Record deleted successfully.', AlertType.SUCCESS);
                         } else {
-                            showGovukAlert('Delete failed: ' + (result.message || 'Unknown error'));
+                            showAlertMessage('Delete failed: ' + (result.message || 'Unknown error'), AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting the record.');
+                        showAlertMessage('An error occurred while deleting the record.', AlertType.ERROR);
                     }
                 });
             });

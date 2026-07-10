@@ -174,7 +174,7 @@
                     $('#modalPopup').addClass("show");
                 },
                 error: function () {
-                    showGovukAlert('An error occurred while loading the form');
+                    showAlertMessage('An error occurred while loading the form', AlertType.ERROR);
                 }
             });
         }
@@ -212,7 +212,7 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message).then(function () {
+                        showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                             closeModal();
                             window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
                         });
@@ -224,7 +224,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving');
+                        showAlertMessage('An error occurred while saving', AlertType.ERROR);
                     }
                 }
             });
@@ -264,7 +264,7 @@
                 contentType: 'application/json; charset=utf-8',
                 success: function (result) {
                     if (result.success) {
-                        showGovukAlert(result.message).then(function () {
+                        showAlertMessage(result.message, AlertType.SUCCESS).then(function () {
                             closeModal();
                             window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
                         });
@@ -276,7 +276,7 @@
                     if (xhr.status === 400 && xhr.responseJSON) {
                         displayServerValidationErrors(xhr.responseJSON.errors, xhr.responseJSON.message, '#modaPopupBody');
                     } else {
-                        showGovukAlert('An error occurred while saving.');
+                        showAlertMessage('An error occurred while saving.', AlertType.ERROR);
                     }
                 }
             });
@@ -294,7 +294,7 @@
                     $('#modalPopup').addClass("show");
                 },
                 error: function () {
-                    showGovukAlert('An error occurred while editing record');
+                    showAlertMessage('An error occurred while editing record', AlertType.ERROR);
                 }
             });
         }
@@ -310,16 +310,16 @@
                     data: { divName: divName },
                     success: function (response) {
                         if (response.success) {
-                                showGovukAlert('Deleted successfully').then(function () {
+                                showAlertMessage('Deleted successfully', AlertType.SUCCESS).then(function () {
                                     window['gridManager_divisionGrid'].reloadGrid({ page: 1 });
                                 });
                         } else {
 
-                            showGovukAlert('Error: ' + response.message);
+                            showAlertMessage('Error: ' + response.message, AlertType.ERROR);
                         }
                     },
                     error: function () {
-                        showGovukAlert('An error occurred while deleting');
+                        showAlertMessage('An error occurred while deleting', AlertType.ERROR);
                     }
                 });
             });

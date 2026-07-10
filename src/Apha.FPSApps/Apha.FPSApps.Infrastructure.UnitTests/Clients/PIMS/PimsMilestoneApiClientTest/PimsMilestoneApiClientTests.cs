@@ -1192,5 +1192,549 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PIMS.PimsMilestoneApiCli
         }
 
         #endregion
+
+        #region GetAllStagingRowsAsync
+
+        [Fact]
+        public async Task GetAllStagingRowsAsync_WithSuccessResponseAndData_ReturnsMappedDtoList()
+        {
+            // Arrange
+            var parameters  = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var resList     = new List<StagingMilestoneRes> { new() { Id = 1, Project = "PP001", Number = "M1" } };
+            var apiResponse = new ApiResponse<List<StagingMilestoneRes>> { Success = true, Data = resList };
+            var mappedDto   = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse(
+                new List<StagingMilestoneDto> { new() { Id = 1, Project = "PP001", Number = "M1" } });
+
+            _http.GetAsync<List<StagingMilestoneRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllStagingRowsAsync(parameters);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _http.Received(1).GetAsync<List<StagingMilestoneRes>>(Arg.Any<string>());
+            _mapper.Received(1).Map<ApiResponseDto<List<StagingMilestoneDto>>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task GetAllStagingRowsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var parameters  = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var errors      = new List<ApiError> { new() { Message = "Server error", Code = "SERVER_ERROR" } };
+            var apiResponse = new ApiResponse<List<StagingMilestoneRes>> { Success = false, Errors = errors };
+            var mappedDto   = new ApiResponseDto<List<StagingMilestoneDto>>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Server error", Code = "SERVER_ERROR" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<StagingMilestoneRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllStagingRowsAsync(parameters);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("SERVER_ERROR", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task GetAllStagingRowsAsync_WithSuccessAndNullData_ReturnsFailureResponse()
+        {
+            // Arrange
+            var parameters  = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var apiResponse = new ApiResponse<List<StagingMilestoneRes>> { Success = true, Data = null };
+            var mappedDto   = new ApiResponseDto<List<StagingMilestoneDto>>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto>(),
+                Meta    = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<StagingMilestoneRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetAllStagingRowsAsync(parameters);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        #endregion
+
+        #region GetStagingRowsAsync
+
+        [Fact]
+        public async Task GetStagingRowsAsync_WithProject_AppendsProjectToUrl()
+        {
+            // Arrange
+            const string project = "PP001";
+            var expectedUrl = $"{PimsApiEndpoints.GetStagingMilestones}?project={Uri.EscapeDataString(project)}";
+            var apiResponse = new ApiResponse<List<StagingMilestoneRes>> { Success = true, Data = new List<StagingMilestoneRes>() };
+            var mappedDto   = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse(new List<StagingMilestoneDto>());
+
+            _http.GetAsync<List<StagingMilestoneRes>>(expectedUrl).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetStagingRowsAsync(project);
+
+            // Assert
+            Assert.True(result.Success);
+            await _http.Received(1).GetAsync<List<StagingMilestoneRes>>(Arg.Is<string>(u => u == expectedUrl));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task GetStagingRowsAsync_WhenProjectNullOrWhitespace_UsesBaseUrl(string? project)
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<StagingMilestoneRes>> { Success = true, Data = new List<StagingMilestoneRes>() };
+            var mappedDto   = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse(new List<StagingMilestoneDto>());
+
+            _http.GetAsync<List<StagingMilestoneRes>>(PimsApiEndpoints.GetStagingMilestones).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.GetStagingRowsAsync(project);
+
+            // Assert
+            await _http.Received(1).GetAsync<List<StagingMilestoneRes>>(Arg.Is<string>(u => u == PimsApiEndpoints.GetStagingMilestones));
+        }
+
+        [Fact]
+        public async Task GetStagingRowsAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var errors      = new List<ApiError> { new() { Message = "Not found", Code = "NOT_FOUND" } };
+            var apiResponse = new ApiResponse<List<StagingMilestoneRes>> { Success = false, Errors = errors };
+            var mappedDto   = new ApiResponseDto<List<StagingMilestoneDto>>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _http.GetAsync<List<StagingMilestoneRes>>(PimsApiEndpoints.GetStagingMilestones).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.GetStagingRowsAsync(null);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("NOT_FOUND", result.Errors![0].Code);
+        }
+
+        #endregion
+
+        #region AddStagingRowAsync
+
+        [Fact]
+        public async Task AddStagingRowAsync_WithSuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            const int year = 2025;
+            var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
+            var request = new StagingMilestoneReq { Project = "PP001", Number = "M1" };
+            var url = string.Format(PimsApiEndpoints.AddStagingMilestone, year);
+            var apiResponse = new ApiResponse<StagingMilestoneRes> { Success = true, Data = new StagingMilestoneRes { Project = "PP001", Number = "M1" } };
+            var mappedDto = ApiResponseDto<StagingMilestoneDto>.SuccessResponse(new StagingMilestoneDto { Project = "PP001", Number = "M1" });
+
+            _mapper.Map<StagingMilestoneReq>(dto).Returns(request);
+            _http.PostAsync<StagingMilestoneReq, StagingMilestoneRes>(url, request).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<StagingMilestoneDto>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.AddStagingRowAsync(dto, year);
+
+            // Assert
+            Assert.True(result.Success);
+            _mapper.Received(1).Map<StagingMilestoneReq>(dto);
+            await _http.Received(1).PostAsync<StagingMilestoneReq, StagingMilestoneRes>(url, request);
+            _mapper.Received(1).Map<ApiResponseDto<StagingMilestoneDto>>(apiResponse);
+        }
+
+        [Fact]
+        public async Task AddStagingRowAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            const int year = 2025;
+            var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
+            var request = new StagingMilestoneReq { Project = "PP001", Number = "M1" };
+            var url = string.Format(PimsApiEndpoints.AddStagingMilestone, year);
+            var errors = new List<ApiError> { new() { Message = "Validation error", Code = "VALIDATION_ERROR" } };
+            var apiResponse = new ApiResponse<StagingMilestoneRes> { Success = false, Errors = errors };
+            var mappedDto = new ApiResponseDto<StagingMilestoneDto>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Validation error", Code = "VALIDATION_ERROR" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _mapper.Map<StagingMilestoneReq>(dto).Returns(request);
+            _http.PostAsync<StagingMilestoneReq, StagingMilestoneRes>(url, request).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<StagingMilestoneDto>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.AddStagingRowAsync(dto, year);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("VALIDATION_ERROR", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task AddStagingRowAsync_WhenMapperThrows_PropagatesException()
+        {
+            // Arrange
+            var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
+            _mapper.Map<StagingMilestoneReq>(dto).Throws(new AutoMapperMappingException("Mapping failed"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<AutoMapperMappingException>(() => _client.AddStagingRowAsync(dto, 2025));
+        }
+
+        #endregion
+
+        #region UpdateStagingRowAsync
+
+        [Fact]
+        public async Task UpdateStagingRowAsync_WithSuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            const int id = 12;
+            var dto = new StagingMilestoneDto { Id = id, Project = "PP001", Number = "M1" };
+            var request = new StagingMilestoneReq { Project = "PP001", Number = "M1" };
+            var url = string.Format(PimsApiEndpoints.UpdateStagingMilestone, id);
+            var apiResponse = new ApiResponse<StagingMilestoneRes> { Success = true, Data = new StagingMilestoneRes { Project = "PP001", Number = "M1" } };
+            var mappedDto = ApiResponseDto<StagingMilestoneDto>.SuccessResponse(new StagingMilestoneDto { Project = "PP001", Number = "M1" });
+
+            _mapper.Map<StagingMilestoneReq>(dto).Returns(request);
+            _http.PutAsync<StagingMilestoneReq, StagingMilestoneRes>(url, request).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<StagingMilestoneDto>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.UpdateStagingRowAsync(id, dto);
+
+            // Assert
+            Assert.True(result.Success);
+            await _http.Received(1).PutAsync<StagingMilestoneReq, StagingMilestoneRes>(url, request);
+        }
+
+        [Fact]
+        public async Task UpdateStagingRowAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            const int id = 12;
+            var dto = new StagingMilestoneDto { Id = id, Project = "PP001" };
+            var request = new StagingMilestoneReq { Project = "PP001" };
+            var url = string.Format(PimsApiEndpoints.UpdateStagingMilestone, id);
+            var errors = new List<ApiError> { new() { Message = "Not found", Code = "NOT_FOUND" } };
+            var apiResponse = new ApiResponse<StagingMilestoneRes> { Success = false, Errors = errors };
+            var mappedDto = new ApiResponseDto<StagingMilestoneDto>
+            {
+                Success = false,
+                Errors  = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } },
+                Meta    = new ApiMetaDto()
+            };
+
+            _mapper.Map<StagingMilestoneReq>(dto).Returns(request);
+            _http.PutAsync<StagingMilestoneReq, StagingMilestoneRes>(url, request).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<StagingMilestoneDto>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.UpdateStagingRowAsync(id, dto);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("NOT_FOUND", result.Errors![0].Code);
+        }
+
+        #endregion
+
+        #region DeleteStagingRowAsync
+
+        [Fact]
+        public async Task DeleteStagingRowAsync_WithSuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            const int id = 10;
+            var url = string.Format(PimsApiEndpoints.DeleteStagingMilestone, id);
+            var apiResponse = new ApiResponse<object> { Success = true, Data = new object() };
+            var mappedDto   = ApiResponseDto<object>.SuccessResponse(new object());
+
+            _http.DeleteAsync<object>(url).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.DeleteStagingRowAsync(id);
+
+            // Assert
+            Assert.True(result.Success);
+            await _http.Received(1).DeleteAsync<object>(Arg.Is<string>(u => u == url));
+        }
+
+        [Fact]
+        public async Task DeleteStagingRowAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            const int id = 10;
+            var url = string.Format(PimsApiEndpoints.DeleteStagingMilestone, id);
+            var errors = new List<ApiError> { new() { Message = "Not found", Code = "NOT_FOUND" } };
+            var apiResponse = new ApiResponse<object> { Success = false, Errors = errors };
+            var mappedDto = new ApiResponseDto<object>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Not found", Code = "NOT_FOUND" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.DeleteAsync<object>(url).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.DeleteStagingRowAsync(id);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("NOT_FOUND", result.Errors![0].Code);
+        }
+
+        #endregion
+
+        #region ClearStagingAsync
+
+        [Fact]
+        public async Task ClearStagingAsync_WithSuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            const string project = "PP001";
+            var url = string.Format(PimsApiEndpoints.ClearStagingMilestones, Uri.EscapeDataString(project));
+            var apiResponse = new ApiResponse<object> { Success = true, Data = new object() };
+            var mappedDto   = ApiResponseDto<object>.SuccessResponse(new object());
+
+            _http.DeleteAsync<object>(url).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.ClearStagingAsync(project);
+
+            // Assert
+            Assert.True(result.Success);
+            await _http.Received(1).DeleteAsync<object>(Arg.Is<string>(u => u == url));
+        }
+
+        [Fact]
+        public async Task ClearStagingAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var url = string.Format(PimsApiEndpoints.ClearStagingMilestones, Uri.EscapeDataString(project));
+            var errors = new List<ApiError> { new() { Message = "Server error", Code = "SERVER_ERROR" } };
+            var apiResponse = new ApiResponse<object> { Success = false, Errors = errors };
+            var mappedDto = new ApiResponseDto<object>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Server error", Code = "SERVER_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.DeleteAsync<object>(url).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.ClearStagingAsync(project);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("SERVER_ERROR", result.Errors![0].Code);
+        }
+
+        #endregion
+
+        #region ValidateStagingAsync
+
+        [Fact]
+        public async Task ValidateStagingAsync_WithTypeId_AppendsQueryParamsAndReturnsMappedDto()
+        {
+            // Arrange
+            const string project = "PP001";
+            const string typeId = "M";
+            const bool isDeliverableMode = true;
+            var expectedUrl = string.Format(PimsApiEndpoints.ValidateStagingMilestones, Uri.EscapeDataString(project)) +
+                              $"?typeId={Uri.EscapeDataString(typeId)}&isDeliverableMode={isDeliverableMode}";
+
+            var apiResponse = new ApiResponse<List<StagingMilestoneRes>> { Success = true, Data = new List<StagingMilestoneRes> { new() { Id = 1 } } };
+            var mappedDto   = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse(new List<StagingMilestoneDto> { new() { Id = 1 } });
+
+            _http.PostAsync<object, List<StagingMilestoneRes>>(expectedUrl, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.ValidateStagingAsync(project, typeId, isDeliverableMode);
+
+            // Assert
+            Assert.True(result.Success);
+            await _http.Received(1).PostAsync<object, List<StagingMilestoneRes>>(Arg.Is<string>(u => u == expectedUrl), Arg.Any<object>());
+        }
+
+        [Fact]
+        public async Task ValidateStagingAsync_WithoutTypeId_AppendsOnlyDeliverableMode()
+        {
+            // Arrange
+            const string project = "PP001";
+            const bool isDeliverableMode = false;
+            var expectedUrl = string.Format(PimsApiEndpoints.ValidateStagingMilestones, Uri.EscapeDataString(project)) +
+                              $"?isDeliverableMode={isDeliverableMode}";
+            var apiResponse = new ApiResponse<List<StagingMilestoneRes>> { Success = true, Data = new List<StagingMilestoneRes>() };
+            var mappedDto   = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse(new List<StagingMilestoneDto>());
+
+            _http.PostAsync<object, List<StagingMilestoneRes>>(expectedUrl, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            await _client.ValidateStagingAsync(project, null, isDeliverableMode);
+
+            // Assert
+            await _http.Received(1).PostAsync<object, List<StagingMilestoneRes>>(Arg.Is<string>(u => u == expectedUrl), Arg.Any<object>());
+        }
+
+        [Fact]
+        public async Task ValidateStagingAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var expectedUrl = string.Format(PimsApiEndpoints.ValidateStagingMilestones, Uri.EscapeDataString(project)) +
+                              "?isDeliverableMode=True";
+            var errors = new List<ApiError> { new() { Message = "Validation failed", Code = "VALIDATION_ERROR" } };
+            var apiResponse = new ApiResponse<List<StagingMilestoneRes>> { Success = false, Errors = errors };
+            var mappedDto = new ApiResponseDto<List<StagingMilestoneDto>>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Validation failed", Code = "VALIDATION_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<object, List<StagingMilestoneRes>>(expectedUrl, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.ValidateStagingAsync(project, null, true);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("VALIDATION_ERROR", result.Errors![0].Code);
+        }
+
+        #endregion
+
+        #region ImportStagingAsync
+
+        [Fact]
+        public async Task ImportStagingAsync_WithSuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            const string project = "PP001";
+            var url = string.Format(PimsApiEndpoints.ImportStagingMilestones, Uri.EscapeDataString(project));
+            var apiResponse = new ApiResponse<object> { Success = true, Data = new object() };
+            var mappedDto   = ApiResponseDto<object>.SuccessResponse(new object());
+
+            _http.PostAsync<object, object>(url, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.ImportStagingAsync(project);
+
+            // Assert
+            Assert.True(result.Success);
+            await _http.Received(1).PostAsync<object, object>(Arg.Is<string>(u => u == url), Arg.Any<object>());
+        }
+
+        [Fact]
+        public async Task ImportStagingAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var url = string.Format(PimsApiEndpoints.ImportStagingMilestones, Uri.EscapeDataString(project));
+            var errors = new List<ApiError> { new() { Message = "Server error", Code = "SERVER_ERROR" } };
+            var apiResponse = new ApiResponse<object> { Success = false, Errors = errors };
+            var mappedDto = new ApiResponseDto<object>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Server error", Code = "SERVER_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<object, object>(url, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.ImportStagingAsync(project);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("SERVER_ERROR", result.Errors![0].Code);
+        }
+
+        #endregion
+
+        #region ImportWithOverwriteAsync
+
+        [Fact]
+        public async Task ImportWithOverwriteAsync_WithSuccessResponse_ReturnsMappedDto()
+        {
+            // Arrange
+            const string project = "PP001";
+            var url = string.Format(PimsApiEndpoints.ImportOverwriteStagingMilestones, Uri.EscapeDataString(project));
+            var apiResponse = new ApiResponse<object> { Success = true, Data = new object() };
+            var mappedDto   = ApiResponseDto<object>.SuccessResponse(new object());
+
+            _http.PostAsync<object, object>(url, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.ImportWithOverwriteAsync(project);
+
+            // Assert
+            Assert.True(result.Success);
+            await _http.Received(1).PostAsync<object, object>(Arg.Is<string>(u => u == url), Arg.Any<object>());
+        }
+
+        [Fact]
+        public async Task ImportWithOverwriteAsync_WhenApiReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var url = string.Format(PimsApiEndpoints.ImportOverwriteStagingMilestones, Uri.EscapeDataString(project));
+            var errors = new List<ApiError> { new() { Message = "Server error", Code = "SERVER_ERROR" } };
+            var apiResponse = new ApiResponse<object> { Success = false, Errors = errors };
+            var mappedDto = new ApiResponseDto<object>
+            {
+                Success = false,
+                Errors = new List<ApiErrorDto> { new() { Message = "Server error", Code = "SERVER_ERROR" } },
+                Meta = new ApiMetaDto()
+            };
+
+            _http.PostAsync<object, object>(url, Arg.Any<object>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<object>>(apiResponse).Returns(mappedDto);
+
+            // Act
+            var result = await _client.ImportWithOverwriteAsync(project);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("SERVER_ERROR", result.Errors![0].Code);
+        }
+
+        #endregion
     }
 }

@@ -20,7 +20,7 @@
 	<PackageReference Include="AWSSDK.CloudWatchLogs" Version="4.0.15.3" />
     <PackageReference Include="Serilog.Sinks.AwsCloudWatch" Version="4.4.42" />
 	<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.5" />
-	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
+	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>
 
   <ItemGroup>    

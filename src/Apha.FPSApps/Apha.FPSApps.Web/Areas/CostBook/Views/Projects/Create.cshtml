@@ -1,4 +1,4 @@
-﻿@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
+@model Apha.FPSApps.Web.Areas.CostBook.Models.ProjectCreateEditViewModel
 
 @{
     ViewData["Title"] = "Add Project";
@@ -9,6 +9,13 @@
         var picker = document.getElementById(pickerId);
         if (picker) {
             try { picker.showPicker(); } catch (e) { picker.click(); }
+        }
+    }
+
+    function handleDatePickerKeydown(event, pickerId) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openDatePicker(pickerId);
         }
     }
 
@@ -144,8 +151,8 @@
 
                         @if (!ViewData.ModelState.IsValid)
                         {
-                            <div asp-validation-summary="All" class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" data-module="govuk-error-summary">
-                                <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+                            <div asp-validation-summary="All" class="govuk-error-summary" aria-label="There is a problem" role="alert" data-module="govuk-error-summary">
+                                <h2 class="govuk-error-summary__title" aria-hidden="true">There is a problem</h2>
                             </div>
                         }
 
@@ -153,14 +160,16 @@
 
                             <!-- Costing Book Code (auto-generated on save, display-only) -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
-                                <label class="govuk-label label_width mb-0 pt-1">Costing Book Code:</label>
+                                <label for="CostingBookCode" class="govuk-label label_width mb-0 pt-1">Costing Book Code:</label>
                                 <div>
                                     <input type="text"
+                                        id="CostingBookCode"
                                            class="govuk-input width-200 read-only margin_left_5"
                                            value="@Model.ProjectId"
                                            placeholder=""
                                            readonly
-                                           tabindex="-1">
+                                           tabindex="-1"
+                                           aria-label="Costing Book Code">
                                 </div>
                             </div>
 
@@ -219,7 +228,7 @@
                                 <label for="StartdateDisplay" class="govuk-label label_width mb-0 pt-1">
                                     Start Date:<span class="sup_color_red">*</span>
                                 </label>
-                                <div class="me-4">
+                                <div>
                                     <div style="position:relative; display:flex; align-items:center;" class="margin_left_5">
                                         <input type="text"
                                                id="StartdateDisplay"
@@ -228,26 +237,37 @@
                                                placeholder="dd/mm/yyyy"
                                                maxlength="10"
                                                autocomplete="off"
+                                               aria-describedby="StartdateError"
                                                oninput="formatDateInput(this)"
                                                onblur="validateAndSyncDate('StartdateDisplay', 'StartdateBinding', 'StartdateError'); calculateStartFYear();">
                                         <button type="button"
                                                 onclick="openDatePicker('StartdatePicker')"
-                                                style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
-                                                aria-label="Open date picker for Start Date">&#128197;</button>
+                                                onkeydown="handleDatePickerKeydown(event, 'StartdatePicker')"
+                                                tabindex="0"
+                                                aria-label="Choose date from calendar for Start Date"
+                                                title="Choose date from calendar"
+                                                style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;">&#128197;</button>
                                         <input type="hidden"
                                                name="StartDate"
                                                id="StartdateBinding"
-                                               value="@(Model.StartDate.HasValue ? Model.StartDate.Value.ToString("yyyy-MM-dd") : string.Empty)">
+                                               value="@(Model.StartDate.HasValue ? Model.StartDate.Value.ToString("yyyy-MM-dd") : string.Empty)"
+                                               aria-hidden="true">
                                         <input type="date"
                                                id="StartdatePicker"
                                                value="@(Model.StartDate.HasValue ? Model.StartDate.Value.ToString("yyyy-MM-dd") : string.Empty)"
+                                               tabindex="-1"
+                                               aria-hidden="true"
+                                               aria-label="Start date calendar picker"
                                                style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                onchange="syncDateToText('StartdatePicker', 'StartdateDisplay', 'StartdateBinding', 'StartdateError')">
                                     </div>
                                     <span id="StartdateError" class="govuk-error-message" style="display:none;"></span>
                                     <span asp-validation-for="StartDate" class="govuk-error-message"></span>
                                 </div>
-                                <label asp-for="IsDefraProject" class="govuk-label label_width mb-0 pt-1">
+                                <label asp-for="IsDefraProject" class="govuk-label mb-0 pt-1" style="
+                                    min-width: 165px;
+                                    text-align: right;
+                                    ">
                                     Is Defra Project?:<span class="sup_color_red">*</span>
                                 </label>
                                 <div class="d-flex align-items-center gap-2 margin_left_5">
@@ -267,7 +287,7 @@
                             <div class="govuk-form-group d-flex align-items-start mb-2">
                                 <label asp-for="StartFYear" class="govuk-label label_width mb-0 pt-1">Start (Financial) Year:</label>
                                 <div class="me-4">
-                                    <input asp-for="StartFYear" asp-format="{0:0}" class="govuk-input width-200 margin_left_5 read-only" readonly>
+                                    <input asp-for="StartFYear" asp-format="{0:0}" class="govuk-input width-200 margin_left_5 read-only" readonly tabindex="-1">
                                     <span asp-validation-for="StartFYear" class="govuk-error-message"></span>
                                 </div>
                                 <label asp-for="Euroconvrate" class="govuk-label label_width mb-0 pt-1">Rate Used (£):</label>
@@ -279,7 +299,7 @@
 
                             <!-- Submitted By Firstname + Prepared By -->
                             <div class="govuk-form-group d-flex align-items-start mb-2">
-                                <label asp-for="SubmittedByFName" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word; margin-left: -16px;">Submitted By - Firstname:</label>
+                                <label asp-for="SubmittedByFName" class="govuk-label label_width mb-0 pt-1" style="overflow-wrap: break-word; ">Submitted By - Firstname:</label>
                                 <div class="me-4">
                                     <input asp-for="SubmittedByFName" class="govuk-input width-200 margin_left_5">
                                     <span asp-validation-for="SubmittedByFName" class="govuk-error-message"></span>
@@ -298,7 +318,7 @@
                                     <input asp-for="SubmittedByLName" class="govuk-input width-200 margin_left_5">
                                     <span asp-validation-for="SubmittedByLName" class="govuk-error-message"></span>
                                 </div>
-                                <label for="chkInflation" class="govuk-label label_width mb-0 pt-1">Include Inflation?:</label>
+                                <label class="govuk-label label_width mb-0 pt-1" >Include Inflation?:</label>
                                 <div class="d-flex align-items-center gap-2 margin_left_5">
                                     <div class="govuk-checkboxes govuk-checkboxes--small">
                                         <div class="govuk-checkboxes__item">
@@ -307,8 +327,11 @@
                                                    name="Inflation"
                                                    value="-1"
                                                    class="govuk-checkboxes__input"
+                                                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.checked = !this.checked; }"
                                             @(Model.Inflation.HasValue && Model.Inflation.Value == -1 ? "checked=\"checked\"" : "") />
-                                            <label class="govuk-checkboxes__label" for="chkInflation"></label>
+                                            <label class="govuk-checkboxes__label" for="chkInflation">
+                                                <span class="govuk-visually-hidden">Include Inflation</span>
+                                            </label>
                                         </div>
                                     </div>
                                     <span class="warning-text" style="font-size:13px; width:286px; color:#353535; border:1px dashed #0d6efd; border-radius:4px; padding:2px;">
@@ -329,19 +352,28 @@
                                                placeholder="dd/mm/yyyy"
                                                maxlength="10"
                                                autocomplete="off"
+                                               aria-describedby="DateOfSubmissionError"
                                                oninput="formatDateInput(this)"
                                                onblur="validateAndSyncDate('DateOfSubmissionDisplay', 'DateOfSubmissionBinding', 'DateOfSubmissionError')">
                                         <button type="button"
                                                 onclick="openDatePicker('DateOfSubmissionPicker')"
-                                                style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;"
-                                                aria-label="Open date picker for Date of Submission">&#128197;</button>
+                                                onkeydown="handleDatePickerKeydown(event, 'DateOfSubmissionPicker')"
+                                                tabindex="0"
+                                                aria-label="Choose date from calendar for Date of Submission"
+                                                title="Choose date from calendar"
+                                                style="margin-left:4px; padding:6px 10px; cursor:pointer; background:#f3f2f1; border:2px solid #0b0c0c; font-size:1rem; line-height:1;">&#128197;</button>
                                         <input type="hidden"
                                                name="DateOfSubmission"
                                                id="DateOfSubmissionBinding"
-                                               value="@Model.DateOfSubmission?.ToString("yyyy-MM-dd")">
+                                               value="@Model.DateOfSubmission?.ToString("yyyy-MM-dd")"
+                                               aria-hidden="true">
                                         <input type="date"
                                                id="DateOfSubmissionPicker"
+                                               name="DateOfSubmissionPicker"
                                                value="@Model.DateOfSubmission?.ToString("yyyy-MM-dd")"
+                                               tabindex="-1"
+                                               aria-hidden="true"
+                                               aria-label="Date of submission calendar picker"
                                                style="position:absolute; top:0; left:0; opacity:0; width:1px; height:1px; pointer-events:auto;"
                                                onchange="syncDateToText('DateOfSubmissionPicker', 'DateOfSubmissionDisplay', 'DateOfSubmissionBinding', 'DateOfSubmissionError')">
                                     </div>
@@ -378,11 +410,11 @@
         $(document).ready(function () {
             @if (TempData["Success"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Success"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Success"])', AlertType.SUCCESS);</text>
             }
             @if (TempData["Error"] != null)
             {
-                <text>showGovukAlert('@Html.Raw(TempData["Error"])');</text>
+                <text>showAlertMessage('@Html.Raw(TempData["Error"])', AlertType.ERROR);</text>
             }
 
             // ── Client-side validation for StartDate (custom date picker) ─────

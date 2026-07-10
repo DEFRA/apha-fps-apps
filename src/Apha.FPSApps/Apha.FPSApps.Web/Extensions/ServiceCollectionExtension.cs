@@ -2,12 +2,14 @@ using Apha.Common.Utilities.ExcelExport;
 using Apha.Common.Utilities.StateManagement;
 using Apha.FPSApps.Application.Interfaces.Costbook;
 using Apha.FPSApps.Application.Interfaces.FPS;
+using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Interfaces.PACT;
 using Apha.FPSApps.Application.Interfaces.PIMS;
 using Apha.FPSApps.Application.Services.Costbook;
 using Apha.FPSApps.Application.Services.FPS;
 using Apha.FPSApps.Application.Services.PACT;
 using Apha.FPSApps.Application.Services.PIMS;
+using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Web.Handler;
 
 namespace Apha.FPSApps.Web.Extensions
@@ -86,15 +88,21 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<ISummarisedWorkgroupTimeService, SummarisedWgTimeService>();
             services.AddScoped<IAnimalService, AnimalService>();
+            services.AddScoped<Apha.FPSApps.Application.Interfaces.FPS.IUserService, Apha.FPSApps.Application.Services.FPS.UserService>();
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
+            services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
             services.AddScoped<IPlanStaffZTCodeService, PlanStaffZTCodeService>();
+            services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
+            services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
+            //   used by IFpsProfitCentreApiClient and other IFps*ApiClient registrations (see ApiClientExtension.cs).
+            services.AddScoped<IFpsProjectAuditTrailApiClient, FpsProjectAuditTrailApiClient>();
             return services;
         }
     }

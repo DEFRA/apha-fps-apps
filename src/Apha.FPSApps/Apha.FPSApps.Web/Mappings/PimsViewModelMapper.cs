@@ -56,6 +56,8 @@ namespace Apha.FPSApps.Web.Mappings
             CreateMap<InvoiceItem, RadTrackInvoiceDto>().ReverseMap();
             CreateMap<InvoiceViewModel, RadTrackInvoiceDto>().ReverseMap();
             CreateMap<InvoiceTotalsItem, RadTrackInvoiceTotalsDto>().ReverseMap();
+            CreateMap<StagingMilestoneItem, StagingMilestoneDto>().ReverseMap();
+
         }
     }
 }

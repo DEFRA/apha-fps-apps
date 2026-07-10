@@ -11,6 +11,8 @@ namespace Apha.FPS.DataAccess.Repositories
 {
     public class ProjectRepository : BaseRepository, IProjectRepository
     {
+        private const string FilterKeyParentProject = "ParentProject";
+
         private readonly FpsDbContext _dbContext;
         private readonly IFpsRequestContext _requestContext;
 
@@ -80,7 +82,7 @@ namespace Apha.FPS.DataAccess.Repositories
                                where EF.Functions.ILike(pg.UserEmail!, _requestContext.UserEmailId) && pg.ProjectGroupName == projectGroup
                                select pv).AsQueryable();
 
-            projectQuery = ApplyProjectFilterProjectProfitabilityVLA(projectQuery, query.Filter);
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
 
             var result = await projectQuery.ToListAsync();
@@ -125,7 +127,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 .Where(p => EF.Functions.ILike(p.UserEmail!, _requestContext.UserEmailId) && p.Program == programNo)
                 .Select(pv => MapToProject(pv)).AsQueryable();
 
-            projectQuery = ApplyProjectFilterProjectProfitabilityVLA(projectQuery, query.Filter);
+            projectQuery = ApplyProjectFilter(projectQuery, query.Filter);
             projectQuery = (IQueryable<Project>)ApplySorting(projectQuery, query.SortBy, query.Descending);
 
             var result = await projectQuery.ToListAsync();
@@ -210,6 +212,21 @@ namespace Apha.FPS.DataAccess.Repositories
             var result = await querProjects.ToListAsync();
 
             // Apply paging
+            return ApplyPaging(result, query.Page, query.PageSize);
+        }
+
+        public async Task<PagedData<PactProjectView>> GetPagedPactProjectsByProgramAsync(PaginationParameters<string> query, string programNo)
+        {
+            var projectQuery = _dbContext.PactProjectViews
+                .AsNoTracking()
+                .Where(p => p.Program == programNo).AsQueryable();
+
+            projectQuery = ApplyPactProjectFilter(projectQuery, query.Filter);
+
+            projectQuery = (IQueryable<PactProjectView>)ApplyPactProjectSorting(projectQuery, query.SortBy, query.Descending);
+
+            var result = await projectQuery.ToListAsync();
+
             return ApplyPaging(result, query.Page, query.PageSize);
         }
 
@@ -479,40 +496,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
-                query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
-
-            if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
-                query = query.Where(x => EF.Functions.ILike(x.ProjectTitle, $"%{projectTitle}%"));
-
-            if (dict.TryGetValue("Manager", out var manager) && manager != null)
-                query = query.Where(x => EF.Functions.ILike(x.Manager!, $"%{manager}%"));
-
-            if (dict.TryGetValue("OracleProjectCode", out var oracleProjectCode) && oracleProjectCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.OracleProjectCode!, $"%{oracleProjectCode}%"));
-
-            if (dict.TryGetValue("SubAccountCode", out var subAccountCode) && subAccountCode != null)
-                query = query.Where(x => EF.Functions.ILike(x.SubAccountCode!, $"%{subAccountCode}%"));
-
-            if (dict.TryGetValue("CostCentre", out var costCentre) && costCentre != null
-                && double.TryParse(costCentre.ToString(), out var costCentreValue))
-                query = query.Where(x => x.CostCentre == costCentreValue);
-
-            return query;
-        }
-
-        private static IQueryable<Project> ApplyProjectFilterProjectProfitabilityVLA(IQueryable<Project> query, string? filter)
-        {
-            if (string.IsNullOrEmpty(filter))
-                return query;
-
-            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
-            if (filterModel == null)
-                return query;
-
-            var dict = (IDictionary<string, object>)filterModel;
-
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+            if (dict.TryGetValue(FilterKeyParentProject, out var parentProject) && parentProject != null)
                 query = query.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
 
             if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
@@ -567,15 +551,22 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return property switch
             {
-                "parentproject" => ApplyOrder(query, p => p.ParentProject, descending),
-                "projecttitle" => ApplyOrder(query, p => p.ProjectTitle, descending),
-                "program" => ApplyOrder(query, p => p.Program, descending),
-                "manager" => ApplyOrder(query, p => p.Manager, descending),
-                "budgetcvl" => ApplyOrder(query, p => p.BudgetCvl, descending),
-                "costcentre" => ApplyOrder(query, p => p.CostCentre, descending),
-                "oracleprojectcode" => ApplyOrder(query, p => p.OracleProjectCode, descending),
-                "subaccountcode" => ApplyOrder(query, p => p.SubAccountCode, descending),
-                "projectstatus" => ApplyOrder(query, p => p.ProjectStatus, descending),
+                "parentproject"    => ApplyOrder(query, p => p.ParentProject, descending),
+                "projecttitle"     => ApplyOrder(query, p => p.ProjectTitle, descending),
+                "program"          => ApplyOrder(query, p => p.Program, descending),
+                "manager"          => ApplyOrder(query, p => p.Manager, descending),
+                "projectgroup"     => ApplyOrder(query, p => p.ProjectGroup, descending),
+                "customer"         => ApplyOrder(query, p => p.Customer, descending),
+                "contract"         => ApplyOrder(query, p => p.Contract, descending),
+                "disease"          => ApplyOrder(query, p => p.Disease, descending),
+                "projectstatus"    => ApplyOrder(query, p => p.ProjectStatus, descending),
+                "budgetcvl"        => ApplyOrder(query, p => p.BudgetCvl, descending),
+                "budgetext"        => ApplyOrder(query, p => p.CustIncome, descending),
+                "transferincome"   => ApplyOrder(query, p => p.TransferIncome, descending),
+                "plancaseworkdebit"=> ApplyOrder(query, p => p.PlanCaseWorkDebit, descending),
+                "costcentre"       => ApplyOrder(query, p => p.CostCentre, descending),
+                "oracleprojectcode"=> ApplyOrder(query, p => p.OracleProjectCode, descending),
+                "subaccountcode"   => ApplyOrder(query, p => p.SubAccountCode, descending),
                 _ => query.OrderBy(p => p.ParentProject)
             };
         }
@@ -596,7 +587,7 @@ namespace Apha.FPS.DataAccess.Repositories
 
             var dict = (IDictionary<string, object>)filterModel;
 
-            if (dict.TryGetValue("ParentProject", out var parentProject) && parentProject != null)
+            if (dict.TryGetValue(FilterKeyParentProject, out var parentProject) && parentProject != null)
             {
                 queryProjects = queryProjects.Where(x => EF.Functions.ILike(x.ParentProject, $"%{parentProject}%"));
             }
@@ -604,6 +595,11 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("ProjectTitle", out var projectTitle) && projectTitle != null)
             {
                 queryProjects = queryProjects.Where(x => EF.Functions.ILike(x.ProjectTitle, $"%{projectTitle}%"));
+            }
+
+            if(dict.TryGetValue("Manager", out var manager) && manager != null)
+            {
+                queryProjects = queryProjects.Where(x => x.Manager != null && EF.Functions.ILike(x.Manager, $"%{manager}%"));
             }
 
             return queryProjects;
@@ -625,6 +621,8 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 "parentproject" => ApplyPactProjectOrder(query, i => i.ParentProject, descending),
                 "projecttitle"  => ApplyPactProjectOrder(query, i => i.ProjectTitle, descending),
+                "manager"       => ApplyPactProjectOrder(query, i => i.Manager, descending),
+                "projectstatus" => ApplyPactProjectOrder(query, i => i.ProjectStatus, descending),
                 _ => query.OrderBy(e => e.ParentProject)
             };
         }
@@ -866,7 +864,7 @@ namespace Apha.FPS.DataAccess.Repositories
             {
                 TestCode        = tr.TestCode,
                 Buyer           = tr.Buyer,
-                UnitPrice       = tr.UnitPrice,
+                UnitPrice       = (double?)tr.UnitPrice,
                 NoRequired      = tr.NoRequired,
                 ProjectBuyerCode = tr.ProjectBuyerCode,
                 TestBuyerCode   = tr.TestBuyerCode,
@@ -1099,7 +1097,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 {
                     TestCode        = tr.TestCode,
                     Buyer           = tr.Buyer,
-                    UnitPrice       = tr.UnitPrice,
+                    UnitPrice       = (double?)tr.UnitPrice,
                     NoRequired      = tr.NoRequired,
                     ProjectBuyerCode = tr.ProjectBuyerCode,
                     TestBuyerCode   = tr.TestBuyerCode,
@@ -1213,7 +1211,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 {
                     TestCode         = tr.TestCode,
                     Buyer            = tr.Buyer,
-                    UnitPrice        = tr.UnitPrice,
+                    UnitPrice        = (double?)tr.UnitPrice,
                     NoRequired       = tr.NoRequired,
                     ProjectBuyerCode = tr.ProjectBuyerCode,
                     TestBuyerCode    = tr.TestBuyerCode,
@@ -1363,14 +1361,14 @@ namespace Apha.FPS.DataAccess.Repositories
             UserId = userId
         };
 
-        private record ProjectProfitabilityEntry(
+        private sealed record ProjectProfitabilityEntry(
             string? ParentProject,
             decimal? BudgetCvl,
             decimal? Profit,
             string? ProjectStatus,
             string? Program);
 
-        private record VlaProjectEntry(
+        private sealed record VlaProjectEntry(
             string? ParentProject,
             decimal? BudgetCvl,
             string? ProjectStatus,
@@ -1525,7 +1523,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     && EF.Functions.ILike(pg.SectorName!, "%charge%")
                 select new
                 {                    
-                    sectorCharge = (pg.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m,
+                    sectorCharge = string.Equals((pg.SectorName ?? "").Trim(), "charge", StringComparison.OrdinalIgnoreCase) ? 1m : 0m,
                     JobCode = sj.JobCode,                    
                     PlannedHours = sj.PlannedHours,
                     ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate
@@ -1653,7 +1651,7 @@ namespace Apha.FPS.DataAccess.Repositories
             var filterDict = ParseFilterDict(query.Filter);
             if (filterDict.TryGetValue("JobCode", out var jobCode))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{jobCode}%"));
-            if (filterDict.TryGetValue("ParentProject", out var parentProject))
+            if (filterDict.TryGetValue(FilterKeyParentProject, out var parentProject))
                 rawQuery = rawQuery.Where(x => EF.Functions.ILike(x.p.ParentProject!, $"%{parentProject}%"));
 
             var projects = await rawQuery
@@ -1721,7 +1719,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     && EF.Functions.ILike(pg.SectorName!, "%charge%")
                 select new
                 {
-                    sectorCharge = (pg.SectorName ?? "").Trim().ToLower() == "charge" ? 1m : 0m,
+                    sectorCharge = string.Equals((pg.SectorName ?? "").Trim(), "charge", StringComparison.OrdinalIgnoreCase) ? 1m : 0m,
                     JobCode = sj.JobCode,
                     PlannedHours = sj.PlannedHours,
                     ChargeRate = p.IsDefraProject == 0 ? pcg.ChargeRate : pcg.DefraChargeRate

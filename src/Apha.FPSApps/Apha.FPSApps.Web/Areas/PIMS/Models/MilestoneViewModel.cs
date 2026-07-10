@@ -11,5 +11,6 @@ namespace Apha.FPSApps.Web.Areas.PIMS.Models
         public DataGridConfig<MilestoneItem> MilestonesGrid { get; set; } = new();
         public DataGridConfig<MilestoneFormDatesItem> MilestoneFormDatesGrid { get; set; } = new();
         public bool FormRequired { get; set; }
+        public char TypeLookUp { get; set; }
     }
 }

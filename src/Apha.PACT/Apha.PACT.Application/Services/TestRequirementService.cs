@@ -72,7 +72,7 @@ namespace Apha.PACT.Application.Services
         public async Task<TestRequirementtDto> AddTestReqmtAsync(TestRequirementtDto dto)
         {
             // ITrig: both fields null
-            if (string.IsNullOrWhiteSpace(dto.ProjectBuyerCode) && string.IsNullOrWhiteSpace(dto.TestBuyerCode))
+            if (string.IsNullOrWhiteSpace(dto.Buyer) && string.IsNullOrWhiteSpace(dto.TestCode))
                 throw new InvalidOperationException("Must fill in Project Buyer or Test Buyer");
 
             // ITrig: project must exist when ProjectBuyerCode is provided
