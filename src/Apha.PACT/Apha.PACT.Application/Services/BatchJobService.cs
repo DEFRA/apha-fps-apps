@@ -43,8 +43,8 @@ namespace Apha.PACT.Application.Services
         public async Task<BatchJobEventTriggerDto> TriggerRecreateSummariesJobAsync(int month, int contextyear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
+            
             var note = $"'{RecreateSummariesJobName}' is initiated for {month} - {contextyear}.";
-
 
             if (month < 1 || month > 12)
                 errors.Add(new BusinessValidationError("Month must be a numeric value between 1 and 12.", "INVALID_MONTH"));
@@ -56,7 +56,7 @@ namespace Apha.PACT.Application.Services
                 throw new InvalidOperationException($"Provided Context year is not valid.");
 
             if (string.IsNullOrEmpty(requestedBy))
-                throw new InvalidOperationException($"RequestedBy is not required.");
+                throw new InvalidOperationException($"RequestedBy is required.");
 
 
             var releasePeriods = await _releaseRepository.GetReleasePeriodsAsync();
@@ -68,7 +68,7 @@ namespace Apha.PACT.Application.Services
             var canRun = await _repository.CanRunBatchJobAsync(RecreateSummariesJobName);
             if (!canRun)
             {
-                throw new InvalidOperationException($"Job '{RecreateSummariesJobName}' is already running.");
+                throw new InvalidOperationException($"Job '{RecreateSummariesJobName}' is already running or initiated.");
             }
 
             var queued = await _repository.EnqueueBatchJobAsync(RecreateSummariesJobName, requestedBy, correlationId, note);
@@ -78,10 +78,8 @@ namespace Apha.PACT.Application.Services
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
 
             var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
-            result.EventId = eventId;          // set the field AutoMapper ignored
+            result.EventId = eventId; 
             return result;
-
-           /// return _mapper.Map<BatchJobQueueDto>(queued);
         }
 
         private static EventDetail BuildReCreateJobEvent(string requestedBy, string correlationId, int month, int contextYear)

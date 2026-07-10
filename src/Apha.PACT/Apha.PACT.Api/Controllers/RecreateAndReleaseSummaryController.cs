@@ -1,13 +1,11 @@
 using Apha.Common.Contracts;
 using Apha.Common.Contracts.PACT;
-using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Core.Interfaces;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Apha.PACT.Api.Controllers
@@ -93,7 +91,7 @@ namespace Apha.PACT.Api.Controllers
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with a list of <see cref="BatchJobHistoryRes"/>.</returns>
-        [HttpGet("/recreatesummary/batchjob/history")]
+        [HttpGet("/api/v1/recreatesummary/batchjob/history")]
         public async Task<IActionResult> GetBatchJobHistory([FromQuery] QueryParameters<string> query, [FromQuery] string jobName)
         {
             var result = await _batchJobService.GetBatchJobsHistoryAsync(query,jobName);
@@ -105,7 +103,7 @@ namespace Apha.PACT.Api.Controllers
         /// </summary>
         /// <param name="jobName">The name of the batch job.</param>
         /// <returns><c>200 OK</c> with <c>true</c> if the job can run; <c>false</c> if it is already running.</returns>
-        [HttpGet("/recreatesummary/batchjob/canrun")]
+        [HttpGet("/api/v1/recreatesummary/batchjob/canrun")]
         public async Task<IActionResult> CanRunBatchJob([FromQuery] string jobName)
         {
             var result = await _batchJobService.CanRunBatchJobAsync(jobName);
@@ -119,8 +117,8 @@ namespace Apha.PACT.Api.Controllers
         /// then enqueues the job.
         /// </summary>
         /// <param name="request">Request body containing the target month (1–12).</param>
-        /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobQueueRes"/>.</returns>
-        [HttpPost("recreatesummary/trigger")]
+        /// <returns><c>202 Accepted</c> with the enqueued <see cref="BatchJobEventTriggerRes"/>.</returns>
+        [HttpPost("/api/v1/recreatesummary/trigger")]
         public async Task<IActionResult> TriggerRecreateSummariesJob([FromBody] RecreateSummariesReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
             var result = await _batchJobService.TriggerRecreateSummariesJobAsync(request.Month, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);

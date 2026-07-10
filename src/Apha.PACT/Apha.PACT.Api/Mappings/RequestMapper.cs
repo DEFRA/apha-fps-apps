@@ -2,7 +2,6 @@
 using Apha.Common.Contracts.PACT;
 using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Pagination;
-using Apha.PACT.Core.Entities;
 using AutoMapper;
 
 namespace Apha.PACT.Api.Mappings

@@ -1,13 +1,8 @@
-﻿using Apha.Common.Contracts.PACT;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Apha.PACT.Application.Dtos
+﻿namespace Apha.PACT.Application.Dtos
 {
     public class BatchJobEventTriggerDto
     {
-        public BatchJobQueueDto Jobqueue { get; set; }
-        public string EventId { get; set; }
+        public BatchJobQueueDto Jobqueue { get; set; } = null!;
+        public string EventId { get; set; } = string.Empty;
     }
 }

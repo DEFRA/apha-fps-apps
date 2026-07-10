@@ -4,7 +4,6 @@ using Apha.PACT.Core.Pagination;
 using Apha.PACT.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using System.Net.NetworkInformation;
 
 namespace Apha.PACT.DataAccess.Repository
 {
@@ -23,7 +22,7 @@ namespace Apha.PACT.DataAccess.Repository
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-               where jm.JobName == jobName
+               where EF.Functions.ILike(jm.JobName, jobName)
                 select new BatchJobHistory
                 {
                     JobId = jm.JobId,
@@ -35,8 +34,6 @@ namespace Apha.PACT.DataAccess.Repository
                     ErrorMessage = jq.ErrorMessage,
                     Status = js.Status
                 };
-
-            Console.WriteLine(jobHistoriesQuery.ToQueryString());
 
             jobHistoriesQuery = (IQueryable<BatchJobHistory>)ApplySorting(jobHistoriesQuery, query.SortBy?.ToLower(), query.Descending);
 
@@ -50,7 +47,7 @@ namespace Apha.PACT.DataAccess.Repository
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-                where jm.JobName == jobName &&  (js.Status.ToLower() == "running" || js.Status.ToLower() == "initiated")
+                where EF.Functions.ILike(jm.JobName, jobName) && (EF.Functions.ILike(js.Status, "running") || EF.Functions.ILike(js.Status, "initiated"))
                 select jq.JobqueueId
             ).AnyAsync();
 
@@ -63,12 +60,12 @@ namespace Apha.PACT.DataAccess.Repository
 
             var job = await _context.BatchJobs
                 .AsNoTracking()
-                .FirstOrDefaultAsync(j => j.JobName == jobName)
+                .FirstOrDefaultAsync(j => EF.Functions.ILike(j.JobName, jobName))
                 ?? throw new KeyNotFoundException($"Batch job '{jobName}' was not found.");
 
             var initiatedStatus = await _context.BatchJobStatuses
                 .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.JobId == job.JobId && s.Status.ToLower() == "initiated")
+                .FirstOrDefaultAsync(s => s.JobId == job.JobId && EF.Functions.ILike(s.Status, "initiated"))
                 ?? throw new KeyNotFoundException($"Status 'Running' not found for job '{jobName}'.");
 
             var strategy = _context.Database.CreateExecutionStrategy();

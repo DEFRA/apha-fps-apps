@@ -111,12 +111,11 @@ namespace Apha.PACT.Api.Extensions
                 .Bind(configuration.GetRequiredSection(WorkGroupReportEmailSettings.SectionName))
                 .ValidateOnStart();
             
-            
             services.AddApplicationServices();
 
             builder.Services.AddSingleton<IAmazonEventBridge>(_ =>
-           new AmazonEventBridgeClient(
-               RegionEndpoint.GetBySystemName(configuration.GetValue<string>("EventBridge:Region"))));
+            new AmazonEventBridgeClient(
+                RegionEndpoint.GetBySystemName(configuration.GetValue<string>("EventBridge:Region"))));
 
             builder.Services.AddScoped<IEventPublisherService, EventBridgePublisherService>();
 

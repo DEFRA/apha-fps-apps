@@ -7,6 +7,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Folder Include="Apha.Common.Contracts\" />
 		<Folder Include="Contracts\Costbook\" />
 	</ItemGroup>
 
