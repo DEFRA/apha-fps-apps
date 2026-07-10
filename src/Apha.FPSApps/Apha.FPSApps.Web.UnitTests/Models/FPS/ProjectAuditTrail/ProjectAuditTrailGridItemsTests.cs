@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Web.UnitTests.Models.FPS.ProjectAuditTrail
 
             // Assert
             Assert.Equal(GridColumnType.DateTime, dateTimeColumn.ColumnType);
-            Assert.Equal("dd/MM/yyyy HH:mm", dateTimeColumn.DateFormat);
+            Assert.Equal("dd/MM/yyyy HH:mm", dateTimeColumn.DateTimeFormatHhMm);
         }
     }
 }
