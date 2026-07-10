@@ -61,25 +61,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 }
             }
 
-            viewModel.StaffGrid = new DataGridConfig<SetUpStaffResourcesItem>
-            {
-                GridId = "ssrStaffGrid",
-                Title = "Staff",
-                ShowCheckboxColumn = false,
-                ShowPagination = true,
-                KeyProperty = "PactId",
-                AllowAdd = false,
-                AllowEdit = true,
-                EditFunction = "editSsrStaff",
-                AllowDelete = false,
-                AllowRowSelection = true,
-                RowSelectFunction = "ssrOnStaffRowSelect",
-                BindGridUrl = "/FPS/SetUpStaffResources/LoadStaffGrid",
-                ExtraFilterMethod = "ssrGetStaffExtraFilters",
-                Data = new List<SetUpStaffResourcesItem>(),
-                Columns = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
-                Pagination = new PaginationModel()
-            };
+            viewModel.StaffGrid = BuildStaffGridConfig(new List<SetUpStaffResourcesItem>(), new PaginationModel());
 
             return View(viewModel);
         }
@@ -118,27 +100,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            var gridConfig = new DataGridConfig<SetUpStaffResourcesItem>
-            {
-                GridId = "ssrStaffGrid",
-                Title = "Staff",
-                ShowCheckboxColumn = false,
-                ShowPagination = true,
-                KeyProperty = "PactId",
-                AllowAdd = false,
-                AllowEdit = true,
-                EditFunction = "editSsrStaff",
-                AllowDelete = false,
-                AllowRowSelection = true,
-                RowSelectFunction = "ssrOnStaffRowSelect",
-                BindGridUrl = "/FPS/SetUpStaffResources/LoadStaffGrid",
-                ExtraFilterMethod = "ssrGetStaffExtraFilters",
-                Data = staffItems,
-                Columns = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
-                Pagination = paginationModel
-            };
-
-            return PartialView("_DataGrid", gridConfig);
+            return PartialView("_DataGrid", BuildStaffGridConfig(staffItems, paginationModel));
         }
 
         [HttpGet]
@@ -193,11 +155,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = "WG Grade is required." });
 
             // Sum HrsAvail (AtWork) across all staff for this grade
-            var queryParams = new Apha.FPSApps.Application.Pagination.QueryParameters<string>
-            {
-                Page     = 1,
-                PageSize = 10_000
-            };
+            var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10_000 };
             var staffResponse = await _workGroupEmployeeService.GetAllActiveWorkGroupEmployeesAsync(queryParams, wgGrade);
             var totalAtWork = staffResponse.Success && staffResponse.Data != null
                 ? staffResponse.Data.Sum(s => s.HrsAvail)
@@ -260,6 +218,28 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
             });
         }
+
+        private static DataGridConfig<SetUpStaffResourcesItem> BuildStaffGridConfig(
+            List<SetUpStaffResourcesItem> data, PaginationModel pagination) =>
+            new()
+            {
+                GridId             = "ssrStaffGrid",
+                Title              = "Staff",
+                ShowCheckboxColumn = false,
+                ShowPagination     = true,
+                KeyProperty        = "PactId",
+                AllowAdd           = false,
+                AllowEdit          = true,
+                EditFunction       = "editSsrStaff",
+                AllowDelete        = false,
+                AllowRowSelection  = true,
+                RowSelectFunction  = "ssrOnStaffRowSelect",
+                BindGridUrl        = "/FPS/SetUpStaffResources/LoadStaffGrid",
+                ExtraFilterMethod  = "ssrGetStaffExtraFilters",
+                Data               = data,
+                Columns            = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
+                Pagination         = pagination
+            };
 
         private async Task<List<SelectListItem>> PopulateResourceCentresAsync()
         {
