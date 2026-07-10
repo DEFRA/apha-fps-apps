@@ -72,8 +72,11 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             if (result.Success)
                 return Json(new { success = true });
 
-            var errorMessage = result.Errors?.FirstOrDefault()?.Message ?? "Failed to trigger the job.";
-            return Json(new { success = false, message = errorMessage });
+            // Return ALL errors so the client can display every message simultaneously
+            var errors = result.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
+                         ?? [new { field = string.Empty, message = "Failed to trigger the job." }];
+
+            return Json(new { success = false, errors });
         }
 
         private async Task<DataGridConfig<BatchJobHistoryItem>> BuildHistoryGridAsync(PaginationFilter<string> request)

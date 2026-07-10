@@ -108,12 +108,12 @@
                 showSuccessBanner('Job triggered successfully.');
                 refreshHistoryGrid();
             } else {
-                // No matching field → library routes the message to .govuk-error-summary
-                displayServerValidationErrors(
-                    [{ field: '', message: data.message || 'Failed to trigger the job.' }],
-                    'There is a problem',
-                    SCOPE
-                );
+                // Map ALL server errors — each gets a summary entry (field is empty
+                // so the library routes every item to .govuk-error-summary)
+                var errors = Array.isArray(data.errors) && data.errors.length
+                    ? data.errors
+                    : [{ field: '', message: data.message || 'Failed to trigger the job.' }];
+                displayServerValidationErrors(errors, 'There is a problem', SCOPE);
                 btn.disabled = false;
                 btn.removeAttribute('aria-disabled');
             }
