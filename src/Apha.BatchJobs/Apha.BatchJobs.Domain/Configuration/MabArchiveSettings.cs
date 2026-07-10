@@ -17,6 +17,11 @@ public class MabArchiveSettings
     public bool StrictYearIsolation { get; set; } = true;
 
     /// <summary>
+    /// When true, failure notification emails are sent to <see cref="AdminNotificationEmail"/>.
+    /// </summary>
+    public bool EnableEmailNotifications { get; set; }
+
+    /// <summary>
     /// Email recipient for failure notifications.
     /// </summary>
     public string? AdminNotificationEmail { get; set; }
