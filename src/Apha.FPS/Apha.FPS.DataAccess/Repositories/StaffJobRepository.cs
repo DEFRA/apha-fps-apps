@@ -276,19 +276,19 @@ namespace Apha.FPS.DataAccess.Repositories
 
 
             var projProgram = (from p in _dbContext.ProjectViews
-                              join prg in _dbContext.ProgramViews on
-                                  new { p.Program, p.UserId } equals new { Program = prg.ProgramNo, prg.UserId }
-                              where p.ParentProject == jobCode
-                                    && p.UserEmail != null
-                                    && p.UserEmail.ToLower() == _requestContext.UserEmailId
-                              select new
-                              {
-                                  p.ParentProject,
-                                  prg.SectorName,
-                                  p.IsDefraProject, 
-                                  prg.UserId,
-                                  prg.UserEmail
-                              }).Distinct();
+                               join prg in _dbContext.ProgramViews on
+                                   new { p.Program, p.UserId } equals new { Program = prg.ProgramNo, prg.UserId }
+                               where p.ParentProject == jobCode
+                                     && p.UserEmail != null
+                                     && p.UserEmail.ToLower() == _requestContext.UserEmailId
+                               select new
+                               {
+                                   p.ParentProject,
+                                   prg.SectorName,
+                                   p.IsDefraProject,
+                                   prg.UserId,
+                                   prg.UserEmail
+                               }).Distinct();
 
             return (from sj in _dbContext.StaffJobTblViews
                     join s in _dbContext.StaffGeneralViews on sj.StaffId equals s.StaffId
@@ -311,7 +311,7 @@ namespace Apha.FPS.DataAccess.Repositories
                         WorkGroup = wg.Workgroup,
                         SectorName = pp.SectorName,
                         Days = dutyHours != null ? (sj.PlannedHours ?? 0) / Convert.ToDouble(dutyHours) : 0
-                    }).Distinct().OrderBy(e => e.Name).AsQueryable();
+                    }).Distinct().OrderBy(e => e.Name).AsQueryable();           
         }
 
         private static IQueryable<StaffJobView> ApplySorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)
