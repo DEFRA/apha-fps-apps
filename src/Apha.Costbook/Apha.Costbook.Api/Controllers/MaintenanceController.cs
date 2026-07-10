@@ -46,6 +46,9 @@ namespace Apha.Costbook.Api.Controllers
         [Authorize(Roles = "API-CostbookAdmin")]
         public async Task<IActionResult> UpdateSettings([FromBody] MaintenanceSettingsReq req)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var dto = _mapper.Map<MaintenanceSettingsDto>(req);
             await _settingsService.UpdateSettingsAsync(dto);
             // Re-fetch the updated settings to return the current persisted state

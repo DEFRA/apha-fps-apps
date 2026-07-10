@@ -411,6 +411,19 @@
         return value !== '' && !isNaN(parseFloat(value)) && isFinite(value);
         }
 
+        // Validates a field as a positive decimal (no negatives, no alpha, no special chars).
+        // Returns an error message string if invalid, or null if valid.
+        function validatePositiveDecimalField(value, label, max) {
+        var trimmed = (value || '').trim();
+        if (trimmed === '') { return label + ' is required.'; }
+        if (!/^\d+(\.\d+)?$/.test(trimmed)) {
+        return label + ' must be a positive number (digits and decimal point only).';
+        }
+        var num = parseFloat(trimmed);
+        if (num > max) { return label + ' must not be greater than ' + max + '.'; }
+        return null;
+        }
+
         function getAntiForgeryToken() {
         var t = document.querySelector('input[name="__RequestVerificationToken"]');
         return t ? t.value : '';
@@ -772,6 +785,29 @@
         return;
         }
 
+        // Validate inflation percentage fields: positive decimals only, max 999.99
+        var inflFieldErrors = [];
+        var inflFields = [
+        { id: 'inflAnimals',           errorId: 'inflAnimals-error',           wrapId: 'fg-inflAnimals',           label: 'Animals' },
+        { id: 'inflExceptionalCosts',  errorId: 'inflExceptionalCosts-error',  wrapId: 'fg-inflExceptionalCosts',  label: 'Exceptional Costs' },
+        { id: 'inflStaff',             errorId: 'inflStaff-error',             wrapId: 'fg-inflStaff',             label: 'Staff' },
+        { id: 'inflTests',             errorId: 'inflTests-error',             wrapId: 'fg-inflTests',             label: 'Tests' }
+        ];
+        inflFields.forEach(function (f) {
+        var val = document.getElementById(f.id) ? document.getElementById(f.id).value : '';
+        var msg = validatePositiveDecimalField(val, f.label, 999.99);
+        if (msg) {
+        inflFieldErrors.push({ field: f.id, message: msg });
+        var errEl = document.getElementById(f.errorId);
+        var wrapEl = document.getElementById(f.wrapId);
+        var inputEl = document.getElementById(f.id);
+        if (errEl) { errEl.textContent = 'Error: ' + msg; errEl.style.display = ''; }
+        if (wrapEl) { wrapEl.classList.add('govuk-form-group--error'); }
+        if (inputEl) { inputEl.classList.add('govuk-input--error'); }
+        }
+        });
+        if (inflFieldErrors.length > 0) { return; }
+
         var yearVal = (document.getElementById('inflCurrentFinancialYear').value || '').trim();
         var yearNum = parseInt(yearVal, 10);
         if (!/^\d{4}$/.test(yearVal) || yearNum < 2001 || yearNum > 2100) {
@@ -837,6 +873,29 @@
         displayClientValidationErrors($form, $form);
         return;
         }
+
+        // Validate profit margin fields: positive decimals only, max 999.99
+        var profitFieldErrors = [];
+        var profitFields = [
+        { id: 'profitAnimals',          errorId: 'profitAnimals-error',          wrapId: 'fg-profitAnimals',          label: 'Animals' },
+        { id: 'profitExceptionalCosts', errorId: 'profitExceptionalCosts-error', wrapId: 'fg-profitExceptionalCosts', label: 'Exceptional Costs' },
+        { id: 'profitStaff',            errorId: 'profitStaff-error',            wrapId: 'fg-profitStaff',            label: 'Staff' },
+        { id: 'profitTests',            errorId: 'profitTests-error',            wrapId: 'fg-profitTests',            label: 'Tests' }
+        ];
+        profitFields.forEach(function (f) {
+        var val = document.getElementById(f.id) ? document.getElementById(f.id).value : '';
+        var msg = validatePositiveDecimalField(val, f.label, 999.99);
+        if (msg) {
+        profitFieldErrors.push({ field: f.id, message: msg });
+        var errEl = document.getElementById(f.errorId);
+        var wrapEl = document.getElementById(f.wrapId);
+        var inputEl = document.getElementById(f.id);
+        if (errEl) { errEl.textContent = 'Error: ' + msg; errEl.style.display = ''; }
+        if (wrapEl) { wrapEl.classList.add('govuk-form-group--error'); }
+        if (inputEl) { inputEl.classList.add('govuk-input--error'); }
+        }
+        });
+        if (profitFieldErrors.length > 0) { return; }
 
         var dto = {
         profitAnimals: parseFloat(document.getElementById('profitAnimals').value),
