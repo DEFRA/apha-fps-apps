@@ -530,30 +530,65 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
         #region Edit POST Tests
 
         [Fact]
-        public async Task Edit_Post_WithValidDto_ReturnsJsonWithSuccessTrue()
+        public async Task Edit_Post_WithValidItem_FetchesPatchesAndSaves_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var model      = new WorkGroupEmployeeStaffDto { PactId = DefaultPactId, WorkGroupGrade = DefaultWgGrade };
-            var updatedDto = new WorkGroupEmployeeStaffDto { PactId = DefaultPactId };
+            var item = new SetUpStaffResourcesItem
+            {
+                PactId        = DefaultPactId,
+                Name          = "Jane Doe",
+                HrsPaid       = 40,
+                Leave         = 5,
+                SickSpecial   = 2,
+                HrsAvail      = 33,
+                MakeAvailable = 1
+            };
 
-            _workGroupEmployeeService.UpdateWorkGroupEmployeeForStaffAsync(model)
-                .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(updatedDto));
+            var existingDto = new WorkGroupEmployeeStaffDto
+            {
+                PactId         = DefaultPactId,
+                SpNumber       = "SP001",
+                WorkGroupGrade = DefaultWgGrade,
+                Name           = "Old Name",
+                PersonStatus   = "A",
+                HrsPaid        = 37,
+                Leave          = 0,
+                SickSpecial    = 0,
+                HrsAvail       = 37,
+                MakeAvailable  = 0
+            };
+
+            _workGroupEmployeeService
+                .GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId)
+                .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(existingDto));
+
+            _workGroupEmployeeService
+                .UpdateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployeeStaffDto>())
+                .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(existingDto));
 
             // Act
-            var result = await _controller.Edit(model);
+            var result = await _controller.Edit(item);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value      = GetJsonResultElement(jsonResult);
             Assert.True(value.GetProperty("success").GetBoolean());
-            await _workGroupEmployeeService.Received(1).UpdateWorkGroupEmployeeForStaffAsync(model);
+            await _workGroupEmployeeService.Received(1).GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId);
+            await _workGroupEmployeeService.Received(1).UpdateWorkGroupEmployeeForStaffAsync(
+                Arg.Is<WorkGroupEmployeeStaffDto>(d =>
+                    d.Name == "Jane Doe" &&
+                    d.HrsPaid == 40 &&
+                    d.Leave == 5 &&
+                    d.SickSpecial == 2 &&
+                    d.SpNumber == "SP001" &&         // preserved from fetch
+                    d.WorkGroupGrade == DefaultWgGrade)); // preserved from fetch
         }
 
         [Fact]
-        public async Task Edit_Post_WithNullDto_ReturnsJsonWithSuccessFalse()
+        public async Task Edit_Post_WithNullItem_ReturnsJsonWithSuccessFalse()
         {
             // Act
-            var result = await _controller.Edit((WorkGroupEmployeeStaffDto)null!);
+            var result = await _controller.Edit((SetUpStaffResourcesItem)null!);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -562,14 +597,17 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
         }
 
         [Fact]
-        public async Task Edit_Post_WithInvalidModelState_ReturnsJsonWithSuccessFalse()
+        public async Task Edit_Post_WhenRecordNotFound_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var model = new WorkGroupEmployeeStaffDto { PactId = DefaultPactId };
-            _controller.ModelState.AddModelError("Name", "Name is required");
+            var item = new SetUpStaffResourcesItem { PactId = DefaultPactId, Name = "Test" };
+
+            _workGroupEmployeeService
+                .GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId)
+                .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(null!));
 
             // Act
-            var result = await _controller.Edit(model);
+            var result = await _controller.Edit(item);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
@@ -581,14 +619,28 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.SetUpStaffResourcesControll
         public async Task Edit_Post_WhenServiceFails_ReturnsJsonWithSuccessFalse()
         {
             // Arrange
-            var model  = new WorkGroupEmployeeStaffDto { PactId = DefaultPactId };
+            var item = new SetUpStaffResourcesItem { PactId = DefaultPactId, Name = "Test" };
+
+            var existingDto = new WorkGroupEmployeeStaffDto
+            {
+                PactId         = DefaultPactId,
+                SpNumber       = "SP001",
+                WorkGroupGrade = DefaultWgGrade,
+                PersonStatus   = "A"
+            };
+
             var errors = new List<ApiErrorDto> { new() { Message = "Update failed", Code = "ERR" } };
 
-            _workGroupEmployeeService.UpdateWorkGroupEmployeeForStaffAsync(model)
+            _workGroupEmployeeService
+                .GetWorkGroupEmployeeByIdForStaffAsync(DefaultPactId)
+                .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.SuccessResponse(existingDto));
+
+            _workGroupEmployeeService
+                .UpdateWorkGroupEmployeeForStaffAsync(Arg.Any<WorkGroupEmployeeStaffDto>())
                 .Returns(ApiResponseDto<WorkGroupEmployeeStaffDto>.FailureResponse(errors, new ApiMetaDto()));
 
             // Act
-            var result = await _controller.Edit(model);
+            var result = await _controller.Edit(item);
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);

@@ -158,14 +158,20 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (string.IsNullOrWhiteSpace(wgGrade))
                 return Json(new { success = false, message = "WG Grade is required." });
 
-            // Sum HrsAvail (AtWork) across all staff for this grade
+            // Resolve the GradeCode for display in the Summary Grade textbox
+            var gradeResponse = await _workGroupGradeService.GetByWgGradeAsync(wgGrade);
+            var gradeCode = gradeResponse.Success && gradeResponse.Data != null
+                ? gradeResponse.Data.GradeCode ?? string.Empty
+                : string.Empty;
+
+            // Sum HrsAvail (AtWork) across all active staff for this grade
             var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10_000 };
             var staffResponse = await _workGroupEmployeeService.GetAllActiveWorkGroupEmployeesAsync(queryParams, wgGrade);
             var totalAtWork = staffResponse.Success && staffResponse.Data != null
                 ? staffResponse.Data.Sum(s => s.HrsAvail)
                 : 0d;
 
-            return Json(new { success = true, wgGrade, totalAtWork });
+            return Json(new { success = true, gradeCode, totalAtWork });
         }
 
         [HttpGet]
@@ -189,30 +195,29 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit([FromBody] WorkGroupEmployeeStaffDto model)
+        public async Task<IActionResult> Edit([FromBody] SetUpStaffResourcesItem model)
         {
-            if (model == null)
-            {
+            if (model == null || string.IsNullOrWhiteSpace(model.PactId))
                 return Json(new { success = false, message = "Staff data is required." });
-            }
 
-            if (!ModelState.IsValid)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = "Please correct the errors below.",
-                    errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new { field = kvp.Key, message = e.ErrorMessage }))
-                });
-            }
+            // Fetch the full existing record so required fields (SpNumber, WorkGroupGrade,
+            // PersonStatus, PersonClass, TimeRecorder, StartDate, EndDate, HoursPerWeek)
+            // are never lost — only the editable subset is overwritten.
+            var existing = await _workGroupEmployeeService.GetWorkGroupEmployeeByIdForStaffAsync(model.PactId);
+            if (!existing.Success || existing.Data == null)
+                return Json(new { success = false, message = "Staff record not found." });
 
-            var response = await _workGroupEmployeeService.UpdateWorkGroupEmployeeForStaffAsync(model);
+            var dto = existing.Data;
+            dto.Name = model.Name ?? dto.Name;
+            dto.HrsPaid = model.HrsPaid;
+            dto.Leave = model.Leave;
+            dto.SickSpecial = model.SickSpecial;
+            dto.HrsAvail = model.HrsPaid - model.Leave - model.SickSpecial;
+            dto.MakeAvailable = model.MakeAvailable;
+
+            var response = await _workGroupEmployeeService.UpdateWorkGroupEmployeeForStaffAsync(dto);
             if (response.Success)
-            {
-                return Json(new { success = true, data = response.Data, message = "Staff record updated successfully." });
-            }
+                return Json(new { success = true, message = "Staff record updated successfully." });
 
             return Json(new
             {

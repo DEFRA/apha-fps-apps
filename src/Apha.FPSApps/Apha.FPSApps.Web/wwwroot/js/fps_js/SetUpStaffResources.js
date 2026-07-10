@@ -169,8 +169,8 @@
 
         $.get('/FPS/SetUpStaffResources/GetGradeStats', { wgGrade: wg }, function (data) {
             if (data && data.success) {
-                setVal('ssrSummaryGrade', wg || '');
-                setVal('ssrWorkHrs', data.totalAtWork != null ? data.totalAtWork : '0');
+                setVal('ssrSummaryGrade', data.gradeCode || '');
+                setVal('ssrWorkHrs',      data.totalAtWork != null ? data.totalAtWork : '0');
             }
         }).fail(function () {
             console.warn('GetGradeStats failed for grade:', wg);
@@ -223,11 +223,11 @@
     }
 
     function saveSetUpStaffResources() {
-        const pactId = el('hdnPactId')?.value || '';
-        const name = el('ssrEditName')?.value || '';
+        const pactId  = el('hdnPactId')?.value || '';
+        const name    = el('ssrEditName')?.value || '';
         const hrsPaid = parseFloat(el('ssrEditHrsPaid')?.value) || 0;
-        const leave = parseFloat(el('ssrEditLeave')?.value) || 0;
-        const sickSp = parseFloat(el('ssrEditSickSp')?.value) || 0;
+        const leave   = parseFloat(el('ssrEditLeave')?.value)   || 0;
+        const sickSp  = parseFloat(el('ssrEditSickSp')?.value)  || 0;
         const planable = el('ssrEditPlanable')?.checked ? 1 : 0;
 
         if (!pactId) {
@@ -236,36 +236,45 @@
         }
 
         const aftInput = document.querySelector('#ssrEditForm input[name="__RequestVerificationToken"]');
-        const aft = aftInput ? aftInput.value : '';
+        const aft      = aftInput ? aftInput.value : '';
 
+        if (!aft) {
+            alert('Security token missing. Please refresh the page and try again.');
+            return;
+        }
+
+        // Send only the editable subset — controller fetches and patches the full record server-side.
         const dto = {
-            PactId: pactId,
-            Name: name,
-            HrsPaid: hrsPaid,
-            Leave: leave,
-            SickSpecial: sickSp,
-            HrsAvail: hrsPaid - leave - sickSp,
+            PactId:        pactId,
+            Name:          name,
+            HrsPaid:       hrsPaid,
+            Leave:         leave,
+            SickSpecial:   sickSp,
+            HrsAvail:      parseFloat((hrsPaid - leave - sickSp).toFixed(2)),
             MakeAvailable: planable
         };
 
         $.ajax({
-            url: '/FPS/SetUpStaffResources/Edit',
-            type: 'POST',
-            data: JSON.stringify(dto),
+            url:         '/FPS/SetUpStaffResources/Edit',
+            type:        'POST',
+            data:        JSON.stringify(dto),
             contentType: 'application/json; charset=utf-8',
-            headers: { 'RequestVerificationToken': aft },
+            headers:     { 'RequestVerificationToken': aft },
             success: function (data) {
                 if (data.success) {
                     closeModal();
                     reloadStaffGrid();
-                    // Refresh summary totals because AtWork may have changed
                     refreshGradeStats(currentGrade);
                 } else {
                     alert('Save failed: ' + (data.message || 'Unknown error.'));
                 }
             },
-            error: function () {
-                alert('An error occurred while saving. Please try again.');
+            error: function (xhr) {
+                if (xhr.status === 400) {
+                    alert('Validation error. Please check the form and try again.');
+                } else {
+                    alert('An error occurred while saving. Please try again.');
+                }
             }
         });
     }
