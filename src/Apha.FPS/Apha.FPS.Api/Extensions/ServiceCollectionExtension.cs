@@ -53,6 +53,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IPurchasesService, PurchasesService>();
             services.AddScoped<ITimeSellerPcService, ContributionSummaryService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -92,6 +93,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IPurchasesRepository, PurchasesRepository>();
             services.AddScoped<ITimeSellerPcRepository, TimeSellerPcRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
             return services;
 
         }

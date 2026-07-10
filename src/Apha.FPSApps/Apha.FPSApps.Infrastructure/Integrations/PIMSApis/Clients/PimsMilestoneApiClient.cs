@@ -178,5 +178,108 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PIMSApis.Clients
             var dto = _mapper.Map<ApiResponseDto<List<LogMilestoneDto>>>(response);
             return ApiResponseDto<List<LogMilestoneDto>>.FailureResponse(dto.Errors, dto.Meta);
         }
+        // ── Staging / Import ─────────────────────────────────────────────────
+        public async Task<ApiResponseDto<List<StagingMilestoneDto>>> GetAllStagingRowsAsync(QueryParameters<string> parameters)
+        {
+            string url = QueryStringHelper.AddQueryString(PimsApiEndpoints.GetAllStagingMilestones, parameters);
+            var response = await _http.GetAsync<List<StagingMilestoneRes>>(url);
+            if (response.Success && response.Data != null)
+                return _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(response);
+            var dto = _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(response);
+            return ApiResponseDto<List<StagingMilestoneDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<StagingMilestoneDto>>> GetStagingRowsAsync(string? project)
+        {
+            string url = PimsApiEndpoints.GetStagingMilestones;
+            if (!string.IsNullOrWhiteSpace(project))
+                url += $"?project={Uri.EscapeDataString(project)}";
+            var response = await _http.GetAsync<List<StagingMilestoneRes>>(url);
+            if (response.Success && response.Data != null)
+                return _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(response);
+            var dto = _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(response);
+            return ApiResponseDto<List<StagingMilestoneDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<StagingMilestoneDto>> AddStagingRowAsync(StagingMilestoneDto dto, int year)
+        {
+            StagingMilestoneReq request = _mapper.Map<StagingMilestoneReq>(dto);
+            var response = await _http.PostAsync<StagingMilestoneReq, StagingMilestoneRes>(
+                string.Format(PimsApiEndpoints.AddStagingMilestone, year), request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<StagingMilestoneDto>>(response);
+            var responseDto = _mapper.Map<ApiResponseDto<StagingMilestoneDto>>(response);
+            return ApiResponseDto<StagingMilestoneDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<StagingMilestoneDto>> UpdateStagingRowAsync(int id, StagingMilestoneDto dto)
+        {
+            StagingMilestoneReq request = _mapper.Map<StagingMilestoneReq>(dto);
+            var response = await _http.PutAsync<StagingMilestoneReq, StagingMilestoneRes>(
+                string.Format(PimsApiEndpoints.UpdateStagingMilestone, id), request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<StagingMilestoneDto>>(response);
+            var responseDto = _mapper.Map<ApiResponseDto<StagingMilestoneDto>>(response);
+            return ApiResponseDto<StagingMilestoneDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
+        }
+
+        public async Task<ApiResponseDto<object>> DeleteStagingRowAsync(int id)
+        {
+            var response = await _http.DeleteAsync<object>(
+                string.Format(PimsApiEndpoints.DeleteStagingMilestone, id));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<object>>(response);
+            var dto = _mapper.Map<ApiResponseDto<object>>(response);
+            return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<object>> ClearStagingAsync(string project)
+        {
+            var response = await _http.DeleteAsync<object>(
+                string.Format(PimsApiEndpoints.ClearStagingMilestones, Uri.EscapeDataString(project)));
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<object>>(response);
+            var dto = _mapper.Map<ApiResponseDto<object>>(response);
+            return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<List<StagingMilestoneDto>>> ValidateStagingAsync(
+            string project, string? typeId, bool isDeliverableMode)
+        {
+            string url = string.Format(PimsApiEndpoints.ValidateStagingMilestones, Uri.EscapeDataString(project));
+            if (!string.IsNullOrWhiteSpace(typeId))
+                url += $"?typeId={Uri.EscapeDataString(typeId)}";
+            url += $"{(url.Contains('?') ? "&" : "?")}isDeliverableMode={isDeliverableMode}";
+
+            var response = await _http.PostAsync<object, List<StagingMilestoneRes>>(url, new object());
+            if (response.Success && response.Data != null)
+                return _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(response);
+            var dto = _mapper.Map<ApiResponseDto<List<StagingMilestoneDto>>>(response);
+            return ApiResponseDto<List<StagingMilestoneDto>>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<object>> ImportStagingAsync(string project)
+        {
+            var response = await _http.PostAsync<object, object>(
+                string.Format(PimsApiEndpoints.ImportStagingMilestones, Uri.EscapeDataString(project)),
+                new object());
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<object>>(response);
+            var dto = _mapper.Map<ApiResponseDto<object>>(response);
+            return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+        public async Task<ApiResponseDto<object>> ImportWithOverwriteAsync(string project)
+        {
+            var response = await _http.PostAsync<object, object>(
+                string.Format(PimsApiEndpoints.ImportOverwriteStagingMilestones, Uri.EscapeDataString(project)),
+                new object());
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<object>>(response);
+            var dto = _mapper.Map<ApiResponseDto<object>>(response);
+            return ApiResponseDto<object>.FailureResponse(dto.Errors, dto.Meta);
+        }
+
+       
     }
 }

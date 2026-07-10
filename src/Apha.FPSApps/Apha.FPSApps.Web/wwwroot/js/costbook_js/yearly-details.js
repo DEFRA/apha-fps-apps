@@ -222,7 +222,7 @@ function saveStaff() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadStaffGrid(); }
+        if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadStaffGrid(); }); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
         else { showAlertMessage(d.message || 'Failed to save staff requirement.', AlertType.ERROR); }
     })
@@ -236,7 +236,10 @@ function deleteStaff(pid, year, srIdentity) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadStaffGrid(); });
+            .then(function (d) {
+                if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadStaffGrid(); }); }
+                else { showAlertMessage(d.message || 'Failed to delete Staff entry.', AlertType.ERROR); }
+            });
     });
 }
 
@@ -289,7 +292,7 @@ function saveTest() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadTestGrid(); }
+        if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadTestGrid(); }); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
         else { showAlertMessage(d.message || 'Failed to save test requirement.', AlertType.ERROR); }
     })
@@ -303,8 +306,11 @@ function deleteTest(pid, year, testCode) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadTestGrid(); });
-    });
+            .then(function (d) {
+                if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadTestGrid(); }); }
+                else { showAlertMessage(d.message || 'Failed to delete Test entry.', AlertType.ERROR); }
+            });
+    })
 }
 
 // ── Animals ────────────────────────────────────────────────────────
@@ -428,7 +434,7 @@ function saveAdditionalCost() {
     })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.success) { closeModal(); loadAdditionalCostGrid(); }
+        if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { closeModal(); loadAdditionalCostGrid(); }); }
         else if (d.errors) { _showModalErrors(d.errors, $modal); }
         else { showAlertMessage(d.message || 'Failed to save additional cost.', AlertType.ERROR); }
     })
@@ -442,7 +448,10 @@ function deleteAdditionalCost(pid, year, acIdentity) {
             headers: { 'RequestVerificationToken': getAntiForgeryToken() }
         })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.success) loadAdditionalCostGrid(); });
+            .then(function (d) {
+                if (d.success) { showAlertMessage(d.message, AlertType.SUCCESS).then(function () { loadAdditionalCostGrid(); }); }
+                else { showAlertMessage(d.message || 'Failed to delete Additional cost entry.', AlertType.ERROR); }
+            });
     });
 }
 
@@ -635,31 +644,113 @@ function initWgGradeDropdown() {
     var searchBox = document.getElementById('wgGradeSearchBox');
     if (!input || !panel) return;
 
+    // Prevent typing in display input but allow focus
+    input.addEventListener('input', function (e) {
+        e.preventDefault();
+        this.value = this.getAttribute('data-current-value') || '';
+    });
+    input.addEventListener('beforeinput', function (e) {
+        if (e.inputType !== 'insertReplacementText') {
+            e.preventDefault();
+        }
+    });
+
+    // Store current value
+    if (input.value) {
+        input.setAttribute('data-current-value', input.value);
+    }
+
+    function openDropdown() {
+        panel.style.display = 'block';
+        input.setAttribute('aria-expanded', 'true');
+        if (searchBox) { 
+            searchBox.value = ''; 
+            filterWgGradeRows(''); 
+            searchBox.focus(); 
+        }
+    }
+
+    function closeDropdown() {
+        panel.style.display = 'none';
+        input.setAttribute('aria-expanded', 'false');
+    }
+
     input.addEventListener('click', function (e) {
         e.stopPropagation();
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        if (panel.style.display === 'block' && searchBox) { searchBox.value = ''; filterWgGradeRows(''); searchBox.focus(); }
+        if (panel.style.display === 'none') {
+            openDropdown();
+        } else {
+            closeDropdown();
+        }
     });
+
+    // Add keyboard support for opening dropdown
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            openDropdown();
+        }
+    });
+
     if (searchBox) {
         searchBox.addEventListener('click', function (e) { e.stopPropagation(); });
         searchBox.addEventListener('input', function () { filterWgGradeRows(this.value.toLowerCase()); });
+
+        // Add keyboard support for search box
+        searchBox.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeDropdown();
+                input.focus();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                var firstVisible = document.querySelector('#wgGradeDropdownBody tr:not([style*="display: none"])');
+                if (firstVisible) firstVisible.focus();
+            }
+        });
     }
+
     document.querySelectorAll('#wgGradeDropdownBody tr').forEach(function (row) {
         row.addEventListener('click', function () {
             var grade      = this.getAttribute('data-value');
             var chargeRate = this.getAttribute('data-chargeratewithinflamation') || this.getAttribute('data-chargerate');
             input.value = grade;
+            input.setAttribute('data-current-value', grade);
             document.getElementById('WgGrade').value    = grade;
             document.getElementById('Chargerate').value = chargeRate;
             document.getElementById('Payrate').value    = this.getAttribute('data-payrate');
             document.getElementById('Npr').value        = this.getAttribute('data-npr');
             document.getElementById('Ohr').value        = this.getAttribute('data-ohr');
             calcStaffCost();
-            panel.style.display = 'none';
+            closeDropdown();
+            input.focus();
         });
+
+        // Add keyboard navigation for rows
+        row.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+                input.focus();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                var next = this.nextElementSibling;
+                while (next && next.style.display === 'none') next = next.nextElementSibling;
+                if (next) next.focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                var prev = this.previousElementSibling;
+                while (prev && prev.style.display === 'none') prev = prev.previousElementSibling;
+                if (prev) prev.focus();
+                else if (searchBox) searchBox.focus();
+            }
+        });
+
         row.addEventListener('mouseenter', function () { this.style.backgroundColor = '#f3f2f1'; });
         row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
     });
+
     var hoursInput = document.getElementById('Nohours');
     if (hoursInput) {
         ['input', 'change', 'keyup', 'keydown', 'paste'].forEach(function (evt) {
@@ -673,7 +764,7 @@ function initWgGradeDropdown() {
         });
     }
     document.addEventListener('click', function (e) {
-        if (input && panel && !input.contains(e.target) && !panel.contains(e.target)) panel.style.display = 'none';
+        if (input && panel && !input.contains(e.target) && !panel.contains(e.target)) closeDropdown();
     });
 }
 function filterWgGradeRows(term) {

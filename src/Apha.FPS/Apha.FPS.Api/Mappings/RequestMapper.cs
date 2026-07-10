@@ -149,6 +149,9 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<TimeSellerPcTotalsDto, TimeSellerPcTotalsRes>().ReverseMap();
 
           
+            // MaintTotalBusinessOverheads
+            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
+            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
         }
     }
 }

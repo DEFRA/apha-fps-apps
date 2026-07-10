@@ -38,6 +38,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         // TRANSFORMENGINE: FpsGrade added
         public IFpsGradeApiClient FpsGrade { get; }
+        public IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
 
         // Income/Contribution from Time Sales (frmTimeSellerPC)
         public IFpsTimeSellerPcApiClient FpsTimeSellerPc { get; }
@@ -71,10 +72,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsBudgetBids = new FpsBudgetBidsApiClient(http, mapper);
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
             FpsUserPermission = new FpsUserApiClient(http, mapper);
-            // TRANSFORMENGINE: FpsGrade wired
             FpsGrade = new FpsGradeApiClient(http, mapper);
-            // Income/Contribution from Time Sales (frmTimeSellerPC)
             FpsTimeSellerPc = new FpsTimeSellerPcApiClient(http, mapper);
+            FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
         }
     }
 }

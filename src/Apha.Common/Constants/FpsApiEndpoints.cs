@@ -37,6 +37,7 @@ namespace Apha.Common.Constants
         public const string GetAllDiseases = "api/v1/disease";
         public const string GetAllCustomers = "api/v1/customer";
         public const string GetAllContracts = "api/v1/contract";
+        public const string GetAllPactContracts = "api/v1/contract/pact";
         public const string GetContractsByUser = "api/v1/contract/by-user";
 
         // Division
@@ -53,6 +54,10 @@ namespace Apha.Common.Constants
         public const string CreateGrade = "api/v1/Grade";
         public const string UpdateGrade = "api/v1/Grade/{0}";
         public const string DeleteGrade = "api/v1/Grade/{0}";
+
+        // Total Business Overheads (frmMaintTotalBusinessOverheads)
+        public const string GetTotalBusinessOverheads = "api/v1/totalbusinessoverheads";
+        public const string UpdateTotalBusinessOverheads = "api/v1/totalbusinessoverheads";
 
         // Division Grade
         public const string GetPagedDivisionGrades = "api/v1/DivisionGrade/paged";
@@ -80,6 +85,7 @@ namespace Apha.Common.Constants
         public const string GetAllProjectsPaged = "api/v1/project/paged/all";
         public const string GetAllPactProjects = "api/v1/project/pactview/all";
         public const string GetPagedPactProjects = "api/v1/project/pactview";
+        public const string GetPagedPactProjectsByProgram = "api/v1/project/pactview/by-program?programNo={0}";
         public const string GetProjectById = "api/v1/project/{0}";
         public const string CreateProject = "api/v1/project";
         public const string UpdateProject = "api/v1/project";

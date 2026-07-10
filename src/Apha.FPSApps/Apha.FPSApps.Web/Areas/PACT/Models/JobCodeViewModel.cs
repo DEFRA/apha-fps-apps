@@ -23,6 +23,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Models
         public string? JobCodeWorkGroup { get; set; }
 
         [Display(Name = "Type")]
+        [Required(ErrorMessage = "Type is required")]
         [StringLength(15)]
         [GridColumn(Order = 3, Width = 296, Type = GridColumnType.Text, IsFilterable = true)]
         public string? Type { get; set; }

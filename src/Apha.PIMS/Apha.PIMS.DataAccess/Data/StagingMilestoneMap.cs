@@ -12,8 +12,12 @@ namespace Apha.PIMS.DataAccess.Data
         public void Configure(EntityTypeBuilder<StagingMilestone> entity)
         {
             entity
-                .HasNoKey()
-                .ToTable("tblstagingmilestone", "mabarchive");
+               .ToTable("tblstagingmilestone", "mabarchive");
+
+            entity.HasKey(e => e.Id).HasName("pk_tblstagingmilestone_id");
+            entity.Property(e => e.Id)
+                .HasColumnName("id")
+                .ValueGeneratedOnAdd().UseIdentityByDefaultColumn();
 
             entity.Property(e => e.AltDate).HasColumnName("alt_date");
             entity.Property(e => e.AltDescription).HasColumnName("alt_description");
@@ -27,7 +31,6 @@ namespace Apha.PIMS.DataAccess.Data
             entity.Property(e => e.Description)
                 .HasMaxLength(500)
                 .HasColumnName("description");
-            entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Note).HasColumnName("note");
             entity.Property(e => e.Number)
                 .HasMaxLength(10)

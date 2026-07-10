@@ -89,9 +89,11 @@ namespace Apha.FPSApps.Web.Extensions
             services.AddScoped<IRecreateAndReleaseSummaryService, RecreateAndReleaseSummaryService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
+            services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             services.AddScoped<IReleaseSummaryService, ReleaseSummaryService>();
             services.AddScoped<IPlanStaffZTCodeService, PlanStaffZTCodeService>();
             services.AddScoped<IContributionSummaryService, ContributionSummaryService>();
+            services.AddScoped<IBosworthInterfaceService, BosworthInterfaceService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)

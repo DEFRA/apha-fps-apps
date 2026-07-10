@@ -30,7 +30,8 @@
                     <a class="govuk-back-link"
                        asp-area="PACT"
                        asp-controller="PortfolioMaintenance"
-                       asp-action="Index">Back</a>
+                       asp-action="Index"
+                    asp-route-portfolio="@Model.ParentProject">Back</a>
                 }
                 else
                 {
@@ -173,11 +174,11 @@
                 var maxMoney = 92233720368547758.07;
 
                 if (isNaN(unitPrice)) {
-        showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.INFO);
+        showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                     return;
                 }
                 if (unitPrice < 0 || unitPrice > maxMoney) {
-                    showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.INFO);
+                    showAlertMessage('The value you enter is not valid for this fields. The entered value is larger than the fieldsize permit.', AlertType.ERROR);
                     return;
                 }
 

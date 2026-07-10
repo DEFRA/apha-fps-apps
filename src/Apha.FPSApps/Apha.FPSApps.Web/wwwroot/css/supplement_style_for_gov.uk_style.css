@@ -178,6 +178,12 @@ a {
     float: right;
 }
 
+.sup_back_link_center_right {
+    float: none;
+    align-self: center;
+    margin: 0 12px 0 0;
+}
+
 .sup_margin_right_0 {
     margin-right: 0 !important;
 }
@@ -1697,4 +1703,8 @@ table#tblMonthPeriod > tbody > tr > td {
 #columnStandardHoursContainer,
 #columnStndHrsAllocatedContainer {
     display: inline-flex; /* Make containers only as wide as content */
+}
+
+.sup_font_weight_700 {
+    font-weight: 700 !important;
 }

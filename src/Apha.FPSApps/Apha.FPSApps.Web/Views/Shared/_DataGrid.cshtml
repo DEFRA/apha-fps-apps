@@ -3,8 +3,8 @@
 
 <div class="editable-grid-container sup_border">
     <div class="sup_border_bottom_0">
-         <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading">
-                <div class="sup_flex_space_between">
+        <h2 class="sup_border-bottom sup_text_color sup_heading_bg_color govuk-heading-s sup_margin_0 sup_align_heading " aria-label="@Model.Title || Datagrid Title">
+            <div class="sup_flex_space_between ">
                     @Model.Title
                     <div>
                         @if (Model.AllowExport)
@@ -140,13 +140,13 @@
                     <tr class="filter-row govuk-table__row">
                         @if (Model.ShowCheckboxColumn)
                         {
-                            <th scope="col"></th>
+                            <th scope="col" aria-label="Select row checkbox"></th>
                         }
                         @foreach (var column in Model.Columns)
                         {
                             if (column.IsVisible)
                             {
-                                <th scope="col">
+                                    <th scope="col" aria-label="Select row checkbox">
                                     @if (column.IsFilterable)
                                     {
                                         var filterValue = Model.CurrentFilters != null && Model.CurrentFilters.ContainsKey(column.PropertyName)
@@ -183,13 +183,17 @@
                                         {
                                             <input type="text" id="@($"{Model.GridId}_{column.PropertyName}_filter")" class="grid-filter govuk-input govuk-!-font-size-16" data-filter="@column.PropertyName" value="@filterValue" placeholder="Filter..." aria-label="@($"Filter {column.DisplayName}")" />
                                         }
-                                        }
-                                    </th>
+                                    }
+                                    else
+                                    {
+                                        <span class="govuk-visually-hidden">No filter</span>
+                                    }
+                                </th>
                                             }
                                         }
                                         @if (Model.AllowEdit || Model.AllowDelete || Model.AllowView)
                                         {
-                                            <th scope="col"></th>
+                                            <th scope="col" aria-label="Actions column"></th>
                                         }
                                     </tr>
                     }
@@ -480,6 +484,7 @@
             // Pagination click
             $(gridContainerSelector).off('click', '.pagination a, .pagination span').on('click', '.pagination a, .pagination span', function (e) {
                 e.preventDefault();
+                if ($(this).hasClass('pagination--disabled') || $(this).attr('aria-disabled') === 'true') return;
                 var pageNo = $(this).data('pageno');
                 if ($(this).is('[disabled]') || !pageNo || isNaN(pageNo) || pageNo < 1) return;
 

@@ -156,6 +156,9 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<UserPermissionDataDto, UserPermissionReq>().ReverseMap();
             CreateMap<PermissionOptionsDto, PermissionOptionsRes>().ReverseMap();
 
+            // Total Business Overheads
+            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
+            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
 
         }
     }

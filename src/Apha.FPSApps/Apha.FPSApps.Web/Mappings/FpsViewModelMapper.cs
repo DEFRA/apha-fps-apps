@@ -105,6 +105,8 @@ namespace Apha.FPSApps.Web.Mappings
 
             // Contribution Summary — row grid item
             CreateMap<TimeSellerPcRowDto, ContributionSummaryRowItem>().ReverseMap();
+            // Total Business Overheads
+            CreateMap<TotalBusinessOverheadsViewModel, TotalBusinessOverheadsDto>().ReverseMap();
 
             // Misc Project Data
             CreateMap<ProjectDto, ProjectMiscItem>()
