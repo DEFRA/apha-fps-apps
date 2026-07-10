@@ -10,17 +10,17 @@ using Xunit;
 
 namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
 {
-    public class TimeSellerPcControllerTests
+    public class ContributionSummaryControllerTests
     {
         private readonly ITimeSellerPcService _serviceMock;
         private readonly IMapper _mapperMock;
-        private readonly TimeSellerPcController _controller;
+        private readonly ContributionSummaryController _controller;
 
-        public TimeSellerPcControllerTests()
+        public ContributionSummaryControllerTests()
         {
             _serviceMock = Substitute.For<ITimeSellerPcService>();
             _mapperMock  = Substitute.For<IMapper>();
-            _controller  = new TimeSellerPcController(_serviceMock, _mapperMock);
+            _controller  = new ContributionSummaryController(_serviceMock, _mapperMock);
         }
 
         private static List<TimeSellerPcRowDto> MakeRowDtos(int count = 2)

@@ -414,7 +414,7 @@ namespace Apha.FPS.DataAccess.Repositories
         /// (decimal). Mixed-type arithmetic is performed in LINQ-to-Objects after materialisation to
         /// avoid a double x decimal compile error inside the IQueryable projection.
         /// </summary>
-        public async Task<decimal> GetGlobalAnimalCostAsync(CancellationToken cancellationToken = default)
+        public async Task<decimal> GetGlobalAnimalCostAsync()
         {
             // Step 1 — IQueryable: fetch raw typed columns, no arithmetic
             var raw = await (from req in _dbContext.AnimalRequests
@@ -427,7 +427,7 @@ namespace Apha.FPS.DataAccess.Repositories
                                  animal.DailyRate
                              })
                 .AsNoTracking()
-                .ToListAsync(cancellationToken);
+                .ToListAsync();
 
             // Step 2 — LINQ-to-Objects: safe mixed-type arithmetic after materialisation
             return raw.Sum(x => (decimal)x.NumberOfDays * (decimal)x.NumberOfAnimals * (x.DailyRate ?? 0m));

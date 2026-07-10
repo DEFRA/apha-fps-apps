@@ -28,7 +28,7 @@ namespace Apha.FPS.Core.Interfaces
         /// Equivalent to the MS Access Form_Activate query used when SellingPC = "ASU":
         /// Sum(NumberOfDays * NumberOfAnimals * DailyRate) JOIN tblAnimals ON AnimalType.
         /// </summary>
-        Task<decimal> GetGlobalAnimalCostAsync(CancellationToken cancellationToken = default);
+        Task<decimal> GetGlobalAnimalCostAsync();
     }
 }
 

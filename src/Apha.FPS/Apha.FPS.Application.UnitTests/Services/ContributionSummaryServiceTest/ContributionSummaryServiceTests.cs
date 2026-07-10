@@ -8,17 +8,17 @@ using NSubstitute.ExceptionExtensions;
 
 namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
 {
-    public class TimeSellerPcServiceTests
+    public class ContributionSummaryServiceTests
     {
         private readonly ITimeSellerPcRepository _mockRepository;
         private readonly IAnimalRepository       _mockAnimalRepository;
-        private readonly TimeSellerPcService     _sut;
+        private readonly ContributionSummaryService     _sut;
 
-        public TimeSellerPcServiceTests()
+        public ContributionSummaryServiceTests()
         {
             _mockRepository       = Substitute.For<ITimeSellerPcRepository>();
             _mockAnimalRepository = Substitute.For<IAnimalRepository>();
-            _sut                  = new TimeSellerPcService(_mockRepository, _mockAnimalRepository);
+            _sut                  = new ContributionSummaryService(_mockRepository, _mockAnimalRepository);
         }
 
         private static TimeSellerPcView MakeView(
@@ -208,7 +208,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
             result.AssuredSurplus.Should().Be(-750m);
             result.AnimalCosts.Should().Be(0m);
             result.IsAsuMode.Should().BeFalse();
-            await _mockAnimalRepository.DidNotReceive().GetGlobalAnimalCostAsync(Arg.Any<CancellationToken>());
+            await _mockAnimalRepository.DidNotReceive().GetGlobalAnimalCostAsync();
         }
 
         [Fact]
@@ -221,7 +221,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
                 MakeView(sellingPc: sellingPc, fec: 400m, appFec: 360m, contTarget: 1000m, sumOfGenBid: 200m)
             };
             _mockRepository.GetBySellingPcAsync(sellingPc).Returns(views);
-            _mockAnimalRepository.GetGlobalAnimalCostAsync(Arg.Any<CancellationToken>()).Returns(150m);
+            _mockAnimalRepository.GetGlobalAnimalCostAsync().Returns(150m);
 
             // Act
             var result = await _sut.GetTotalsAsync(sellingPc);
@@ -231,7 +231,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
             result.AnimalCosts.Should().Be(150m);
             result.Surplus.Should().Be(400m - 1200m + 150m);
             result.AssuredSurplus.Should().Be(360m - 1200m);
-            await _mockAnimalRepository.Received(1).GetGlobalAnimalCostAsync(Arg.Any<CancellationToken>());
+            await _mockAnimalRepository.Received(1).GetGlobalAnimalCostAsync();
         }
 
         [Fact]
@@ -240,14 +240,14 @@ namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
             // Arrange
             var views = new List<TimeSellerPcView> { MakeView(sellingPc: "asu") };
             _mockRepository.GetBySellingPcAsync("asu").Returns(views);
-            _mockAnimalRepository.GetGlobalAnimalCostAsync(Arg.Any<CancellationToken>()).Returns(100m);
+            _mockAnimalRepository.GetGlobalAnimalCostAsync().Returns(100m);
 
             // Act
             var result = await _sut.GetTotalsAsync("asu");
 
             // Assert
             result.IsAsuMode.Should().BeTrue();
-            await _mockAnimalRepository.Received(1).GetGlobalAnimalCostAsync(Arg.Any<CancellationToken>());
+            await _mockAnimalRepository.Received(1).GetGlobalAnimalCostAsync();
         }
 
         [Fact]

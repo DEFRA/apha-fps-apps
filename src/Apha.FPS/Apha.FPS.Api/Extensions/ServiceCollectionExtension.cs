@@ -51,7 +51,7 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
-            services.AddScoped<ITimeSellerPcService, TimeSellerPcService>();
+            services.AddScoped<ITimeSellerPcService, ContributionSummaryService>();
             services.AddScoped<IUserService, UserService>();
             return services;
         }

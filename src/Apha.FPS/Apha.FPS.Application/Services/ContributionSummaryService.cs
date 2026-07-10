@@ -7,14 +7,14 @@ namespace Apha.FPS.Application.Services
     /// <summary>
     /// Service for the Income/Contribution from Time Sales summary (frmTimeSellerPC).
     /// </summary>
-    public class TimeSellerPcService : ITimeSellerPcService
+    public class ContributionSummaryService : ITimeSellerPcService
     {
         private const string AsuSellingPc = "ASU";
 
         private readonly ITimeSellerPcRepository _repository;
         private readonly IAnimalRepository _animalRepository;
 
-        public TimeSellerPcService(
+        public ContributionSummaryService(
             ITimeSellerPcRepository repository,
             IAnimalRepository animalRepository)
         {
@@ -80,7 +80,7 @@ namespace Apha.FPS.Application.Services
             // ASU special case: add global animal costs to the surplus calculation
             var isAsuMode = string.Equals(sellingPc, AsuSellingPc, StringComparison.OrdinalIgnoreCase);
             var animalCosts = isAsuMode
-                ? await _animalRepository.GetGlobalAnimalCostAsync(cancellationToken)
+                ? await _animalRepository.GetGlobalAnimalCostAsync()
                 : 0m;
 
             // Surplus/Shortfall (Total Time panel) = TotalFec - TotalToRecover + AnimalCosts
