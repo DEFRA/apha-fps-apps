@@ -33,7 +33,7 @@ namespace Apha.FPSApps.Web.UnitTests.Models.Components.DataGrid
             // Assert
             var column = columns.Single(c => c.PropertyName == nameof(SampleGridModel.EventDateTime));
             Assert.Equal(GridColumnType.DateTime, column.ColumnType);
-            Assert.Equal("dd/MM/yyyy HH:mm", column.DateFormat);
+            Assert.Equal("dd/MM/yyyy HH:mm", column.DateTimeFormatHhMm);
         }
 
         [Fact]
