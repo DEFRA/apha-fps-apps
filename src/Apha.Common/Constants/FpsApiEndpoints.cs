@@ -225,8 +225,8 @@ namespace Apha.Common.Constants
         public const string GetBudgetBidsAccounts = "api/v1/budgetbids/accounts";
 
         // Income/Contribution from Time Sales (frmTimeSellerPC)
-        public const string GetTimeSellerPcRows   = "api/v1/timeseller/{0}/rows";
-        public const string GetTimeSellerPcTotals = "api/v1/timeseller/{0}/totals";
+        public const string GetContributionSummaryRows   = "api/v1/timeseller/{0}/rows";
+        public const string GetContributionSummaryTotals = "api/v1/timeseller/{0}/totals";
 
         // Generic Bid — Purchases
         public const string GetGenericPurchases     = "api/v1/purchases";

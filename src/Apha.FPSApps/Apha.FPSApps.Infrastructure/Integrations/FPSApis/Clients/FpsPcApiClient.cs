@@ -21,7 +21,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<ContributionSummaryRowDto>>> GetRowsAsync(string sellingPc)
         {
-            var url = string.Format(FpsApiEndpoints.GetTimeSellerPcRows, sellingPc);
+            var url = string.Format(FpsApiEndpoints.GetContributionSummaryRows, sellingPc);
             var response = await _http.GetAsync<List<ContributionSummaryRowRes>>(url);
 
             if (response.Success)
@@ -33,7 +33,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<ContributionSummaryTotalsDto>> GetTotalsAsync(string sellingPc)
         {
-            var url = string.Format(FpsApiEndpoints.GetTimeSellerPcTotals, sellingPc);
+            var url = string.Format(FpsApiEndpoints.GetContributionSummaryTotals, sellingPc);
             var response = await _http.GetAsync<ContributionSummaryTotalsRes>(url);
 
             if (response.Success)
