@@ -18,12 +18,12 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         private const string RecreateSummariesJobName = "RecreateSummary";
 
         private readonly IMapper _mapper;
-        private readonly IRecreateAndReleaseSummaryService _service;
+        private readonly IRecreateSummaryService _service;
         private readonly IMonthService _monthService;
 
         public RecreateSummariesController(
             IMapper mapper,
-            IRecreateAndReleaseSummaryService service,
+            IRecreateSummaryService service,
             IMonthService monthService)
         {
             _mapper = mapper;
@@ -67,7 +67,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         [HttpPost]
         public async Task<IActionResult> TriggerJob(int month)
         {
-            var result = await _service.TriggerRecreateSummariesJobAsync(month);
+            var result = await _service.TriggerRecreateSummariesBatchJobAsync(month);
 
             if (result.Success)
                 return Json(new { success = true });
@@ -80,7 +80,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             var grid = HistoryGridConfig();
             var query = _mapper.Map<QueryParameters<string>>(request);
-            var response = await _service.GetBatchJobHistoryAsync(query, RecreateSummariesJobName);
+            var response = await _service.GetRecreateSummaryBatchJobHistoryAsync(query, RecreateSummariesJobName);
 
             grid.Data = response.Data != null
                 ? _mapper.Map<List<BatchJobHistoryItem>>(response.Data)
@@ -110,7 +110,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
         private async Task<bool> GetCanRunJobAsync()
         {
-            var result = await _service.CanRunBatchJobAsync(RecreateSummariesJobName);
+            var result = await _service.CanRunRecreateSummaryBatchJobAsync(RecreateSummariesJobName);
             return result.Success && result.Data;
         }
 

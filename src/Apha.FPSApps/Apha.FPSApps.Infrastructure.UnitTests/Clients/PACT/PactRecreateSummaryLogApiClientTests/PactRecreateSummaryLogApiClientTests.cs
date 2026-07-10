@@ -14,7 +14,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
     {
         private readonly IPactHttpExecutor _mockHttp;
         private readonly IMapper _mockMapper;
-        private readonly PactRecreateAndReleaseSummaryLogApiClient _client;
+        private readonly PactRecreateSummaryApiClient _client;
 
         private const string TestUserId = "TestUser1";
         private const string TestUserName = "Test User";
@@ -27,7 +27,7 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.PACT.PactRecreateSummari
         {
             _mockHttp = Substitute.For<IPactHttpExecutor>();
             _mockMapper = Substitute.For<IMapper>();
-            _client = new PactRecreateAndReleaseSummaryLogApiClient(_mockHttp, _mockMapper);
+            _client = new PactRecreateSummaryApiClient(_mockHttp, _mockMapper);
         }
 
         #region GetAllRecreateSummariesLogsAsync

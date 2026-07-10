@@ -10,8 +10,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
     public class RecreateSummaryLogServiceTests
     {
         private readonly IPactApiClient _mockPactClient;
-        private readonly IPactRecreateAndReleaseSummaryLogApiClient _mockLogApiClient;
-        private readonly RecreateAndReleaseSummaryService _service;
+        private readonly IPactRecreateSummaryApiClient _mockLogApiClient;
+        private readonly RecreateSummaryService _service;
 
         private const string TestUserId = "TestUser1";
         private const string TestUserName = "Test User";
@@ -23,9 +23,9 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummariesLogS
         public RecreateSummaryLogServiceTests()
         {
             _mockPactClient = Substitute.For<IPactApiClient>();
-            _mockLogApiClient = Substitute.For<IPactRecreateAndReleaseSummaryLogApiClient>();
-            _mockPactClient.PactRecreateSummaryLog.Returns(_mockLogApiClient);
-            _service = new RecreateAndReleaseSummaryService(_mockPactClient);
+            _mockLogApiClient = Substitute.For<IPactRecreateSummaryApiClient>();
+            _mockPactClient.PactRecreateSummary.Returns(_mockLogApiClient);
+            _service = new RecreateSummaryService(_mockPactClient);
         }
 
         #region GetRecreateSummaryLogAsync

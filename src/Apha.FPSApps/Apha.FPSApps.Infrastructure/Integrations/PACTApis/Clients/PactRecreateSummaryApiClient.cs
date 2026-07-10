@@ -10,18 +10,40 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
 {
-    public class PactBatchJobApiClient : IPactBatchJobApiClient
+    public class PactRecreateSummaryApiClient : IPactRecreateSummaryApiClient
     {
         private readonly IPactHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        public PactBatchJobApiClient(IPactHttpExecutor http, IMapper mapper)
+        public PactRecreateSummaryApiClient(IPactHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;
         }
 
-        public async Task<ApiResponseDto<List<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
+        public async Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetRecreateSummaryLogAsync(QueryParameters<string> query)
+        {
+            var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetRecreateSummaryLog, query);
+            var response = await _http.GetAsync<List<RecreateSummaryLogRes>>(url);
+
+            if (response.Success)
+            {
+                var dto = _mapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(response);
+                var pagination = response.Pagination;
+                var result = new PaginatedResult<RecreateSummaryLogDto>(
+                    dto.Data ?? new List<RecreateSummaryLogDto>(),
+                    pagination?.TotalRecords ?? 0,
+                    pagination?.PageNumber ?? query.Page,
+                    pagination?.PageSize ?? query.PageSize);
+                return ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>.SuccessResponse(result);
+            }
+
+            var failDto = _mapper.Map<ApiResponseDto<List<RecreateSummaryLogDto>>>(response);
+            return ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>.FailureResponse(failDto.Errors, failDto.Meta);
+        }
+
+
+        public async Task<ApiResponseDto<List<BatchJobHistoryDto>>> GetRecreateSummaryBatchJobHistoryAsync(QueryParameters<string> query, string jobName)
         {
             var url = QueryStringHelper.AddQueryString(PactApiEndpoints.GetRecreateSummaryBatchJobHistory, query);
             url += $"&jobName={Uri.EscapeDataString(jobName)}";
@@ -38,7 +60,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             }
         }
 
-        public async Task<ApiResponseDto<bool>> CanRunBatchJobAsync(string jobName)
+        public async Task<ApiResponseDto<bool>> CanRunRecreateSummaryBatchJobAsync(string jobName)
         {
             var url = $"{PactApiEndpoints.CanRunRecreateSummaryBatchJob}?jobName={Uri.EscapeDataString(jobName)}";
             var response = await _http.GetAsync<bool>(url);
@@ -50,7 +72,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerRecreateSummariesJobAsync(int month)
+        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerRecreateSummariesBatchJobAsync(int month)
         {
             var request = new RecreateSummariesReq { Month = month };
             var response = await _http.PostAsync<RecreateSummariesReq, BatchJobEventTriggerRes>(

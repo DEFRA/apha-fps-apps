@@ -21,11 +21,10 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
         public IPactMonthlyOutputApiClient PactMonthlyOutput { get; }        
         public IPactSummarisedWgTimeApiClient PactSummarisedWgTime { get; }               
         public IPactWorkGroupReportEmailApiClient PactWorkGroupReportEmail { get; }
-        public IPactRecreateAndReleaseSummaryLogApiClient PactRecreateSummaryLog { get; }
+        public IPactRecreateSummaryApiClient PactRecreateSummary { get; }
         public IPactMonthlyTimeApiClient PactMonthlyTime { get; }
         public IPactReleaseSummaryApiClient PactReleaseSummary { get; }
         public IPactBosworthInterfaceApiClient PactBosworthInterface { get; }
-        public IPactBatchJobApiClient PactBatchJob { get; }
 
         public PactApiClient(IPactHttpExecutor http, IMapper mapper)
         {
@@ -45,10 +44,9 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             PactSummarisedWgTime = new PactSummarisedWgTimeApiClient(http, mapper);                        
             PactWorkGroupReportEmail = new PactWorkGroupReportEmailApiClient(http, mapper);
             PactMonthlyTime = new PactMonthlyTimeApiClient(http, mapper);
-            PactRecreateSummaryLog = new PactRecreateAndReleaseSummaryLogApiClient(http, mapper);
+            PactRecreateSummary = new PactRecreateSummaryApiClient(http, mapper);
             PactReleaseSummary = new PactReleaseSummaryApiClient(http, mapper);
             PactBosworthInterface = new PactBosworthInterfaceApiClient(http, mapper);
-            PactBatchJob = new PactBatchJobApiClient(http, mapper);
         }
     }
 }
