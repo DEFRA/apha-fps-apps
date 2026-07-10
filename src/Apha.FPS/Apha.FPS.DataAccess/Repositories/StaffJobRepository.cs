@@ -41,7 +41,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     item.Name = name;
             }
 
-            result = ApplyStaffJobFilterInMemory(result, query.Filter);
+            result = ApplyStaffJobFilter(result, query.Filter);
 
             return base.ApplyPaging(result, query.Page, query.PageSize);
         }
@@ -343,7 +343,7 @@ namespace Apha.FPS.DataAccess.Repositories
             return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
 
-        private static List<StaffJobView> ApplyStaffJobFilterInMemory(List<StaffJobView> list, string? filter)
+        private static List<StaffJobView> ApplyStaffJobFilter(List<StaffJobView> list, string? filter)
         {
             if (string.IsNullOrEmpty(filter))
                 return list;
