@@ -51,11 +51,11 @@
                 if (response && response.success) {
                     bindGroupDropdownList(response.data);
                 } else {
-                    console.warn('GetGroupsByResourceCentre:', response && response.message);
+                    showAlertMessage('Could not load work groups for \'' + currentCentre + '\': ' + (response && response.message || 'Unknown error.'), AlertType.INFO);
                 }
             }
         ).fail(function () {
-            console.error('GetGroupsByResourceCentre failed for:', currentCentre);
+            showAlertMessage('Could not load work groups for \'' + currentCentre + '\'. Please try selecting the Resource Centre again.', AlertType.INFO);
         });
     }
 
@@ -74,9 +74,9 @@
 
     /* ── WorkGroup → Grade cascade ──────────────────────────────────── */
     function LoadGradeByGroup(restoreGrade) {
-        const sel           = el('workGroupSelect');
+        const sel = el('workGroupSelect');
         const selectedGroup = sel ? sel.value : '';
-        currentWorkGroup    = selectedGroup;
+        currentWorkGroup = selectedGroup;
 
         if (!selectedGroup) {
             bindGradeList([], null);
@@ -89,11 +89,11 @@
                 if (response && response.success) {
                     bindGradeList(response.data, restoreGrade || null);
                 } else {
-                    console.warn('GetGradesByGroups:', response && response.message);
+                    showAlertMessage('Could not load grades for work group \'' + selectedGroup + '\': ' + (response && response.message || 'Unknown error.'), AlertType.INFO);
                 }
             }
         ).fail(function () {
-            console.error('GetGradesByGroups failed for:', selectedGroup);
+            showAlertMessage('Could not load grades for work group \'' + selectedGroup + '\'. Please try selecting the work group again.', AlertType.INFO);
         });
     }
 
@@ -173,7 +173,7 @@
                 setVal('ssrWorkHrs',      data.totalAtWork != null ? data.totalAtWork : '0');
             }
         }).fail(function () {
-            console.warn('GetGradeStats failed for grade:', wg);
+            showAlertMessage('Could not load grade summary for: ' + wg + '. Please try selecting the grade again.', AlertType.INFO);
         });
     }
 
@@ -218,62 +218,62 @@
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
         }).fail(function () {
-            alert('Failed to load edit form. Please try again.');
+            showAlertMessage('Failed to load edit form. Please try again.', AlertType.ERROR);
         });
     }
 
     function saveSetUpStaffResources() {
-        const pactId  = el('hdnPactId')?.value || '';
-        const name    = el('ssrEditName')?.value || '';
+        const pactId = el('hdnPactId')?.value || '';
+        const name = el('ssrEditName')?.value || '';
         const hrsPaid = parseFloat(el('ssrEditHrsPaid')?.value) || 0;
-        const leave   = parseFloat(el('ssrEditLeave')?.value)   || 0;
-        const sickSp  = parseFloat(el('ssrEditSickSp')?.value)  || 0;
+        const leave = parseFloat(el('ssrEditLeave')?.value) || 0;
+        const sickSp = parseFloat(el('ssrEditSickSp')?.value) || 0;
         const planable = el('ssrEditPlanable')?.checked ? 1 : 0;
 
         if (!pactId) {
-            alert('Cannot save: staff record ID is missing.');
+            showAlertMessage('Cannot save: staff record ID is missing.', AlertType.INFO);
             return;
         }
 
         const aftInput = document.querySelector('#ssrEditForm input[name="__RequestVerificationToken"]');
-        const aft      = aftInput ? aftInput.value : '';
+        const aft = aftInput ? aftInput.value : '';
 
         if (!aft) {
-            alert('Security token missing. Please refresh the page and try again.');
+            showAlertMessage('Security token missing. Please refresh the page and try again.', AlertType.INFO);
             return;
         }
 
         // Send only the editable subset — controller fetches and patches the full record server-side.
         const dto = {
-            PactId:        pactId,
-            Name:          name,
-            HrsPaid:       hrsPaid,
-            Leave:         leave,
-            SickSpecial:   sickSp,
-            HrsAvail:      parseFloat((hrsPaid - leave - sickSp).toFixed(2)),
+            PactId: pactId,
+            Name: name,
+            HrsPaid: hrsPaid,
+            Leave: leave,
+            SickSpecial: sickSp,
+            HrsAvail: parseFloat((hrsPaid - leave - sickSp).toFixed(2)),
             MakeAvailable: planable
         };
 
         $.ajax({
-            url:         '/FPS/SetUpStaffResources/Edit',
-            type:        'POST',
-            data:        JSON.stringify(dto),
+            url: '/FPS/SetUpStaffResources/Edit',
+            type: 'POST',
+            data: JSON.stringify(dto),
             contentType: 'application/json; charset=utf-8',
-            headers:     { 'RequestVerificationToken': aft },
+            headers: { 'RequestVerificationToken': aft },
             success: function (data) {
                 if (data.success) {
                     closeModal();
                     reloadStaffGrid();
                     refreshGradeStats(currentGrade);
                 } else {
-                    alert('Save failed: ' + (data.message || 'Unknown error.'));
+                    showAlertMessage('Save failed: ' + (data.message || 'Unknown error.'), AlertType.ERROR);
                 }
             },
             error: function (xhr) {
                 if (xhr.status === 400) {
-                    alert('Validation error. Please check the form and try again.');
+                    showAlertMessage('Validation error. Please check the form and try again.', AlertType.ERROR);
                 } else {
-                    alert('An error occurred while saving. Please try again.');
+                    showAlertMessage('An error occurred while saving. Please try again.', AlertType.ERROR);
                 }
             }
         });
@@ -290,7 +290,7 @@
         const idEl = el('ssrSelectedPersonId');
 
         if (!person || !person.value) {
-            alert('Please select a person first.');
+            showAlertMessage('Please select a person first.', AlertType.INFO);
             return;
         }
 
@@ -302,7 +302,7 @@
                 grade:     currentGrade
             }));
         } catch (e) {
-            console.warn('Could not save SSR state to sessionStorage:', e);
+            showAlertMessage('Error, The page will still open but your previous selection may not be restored on return.', AlertType.INFO);
         }
 
         let url = cfg.ztCodeUrl;
@@ -336,7 +336,7 @@
             saved = JSON.parse(raw);
             sessionStorage.removeItem('ssrReturnState'); // consume immediately
         } catch (e) {
-            console.warn('Could not read SSR return state:', e);
+            showAlertMessage('Error, Please re-select a Resource Centre and Grade.', AlertType.INFO);
             return;
         }
 
@@ -351,7 +351,7 @@
         if (!targetOption) return;
 
         rcSelect.value = saved.centre;
-        currentCentre  = saved.centre;
+        currentCentre = saved.centre;
 
         const nameEl = el('ssrSelectedCentreName');
         if (nameEl) nameEl.textContent = saved.centre;
@@ -373,7 +373,7 @@
                 const wgOption = Array.from(wgSelect.options).find(function (o) { return o.value === saved.workGroup; });
                 if (!wgOption) return;
 
-                wgSelect.value   = saved.workGroup;
+                wgSelect.value = saved.workGroup;
                 currentWorkGroup = saved.workGroup;
 
                 // ── 3. Load grades for the restored workgroup, activate saved grade ─
@@ -385,11 +385,11 @@
                         }
                     }
                 ).fail(function () {
-                    console.warn('GetGradesByGroups failed during state restore');
+                    showAlertMessage('Could not restore grade list for work group \'' + saved.workGroup + '\'. Please re-select manually.', AlertType.INFO);
                 });
             }
         ).fail(function () {
-            console.warn('GetGroupsByResourceCentre failed during state restore');
+            showAlertMessage('Could not restore work groups for \'' + saved.centre + '\'. Please re-select the Resource Centre manually.', AlertType.INFO);
         });
     }
 
