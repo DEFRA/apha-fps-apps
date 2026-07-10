@@ -1696,3 +1696,7 @@ table#tblMonthPeriod > tbody > tr > td {
 #columnStndHrsAllocatedContainer {
     display: inline-flex; /* Make containers only as wide as content */
 }
+
+.sup_font_weight_700 {
+    font-weight: 700 !important;
+}
