@@ -50,7 +50,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var query = await BuildJobStaffCostQueryAsync(jobCode);
             var result = (await query.ToListAsync()).Select(ComputeStaffCost).ToList();
-            return result != null ? ((result.Sum(x => x.StaffCost)) ?? 0m) : 0m;
+            return result.Sum(x => x.StaffCost) ?? 0m;
         }
 
         public async Task<List<StaffWorkgroupLookup>> GetStaffWorkgroupLookup()
@@ -291,6 +291,8 @@ namespace Apha.FPS.DataAccess.Repositories
                                   prg.UserEmail
                               }).Distinct();
 
+            var test = projProgram.ToList();
+
             return (from sj in _dbContext.StaffJobTblViews
                     join s in _dbContext.StaffGeneralViews on sj.StaffId equals s.StaffId
                     join wg in _dbContext.WorkgroupGrades on s.WorkGroupGrade equals wg.WgGrade
@@ -348,7 +350,15 @@ namespace Apha.FPS.DataAccess.Repositories
             if (string.IsNullOrEmpty(filter))
                 return list;
 
-            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            dynamic? filterModel;
+            try
+            {
+                filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            }
+            catch (JsonException)
+            {
+                return list;
+            }
             if (filterModel == null)
                 return list;
 

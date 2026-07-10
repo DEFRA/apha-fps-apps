@@ -254,6 +254,239 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.StaffJobRepositoryTest
 
         #endregion
 
+        #region ApplyStaffJobFilter Tests
+
+        private static (List<StaffJobTblView>, List<StaffGeneralView>, List<WorkgroupGrade>, List<ProfitCentreGrade>, List<ProjectView>, List<ProgramView>, List<FpsSetting>) BuildTwoStaffFilterTestData()
+        {
+            var settings = new List<FpsSetting> { new() { Id = "HoursInDay", Setting = "8" } };
+            var staffJobTblViews = new List<StaffJobTblView>
+            {
+                new() { StaffId = "S001", JobCode = "JOB001", PlannedHours = 40, UserId = DefaultUserId },
+                new() { StaffId = "S002", JobCode = "JOB001", PlannedHours = 20, UserId = DefaultUserId }
+            };
+            var staffGeneralViews = new List<StaffGeneralView>
+            {
+                new() { StaffId = "S001", Name = "Alice Smith", WorkGroupGrade = "WG01" },
+                new() { StaffId = "S002", Name = "Bob Jones",   WorkGroupGrade = "WG01" }
+            };
+            var workgroupGrades = new List<WorkgroupGrade>
+            {
+                new() { WgGrade = "WG01", ProfitCentreGrade = "PC01", GradeCode = "G01", Workgroup = "IT" }
+            };
+            var profitCentreGrades = new List<ProfitCentreGrade>
+            {
+                new() { PcGrade = "PC01", ChargeRate = 100, DefraChargeRate = 120 }
+            };
+            var projectViews = new List<ProjectView>
+            {
+                new() { ParentProject = "JOB001", UserId = DefaultUserId, IsDefraProject = 0, Program = "PROG01", UserEmail = DefaultUserEmail }
+            };
+            var programViews = new List<ProgramView>
+            {
+                new() { ProgramNo = "PROG01", UserId = DefaultUserId, SectorName = "charge" }
+            };
+            return (staffJobTblViews, staffGeneralViews, workgroupGrades, profitCentreGrades, projectViews, programViews, settings);
+        }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_Filter_Null_ReturnsAllRecords()
+        {
+            // Arrange
+            var (staffJobTblViews, staffGeneralViews, workgroupGrades, profitCentreGrades, projectViews, programViews, settings) = BuildTwoStaffFilterTestData();
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_Filter_EmptyString_ReturnsAllRecords()
+        {
+            // Arrange
+            var (staffJobTblViews, staffGeneralViews, workgroupGrades, profitCentreGrades, projectViews, programViews, settings) = BuildTwoStaffFilterTestData();
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "" };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_Filter_InvalidJson_ReturnsAllRecords()
+        {
+            // Arrange
+            var (staffJobTblViews, staffGeneralViews, workgroupGrades, profitCentreGrades, projectViews, programViews, settings) = BuildTwoStaffFilterTestData();
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "not-valid-json" };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_Filter_ByNameExactMatch_ReturnsMatchingRecord()
+        {
+            // Arrange
+            var (staffJobTblViews, staffGeneralViews, workgroupGrades, profitCentreGrades, projectViews, programViews, settings) = BuildTwoStaffFilterTestData();
+            var staffViews = new List<StaffView>
+            {
+                new() { StaffId = "S001", Name = "Alice Smith", WorkgroupGrade = "WG01", UserEmail = DefaultUserEmail },
+                new() { StaffId = "S002", Name = "Bob Jones",   WorkgroupGrade = "WG01", UserEmail = DefaultUserEmail }
+            };
+            var staffPickViews = new List<StaffPickView>
+            {
+                new() { StaffId = "S001" },
+                new() { StaffId = "S002" }
+            };
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                staffViews: staffViews,
+                staffPickViews: staffPickViews,
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"Name\":\"Alice Smith\"}" };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("Alice Smith", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_Filter_ByNamePartialMatch_IsCaseInsensitive()
+        {
+            // Arrange
+            var (staffJobTblViews, staffGeneralViews, workgroupGrades, profitCentreGrades, projectViews, programViews, settings) = BuildTwoStaffFilterTestData();
+            var staffViews = new List<StaffView>
+            {
+                new() { StaffId = "S001", Name = "Alice Smith", WorkgroupGrade = "WG01", UserEmail = DefaultUserEmail },
+                new() { StaffId = "S002", Name = "Bob Jones",   WorkgroupGrade = "WG01", UserEmail = DefaultUserEmail }
+            };
+            var staffPickViews = new List<StaffPickView>
+            {
+                new() { StaffId = "S001" },
+                new() { StaffId = "S002" }
+            };
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                staffViews: staffViews,
+                staffPickViews: staffPickViews,
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"Name\":\"alice\"}" };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Equal(1, result.PaginationData.TotalRecords);
+            Assert.Equal("Alice Smith", result.Data.First().Name);
+        }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_Filter_ByNameNoMatch_ReturnsEmptyList()
+        {
+            // Arrange
+            var (staffJobTblViews, staffGeneralViews, workgroupGrades, profitCentreGrades, projectViews, programViews, settings) = BuildTwoStaffFilterTestData();
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"Name\":\"ZZZ_NoMatch\"}" };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetJobStaffCostAsync_Filter_UnknownKey_ReturnsAllRecords()
+        {
+            // Arrange
+            var (staffJobTblViews, staffGeneralViews, workgroupGrades, profitCentreGrades, projectViews, programViews, settings) = BuildTwoStaffFilterTestData();
+            var repo = CreateRepository(
+                staffJobTblViews: staffJobTblViews,
+                staffGeneralViews: staffGeneralViews,
+                workgroupGrades: workgroupGrades,
+                profitCentreGrades: profitCentreGrades,
+                projectViews: projectViews,
+                programViews: programViews,
+                staffViews: new List<StaffView>(),
+                staffPickViews: new List<StaffPickView>(),
+                settings: settings);
+
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "{\"UnknownField\":\"value\"}" };
+
+            // Act
+            var result = await repo.GetJobStaffCostAsync(query, "JOB001");
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
         #region GetStaffWorkgroupLookup Tests
 
         [Fact]
