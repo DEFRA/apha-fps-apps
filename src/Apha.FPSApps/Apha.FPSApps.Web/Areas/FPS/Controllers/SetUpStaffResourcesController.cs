@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Identity.Web;
+using Newtonsoft.Json;
 
 namespace Apha.FPSApps.Web.Areas.FPS.Controllers
 {
@@ -93,6 +94,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 return Json(new { success = false, message = response.Errors?.FirstOrDefault()?.Message ?? "Failed to load staff data." });
             }
 
+            var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
+                             ?? new Dictionary<string, string>();
+
             var rawData = response.Data ?? new List<WorkGroupEmployeeStaffDto>();
             var staffItems = rawData.Select(d => _mapper.Map<SetUpStaffResourcesItem>(d)).ToList();
 
@@ -100,7 +104,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
-            return PartialView("_DataGrid", BuildStaffGridConfig(staffItems, paginationModel));
+            return PartialView("_DataGrid", BuildStaffGridConfig(staffItems, paginationModel, filterDict));
         }
 
         [HttpGet]
@@ -220,7 +224,9 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         }
 
         private static DataGridConfig<SetUpStaffResourcesItem> BuildStaffGridConfig(
-            List<SetUpStaffResourcesItem> data, PaginationModel pagination) =>
+            List<SetUpStaffResourcesItem> data,
+            PaginationModel pagination,
+            Dictionary<string, string>? currentFilters = null) =>
             new()
             {
                 GridId             = "ssrStaffGrid",
@@ -238,7 +244,8 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ExtraFilterMethod  = "ssrGetStaffExtraFilters",
                 Data               = data,
                 Columns            = GridDataProvider.GetColumnsDefination<SetUpStaffResourcesItem>(),
-                Pagination         = pagination
+                Pagination         = pagination,
+                CurrentFilters     = currentFilters ?? new Dictionary<string, string>()
             };
 
         private async Task<List<SelectListItem>> PopulateResourceCentresAsync()

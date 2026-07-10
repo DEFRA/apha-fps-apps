@@ -13,8 +13,9 @@
     'use strict';
 
     /* ── Module-level state ─────────────────────────────────────────── */
-    let currentCentre = cfg.currentCentre || '';
-    let currentGrade = cfg.currentGrade || '';
+    let currentCentre    = cfg.currentCentre    || '';
+    let currentWorkGroup = cfg.currentWorkGroup || '';
+    let currentGrade     = cfg.currentGrade     || '';
 
     /* ── Utility helpers ────────────────────────────────────────────── */
     function el(id) { return document.getElementById(id); }
@@ -40,6 +41,7 @@
         }
 
         if (nameEl) nameEl.textContent = currentCentre;
+        currentWorkGroup = '';
         currentGrade = '';
         bindGroupDropdownList([]);
 
@@ -71,12 +73,13 @@
     }
 
     /* ── WorkGroup → Grade cascade ──────────────────────────────────── */
-    function LoadGradeByGroup() {
-        const sel = el('workGroupSelect');
+    function LoadGradeByGroup(restoreGrade) {
+        const sel           = el('workGroupSelect');
         const selectedGroup = sel ? sel.value : '';
+        currentWorkGroup    = selectedGroup;
 
         if (!selectedGroup) {
-            bindGradeList([]);
+            bindGradeList([], null);
             return;
         }
 
@@ -84,7 +87,7 @@
             { workGroup: selectedGroup },
             function (response) {
                 if (response && response.success) {
-                    bindGradeList(response.data);
+                    bindGradeList(response.data, restoreGrade || null);
                 } else {
                     console.warn('GetGradesByGroups:', response && response.message);
                 }
@@ -97,8 +100,9 @@
     /**
      * Populate the grade listbox.
      * @param {Array<{wgGrade:string, gradeCode:string}>} grades
+     * @param {string|null} restoreGrade  When non-null, activate this grade instead of the first.
      */
-    function bindGradeList(grades) {
+    function bindGradeList(grades, restoreGrade) {
         const list = el('ssrGradeList');
         if (!list) return;
 
@@ -119,8 +123,11 @@
         });
 
         if (grades && grades.length > 0) {
-            const first = (typeof grades[0] === 'object') ? grades[0].wgGrade : grades[0];
-            ssrSelectWorkGroup(first);
+            const allGrades = grades.map(function (g) { return typeof g === 'object' ? g.wgGrade : g; });
+            const target    = (restoreGrade && allGrades.includes(restoreGrade))
+                ? restoreGrade
+                : allGrades[0];
+            ssrSelectWorkGroup(target);
         } else {
             currentGrade = '';
             ssrClearAll();
@@ -278,9 +285,20 @@
             return;
         }
 
+        // Persist current selections so they are restored when the user clicks Back
+        try {
+            sessionStorage.setItem('ssrReturnState', JSON.stringify({
+                centre:    currentCentre,
+                workGroup: currentWorkGroup,
+                grade:     currentGrade
+            }));
+        } catch (e) {
+            console.warn('Could not save SSR state to sessionStorage:', e);
+        }
+
         let url = cfg.ztCodeUrl;
         const id = idEl ? idEl.value : '';
-        if (id) url += '?staffId=' + encodeURIComponent(id);
+        if (id) url += '?staffId=' + encodeURIComponent(id) + '&source=ssr';
         window.location.href = url;
     }
 
@@ -295,6 +313,81 @@
         setVal('ssrWorkHrs', '0');
         ssrClearPersonSelection();
     }
+
+    /* ── Back-navigation state restore ─────────────────────────────── */
+    /**
+     * Restore Resource Centre → WorkGroup → Grade cascade from sessionStorage.
+     * Triggered on pageshow so it also fires after a bfcache restore.
+     */
+    function restoreSelectionState() {
+        let saved;
+        try {
+            const raw = sessionStorage.getItem('ssrReturnState');
+            if (!raw) return;
+            saved = JSON.parse(raw);
+            sessionStorage.removeItem('ssrReturnState'); // consume immediately
+        } catch (e) {
+            console.warn('Could not read SSR return state:', e);
+            return;
+        }
+
+        if (!saved || !saved.centre) return;
+
+        // ── 1. Set Resource Centre dropdown ─────────────────────────────
+        const rcSelect = el('resourceCentreSelect');
+        if (!rcSelect) return;
+
+        // If the <option> for this centre does not exist the user lost access — bail
+        const targetOption = Array.from(rcSelect.options).find(function (o) { return o.value === saved.centre; });
+        if (!targetOption) return;
+
+        rcSelect.value = saved.centre;
+        currentCentre  = saved.centre;
+
+        const nameEl = el('ssrSelectedCentreName');
+        if (nameEl) nameEl.textContent = saved.centre;
+
+        // ── 2. Load workgroups for this centre, then restore workgroup + grade ─
+        $.get('/FPS/SetUpStaffResources/GetGroupsByResourceCentre',
+            { resourceCentre: saved.centre },
+            function (response) {
+                if (!response || !response.success) return;
+
+                bindGroupDropdownList(response.data);
+
+                if (!saved.workGroup) return;
+
+                const wgSelect = el('workGroupSelect');
+                if (!wgSelect) return;
+
+                // Find the matching workgroup option
+                const wgOption = Array.from(wgSelect.options).find(function (o) { return o.value === saved.workGroup; });
+                if (!wgOption) return;
+
+                wgSelect.value   = saved.workGroup;
+                currentWorkGroup = saved.workGroup;
+
+                // ── 3. Load grades for the restored workgroup, activate saved grade ─
+                $.get('/FPS/SetUpStaffResources/GetGradesByGroups',
+                    { workGroup: saved.workGroup },
+                    function (gradeResponse) {
+                        if (gradeResponse && gradeResponse.success) {
+                            bindGradeList(gradeResponse.data, saved.grade || null);
+                        }
+                    }
+                ).fail(function () {
+                    console.warn('GetGradesByGroups failed during state restore');
+                });
+            }
+        ).fail(function () {
+            console.warn('GetGroupsByResourceCentre failed during state restore');
+        });
+    }
+
+    // pageshow fires on both normal page load and bfcache restore (persisted === true)
+    window.addEventListener('pageshow', function () {
+        restoreSelectionState();
+    });
 
     /* ── Grid-reloaded event ────────────────────────────────────────── */
     document.addEventListener('gridReloaded', function (e) {
