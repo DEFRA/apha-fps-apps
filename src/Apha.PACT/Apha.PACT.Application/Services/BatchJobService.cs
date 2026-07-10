@@ -6,6 +6,7 @@ using Apha.PACT.Application.Validation;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
+using Microsoft.Graph.Models;
 using System.Text.Json;
 
 namespace Apha.PACT.Application.Services
@@ -49,27 +50,27 @@ namespace Apha.PACT.Application.Services
             if (month < 1 || month > 12)
                 errors.Add(new BusinessValidationError("Month must be a numeric value between 1 and 12.", "INVALID_MONTH"));
 
-            if (errors.Count > 0)
-                throw new BusinessValidationErrorException(errors);
-
             if (contextyear == 0 || (contextyear < 1900 || contextyear > 9999))
-                throw new InvalidOperationException($"Provided Context year is not valid.");
+                errors.Add(new BusinessValidationError($"The selected financial year is not valid. If the issue persists, contact support.", "INVALID_ContextYear"));
 
             if (string.IsNullOrEmpty(requestedBy))
-                throw new InvalidOperationException($"RequestedBy is required.");
+                errors.Add(new BusinessValidationError($"Unable to identify the requester. Please sign in again and retry. If the issue persists, contact support.", "INVALID_User"));
 
 
             var releasePeriods = await _releaseRepository.GetReleasePeriodsAsync();
             bool exists = releasePeriods.Any(p => p.FinalSummariesRun == -1 && p.EndPeriod >= month);
 
             if (exists)
-                throw new InvalidOperationException($"You cannot rerun a period when a later period has been run.");
+                errors.Add(new BusinessValidationError($"You cannot rerun a period when a later period has been run.","INVALID_Rerun"));
 
             var canRun = await _repository.CanRunBatchJobAsync(RecreateSummariesJobName);
             if (!canRun)
             {
-                throw new InvalidOperationException($"Job '{RecreateSummariesJobName}' is already running or initiated.");
+                errors.Add(new BusinessValidationError($"Job '{RecreateSummariesJobName}' is already running or initiated., Please try after sometime.", "INVALID_Rerun"));
             }
+
+            if (errors.Count > 0)
+                throw new BusinessValidationErrorException(errors);
 
             var queued = await _repository.EnqueueBatchJobAsync(RecreateSummariesJobName, requestedBy, correlationId, note);
 

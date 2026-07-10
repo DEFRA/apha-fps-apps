@@ -86,138 +86,18 @@
 }
 @section Scripts {
 <script>
-    // ── Period dropdown data ──────────────────────────────────────────────
-    const periodData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-        Model.Months.Select(m => new {
-            value    = m.Value,
-            period   = m.Value,
-            monthName = m.Text.Contains(" - ") ? m.Text.Split(" - ", 2)[1] : m.Text
-        })
-    ));
+    // ── Config bridge: Razor-rendered data exposed to the external JS file ──
+    window.RecreateSummariesConfig = {
+        periodData: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.Months.Select(m => new {
+                value     = m.Value,
+                period    = m.Value,
+                monthName = m.Text.Contains(" - ") ? m.Text.Split(" - ", 2)[1] : m.Text
+            })
+        ))
+    };
 </script>
 <script src="~/js/common/multicolumn-dropdown.component.js"></script>
-    <script src="~/js/ajax-form-validation.js"></script>
-<script>
-        
-    var selectPeriodDropdown = null;
-    var SCOPE = '#recreate-form-scope';   // single container for all validation calls
-
-    document.addEventListener('DOMContentLoaded', function () {
-        selectPeriodDropdown = new MultiColumnDropdownComponent({
-            dropdownId: 'selectPeriodDropdown',
-            containerSelector: '#select-period-container',
-            placeholder: '--select--',
-            searchPlaceholder: 'Type to search and select period',
-            showSerialNumber: false,
-            columns: [
-                { field: 'period',    header: 'Period',     width: '80px'  },
-                { field: 'monthName', header: 'Month Name', width: '160px' }
-            ],
-            data: periodData,
-            displayField: 'period',
-            valueField: 'value',
-            clearButtonClearsSelection: true,
-            callbacks: {
-                onSelect: function (selectedItem) {
-                    // sync value to the named hidden input so validation library can find it
-                    document.getElementById('month').value = selectedItem.value || '';
-                    // display as "period - monthName" in the visible input
-                    var input = document.getElementById('selectPeriodDropdown_input');
-                    if (input) input.value = selectedItem.period + ' - ' + selectedItem.monthName;
-                    // clear any existing month error when user makes a selection (Bug 4 fix)
-                    clearValidationErrors(SCOPE);
-                },
-                onClear: function () {
-                    document.getElementById('month').value = '';
-                }
-            }
-        });
-    });
-
-    // ── Trigger job ───────────────────────────────────────────────────────────
-    function triggerCreateSummary() {
-        clearValidationErrors(SCOPE);
-        hideSuccessBanner();   // hide any previous success before each new attempt
-
-        var monthVal = parseInt(document.getElementById('month').value, 10);
-
-        if (!monthVal || isNaN(monthVal)) {
-            // Field-level error — library writes it inline below the dropdown
-            // because name="month" exists inside the scope
-            displayServerValidationErrors(
-                [{ field: 'month', message: 'Please select a summary period.' }],
-                'There is a problem',
-                SCOPE
-            );
-            return;
-        }
-
-        var btn = document.getElementById('btnCreateSummary');
-        btn.disabled = true;
-        btn.setAttribute('aria-disabled', 'true');
-
-        fetch('/PACT/RecreateSummaries/TriggerJob', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ month: monthVal, __RequestVerificationToken: getAntiForgeryToken() })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                showSuccessBanner('Job triggered successfully.');
-                refreshHistoryGrid();
-            } else {
-                // server returned a failure message — show in error summary
-                // field is omitted so the library routes it to .govuk-error-summary
-                displayServerValidationErrors(
-                    [{ field: '', message: data.message ?? 'Failed to trigger the job.' }],
-                    'There is a problem',
-                    SCOPE
-                );
-                btn.disabled = false;
-                btn.removeAttribute('aria-disabled');
-            }
-        })
-        .catch(() => {
-            displayServerValidationErrors(
-                [{ field: '', message: 'An unexpected error occurred. Please try again.' }],
-                'There is a problem',
-                SCOPE
-            );
-            btn.disabled = false;
-            btn.removeAttribute('aria-disabled');
-        });
-    }
-
-    // ── Refresh history grid ──────────────────────────────────────────────
-    function refreshHistoryGrid() {
-        const container = document.getElementById('gridContainer_summaryHistoryGrid');
-        if (!container) return;
-        fetch('/PACT/RecreateSummaries/LoadHistoryGrid', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ Filter: '{}', Page: 1, PageSize: 10, __RequestVerificationToken: getAntiForgeryToken() })
-        })
-        .then(r => r.text())
-        .then(html => { container.innerHTML = html; });
-    }
-
-    // ── Success banner helpers ─────────────────────────────────────────────
-    function showSuccessBanner(message) {
-        var banner = document.getElementById('recreate-success-banner');
-        document.getElementById('recreate-success-banner-message').textContent = message;
-        banner.style.display = '';
-        banner.focus();
-    }
-
-    function hideSuccessBanner() {
-        var banner = document.getElementById('recreate-success-banner');
-        if (banner) banner.style.display = 'none';
-    }
-
-    function getAntiForgeryToken() {
-        const el = document.querySelector('input[name="__RequestVerificationToken"]');
-        return el ? el.value : '';
-    }
-</script>
+<script src="~/js/ajax-form-validation.js"></script>
+<script src="~/js/pact_js/recreate-summaries.js"></script>
 }
