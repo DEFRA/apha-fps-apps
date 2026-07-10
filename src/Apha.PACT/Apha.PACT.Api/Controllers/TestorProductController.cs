@@ -133,13 +133,5 @@ namespace Apha.PACT.Api.Controllers
             return Ok(updated);
         }
 
-        /// <summary>Returns paged test requirement breakdown rows from fps.vtestreqbreakdown.</summary>
-        [HttpGet("testreqbreakdown")]
-        public async Task<IActionResult> GetPlannedTestsByWorkgroup([FromQuery] QueryParameters<string> query)
-        {
-            var result = await _service.GetPlannedTestsByWorkgroupAsync(query);
-            return Ok(_mapper.Map<PaginationRes<TestReqBreakdownRes>>(result));
-        }
-
     }
 }
