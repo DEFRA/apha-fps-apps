@@ -38,7 +38,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         // TRANSFORMENGINE: FpsGrade added — Phase 9 (FpsGradeApiClient for frmMaintGrade ? api/v1/Grade)
         public IFpsGradeApiClient FpsGrade { get; }
 
-        public FpsApiClient(IFpsHttpExecutor http, IPactHttpExecutor pactHttp, IMapper mapper)
+        public FpsApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             FpsStaffJob = new FpsStaffJobApiClient(http, mapper);
             FpsEmployee = new FpsEmployeeApiClient(http, mapper);
