@@ -50,17 +50,17 @@ namespace Apha.FPSApps.Infrastructure.Integrations.PACTApis.Clients
             return ApiResponseDto<bool>.FailureResponse(failDto.Errors, failDto.Meta);
         }
 
-        public async Task<ApiResponseDto<BatchJobQueueDto>> TriggerRecreateSummariesJobAsync(int month)
+        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerRecreateSummariesJobAsync(int month)
         {
             var request = new TriggerRecreateSummariesReq { Month = month };
-            var response = await _http.PostAsync<TriggerRecreateSummariesReq, BatchJobQueueRes>(
+            var response = await _http.PostAsync<TriggerRecreateSummariesReq, BatchJobEventTriggerRes>(
                 PactApiEndpoints.TriggerRecreateSummariesJob, request);
 
             if (response.Success && response.Data is not null)
-                return _mapper.Map<ApiResponseDto<BatchJobQueueDto>>(response);
+                return _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);
 
-            var failDto = _mapper.Map<ApiResponseDto<BatchJobQueueDto>>(response);
-            return ApiResponseDto<BatchJobQueueDto>.FailureResponse(failDto.Errors, failDto.Meta);
+            var failDto = _mapper.Map<ApiResponseDto<BatchJobEventTriggerDto>>(response);
+            return ApiResponseDto<BatchJobEventTriggerDto>.FailureResponse(failDto.Errors, failDto.Meta);
         }
     }
 }

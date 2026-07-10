@@ -24,7 +24,7 @@ namespace Apha.FPSApps.Application.Services.PACT
         public async Task<ApiResponseDto<bool>> CanRunBatchJobAsync(string jobName)
             => await _pactClient.PactBatchJob.CanRunBatchJobAsync(jobName);
 
-        public async Task<ApiResponseDto<BatchJobQueueDto>> TriggerRecreateSummariesJobAsync(int month)
+        public async Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerRecreateSummariesJobAsync(int month)
             => await _pactClient.PactBatchJob.TriggerRecreateSummariesJobAsync(month);
     }
 }

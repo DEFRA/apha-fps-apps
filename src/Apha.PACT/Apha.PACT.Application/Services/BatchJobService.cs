@@ -3,11 +3,9 @@ using Apha.PACT.Application.Dtos;
 using Apha.PACT.Application.Interfaces;
 using Apha.PACT.Application.Pagination;
 using Apha.PACT.Application.Validation;
-using Apha.PACT.Core.Entities;
 using Apha.PACT.Core.Interfaces;
 using Apha.PACT.Core.Pagination;
 using AutoMapper;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace Apha.PACT.Application.Services
@@ -42,7 +40,7 @@ namespace Apha.PACT.Application.Services
             return await _repository.CanRunBatchJobAsync(jobName);
         }
 
-        public async Task<BatchJobQueueDto> TriggerRecreateSummariesJobAsync(int month, int contextyear, string requestedBy, string correlationId)
+        public async Task<BatchJobEventTriggerDto> TriggerRecreateSummariesJobAsync(int month, int contextyear, string requestedBy, string correlationId)
         {
             var errors = new List<BusinessValidationError>();
             var note = $"'{RecreateSummariesJobName}' is initiated for {month} - {contextyear}.";
@@ -78,8 +76,12 @@ namespace Apha.PACT.Application.Services
             var eventDetail = BuildReCreateJobEvent(requestedBy, correlationId, month, contextyear);
 
             var eventId = await _eventPublisherService.PublishAsync(eventDetail, CancellationToken.None);
-      
-            return _mapper.Map<BatchJobQueueDto>(queued);
+
+            var result = _mapper.Map<BatchJobEventTriggerDto>(queued);
+            result.EventId = eventId;          // set the field AutoMapper ignored
+            return result;
+
+           /// return _mapper.Map<BatchJobQueueDto>(queued);
         }
 
         private static EventDetail BuildReCreateJobEvent(string requestedBy, string correlationId, int month, int contextYear)

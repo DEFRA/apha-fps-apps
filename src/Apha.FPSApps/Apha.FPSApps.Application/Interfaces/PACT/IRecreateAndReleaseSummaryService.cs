@@ -9,6 +9,6 @@ namespace Apha.FPSApps.Application.Interfaces.PACT
         Task<ApiResponseDto<PaginatedResult<RecreateSummaryLogDto>>> GetRecreateSummaryLogAsync(QueryParameters<string> query);
         Task<ApiResponseDto<List<BatchJobHistoryDto>>> GetBatchJobHistoryAsync(QueryParameters<string> query, string jobName);
         Task<ApiResponseDto<bool>> CanRunBatchJobAsync(string jobName);
-        Task<ApiResponseDto<BatchJobQueueDto>> TriggerRecreateSummariesJobAsync(int month);
+        Task<ApiResponseDto<BatchJobEventTriggerDto>> TriggerRecreateSummariesJobAsync(int month);
     }
 }

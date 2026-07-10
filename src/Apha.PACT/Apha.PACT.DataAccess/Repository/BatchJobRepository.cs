@@ -23,7 +23,7 @@ namespace Apha.PACT.DataAccess.Repository
                 join jq in _context.BatchJobQueues.AsNoTracking() on jm.JobId equals jq.JobId
                 join js in _context.BatchJobStatuses.AsNoTracking()
                     on new { jq.StatusId, jq.JobId } equals new { js.StatusId, js.JobId }
-               // where jm.JobName == jobName
+               where jm.JobName == jobName
                 select new BatchJobHistory
                 {
                     JobId = jm.JobId,
@@ -79,9 +79,7 @@ namespace Apha.PACT.DataAccess.Repository
                 try
                 {
                     jobQueueEntry = BuildJobQueueEntry(requestedBy, correlationId, note, job.JobId, initiatedStatus.StatusId, _requestContext.FpsYear);
-
                     _context.BatchJobQueues.Add(jobQueueEntry);
-                    //await _context.SaveChangesAsync();
 
                     BatchJobQueueLog logEntry = BuildJobQueueLogEntry(jobQueueEntry.RequestedBy, jobQueueEntry.JobqueueId, note, jobQueueEntry.StartDateTime, initiatedStatus.StatusId);
                     _context.BatchJobQueueLogs.Add(logEntry);
@@ -103,7 +101,6 @@ namespace Apha.PACT.DataAccess.Repository
         {
             if (string.IsNullOrEmpty(sortBy))
             {
-                //return query.OrderBy(e => e.StartDateTime,);
                 return query.OrderByDescending(e => e.StartDateTime);
             }
             else

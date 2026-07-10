@@ -9,6 +9,6 @@ namespace Apha.PACT.Application.Interfaces
 
         Task<bool> CanRunBatchJobAsync(string jobName);
 
-        Task<BatchJobQueueDto> TriggerRecreateSummariesJobAsync(int month, int contextyear, string requestedBy, string correlationId);
+        Task<BatchJobEventTriggerDto> TriggerRecreateSummariesJobAsync(int month, int contextyear, string requestedBy, string correlationId);
     }
 }

@@ -124,7 +124,8 @@ namespace Apha.PACT.Api.Controllers
         public async Task<IActionResult> TriggerRecreateSummariesJob([FromBody] RecreateSummariesReq request, [FromHeader(Name = "X-Correlation-ID")] string correlationId)
         {
             var result = await _batchJobService.TriggerRecreateSummariesJobAsync(request.Month, _fpsRequestContext.FpsYear, _fpsRequestContext.UserEmailId, correlationId);
-            return Ok(_mapper.Map<BatchJobQueueRes>(result));
+            
+            return Ok(_mapper.Map<BatchJobEventTriggerRes>(result));
         }
     }
 }

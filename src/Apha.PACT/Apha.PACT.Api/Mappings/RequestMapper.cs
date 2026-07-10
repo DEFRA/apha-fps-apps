@@ -72,6 +72,7 @@ namespace Apha.PACT.Api.Mappings
             CreateMap<WgTestCapabilitiesWithDescriptionDto, WgTestCapabilitiesWithDescriptionRes>();
             CreateMap<BatchJobHistoryRes, BatchJobHistoryDto>().ReverseMap();
             CreateMap<BatchJobQueueRes, BatchJobQueueDto>().ReverseMap();
+            CreateMap<BatchJobEventTriggerRes, BatchJobEventTriggerDto>().ReverseMap();
         }
     }
 }
