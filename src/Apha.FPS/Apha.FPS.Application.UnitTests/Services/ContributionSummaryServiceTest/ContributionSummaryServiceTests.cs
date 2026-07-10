@@ -6,7 +6,7 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
-namespace Apha.FPS.Application.UnitTests.Services.TimeSellerPcServiceTest
+namespace Apha.FPS.Application.UnitTests.Services.ContributionSummaryServiceTest
 {
     public class ContributionSummaryServiceTests
     {

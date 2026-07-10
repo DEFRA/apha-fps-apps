@@ -5,7 +5,7 @@ using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
 using Moq;
 
-namespace Apha.FPS.DataAccess.UnitTests.Repository.TimeSellerPcRepositoryTest
+namespace Apha.FPS.DataAccess.UnitTests.Repository.ContributionSummaryRepositoryTest
 {
     public class ContributionSummaryRepositoryTests
     {

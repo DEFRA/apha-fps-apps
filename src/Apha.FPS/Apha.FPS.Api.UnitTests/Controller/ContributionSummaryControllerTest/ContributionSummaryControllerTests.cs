@@ -8,7 +8,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace Apha.FPS.Api.UnitTests.Controller.TimeSellerPcControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.ContributionSummaryControllerTest
 {
     public class ContributionSummaryControllerTests
     {

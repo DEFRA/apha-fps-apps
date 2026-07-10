@@ -14,13 +14,13 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTimeSellerPcApiCl
     {
         private readonly IFpsHttpExecutor         _http;
         private readonly IMapper                  _mapper;
-        private readonly FpsTimeSellerPcApiClient _client;
+        private readonly FpsContributionSummaryApiClient _client;
 
         public FpsContributionSummaryApiClientTests()
         {
             _http   = Substitute.For<IFpsHttpExecutor>();
             _mapper = Substitute.For<IMapper>();
-            _client = new FpsTimeSellerPcApiClient(_http, _mapper);
+            _client = new FpsContributionSummaryApiClient(_http, _mapper);
         }
 
         private static ApiResponse<List<ContributionSummaryRowRes>> MakeRowsApiResponse(bool success = true)

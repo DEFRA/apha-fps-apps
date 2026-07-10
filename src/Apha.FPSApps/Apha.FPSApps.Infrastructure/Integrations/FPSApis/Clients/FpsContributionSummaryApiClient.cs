@@ -8,12 +8,12 @@ using AutoMapper;
 
 namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 {
-    public class FpsTimeSellerPcApiClient : IFpsContributionSummaryApiClient
+    public class FpsContributionSummaryApiClient : IFpsContributionSummaryApiClient
     {
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        public FpsTimeSellerPcApiClient(IFpsHttpExecutor http, IMapper mapper)
+        public FpsContributionSummaryApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http;
             _mapper = mapper;

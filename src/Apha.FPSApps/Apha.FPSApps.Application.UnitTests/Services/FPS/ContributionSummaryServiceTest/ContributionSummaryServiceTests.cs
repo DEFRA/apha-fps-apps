@@ -17,7 +17,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
         {
             _fpsClient = Substitute.For<IFpsApiClient>();
             _apiClient = Substitute.For<IFpsContributionSummaryApiClient>();
-            _fpsClient.FpsTimeSellerPc.Returns(_apiClient);
+            _fpsClient.FpsContributionSummary.Returns(_apiClient);
             _service   = new ContributionSummaryService(_fpsClient);
         }
 
@@ -99,7 +99,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
 
             // Assert
             await _apiClient.Received(1).GetRowsAsync(sellingPc);
-            _ = _fpsClient.Received(1).FpsTimeSellerPc;
+            _ = _fpsClient.Received(1).FpsContributionSummary;
         }
 
         [Theory]
@@ -215,7 +215,7 @@ namespace Apha.FPSApps.Application.UnitTests.Services.FPS.ContributionSummarySer
 
             // Assert
             await _apiClient.Received(1).GetTotalsAsync(sellingPc);
-            _ = _fpsClient.Received(1).FpsTimeSellerPc;
+            _ = _fpsClient.Received(1).FpsContributionSummary;
         }
 
         [Theory]
