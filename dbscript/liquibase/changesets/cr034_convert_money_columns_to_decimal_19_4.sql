@@ -10,14 +10,25 @@ LANGUAGE plpgsql
 AS $procedure$
 DECLARE
     rec record;
+    view_rec record;
+    drop_order text[];
+    recreate_sql text;
 BEGIN
     DROP TABLE IF EXISTS m2d_view_defs;
     DROP TABLE IF EXISTS m2d_target_tables;
+    DROP TABLE IF EXISTS m2d_dependent_views;
 
     CREATE TEMP TABLE m2d_target_tables (
         table_oid oid PRIMARY KEY,
         schemaname text NOT NULL,
         tablename text NOT NULL
+    ) ON COMMIT DROP;
+
+    CREATE TEMP TABLE m2d_dependent_views (
+        view_oid oid PRIMARY KEY,
+        schemaname text NOT NULL,
+        viewname text NOT NULL,
+        view_definition text NOT NULL
     ) ON COMMIT DROP;
 
     INSERT INTO m2d_target_tables (table_oid, schemaname, tablename)
@@ -56,6 +67,34 @@ BEGIN
         RETURN;
     END IF;
 
+    -- Find all views that depend on target tables
+    INSERT INTO m2d_dependent_views (view_oid, schemaname, viewname, view_definition)
+    SELECT DISTINCT
+        v.oid,
+        vn.nspname,
+        v.relname,
+        pg_get_viewdef(v.oid)
+    FROM m2d_target_tables t
+    INNER JOIN pg_depend dep
+        ON dep.refobjid = t.table_oid
+        AND dep.refclassid = 'pg_class'::regclass
+    INNER JOIN pg_class v
+        ON v.oid = dep.objid
+        AND v.relkind = 'v'
+    INNER JOIN pg_namespace vn
+        ON vn.oid = v.relnamespace;
+
+    -- Drop dependent views in correct order (handling cascading dependencies)
+    FOR view_rec IN
+        SELECT schemaname, viewname
+        FROM m2d_dependent_views
+        ORDER BY view_oid DESC
+    LOOP
+        EXECUTE format('DROP VIEW IF EXISTS %I.%I CASCADE', view_rec.schemaname, view_rec.viewname);
+        RAISE NOTICE 'Dropped view %.%', view_rec.schemaname, view_rec.viewname;
+    END LOOP;
+
+    -- Alter column types
     FOR rec IN
         SELECT
             schemaname,
@@ -80,7 +119,20 @@ BEGIN
         ORDER BY schemaname, tablename
     LOOP
         EXECUTE format('ALTER TABLE %I.%I %s', rec.schemaname, rec.tablename, rec.alter_clauses);
+        RAISE NOTICE 'Converted money columns in %.%', rec.schemaname, rec.tablename;
     END LOOP;
+
+    -- Recreate dependent views
+    FOR view_rec IN
+        SELECT schemaname, viewname, view_definition
+        FROM m2d_dependent_views
+        ORDER BY view_oid
+    LOOP
+        recreate_sql := format('CREATE VIEW %I.%I AS %s', view_rec.schemaname, view_rec.viewname, view_rec.view_definition);
+        EXECUTE recreate_sql;
+        RAISE NOTICE 'Recreated view %.%', view_rec.schemaname, view_rec.viewname;
+    END LOOP;
+
 END;
 $procedure$;
 
