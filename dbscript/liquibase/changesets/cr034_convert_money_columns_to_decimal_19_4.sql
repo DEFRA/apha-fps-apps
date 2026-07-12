@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset repo-admin:CR034 labels:ddl context:all splitStatements:false
+--changeset repo-admin:CR034 labels:ddl context:all splitStatements:false runOnChange:true
 --comment Create a reusable helper that converts one batch of money tables and rebuilds only views that depend on that batch.
 CREATE OR REPLACE PROCEDURE public._m2d_convert_money_batch(
     p_schema text,
@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE public._m2d_convert_money_batch(
 LANGUAGE plpgsql
 AS $procedure$
 DECLARE
-    v record;
+    rec record;
     recreated_count integer;
     remaining_count integer;
 BEGIN
@@ -68,49 +68,49 @@ BEGIN
     INSERT INTO m2d_view_defs (view_oid, depth, schemaname, viewname, definition)
     WITH RECURSIVE dependent_views AS (
         SELECT DISTINCT
-            v.oid AS view_oid,
+            dep_view.oid AS view_oid,
             1 AS depth
         FROM m2d_target_tables t
         INNER JOIN pg_catalog.pg_depend d
             ON d.refobjid = t.table_oid
         INNER JOIN pg_catalog.pg_rewrite r
             ON r.oid = d.objid
-        INNER JOIN pg_catalog.pg_class v
-            ON v.oid = r.ev_class
+        INNER JOIN pg_catalog.pg_class dep_view
+            ON dep_view.oid = r.ev_class
         INNER JOIN pg_catalog.pg_namespace vn
-            ON vn.oid = v.relnamespace
-        WHERE v.relkind = 'v'
+            ON vn.oid = dep_view.relnamespace
+        WHERE dep_view.relkind = 'v'
           AND d.deptype = 'n'
           AND vn.nspname NOT IN ('pg_catalog', 'information_schema')
 
         UNION ALL
 
         SELECT DISTINCT
-            v2.oid AS view_oid,
+            dep_view2.oid AS view_oid,
             dv.depth + 1 AS depth
         FROM dependent_views dv
         INNER JOIN pg_catalog.pg_depend d2
             ON d2.refobjid = dv.view_oid
         INNER JOIN pg_catalog.pg_rewrite r2
             ON r2.oid = d2.objid
-        INNER JOIN pg_catalog.pg_class v2
-            ON v2.oid = r2.ev_class
+        INNER JOIN pg_catalog.pg_class dep_view2
+            ON dep_view2.oid = r2.ev_class
         INNER JOIN pg_catalog.pg_namespace vn2
-            ON vn2.oid = v2.relnamespace
-        WHERE v2.relkind = 'v'
+            ON vn2.oid = dep_view2.relnamespace
+        WHERE dep_view2.relkind = 'v'
           AND d2.deptype = 'n'
           AND vn2.nspname NOT IN ('pg_catalog', 'information_schema')
-          AND v2.oid <> dv.view_oid
+          AND dep_view2.oid <> dv.view_oid
     )
     SELECT
-        v.view_oid,
-        MAX(v.depth) AS depth,
+        dv.view_oid,
+        MAX(dv.depth) AS depth,
         n.nspname AS schemaname,
         c.relname AS viewname,
         replace(
             replace(
                 regexp_replace(
-                    pg_catalog.pg_get_viewdef(v.view_oid, true),
+                    pg_catalog.pg_get_viewdef(dv.view_oid, true),
                     '(?i)\\bAS\\s+"?money"?',
                     'AS decimal(19,4)',
                     'g'
@@ -121,22 +121,22 @@ BEGIN
             '::money',
             '::decimal(19,4)'
         ) AS definition
-    FROM dependent_views v
+    FROM dependent_views dv
     INNER JOIN pg_catalog.pg_class c
-        ON c.oid = v.view_oid
+        ON c.oid = dv.view_oid
     INNER JOIN pg_catalog.pg_namespace n
         ON n.oid = c.relnamespace
-    GROUP BY v.view_oid, n.nspname, c.relname;
+    GROUP BY dv.view_oid, n.nspname, c.relname;
 
-    FOR v IN
+    FOR rec IN
         SELECT schemaname, viewname
         FROM m2d_view_defs
         ORDER BY depth DESC, schemaname, viewname
     LOOP
-        EXECUTE format('DROP VIEW IF EXISTS %I.%I', v.schemaname, v.viewname);
+        EXECUTE format('DROP VIEW IF EXISTS %I.%I', rec.schemaname, rec.viewname);
     END LOOP;
 
-    FOR v IN
+    FOR rec IN
         SELECT
             schemaname,
             tablename,
@@ -159,21 +159,21 @@ BEGIN
         GROUP BY schemaname, tablename
         ORDER BY schemaname, tablename
     LOOP
-        EXECUTE format('ALTER TABLE %I.%I %s', v.schemaname, v.tablename, v.alter_clauses);
+        EXECUTE format('ALTER TABLE %I.%I %s', rec.schemaname, rec.tablename, rec.alter_clauses);
     END LOOP;
 
     LOOP
         recreated_count := 0;
 
-        FOR v IN
+        FOR rec IN
             SELECT view_oid, schemaname, viewname, definition
             FROM m2d_view_defs
             ORDER BY depth, schemaname, viewname
         LOOP
             BEGIN
-                EXECUTE format('CREATE OR REPLACE VIEW %I.%I AS %s', v.schemaname, v.viewname, v.definition);
+                EXECUTE format('CREATE OR REPLACE VIEW %I.%I AS %s', rec.schemaname, rec.viewname, rec.definition);
                 DELETE FROM m2d_view_defs
-                WHERE view_oid = v.view_oid;
+                WHERE view_oid = rec.view_oid;
                 recreated_count := recreated_count + 1;
             EXCEPTION
                 WHEN OTHERS THEN
