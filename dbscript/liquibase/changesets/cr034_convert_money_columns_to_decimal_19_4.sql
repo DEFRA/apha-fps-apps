@@ -36,6 +36,7 @@ BEGIN
     INNER JOIN pg_catalog.pg_namespace n
         ON n.oid = c.relnamespace
     WHERE n.nspname = p_schema
+            AND NOT c.relispartition
       AND (
           c.relname = r.root_name
           OR c.relname = r.root_name || '_default'
