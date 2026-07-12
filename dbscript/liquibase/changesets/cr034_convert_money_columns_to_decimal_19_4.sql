@@ -156,12 +156,22 @@ BEGIN
 
     -- Recreate dependent views shallowest-first so base views exist before
     -- the views that reference them.
+    -- pg_get_viewdef freezes any implicit money coercions into the definition
+    -- text (e.g. a CASE/COALESCE literal becomes '(0)::money'). Since the
+    -- underlying columns are now decimal(19,4), those frozen '::money' casts
+    -- would fail to unify. Rewrite them to '::decimal(19,4)' so every branch
+    -- matches the converted columns.
     FOR view_rec IN
         SELECT schemaname, viewname, view_definition
         FROM m2d_dependent_views
         ORDER BY depth ASC, view_oid ASC
     LOOP
-        recreate_sql := format('CREATE VIEW %I.%I AS %s', view_rec.schemaname, view_rec.viewname, view_rec.view_definition);
+        recreate_sql := format(
+            'CREATE VIEW %I.%I AS %s',
+            view_rec.schemaname,
+            view_rec.viewname,
+            replace(view_rec.view_definition, '::money', '::decimal(19,4)')
+        );
         EXECUTE recreate_sql;
         RAISE NOTICE 'Recreated view %.%', view_rec.schemaname, view_rec.viewname;
     END LOOP;
