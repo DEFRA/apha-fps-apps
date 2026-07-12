@@ -1,13 +1,14 @@
 --liquibase formatted sql
 
 --changeset repo-admin:CR034 labels:ddl context:all splitStatements:false runOnChange:true
---comment Create a reusable helper that converts every money column in the given schemas to decimal(19,4) and rebuilds all dependent views in one atomic pass.
-CREATE OR REPLACE PROCEDURE public._m2d_convert_money_all(
-    p_schemas text[]
-)
-LANGUAGE plpgsql
-AS $procedure$
+--comment Convert every money column in the fps and mabarchive schemas to decimal(19,4) and rebuild all dependent views in one self-contained, idempotent pass.
+-- Remove any helper procedures left behind by earlier iterations of this changeset.
+DROP PROCEDURE IF EXISTS public._m2d_convert_money_batch(text, text[]);
+DROP PROCEDURE IF EXISTS public._m2d_convert_money_all(text[]);
+
+DO $do$
 DECLARE
+    p_schemas text[] := ARRAY['fps', 'mabarchive'];
     rec record;
     view_rec record;
     recreate_sql text;
@@ -165,17 +166,6 @@ BEGIN
         RAISE NOTICE 'Recreated view %.%', view_rec.schemaname, view_rec.viewname;
     END LOOP;
 
-END;
-$procedure$;
-
---changeset repo-admin:CR034_01 labels:ddl context:all
---comment Convert all money columns in the fps and mabarchive schemas to decimal(19,4) in a single atomic pass, rebuilding every dependent view.
-CALL public._m2d_convert_money_all(
-    ARRAY['fps', 'mabarchive']
-);
-
---changeset repo-admin:CR034_cleanup labels:ddl context:all
---comment Remove the temporary CR034 helper procedure once conversion is complete.
-DROP PROCEDURE IF EXISTS public._m2d_convert_money_all(text[]);
+END $do$;
 
 --rollback not required
