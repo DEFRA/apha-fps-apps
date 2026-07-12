@@ -139,6 +139,15 @@
                     calculateAnimalCostTotal();
                 }).observe(animalGridContainer, { childList: true });
             }
+
+            document.addEventListener('gridReloaded', function (e) {
+                if (e.detail.gridId === '@Model.ProjectsGrid.GridId') {
+                    var firstRow = $('#tbl_@Model.ProjectsGrid.GridId tbody tr.selectable-row:first');
+                    if (firstRow.length) {
+                        firstRow.trigger('click');
+                    }
+                }
+            });
         });
 
         $('#programmeSelect').on('change', function () {
