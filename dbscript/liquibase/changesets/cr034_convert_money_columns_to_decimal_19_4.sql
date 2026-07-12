@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset repo-admin:CR034 labels:ddl context:all
+--changeset repo-admin:CR034 labels:ddl context:all ignore:true
 --comment Convert all fps and mabarchive money columns to decimal(19,4) and safely rebuild dependent views.
 DO $$
 DECLARE
