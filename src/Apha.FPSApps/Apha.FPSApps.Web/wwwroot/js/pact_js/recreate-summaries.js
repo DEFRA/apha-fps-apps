@@ -4,8 +4,8 @@
  * Handles all client-side behaviour for the Recreate Summaries page:
  *   - Period dropdown initialisation (MultiColumnDropdownComponent)
  *   - Client-side validation using ajax-form-validation.js helpers
- *   - AJAX job trigger (POST /PACT/RecreateSummaries/TriggerJob)
- *   - AJAX history-grid refresh (POST /PACT/RecreateSummaries/LoadHistoryGrid)
+ *   - AJAX job trigger (POST /PACT/RecreateSummary/TriggerJob)
+ *   - AJAX history-grid refresh (POST /PACT/RecreateSummary/LoadHistoryGrid)
  *   - Success / error banner display
  *
  * Depends on (must be loaded before this file):
@@ -23,8 +23,8 @@
     // ── Constants ─────────────────────────────────────────────────────────────
 
     var SCOPE        = '#recreate-form-scope';
-    var TRIGGER_URL  = '/PACT/RecreateSummaries/TriggerJob';
-    var GRID_URL     = '/PACT/RecreateSummaries/LoadHistoryGrid';
+    var TRIGGER_URL  = '/PACT/RecreateSummary/TriggerJob';
+    var GRID_URL     = '/PACT/RecreateSummary/LoadHistoryGrid';
 
     // ── Initialise period dropdown ────────────────────────────────────────────
 

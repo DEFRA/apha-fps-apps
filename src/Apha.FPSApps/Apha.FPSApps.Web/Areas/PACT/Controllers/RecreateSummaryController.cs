@@ -13,22 +13,25 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
     [Area("PACT")]
     [Authorize(Roles = "PACTAdmin,PACTUser")]
     [AuthorizeForScopes(ScopeKeySection = "PACTApiSettings:Scope")]
-    public class RecreateSummariesController : Controller
+    public class RecreateSummaryController : Controller
     {
         private const string RecreateSummariesJobName = "RecreateSummary";
 
         private readonly IMapper _mapper;
         private readonly IRecreateSummaryService _service;
         private readonly IMonthService _monthService;
+        private readonly ILogger<RecreateSummaryController> _logger;
 
-        public RecreateSummariesController(
+        public RecreateSummaryController(
             IMapper mapper,
             IRecreateSummaryService service,
-            IMonthService monthService)
+            IMonthService monthService,
+            ILogger<RecreateSummaryController> logger)
         {
             _mapper = mapper;
             _service = service;
             _monthService = monthService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -70,7 +73,10 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
             var result = await _service.TriggerRecreateSummariesBatchJobAsync(month);
 
             if (result.Success)
+            {
+                _logger.LogInformation("Recreate Summary batch job triggered successfully with eventif -{a} and jobquueid -{b}.", result?.Data?.EventId, result?.Data?.Jobqueue.JobqueueId);
                 return Json(new { success = true });
+            }
 
             // Return ALL errors so the client can display every message simultaneously
             var errors = result.Errors?.Select(e => new { field = string.Empty, message = e.Message }).ToArray()
@@ -103,7 +109,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
         {
             GridId = "summaryHistoryGrid",
             Title = string.Empty,
-            BindGridUrl = "/PACT/RecreateSummaries/LoadHistoryGrid",
+            BindGridUrl = "/PACT/RecreateSummary/LoadHistoryGrid",
             ShowCheckboxColumn = false,
             AllowAdd = false,
             AllowEdit = false,
