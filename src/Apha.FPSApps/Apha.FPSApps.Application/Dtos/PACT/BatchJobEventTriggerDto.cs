@@ -7,7 +7,7 @@ namespace Apha.FPSApps.Application.Dtos.PACT
 {
     public class BatchJobEventTriggerDto
     {
-        public BatchJobQueueDto Jobqueue { get; set; }
-        public string EventId { get; set; }
+        public BatchJobQueueDto Jobqueue { get; set; } = null!;
+        public string EventId { get; set; } = string.Empty;
     }
 }
