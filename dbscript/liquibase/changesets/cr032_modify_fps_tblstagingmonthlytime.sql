@@ -23,23 +23,11 @@ ADD COLUMN IF NOT EXISTS importeddate timestamp without time zone;
 ALTER TABLE fps.tblstagingmonthlytime
 ALTER COLUMN id SET NOT NULL;
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM pg_constraint con
-        INNER JOIN pg_class rel
-            ON rel.oid = con.conrelid
-        INNER JOIN pg_namespace nsp
-            ON nsp.oid = rel.relnamespace
-        WHERE con.conname = 'pk_tblstagingmonthlytime'
-          AND nsp.nspname = 'fps'
-          AND rel.relname = 'tblstagingmonthlytime'
-    ) THEN
-        ALTER TABLE fps.tblstagingmonthlytime
-        ADD CONSTRAINT pk_tblstagingmonthlytime PRIMARY KEY (id);
-    END IF;
-END $$;
+ALTER TABLE fps.tblstagingmonthlytime
+DROP CONSTRAINT IF EXISTS pk_tblstagingmonthlytime;
+
+ALTER TABLE fps.tblstagingmonthlytime
+ADD CONSTRAINT pk_tblstagingmonthlytime PRIMARY KEY (id);
 
 --ROLLBACK
 --Not Applicable
