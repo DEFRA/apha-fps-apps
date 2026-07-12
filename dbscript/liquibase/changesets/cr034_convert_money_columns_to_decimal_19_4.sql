@@ -11,7 +11,6 @@ AS $procedure$
 DECLARE
     rec record;
     view_rec record;
-    drop_order text[];
     recreate_sql text;
 BEGIN
     DROP TABLE IF EXISTS m2d_view_defs;
@@ -28,7 +27,8 @@ BEGIN
         view_oid oid PRIMARY KEY,
         schemaname text NOT NULL,
         viewname text NOT NULL,
-        view_definition text NOT NULL
+        view_definition text NOT NULL,
+        depth integer NOT NULL
     ) ON COMMIT DROP;
 
     INSERT INTO m2d_target_tables (table_oid, schemaname, tablename)
@@ -67,28 +67,65 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Find all views that depend on target tables
-    INSERT INTO m2d_dependent_views (view_oid, schemaname, viewname, view_definition)
-    SELECT DISTINCT
-        v.oid,
+    -- Find all views that depend on target tables (directly or transitively,
+    -- including views built on top of other dependent views).
+    -- View dependencies are recorded via pg_rewrite rules, so we must join
+    -- pg_depend -> pg_rewrite -> pg_class (ev_class) to reach the actual view.
+    INSERT INTO m2d_dependent_views (view_oid, schemaname, viewname, view_definition, depth)
+    WITH RECURSIVE view_deps AS (
+        -- Base: views that directly depend on a target table
+        SELECT DISTINCT
+            v.oid AS view_oid,
+            1 AS depth
+        FROM m2d_target_tables t
+        INNER JOIN pg_catalog.pg_depend d
+            ON d.refobjid = t.table_oid
+            AND d.refclassid = 'pg_class'::regclass
+            AND d.classid = 'pg_rewrite'::regclass
+        INNER JOIN pg_catalog.pg_rewrite rw
+            ON rw.oid = d.objid
+        INNER JOIN pg_catalog.pg_class v
+            ON v.oid = rw.ev_class
+            AND v.relkind = 'v'
+        WHERE v.oid <> t.table_oid
+
+        UNION ALL
+
+        -- Recursive: views that depend on already-discovered views
+        SELECT DISTINCT
+            v.oid AS view_oid,
+            vd.depth + 1
+        FROM view_deps vd
+        INNER JOIN pg_catalog.pg_depend d
+            ON d.refobjid = vd.view_oid
+            AND d.refclassid = 'pg_class'::regclass
+            AND d.classid = 'pg_rewrite'::regclass
+        INNER JOIN pg_catalog.pg_rewrite rw
+            ON rw.oid = d.objid
+        INNER JOIN pg_catalog.pg_class v
+            ON v.oid = rw.ev_class
+            AND v.relkind = 'v'
+        WHERE v.oid <> vd.view_oid
+    )
+    SELECT
+        vd.view_oid,
         vn.nspname,
         v.relname,
-        pg_get_viewdef(v.oid)
-    FROM m2d_target_tables t
-    INNER JOIN pg_depend dep
-        ON dep.refobjid = t.table_oid
-        AND dep.refclassid = 'pg_class'::regclass
-    INNER JOIN pg_class v
-        ON v.oid = dep.objid
-        AND v.relkind = 'v'
-    INNER JOIN pg_namespace vn
-        ON vn.oid = v.relnamespace;
+        pg_get_viewdef(vd.view_oid),
+        MAX(vd.depth) AS depth
+    FROM view_deps vd
+    INNER JOIN pg_catalog.pg_class v
+        ON v.oid = vd.view_oid
+    INNER JOIN pg_catalog.pg_namespace vn
+        ON vn.oid = v.relnamespace
+    GROUP BY vd.view_oid, vn.nspname, v.relname;
 
-    -- Drop dependent views in correct order (handling cascading dependencies)
+    -- Drop dependent views deepest-first so that views built on other views
+    -- are removed before the views they reference.
     FOR view_rec IN
         SELECT schemaname, viewname
         FROM m2d_dependent_views
-        ORDER BY view_oid DESC
+        ORDER BY depth DESC, view_oid DESC
     LOOP
         EXECUTE format('DROP VIEW IF EXISTS %I.%I CASCADE', view_rec.schemaname, view_rec.viewname);
         RAISE NOTICE 'Dropped view %.%', view_rec.schemaname, view_rec.viewname;
@@ -122,11 +159,12 @@ BEGIN
         RAISE NOTICE 'Converted money columns in %.%', rec.schemaname, rec.tablename;
     END LOOP;
 
-    -- Recreate dependent views
+    -- Recreate dependent views shallowest-first so base views exist before
+    -- the views that reference them.
     FOR view_rec IN
         SELECT schemaname, viewname, view_definition
         FROM m2d_dependent_views
-        ORDER BY view_oid
+        ORDER BY depth ASC, view_oid ASC
     LOOP
         recreate_sql := format('CREATE VIEW %I.%I AS %s', view_rec.schemaname, view_rec.viewname, view_rec.view_definition);
         EXECUTE recreate_sql;
