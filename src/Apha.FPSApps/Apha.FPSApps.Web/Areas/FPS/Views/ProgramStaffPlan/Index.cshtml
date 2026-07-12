@@ -148,6 +148,16 @@
                     }
                 }
             });
+
+            var staffGridEl = document.getElementById('gridContainer_@Model.StaffCostGrid.GridId');
+            if (staffGridEl) {
+                staffGridEl.addEventListener('click', function (e) {
+                    if (!currentJobCode && (e.target.closest('.sortable-header') || e.target.closest('.pagination a'))) {
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+                    }
+                }, true);
+            }
         });
 
         $('#programmeSelect').on('change', function () {

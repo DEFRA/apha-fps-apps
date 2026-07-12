@@ -147,6 +147,13 @@
                     }
                 }
             });
+
+            $(document).on('click', '#gridContainer_@Model.TestPlanGrid.GridId .sortable-header, #gridContainer_@Model.TestPlanGrid.GridId .pagination a', function (e) {
+                if (!currentJobCode) {
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            });
         });
 
         $('#programmeSelect').on('change', function () {

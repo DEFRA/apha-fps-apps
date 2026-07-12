@@ -151,6 +151,16 @@
                     }
                 }
             });
+
+            var costGridEl = document.getElementById('gridContainer_@Model.AdditionalCostGrid.GridId');
+            if (costGridEl) {
+                costGridEl.addEventListener('click', function (e) {
+                    if (!currentJobCode && (e.target.closest('.sortable-header') || e.target.closest('.pagination a'))) {
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+                    }
+                }, true);
+            }
         });
 
         $('#programmeSelect').on('change', function () {
