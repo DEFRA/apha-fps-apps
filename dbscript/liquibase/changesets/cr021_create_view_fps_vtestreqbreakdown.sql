@@ -1,8 +1,10 @@
 --liquibase formatted sql
 
---changeset repo-admin:CR021 labels:ddl context:all
+--changeset repo-admin:CR021 labels:ddl context:all runOnChange:true
 
-CREATE OR REPLACE VIEW fps.vtestreqbreakdown AS
+DROP VIEW IF EXISTS fps.vtestreqbreakdown;
+
+CREATE VIEW fps.vtestreqbreakdown AS
 WITH default_workgroup AS (
     SELECT
         tc.testcode,
@@ -74,7 +76,7 @@ SELECT
     COALESCE(q.profitcentre, wg.profitcentre)          AS pc,
     q.workg,
     q.wgprice,
-    (q.noreq::numeric * q.wgprice::numeric)::money     AS totalcost,
+    (q.noreq::numeric * q.wgprice::numeric)::decimal(19,4) AS totalcost,
     q.fpsyear
 FROM qry_test_req_breakdown q
 LEFT JOIN workgroup_lookup wg

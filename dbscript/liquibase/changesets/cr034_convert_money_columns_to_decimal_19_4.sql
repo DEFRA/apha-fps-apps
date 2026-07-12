@@ -1,10 +1,9 @@
 --liquibase formatted sql
 
 --changeset repo-admin:CR034 labels:ddl context:all splitStatements:false runOnChange:true
---comment Create a reusable helper that converts one batch of money tables and rebuilds only views that depend on that batch.
-CREATE OR REPLACE PROCEDURE public._m2d_convert_money_batch(
-    p_schema text,
-    p_roots text[]
+--comment Create a reusable helper that converts every money column in the given schemas to decimal(19,4) and rebuilds all dependent views in one atomic pass.
+CREATE OR REPLACE PROCEDURE public._m2d_convert_money_all(
+    p_schemas text[]
 )
 LANGUAGE plpgsql
 AS $procedure$
@@ -31,26 +30,20 @@ BEGIN
         depth integer NOT NULL
     ) ON COMMIT DROP;
 
+    -- Discover every base table (including partitioned parents) in the target
+    -- schemas that still has at least one money column. Individual partitions
+    -- inherit the parent's ALTER, so they are excluded here.
     INSERT INTO m2d_target_tables (table_oid, schemaname, tablename)
-    WITH roots AS (
-        SELECT unnest(p_roots) AS root_name
-    )
     SELECT DISTINCT
         c.oid,
         n.nspname,
         c.relname
-    FROM roots r
-    INNER JOIN pg_catalog.pg_class c
-        ON c.relkind IN ('r', 'p')
+    FROM pg_catalog.pg_class c
     INNER JOIN pg_catalog.pg_namespace n
         ON n.oid = c.relnamespace
-    WHERE n.nspname = p_schema
-            AND NOT c.relispartition
-      AND (
-          c.relname = r.root_name
-          OR c.relname = r.root_name || '_default'
-          OR c.relname ~ ('^' || r.root_name || '_y[0-9]{4}$')
-      )
+    WHERE n.nspname = ANY(p_schemas)
+      AND c.relkind IN ('r', 'p')
+      AND NOT c.relispartition
       AND EXISTS (
           SELECT 1
           FROM pg_catalog.pg_attribute a
@@ -63,7 +56,7 @@ BEGIN
       );
 
     IF NOT EXISTS (SELECT 1 FROM m2d_target_tables) THEN
-        RAISE NOTICE 'No money columns found for schema % and roots %', p_schema, p_roots;
+        RAISE NOTICE 'No money columns found in schemas %', p_schemas;
         RETURN;
     END IF;
 
@@ -131,7 +124,8 @@ BEGIN
         RAISE NOTICE 'Dropped view %.%', view_rec.schemaname, view_rec.viewname;
     END LOOP;
 
-    -- Alter column types
+    -- Convert every money column in every target table BEFORE recreating any
+    -- view, so that views spanning multiple tables never mix money and numeric.
     FOR rec IN
         SELECT
             schemaname,
@@ -175,104 +169,13 @@ END;
 $procedure$;
 
 --changeset repo-admin:CR034_01 labels:ddl context:all
---comment Convert operational fps tables with money columns in a smaller transactional batch.
-CALL public._m2d_convert_money_batch(
-    'fps',
-    ARRAY[
-        'additionalcosts_log',
-        'tbladditionalcosts',
-        'tblanimals',
-        'tblbid',
-        'tblpurchase',
-        'tblstagingpurchaselocal',
-        'tblsurvff_fees',
-        'tbltestrccost',
-        'tbltestreqbaseline',
-        'tbltestrequirementrccost'
-    ]
-);
-
---changeset repo-admin:CR034_02 labels:ddl context:all
---comment Convert monthly and subcontract fps tables with money columns in a smaller transactional batch.
-CALL public._m2d_convert_money_batch(
-    'fps',
-    ARRAY[
-        'period_monthlyoutput',
-        'period_proj_subcontract',
-        'period_timecostcalcs',
-        'proj_invoice',
-        'proj_subcontract',
-        'resourcecentremonth',
-        'timecostcalcs'
-    ]
-);
-
---changeset repo-admin:CR034_03 labels:ddl context:all
---comment Convert fps reference and rate tables with money columns in a smaller transactional batch.
-CALL public._m2d_convert_money_batch(
-    'fps',
-    ARRAY[
-        'divisiongrade',
-        'grade',
-        'profitcentregrade',
-        'profitcentregrade_nondefra',
-        'testorproduct',
-        'tlkpdivision',
-        'tlkpprogram',
-        'tlkptestcapability',
-        'tblkpprofitcentre',
-        'workgroup',
-        'workgroupgrade'
-    ]
-);
-
---changeset repo-admin:CR034_04 labels:ddl context:all
---comment Convert fps project and totals tables with money columns in a smaller transactional batch.
-CALL public._m2d_convert_money_batch(
-    'fps',
-    ARRAY[
-        'fpsyeartotals',
-        'project_log',
-        'projectmonth',
-        'projectmonth2',
-        'projectmonth3',
-        'projectmonthfinal',
-        'tblcbsummary',
-        'tblpostmortem1report',
-        'tbltotalbusinessoverheads',
-        'tlkpproject',
-        'tlkptestreqmt',
-        'workgroupmonth'
-    ]
-);
-
---changeset repo-admin:CR034_05 labels:ddl context:all
---comment Convert mabarchive tables with money columns in a smaller transactional batch.
-CALL public._m2d_convert_money_batch(
-    'mabarchive',
-    ARRAY[
-        'g_tlkpproject_radtrackdata',
-        'my_fpsyeartotals',
-        'my_profitcentregrade',
-        'my_proj_invoice',
-        'my_proj_subcontract',
-        'my_projectmonthfinal',
-        'my_tbladditionalcosts',
-        'my_tblanimals',
-        'my_tblprofitcentre',
-        'my_testorproduct',
-        'my_timecostcalcs',
-        'my_tlkpprogram',
-        'my_tlkpproject',
-        'my_tlkpproject_all',
-        'my_tlkpprojectradtrackdata',
-        'my_tlkptestreqmt',
-        'my_workgroup'
-    ]
+--comment Convert all money columns in the fps and mabarchive schemas to decimal(19,4) in a single atomic pass, rebuilding every dependent view.
+CALL public._m2d_convert_money_all(
+    ARRAY['fps', 'mabarchive']
 );
 
 --changeset repo-admin:CR034_cleanup labels:ddl context:all
---comment Remove the temporary CR034 helper procedure once all batches are complete.
-DROP PROCEDURE IF EXISTS public._m2d_convert_money_batch(text, text[]);
+--comment Remove the temporary CR034 helper procedure once conversion is complete.
+DROP PROCEDURE IF EXISTS public._m2d_convert_money_all(text[]);
 
 --rollback not required
