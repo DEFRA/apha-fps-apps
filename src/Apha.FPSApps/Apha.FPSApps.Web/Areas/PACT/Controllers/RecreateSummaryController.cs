@@ -74,7 +74,7 @@ namespace Apha.FPSApps.Web.Areas.PACT.Controllers
 
             if (result.Success)
             {
-                _logger.LogInformation("Recreate Summary batch job triggered successfully with eventif -{a} and jobquueid -{b}.", result?.Data?.EventId, result?.Data?.Jobqueue.JobqueueId);
+                _logger.LogInformation("Recreate Summary batch job triggered successfully with eventif -{a} and jobquueid -{b}.", result?.Data?.EventId, result?.Data?.Jobqueue.JobExecutionId);
                 return Json(new { success = true });
             }
 

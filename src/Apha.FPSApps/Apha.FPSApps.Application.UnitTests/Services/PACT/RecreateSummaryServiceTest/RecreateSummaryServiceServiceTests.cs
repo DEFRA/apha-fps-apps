@@ -165,8 +165,8 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PACT.RecreateSummaryServic
                 Success = true,
                 Data = new List<BatchJobHistoryDto>
                 {
-                    new() { JobId = 1, JobName = jobName, Status = "Completed", RequestedBy = TestUserId, StartDateTime = DateTime.UtcNow },
-                    new() { JobId = 1, JobName = jobName, Status = "Running",   RequestedBy = TestUserId, StartDateTime = DateTime.UtcNow.AddMinutes(-5) }
+                    new() { JobId = 1, JobName = jobName, Status = "Completed", RequestedBy = TestUserId, StartDateTime = DateTime.UtcNow,EndDateTime = DateTime.UtcNow,ErrorMessage ="Initiated" },
+                    new() { JobId = 1, JobName = jobName, Status = "Running",   RequestedBy = TestUserId, StartDateTime = DateTime.UtcNow.AddMinutes(-5),EndDateTime = DateTime.UtcNow,ErrorMessage ="Initiated" }
                 }
             };
 
