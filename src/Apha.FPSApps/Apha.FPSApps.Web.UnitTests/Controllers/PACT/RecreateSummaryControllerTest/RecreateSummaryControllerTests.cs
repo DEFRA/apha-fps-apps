@@ -538,7 +538,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.PACT.RecreateSummaryControllerT
         public async Task TriggerJob_OnSuccess_ReturnsJsonWithSuccessTrue()
         {
             // Arrange
-            var queueDto = new BatchJobQueueDto { JobqueueId = Guid.NewGuid(), RequestedBy = "user@test.com", StartDateTime = DateTime.UtcNow };
+            var queueDto = new BatchJobQueueDto { JobqueueId = Guid.NewGuid(), RequestedBy = "user@test.com", StartDateTime = DateTime.UtcNow, JobId=1, StatusId=1, RequestedAtUtc = DateTime.UtcNow };
             var triggerDto = new BatchJobEventTriggerDto { Jobqueue = queueDto, EventId = "evt-001" };
 
             _service.TriggerRecreateSummariesBatchJobAsync(6)
