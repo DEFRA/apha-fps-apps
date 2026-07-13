@@ -1,4 +1,4 @@
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.Common.Contracts.PACT;
 using Apha.FPSApps.Application.Dtos;
@@ -139,6 +139,10 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             // Job Code (ZT lookup) - now served from PACT API
             CreateMap<FpsJobCodeZtDto, Apha.Common.Contracts.PACT.JobCodeZtRes>().ReverseMap();
                       
+
+            // Income/Contribution from Time Sales (frmTimeSellerPC)
+            CreateMap<ContributionSummaryRowDto, ContributionSummaryRowRes>().ReverseMap();
+            CreateMap<ContributionSummaryTotalsDto, ContributionSummaryTotalsRes>().ReverseMap();
 
             // BudgetResourceLevel
             CreateMap<BidDto, BidReq>().ReverseMap();

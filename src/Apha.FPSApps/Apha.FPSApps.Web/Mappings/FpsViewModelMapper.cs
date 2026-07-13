@@ -102,6 +102,8 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
 
+            // Contribution Summary — row grid item
+            CreateMap<ContributionSummaryRowDto, ContributionSummaryRowItem>().ReverseMap();
             // Total Business Overheads
             CreateMap<TotalBusinessOverheadsViewModel, TotalBusinessOverheadsDto>().ReverseMap();
 

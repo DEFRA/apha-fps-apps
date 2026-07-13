@@ -143,6 +143,11 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
+            // TimeSellerPC — frmTimeSellerPC
+            CreateMap<ContributionSummaryRowDto, ContributionSummaryRowRes>().ReverseMap();
+            CreateMap<ContributionSummaryTotalsDto, ContributionSummaryTotalsRes>().ReverseMap();
+
+          
             // 5 log tables: project_log, staffjob_log, testreq_log, animalreq_log, additionalcosts_log
             CreateMap<ProjectLogDto, ProjectLogRes>().ReverseMap();
             CreateMap<PaginatedResult<ProjectLogDto>, PaginationRes<ProjectLogRes>>();
