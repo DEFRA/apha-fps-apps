@@ -42,7 +42,7 @@ namespace Apha.PACT.DataAccess.Repository
         {
             return await _context.TestorProducts
                 .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.ItemCode == itemCode);
+                .FirstOrDefaultAsync(t => t.ItemCode.ToLower() == itemCode.ToLower());
         }
 
         public async Task<TestorProduct> CreateTestOrProductAsync(TestorProduct entity)

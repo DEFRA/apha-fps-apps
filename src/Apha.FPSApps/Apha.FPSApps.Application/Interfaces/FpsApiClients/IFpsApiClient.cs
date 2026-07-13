@@ -29,8 +29,10 @@ namespace Apha.FPSApps.Application.Interfaces.FpsApiClients
         IFpsPurchasesApiClient FpsPurchases { get; }
         IFpsUserApiClient FpsUserPermission { get; }
         IFpsGradeApiClient FpsGrade { get; }
-        IFpsTestListVlaApiClient FpsTestListVla { get; }
-        IFpsTestRCCostApiClient FpsTestRCCost { get; }
-        IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
+IFpsTestListVlaApiClient FpsTestListVla { get; }
+IFpsTestRCCostApiClient FpsTestRCCost { get; }
+IFpsTestRequirementRCCostApiClient FpsTestRequirementRCCost { get; }
+IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
+IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
     }
 }

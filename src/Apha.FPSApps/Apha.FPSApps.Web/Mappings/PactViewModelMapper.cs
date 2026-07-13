@@ -23,11 +23,7 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(dest => dest.ParentProject, opt => opt.MapFrom(src => src.ParentProject));
             CreateMap<ProjectInvoiceItem, ProjectInvoiceDto>().ReverseMap();
             CreateMap<InvoiceItem, ProjectInvoiceDto>().ReverseMap();
-            CreateMap<ProjectSubContractItem, ProjectSubContractDto>()
-                .ForMember(dest => dest.SubContCounter, opt => opt.MapFrom(src => src.Counter))
-                .ReverseMap()
-                .ForMember(dest => dest.Counter, opt => opt.MapFrom(src => src.SubContCounter));
-
+            CreateMap<ProjectSubContractItem, ProjectSubContractDto>().ReverseMap();
             // Mapping for standalone SubContract page
             CreateMap<SubContractItem, ProjectSubContractDto>()
                 .ForMember(dest => dest.DailyRate, opt => opt.Ignore())

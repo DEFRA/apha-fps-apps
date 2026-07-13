@@ -327,3 +327,22 @@
     background-color: #f3f2f1;
 }
 
+/* Disabled pagination links */
+.pagination--disabled,
+.pagination--disabled:hover,
+.pagination--disabled:focus,
+.pagination--disabled:active,
+.pagination--disabled:visited,
+.govuk-pagination__item:has(.pagination--disabled),
+.govuk-pagination__item:has(.pagination--disabled):hover{
+    pointer-events: none !important;
+    cursor: default !important;
+    opacity: 0.4 !important;
+    text-decoration: none !important;
+    color: #505a5f !important;
+    background-color: transparent !important;
+    border-bottom: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+

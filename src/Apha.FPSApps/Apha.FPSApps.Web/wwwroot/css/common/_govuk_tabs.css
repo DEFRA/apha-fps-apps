@@ -41,8 +41,12 @@
 }
 
 .govuk-tabs__tab {
-  color: #1d70b8;
-  text-decoration: underline;
+    color: #1d70b8;
+    text-decoration: none;
+    padding: 15px 20px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: #f3f2f1;
 }
 
 .govuk-tabs__tab:hover {

@@ -4,6 +4,8 @@ using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Pagination;
 using AutoMapper;
 
+
+
 namespace Apha.FPS.Application.Mappings
 {
     public class EntityMapper : Profile
@@ -75,12 +77,11 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<PactStaff, PactStaffDto>().ReverseMap();
             CreateMap<ProjectProfitabilityView, ProjectProfitabilityDto>().ReverseMap();
             CreateMap<MonthlyOutput, MonthlyOutputDto>().ReverseMap();
-
-            // ProjectProfitabilityVlaView
-            //   Property names are aligned between entity and DTO; no ForMember overrides needed.
-            //   Covers: Id, JobCode, Program, Customer, Manager, Status, StaffCosts, TestCost,
-            //   AnimalCosts, AdditionalCosts, TotalCosts, Budget, Profit, TargetProfit, OffTarget.
-            CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
+// ProjectProfitabilityVlaView
+//   Property names are aligned between entity and DTO; no ForMember overrides needed.
+//   Covers: Id, JobCode, Program, Customer, Manager, Status, StaffCosts, TestCost,
+//   AnimalCosts, AdditionalCosts, TotalCosts, Budget, Profit, TargetProfit, OffTarget.
+CreateMap<ProjectProfitabilityVlaView, ProjectProfitabilityVlaDto>().ReverseMap();
 
             CreateMap<User, UserDto>().ReverseMap();
 
@@ -88,18 +89,31 @@ namespace Apha.FPS.Application.Mappings
             CreateMap<Bid, BidDto>().ReverseMap();
             CreateMap<BidView, BidViewDto>().ReverseMap();
             CreateMap<Purchase, PurchaseDto>().ReverseMap();
+//   TestOrProduct <-> TestListVlaDto: all property names aligned; no ForMember overrides needed.
+//   Covers composite PK (ItemCode, FpsYear) plus all VLA pricing and descriptor fields.
+CreateMap<TestOrProduct, TestListVlaDto>().ReverseMap();
 
-            //   TestOrProduct <-> TestListVlaDto: all property names aligned; no ForMember overrides needed.
-            //   Covers composite PK (ItemCode, FpsYear) plus all VLA pricing and descriptor fields.
-            CreateMap<TestOrProduct, TestListVlaDto>().ReverseMap();
+//   TestRCCost <-> TestRCCostDto: all property names aligned; no ForMember overrides needed.
+//   Covers composite PK (TestCode, ProfitCentre, FpsYear) and Price.
+CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
 
-            //   TestRCCost <-> TestRCCostDto: all property names aligned; no ForMember overrides needed.
-            //   Covers composite PK (TestCode, ProfitCentre, FpsYear) and Price.
-            CreateMap<TestRCCost, TestRCCostDto>().ReverseMap();
+//   TestRequirementRCCost <-> TestRequirementRCCostDto: all property names aligned; no ForMember overrides needed.
+//   Covers composite PK (TestCode, Buyer, ProfitCentre, FpsYear) and Price.
+CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
 
-            //   TestRequirementRCCost <-> TestRequirementRCCostDto: all property names aligned; no ForMember overrides needed.
-            //   Covers composite PK (TestCode, Buyer, ProfitCentre, FpsYear) and Price.
-            CreateMap<TestRequirementRCCost, TestRequirementRCCostDto>().ReverseMap();
+//   All 5 log entities from fps schema partitioned tables.
+//   Property names are fully aligned between entity and DTO; no ForMember overrides needed.
+//   Covers all columns: sequenceno, parentproject/jobcode/testcode, date range, user tracking fields, fpsyear.
+CreateMap<ProjectLog, ProjectLogDto>().ReverseMap();
+CreateMap<StaffJobLog, StaffJobLogDto>().ReverseMap();
+CreateMap<TestRequirementLog, TestRequirementLogDto>().ReverseMap();
+CreateMap<AnimalRequestLog, AnimalRequestLogDto>().ReverseMap();
+CreateMap<AdditionalCostLog, AdditionalCostLogDto>().ReverseMap();
+// MaintTotalBusinessOverheads
+CreateMap<TotalBusinessOverheads, TotalBusinessOverheadsDto>()
+    .ForMember(d => d.TotalBusinessOverheads, o => o.MapFrom(s => s.BusinessOverheads))
+    .ReverseMap()
+    .ForMember(d => d.BusinessOverheads, o => o.MapFrom(s => s.TotalBusinessOverheads));
         }
     }
 }

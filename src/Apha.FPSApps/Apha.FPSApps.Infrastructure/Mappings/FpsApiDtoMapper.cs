@@ -146,6 +146,25 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
+            // Audit logs are read-only so no .ReverseMap() — frontend never writes back to backend audit tables.
+            CreateMap<ProjectLogRes, ProjectLogDto>()
+                .ForMember(d => d.CaseWorkSub, o => o.MapFrom(s => s.CaseworkSub))
+                .ForMember(d => d.PlanCaseWorkDebit, o => o.MapFrom(s => s.PlanCaseworkDebit));
+
+            // StaffJobLog: Res.Name (staff display name resolved server-side) maps to Dto.Name by convention.
+            CreateMap<StaffJobLogRes, StaffJobLogDto>();
+
+            // TestRequirementLog: type-coercion — Res.UnitPrice is double? but Dto.UnitPrice is decimal?;
+            //   Res.NoRequired is int? but Dto.NoRequired is double?. Explicit ForMember casts applied.
+            CreateMap<TestRequirementLogRes, TestRequirementLogDto>()
+                .ForMember(d => d.UnitPrice, o => o.MapFrom(s => s.UnitPrice.HasValue ? (decimal?)Convert.ToDecimal(s.UnitPrice.Value) : null))
+                .ForMember(d => d.NoRequired, o => o.MapFrom(s => s.NoRequired.HasValue ? (double?)Convert.ToDouble(s.NoRequired.Value) : null));
+
+            // AnimalRequestLog: all property names and types align — convention mapping suffices.
+            CreateMap<AnimalRequestLogRes, AnimalRequestLogDto>();
+
+            // AdditionalCostLog: all property names and types align — convention mapping suffices.
+            CreateMap<AdditionalCostLogRes, AdditionalCostLogDto>();
             // UserPermission
             CreateMap<UserDto, UserRes>().ReverseMap();
             CreateMap<UserDto, UserReq>().ReverseMap();
@@ -153,25 +172,28 @@ namespace Apha.FPSApps.Infrastructure.Mappings
             CreateMap<UserPermissionDataDto, UserPermissionReq>().ReverseMap();
             CreateMap<PermissionOptionsDto, PermissionOptionsRes>().ReverseMap();
 
-            //   backend TestListVlaRes (GET /api/v1/testlistvla responses) and
-            //   TestListVlaReq (POST/PUT /api/v1/testlistvla request bodies).
-            //   All 11 property names are 1:1 between Dto and Res/Req — convention mapping applies.
-            CreateMap<TestListVlaDto, TestListVlaRes>().ReverseMap();
-            CreateMap<TestListVlaDto, TestListVlaReq>().ReverseMap();
+//   backend TestListVlaRes (GET /api/v1/testlistvla responses) and
+//   TestListVlaReq (POST/PUT /api/v1/testlistvla request bodies).
+//   All 11 property names are 1:1 between Dto and Res/Req — convention mapping applies.
+CreateMap<TestListVlaDto, TestListVlaRes>().ReverseMap();
+CreateMap<TestListVlaDto, TestListVlaReq>().ReverseMap();
 
-            //   backend TestRCCostRes (GET /api/v1/testrccost responses) and
-            //   TestRCCostReq (POST/PUT /api/v1/testrccost request bodies).
-            //   All 4 property names are 1:1 between Dto and Res/Req — convention mapping applies.
-            CreateMap<TestRCCostDto, TestRCCostRes>().ReverseMap();
-            CreateMap<TestRCCostDto, TestRCCostReq>().ReverseMap();
+//   backend TestRCCostRes (GET /api/v1/testrccost responses) and
+//   TestRCCostReq (POST/PUT /api/v1/testrccost request bodies).
+//   All 4 property names are 1:1 between Dto and Res/Req — convention mapping applies.
+CreateMap<TestRCCostDto, TestRCCostRes>().ReverseMap();
+CreateMap<TestRCCostDto, TestRCCostReq>().ReverseMap();
 
-            //   TestRequirementRCCostDto to/from backend TestRequirementRCCostRes
-            //   (GET /api/v1/testrequirementrccost responses) and TestRequirementRCCostReq
-            //   (POST/PUT /api/v1/testrequirementrccost request bodies).
-            //   All 5 property names are 1:1 between Dto and Res/Req — convention mapping applies.
-            CreateMap<TestRequirementRCCostDto, TestRequirementRCCostRes>().ReverseMap();
-            CreateMap<TestRequirementRCCostDto, TestRequirementRCCostReq>().ReverseMap();
+//   TestRequirementRCCostDto to/from backend TestRequirementRCCostRes
+//   (GET /api/v1/testrequirementrccost responses) and TestRequirementRCCostReq
+//   (POST/PUT /api/v1/testrequirementrccost request bodies).
+//   All 5 property names are 1:1 between Dto and Res/Req — convention mapping applies.
+CreateMap<TestRequirementRCCostDto, TestRequirementRCCostRes>().ReverseMap();
+CreateMap<TestRequirementRCCostDto, TestRequirementRCCostReq>().ReverseMap();
 
+// Total Business Overheads
+CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
+CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
 
         }
     }

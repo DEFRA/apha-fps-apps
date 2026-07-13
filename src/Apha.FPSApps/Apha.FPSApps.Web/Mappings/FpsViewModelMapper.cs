@@ -102,6 +102,9 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.StaffId, o => o.MapFrom(s => s.StaffID))
                 .ReverseMap();
 
+            // Total Business Overheads
+            CreateMap<TotalBusinessOverheadsViewModel, TotalBusinessOverheadsDto>().ReverseMap();
+
             // Misc Project Data
             CreateMap<ProjectDto, ProjectMiscItem>()
                 .ForMember(d => d.ParentProject, o => o.MapFrom(s => s.ParentProject))
@@ -111,20 +114,43 @@ namespace Apha.FPSApps.Web.Mappings
                 .ForMember(d => d.SubAccountCode, o => o.MapFrom(s => s.SubAccountCode))
                 .ReverseMap();
 
-            // All four types created in Phase 11; ReverseMap is convention-based (property names match Dto).
+// All four types created in Phase 11; ReverseMap is convention-based (property names match Dto).
 
-            // TestListVla grid row ↔ DTO (frmTestList / fsubTest_MainList):
-            CreateMap<TestListVlaItem, TestListVlaDto>().ReverseMap();
+// TestListVla grid row ↔ DTO (frmTestList / fsubTest_MainList):
+CreateMap<TestListVlaItem, TestListVlaDto>().ReverseMap();
 
-            // TestRCCost grid row ↔ DTO (fsubTestRCPrice / Component Charges general tab):
-            CreateMap<TestRCCostItem, TestRCCostDto>().ReverseMap();
+// TestRCCost grid row ↔ DTO (fsubTestRCPrice / Component Charges general tab):
+CreateMap<TestRCCostItem, TestRCCostDto>().ReverseMap();
 
-            // TestRequirementRCCost grid row ↔ DTO (fsubTestequirementRCPrice / Component Charges project tab):
-            CreateMap<TestRequirementRCCostItem, TestRequirementRCCostDto>().ReverseMap();
+// TestRequirementRCCost grid row ↔ DTO (fsubTestequirementRCPrice / Component Charges project tab):
+CreateMap<TestRequirementRCCostItem, TestRequirementRCCostDto>().ReverseMap();
 
-            // TestRequirementItem grid row ↔ DTO (Test Requirements tab — stage2TestRequirementsGrid):
-            // Convention ReverseMap: Buyer, NoRequired, UnitPrice, TestCode, FpsYear all match DTO names.
-            CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
+// TestRequirementItem grid row ↔ DTO (Test Requirements tab — stage2TestRequirementsGrid):
+// Convention ReverseMap: Buyer, NoRequired, UnitPrice, TestCode, FpsYear all match DTO names.
+CreateMap<TestRequirementItem, TestRequirementDto>().ReverseMap();
+
+// all 5 *LogItem ViewModel types are created in Phase 11.
+// Audit log items are read-only grid rows — .ReverseMap() is intentionally omitted.
+
+// UserEmail is NOT in ProjectLogDto (requires backend UserId→email resolution); Ignore() it.
+CreateMap<ProjectLogDto, ProjectLogItem>()
+    .ForMember(d => d.UserEmail, o => o.Ignore());
+
+// UserEmail is NOT in StaffJobLogDto (requires UserId→email resolution); Ignore() it.
+CreateMap<StaffJobLogDto, StaffJobLogItem>()
+    .ForMember(d => d.UserEmail, o => o.Ignore());
+
+// UserEmail is NOT in TestRequirementLogDto (requires UserId→email resolution); Ignore() it.
+CreateMap<TestRequirementLogDto, TestRequirementLogItem>()
+    .ForMember(d => d.UserEmail, o => o.Ignore());
+
+// UserEmail is NOT in AnimalRequestLogDto (requires UserId→email resolution); Ignore() it.
+CreateMap<AnimalRequestLogDto, AnimalRequestLogItem>()
+    .ForMember(d => d.UserEmail, o => o.Ignore());
+
+// UserEmail is NOT in AdditionalCostLogDto (requires UserId→email resolution); Ignore() it.
+CreateMap<AdditionalCostLogDto, AdditionalCostLogItem>()
+    .ForMember(d => d.UserEmail, o => o.Ignore());
         }
     }
 }

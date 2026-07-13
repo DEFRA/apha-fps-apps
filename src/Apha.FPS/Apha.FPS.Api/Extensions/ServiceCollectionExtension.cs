@@ -52,10 +52,12 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectGroupStaffPlanService, ProjectGroupStaffPlanService>();
             services.AddScoped<IBudgetBidsService, BudgetBidsService>();
             services.AddScoped<IPurchasesService, PurchasesService>();
+            services.AddScoped<IProjectAuditTrailService, ProjectAuditTrailService>();
             services.AddScoped<IUserService, UserService>();
-            services.AddScoped<ITestListVlaService, TestListVlaService>();
-            services.AddScoped<ITestRCCostService, TestRCCostService>();
-            services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
+services.AddScoped<ITestListVlaService, TestListVlaService>();
+services.AddScoped<ITestRCCostService, TestRCCostService>();
+services.AddScoped<ITestRequirementRCCostService, TestRequirementRCCostService>();
+services.AddScoped<ITotalBusinessOverheadsService, TotalBusinessOverheadsService>();
             return services;
         }
         public static IServiceCollection AddRepositories(this IServiceCollection services)
@@ -93,10 +95,12 @@ namespace Apha.FPS.Api.Extensions
             services.AddScoped<IProjectGroupStaffPlanRepository, ProjectGroupStaffPlanRepository>();
             services.AddScoped<IBudgetBidsRepository, BudgetBidsRepository>();
             services.AddScoped<IPurchasesRepository, PurchasesRepository>();
+            services.AddScoped<IProjectAuditTrailRepository, ProjectAuditTrailRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<ITestListVlaRepository, TestListVlaRepository>();
-            services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
-            services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
+services.AddScoped<ITestListVlaRepository, TestListVlaRepository>();
+services.AddScoped<ITestRCCostRepository, TestRCCostRepository>();
+services.AddScoped<ITestRequirementRCCostRepository, TestRequirementRCCostRepository>();
+services.AddScoped<ITotalBusinessOverheadsRepository, TotalBusinessOverheadsRepository>();
             return services;
 
         }

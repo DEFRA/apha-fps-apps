@@ -236,6 +236,42 @@ $(document).on('change', '#Days', function () {
     calculateHoursFromDays();
 });
 
+// Prevent non-numeric input on Hrs and Days fields using keypress event
+$(document).on('keypress', '#PlannedHours, #Days', function (e) {
+    var char = String.fromCharCode(e.which || e.keyCode);
+    // Allow only digits (0-9) and decimal point (.)
+    if (!/[\d.]/.test(char)) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// Allow special keys like backspace, delete, arrows, tab, enter, ctrl shortcuts
+$(document).on('keydown', '#PlannedHours, #Days', function (e) {
+    var allowedKeys = [8, 9, 27, 13, 35, 36, 37, 38, 39, 40, 46]; // Backspace, Tab, Escape, Enter, End, Home, Arrow keys, Delete
+    if (allowedKeys.indexOf(e.keyCode) !== -1) {
+        return true;
+    }
+    // Allow Ctrl+A, Ctrl+C, Ctrl+X, Ctrl+V (copy/paste)
+    if ((e.keyCode === 65 || e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 88) && (e.ctrlKey || e.metaKey)) {
+        return true;
+    }
+});
+
+// Additional cleanup on input event to handle paste and other edge cases
+$(document).on('input', '#PlannedHours, #Days', function () {
+    var value = $(this).val();
+    var filtered = value.replace(/[^\d.]/g, '');
+    // Prevent multiple decimal points - keep only the first one
+    var parts = filtered.split('.');
+    if (parts.length > 2) {
+        filtered = parts[0] + '.' + parts.slice(1).join('');
+    }
+    if (value !== filtered) {
+        $(this).val(filtered);
+    }
+});
+
 $(document).ready(function () {
     fetchHoursPerDay();
 });

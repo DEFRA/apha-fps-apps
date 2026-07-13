@@ -223,7 +223,7 @@ namespace Apha.PACT.Application.UnitTests.Services.TestRequirementServiceTest
         {
             var dto = new TestRequirementtDto
             {
-                TestCode = "BLOOD", Buyer = "PRJ1",
+                TestCode = null!, Buyer = null!,
                 ProjectBuyerCode = null, TestBuyerCode = null
             };
 

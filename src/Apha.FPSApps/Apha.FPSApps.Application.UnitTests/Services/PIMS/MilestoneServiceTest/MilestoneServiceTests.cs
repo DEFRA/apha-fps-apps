@@ -824,5 +824,519 @@ namespace Apha.FPSApps.Application.UnitTests.Services.PIMS.MilestoneServiceTest
         }
 
         #endregion
+
+        #region GetAllStagingRowsAsync
+
+        [Fact]
+        public async Task GetAllStagingRowsAsync_WithSuccessResponse_ReturnsStagingRows()
+        {
+            // Arrange
+            var parameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var data = new List<StagingMilestoneDto>
+            {
+                new() { Id = 1, Project = "PP001", Number = "M1" },
+                new() { Id = 2, Project = "PP001", Number = "M2" }
+            };
+            var expected = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse(data);
+
+            _pimsMilestoneApiClient.GetAllStagingRowsAsync(parameters).Returns(expected);
+
+            // Act
+            var result = await _sut.GetAllStagingRowsAsync(parameters);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.NotNull(result.Data);
+            Assert.Equal(2, result.Data.Count);
+            await _pimsMilestoneApiClient.Received(1).GetAllStagingRowsAsync(parameters);
+        }
+
+        [Fact]
+        public async Task GetAllStagingRowsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            var parameters = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var expected = ApiResponseDto<List<StagingMilestoneDto>>.FailureResponse(OneError("Server error", "SERVER_ERROR"), new ApiMetaDto());
+
+            _pimsMilestoneApiClient.GetAllStagingRowsAsync(parameters).Returns(expected);
+
+            // Act
+            var result = await _sut.GetAllStagingRowsAsync(parameters);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("SERVER_ERROR", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task GetAllStagingRowsAsync_PassesCorrectParametersToClient()
+        {
+            // Arrange
+            var parameters = new QueryParameters<string> { Page = 3, PageSize = 25 };
+            var expected = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse([]);
+
+            _pimsMilestoneApiClient.GetAllStagingRowsAsync(parameters).Returns(expected);
+
+            // Act
+            await _sut.GetAllStagingRowsAsync(parameters);
+
+            // Assert
+            await _pimsMilestoneApiClient.Received(1).GetAllStagingRowsAsync(
+                Arg.Is<QueryParameters<string>>(p => p.Page == 3 && p.PageSize == 25));
+        }
+
+        #endregion
+
+        #region GetStagingRowsAsync
+
+        [Fact]
+        public async Task GetStagingRowsAsync_WithProject_ReturnsRows()
+        {
+            // Arrange
+            const string project = "PP001";
+            var data = new List<StagingMilestoneDto> { new() { Id = 1, Project = project, Number = "M1" } };
+            var expected = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse(data);
+
+            _pimsMilestoneApiClient.GetStagingRowsAsync(project).Returns(expected);
+
+            // Act
+            var result = await _sut.GetStagingRowsAsync(project);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _pimsMilestoneApiClient.Received(1).GetStagingRowsAsync(project);
+        }
+
+        [Fact]
+        public async Task GetStagingRowsAsync_WithNullProject_PassesNullToClient()
+        {
+            // Arrange
+            var expected = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse([]);
+
+            _pimsMilestoneApiClient.GetStagingRowsAsync(null).Returns(expected);
+
+            // Act
+            var result = await _sut.GetStagingRowsAsync(null);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pimsMilestoneApiClient.Received(1).GetStagingRowsAsync(Arg.Is<string?>(p => p == null));
+        }
+
+        [Fact]
+        public async Task GetStagingRowsAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var expected = ApiResponseDto<List<StagingMilestoneDto>>.FailureResponse(OneError("Not found", "NOT_FOUND"), new ApiMetaDto());
+
+            _pimsMilestoneApiClient.GetStagingRowsAsync(project).Returns(expected);
+
+            // Act
+            var result = await _sut.GetStagingRowsAsync(project);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("NOT_FOUND", result.Errors![0].Code);
+        }
+
+        #endregion
+
+        #region AddStagingRowAsync
+
+        [Fact]
+        public async Task AddStagingRowAsync_WithSuccessResponse_ReturnsRow()
+        {
+            // Arrange
+            const int year = 2025;
+            var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1", Description = "Added" };
+            var expected = ApiResponseDto<StagingMilestoneDto>.SuccessResponse(dto);
+
+            _pimsMilestoneApiClient.AddStagingRowAsync(dto, year).Returns(expected);
+
+            // Act
+            var result = await _sut.AddStagingRowAsync(dto, year);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal("Added", result.Data!.Description);
+            await _pimsMilestoneApiClient.Received(1).AddStagingRowAsync(dto, year);
+        }
+
+        [Fact]
+        public async Task AddStagingRowAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            const int year = 2025;
+            var dto = new StagingMilestoneDto { Project = "PP001", Number = "M1" };
+            var expected = ApiResponseDto<StagingMilestoneDto>.FailureResponse(OneError("Validation error", "VALIDATION_ERROR"), new ApiMetaDto());
+
+            _pimsMilestoneApiClient.AddStagingRowAsync(dto, year).Returns(expected);
+
+            // Act
+            var result = await _sut.AddStagingRowAsync(dto, year);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("VALIDATION_ERROR", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task AddStagingRowAsync_PassesCorrectParameters()
+        {
+            // Arrange
+            const int year = 2026;
+            var dto = new StagingMilestoneDto { Project = "PP123", Number = "M3" };
+            var expected = ApiResponseDto<StagingMilestoneDto>.SuccessResponse(dto);
+
+            _pimsMilestoneApiClient.AddStagingRowAsync(dto, year).Returns(expected);
+
+            // Act
+            await _sut.AddStagingRowAsync(dto, year);
+
+            // Assert
+            await _pimsMilestoneApiClient.Received(1).AddStagingRowAsync(
+                Arg.Is<StagingMilestoneDto>(d => d.Project == "PP123" && d.Number == "M3"),
+                Arg.Is<int>(y => y == year));
+        }
+
+        #endregion
+
+        #region UpdateStagingRowAsync
+
+        [Fact]
+        public async Task UpdateStagingRowAsync_WithSuccessResponse_ReturnsUpdatedRow()
+        {
+            // Arrange
+            const int id = 12;
+            var dto = new StagingMilestoneDto { Id = id, Project = "PP001", Description = "Updated" };
+            var expected = ApiResponseDto<StagingMilestoneDto>.SuccessResponse(dto);
+
+            _pimsMilestoneApiClient.UpdateStagingRowAsync(id, dto).Returns(expected);
+
+            // Act
+            var result = await _sut.UpdateStagingRowAsync(id, dto);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal("Updated", result.Data!.Description);
+            await _pimsMilestoneApiClient.Received(1).UpdateStagingRowAsync(id, dto);
+        }
+
+        [Fact]
+        public async Task UpdateStagingRowAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            const int id = 12;
+            var dto = new StagingMilestoneDto { Id = id, Project = "PP001" };
+            var expected = ApiResponseDto<StagingMilestoneDto>.FailureResponse(OneError("Not found", "NOT_FOUND"), new ApiMetaDto());
+
+            _pimsMilestoneApiClient.UpdateStagingRowAsync(id, dto).Returns(expected);
+
+            // Act
+            var result = await _sut.UpdateStagingRowAsync(id, dto);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("NOT_FOUND", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task UpdateStagingRowAsync_PassesCorrectParameters()
+        {
+            // Arrange
+            const int id = 33;
+            var dto = new StagingMilestoneDto { Id = id, Project = "PP123", Number = "M7" };
+            var expected = ApiResponseDto<StagingMilestoneDto>.SuccessResponse(dto);
+
+            _pimsMilestoneApiClient.UpdateStagingRowAsync(id, dto).Returns(expected);
+
+            // Act
+            await _sut.UpdateStagingRowAsync(id, dto);
+
+            // Assert
+            await _pimsMilestoneApiClient.Received(1).UpdateStagingRowAsync(
+                Arg.Is<int>(i => i == id),
+                Arg.Is<StagingMilestoneDto>(d => d.Project == "PP123" && d.Number == "M7"));
+        }
+
+        #endregion
+
+        #region DeleteStagingRowAsync
+
+        [Fact]
+        public async Task DeleteStagingRowAsync_WithSuccessResponse_ReturnsSuccess()
+        {
+            // Arrange
+            const int id = 10;
+            var expected = ApiResponseDto<object>.SuccessResponse(new { success = true });
+
+            _pimsMilestoneApiClient.DeleteStagingRowAsync(id).Returns(expected);
+
+            // Act
+            var result = await _sut.DeleteStagingRowAsync(id);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pimsMilestoneApiClient.Received(1).DeleteStagingRowAsync(id);
+        }
+
+        [Fact]
+        public async Task DeleteStagingRowAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            const int id = 10;
+            var expected = ApiResponseDto<object>.FailureResponse(OneError("Not found", "NOT_FOUND"), new ApiMetaDto());
+
+            _pimsMilestoneApiClient.DeleteStagingRowAsync(id).Returns(expected);
+
+            // Act
+            var result = await _sut.DeleteStagingRowAsync(id);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("NOT_FOUND", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task DeleteStagingRowAsync_PassesCorrectParameters()
+        {
+            // Arrange
+            const int id = 55;
+            var expected = ApiResponseDto<object>.SuccessResponse(new object());
+
+            _pimsMilestoneApiClient.DeleteStagingRowAsync(id).Returns(expected);
+
+            // Act
+            await _sut.DeleteStagingRowAsync(id);
+
+            // Assert
+            await _pimsMilestoneApiClient.Received(1).DeleteStagingRowAsync(Arg.Is<int>(i => i == id));
+        }
+
+        #endregion
+
+        #region ClearStagingAsync
+
+        [Fact]
+        public async Task ClearStagingAsync_WithSuccessResponse_ReturnsSuccess()
+        {
+            // Arrange
+            const string project = "PP001";
+            var expected = ApiResponseDto<object>.SuccessResponse(new { success = true });
+
+            _pimsMilestoneApiClient.ClearStagingAsync(project).Returns(expected);
+
+            // Act
+            var result = await _sut.ClearStagingAsync(project);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pimsMilestoneApiClient.Received(1).ClearStagingAsync(project);
+        }
+
+        [Fact]
+        public async Task ClearStagingAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var expected = ApiResponseDto<object>.FailureResponse(OneError("Server error", "SERVER_ERROR"), new ApiMetaDto());
+
+            _pimsMilestoneApiClient.ClearStagingAsync(project).Returns(expected);
+
+            // Act
+            var result = await _sut.ClearStagingAsync(project);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("SERVER_ERROR", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task ClearStagingAsync_PassesCorrectParameters()
+        {
+            // Arrange
+            const string project = "PP123";
+            var expected = ApiResponseDto<object>.SuccessResponse(new object());
+
+            _pimsMilestoneApiClient.ClearStagingAsync(project).Returns(expected);
+
+            // Act
+            await _sut.ClearStagingAsync(project);
+
+            // Assert
+            await _pimsMilestoneApiClient.Received(1).ClearStagingAsync(Arg.Is<string>(p => p == project));
+        }
+
+        #endregion
+
+        #region ValidateStagingAsync
+
+        [Fact]
+        public async Task ValidateStagingAsync_WithSuccessResponse_ReturnsValidationRows()
+        {
+            // Arrange
+            const string project = "PP001";
+            const string typeId = "M";
+            var data = new List<StagingMilestoneDto> { new() { Id = 1, Project = project, TypeId = typeId } };
+            var expected = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse(data);
+
+            _pimsMilestoneApiClient.ValidateStagingAsync(project, typeId, true).Returns(expected);
+
+            // Act
+            var result = await _sut.ValidateStagingAsync(project, typeId, true);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Single(result.Data!);
+            await _pimsMilestoneApiClient.Received(1).ValidateStagingAsync(project, typeId, true);
+        }
+
+        [Fact]
+        public async Task ValidateStagingAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var expected = ApiResponseDto<List<StagingMilestoneDto>>.FailureResponse(OneError("Validation error", "VALIDATION_ERROR"), new ApiMetaDto());
+
+            _pimsMilestoneApiClient.ValidateStagingAsync(project, null, false).Returns(expected);
+
+            // Act
+            var result = await _sut.ValidateStagingAsync(project, null, false);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("VALIDATION_ERROR", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task ValidateStagingAsync_WithNullTypeId_PassesNullToClient()
+        {
+            // Arrange
+            const string project = "PP123";
+            var expected = ApiResponseDto<List<StagingMilestoneDto>>.SuccessResponse([]);
+
+            _pimsMilestoneApiClient.ValidateStagingAsync(project, null, false).Returns(expected);
+
+            // Act
+            await _sut.ValidateStagingAsync(project, null, false);
+
+            // Assert
+            await _pimsMilestoneApiClient.Received(1).ValidateStagingAsync(
+                Arg.Is<string>(p => p == project),
+                Arg.Is<string?>(t => t == null),
+                Arg.Is<bool>(m => m == false));
+        }
+
+        #endregion
+
+        #region ImportStagingAsync
+
+        [Fact]
+        public async Task ImportStagingAsync_WithSuccessResponse_ReturnsSuccess()
+        {
+            // Arrange
+            const string project = "PP001";
+            var expected = ApiResponseDto<object>.SuccessResponse(new { success = true });
+
+            _pimsMilestoneApiClient.ImportStagingAsync(project).Returns(expected);
+
+            // Act
+            var result = await _sut.ImportStagingAsync(project);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pimsMilestoneApiClient.Received(1).ImportStagingAsync(project);
+        }
+
+        [Fact]
+        public async Task ImportStagingAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var expected = ApiResponseDto<object>.FailureResponse(OneError("Server error", "SERVER_ERROR"), new ApiMetaDto());
+
+            _pimsMilestoneApiClient.ImportStagingAsync(project).Returns(expected);
+
+            // Act
+            var result = await _sut.ImportStagingAsync(project);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("SERVER_ERROR", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task ImportStagingAsync_PassesCorrectParameters()
+        {
+            // Arrange
+            const string project = "PP123";
+            var expected = ApiResponseDto<object>.SuccessResponse(new object());
+
+            _pimsMilestoneApiClient.ImportStagingAsync(project).Returns(expected);
+
+            // Act
+            await _sut.ImportStagingAsync(project);
+
+            // Assert
+            await _pimsMilestoneApiClient.Received(1).ImportStagingAsync(Arg.Is<string>(p => p == project));
+        }
+
+        #endregion
+
+        #region ImportWithOverwriteAsync
+
+        [Fact]
+        public async Task ImportWithOverwriteAsync_WithSuccessResponse_ReturnsSuccess()
+        {
+            // Arrange
+            const string project = "PP001";
+            var expected = ApiResponseDto<object>.SuccessResponse(new { success = true });
+
+            _pimsMilestoneApiClient.ImportWithOverwriteAsync(project).Returns(expected);
+
+            // Act
+            var result = await _sut.ImportWithOverwriteAsync(project);
+
+            // Assert
+            Assert.True(result.Success);
+            await _pimsMilestoneApiClient.Received(1).ImportWithOverwriteAsync(project);
+        }
+
+        [Fact]
+        public async Task ImportWithOverwriteAsync_WhenApiFails_ReturnsFailureResponse()
+        {
+            // Arrange
+            const string project = "PP001";
+            var expected = ApiResponseDto<object>.FailureResponse(OneError("Server error", "SERVER_ERROR"), new ApiMetaDto());
+
+            _pimsMilestoneApiClient.ImportWithOverwriteAsync(project).Returns(expected);
+
+            // Act
+            var result = await _sut.ImportWithOverwriteAsync(project);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.Equal("SERVER_ERROR", result.Errors![0].Code);
+        }
+
+        [Fact]
+        public async Task ImportWithOverwriteAsync_PassesCorrectParameters()
+        {
+            // Arrange
+            const string project = "PP123";
+            var expected = ApiResponseDto<object>.SuccessResponse(new object());
+
+            _pimsMilestoneApiClient.ImportWithOverwriteAsync(project).Returns(expected);
+
+            // Act
+            await _sut.ImportWithOverwriteAsync(project);
+
+            // Assert
+            await _pimsMilestoneApiClient.Received(1).ImportWithOverwriteAsync(Arg.Is<string>(p => p == project));
+        }
+
+        #endregion
     }
 }
