@@ -33,26 +33,6 @@ public sealed class JobOrchestratorTests
             _correlationService,
             _settings,
             NullLogger<JobOrchestrator>.Instance);
-        
-        // Mock GetExecutionByJobExecutionIdAsync to return pre-created Initiated record
-        _execRepo.GetExecutionByJobExecutionIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns(args => 
-            {
-                var jobExecutionId = (Guid)args[0];
-                return Task.FromResult<JobExecutionRecord?>(new JobExecutionRecord
-                {
-                    ExecutionId = 1,
-                    JobExecutionId = jobExecutionId,
-                    JobQueueId = Guid.NewGuid(),
-                    JobName = "TestJob",
-                    UserId = "test-user",
-                    JobType = JobType.Unknown,
-                    RunMode = RunMode.Manual,
-                    Status = JobStatus.Initiated,
-                    StartedAt = DateTime.UtcNow,
-                    RetryAttempts = 0
-                });
-            });
     }
 
     // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -64,8 +44,7 @@ public sealed class JobOrchestratorTests
     {
         // Arrange â€” capture argument state at call time (not at assertion time)
         // because JobExecutionRecord is a mutable reference type that gets updated
-        // between CreateExecutionRecordAsync and UpdateExecutionRecordAsync.
-        var capturedCreateStatus = new List<JobStatus>();
+        // between CreateExecutionRecordAsync and UpdateExecutionRecordAsync.        SetupInitiatedExecution("TestJob");        var capturedCreateStatus = new List<JobStatus>();
         var capturedUpdateStatus = new List<JobStatus>();
 
         var job = Substitute.For<IBatchJob>();
@@ -112,7 +91,6 @@ public sealed class JobOrchestratorTests
     public async Task RunAsync_WhenRequestedAtUtcProvided_PassesRequestedAtUtcToCreateRecord()
     {
         // Arrange
-        SetupInitiatedExecution("TestJob");
         SetupInitiatedExecution("TestJob");
         JobExecutionRecord? capturedCreateRecord = null;
         var requestedAtUtc = DateTime.UtcNow.AddMinutes(-1);
@@ -490,10 +468,7 @@ public sealed class JobOrchestratorTests
     [Fact]
     public async Task RunAsync_WhenTwoConcurrentCallsForSameJob_OnlyOneExecutesAndOtherIsSkipped()
     {
-        // Arrange
-        // Arrange - first call acquires lock, second call gets false (DB unique constraint)
-        SetupInitiatedExecution("ConcurrentJob");
-        var lockCallCount = 0;
+        // Arrange â€” first call acquires lock, second call gets false (DB unique constraint)        SetupInitiatedExecution("ConcurrentJob");        var lockCallCount = 0;
         _lockRepo.TryAcquireLockAsync("ConcurrentJob", Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
                  .Returns(_ => ++lockCallCount == 1);  // first true, subsequent false
 
@@ -532,7 +507,6 @@ public sealed class JobOrchestratorTests
     public async Task RunAsync_WhenFirstAttemptFailsAndSecondSucceeds_RetriesAndCompletes()
     {
         // Arrange
-        SetupInitiatedExecution("RetrySuccessJob");
         var retrySettings = Options.Create(new BatchJobSettings
         {
             JobTimeout = 3600,
@@ -548,6 +522,7 @@ public sealed class JobOrchestratorTests
             retrySettings,
             NullLogger<JobOrchestrator>.Instance);
 
+        SetupInitiatedExecution("RetrySuccessJob");
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("RetrySuccessJob");
         job.ExecuteAsync(Arg.Any<CancellationToken>())
@@ -575,7 +550,6 @@ public sealed class JobOrchestratorTests
     public async Task RunAsync_WhenRetriesExhausted_ThrowsAfterConfiguredAttempts()
     {
         // Arrange
-        SetupInitiatedExecution("RetryFailJob");
         var retrySettings = Options.Create(new BatchJobSettings
         {
             JobTimeout = 3600,
@@ -591,6 +565,7 @@ public sealed class JobOrchestratorTests
             retrySettings,
             NullLogger<JobOrchestrator>.Instance);
 
+        SetupInitiatedExecution("RetryFailJob");
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("RetryFailJob");
         // Use explicit transient infrastructure exception so all attempts run.
@@ -624,7 +599,6 @@ public sealed class JobOrchestratorTests
     public async Task RunAsync_WhenNonRetryableExceptionThrown_FailsImmediatelyWithoutRetry(Type exceptionType)
     {
         // Arrange â€” 2 retries configured, but non-retryable exception must stop on attempt 1
-        SetupInitiatedExecution("NonRetryableJob");
         var retrySettings = Options.Create(new BatchJobSettings
         {
             JobTimeout = 3600,
@@ -640,6 +614,7 @@ public sealed class JobOrchestratorTests
             retrySettings,
             NullLogger<JobOrchestrator>.Instance);
 
+        SetupInitiatedExecution("NonRetryableJob");
         var nonRetryableEx = (Exception)Activator.CreateInstance(exceptionType, "Non-retryable")!;
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("NonRetryableJob");
@@ -677,7 +652,6 @@ public sealed class JobOrchestratorTests
     public async Task RunAsync_WhenRuntimeTimeoutExceeded_FailsWithTimeoutAndNoRetry()
     {
         // Arrange
-        SetupInitiatedExecution("RuntimeTimeoutJob");
         var timeoutSettings = Options.Create(new BatchJobSettings
         {
             JobTimeout = 1,
@@ -693,6 +667,7 @@ public sealed class JobOrchestratorTests
             timeoutSettings,
             NullLogger<JobOrchestrator>.Instance);
 
+        SetupInitiatedExecution("RuntimeTimeoutJob");
         JobStatus? updatedStatus = null;
         string? updatedErrorMessage = null;
 
@@ -730,7 +705,6 @@ public sealed class JobOrchestratorTests
     public async Task RunAsync_WhenJobTimeoutOverrideExists_OverrideTakesPrecedence()
     {
         // Arrange
-        SetupInitiatedExecution("OverrideTimeoutJob");
         var timeoutSettings = Options.Create(new BatchJobSettings
         {
             JobTimeout = 300,
@@ -750,6 +724,7 @@ public sealed class JobOrchestratorTests
             timeoutSettings,
             NullLogger<JobOrchestrator>.Instance);
 
+        SetupInitiatedExecution("OverrideTimeoutJob");
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("OverrideTimeoutJob");
         job.MaxExecutionSeconds.Returns(1200);
@@ -776,7 +751,6 @@ public sealed class JobOrchestratorTests
     public async Task RunAsync_UsesConfiguredLockTimeoutForLockAcquisition()
     {
         // Arrange
-        SetupInitiatedExecution("TimeoutJob");
         var timeoutSettings = Options.Create(new BatchJobSettings { LockTimeoutSeconds = 1234 });
         var orchestrator = new JobOrchestrator(
             _factory,
@@ -786,6 +760,7 @@ public sealed class JobOrchestratorTests
             timeoutSettings,
             NullLogger<JobOrchestrator>.Instance);
 
+        SetupInitiatedExecution("TimeoutJob");
         var job = Substitute.For<IBatchJob>();
         job.Name.Returns("TimeoutJob");
         _factory.Create("TimeoutJob").Returns(job);
@@ -812,9 +787,9 @@ public sealed class JobOrchestratorTests
     // ─── Helpers ────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Overrides the default mock so GetExecutionByJobExecutionIdAsync returns an Initiated
-    /// record whose JobName matches <paramref name="jobName"/>. Required for tests that call
-    /// RunAsync with a job name other than the constructor default ("TestJob").
+    /// Configures GetExecutionByJobExecutionIdAsync to return an Initiated record
+    /// whose JobName matches <paramref name="jobName"/>. Each test that calls RunAsync
+    /// must invoke this (or SetupApprovedExecution / a custom override) exactly once.
     /// </summary>
     private void SetupInitiatedExecution(string jobName)
     {
@@ -835,8 +810,8 @@ public sealed class JobOrchestratorTests
     }
 
     /// <summary>
-    /// Overrides the mock to return an Approved record for approval-based jobs
-    /// (YearEnd, BulkRatesUpdate). GetApprovalMetadataAsync returns null by default,
+    /// Configures GetExecutionByJobExecutionIdAsync to return an Approved record for
+    /// approval-based jobs. GetApprovalMetadataAsync returns null by default (NSubstitute),
     /// which the orchestrator handles gracefully per the CR025 provisional guard.
     /// </summary>
     private void SetupApprovedExecution(string jobName)
@@ -857,7 +832,6 @@ public sealed class JobOrchestratorTests
             }));
     }
 }
-
 
 
 
