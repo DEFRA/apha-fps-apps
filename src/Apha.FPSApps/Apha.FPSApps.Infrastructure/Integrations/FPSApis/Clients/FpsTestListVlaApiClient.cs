@@ -18,10 +18,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        private const string InternalCodeError = "INTERNAL_ERROR";
-
         private const string BaseUrl = "api/v1/testlistvla";
-
         public FpsTestListVlaApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http ?? throw new ArgumentNullException(nameof(http));
@@ -30,64 +27,37 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<TestListVlaDto>>> GetAllAsync(QueryParameters<string> query, int fpsYear)
         {
-            try
-            {
-                var url = QueryStringHelper.AddQueryString(BaseUrl, query);
-                url = QueryStringHelper.AddQueryString(url, new { fpsYear });
+            var url = QueryStringHelper.AddQueryString(BaseUrl, query);
+            url = QueryStringHelper.AddQueryString(url, new { fpsYear });
 
-                var response = await _http.GetAsync<List<TestListVlaRes>>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<TestListVlaDto>>>(response);
+            var response = await _http.GetAsync<List<TestListVlaRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<TestListVlaDto>>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<List<TestListVlaDto>>>(response);
-                return ApiResponseDto<List<TestListVlaDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception ex)
-            {
-                return ApiResponseDto<List<TestListVlaDto>>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = $"Failed to retrieve TestListVla data: {ex.Message}", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<List<TestListVlaDto>>>(response);
+            return ApiResponseDto<List<TestListVlaDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<List<TestListVlaDto>>> GetAllByYearAsync(int fpsYear)
         {
-            try
-            {
-                var url = $"{BaseUrl}/lookup?fpsYear={fpsYear}";
-                var response = await _http.GetAsync<List<TestListVlaRes>>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<TestListVlaDto>>>(response);
+            var url = $"{BaseUrl}/lookup?fpsYear={fpsYear}";
+            var response = await _http.GetAsync<List<TestListVlaRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<TestListVlaDto>>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<List<TestListVlaDto>>>(response);
-                return ApiResponseDto<List<TestListVlaDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<TestListVlaDto>>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve TestListVla lookup data", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<List<TestListVlaDto>>>(response);
+            return ApiResponseDto<List<TestListVlaDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<TestListVlaDto>> GetByIdAsync(string itemCode, int fpsYear)
         {
-            try
-            {
-                var url = $"{BaseUrl}/{itemCode}/{fpsYear}";
-                var response = await _http.GetAsync<TestListVlaRes>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<TestListVlaDto>>(response);
+            var url = $"{BaseUrl}/{itemCode}/{fpsYear}";
+            var response = await _http.GetAsync<TestListVlaRes>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<TestListVlaDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<TestListVlaDto>>(response);
-                return ApiResponseDto<TestListVlaDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<TestListVlaDto>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve TestListVla by ID", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<TestListVlaDto>>(response);
+            return ApiResponseDto<TestListVlaDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
     }

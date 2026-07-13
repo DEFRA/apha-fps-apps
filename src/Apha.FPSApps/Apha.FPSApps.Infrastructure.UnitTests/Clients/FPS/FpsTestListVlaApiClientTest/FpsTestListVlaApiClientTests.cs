@@ -8,7 +8,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestListVlaApiClientTest
@@ -91,24 +90,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestListVlaApiCli
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task GetAllAsync_HttpThrowsException_ReturnsInternalErrorFailureResponse()
-        {
-            // Arrange
-            var query = new QueryParameters<string>();
-            _http.GetAsync<List<TestListVlaRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllAsync(query, DefaultFpsYear);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.NotNull(result.Errors);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-        }
-
         #endregion
 
         #region GetAllByYearAsync
@@ -152,22 +133,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestListVlaApiCli
             Assert.Contains($"fpsYear={DefaultFpsYear}", capturedUrl);
         }
 
-        [Fact]
-        public async Task GetAllByYearAsync_HttpThrowsException_ReturnsInternalErrorFailureResponse()
-        {
-            // Arrange
-            _http.GetAsync<List<TestListVlaRes>>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetAllByYearAsync(DefaultFpsYear);
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-        }
-
         #endregion
 
         #region GetByIdAsync
@@ -208,22 +173,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestListVlaApiCli
 
             // Assert
             Assert.Equal($"{BaseUrl}/{DefaultItemCode}/{DefaultFpsYear}", capturedUrl);
-        }
-
-        [Fact]
-        public async Task GetByIdAsync_HttpThrowsException_ReturnsInternalErrorFailureResponse()
-        {
-            // Arrange
-            _http.GetAsync<TestListVlaRes>(Arg.Any<string>())
-                .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetByIdAsync(DefaultItemCode, DefaultFpsYear);
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
         }
 
         #endregion

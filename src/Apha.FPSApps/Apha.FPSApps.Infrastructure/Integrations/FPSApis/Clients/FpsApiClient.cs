@@ -75,11 +75,11 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsPurchases = new FpsPurchasesApiClient(http, mapper);
             FpsUserPermission = new FpsUserApiClient(http, mapper);
             FpsGrade = new FpsGradeApiClient(http, mapper);
-FpsTestListVla = new FpsTestListVlaApiClient(http, mapper);
-FpsTestRCCost = new FpsTestRCCostApiClient(http, mapper);
-FpsTestRequirementRCCost = new FpsTestRequirementRCCostApiClient(http, mapper);
-FpsProjectAuditTrail = new FpsProjectAuditTrailApiClient(http, mapper);
-FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
+            FpsTestListVla = new FpsTestListVlaApiClient(http, mapper);
+            FpsTestRCCost = new FpsTestRCCostApiClient(http, mapper);
+            FpsTestRequirementRCCost = new FpsTestRequirementRCCostApiClient(http, mapper);
+            FpsProjectAuditTrail = new FpsProjectAuditTrailApiClient(http, mapper);
+            FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
         }
     }
 }

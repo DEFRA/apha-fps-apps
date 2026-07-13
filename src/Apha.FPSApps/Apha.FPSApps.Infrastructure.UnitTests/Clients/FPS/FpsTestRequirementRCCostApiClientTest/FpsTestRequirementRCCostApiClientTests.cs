@@ -6,7 +6,6 @@ using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRCCostApiClientTest
@@ -100,22 +99,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRC
             Assert.False(result.Success);
         }
 
-        [Fact]
-        public async Task GetByTestCodeAsync_HttpThrowsException_ReturnsInternalErrorFailureResponse()
-        {
-            // Arrange
-            _http.GetAsync<List<TestRequirementRCCostRes>>(Arg.Any<string>())
-                 .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-        }
-
         #endregion
 
         // ── GetByKeyAsync ─────────────────────────────────────────────────────
@@ -166,23 +149,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRC
                 capturedUrl);
         }
 
-        [Fact]
-        public async Task GetByKeyAsync_HttpThrowsException_ReturnsInternalErrorFailureResponse()
-        {
-            // Arrange
-            _http.GetAsync<TestRequirementRCCostRes>(Arg.Any<string>())
-                 .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.GetByKeyAsync(
-                DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear);
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-        }
-
         #endregion
 
         // ── CreateAsync ───────────────────────────────────────────────────────
@@ -209,25 +175,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRC
 
             // Assert
             Assert.True(result.Success);
-        }
-
-        [Fact]
-        public async Task CreateAsync_HttpThrowsException_ReturnsInternalErrorFailureResponse()
-        {
-            // Arrange
-            var dto = new TestRequirementRCCostDto { TestCode = DefaultTestCode };
-            _mapper.Map<TestRequirementRCCostReq>(dto).Returns(new TestRequirementRCCostReq());
-            _http.PostAsync<TestRequirementRCCostReq, TestRequirementRCCostRes>(
-                    Arg.Any<string>(), Arg.Any<TestRequirementRCCostReq>())
-                 .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.CreateAsync(dto);
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
         }
 
         #endregion
@@ -287,26 +234,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRC
                 capturedUrl);
         }
 
-        [Fact]
-        public async Task UpdateAsync_HttpThrowsException_ReturnsInternalErrorFailureResponse()
-        {
-            // Arrange
-            var dto = new TestRequirementRCCostDto();
-            _mapper.Map<TestRequirementRCCostReq>(dto).Returns(new TestRequirementRCCostReq());
-            _http.PutAsync<TestRequirementRCCostReq, TestRequirementRCCostRes>(
-                    Arg.Any<string>(), Arg.Any<TestRequirementRCCostReq>())
-                 .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.UpdateAsync(
-                DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear, dto);
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
-        }
-
         #endregion
 
         // ── DeleteAsync ───────────────────────────────────────────────────────
@@ -352,23 +279,6 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRequirementRC
             Assert.Equal(
                 $"{BaseUrl}/{DefaultTestCode}/{DefaultBuyer}/{DefaultProfitCentre}/{DefaultFpsYear}",
                 capturedUrl);
-        }
-
-        [Fact]
-        public async Task DeleteAsync_HttpThrowsException_ReturnsInternalErrorFailureResponse()
-        {
-            // Arrange
-            _http.DeleteAsync<bool?>(Arg.Any<string>())
-                 .ThrowsAsync(new Exception("Network error"));
-
-            // Act
-            var result = await _client.DeleteAsync(
-                DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear);
-
-            // Assert
-            Assert.False(result.Success);
-            var error = Assert.Single(result.Errors!);
-            Assert.Equal("INTERNAL_ERROR", error.Code);
         }
 
         #endregion

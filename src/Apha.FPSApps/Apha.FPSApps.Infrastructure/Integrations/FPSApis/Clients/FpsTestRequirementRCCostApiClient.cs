@@ -19,10 +19,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         private readonly IFpsHttpExecutor _http;
         private readonly IMapper _mapper;
 
-        private const string InternalCodeError = "INTERNAL_ERROR";
-
         private const string BaseUrl = "api/v1/testrequirementrccost";
-
         public FpsTestRequirementRCCostApiClient(IFpsHttpExecutor http, IMapper mapper)
         {
             _http = http ?? throw new ArgumentNullException(nameof(http));
@@ -31,105 +28,60 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
 
         public async Task<ApiResponseDto<List<TestRequirementRCCostDto>>> GetByTestCodeAsync(string testCode, int fpsYear)
         {
-            try
-            {
-                var url = $"{BaseUrl}/{testCode}";
-                var response = await _http.GetAsync<List<TestRequirementRCCostRes>>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<List<TestRequirementRCCostDto>>>(response);
+            var url = $"{BaseUrl}/{testCode}";
+            var response = await _http.GetAsync<List<TestRequirementRCCostRes>>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<List<TestRequirementRCCostDto>>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<List<TestRequirementRCCostDto>>>(response);
-                return ApiResponseDto<List<TestRequirementRCCostDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<List<TestRequirementRCCostDto>>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve TestRequirementRCCost data", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<List<TestRequirementRCCostDto>>>(response);
+            return ApiResponseDto<List<TestRequirementRCCostDto>>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<TestRequirementRCCostDto>> GetByKeyAsync(string testCode, string buyer, string profitCentre, int fpsYear)
         {
-            try
-            {
-                var url = $"{BaseUrl}/{testCode}/{buyer}/{profitCentre}";
-                var response = await _http.GetAsync<TestRequirementRCCostRes>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
+            var url = $"{BaseUrl}/{testCode}/{buyer}/{profitCentre}";
+            var response = await _http.GetAsync<TestRequirementRCCostRes>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
-                return ApiResponseDto<TestRequirementRCCostDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<TestRequirementRCCostDto>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to retrieve TestRequirementRCCost by key", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
+            return ApiResponseDto<TestRequirementRCCostDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         //   TestRequirementRCCostDto mapped to TestRequirementRCCostReq for the request body
         public async Task<ApiResponseDto<TestRequirementRCCostDto>> CreateAsync(TestRequirementRCCostDto dto)
         {
-            try
-            {
-                var request = _mapper.Map<TestRequirementRCCostReq>(dto);
-                var response = await _http.PostAsync<TestRequirementRCCostReq, TestRequirementRCCostRes>(BaseUrl, request);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
+            var request = _mapper.Map<TestRequirementRCCostReq>(dto);
+            var response = await _http.PostAsync<TestRequirementRCCostReq, TestRequirementRCCostRes>(BaseUrl, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
-                return ApiResponseDto<TestRequirementRCCostDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<TestRequirementRCCostDto>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to create TestRequirementRCCost", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
+            return ApiResponseDto<TestRequirementRCCostDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         //   All four PK segments placed in path; DTO body carries the full writable payload
         public async Task<ApiResponseDto<TestRequirementRCCostDto>> UpdateAsync(string testCode, string buyer, string profitCentre, int fpsYear, TestRequirementRCCostDto dto)
         {
-            try
-            {
-                var request = _mapper.Map<TestRequirementRCCostReq>(dto);
-                var url = $"{BaseUrl}/{testCode}/{buyer}/{profitCentre}/{fpsYear}";
-                var response = await _http.PutAsync<TestRequirementRCCostReq, TestRequirementRCCostRes>(url, request);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
+            var request = _mapper.Map<TestRequirementRCCostReq>(dto);
+            var url = $"{BaseUrl}/{testCode}/{buyer}/{profitCentre}/{fpsYear}";
+            var response = await _http.PutAsync<TestRequirementRCCostReq, TestRequirementRCCostRes>(url, request);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
-                return ApiResponseDto<TestRequirementRCCostDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<TestRequirementRCCostDto>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to update TestRequirementRCCost", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<TestRequirementRCCostDto>>(response);
+            return ApiResponseDto<TestRequirementRCCostDto>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(string testCode, string buyer, string profitCentre, int fpsYear)
         {
-            try
-            {
-                var url = $"{BaseUrl}/{testCode}/{buyer}/{profitCentre}/{fpsYear}";
-                var response = await _http.DeleteAsync<bool?>(url);
-                if (response.Success)
-                    return _mapper.Map<ApiResponseDto<bool>>(response);
+            var url = $"{BaseUrl}/{testCode}/{buyer}/{profitCentre}/{fpsYear}";
+            var response = await _http.DeleteAsync<bool?>(url);
+            if (response.Success)
+                return _mapper.Map<ApiResponseDto<bool>>(response);
 
-                var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
-                return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
-            }
-            catch (Exception)
-            {
-                return ApiResponseDto<bool>.FailureResponse(
-                    new List<ApiErrorDto> { new ApiErrorDto { Message = "Failed to delete TestRequirementRCCost", Code = InternalCodeError } },
-                    new ApiMetaDto());
-            }
+            var responseDto = _mapper.Map<ApiResponseDto<bool>>(response);
+            return ApiResponseDto<bool>.FailureResponse(responseDto.Errors, responseDto.Meta);
         }
     }
 }
