@@ -410,7 +410,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         {
             // Arrange
             SetupGridMapper();
-            var response = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(null, null);
+            var response = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(null!, null);
 
             _testRequirementService
                 .GetPagedTestReqmtAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode)
@@ -515,7 +515,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         {
             // Arrange
             SetupGridMapper();
-            var response = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse(null, null);
+            var response = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse(null!, null);
 
             _testCapabilityService
                 .GetPagedByTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode)
