@@ -234,7 +234,7 @@ namespace Apha.Common.Constants
         public const string GetAdditionalCostLogs = "api/v1/projectaudittrail/additionalcostlogs";
 
         // Generic Bid — Purchases
-        public const string GetGenericPurchases     = "api/v1/purchases";
+        public const string GetGenericPurchases     = "api/v1/purchases?WorkGroupName={0}&account={1}";
         public const string GetGenericPurchasesPaged = "api/v1/purchases/paged";
         public const string GetPurchaseByKeys = "api/v1/purchases/{0}/{1}/{2}";
         public const string CreateGenericPurchase = "api/v1/purchases";
