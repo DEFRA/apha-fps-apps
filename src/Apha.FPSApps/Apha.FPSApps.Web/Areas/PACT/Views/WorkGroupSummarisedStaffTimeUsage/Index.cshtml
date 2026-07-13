@@ -12,14 +12,14 @@
             <h1 class="sup_padding_bottom_10 govuk-grid-column-one-third sup_p_0">Time Usage "Spreadsheet" for </h1>
             <div class="govuk-grid-column-three-quarters sup_margin_tb_5 sup_padding_right_8 sup_flex_gap_10">
                 <div class="govuk-!-width-one-half">
-                    <input type="text" id="txtselectedPersonname" class="govuk-input govuk-!-font-size-16" asp-for="@Model.SelectedPersonName" readonly="" disabled="">
+                    <input type="text" id="txtselectedPersonname" class="govuk-input govuk-!-font-size-16" asp-for="@Model.SelectedPersonName" aria-label="Person Name" disabled>
                 </div>
                 <div>
-                    <input type="text" id="txtselectedWG" class="govuk-input govuk-!-font-size-16" asp-for="@Model.SelectedWorkGroup" readonly="" disabled="">
+                    <input type="text" id="txtselectedWG" class="govuk-input govuk-!-font-size-16" asp-for="@Model.SelectedWorkGroup" aria-label="Work Group" disabled>
                 </div>
                 <div class="govuk-grid-column-two-thirds sup_flex_align_center">
                     <span class="sup_bold_100">Standard Hours</span>
-                    <input type="text" id="txtStandardhours" class="govuk-input govuk-!-font-size-16" value="@Model.HrsPaid.ToString("0.##")" readonly="" disabled="">
+                    <input type="text" id="txtStandardhours" class="govuk-input govuk-!-font-size-16" value="@Model.HrsPaid.ToString("0.##")" aria-label="Standard Hours" disabled>
                 </div>
             </div>
         </div>
@@ -28,7 +28,7 @@
                asp-controller="WorkGroupPeople"
                asp-action="Index"
                asp-route-workGroup="@Model.SelectedWorkGroup"
-               class="govuk-back-link sup_align_right sup_margin_0">
+               class="govuk-back-link sup_align_right sup_margin_0 sup_font_weight_700">
                 Back
             </a>
             </div>
