@@ -9,24 +9,23 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPS.Api.UnitTests.Controllers.TestRequirementRCCostControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.TestRCCostControllerTest
 {
-    public class TestRequirementRCCostControllerTests
+    public class TestRCCostControllerTests
     {
         private const string DefaultTestCode = "TEST001";
-        private const string DefaultBuyer = "BUYER01";
         private const string DefaultProfitCentre = "PC001";
         private const int DefaultFpsYear = 2025;
 
-        private readonly ITestRequirementRCCostService _service;
+        private readonly ITestRCCostService _service;
         private readonly IMapper _mapper;
-        private readonly TestRequirementRCCostController _controller;
+        private readonly TestRCCostController _controller;
 
-        public TestRequirementRCCostControllerTests()
+        public TestRCCostControllerTests()
         {
-            _service = Substitute.For<ITestRequirementRCCostService>();
+            _service = Substitute.For<ITestRCCostService>();
             _mapper = Substitute.For<IMapper>();
-            _controller = new TestRequirementRCCostController(_service, _mapper);
+            _controller = new TestRCCostController(_service, _mapper);
         }
 
         #region GetByTestCodeAsync
@@ -37,27 +36,27 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestRequirementRCCostControllerTest
             // Arrange
             var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
             var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var serviceResult = new PaginatedResult<TestRequirementRCCostDto>
+            var serviceResult = new PaginatedResult<TestRCCostDto>
             {
-                Data = new List<TestRequirementRCCostDto> { CreateTestDto(), CreateTestDto() },
+                Data = new List<TestRCCostDto> { CreateTestDto(), CreateTestDto() },
                 PaginationData = new PaginationDto { TotalRecords = 2 }
             };
-            var mappedRes = new PaginationRes<TestRequirementRCCostRes>
+            var mappedRes = new PaginationRes<TestRCCostRes>
             {
-                Data = new List<TestRequirementRCCostRes> { CreateTestRes(), CreateTestRes() },
+                Data = new List<TestRCCostRes> { CreateTestRes(), CreateTestRes() },
                 PaginationData = new Pagination { TotalRecords = 2 }
             };
 
             _mapper.Map<QueryParameters<string>>(query).Returns(queryParams);
             _service.GetPagedByTestCodeAsync(queryParams, DefaultTestCode).Returns(serviceResult);
-            _mapper.Map<PaginationRes<TestRequirementRCCostRes>>(serviceResult).Returns(mappedRes);
+            _mapper.Map<PaginationRes<TestRCCostRes>>(serviceResult).Returns(mappedRes);
 
             // Act
             var result = await _controller.GetByTestCodeAsync(DefaultTestCode, query);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var data = Assert.IsType<PaginationRes<TestRequirementRCCostRes>>(okResult.Value);
+            var data = Assert.IsType<PaginationRes<TestRCCostRes>>(okResult.Value);
             Assert.Equal(2, data.Data.Count());
         }
 
@@ -67,27 +66,27 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestRequirementRCCostControllerTest
             // Arrange
             var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
             var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var serviceResult = new PaginatedResult<TestRequirementRCCostDto>
+            var serviceResult = new PaginatedResult<TestRCCostDto>
             {
-                Data = new List<TestRequirementRCCostDto>(),
+                Data = new List<TestRCCostDto>(),
                 PaginationData = new PaginationDto { TotalRecords = 0 }
             };
-            var mappedRes = new PaginationRes<TestRequirementRCCostRes>
+            var mappedRes = new PaginationRes<TestRCCostRes>
             {
-                Data = new List<TestRequirementRCCostRes>(),
+                Data = new List<TestRCCostRes>(),
                 PaginationData = new Pagination { TotalRecords = 0 }
             };
 
             _mapper.Map<QueryParameters<string>>(query).Returns(queryParams);
             _service.GetPagedByTestCodeAsync(queryParams, DefaultTestCode).Returns(serviceResult);
-            _mapper.Map<PaginationRes<TestRequirementRCCostRes>>(serviceResult).Returns(mappedRes);
+            _mapper.Map<PaginationRes<TestRCCostRes>>(serviceResult).Returns(mappedRes);
 
             // Act
             var result = await _controller.GetByTestCodeAsync(DefaultTestCode, query);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var data = Assert.IsType<PaginationRes<TestRequirementRCCostRes>>(okResult.Value);
+            var data = Assert.IsType<PaginationRes<TestRCCostRes>>(okResult.Value);
             Assert.Empty(data.Data);
         }
 
@@ -97,16 +96,16 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestRequirementRCCostControllerTest
             // Arrange
             var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
             var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
-            var serviceResult = new PaginatedResult<TestRequirementRCCostDto>
+            var serviceResult = new PaginatedResult<TestRCCostDto>
             {
-                Data = new List<TestRequirementRCCostDto>(),
+                Data = new List<TestRCCostDto>(),
                 PaginationData = new PaginationDto()
             };
 
             _mapper.Map<QueryParameters<string>>(query).Returns(queryParams);
             _service.GetPagedByTestCodeAsync(queryParams, "ALPHA").Returns(serviceResult);
-            _mapper.Map<PaginationRes<TestRequirementRCCostRes>>(serviceResult)
-                .Returns(new PaginationRes<TestRequirementRCCostRes> { Data = new List<TestRequirementRCCostRes>(), PaginationData = new Pagination() });
+            _mapper.Map<PaginationRes<TestRCCostRes>>(serviceResult)
+                .Returns(new PaginationRes<TestRCCostRes> { Data = new List<TestRCCostRes>(), PaginationData = new Pagination() });
 
             // Act
             await _controller.GetByTestCodeAsync("ALPHA", query);
@@ -126,52 +125,51 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestRequirementRCCostControllerTest
             var dto = CreateTestDto();
             var res = CreateTestRes();
 
-            _service.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre)
-                .Returns(dto);
-            _mapper.Map<TestRequirementRCCostRes>(dto).Returns(res);
+            _service.GetByKeyAsync(DefaultTestCode, DefaultProfitCentre).Returns(dto);
+            _mapper.Map<TestRCCostRes>(dto).Returns(res);
 
             // Act
-            var result = await _controller.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre);
+            var result = await _controller.GetByKeyAsync(DefaultTestCode, DefaultProfitCentre);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.IsType<TestRequirementRCCostRes>(okResult.Value);
+            Assert.IsType<TestRCCostRes>(okResult.Value);
         }
 
         [Fact]
-        public async Task GetByKeyAsync_RecordNotFound_ThrowsKeyNotFoundException()
+        public async Task GetByKeyAsync_RecordNotFound_ReturnsOkWithEmptyRecord()
         {
             // Arrange
-            _service.GetByKeyAsync("NOTEXIST", "B999", "PC999")
-                .Returns((TestRequirementRCCostDto?)null);
+            _service.GetByKeyAsync("NOTEXIST", "PC999").Returns((TestRCCostDto?)null);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _controller.GetByKeyAsync("NOTEXIST", "B999", "PC999"));
+            // Act
+            var result = await _controller.GetByKeyAsync("NOTEXIST", "PC999");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.IsType<TestRCCostRes>(okResult.Value);
         }
 
         #endregion
 
         #region Helper Methods
 
-        private static TestRequirementRCCostDto CreateTestDto() =>
+        private static TestRCCostDto CreateTestDto() =>
             new()
             {
                 TestCode = DefaultTestCode,
-                Buyer = DefaultBuyer,
                 ProfitCentre = DefaultProfitCentre,
                 FpsYear = DefaultFpsYear,
-                Price = 200m
+                Price = 150m
             };
 
-        private static TestRequirementRCCostRes CreateTestRes() =>
+        private static TestRCCostRes CreateTestRes() =>
             new()
             {
                 TestCode = DefaultTestCode,
-                Buyer = DefaultBuyer,
                 ProfitCentre = DefaultProfitCentre,
                 FpsYear = DefaultFpsYear,
-                Price = 200m
+                Price = 150m
             };
 
         #endregion

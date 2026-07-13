@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Xunit;
 
-namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
+namespace Apha.FPS.Api.UnitTests.Controller.TestListVlaControllerTest
 {
     public class TestListVlaControllerTests
     {
