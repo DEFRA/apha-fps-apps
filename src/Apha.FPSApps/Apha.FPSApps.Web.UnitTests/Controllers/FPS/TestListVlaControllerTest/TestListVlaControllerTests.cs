@@ -1,6 +1,7 @@
 using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Dtos.PACT;
+using Microsoft.AspNetCore.Http;
 using Apha.FPSApps.Application.Interfaces.FPS;
 using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Application.Interfaces.PACT;
@@ -56,6 +57,10 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
                 _testCapabilityService,
                 _fpsApiClient,
                 _fpsYearContext);
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
         }
 
         private static JsonElement GetJsonResultElement(JsonResult jsonResult)
@@ -353,6 +358,77 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
 
         #endregion
 
+        #region LoadComponentChargesProjectGrid (additional)
+
+        [Fact]
+        public async Task LoadComponentChargesProjectGrid_InvalidModelState_ReturnsJsonFalse()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("test", "Error");
+
+            // Act
+            var result = await _controller.LoadComponentChargesProjectGrid(new PaginationFilter<string>(), DefaultTestCode);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element    = GetJsonResultElement(jsonResult);
+            Assert.False(element.GetProperty("success").GetBoolean());
+        }
+
+        #endregion
+
+        #region LoadTestListVlaGrid (failure path)
+
+        [Fact]
+        public async Task LoadTestListVlaGrid_ServiceReturnsFailure_ReturnsPartialViewWithEmptyItems()
+        {
+            // Arrange
+            SetupGridMapper();
+            var response = ApiResponseDto<List<TestListVlaDto>>.FailureResponse(
+                new List<ApiErrorDto> { new() { Message = "Service error" } },
+                new ApiMetaDto());
+
+            _testListVlaService.GetAllAsync(Arg.Any<QueryParameters<string>>(), DefaultFpsYear)
+                .Returns(response);
+
+            // Act
+            var result = await _controller.LoadTestListVlaGrid(new PaginationFilter<string>());
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialView.ViewName);
+            var config = Assert.IsType<DataGridConfig<TestListVlaItem>>(partialView.Model);
+            Assert.Empty(config.Data);
+        }
+
+        #endregion
+
+        #region LoadTestRequirementsGrid (null-data branch)
+
+        [Fact]
+        public async Task LoadTestRequirementsGrid_WithTestCode_ServiceReturnsNullData_ReturnsPartialViewWithEmptyItems()
+        {
+            // Arrange
+            SetupGridMapper();
+            var response = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(null, null);
+
+            _testRequirementService
+                .GetPagedTestReqmtAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode)
+                .Returns(response);
+
+            // Act
+            var result = await _controller.LoadTestRequirementsGrid(
+                new PaginationFilter<string>(), DefaultTestCode);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialView.ViewName);
+            var config = Assert.IsType<DataGridConfig<TestRequirementItem>>(partialView.Model);
+            Assert.Empty(config.Data);
+        }
+
+        #endregion
+
         #region LoadSuppliersGrid
 
         [Fact]
@@ -428,6 +504,32 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             Assert.Equal("_DataGrid", partialView.ViewName);
             var config = Assert.IsType<DataGridConfig<TestCapabilityItem>>(partialView.Model);
             Assert.Contains(DefaultTestCode, config.Title);
+        }
+
+        #endregion
+
+        #region LoadSuppliersGrid (null-data branch)
+
+        [Fact]
+        public async Task LoadSuppliersGrid_WithTestCode_ServiceReturnsNullData_ReturnsPartialViewWithEmptyItems()
+        {
+            // Arrange
+            SetupGridMapper();
+            var response = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse(null, null);
+
+            _testCapabilityService
+                .GetPagedByTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode)
+                .Returns(response);
+
+            // Act
+            var result = await _controller.LoadSuppliersGrid(
+                new PaginationFilter<string>(), DefaultTestCode);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialView.ViewName);
+            var config = Assert.IsType<DataGridConfig<TestCapabilityItem>>(partialView.Model);
+            Assert.Empty(config.Data);
         }
 
         #endregion

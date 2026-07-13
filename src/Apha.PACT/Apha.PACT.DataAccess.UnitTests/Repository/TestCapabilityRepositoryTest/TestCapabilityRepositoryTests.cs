@@ -1403,5 +1403,68 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestCapabilityRepositoryTest
         }
 
         #endregion
+
+        #region FpsYear filtering (new code coverage)
+
+        [Fact]
+        public async Task GetPagedByWorkGroupAsync_WithNonMatchingFpsYear_ReturnsEmpty()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = 2020 }
+            };
+            var repo = CreateRepository(capabilities, fpsYear: DefaultFpsYear);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByWorkGroupAsync(query, "WG1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WithNonMatchingFpsYear_ReturnsEmpty()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = 2020 }
+            };
+            var repo = CreateRepository(capabilities, fpsYear: DefaultFpsYear);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedByTestCodeAsync(query, "TC1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedTestCapabilityByPortfolioAsync_WithNonMatchingFpsYear_ReturnsEmpty()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = 2020 }
+            };
+            var repo = CreateRepository(capabilities, fpsYear: DefaultFpsYear);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            var result = await repo.GetPagedTestCapabilityByPortfolioAsync(query, "PP1");
+
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_WrongFpsYear_ReturnsNull()
+        {
+            var capabilities = new List<TestCapability>
+            {
+                new() { TestCode = "TC1", WorkGroup = "WG1", PlanPortfolio = "PP1", FpsYear = 2020 }
+            };
+            var repo = CreateRepository(capabilities, fpsYear: DefaultFpsYear);
+
+            var result = await repo.GetByIdAsync("TC1", "WG1");
+
+            Assert.Null(result);
+        }
+
+        #endregion
     }
 }
