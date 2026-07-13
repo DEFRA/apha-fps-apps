@@ -9,9 +9,11 @@ using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Web.Areas.FPS.Controllers;
 using Apha.FPSApps.Web.Areas.FPS.Models;
 using Apha.FPSApps.Web.Handler;
+using Apha.FPSApps.Web.Mappings;
 using Apha.FPSApps.Web.Models.Components.DataGrid;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using System.Text.Json;
 using Xunit;
@@ -531,6 +533,56 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             var config = Assert.IsType<DataGridConfig<TestCapabilityItem>>(partialView.Model);
             Assert.Empty(config.Data);
         }
+
+        #endregion
+
+        #region FpsViewModelMapper profile — TestListVla types
+
+        [Fact]
+        public void FpsViewModelMapper_TestListVlaItem_MapsToDto()
+        {
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsViewModelMapper>(), NullLoggerFactory.Instance);
+            var mapper = config.CreateMapper();
+
+            var item = new TestListVlaItem { ItemCode = "VLA01" };
+            var dto = mapper.Map<TestListVlaDto>(item);
+            Assert.Equal(item.ItemCode, dto.ItemCode);
+        }
+
+        [Fact]
+        public void FpsViewModelMapper_TestRCCostItem_MapsToDto()
+        {
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsViewModelMapper>(), NullLoggerFactory.Instance);
+            var mapper = config.CreateMapper();
+
+            var item = new TestRCCostItem { TestCode = "T001" };
+            var dto = mapper.Map<TestRCCostDto>(item);
+            Assert.Equal(item.TestCode, dto.TestCode);
+        }
+
+        [Fact]
+        public void FpsViewModelMapper_TestRequirementRCCostItem_MapsToDto()
+        {
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsViewModelMapper>(), NullLoggerFactory.Instance);
+            var mapper = config.CreateMapper();
+
+            var item = new TestRequirementRCCostItem { TestCode = "T001" };
+            var dto = mapper.Map<TestRequirementRCCostDto>(item);
+            Assert.Equal(item.TestCode, dto.TestCode);
+        }
+
+        [Fact]
+        public void FpsViewModelMapper_TestRequirementItem_MapsToDto()
+        {
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsViewModelMapper>(), NullLoggerFactory.Instance);
+            var mapper = config.CreateMapper();
+
+            var item = new TestRequirementItem { TestCode = "T001" };
+            var dto = mapper.Map<TestRequirementDto>(item);
+            Assert.Equal(item.TestCode, dto.TestCode);
+        }
+
+       
 
         #endregion
     }

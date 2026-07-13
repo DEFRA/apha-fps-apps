@@ -6,7 +6,9 @@ using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Application.Pagination;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
+using Apha.FPSApps.Infrastructure.Mappings;
 using AutoMapper;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
 
@@ -210,6 +212,27 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestListVlaApiCli
             // Assert
             Assert.False(result.Success);
         }
+
+        #endregion
+
+        #region FpsApiDtoMapper profile — TestListVla and TotalBusinessOverheads
+
+        [Fact]
+        public void FpsApiDtoMapper_TestListVlaDto_MapsToResAndReq()
+        {
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsApiDtoMapper>(), NullLoggerFactory.Instance);
+            var mapper = config.CreateMapper();
+
+            var dto = new TestListVlaDto { ItemCode = "VLA01", FpsYear = 2025 };
+
+            var res = mapper.Map<TestListVlaRes>(dto);
+            Assert.Equal(dto.ItemCode, res.ItemCode);
+
+            var req = mapper.Map<TestListVlaReq>(dto);
+            Assert.Equal(dto.ItemCode, req.ItemCode);
+        }
+
+       
 
         #endregion
     }

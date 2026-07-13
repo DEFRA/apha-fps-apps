@@ -4,7 +4,9 @@ using Apha.FPSApps.Application.Dtos;
 using Apha.FPSApps.Application.Dtos.FPS;
 using Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
+using Apha.FPSApps.Infrastructure.Mappings;
 using AutoMapper;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
 
@@ -320,6 +322,25 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRCCostApiClie
 
             // Assert
             Assert.Equal($"{BaseUrl}/{DefaultTestCode}/{DefaultProfitCentre}/{DefaultFpsYear}", capturedUrl);
+        }
+
+        #endregion
+
+        #region FpsApiDtoMapper profile — TestRCCost
+
+        [Fact]
+        public void FpsApiDtoMapper_TestRCCostDto_MapsToResAndReq()
+        {
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<FpsApiDtoMapper>(), NullLoggerFactory.Instance);
+            var mapper = config.CreateMapper();
+
+            var dto = new TestRCCostDto { TestCode = "T001", ProfitCentre = "PC01", FpsYear = 2025 };
+
+            var res = mapper.Map<TestRCCostRes>(dto);
+            Assert.Equal(dto.TestCode, res.TestCode);
+
+            var req = mapper.Map<TestRCCostReq>(dto);
+            Assert.Equal(dto.TestCode, req.TestCode);
         }
 
         #endregion
