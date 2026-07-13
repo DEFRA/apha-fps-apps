@@ -1,7 +1,9 @@
 using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Pagination;
 using Apha.FPS.Application.Services;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using AutoMapper;
 using NSubstitute;
 using Xunit;
@@ -25,6 +27,53 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
             _mapper = Substitute.For<IMapper>();
             _service = new TestRequirementRCCostService(_repository, _mapper);
         }
+
+        #region GetPagedByTestCodeAsync
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_ValidRequest_ReturnsPagedResult()
+        {
+            // Arrange
+            var query = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var paginationParams = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+            var pagedData = new PagedData<TestRequirementRCCost>
+            {
+                Data = new List<TestRequirementRCCost> { CreateTestEntity() },
+                PaginationData = new PaginationData { TotalRecords = 1 }
+            };
+            var expectedResult = new PaginatedResult<TestRequirementRCCostDto>
+            {
+                Data = new List<TestRequirementRCCostDto> { CreateTestDto() }
+            };
+
+            _mapper.Map<PaginationParameters<string>>(query).Returns(paginationParams);
+            _repository.GetPagedByTestCodeAsync(paginationParams, DefaultTestCode).Returns(pagedData);
+            _mapper.Map<PaginatedResult<TestRequirementRCCostDto>>(pagedData).Returns(expectedResult);
+
+            // Act
+            var result = await _service.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result.Data);
+            await _repository.Received(1).GetPagedByTestCodeAsync(paginationParams, DefaultTestCode);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_NullQuery_ThrowsArgumentNullException()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _service.GetPagedByTestCodeAsync(null!, DefaultTestCode));
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WhitespaceTestCode_ThrowsArgumentException()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _service.GetPagedByTestCodeAsync(new QueryParameters<string>(), "   "));
+        }
+
+        #endregion
 
         #region GetByTestCodeAsync
 

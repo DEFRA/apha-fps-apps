@@ -236,6 +236,146 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
 
         #endregion
 
+        #region AddAsync
+
+        [Fact]
+        public async Task AddAsync_ValidEntity_ReturnsAddedEntity()
+        {
+            // Arrange
+            var repo = CreateRepository(Enumerable.Empty<TestOrProduct>());
+            var entity = CreateEntity(DefaultItemCode);
+
+            // Act
+            var result = await repo.AddAsync(entity);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(DefaultItemCode, result.ItemCode);
+            Assert.Equal(DefaultFpsYear, result.FpsYear);
+        }
+
+        [Fact]
+        public async Task AddAsync_ValidEntity_CallsDbSetAdd()
+        {
+            // Arrange
+            var mockRequestContext = CreateMockRequestContext();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<TestOrProduct>());
+            mockContext.Setup(x => x.TestOrProducts).Returns(mockSet.Object);
+            var repo = new TestListVlaRepository(mockContext.Object, mockRequestContext.Object);
+            var entity = CreateEntity(DefaultItemCode);
+
+            // Act
+            await repo.AddAsync(entity);
+
+            // Assert
+            mockSet.Verify(s => s.Add(entity), Moq.Times.Once);
+        }
+
+        #endregion
+
+        #region UpdateAsync
+
+        [Fact]
+        public async Task UpdateAsync_ExistingEntity_ReturnsUpdatedEntity()
+        {
+            // Arrange
+            var existing = CreateEntity(DefaultItemCode);
+            var repo = CreateRepository(new List<TestOrProduct> { existing });
+
+            var updated = new TestOrProduct
+            {
+                ItemCode         = DefaultItemCode,
+                FpsYear          = DefaultFpsYear,
+                ItemDescription  = "Updated Description",
+                TestManager      = "TM01",
+                JobStatus        = "Active",
+                UnitPriceVla     = 200m,
+                PriceAhvg        = 50m,
+                Owner            = "PA",
+                ChargeMethod     = "F",
+                ShortDescription = "Short",
+                DefraUnitPrice   = 150m
+            };
+
+            // Act
+            var result = await repo.UpdateAsync(updated);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("Updated Description", result.ItemDescription);
+            Assert.Equal("TM01", result.TestManager);
+            Assert.Equal("Active", result.JobStatus);
+            Assert.Equal(200m, result.UnitPriceVla);
+            Assert.Equal(50m, result.PriceAhvg);
+            Assert.Equal("PA", result.Owner);
+            Assert.Equal("F", result.ChargeMethod);
+            Assert.Equal("Short", result.ShortDescription);
+            Assert.Equal(150m, result.DefraUnitPrice);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_NonExistingEntity_ThrowsKeyNotFoundException()
+        {
+            // Arrange
+            var repo = CreateRepository(Enumerable.Empty<TestOrProduct>());
+            var entity = CreateEntity("NOTEXIST");
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => repo.UpdateAsync(entity));
+        }
+
+        #endregion
+
+        #region DeleteAsync
+
+        [Fact]
+        public async Task DeleteAsync_ExistingRecord_ReturnsTrue()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct> { CreateEntity(DefaultItemCode) };
+            var repo = CreateRepository(entities);
+
+            // Act
+            var result = await repo.DeleteAsync(DefaultItemCode);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_NonExistingRecord_ReturnsFalse()
+        {
+            // Arrange
+            var repo = CreateRepository(Enumerable.Empty<TestOrProduct>());
+
+            // Act
+            var result = await repo.DeleteAsync("NOTEXIST");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ExistingRecord_CallsDbSetRemove()
+        {
+            // Arrange
+            var entity = CreateEntity(DefaultItemCode);
+            var mockRequestContext = CreateMockRequestContext();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<TestOrProduct> { entity });
+            mockContext.Setup(x => x.TestOrProducts).Returns(mockSet.Object);
+            var repo = new TestListVlaRepository(mockContext.Object, mockRequestContext.Object);
+
+            // Act
+            await repo.DeleteAsync(DefaultItemCode);
+
+            // Assert
+            mockSet.Verify(s => s.Remove(It.IsAny<TestOrProduct>()), Moq.Times.Once);
+        }
+
+        #endregion
+
         #region Helper Methods
 
         private static TestOrProduct CreateEntity(string itemCode = DefaultItemCode) =>

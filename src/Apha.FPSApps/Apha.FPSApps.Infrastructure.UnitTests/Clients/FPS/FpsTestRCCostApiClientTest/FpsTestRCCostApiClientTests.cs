@@ -123,21 +123,21 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRCCostApiClie
         }
 
         [Fact]
-        public async Task GetByKeyAsync_UrlContainsCompositeKey_CorrectRouteCalled()
+        public async Task GetByKeyAsync_HttpReturnsFailure_ReturnsFailureResponse()
         {
             // Arrange
-            var apiResponse = SuccessResponse(new TestRCCostRes());
-            var expectedDto = ApiResponseDto<TestRCCostDto>.SuccessResponse(new TestRCCostDto());
-            string capturedUrl = string.Empty;
+            var apiResponse = FailureResponse<TestRCCostRes>();
+            var failureDto  = ApiResponseDto<TestRCCostDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Message = "Server error" } }, new ApiMetaDto());
 
-            _http.GetAsync<TestRCCostRes>(Arg.Do<string>(u => capturedUrl = u)).Returns(apiResponse);
-            _mapper.Map<ApiResponseDto<TestRCCostDto>>(apiResponse).Returns(expectedDto);
+            _http.GetAsync<TestRCCostRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TestRCCostDto>>(apiResponse).Returns(failureDto);
 
             // Act
-            await _client.GetByKeyAsync(DefaultTestCode, DefaultProfitCentre, DefaultFpsYear);
+            var result = await _client.GetByKeyAsync(DefaultTestCode, DefaultProfitCentre, DefaultFpsYear);
 
             // Assert
-            Assert.Equal($"{BaseUrl}/{DefaultTestCode}/{DefaultProfitCentre}", capturedUrl);
+            Assert.False(result.Success);
         }
 
         #endregion
@@ -167,6 +167,27 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRCCostApiClie
             Assert.True(result.Success);
         }
 
+        [Fact]
+        public async Task CreateAsync_HttpReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var dto         = new TestRCCostDto { TestCode = DefaultTestCode, ProfitCentre = DefaultProfitCentre };
+            var req         = new TestRCCostReq();
+            var apiResponse = FailureResponse<TestRCCostRes>();
+            var failureDto  = ApiResponseDto<TestRCCostDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Message = "Server error" } }, new ApiMetaDto());
+
+            _mapper.Map<TestRCCostReq>(dto).Returns(req);
+            _http.PostAsync<TestRCCostReq, TestRCCostRes>(BaseUrl, req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TestRCCostDto>>(apiResponse).Returns(failureDto);
+
+            // Act
+            var result = await _client.CreateAsync(dto);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
         #endregion
 
         // ── UpdateAsync ───────────────────────────────────────────────────────
@@ -193,6 +214,28 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRCCostApiClie
 
             // Assert
             Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_HttpReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var dto         = new TestRCCostDto { TestCode = DefaultTestCode, ProfitCentre = DefaultProfitCentre };
+            var req         = new TestRCCostReq();
+            var apiResponse = FailureResponse<TestRCCostRes>();
+            var failureDto  = ApiResponseDto<TestRCCostDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Message = "Server error" } }, new ApiMetaDto());
+            var expectedUrl = $"{BaseUrl}/{DefaultTestCode}/{DefaultProfitCentre}/{DefaultFpsYear}";
+
+            _mapper.Map<TestRCCostReq>(dto).Returns(req);
+            _http.PutAsync<TestRCCostReq, TestRCCostRes>(expectedUrl, req).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TestRCCostDto>>(apiResponse).Returns(failureDto);
+
+            // Act
+            var result = await _client.UpdateAsync(DefaultTestCode, DefaultProfitCentre, DefaultFpsYear, dto);
+
+            // Assert
+            Assert.False(result.Success);
         }
 
         [Fact]
@@ -240,6 +283,25 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestRCCostApiClie
 
             // Assert
             Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_HttpReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = FailureResponse<bool?>();
+            var failureDto  = ApiResponseDto<bool>.FailureResponse(
+                new List<ApiErrorDto> { new() { Message = "Server error" } }, new ApiMetaDto());
+            var expectedUrl = $"{BaseUrl}/{DefaultTestCode}/{DefaultProfitCentre}/{DefaultFpsYear}";
+
+            _http.DeleteAsync<bool?>(expectedUrl).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<bool>>(apiResponse).Returns(failureDto);
+
+            // Act
+            var result = await _client.DeleteAsync(DefaultTestCode, DefaultProfitCentre, DefaultFpsYear);
+
+            // Assert
+            Assert.False(result.Success);
         }
 
         [Fact]

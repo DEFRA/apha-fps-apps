@@ -1,6 +1,7 @@
 using Apha.Common.Helpers.Repository;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Apha.FPS.DataAccess.Repositories;
 using Moq;
@@ -36,6 +37,83 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
 
             return new TestRCCostRepository(mockContext.Object, mockRequestContext.Object);
         }
+
+        #region GetPagedByTestCodeAsync
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WithMatchingRecords_ReturnsPagedData()
+        {
+            // Arrange
+            var entities = new List<TestRCCost>
+            {
+                CreateEntity(DefaultTestCode, "PC001"),
+                CreateEntity(DefaultTestCode, "PC002")
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WithNonMatchingTestCode_ReturnsEmpty()
+        {
+            // Arrange
+            var entities = new List<TestRCCost> { CreateEntity(DefaultTestCode, "PC001") };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, "NOTEXIST");
+
+            // Assert
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WithNonMatchingFpsYear_ReturnsEmpty()
+        {
+            // Arrange
+            var entities = new List<TestRCCost> { CreateEntity(DefaultTestCode, "PC001") };
+            var repo = CreateRepository(entities, 9999);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
+
+            // Act — repo context has year 9999, entities have year 2025
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Empty(result.Data);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WithPaging_ReturnsCorrectPage()
+        {
+            // Arrange — repository enforces Math.Max(pageSize, 10), so use pageSize=10 with 15 items
+            var entities = Enumerable.Range(1, 15)
+                .Select(i => new TestRCCost
+                {
+                    TestCode = DefaultTestCode,
+                    ProfitCentre = $"PC{i:D3}",
+                    FpsYear = DefaultFpsYear,
+                    Price = i * 10m
+                }).ToList();
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 2, PageSize = 10 };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal(5, result.Data.Count());
+            Assert.Equal(15, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
 
         #region GetByTestCodeAsync
 
@@ -185,6 +263,137 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
             Assert.Equal(3, result.Count);
             Assert.Equal("PC001", result.First().ProfitCentre);
             Assert.Equal("PC003", result.Last().ProfitCentre);
+        }
+
+        #endregion
+
+        #region AddAsync
+
+        [Fact]
+        public async Task AddAsync_ValidEntity_ReturnsAddedEntity()
+        {
+            // Arrange
+            var repo = CreateRepository(Enumerable.Empty<TestRCCost>());
+            var entity = CreateEntity(DefaultTestCode, DefaultProfitCentre);
+
+            // Act
+            var result = await repo.AddAsync(entity);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(DefaultTestCode, result.TestCode);
+            Assert.Equal(DefaultProfitCentre, result.ProfitCentre);
+        }
+
+        [Fact]
+        public async Task AddAsync_ValidEntity_CallsDbSetAdd()
+        {
+            // Arrange
+            var entity = CreateEntity(DefaultTestCode, DefaultProfitCentre);
+            var mockRequestContext = CreateMockRequestContext();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(Enumerable.Empty<TestRCCost>());
+            mockContext.Setup(x => x.TestRCCosts).Returns(mockSet.Object);
+            var repo = new TestRCCostRepository(mockContext.Object, mockRequestContext.Object);
+
+            // Act
+            await repo.AddAsync(entity);
+
+            // Assert
+            mockSet.Verify(s => s.Add(entity), Moq.Times.Once);
+        }
+
+        #endregion
+
+        #region UpdateAsync
+
+        [Fact]
+        public async Task UpdateAsync_ExistingEntity_ReturnsUpdatedEntity()
+        {
+            // Arrange
+            var existing = CreateEntity(DefaultTestCode, DefaultProfitCentre);
+            var repo = CreateRepository(new List<TestRCCost> { existing });
+
+            var updated = new TestRCCost
+            {
+                TestCode = DefaultTestCode,
+                ProfitCentre = DefaultProfitCentre,
+                FpsYear = DefaultFpsYear,
+                Price = 999m
+            };
+
+            // Act
+            var result = await repo.UpdateAsync(updated);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(999m, result.Price);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_NonExistingEntity_ThrowsKeyNotFoundException()
+        {
+            // Arrange
+            var repo = CreateRepository(Enumerable.Empty<TestRCCost>());
+            var entity = new TestRCCost
+            {
+                TestCode = "NOTEXIST",
+                ProfitCentre = "PC999",
+                FpsYear = DefaultFpsYear,
+                Price = 100m
+            };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => repo.UpdateAsync(entity));
+        }
+
+        #endregion
+
+        #region DeleteAsync
+
+        [Fact]
+        public async Task DeleteAsync_ExistingRecord_ReturnsTrue()
+        {
+            // Arrange
+            var entities = new List<TestRCCost> { CreateEntity(DefaultTestCode, DefaultProfitCentre) };
+            var repo = CreateRepository(entities);
+
+            // Act
+            var result = await repo.DeleteAsync(DefaultTestCode, DefaultProfitCentre);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_NonExistingRecord_ReturnsFalse()
+        {
+            // Arrange
+            var repo = CreateRepository(Enumerable.Empty<TestRCCost>());
+
+            // Act
+            var result = await repo.DeleteAsync("NOTEXIST", "PC999");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ExistingRecord_CallsDbSetRemove()
+        {
+            // Arrange
+            var entity = CreateEntity(DefaultTestCode, DefaultProfitCentre);
+            var mockRequestContext = CreateMockRequestContext();
+            var mockContext = RepositoryTestHelper.CreateMockDbContext<FpsDbContext>(mockRequestContext.Object);
+            var mockSet = RepositoryTestHelper.CreateMockDbSet(new List<TestRCCost> { entity });
+            mockContext.Setup(x => x.TestRCCosts).Returns(mockSet.Object);
+            var repo = new TestRCCostRepository(mockContext.Object, mockRequestContext.Object);
+
+            // Act
+            await repo.DeleteAsync(DefaultTestCode, DefaultProfitCentre);
+
+            // Assert
+            mockSet.Verify(s => s.Remove(It.IsAny<TestRCCost>()), Moq.Times.Once);
         }
 
         #endregion

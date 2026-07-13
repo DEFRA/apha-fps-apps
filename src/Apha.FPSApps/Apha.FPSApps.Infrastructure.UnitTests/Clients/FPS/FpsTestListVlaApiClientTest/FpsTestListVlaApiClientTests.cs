@@ -133,6 +133,24 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestListVlaApiCli
             Assert.Contains($"fpsYear={DefaultFpsYear}", capturedUrl);
         }
 
+        [Fact]
+        public async Task GetAllByYearAsync_HttpReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<List<TestListVlaRes>> { Success = false };
+            var failureDto = ApiResponseDto<List<TestListVlaDto>>.FailureResponse(
+                new List<ApiErrorDto> { new() { Message = "Server error" } }, new ApiMetaDto());
+
+            _http.GetAsync<List<TestListVlaRes>>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<List<TestListVlaDto>>>(apiResponse).Returns(failureDto);
+
+            // Act
+            var result = await _client.GetAllByYearAsync(DefaultFpsYear);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
         #endregion
 
         #region GetByIdAsync
@@ -173,6 +191,24 @@ namespace Apha.FPSApps.Infrastructure.UnitTests.Clients.FPS.FpsTestListVlaApiCli
 
             // Assert
             Assert.Equal($"{BaseUrl}/{DefaultItemCode}/{DefaultFpsYear}", capturedUrl);
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_HttpReturnsFailure_ReturnsFailureResponse()
+        {
+            // Arrange
+            var apiResponse = new ApiResponse<TestListVlaRes> { Success = false };
+            var failureDto = ApiResponseDto<TestListVlaDto>.FailureResponse(
+                new List<ApiErrorDto> { new() { Message = "Server error" } }, new ApiMetaDto());
+
+            _http.GetAsync<TestListVlaRes>(Arg.Any<string>()).Returns(apiResponse);
+            _mapper.Map<ApiResponseDto<TestListVlaDto>>(apiResponse).Returns(failureDto);
+
+            // Act
+            var result = await _client.GetByIdAsync(DefaultItemCode, DefaultFpsYear);
+
+            // Assert
+            Assert.False(result.Success);
         }
 
         #endregion
