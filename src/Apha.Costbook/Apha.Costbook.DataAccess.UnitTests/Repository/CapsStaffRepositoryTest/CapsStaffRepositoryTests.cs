@@ -1,23 +1,3 @@
-/*
- * TRANSFORMENGINE MIGRATION — CapsStaffRepositoryTests.cs
- * Pattern  : stack-upgrade/msaccess-frm-to-dotnet10-mvc-e2e  Phase 13 — Unit Tests - Backend + Frontend xUnit Coverage
- * Migrated : 2026-06-23
- *
- * CHANGED:
- *   - New xUnit test class for Apha.Costbook.DataAccess.Repositories.CapsStaffRepository
- *   - Tests GetAllAsync, GetByMNumberAsync, ExistsAsync, AddAsync, UpdateAsync, DeleteAsync
- *   - Uses Moq + RepositoryTestHelper pattern (matches existing DataAccess test conventions)
- *
- * PRESERVED:
- *   - Test naming convention: [MethodName]_[StateUnderTest]_[ExpectedResult]
- *   - RepositoryTestHelper.CreateMockDbContext / CreateMockDbSet pattern from StaffRepositoryTests
- *   - CapsStaff entity properties: MNumber, Name, Dt2Number
- *
- * DEFERRED / REQUIRES HUMAN REVIEW:
- *   - TRANSFORMENGINE TODO: GetPaginatedAsync tests omitted — EF ExecuteDeleteAsync/AnyAsync on InMemory provider
- *     requires integration test; add once a test DB context is available
- */
-
 using Apha.Common.Helpers.Repository;
 using Apha.Costbook.Core.Entities;
 using Apha.Costbook.Core.Interfaces;
