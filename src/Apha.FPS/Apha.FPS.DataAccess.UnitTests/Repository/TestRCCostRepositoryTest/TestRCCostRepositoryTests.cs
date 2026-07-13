@@ -410,5 +410,151 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
             };
 
         #endregion
+
+        #region GetPagedByTestCodeAsync - Filters
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WithJsonTestCodeFilter_FiltersResults()
+        {
+            // Arrange
+            var entities = new List<TestRCCost>
+            {
+                new() { TestCode = DefaultTestCode, ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ProfitCentre\":\"PC001\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("PC001", result.Data.First().ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WithNullFilter_ReturnsAll()
+        {
+            // Arrange
+            var entities = new List<TestRCCost>
+            {
+                new() { TestCode = DefaultTestCode, ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        #region GetPagedByTestCodeAsync - Sorting
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByProfitCentreAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestRCCost>
+            {
+                new() { TestCode = DefaultTestCode, ProfitCentre = "ZZZPC", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, ProfitCentre = "AAAPC", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "profitcentre", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal("AAAPC", result.Data.First().ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByProfitCentreDescending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestRCCost>
+            {
+                new() { TestCode = DefaultTestCode, ProfitCentre = "AAAPC", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, ProfitCentre = "ZZZPC", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "profitcentre", Descending = true };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal("ZZZPC", result.Data.First().ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByTestCodeAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestRCCost>
+            {
+                new() { TestCode = DefaultTestCode, ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 200m },
+                new() { TestCode = DefaultTestCode, ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 100m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "testcode", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByPriceAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestRCCost>
+            {
+                new() { TestCode = DefaultTestCode, ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 999m },
+                new() { TestCode = DefaultTestCode, ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 1m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "price", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal("PC002", result.Data.First().ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_UnknownSortBy_DefaultsToSortByProfitCentre()
+        {
+            // Arrange
+            var entities = new List<TestRCCost>
+            {
+                new() { TestCode = DefaultTestCode, ProfitCentre = "ZZZPC", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, ProfitCentre = "AAAPC", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "unknown" };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal("AAAPC", result.Data.First().ProfitCentre);
+        }
+
+        #endregion
     }
 }

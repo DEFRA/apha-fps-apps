@@ -389,5 +389,313 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
             };
 
         #endregion
+
+        #region GetPagedAsync - Filters
+
+        [Fact]
+        public async Task GetPagedAsync_WithJsonItemCodeFilter_FiltersResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "ALPHA001", FpsYear = DefaultFpsYear, ItemDescription = "Desc A", DefraUnitPrice = 0m },
+                new() { ItemCode = "BETA002",  FpsYear = DefaultFpsYear, ItemDescription = "Desc B", DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ItemCode\":\"ALPHA\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("ALPHA001", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_WithJsonItemDescriptionFilter_FiltersResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, ItemDescription = "BloodTest", DefraUnitPrice = 0m },
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, ItemDescription = "UrineTest", DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ItemDescription\":\"Blood\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("I001", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_WithJsonOwnerFilter_FiltersResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, Owner = "PT", DefraUnitPrice = 0m },
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, Owner = "PA", DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"Owner\":\"PT\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("I001", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_WithNullFilter_ReturnsAll()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, DefraUnitPrice = 0m },
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_WithEmptyFilter_ReturnsAll()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, DefraUnitPrice = 0m },
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = "" };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        #region GetPagedAsync - Sorting
+
+        [Fact]
+        public async Task GetPagedAsync_SortByItemCodeAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "ZITEM", FpsYear = DefaultFpsYear, DefraUnitPrice = 0m },
+                new() { ItemCode = "AITEM", FpsYear = DefaultFpsYear, DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "itemcode", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal("AITEM", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByItemCodeDescending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "AITEM", FpsYear = DefaultFpsYear, DefraUnitPrice = 0m },
+                new() { ItemCode = "ZITEM", FpsYear = DefaultFpsYear, DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "itemcode", Descending = true };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal("ZITEM", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByOwnerAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, Owner = "ZZ", DefraUnitPrice = 0m },
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, Owner = "AA", DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "owner", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal("I001", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByDefraUnitPriceAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, DefraUnitPrice = 500m },
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, DefraUnitPrice = 100m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "defraunitprice", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal("I001", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByUnitPriceVlaAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, UnitPriceVla = 999m, DefraUnitPrice = 0m },
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, UnitPriceVla = 10m, DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "unitpricevla", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal("I001", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByItemDescriptionAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, ItemDescription = "Zeta Test", DefraUnitPrice = 0m },
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, ItemDescription = "Alpha Test", DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "itemdescription", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal("I001", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByJobStatusAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, JobStatus = "Z-Status", DefraUnitPrice = 0m },
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, JobStatus = "A-Status", DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "jobstatus", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal("I001", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByTestManagerAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, TestManager = "ZManager", DefraUnitPrice = 0m },
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, TestManager = "AManager", DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "testmanager", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal("I001", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task GetPagedAsync_SortByShortDescriptionAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "I002", FpsYear = DefaultFpsYear, ShortDescription = "ZShort", DefraUnitPrice = 0m },
+                new() { ItemCode = "I001", FpsYear = DefaultFpsYear, ShortDescription = "AShort", DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "shortdescription", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal("I001", result.Data.First().ItemCode);
+        }
+
+        [Fact]
+        public async Task UnknownSortBy_DefaultsToItemCodeAscending()
+        {
+            // Arrange
+            var entities = new List<TestOrProduct>
+            {
+                new() { ItemCode = "ZITEM", FpsYear = DefaultFpsYear, DefraUnitPrice = 0m },
+                new() { ItemCode = "AITEM", FpsYear = DefaultFpsYear, DefraUnitPrice = 0m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "unknowncolumn" };
+
+            // Act
+            var result = await repo.GetPagedAsync(query);
+
+            // Assert
+            Assert.Equal("AITEM", result.Data.First().ItemCode);
+        }
+
+        #endregion
     }
 }

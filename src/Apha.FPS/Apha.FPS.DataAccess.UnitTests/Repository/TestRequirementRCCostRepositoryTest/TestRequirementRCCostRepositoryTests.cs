@@ -468,5 +468,194 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRequirementRCCostReposito
             };
 
         #endregion
+
+        #region GetPagedByTestCodeAsync - Filters
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WithJsonBuyerFilter_FiltersResults()
+        {
+            // Arrange
+            var entities = new List<TestRequirementRCCost>
+            {
+                new() { TestCode = DefaultTestCode, Buyer = "BUYERA", ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, Buyer = "BUYERB", ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"Buyer\":\"BUYERA\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("BUYERA", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WithJsonProfitCentreFilter_FiltersResults()
+        {
+            // Arrange
+            var entities = new List<TestRequirementRCCost>
+            {
+                new() { TestCode = DefaultTestCode, Buyer = DefaultBuyer, ProfitCentre = "ALPHA", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, Buyer = DefaultBuyer, ProfitCentre = "BETA",  FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string>
+            {
+                Page = 1, PageSize = 10,
+                Filter = "{\"ProfitCentre\":\"ALPHA\"}"
+            };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Single(result.Data);
+            Assert.Equal("ALPHA", result.Data.First().ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_WithNullFilter_ReturnsAll()
+        {
+            // Arrange
+            var entities = new List<TestRequirementRCCost>
+            {
+                new() { TestCode = DefaultTestCode, Buyer = "B1", ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, Buyer = "B2", ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, Filter = null };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        #endregion
+
+        #region GetPagedByTestCodeAsync - Sorting
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByBuyerAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestRequirementRCCost>
+            {
+                new() { TestCode = DefaultTestCode, Buyer = "ZBUYER", ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, Buyer = "ABUYER", ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "buyer", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal("ABUYER", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByBuyerDescending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestRequirementRCCost>
+            {
+                new() { TestCode = DefaultTestCode, Buyer = "ABUYER", ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, Buyer = "ZBUYER", ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "buyer", Descending = true };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal("ZBUYER", result.Data.First().Buyer);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByProfitCentreAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestRequirementRCCost>
+            {
+                new() { TestCode = DefaultTestCode, Buyer = DefaultBuyer, ProfitCentre = "ZZZPC", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, Buyer = DefaultBuyer, ProfitCentre = "AAAPC", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "profitcentre", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal("AAAPC", result.Data.First().ProfitCentre);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByTestCodeAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestRequirementRCCost>
+            {
+                new() { TestCode = DefaultTestCode, Buyer = "B1", ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, Buyer = "B2", ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "testcode", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal(2, result.PaginationData.TotalRecords);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_SortByPriceAscending_ReturnsOrderedResults()
+        {
+            // Arrange
+            var entities = new List<TestRequirementRCCost>
+            {
+                new() { TestCode = DefaultTestCode, Buyer = "B1", ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 999m },
+                new() { TestCode = DefaultTestCode, Buyer = "B2", ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 1m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "price", Descending = false };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal(1m, result.Data.First().Price);
+        }
+
+        [Fact]
+        public async Task GetPagedByTestCodeAsync_UnknownSortBy_DefaultsToSortByBuyerThenProfitCentre()
+        {
+            // Arrange
+            var entities = new List<TestRequirementRCCost>
+            {
+                new() { TestCode = DefaultTestCode, Buyer = "ZBUYER", ProfitCentre = "PC001", FpsYear = DefaultFpsYear, Price = 100m },
+                new() { TestCode = DefaultTestCode, Buyer = "ABUYER", ProfitCentre = "PC002", FpsYear = DefaultFpsYear, Price = 200m }
+            };
+            var repo = CreateRepository(entities);
+            var query = new PaginationParameters<string> { Page = 1, PageSize = 10, SortBy = "unknown" };
+
+            // Act
+            var result = await repo.GetPagedByTestCodeAsync(query, DefaultTestCode);
+
+            // Assert
+            Assert.Equal("ABUYER", result.Data.First().Buyer);
+        }
+
+        #endregion
     }
 }
