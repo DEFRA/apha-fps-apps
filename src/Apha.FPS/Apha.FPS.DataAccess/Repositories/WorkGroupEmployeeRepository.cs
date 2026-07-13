@@ -178,7 +178,7 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var workGroupEmployeeQuery = _dbContext.WorkGroupEmployees
                 .AsNoTracking()
-                .Where(wg => wg.WorkGroupGrade == wgGrade)
+                .Where(wg => wg.WorkGroupGrade == wgGrade && wg.PersonStatus.ToUpper() != "I")
                 .Join(
                     _dbContext.Employees.AsNoTracking(),
                     wg => wg.SpNumber,

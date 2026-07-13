@@ -717,7 +717,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.WorkGroupEmployeeRepositoryTe
 
             var result = await repo.GetAllActiveWorkGroupEmployeesAsync(query, DefaultWgGrade);
 
-            Assert.Equal(1, result.Data.Count());
+            Assert.Single(result.Data);
             Assert.All(result.Data, e => Assert.NotEqual("I", e.PersonStatus));
         }
 
