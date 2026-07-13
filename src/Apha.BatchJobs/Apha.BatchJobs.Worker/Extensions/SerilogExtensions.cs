@@ -77,9 +77,10 @@ public static class SerilogExtensions
 
     /// <summary>
     /// Resolves a stable prefix that appears on each log event.
+    /// Exposed internally so <see cref="ProgramExtension.ConfigureLogging"/> can use the same logic.
     /// Precedence: env var BATCH_LOG_STREAM_PREFIX, config Logging:LogStreamPrefix, default value.
     /// </summary>
-    private static string ResolveLogStreamPrefix(IConfiguration? configuration)
+    internal static string ResolveLogStreamPrefix(IConfiguration? configuration)
     {
         var envPrefix = Environment.GetEnvironmentVariable("BATCH_LOG_STREAM_PREFIX");
         if (!string.IsNullOrWhiteSpace(envPrefix))

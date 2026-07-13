@@ -17,9 +17,8 @@ public interface IJobOrchestrator
     /// <param name="userId">The user/system ID requesting the job execution.</param>
     /// <param name="requestedAtUtc">Trigger acceptance timestamp from caller/API when available.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <param name="fpsYear">Optional FPS year context for year-scoped jobs.</param>
     /// <returns>The execution result including JobQueueId, status, and duration.</returns>
-    Task<JobExecutionResult> RunAsync(string jobName, RunMode runMode, Guid jobExecutionId, string userId, DateTime? requestedAtUtc = null, CancellationToken cancellationToken = default, int? fpsYear = null);
+    Task<JobExecutionResult> RunAsync(string jobName, RunMode runMode, Guid jobExecutionId, string userId, DateTime? requestedAtUtc = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

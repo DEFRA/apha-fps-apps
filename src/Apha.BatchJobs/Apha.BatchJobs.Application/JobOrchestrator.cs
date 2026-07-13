@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using System.Text.Json;
 
 namespace Apha.BatchJobs.Application;
 
@@ -20,6 +21,7 @@ public sealed class JobOrchestrator : IJobOrchestrator
     private readonly IBatchJobFactory _factory;
     private readonly IBatchLockRepository _lockRepository;
     private readonly IJobExecutionRepository _executionRepository;
+    private readonly ICorrelationService _correlationService;
     private readonly ILogger<JobOrchestrator> _logger;
     private readonly int _lockTimeoutSeconds;
     private readonly int _retryAttempts;
@@ -42,12 +44,14 @@ public sealed class JobOrchestrator : IJobOrchestrator
         IBatchJobFactory factory,
         IBatchLockRepository lockRepository,
         IJobExecutionRepository executionRepository,
+        ICorrelationService correlationService,
         IOptions<BatchJobSettings> settings,
         ILogger<JobOrchestrator> logger)
     {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _lockRepository = lockRepository ?? throw new ArgumentNullException(nameof(lockRepository));
         _executionRepository = executionRepository ?? throw new ArgumentNullException(nameof(executionRepository));
+        _correlationService = correlationService ?? throw new ArgumentNullException(nameof(correlationService));
         _lockTimeoutSeconds = settings?.Value.LockTimeoutSeconds >= 0
             ? settings.Value.LockTimeoutSeconds
             : DefaultLockTimeoutSeconds;
@@ -81,9 +85,14 @@ public sealed class JobOrchestrator : IJobOrchestrator
         Guid jobExecutionId,
         string userId,
         DateTime? requestedAtUtc = null,
-        CancellationToken cancellationToken = default,
-        int? fpsYear = null)
+        CancellationToken cancellationToken = default)
     {
+        // Set correlation context so all downstream log events carry the execution ID.
+        _correlationService.SetCorrelationId(jobExecutionId.ToString("D"));
+
+        // Resolve optional FPS year from job parameters (used by year-scoped jobs).
+        var fpsYear = TryExtractFpsYearFromParameters(Environment.GetEnvironmentVariable("BATCH_JOB_PARAMETERS_JSON"));
+
         var startedAt = DateTime.UtcNow;
 
         // Fetch the Initiated record created by API layer
@@ -92,6 +101,13 @@ public sealed class JobOrchestrator : IJobOrchestrator
         var shouldAutoCreateInitiated =
             runMode == RunMode.Scheduled
             && string.Equals(jobName, BatchJobNames.MabArchive, StringComparison.OrdinalIgnoreCase);
+
+        // Validate the execution contract for all non-worker-managed runs.
+        // Worker-managed MABArchive Scheduled runs may self-create their initiated record below.
+        if (!shouldAutoCreateInitiated)
+        {
+            await ValidatePreCreatedExecutionRecordAsync(jobName, jobExecutionId, existingExecution, fpsYear, cancellationToken);
+        }
 
         if (existingExecution == null && shouldAutoCreateInitiated)
         {
@@ -568,5 +584,129 @@ public sealed class JobOrchestrator : IJobOrchestrator
                     jobQueueId);
             }
         }
+    }
+
+    // ─── Execution contract validation ──────────────────────────────────────────
+
+    private async Task ValidatePreCreatedExecutionRecordAsync(
+        string jobName,
+        Guid jobExecutionId,
+        JobExecutionRecord? existingExecution,
+        int? targetFpsYear,
+        CancellationToken cancellationToken)
+    {
+        var expectedPickupStatus = IsApprovalBasedJob(jobName) ? JobStatus.Approved : JobStatus.Initiated;
+
+        if (existingExecution is null)
+        {
+            throw new InvalidOperationException(
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has no pre-created {expectedPickupStatus} row. " +
+                $"API must insert and prepare {expectedPickupStatus} before worker start.");
+        }
+
+        if (!string.Equals(existingExecution.JobName, jobName, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' already belongs to job '{existingExecution.JobName}', not '{jobName}'.");
+        }
+
+        _logger.LogInformation(
+            "Found existing execution record | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | Status={Status}",
+            jobExecutionId, existingExecution.JobQueueId, existingExecution.Status);
+
+        if (targetFpsYear.HasValue && existingExecution.FpsYear.HasValue && existingExecution.FpsYear.Value != targetFpsYear.Value)
+        {
+            throw new InvalidOperationException(
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has fpsyear '{existingExecution.FpsYear.Value}' " +
+                $"but trigger requested targetFpsYear '{targetFpsYear.Value}'.");
+        }
+
+        if (existingExecution.Status == expectedPickupStatus)
+        {
+            _logger.LogInformation(
+                "Execution contract pre-check passed | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | JobName={JobName} | ExpectedPickupStatus={ExpectedPickupStatus}",
+                jobExecutionId, existingExecution.JobQueueId, jobName, expectedPickupStatus);
+
+            if (IsApprovalBasedJob(jobName))
+                await ValidateApprovalMetadataAsync(jobName, jobExecutionId, cancellationToken);
+
+            return;
+        }
+
+        if (existingExecution.Status == JobStatus.Running)
+        {
+            throw new InvalidOperationException(
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is already running (JobQueueId={existingExecution.JobQueueId}). Parallel execution not permitted.");
+        }
+
+        var isTerminal = existingExecution.Status is JobStatus.Completed or JobStatus.Failed or JobStatus.Rejected;
+        if (isTerminal)
+        {
+            throw new InvalidOperationException(
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' was already used by terminal execution '{existingExecution.Status}' (JobQueueId={existingExecution.JobQueueId}). Replays are not permitted.");
+        }
+
+        throw new InvalidOperationException(
+            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is in an unexpected status '{existingExecution.Status}' " +
+            $"(JobQueueId={existingExecution.JobQueueId}). Expected pickup status: '{expectedPickupStatus}'.");
+    }
+
+    private async Task ValidateApprovalMetadataAsync(string jobName, Guid jobExecutionId, CancellationToken cancellationToken)
+    {
+        var metadata = await _executionRepository.GetApprovalMetadataAsync(jobExecutionId, cancellationToken);
+
+        if (metadata is null)
+        {
+            _logger.LogWarning(
+                "Skipping approval metadata check because fps.job_queue approval columns are not yet provisioned (see CR025) | JobName={JobName} | JobExecutionId={JobExecutionId}",
+                jobName, jobExecutionId);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(metadata.ApprovedBy) || !metadata.ApprovedAtUtc.HasValue)
+        {
+            throw new InvalidOperationException(
+                $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' for job '{jobName}' is Approved " +
+                "but is missing approval metadata (approved_by/approved_at_utc) in fps.job_queue.");
+        }
+
+        _logger.LogInformation(
+            "Approval metadata verified | JobName={JobName} | JobExecutionId={JobExecutionId} | ApprovedBy={ApprovedBy} | ApprovedAtUtc={ApprovedAtUtc}",
+            jobName, jobExecutionId, metadata.ApprovedBy, metadata.ApprovedAtUtc);
+    }
+
+    private static bool IsApprovalBasedJob(string jobName) =>
+        IsYearEndJob(jobName)
+        || string.Equals(jobName, BatchJobNames.BulkTestRatesUpdate, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(jobName, BatchJobNames.BulkStaffRatesUpdate, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(jobName, BatchJobNames.BulkAnimalRatesUpdate, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsYearEndJob(string jobName) =>
+        string.Equals(jobName, BatchJobNames.YearEndDataSetup, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(jobName, BatchJobNames.YearEndCutover, StringComparison.OrdinalIgnoreCase);
+
+    private static int? TryExtractFpsYearFromParameters(string? parametersJson)
+    {
+        if (string.IsNullOrWhiteSpace(parametersJson))
+            return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(parametersJson);
+            if (!doc.RootElement.TryGetProperty("targetFpsYear", out var el))
+                return null;
+
+            if (el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var num))
+                return num;
+
+            if (el.ValueKind == JsonValueKind.String && int.TryParse(el.GetString(), out var str))
+                return str;
+        }
+        catch (JsonException)
+        {
+            // Malformed JSON — year is not extractable; callers treat null as absent.
+        }
+
+        return null;
     }
 }

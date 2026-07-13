@@ -1,7 +1,6 @@
 ﻿using Apha.BatchJobs.Application.Interfaces;
 using Apha.BatchJobs.Domain.Constants;
 using Apha.BatchJobs.Domain.Enums;
-using Apha.BatchJobs.Domain.Interfaces;
 using Apha.BatchJobs.Application.DependencyInjection;
 using Apha.BatchJobs.Worker.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using Serilog;
 using System.Globalization;
-using System.Text.Json;
 
 var requestedJobArg = args.Length > 0
     ? args[0]
@@ -46,6 +44,7 @@ builder.Configuration
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
+
 var startedAt = DateTime.UtcNow;
 const int ExitCodeSuccess = 0;
 const int ExitCodeBusinessFailure = 1;
@@ -53,7 +52,7 @@ const int ExitCodeConfigurationError = 2;
 const int ExitCodeCancelled = 3;
 const int ExitCodeDependencyOutage = 5;
 
-// ECS SIGTERM â†’ forced-stop window is typically 30 s.
+// ECS SIGTERM → forced-stop window is typically 30 s.
 // We allow 25 s for graceful cleanup before the host forces termination.
 var gracefulShutdownWindowSeconds = ResolveIntSetting(
     builder.Configuration,
@@ -61,51 +60,8 @@ var gracefulShutdownWindowSeconds = ResolveIntSetting(
     "BATCH_GRACEFUL_SHUTDOWN_WINDOW_SECONDS",
     25);
 
-if (builder.Environment.IsEnvironment("local"))
-{
-    string srvpath = builder.Configuration.GetValue<string>("LogsPath") ?? string.Empty;
-    string logpath = $"{(builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("local") ? "Logs" : srvpath)}\\Logsample.log";
-    var logStreamPrefix = ResolveLogStreamPrefix(builder.Configuration);
-    Log.Logger = new LoggerConfiguration()
-        .Enrich.FromLogContext()
-        .Enrich.WithProperty("ApplicationName", "Apha.BatchJobs")
-        .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
-        .Enrich.WithProperty("LogStreamPrefix", logStreamPrefix)
-        .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{LogStreamPrefix}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-        .WriteTo.File(
-            path: logpath,
-            restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Verbose,
-            rollingInterval: RollingInterval.Day,
-            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] [{LogStreamPrefix}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-        .CreateLogger();
-}
-else
-{
-    Serilog.Debugging.SelfLog.Enable(Console.Error);
-    Log.Logger = new LoggerConfiguration()
-        .ReadFrom.Configuration(builder.Configuration)
-        .UseStructuredConsoleLogging(builder.Configuration)
-        .CreateLogger();
-}
-
-static string ResolveLogStreamPrefix(IConfiguration configuration)
-{
-    var envPrefix = Environment.GetEnvironmentVariable("BATCH_LOG_STREAM_PREFIX");
-    if (!string.IsNullOrWhiteSpace(envPrefix))
-    {
-        return envPrefix.Trim();
-    }
-
-    var configPrefix = configuration["Logging:LogStreamPrefix"];
-    if (!string.IsNullOrWhiteSpace(configPrefix))
-    {
-        return configPrefix.Trim();
-    }
-
-    return "apha-batch";
-}
-builder.Logging.ClearProviders();
-builder.Logging.AddSerilog(Log.Logger);
+// Extracted to extension — mirrors the pattern used by sibling API projects.
+builder.ConfigureLogging();
 builder.ConfigureServices();
 
 using var host = builder.Build();
@@ -120,7 +76,7 @@ string? capturedJobExecutionId = null;
 string? capturedJobQueueId = null;
 int? capturedExecutionId = null;
 var exitCode = ExitCodeBusinessFailure;
-bool gracefulShutdownCompleted = true; // Assume graceful unless proven otherwise
+bool gracefulShutdownCompleted = true;
 
 try
 {
@@ -129,7 +85,7 @@ try
     loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
     var logger = loggerFactory.CreateLogger("BatchJobs.Startup");
     var hostLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
-    
+
     logger.LogInformation("===========================================");
     logger.LogInformation("Batch Jobs Worker - Starting");
     logger.LogInformation("===========================================");
@@ -137,45 +93,27 @@ try
     logger.LogInformation("ProcessId: {ProcessId}", Environment.ProcessId);
     logger.LogInformation("Environment: {EnvironmentName}", builder.Environment.EnvironmentName);
 
-    await WaitForDebuggerAttachIfRequestedAsync(logger, cancellationToken: CancellationToken.None);
-
     var config = serviceProvider.GetRequiredService<IConfiguration>();
-    var dbCommandTimeoutSeconds = ResolveIntSetting(
-        config,
-        "BatchJobs:DbCommandTimeoutSeconds",
-        "BATCH_DB_COMMAND_TIMEOUT_SECONDS",
-        30);
-    var lockTimeoutSeconds = ResolveIntSetting(
-        config,
-        "BatchJobs:LockTimeoutSeconds",
-        "BATCH_LOCK_TIMEOUT_SECONDS",
-        3600);
-    var jobTimeoutSeconds = ResolveIntSetting(
-        config,
-        "BatchJobs:JobTimeout",
-        "BATCH_JOB_TIMEOUT_SECONDS",
-        3600);
+    var dbCommandTimeoutSeconds = ResolveIntSetting(config, "BatchJobs:DbCommandTimeoutSeconds", "BATCH_DB_COMMAND_TIMEOUT_SECONDS", 30);
+    var lockTimeoutSeconds = ResolveIntSetting(config, "BatchJobs:LockTimeoutSeconds", "BATCH_LOCK_TIMEOUT_SECONDS", 3600);
+    var jobTimeoutSeconds = ResolveIntSetting(config, "BatchJobs:JobTimeout", "BATCH_JOB_TIMEOUT_SECONDS", 3600);
 
     logger.LogInformation("Flow checkpoint: Program.Main -> Host.Started -> Resolving JobOrchestrator");
     logger.LogInformation(
         "Runtime tolerance | GracefulShutdownWindowSeconds={GracefulShutdownWindowSeconds} | DbCommandTimeoutSeconds={DbCommandTimeoutSeconds} | LockTimeoutSeconds={LockTimeoutSeconds} | JobTimeoutSeconds={JobTimeoutSeconds}",
-        gracefulShutdownWindowSeconds,
-        dbCommandTimeoutSeconds,
-        lockTimeoutSeconds,
-        jobTimeoutSeconds);
+        gracefulShutdownWindowSeconds, dbCommandTimeoutSeconds, lockTimeoutSeconds, jobTimeoutSeconds);
 
-    // Get job name from args or environment variable
-    var jobName = args.Length > 0 ? args[0] : (Environment.GetEnvironmentVariable("BATCH_JOB_NAME") ?? BatchJobNames.HealthCheck);
+    // Resolve execution inputs from environment — entry-point responsibility only.
+    var jobName = requestedJobArg;
     var runModeEnv = Environment.GetEnvironmentVariable("BATCH_RUN_MODE") ?? "Manual";
     var runMode = Enum.TryParse<RunMode>(runModeEnv, ignoreCase: true, out var parsedMode) ? parsedMode : RunMode.Manual;
-    // External/API correlation key for tracing across trigger -> worker -> status.
     var jobExecutionIdEnv = Environment.GetEnvironmentVariable("BATCH_JOB_EXECUTION_ID")
         ?? Environment.GetEnvironmentVariable("BATCH_EXECUTION_ID");
     var requestedAtUtcEnv = Environment.GetEnvironmentVariable("BATCH_REQUESTED_AT_UTC");
     var requestedAtUtc = ParseRequestedAtUtc(requestedAtUtcEnv, logger);
-    
+    var userId = Environment.GetEnvironmentVariable("BATCH_REQUESTED_BY") ?? "system";
+
     // For scheduled jobs, default to current UTC time if BATCH_REQUESTED_AT_UTC was not provided.
-    // This captures the worker startup time and enables startup latency measurement.
     if (requestedAtUtc == null && runMode == RunMode.Scheduled)
     {
         requestedAtUtc = DateTime.UtcNow;
@@ -183,82 +121,45 @@ try
             "BATCH_REQUESTED_AT_UTC not provided for scheduled job; defaulting to worker startup time | DefaultRequestedAtUtc={DefaultRequestedAtUtc}",
             requestedAtUtc);
     }
-    
-    var isWorkerManagedMabArchiveScheduledRun =
-        runMode == RunMode.Scheduled
-        && string.Equals(jobName, "MABArchive", StringComparison.OrdinalIgnoreCase);
-    Guid jobExecutionId;
-    string userId = "system";
-
-    // Canonical requester identity env var for trigger -> worker contract.
-    userId = Environment.GetEnvironmentVariable("BATCH_REQUESTED_BY")
-        ?? "system";
 
     if (LooksLikeTemplatePlaceholder(jobName))
-    {
-        throw new InvalidOperationException(
-            $"BATCH_JOB_NAME resolved to template placeholder '{jobName}'. Provide a real registered job name.");
-    }
+        throw new InvalidOperationException($"BATCH_JOB_NAME resolved to template placeholder '{jobName}'. Provide a real registered job name.");
 
     if (LooksLikeTemplatePlaceholder(userId))
-    {
-        throw new InvalidOperationException(
-            $"BATCH_REQUESTED_BY resolved to template placeholder '{userId}'. Provide a real requester identity.");
-    }
+        throw new InvalidOperationException($"BATCH_REQUESTED_BY resolved to template placeholder '{userId}'. Provide a real requester identity.");
 
-    var correlationSource = "IncomingJobExecutionId";
-    if (isWorkerManagedMabArchiveScheduledRun)
+    // Resolve job execution ID. Scheduled MABArchive may self-generate when the trigger does not
+    // supply one; all other jobs require a pre-assigned GUID from the API.
+    Guid jobExecutionId;
+    if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
     {
-        if (!string.IsNullOrWhiteSpace(jobExecutionIdEnv) && Guid.TryParse(jobExecutionIdEnv, out var providedScheduledExecutionId))
+        if (runMode == RunMode.Scheduled && string.Equals(jobName, BatchJobNames.MabArchive, StringComparison.OrdinalIgnoreCase))
         {
-            jobExecutionId = providedScheduledExecutionId;
-            correlationSource = "IncomingJobExecutionId";
+            jobExecutionId = Guid.NewGuid();
+            logger.LogInformation(
+                "No BATCH_JOB_EXECUTION_ID supplied; worker generated execution id for scheduled MABArchive | GeneratedJobExecutionId={GeneratedJobExecutionId}",
+                jobExecutionId);
         }
         else
         {
-            jobExecutionId = Guid.NewGuid();
-            correlationSource = "WorkerManagedScheduledRun";
-
-            logger.LogInformation(
-                "Worker-managed Scheduled MABArchive run generated execution id | GeneratedJobExecutionId={GeneratedJobExecutionId}",
-                jobExecutionId);
+            throw new InvalidOperationException("BATCH_JOB_EXECUTION_ID is required for non-worker-managed runs.");
         }
-    }
-    else if (string.IsNullOrWhiteSpace(jobExecutionIdEnv))
-    {
-        throw new InvalidOperationException(
-            "BATCH_JOB_EXECUTION_ID is required for non-worker-managed runs.");
     }
     else if (!Guid.TryParse(jobExecutionIdEnv, out jobExecutionId))
     {
-        throw new InvalidOperationException(
-            "BATCH_JOB_EXECUTION_ID must be a valid GUID for non-worker-managed runs.");
+        throw new InvalidOperationException("BATCH_JOB_EXECUTION_ID must be a valid GUID.");
     }
 
-    var correlationService = serviceProvider.GetRequiredService<ICorrelationService>();
-    correlationService.SetCorrelationId(jobExecutionId.ToString("D"));
     capturedJobExecutionId = jobExecutionId.ToString("D");
-
-    logger.LogInformation(
-        "Correlation context initialized | CorrelationId={CorrelationId} | Source={CorrelationSource}",
-        jobExecutionId,
-        correlationSource);
-
     requestedJobName = jobName;
     requestedRunMode = runMode.ToString();
 
     logger.LogInformation(
         "Requested job: {JobName} | RunMode: {RunMode} | JobExecutionId={JobExecutionId} | UserId={UserId} | RequestedAtUtc={RequestedAtUtc}",
-        jobName,
-        runMode,
-        jobExecutionId,
-        userId,
-        requestedAtUtc?.ToString("O") ?? "n/a");
+        jobName, runMode, jobExecutionId, userId, requestedAtUtc?.ToString("O") ?? "n/a");
 
     // Cancel job execution only when the host is stopping.
-    // Do not use GracefulShutdownWindowSeconds as a hard runtime cap.
-    using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-        hostLifetime.ApplicationStopping);
+    using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(hostLifetime.ApplicationStopping);
 
     if (hostLifetime.ApplicationStopping.IsCancellationRequested)
     {
@@ -271,51 +172,9 @@ try
     }
     else
     {
-        // Run through orchestrator (handles lock, execution records, and job execution)
         await using var executionScope = serviceProvider.CreateAsyncScope();
-        var executionRepository = executionScope.ServiceProvider.GetRequiredService<IJobExecutionRepository>();
-        int? fpsYear = null;
-
-        if (string.Equals(jobName, "RecreateSummary", StringComparison.OrdinalIgnoreCase))
-        {
-            var recreateContext = executionScope.ServiceProvider.GetService<IRecreateSummariesContext>();
-            if (recreateContext is not null)
-            {
-                fpsYear = recreateContext.Year;
-            }
-        }
-
-        if (!isWorkerManagedMabArchiveScheduledRun)
-        {
-            var targetFpsYear = TryExtractTargetFpsYearFromParameters(
-                Environment.GetEnvironmentVariable("BATCH_JOB_PARAMETERS_JSON"),
-                logger);
-
-            await ValidatePreCreatedExecutionRecordAsync(
-                jobName,
-                jobExecutionId,
-                executionRepository,
-                logger,
-                targetFpsYear,
-                linkedCts.Token);
-        }
-        else
-        {
-            logger.LogInformation(
-                "Execution contract pre-check skipped for worker-managed Scheduled MABArchive run | JobExecutionId={JobExecutionId} | WorkerManagedMabArchiveScheduledRun={WorkerManagedMabArchiveScheduledRun}",
-                jobExecutionId,
-                isWorkerManagedMabArchiveScheduledRun);
-        }
-
         var orchestrator = executionScope.ServiceProvider.GetRequiredService<IJobOrchestrator>();
-        var result = await orchestrator.RunAsync(
-            jobName,
-            runMode,
-            jobExecutionId,
-            userId,
-            requestedAtUtc,
-            linkedCts.Token,
-            fpsYear);
+        var result = await orchestrator.RunAsync(jobName, runMode, jobExecutionId, userId, requestedAtUtc, linkedCts.Token);
 
         capturedJobQueueId = result.JobQueueId.ToString();
         capturedExecutionId = result.ExecutionId;
@@ -346,14 +205,11 @@ catch (OperationCanceledException ex)
     var logger = loggerFactory?.CreateLogger("BatchJobs.Error");
     var remainingWindowMs = Math.Max(0, (int)(gracefulShutdownWindowSeconds * 1000 - (DateTime.UtcNow - startedAt).TotalMilliseconds));
     logger?.LogWarning(ex,
-        "Job execution was interrupted by cancellation token | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | RemainingShutdownWindowMs={RemainingWindowMs}",
+        "Job execution was interrupted | JobName={JobName} | JobQueueId={JobQueueId} | JobExecutionId={JobExecutionId} | RemainingShutdownWindowMs={RemainingWindowMs}",
         requestedJobName ?? "Unknown", capturedJobQueueId ?? "N/A", capturedJobExecutionId ?? "N/A", remainingWindowMs);
     Console.Error.WriteLine("INTERRUPTED: Job execution was interrupted");
-    
-    // Mark as forced cancellation if we ran out of graceful window (remainingWindowMs near 0)
-    gracefulShutdownCompleted = remainingWindowMs > 100; // Allow 100ms buffer
-    
-    exitCode = ExitCodeBusinessFailure;
+    gracefulShutdownCompleted = remainingWindowMs > 100;
+    exitCode = ExitCodeCancelled;
     failureCategory = "Cancellation";
     runOutcome = "Failed";
 }
@@ -375,7 +231,7 @@ catch (Exception ex)
     }
     else
     {
-        logger?.LogError(ex, "{ExceptionType} Unhandled business/runtime exception: {ErrorMessage}", exceptionPrefix, ex.Message);
+        logger?.LogError(ex, "{ExceptionType} Unhandled exception: {ErrorMessage}", exceptionPrefix, ex.Message);
         exitCode = ExitCodeBusinessFailure;
         failureCategory = "BusinessFailure";
     }
@@ -398,80 +254,20 @@ finally
         var humanReadableMessage = GenerateHumanReadableMessage(runOutcome, failureCategory);
         const string summaryTemplate = "Run completed | StartedAt={StartTime} | EndedAt={EndTime} | Outcome={Outcome} | FailureCategory={FailureCategory} | ExitCode={ExitCode} | Message={Message} | JobName={JobName} | JobQueueId={JobQueueId} | ExecutionId={ExecutionId} | JobExecutionId={JobExecutionId} | RunMode={RunMode} | TotalDurationMs={DurationMs} | GracefulShutdownCompleted={GracefulShutdownCompleted}";
         var summaryLine = BuildSummaryLine(
-            startedAt,
-            endedAtUtc,
-            runOutcome,
-            failureCategory,
-            exitCode,
-            humanReadableMessage,
-            requestedJobName ?? "Unknown",
-            capturedJobQueueId ?? "N/A",
-            capturedExecutionId?.ToString() ?? "N/A",
-            capturedJobExecutionId ?? "N/A",
-            requestedRunMode,
-            durationMs,
-            gracefulShutdownCompleted);
+            startedAt, endedAtUtc, runOutcome, failureCategory, exitCode, humanReadableMessage,
+            requestedJobName ?? "Unknown", capturedJobQueueId ?? "N/A",
+            capturedExecutionId?.ToString() ?? "N/A", capturedJobExecutionId ?? "N/A",
+            requestedRunMode, durationMs, gracefulShutdownCompleted);
 
-        // Always emit one terminal summary to stdout for container-level visibility.
         Console.WriteLine(summaryLine);
-        
+
         var logger = loggerFactory?.CreateLogger("BatchJobs.Summary");
-        
-        // Log at appropriate level by outcome semantics.
         if (logLevel == LogLevel.Information)
-        {
-            logger?.LogInformation(
-                summaryTemplate,
-                startedAt,
-                endedAtUtc,
-                runOutcome,
-                failureCategory,
-                exitCode,
-                humanReadableMessage,
-                requestedJobName ?? "Unknown",
-                capturedJobQueueId ?? "N/A",
-                capturedExecutionId?.ToString() ?? "N/A",
-                capturedJobExecutionId ?? "N/A",
-                requestedRunMode,
-                durationMs,
-                gracefulShutdownCompleted);
-        }
+            logger?.LogInformation(summaryTemplate, startedAt, endedAtUtc, runOutcome, failureCategory, exitCode, humanReadableMessage, requestedJobName ?? "Unknown", capturedJobQueueId ?? "N/A", capturedExecutionId?.ToString() ?? "N/A", capturedJobExecutionId ?? "N/A", requestedRunMode, durationMs, gracefulShutdownCompleted);
         else if (logLevel == LogLevel.Warning)
-        {
-            logger?.LogWarning(
-                summaryTemplate,
-                startedAt,
-                endedAtUtc,
-                runOutcome,
-                failureCategory,
-                exitCode,
-                humanReadableMessage,
-                requestedJobName ?? "Unknown",
-                capturedJobQueueId ?? "N/A",
-                capturedExecutionId?.ToString() ?? "N/A",
-                capturedJobExecutionId ?? "N/A",
-                requestedRunMode,
-                durationMs,
-                gracefulShutdownCompleted);
-        }
+            logger?.LogWarning(summaryTemplate, startedAt, endedAtUtc, runOutcome, failureCategory, exitCode, humanReadableMessage, requestedJobName ?? "Unknown", capturedJobQueueId ?? "N/A", capturedExecutionId?.ToString() ?? "N/A", capturedJobExecutionId ?? "N/A", requestedRunMode, durationMs, gracefulShutdownCompleted);
         else
-        {
-            logger?.LogError(
-                summaryTemplate,
-                startedAt,
-                endedAtUtc,
-                runOutcome,
-                failureCategory,
-                exitCode,
-                humanReadableMessage,
-                requestedJobName ?? "Unknown",
-                capturedJobQueueId ?? "N/A",
-                capturedExecutionId?.ToString() ?? "N/A",
-                capturedJobExecutionId ?? "N/A",
-                requestedRunMode,
-                durationMs,
-                gracefulShutdownCompleted);
-        }
+            logger?.LogError(summaryTemplate, startedAt, endedAtUtc, runOutcome, failureCategory, exitCode, humanReadableMessage, requestedJobName ?? "Unknown", capturedJobQueueId ?? "N/A", capturedExecutionId?.ToString() ?? "N/A", capturedJobExecutionId ?? "N/A", requestedRunMode, durationMs, gracefulShutdownCompleted);
     }
     catch
     {
@@ -491,64 +287,17 @@ finally
     Log.CloseAndFlush();
 }
 
-static async Task WaitForDebuggerAttachIfRequestedAsync(Microsoft.Extensions.Logging.ILogger logger, CancellationToken cancellationToken)
-{
-    var waitForAttach = Environment.GetEnvironmentVariable("BATCH_DEBUG_WAIT_FOR_ATTACH");
-    if (!string.Equals(waitForAttach, "true", StringComparison.OrdinalIgnoreCase) || System.Diagnostics.Debugger.IsAttached)
-    {
-        return;
-    }
-
-    var timeoutSecondsRaw = Environment.GetEnvironmentVariable("BATCH_DEBUG_ATTACH_TIMEOUT_SECONDS");
-    var timeoutSeconds = int.TryParse(timeoutSecondsRaw, out var parsedTimeout) ? parsedTimeout : 120;
-    var timeoutAt = DateTime.UtcNow.AddSeconds(Math.Max(0, timeoutSeconds));
-
-    logger.LogInformation(
-        "Waiting for debugger attach | ProcessId={ProcessId} | TimeoutSeconds={TimeoutSeconds}",
-        Environment.ProcessId,
-        timeoutSeconds);
-
-    while (!System.Diagnostics.Debugger.IsAttached && DateTime.UtcNow < timeoutAt)
-    {
-        await Task.Delay(250, cancellationToken);
-    }
-
-    var breakOnStart = Environment.GetEnvironmentVariable("BATCH_DEBUG_BREAK_ON_START");
-    if (System.Diagnostics.Debugger.IsAttached && string.Equals(breakOnStart, "true", StringComparison.OrdinalIgnoreCase))
-    {
-        logger.LogInformation("Debugger attached; breaking at worker startup | ProcessId={ProcessId}", Environment.ProcessId);
-        System.Diagnostics.Debugger.Break();
-    }
-
-    logger.LogInformation(
-        "Debugger attach wait finished | ProcessId={ProcessId} | DebuggerAttached={DebuggerAttached}",
-        Environment.ProcessId,
-        System.Diagnostics.Debugger.IsAttached);
-}
-
 return exitCode;
 
-static string BuildSummaryLine(
-    DateTime startedAt,
-    DateTime endedAt,
-    string outcome,
-    string failureCategory,
-    int exitCode,
-    string message,
-    string jobName,
-    string jobQueueId,
-    string executionId,
-    string jobExecutionId,
-    string runMode,
-    double totalDurationMs,
-    bool gracefulShutdownCompleted)
-{
-    return $"Run completed | StartedAt={startedAt:O} | EndedAt={endedAt:O} | Outcome={outcome} | FailureCategory={failureCategory} | ExitCode={exitCode} | Message={message} | JobName={jobName} | JobQueueId={jobQueueId} | ExecutionId={executionId} | JobExecutionId={jobExecutionId} | RunMode={runMode} | TotalDurationMs={totalDurationMs:F0} | GracefulShutdownCompleted={gracefulShutdownCompleted}";
-}
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-static string GenerateHumanReadableMessage(string outcome, string failureCategory)
-{
-    return (outcome, failureCategory) switch
+static string BuildSummaryLine(DateTime startedAt, DateTime endedAt, string outcome, string failureCategory,
+    int exitCode, string message, string jobName, string jobQueueId, string executionId,
+    string jobExecutionId, string runMode, double totalDurationMs, bool gracefulShutdownCompleted) =>
+    $"Run completed | StartedAt={startedAt:O} | EndedAt={endedAt:O} | Outcome={outcome} | FailureCategory={failureCategory} | ExitCode={exitCode} | Message={message} | JobName={jobName} | JobQueueId={jobQueueId} | ExecutionId={executionId} | JobExecutionId={jobExecutionId} | RunMode={runMode} | TotalDurationMs={totalDurationMs:F0} | GracefulShutdownCompleted={gracefulShutdownCompleted}";
+
+static string GenerateHumanReadableMessage(string outcome, string failureCategory) =>
+    (outcome, failureCategory) switch
     {
         ("Succeeded", _) => "Job completed successfully within the graceful shutdown window.",
         ("Failed", "Cancellation") => "Job execution was interrupted due to host shutdown or timeout.",
@@ -558,33 +307,23 @@ static string GenerateHumanReadableMessage(string outcome, string failureCategor
         ("Failed", "DependencyOutage") => "Job failed due to dependency outage (database unavailable, network timeout, etc.).",
         _ => $"Job execution ended with outcome: {outcome} ({failureCategory})."
     };
-}
 
 static bool IsTimeoutFailure(Exception ex)
 {
-    for (Exception? current = ex; current != null; current = current.InnerException)
-    {
-        if (current is TimeoutException)
-            return true;
-    }
-
+    for (var current = ex; current != null; current = current.InnerException)
+        if (current is TimeoutException) return true;
     return false;
 }
 
 static bool IsDependencyOutage(Exception ex)
 {
-    for (Exception? current = ex; current != null; current = current.InnerException)
-    {
-        if (current is NpgsqlException || current is DbUpdateException)
-            return true;
-    }
-
+    for (var current = ex; current != null; current = current.InnerException)
+        if (current is NpgsqlException || current is DbUpdateException) return true;
     return false;
 }
 
 static string GetExceptionTypePrefix(Exception ex, IConfiguration? config = null)
 {
-    // Load exception type mappings from configuration
     var exceptionTypes = config?.GetSection("ExceptionTypes").Get<Dictionary<string, string>>()
         ?? new Dictionary<string, string>
         {
@@ -594,23 +333,14 @@ static string GetExceptionTypePrefix(Exception ex, IConfiguration? config = null
             { "Timeout", "APHA_BATCH.TIMEOUT_EXCEPTION" }
         };
 
-    // Scan exception chain for specific exception types
-    for (Exception? current = ex; current != null; current = current.InnerException)
+    for (var current = ex; current != null; current = current.InnerException)
     {
-        if (current is NpgsqlException)
-            return $"[[{exceptionTypes.GetValueOrDefault("Sql", "APHA_BATCH.SQL_EXCEPTION")}]]";
-
-        if (current is TimeoutException)
-            return $"[[{exceptionTypes.GetValueOrDefault("Timeout", "APHA_BATCH.TIMEOUT_EXCEPTION")}]]";
-
-        if (current is UnauthorizedAccessException)
-            return $"[[{exceptionTypes.GetValueOrDefault("Authorization", "APHA_BATCH.AUTHORIZATION_EXCEPTION")}]]";
-
-        if (current is DbUpdateException)
-            return $"[[{exceptionTypes.GetValueOrDefault("Sql", "APHA_BATCH.SQL_EXCEPTION")}]]";
+        if (current is NpgsqlException) return $"[[{exceptionTypes.GetValueOrDefault("Sql", "APHA_BATCH.SQL_EXCEPTION")}]]";
+        if (current is TimeoutException) return $"[[{exceptionTypes.GetValueOrDefault("Timeout", "APHA_BATCH.TIMEOUT_EXCEPTION")}]]";
+        if (current is UnauthorizedAccessException) return $"[[{exceptionTypes.GetValueOrDefault("Authorization", "APHA_BATCH.AUTHORIZATION_EXCEPTION")}]]";
+        if (current is DbUpdateException) return $"[[{exceptionTypes.GetValueOrDefault("Sql", "APHA_BATCH.SQL_EXCEPTION")}]]";
     }
 
-    // Default to general exception
     return $"[[{exceptionTypes.GetValueOrDefault("General", "APHA_BATCH.GENERAL_EXCEPTION")}]]";
 }
 
@@ -618,15 +348,11 @@ static int ResolveIntSetting(IConfiguration configuration, string configKey, str
 {
     var envValue = Environment.GetEnvironmentVariable(envVarName);
     if (!string.IsNullOrWhiteSpace(envValue) && int.TryParse(envValue, out var parsedEnv) && parsedEnv >= 0)
-    {
         return parsedEnv;
-    }
 
     var configValue = configuration.GetValue<int?>(configKey);
     if (configValue.HasValue && configValue.Value >= 0)
-    {
         return configValue.Value;
-    }
 
     return defaultValue;
 }
@@ -634,197 +360,23 @@ static int ResolveIntSetting(IConfiguration configuration, string configKey, str
 static DateTime? ParseRequestedAtUtc(string? requestedAtUtcRaw, Microsoft.Extensions.Logging.ILogger logger)
 {
     if (string.IsNullOrWhiteSpace(requestedAtUtcRaw))
+        return null;
+
+    if (!DateTimeOffset.TryParse(requestedAtUtcRaw, CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsed))
     {
+        logger.LogWarning("Ignoring invalid BATCH_REQUESTED_AT_UTC value | RequestedAtUtc={RequestedAtUtc}", requestedAtUtcRaw);
         return null;
     }
 
-    if (!DateTimeOffset.TryParse(
-            requestedAtUtcRaw,
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-            out var parsedRequestedAtUtc))
-    {
-        logger.LogWarning(
-            "Ignoring invalid BATCH_REQUESTED_AT_UTC value | RequestedAtUtc={RequestedAtUtc}",
-            requestedAtUtcRaw);
-        return null;
-    }
-
-    return parsedRequestedAtUtc.UtcDateTime;
+    return parsed.UtcDateTime;
 }
 
 static bool LooksLikeTemplatePlaceholder(string? value)
 {
-    if (string.IsNullOrWhiteSpace(value))
-    {
-        return false;
-    }
-
+    if (string.IsNullOrWhiteSpace(value)) return false;
     var trimmed = value.Trim();
     return trimmed.Length > 2 && trimmed[0] == '<' && trimmed[^1] == '>';
 }
 
-static async Task ValidatePreCreatedExecutionRecordAsync(
-    string requestedJobName,
-    Guid jobExecutionId,
-    IJobExecutionRepository executionRepository,
-    Microsoft.Extensions.Logging.ILogger logger,
-    int? targetFpsYear,
-    CancellationToken cancellationToken)
-{
-    var existingExecution = await executionRepository.GetExecutionByJobExecutionIdAsync(jobExecutionId, cancellationToken);
-    var expectedPickupStatus = IsApprovalBasedJob(requestedJobName)
-        ? JobStatus.Approved
-        : JobStatus.Initiated;
-
-    if (existingExecution is null)
-    {
-        throw new InvalidOperationException(
-            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has no pre-created {expectedPickupStatus} row. " +
-            $"API must insert and prepare {expectedPickupStatus} before worker start.");
-    }
-
-    if (!string.Equals(existingExecution.JobName, requestedJobName, StringComparison.OrdinalIgnoreCase))
-    {
-        throw new InvalidOperationException(
-            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' already belongs to job '{existingExecution.JobName}', not '{requestedJobName}'.");
-    }
-
-    logger.LogInformation(
-        "Found existing execution record | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | Status={Status}",
-        jobExecutionId,
-        existingExecution.JobQueueId,
-        existingExecution.Status);
-
-    if (targetFpsYear.HasValue && existingExecution.FpsYear.HasValue && existingExecution.FpsYear.Value != targetFpsYear.Value)
-    {
-        throw new InvalidOperationException(
-            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' has fpsyear '{existingExecution.FpsYear.Value}' " +
-            $"but trigger requested targetFpsYear '{targetFpsYear.Value}'.");
-    }
-
-    if (existingExecution.Status == expectedPickupStatus)
-    {
-        logger.LogInformation(
-            "Execution contract pre-check passed | JobExecutionId={JobExecutionId} | JobQueueId={JobQueueId} | JobName={JobName} | ExpectedPickupStatus={ExpectedPickupStatus}",
-            jobExecutionId,
-            existingExecution.JobQueueId,
-            requestedJobName,
-            expectedPickupStatus);
-
-        if (IsApprovalBasedJob(requestedJobName))
-        {
-            await ValidateApprovalMetadataAsync(requestedJobName, jobExecutionId, executionRepository, logger, cancellationToken);
-        }
-
-        return;
-    }
-
-    if (existingExecution.Status == JobStatus.Running)
-    {
-        throw new InvalidOperationException(
-            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is already running (JobQueueId={existingExecution.JobQueueId}). Parallel execution not permitted.");
-    }
-
-    var isTerminal = existingExecution.Status is JobStatus.Completed
-        or JobStatus.Failed
-        or JobStatus.Rejected;
-
-    if (isTerminal)
-    {
-        throw new InvalidOperationException(
-            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' was already used by terminal execution '{existingExecution.Status}' (JobQueueId={existingExecution.JobQueueId}). Replays are not permitted.");
-    }
-
-    throw new InvalidOperationException(
-        $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' is in an unexpected status '{existingExecution.Status}' " +
-        $"(JobQueueId={existingExecution.JobQueueId}). Expected pickup status: '{expectedPickupStatus}'.");
-}
-
-static async Task ValidateApprovalMetadataAsync(
-    string requestedJobName,
-    Guid jobExecutionId,
-    IJobExecutionRepository executionRepository,
-    Microsoft.Extensions.Logging.ILogger logger,
-    CancellationToken cancellationToken)
-{
-    var metadata = await executionRepository.GetApprovalMetadataAsync(jobExecutionId, cancellationToken);
-
-    if (metadata is null)
-    {
-        logger.LogWarning(
-            "Skipping Year End approval metadata check because fps.job_queue approval columns are not yet provisioned (see CR025) | JobName={JobName} | JobExecutionId={JobExecutionId}",
-            requestedJobName,
-            jobExecutionId);
-        return;
-    }
-
-    if (string.IsNullOrWhiteSpace(metadata.ApprovedBy) || !metadata.ApprovedAtUtc.HasValue)
-    {
-        throw new InvalidOperationException(
-            $"Execution contract violation: JobExecutionId '{jobExecutionId:D}' for job '{requestedJobName}' is Approved " +
-            "but is missing approval metadata (approved_by/approved_at_utc) in fps.job_queue.");
-    }
-
-    logger.LogInformation(
-        "Year End approval metadata verified | JobName={JobName} | JobExecutionId={JobExecutionId} | ApprovedBy={ApprovedBy} | ApprovedAtUtc={ApprovedAtUtc}",
-        requestedJobName,
-        jobExecutionId,
-        metadata.ApprovedBy,
-        metadata.ApprovedAtUtc);
-}
-
-static int? TryExtractTargetFpsYearFromParameters(string? parametersJson, Microsoft.Extensions.Logging.ILogger logger)
-{
-    if (string.IsNullOrWhiteSpace(parametersJson))
-    {
-        return null;
-    }
-
-    try
-    {
-        using var doc = JsonDocument.Parse(parametersJson);
-        if (!doc.RootElement.TryGetProperty("targetFpsYear", out var targetYearElement))
-        {
-            return null;
-        }
-
-        if (targetYearElement.ValueKind == JsonValueKind.Number && targetYearElement.TryGetInt32(out var targetYearAsNumber))
-        {
-            return targetYearAsNumber;
-        }
-
-        if (targetYearElement.ValueKind == JsonValueKind.String
-            && int.TryParse(targetYearElement.GetString(), out var targetYearAsString))
-        {
-            return targetYearAsString;
-        }
-
-        logger.LogWarning(
-            "Ignoring non-integer targetFpsYear from BATCH_JOB_PARAMETERS_JSON | TargetFpsYearRawKind={TargetFpsYearRawKind}",
-            targetYearElement.ValueKind);
-    }
-    catch (JsonException ex)
-    {
-        logger.LogWarning(
-            ex,
-            "Ignoring invalid BATCH_JOB_PARAMETERS_JSON while reading targetFpsYear.");
-    }
-
-    return null;
-}
-
-static bool IsYearEndJob(string jobName)
-{
-    return string.Equals(jobName, BatchJobNames.YearEndDataSetup, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(jobName, BatchJobNames.YearEndCutover, StringComparison.OrdinalIgnoreCase);
-}
-
-static bool IsApprovalBasedJob(string jobName)
-{
-    return IsYearEndJob(jobName)
-        || string.Equals(jobName, BatchJobNames.BulkTestRatesUpdate, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(jobName, BatchJobNames.BulkStaffRatesUpdate, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(jobName, BatchJobNames.BulkAnimalRatesUpdate, StringComparison.OrdinalIgnoreCase);
-}
 
