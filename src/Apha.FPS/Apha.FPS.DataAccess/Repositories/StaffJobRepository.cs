@@ -24,8 +24,6 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             var queryStaffJob = await BuildJobStaffCostQueryAsync(jobCode);
 
-            queryStaffJob = ApplySorting(queryStaffJob, query.SortBy, query.Descending);
-
             var result = (await queryStaffJob.ToListAsync())
                 .Select(ComputeStaffCost)
                 .ToList();
@@ -41,6 +39,7 @@ namespace Apha.FPS.DataAccess.Repositories
                     item.Name = name;
             }
 
+            result = ApplySorting(result, query.SortBy, query.Descending);
             result = ApplyStaffJobFilterInMemory(result, query.Filter);
 
             return base.ApplyPaging(result, query.Page, query.PageSize);
@@ -315,14 +314,22 @@ namespace Apha.FPS.DataAccess.Repositories
                     }).Distinct().OrderBy(e => e.Name).AsQueryable();
         }
 
-        private static IQueryable<StaffJobView> ApplySorting(IQueryable<StaffJobView> query, string? sortBy, bool descending)
+        private static List<StaffJobView> ApplySorting(List<StaffJobView> list, string? sortBy, bool descending)
         {
             if (string.IsNullOrEmpty(sortBy))
-            {
-                return query;
-            }
+                return list;
 
-            return ApplySortingByProperty(query, sortBy.ToLower(), descending);
+            IEnumerable<StaffJobView> sorted = sortBy.ToLower() switch
+            {
+                "name"         => descending ? list.OrderByDescending(i => i.Name)         : list.OrderBy(i => i.Name),
+                "chargerate"   => descending ? list.OrderByDescending(i => i.ChargeRate)   : list.OrderBy(i => i.ChargeRate),
+                "plannedhours" => descending ? list.OrderByDescending(i => i.PlannedHours) : list.OrderBy(i => i.PlannedHours),
+                "days"         => descending ? list.OrderByDescending(i => i.Days)         : list.OrderBy(i => i.Days),
+                "staffcost"    => descending ? list.OrderByDescending(i => i.StaffCost)    : list.OrderBy(i => i.StaffCost),
+                _              => list
+            };
+
+            return sorted.ToList();
         }
 
         private static IQueryable<StaffJobView> ApplySortingByProperty(IQueryable<StaffJobView> query, string property, bool descending)
