@@ -39,15 +39,16 @@
             ssrClearAll();
             return;
         }
-
+        
         if (nameEl) nameEl.textContent = currentCentre;
         currentWorkGroup = '';
         currentGrade = '';
         bindGroupDropdownList([]);
-
+        showLoader();
         $.get('/FPS/SetUpStaffResources/GetGroupsByResourceCentre',
             { resourceCentre: currentCentre },
             function (response) {
+                hideLoader();
                 if (response && response.success) {
                     bindGroupDropdownList(response.data);
                 } else {
@@ -55,6 +56,7 @@
                 }
             }
         ).fail(function () {
+            hideLoader();
             showAlertMessage('Could not load work groups for \'' + currentCentre + '\'. Please try selecting the Resource Centre again.', AlertType.INFO);
         });
     }
@@ -82,10 +84,11 @@
             bindGradeList([], null);
             return;
         }
-
+        showLoader();
         $.get('/FPS/SetUpStaffResources/GetGradesByGroups',
             { workGroup: selectedGroup },
             function (response) {
+                hideLoader();
                 if (response && response.success) {
                     bindGradeList(response.data, restoreGrade || null);
                 } else {
@@ -93,6 +96,7 @@
                 }
             }
         ).fail(function () {
+            hideLoader();
             showAlertMessage('Could not load grades for work group \'' + selectedGroup + '\'. Please try selecting the work group again.', AlertType.INFO);
         });
     }
@@ -167,12 +171,15 @@
     function refreshGradeStats(wg) {
         if (!wg) return;
 
+        showLoader();
         $.get('/FPS/SetUpStaffResources/GetGradeStats', { wgGrade: wg }, function (data) {
+            hideLoader();
             if (data && data.success) {
                 setVal('ssrSummaryGrade', data.gradeCode || '');
                 setVal('ssrWorkHrs',      data.totalAtWork != null ? data.totalAtWork : '0');
             }
         }).fail(function () {
+            hideLoader();
             showAlertMessage('Could not load grade summary for: ' + wg + '. Please try selecting the grade again.', AlertType.INFO);
         });
     }
@@ -214,10 +221,13 @@
     /* ── Edit modal ─────────────────────────────────────────────────── */
     function editSsrStaff(btn) {
         const id = $(btn).data('id');
+        showLoader();
         $.get('/FPS/SetUpStaffResources/Edit', { pactId: id }, function (html) {
+            hideLoader();
             $('#modaPopupBody').html(html);
             $('#modalPopup').addClass('show');
         }).fail(function () {
+            hideLoader();
             showAlertMessage('Failed to load edit form. Please try again.', AlertType.ERROR);
         });
     }
@@ -253,7 +263,7 @@
             HrsAvail: parseFloat((hrsPaid - leave - sickSp).toFixed(2)),
             MakeAvailable: planable
         };
-
+        showLoader();
         $.ajax({
             url: '/FPS/SetUpStaffResources/Edit',
             type: 'POST',
@@ -261,7 +271,9 @@
             contentType: 'application/json; charset=utf-8',
             headers: { 'RequestVerificationToken': aft },
             success: function (data) {
+                hideLoader();
                 if (data.success) {
+                    showAlertMessage('Staff resource saved successfully.', AlertType.SUCCESS);
                     closeModal();
                     reloadStaffGrid();
                     refreshGradeStats(currentGrade);
@@ -270,6 +282,7 @@
                 }
             },
             error: function (xhr) {
+                hideLoader();
                 if (xhr.status === 400) {
                     showAlertMessage('Validation error. Please check the form and try again.', AlertType.ERROR);
                 } else {
@@ -356,10 +369,12 @@
         const nameEl = el('ssrSelectedCentreName');
         if (nameEl) nameEl.textContent = saved.centre;
 
+        showLoader();
         // ── 2. Load workgroups for this centre, then restore workgroup + grade ─
         $.get('/FPS/SetUpStaffResources/GetGroupsByResourceCentre',
             { resourceCentre: saved.centre },
             function (response) {
+                
                 if (!response || !response.success) return;
 
                 bindGroupDropdownList(response.data);
@@ -380,15 +395,18 @@
                 $.get('/FPS/SetUpStaffResources/GetGradesByGroups',
                     { workGroup: saved.workGroup },
                     function (gradeResponse) {
+                        hideLoader();
                         if (gradeResponse && gradeResponse.success) {
                             bindGradeList(gradeResponse.data, saved.grade || null);
                         }
                     }
                 ).fail(function () {
+                    hideLoader();
                     showAlertMessage('Could not restore grade list for work group \'' + saved.workGroup + '\'. Please re-select manually.', AlertType.INFO);
                 });
             }
         ).fail(function () {
+            hideLoader();
             showAlertMessage('Could not restore work groups for \'' + saved.centre + '\'. Please re-select the Resource Centre manually.', AlertType.INFO);
         });
     }
