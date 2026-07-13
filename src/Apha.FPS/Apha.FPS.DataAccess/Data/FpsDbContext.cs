@@ -1,4 +1,4 @@
-using Apha.FPS.Core.Entities;
+﻿using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -105,10 +105,11 @@ namespace Apha.FPS.DataAccess.Data
         public virtual DbSet<Bid> Bids { get; set; }
         public virtual DbSet<BidView> BidViews { get; set; }
         public virtual DbSet<Purchase> Purchases { get; set; }
-public virtual DbSet<TestOrProduct> TestOrProducts { get; set; }
-public virtual DbSet<TestRCCost> TestRCCosts { get; set; }
-public virtual DbSet<TestRequirementRCCost> TestRequirementRCCosts { get; set; }
-public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
+        public virtual DbSet<TestOrProduct> TestOrProducts { get; set; }
+        public virtual DbSet<TestRCCost> TestRCCosts { get; set; }
+        public virtual DbSet<TestRequirementRCCost> TestRequirementRCCosts { get; set; }
+        public virtual DbSet<ContributionSummaryView> VQryFrmTimeSellerPcViews { get; set; }
+        public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserMap());
@@ -319,6 +320,9 @@ public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; 
             modelBuilder.ApplyConfiguration(new PurchaseMap());
             modelBuilder.Entity<Purchase>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
+            modelBuilder.ApplyConfiguration(new ContributionSummaryViewMap());
+            modelBuilder.Entity<ContributionSummaryView>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+
             modelBuilder.ApplyConfiguration(new MonthlyTimeMap());
             modelBuilder.Entity<MonthlyTime>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
@@ -329,18 +333,17 @@ public virtual DbSet<TotalBusinessOverheads> TotalBusinessOverheads { get; set; 
 
             modelBuilder.ApplyConfiguration(new GradeMap());
             modelBuilder.Entity<Grade>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new TestOrProductMap());
+            modelBuilder.Entity<TestOrProduct>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-modelBuilder.ApplyConfiguration(new TestOrProductMap());
-modelBuilder.Entity<TestOrProduct>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new TestRCCostMap());
+            modelBuilder.Entity<TestRCCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-modelBuilder.ApplyConfiguration(new TestRCCostMap());
-modelBuilder.Entity<TestRCCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new TestRequirementRCCostMap());
+            modelBuilder.Entity<TestRequirementRCCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
 
-modelBuilder.ApplyConfiguration(new TestRequirementRCCostMap());
-modelBuilder.Entity<TestRequirementRCCost>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
-
-modelBuilder.ApplyConfiguration(new TotalBusinessOverheadsMap());
-modelBuilder.Entity<TotalBusinessOverheads>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
+            modelBuilder.ApplyConfiguration(new TotalBusinessOverheadsMap());
+            modelBuilder.Entity<TotalBusinessOverheads>().HasQueryFilter(e => e.FpsYear == FilterFpsYear);
         }
     }
 }

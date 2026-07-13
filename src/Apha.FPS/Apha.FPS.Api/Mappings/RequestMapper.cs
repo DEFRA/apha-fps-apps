@@ -1,4 +1,4 @@
-using Apha.Common.Contracts;
+﻿using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Pagination;
@@ -117,42 +117,47 @@ namespace Apha.FPS.Api.Mappings
             CreateMap<PurchaseDto, PurchaseReq>().ReverseMap();
             CreateMap<PurchaseDto, PurchaseRes>().ReverseMap();
 
-//   TestListVlaReq and TestListVlaRes both map bidirectionally to TestListVlaDto.
-//   PaginatedResult<TestListVlaDto> -> PaginationRes<TestListVlaRes> for paged list endpoint.
-CreateMap<TestListVlaReq, TestListVlaDto>().ReverseMap();
-CreateMap<TestListVlaRes, TestListVlaDto>().ReverseMap();
-CreateMap<PaginatedResult<TestListVlaDto>, PaginationRes<TestListVlaRes>>();
+            // TimeSellerPC - frmTimeSellerPC
+            CreateMap<ContributionSummaryRowDto, ContributionSummaryRowRes>().ReverseMap();
+            CreateMap<ContributionSummaryTotalsDto, ContributionSummaryTotalsRes>().ReverseMap();
 
-//   TestRCCostReq and TestRCCostRes both map bidirectionally to TestRCCostDto.
-//   PaginatedResult<TestRCCostDto> -> PaginationRes<TestRCCostRes> for paged list endpoint.
-CreateMap<TestRCCostReq, TestRCCostDto>().ReverseMap();
-CreateMap<TestRCCostRes, TestRCCostDto>().ReverseMap();
-CreateMap<PaginatedResult<TestRCCostDto>, PaginationRes<TestRCCostRes>>();
+            //   TestListVlaReq and TestListVlaRes both map bidirectionally to TestListVlaDto.
+            //   PaginatedResult<TestListVlaDto> -> PaginationRes<TestListVlaRes> for paged list endpoint.
+            CreateMap<TestListVlaReq, TestListVlaDto>().ReverseMap();
+            CreateMap<TestListVlaRes, TestListVlaDto>().ReverseMap();
+            CreateMap<PaginatedResult<TestListVlaDto>, PaginationRes<TestListVlaRes>>();
 
-//   TestRequirementRCCostReq and TestRequirementRCCostRes both map bidirectionally to TestRequirementRCCostDto.
-//   PaginatedResult<TestRequirementRCCostDto> -> PaginationRes<TestRequirementRCCostRes> for paged list endpoint.
-CreateMap<TestRequirementRCCostReq, TestRequirementRCCostDto>().ReverseMap();
-CreateMap<TestRequirementRCCostRes, TestRequirementRCCostDto>().ReverseMap();
-CreateMap<PaginatedResult<TestRequirementRCCostDto>, PaginationRes<TestRequirementRCCostRes>>();
+            //   TestRCCostReq and TestRCCostRes both map bidirectionally to TestRCCostDto.
+            //   PaginatedResult<TestRCCostDto> -> PaginationRes<TestRCCostRes> for paged list endpoint.
+            CreateMap<TestRCCostReq, TestRCCostDto>().ReverseMap();
+            CreateMap<TestRCCostRes, TestRCCostDto>().ReverseMap();
+            CreateMap<PaginatedResult<TestRCCostDto>, PaginationRes<TestRCCostRes>>();
 
-// 5 log tables: project_log, staffjob_log, testreq_log, animalreq_log, additionalcosts_log
-CreateMap<ProjectLogDto, ProjectLogRes>().ReverseMap();
-CreateMap<PaginatedResult<ProjectLogDto>, PaginationRes<ProjectLogRes>>();
+            //   TestRequirementRCCostReq and TestRequirementRCCostRes both map bidirectionally to TestRequirementRCCostDto.
+            //   PaginatedResult<TestRequirementRCCostDto> -> PaginationRes<TestRequirementRCCostRes> for paged list endpoint.
+            CreateMap<TestRequirementRCCostReq, TestRequirementRCCostDto>().ReverseMap();
+            CreateMap<TestRequirementRCCostRes, TestRequirementRCCostDto>().ReverseMap();
+            CreateMap<PaginatedResult<TestRequirementRCCostDto>, PaginationRes<TestRequirementRCCostRes>>();
 
-CreateMap<StaffJobLogDto, StaffJobLogRes>().ReverseMap();
-CreateMap<PaginatedResult<StaffJobLogDto>, PaginationRes<StaffJobLogRes>>();
+            // 5 log tables: project_log, staffjob_log, testreq_log, animalreq_log, additionalcosts_log
+            CreateMap<ProjectLogDto, ProjectLogRes>().ReverseMap();
+            CreateMap<PaginatedResult<ProjectLogDto>, PaginationRes<ProjectLogRes>>();
 
-CreateMap<TestRequirementLogDto, TestRequirementLogRes>().ReverseMap();
-CreateMap<PaginatedResult<TestRequirementLogDto>, PaginationRes<TestRequirementLogRes>>();
+            CreateMap<StaffJobLogDto, StaffJobLogRes>().ReverseMap();
+            CreateMap<PaginatedResult<StaffJobLogDto>, PaginationRes<StaffJobLogRes>>();
 
-CreateMap<AnimalRequestLogDto, AnimalRequestLogRes>().ReverseMap();
-CreateMap<PaginatedResult<AnimalRequestLogDto>, PaginationRes<AnimalRequestLogRes>>();
+            CreateMap<TestRequirementLogDto, TestRequirementLogRes>().ReverseMap();
+            CreateMap<PaginatedResult<TestRequirementLogDto>, PaginationRes<TestRequirementLogRes>>();
 
-CreateMap<AdditionalCostLogDto, AdditionalCostLogRes>().ReverseMap();
-CreateMap<PaginatedResult<AdditionalCostLogDto>, PaginationRes<AdditionalCostLogRes>>();
-// MaintTotalBusinessOverheads
-CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
-CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
+            CreateMap<AnimalRequestLogDto, AnimalRequestLogRes>().ReverseMap();
+            CreateMap<PaginatedResult<AnimalRequestLogDto>, PaginationRes<AnimalRequestLogRes>>();
+
+            CreateMap<AdditionalCostLogDto, AdditionalCostLogRes>().ReverseMap();
+            CreateMap<PaginatedResult<AdditionalCostLogDto>, PaginationRes<AdditionalCostLogRes>>();
+
+            // MaintTotalBusinessOverheads
+            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsReq>().ReverseMap();
+            CreateMap<TotalBusinessOverheadsDto, TotalBusinessOverheadsRes>().ReverseMap();
         }
     }
 }

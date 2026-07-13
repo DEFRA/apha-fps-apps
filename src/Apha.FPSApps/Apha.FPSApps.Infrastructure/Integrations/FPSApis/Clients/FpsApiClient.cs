@@ -1,4 +1,4 @@
-using Apha.FPSApps.Application.Interfaces.FpsApiClients;
+﻿using Apha.FPSApps.Application.Interfaces.FpsApiClients;
 using Apha.FPSApps.Infrastructure.Integrations.HttpExecutor;
 using AutoMapper;
 
@@ -39,6 +39,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         public IFpsGradeApiClient FpsGrade { get; }
         public IFpsTotalBusinessOverheadsApiClient FpsTotalBusinessOverheads { get; }
 
+        public IFpsContributionSummaryApiClient FpsContributionSummary { get; }
         public IFpsProjectAuditTrailApiClient FpsProjectAuditTrail { get; }
 
         public IFpsTestListVlaApiClient FpsTestListVla { get; }
@@ -78,6 +79,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
             FpsTestListVla = new FpsTestListVlaApiClient(http, mapper);
             FpsTestRCCost = new FpsTestRCCostApiClient(http, mapper);
             FpsTestRequirementRCCost = new FpsTestRequirementRCCostApiClient(http, mapper);
+            FpsContributionSummary = new FpsContributionSummaryApiClient(http, mapper);
             FpsProjectAuditTrail = new FpsProjectAuditTrailApiClient(http, mapper);
             FpsTotalBusinessOverheads = new FpsTotalBusinessOverheadsApiClient(http, mapper);
         }
