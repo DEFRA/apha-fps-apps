@@ -160,7 +160,7 @@ namespace Apha.FPS.DataAccess.Repositories
                 return query;
 
             // Backward-compatible global search (non-JSON callers)
-            if (!filter.TrimStart().StartsWith("{"))
+            if (!filter.TrimStart().StartsWith('{'))
             {
                 var term = filter.Trim();
                 return query.Where(e =>
@@ -172,8 +172,18 @@ namespace Apha.FPS.DataAccess.Repositories
             if (filterModel == null)
                 return query;
 
-            var dict = (IDictionary<string, object>)filterModel;
+            return ApplyJsonFilter(query, (IDictionary<string, object>)filterModel);
+        }
 
+        private static IQueryable<TestOrProduct> ApplyJsonFilter(IQueryable<TestOrProduct> query, IDictionary<string, object> dict)
+        {
+            query = ApplyStringFilters(query, dict);
+            query = ApplyDecimalFilters(query, dict);
+            return query;
+        }
+
+        private static IQueryable<TestOrProduct> ApplyStringFilters(IQueryable<TestOrProduct> query, IDictionary<string, object> dict)
+        {
             if (dict.TryGetValue("ItemCode", out var itemCode) && itemCode != null)
                 query = query.Where(x => EF.Functions.ILike(x.ItemCode, $"%{itemCode}%"));
 
@@ -192,6 +202,11 @@ namespace Apha.FPS.DataAccess.Repositories
             if (dict.TryGetValue("Owner", out var owner) && owner != null)
                 query = query.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, $"%{owner}%"));
 
+            return query;
+        }
+
+        private static IQueryable<TestOrProduct> ApplyDecimalFilters(IQueryable<TestOrProduct> query, IDictionary<string, object> dict)
+        {
             if (dict.TryGetValue("UnitPriceVla", out var unitPriceVla) && unitPriceVla != null && decimal.TryParse(unitPriceVla.ToString(), out var vlaPrice))
                 query = query.Where(x => x.UnitPriceVla == vlaPrice);
 
@@ -206,16 +221,24 @@ namespace Apha.FPS.DataAccess.Repositories
         {
             return sortBy?.ToLowerInvariant() switch
             {
-                "itemcode"        => descending ? query.OrderByDescending(e => e.ItemCode)        : query.OrderBy(e => e.ItemCode),
-                "itemdescription" => descending ? query.OrderByDescending(e => e.ItemDescription) : query.OrderBy(e => e.ItemDescription),
-                "shortdescription" => descending ? query.OrderByDescending(e => e.ShortDescription) : query.OrderBy(e => e.ShortDescription),
-                "testmanager"     => descending ? query.OrderByDescending(e => e.TestManager)     : query.OrderBy(e => e.TestManager),
-                "jobstatus"       => descending ? query.OrderByDescending(e => e.JobStatus)       : query.OrderBy(e => e.JobStatus),
-                "owner"           => descending ? query.OrderByDescending(e => e.Owner)           : query.OrderBy(e => e.Owner),
-                "unitpricevla"    => descending ? query.OrderByDescending(e => e.UnitPriceVla)    : query.OrderBy(e => e.UnitPriceVla),
-                "defraunitprice"  => descending ? query.OrderByDescending(e => e.DefraUnitPrice)  : query.OrderBy(e => e.DefraUnitPrice),
+                "itemcode"         => Order(query, e => e.ItemCode, descending),
+                "itemdescription"  => Order(query, e => e.ItemDescription, descending),
+                "shortdescription" => Order(query, e => e.ShortDescription, descending),
+                "testmanager"      => Order(query, e => e.TestManager, descending),
+                "jobstatus"        => Order(query, e => e.JobStatus, descending),
+                "owner"            => Order(query, e => e.Owner, descending),
+                "unitpricevla"     => Order(query, e => e.UnitPriceVla, descending),
+                "defraunitprice"   => Order(query, e => e.DefraUnitPrice, descending),
                 _                  => query.OrderBy(e => e.ItemCode),
             };
+        }
+
+        private static IQueryable<TestOrProduct> Order<TKey>(
+            IQueryable<TestOrProduct> query,
+            System.Linq.Expressions.Expression<Func<TestOrProduct, TKey>> keySelector,
+            bool descending)
+        {
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
         }
     }
 }
