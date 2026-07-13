@@ -1,6 +1,7 @@
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
-using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Pagination;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +14,7 @@ namespace Apha.FPS.Api.Controllers
     /// Manages CRUD for the fps.tbltestrccost resource.
     /// Composite PK: TestCode + ProfitCentre + FpsYear.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin,API-FPSShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/testrccost")]
@@ -29,72 +30,33 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Returns all component charges for a given test code and FPS year.
+        /// Returns all component charges for a given test code for the current FPS year.
         /// </summary>
         /// <param name="testCode">The test code.</param>
-        /// <param name="fpsYear">The FPS year.</param>
-        [HttpGet("{testCode}/{fpsYear:int}")]
-        public async Task<IActionResult> GetByTestCodeAsync(string testCode, int fpsYear)
+        [HttpGet("{testCode}")]
+        public async Task<IActionResult> GetByTestCodeAsync(
+            string testCode,
+            [FromQuery] PaginationReq<string> query)
         {
-            var result = await _service.GetByTestCodeAsync(testCode, fpsYear);
-            return Ok(_mapper.Map<List<TestRCCostRes>>(result));
+            var filter = _mapper.Map<QueryParameters<string>>(query);
+            var result = await _service.GetPagedByTestCodeAsync(filter, testCode);
+            return Ok(_mapper.Map<PaginationRes<TestRCCostRes>>(result));
         }
 
         /// <summary>
-        /// Returns a single component charge by composite key (TestCode + ProfitCentre + FpsYear).
+        /// Returns a single component charge by composite key (TestCode + ProfitCentre) for the current FPS year.
         /// </summary>
         /// <param name="testCode">The test code.</param>
         /// <param name="profitCentre">The profit centre code.</param>
-        /// <param name="fpsYear">The FPS year.</param>
-        [HttpGet("{testCode}/{profitCentre}/{fpsYear:int}")]
-        public async Task<IActionResult> GetByKeyAsync(string testCode, string profitCentre, int fpsYear)
+        [HttpGet("{testCode}/{profitCentre}")]
+        public async Task<IActionResult> GetByKeyAsync(string testCode, string profitCentre)
         {
-            var result = await _service.GetByKeyAsync(testCode, profitCentre, fpsYear);
+            var result = await _service.GetByKeyAsync(testCode, profitCentre);
+
             if (result == null)
-                throw new KeyNotFoundException("Component charge entry not found.");
-            return Ok(_mapper.Map<TestRCCostRes>(result));
-        }
+                return Ok(new TestRCCostRes());
 
-        /// <summary>
-        /// Creates a new component charge entry.
-        /// </summary>
-        /// <param name="req">The create request containing TestCode, ProfitCentre, FpsYear, and Price.</param>
-        [HttpPost]
-        public async Task<IActionResult> CreateAsync([FromBody] TestRCCostReq req)
-        {
-            var dto = _mapper.Map<TestRCCostDto>(req);
-            var result = await _service.CreateAsync(dto);
             return Ok(_mapper.Map<TestRCCostRes>(result));
-        }
-
-        /// <summary>
-        /// Updates an existing component charge entry identified by composite key.
-        /// </summary>
-        /// <param name="testCode">The test code (route key).</param>
-        /// <param name="profitCentre">The profit centre code (route key).</param>
-        /// <param name="fpsYear">The FPS year (route key).</param>
-        /// <param name="req">The update request body.</param>
-        [HttpPut("{testCode}/{profitCentre}/{fpsYear:int}")]
-        public async Task<IActionResult> UpdateAsync(string testCode, string profitCentre, int fpsYear, [FromBody] TestRCCostReq req)
-        {
-            var dto = _mapper.Map<TestRCCostDto>(req);
-            var result = await _service.UpdateAsync(testCode, profitCentre, fpsYear, dto);
-            return Ok(_mapper.Map<TestRCCostRes>(result));
-        }
-
-        /// <summary>
-        /// Deletes a component charge entry by composite key.
-        /// </summary>
-        /// <param name="testCode">The test code.</param>
-        /// <param name="profitCentre">The profit centre code.</param>
-        /// <param name="fpsYear">The FPS year.</param>
-        [HttpDelete("{testCode}/{profitCentre}/{fpsYear:int}")]
-        public async Task<IActionResult> DeleteAsync(string testCode, string profitCentre, int fpsYear)
-        {
-            var isDeleted = await _service.DeleteAsync(testCode, profitCentre, fpsYear);
-            if (!isDeleted)
-                throw new KeyNotFoundException("Component charge entry not found.");
-            return Ok(isDeleted);
         }
     }
 }

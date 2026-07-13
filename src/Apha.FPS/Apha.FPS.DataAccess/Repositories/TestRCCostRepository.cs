@@ -1,21 +1,49 @@
+using System.Dynamic;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
     public class TestRCCostRepository : BaseRepository, ITestRCCostRepository
     {
         private readonly FpsDbContext _dbContext;
+        private readonly IFpsRequestContext _requestContext;
 
-        public TestRCCostRepository(FpsDbContext dbContext) : base(dbContext)
+        public TestRCCostRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
-        public async Task<IEnumerable<TestRCCost>> GetByTestCodeAsync(string testCode, int fpsYear)
+        public async Task<PagedData<TestRCCost>> GetPagedByTestCodeAsync(
+            PaginationParameters<string> query, string testCode)
         {
+            var fpsYear = _requestContext.FpsYear;
+
+            var q = _dbContext.TestRCCosts
+                .AsNoTracking()
+                .Where(e => e.TestCode == testCode && e.FpsYear == fpsYear);
+
+            q = ApplyFilter(q, query.Filter);
+            q = ApplySort(q, query.SortBy, query.Descending);
+
+            var page = Math.Max(query.Page, 1);
+            var pageSize = Math.Max(query.PageSize, 10);
+
+            var result = await q.ToListAsync();
+            return base.ApplyPaging(result, page, pageSize);
+        }
+
+    
+
+        public async Task<IEnumerable<TestRCCost>> GetByTestCodeAsync(string testCode)
+        {
+            var fpsYear = _requestContext.FpsYear;
+
             return await _dbContext.TestRCCosts
                 .AsNoTracking()
                 .Where(e => e.TestCode == testCode && e.FpsYear == fpsYear)
@@ -23,8 +51,10 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<TestRCCost?> GetByKeyAsync(string testCode, string profitCentre, int fpsYear)
+        public async Task<TestRCCost?> GetByKeyAsync(string testCode, string profitCentre)
         {
+            var fpsYear = _requestContext.FpsYear;
+
             return await _dbContext.TestRCCosts
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.TestCode == testCode
@@ -32,8 +62,10 @@ namespace Apha.FPS.DataAccess.Repositories
                                        && e.FpsYear == fpsYear);
         }
 
-        public async Task<bool> ExistsAsync(string testCode, string profitCentre, int fpsYear)
+        public async Task<bool> ExistsAsync(string testCode, string profitCentre)
         {
+            var fpsYear = _requestContext.FpsYear;
+
             return await _dbContext.TestRCCosts
                 .AnyAsync(e => e.TestCode == testCode
                             && e.ProfitCentre == profitCentre
@@ -93,8 +125,10 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<bool> DeleteAsync(string testCode, string profitCentre, int fpsYear)
+        public async Task<bool> DeleteAsync(string testCode, string profitCentre)
         {
+            var fpsYear = _requestContext.FpsYear;
+
             var entity = await _dbContext.TestRCCosts
                 .FirstOrDefaultAsync(e => e.TestCode == testCode
                                        && e.ProfitCentre == profitCentre
@@ -120,6 +154,40 @@ namespace Apha.FPS.DataAccess.Repositories
                     throw;
                 }
             });
+        }
+
+        private static IQueryable<TestRCCost> ApplyFilter(IQueryable<TestRCCost> query, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return query;
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("TestCode", out var testCode) && testCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.TestCode, $"%{testCode}%"));
+
+            if (dict.TryGetValue("ProfitCentre", out var profitCentre) && profitCentre != null)
+                query = query.Where(x => x.ProfitCentre != null && EF.Functions.ILike(x.ProfitCentre, $"%{profitCentre}%"));
+
+            if (dict.TryGetValue("Price", out var priceValue) && priceValue != null && decimal.TryParse(priceValue.ToString(), out var price))
+                query = query.Where(x => x.Price == price);
+
+            return query;
+        }
+
+        private static IQueryable<TestRCCost> ApplySort(IQueryable<TestRCCost> query, string? sortBy, bool descending)
+        {
+            return sortBy?.ToLowerInvariant() switch
+            {
+                "testcode" => descending ? query.OrderByDescending(x => x.TestCode) : query.OrderBy(x => x.TestCode),
+                "profitcentre" => descending ? query.OrderByDescending(x => x.ProfitCentre) : query.OrderBy(x => x.ProfitCentre),
+                "price" => descending ? query.OrderByDescending(x => x.Price) : query.OrderBy(x => x.Price),
+                _ => descending ? query.OrderByDescending(x => x.ProfitCentre) : query.OrderBy(x => x.ProfitCentre)
+            };
         }
     }
 }

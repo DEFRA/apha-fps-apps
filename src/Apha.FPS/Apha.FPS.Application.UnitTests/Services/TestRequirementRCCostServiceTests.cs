@@ -35,16 +35,16 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
             var entities = new List<TestRequirementRCCost> { CreateTestEntity() };
             var dtos = new List<TestRequirementRCCostDto> { CreateTestDto() };
 
-            _repository.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear).Returns(entities);
+            _repository.GetByTestCodeAsync(DefaultTestCode).Returns(entities);
             _mapper.Map<IEnumerable<TestRequirementRCCostDto>>(entities).Returns(dtos);
 
             // Act
-            var result = await _service.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            var result = await _service.GetByTestCodeAsync(DefaultTestCode);
 
             // Assert
             Assert.NotNull(result);
             Assert.Single(result);
-            await _repository.Received(1).GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            await _repository.Received(1).GetByTestCodeAsync(DefaultTestCode);
         }
 
         [Fact]
@@ -54,11 +54,11 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
             var entities = new List<TestRequirementRCCost>();
             var dtos = new List<TestRequirementRCCostDto>();
 
-            _repository.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear).Returns(entities);
+            _repository.GetByTestCodeAsync(DefaultTestCode).Returns(entities);
             _mapper.Map<IEnumerable<TestRequirementRCCostDto>>(entities).Returns(dtos);
 
             // Act
-            var result = await _service.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            var result = await _service.GetByTestCodeAsync(DefaultTestCode);
 
             // Assert
             Assert.Empty(result);
@@ -68,14 +68,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
         public async Task GetByTestCodeAsync_WhitespaceTestCode_ThrowsArgumentException()
         {
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.GetByTestCodeAsync("  ", DefaultFpsYear));
-        }
-
-        [Fact]
-        public async Task GetByTestCodeAsync_InvalidFpsYear_ThrowsArgumentException()
-        {
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.GetByTestCodeAsync(DefaultTestCode, 0));
+                _service.GetByTestCodeAsync("  "));
         }
 
         #endregion
@@ -89,12 +82,12 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
             var entity = CreateTestEntity();
             var dto = CreateTestDto();
 
-            _repository.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear)
+            _repository.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre)
                 .Returns(entity);
             _mapper.Map<TestRequirementRCCostDto>(entity).Returns(dto);
 
             // Act
-            var result = await _service.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear);
+            var result = await _service.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre);
 
             // Assert
             Assert.NotNull(result);
@@ -104,11 +97,11 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
         public async Task GetByKeyAsync_RecordNotFound_ReturnsNull()
         {
             // Arrange
-            _repository.GetByKeyAsync("NOTEXIST", "B999", "PC999", DefaultFpsYear)
+            _repository.GetByKeyAsync("NOTEXIST", "B999", "PC999")
                 .Returns((TestRequirementRCCost?)null);
 
             // Act
-            var result = await _service.GetByKeyAsync("NOTEXIST", "B999", "PC999", DefaultFpsYear);
+            var result = await _service.GetByKeyAsync("NOTEXIST", "B999", "PC999");
 
             // Assert
             Assert.Null(result);
@@ -118,21 +111,14 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
         public async Task GetByKeyAsync_WhitespaceBuyer_ThrowsArgumentException()
         {
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.GetByKeyAsync(DefaultTestCode, "  ", DefaultProfitCentre, DefaultFpsYear));
+                _service.GetByKeyAsync(DefaultTestCode, "  ", DefaultProfitCentre));
         }
 
         [Fact]
         public async Task GetByKeyAsync_WhitespaceProfitCentre_ThrowsArgumentException()
         {
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.GetByKeyAsync(DefaultTestCode, DefaultBuyer, "  ", DefaultFpsYear));
-        }
-
-        [Fact]
-        public async Task GetByKeyAsync_InvalidFpsYear_ThrowsArgumentException()
-        {
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, -1));
+                _service.GetByKeyAsync(DefaultTestCode, DefaultBuyer, "  "));
         }
 
         #endregion
@@ -146,7 +132,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
             var dto = CreateTestDto();
             var entity = CreateTestEntity();
 
-            _repository.ExistsAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear)
+            _repository.ExistsAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre)
                 .Returns(false);
             _mapper.Map<TestRequirementRCCost>(dto).Returns(entity);
             _repository.AddAsync(entity).Returns(entity);
@@ -204,7 +190,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
         {
             // Arrange
             var dto = CreateTestDto();
-            _repository.ExistsAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear)
+            _repository.ExistsAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre)
                 .Returns(true);
 
             // Act & Assert
@@ -223,14 +209,14 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
             var dto = CreateTestDto();
             var entity = CreateTestEntity();
 
-            _repository.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear)
+            _repository.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre)
                 .Returns(entity);
             _mapper.Map<TestRequirementRCCost>(dto).Returns(entity);
             _repository.UpdateAsync(entity).Returns(entity);
             _mapper.Map<TestRequirementRCCostDto>(entity).Returns(dto);
 
             // Act
-            var result = await _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear, dto);
+            var result = await _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, dto);
 
             // Assert
             Assert.NotNull(result);
@@ -241,7 +227,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
         public async Task UpdateAsync_NullDto_ThrowsArgumentNullException()
         {
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear, null!));
+                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, null!));
         }
 
         [Fact]
@@ -250,7 +236,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
             var dto = CreateTestDto();
             dto.TestCode = "DIFFERENT";
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear, dto));
+                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, dto));
         }
 
         [Fact]
@@ -259,7 +245,7 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
             var dto = CreateTestDto();
             dto.Buyer = "DIFFERENT";
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear, dto));
+                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, dto));
         }
 
         [Fact]
@@ -268,28 +254,21 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
             var dto = CreateTestDto();
             dto.ProfitCentre = "DIFFERENT";
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear, dto));
+                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, dto));
         }
 
-        [Fact]
-        public async Task UpdateAsync_FpsYearMismatch_ThrowsArgumentException()
-        {
-            var dto = CreateTestDto();
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, 9999, dto));
-        }
 
         [Fact]
         public async Task UpdateAsync_RecordNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
             var dto = CreateTestDto();
-            _repository.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear)
+            _repository.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre)
                 .Returns((TestRequirementRCCost?)null);
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear, dto));
+                _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, dto));
         }
 
         #endregion
@@ -300,24 +279,24 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
         public async Task DeleteAsync_ExistingRecord_ReturnsTrue()
         {
             // Arrange
-            _repository.DeleteAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear).Returns(true);
+            _repository.DeleteAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre).Returns(true);
 
             // Act
-            var result = await _service.DeleteAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear);
+            var result = await _service.DeleteAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre);
 
             // Assert
             Assert.True(result);
-            await _repository.Received(1).DeleteAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear);
+            await _repository.Received(1).DeleteAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre);
         }
 
         [Fact]
         public async Task DeleteAsync_RecordNotFound_ReturnsFalse()
         {
             // Arrange
-            _repository.DeleteAsync("NOTEXIST", "B999", "PC999", DefaultFpsYear).Returns(false);
+            _repository.DeleteAsync("NOTEXIST", "B999", "PC999").Returns(false);
 
             // Act
-            var result = await _service.DeleteAsync("NOTEXIST", "B999", "PC999", DefaultFpsYear);
+            var result = await _service.DeleteAsync("NOTEXIST", "B999", "PC999");
 
             // Assert
             Assert.False(result);
@@ -327,28 +306,21 @@ namespace Apha.FPS.Application.UnitTests.Services.TestRequirementRCCostServiceTe
         public async Task DeleteAsync_WhitespaceTestCode_ThrowsArgumentException()
         {
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.DeleteAsync("  ", DefaultBuyer, DefaultProfitCentre, DefaultFpsYear));
+                _service.DeleteAsync("  ", DefaultBuyer, DefaultProfitCentre));
         }
 
         [Fact]
         public async Task DeleteAsync_WhitespaceBuyer_ThrowsArgumentException()
         {
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.DeleteAsync(DefaultTestCode, "  ", DefaultProfitCentre, DefaultFpsYear));
+                _service.DeleteAsync(DefaultTestCode, "  ", DefaultProfitCentre));
         }
 
         [Fact]
         public async Task DeleteAsync_WhitespaceProfitCentre_ThrowsArgumentException()
         {
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.DeleteAsync(DefaultTestCode, DefaultBuyer, "  ", DefaultFpsYear));
-        }
-
-        [Fact]
-        public async Task DeleteAsync_InvalidFpsYear_ThrowsArgumentException()
-        {
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                _service.DeleteAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, 0));
+                _service.DeleteAsync(DefaultTestCode, DefaultBuyer, "  "));
         }
 
         #endregion

@@ -1,44 +1,47 @@
+using System.Dynamic;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
 using Apha.FPS.Core.Pagination;
 using Apha.FPS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace Apha.FPS.DataAccess.Repositories
 {
     public class TestListVlaRepository : BaseRepository, ITestListVlaRepository
     {
         private readonly FpsDbContext _dbContext;
+        private readonly IFpsRequestContext _requestContext;
 
-        public TestListVlaRepository(FpsDbContext dbContext) : base(dbContext)
+        public TestListVlaRepository(FpsDbContext dbContext, IFpsRequestContext requestContext) : base(dbContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _requestContext = requestContext ?? throw new ArgumentNullException(nameof(requestContext));
         }
 
         //   filter string is applied as ILike across itemcode and itemdescription
-        public async Task<PagedData<TestOrProduct>> GetPagedAsync(
-            PaginationParameters<string> query, int fpsYear)
+        public async Task<PagedData<TestOrProduct>> GetPagedAsync(PaginationParameters<string> query)
         {
+            var fpsYear = _requestContext.FpsYear;
+
             var q = _dbContext.TestOrProducts
                 .AsNoTracking()
                 .Where(e => e.FpsYear == fpsYear);
 
-            if (!string.IsNullOrWhiteSpace(query.Filter))
-            {
-                var filter = query.Filter.Trim();
-                q = q.Where(e =>
-                    EF.Functions.ILike(e.ItemCode, $"%{filter}%") ||
-                    (e.ItemDescription != null && EF.Functions.ILike(e.ItemDescription, $"%{filter}%")));
-            }
-
+            q = ApplyFilter(q, query.Filter);
             q = ApplySort(q, query.SortBy, query.Descending);
 
+            var page = Math.Max(query.Page, 1);
+            var pageSize = Math.Max(query.PageSize, 10);
+
             var result = await q.ToListAsync();
-            return base.ApplyPaging(result, query.Page > 0 ? query.Page : 1, query.PageSize > 0 ? query.PageSize : 10);
+            return base.ApplyPaging(result, page, pageSize);
         }
 
-        public async Task<IEnumerable<TestOrProduct>> GetAllByYearAsync(int fpsYear)
+        public async Task<IEnumerable<TestOrProduct>> GetAllByYearAsync()
         {
+            var fpsYear = _requestContext.FpsYear;
+
             return await _dbContext.TestOrProducts
                 .AsNoTracking()
                 .Where(e => e.FpsYear == fpsYear)
@@ -46,15 +49,19 @@ namespace Apha.FPS.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<TestOrProduct?> GetByKeyAsync(string itemCode, int fpsYear)
+        public async Task<TestOrProduct?> GetByKeyAsync(string itemCode)
         {
+            var fpsYear = _requestContext.FpsYear;
+
             return await _dbContext.TestOrProducts
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.ItemCode == itemCode && e.FpsYear == fpsYear);
         }
 
-        public async Task<bool> ExistsAsync(string itemCode, int fpsYear)
+        public async Task<bool> ExistsAsync(string itemCode)
         {
+            var fpsYear = _requestContext.FpsYear;
+
             return await _dbContext.TestOrProducts
                 .AnyAsync(e => e.ItemCode == itemCode && e.FpsYear == fpsYear);
         }
@@ -118,8 +125,10 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
-        public async Task<bool> DeleteAsync(string itemCode, int fpsYear)
+        public async Task<bool> DeleteAsync(string itemCode)
         {
+            var fpsYear = _requestContext.FpsYear;
+
             var entity = await _dbContext.TestOrProducts
                 .FirstOrDefaultAsync(e => e.ItemCode == itemCode && e.FpsYear == fpsYear);
 
@@ -145,19 +154,67 @@ namespace Apha.FPS.DataAccess.Repositories
             });
         }
 
+        private static IQueryable<TestOrProduct> ApplyFilter(IQueryable<TestOrProduct> query, string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return query;
+
+            // Backward-compatible global search (non-JSON callers)
+            if (!filter.TrimStart().StartsWith("{"))
+            {
+                var term = filter.Trim();
+                return query.Where(e =>
+                    EF.Functions.ILike(e.ItemCode, $"%{term}%") ||
+                    (e.ItemDescription != null && EF.Functions.ILike(e.ItemDescription, $"%{term}%")));
+            }
+
+            dynamic? filterModel = JsonConvert.DeserializeObject<ExpandoObject>(filter);
+            if (filterModel == null)
+                return query;
+
+            var dict = (IDictionary<string, object>)filterModel;
+
+            if (dict.TryGetValue("ItemCode", out var itemCode) && itemCode != null)
+                query = query.Where(x => EF.Functions.ILike(x.ItemCode, $"%{itemCode}%"));
+
+            if (dict.TryGetValue("ItemDescription", out var itemDescription) && itemDescription != null)
+                query = query.Where(x => x.ItemDescription != null && EF.Functions.ILike(x.ItemDescription, $"%{itemDescription}%"));
+
+            if (dict.TryGetValue("ShortDescription", out var shortDescription) && shortDescription != null)
+                query = query.Where(x => x.ShortDescription != null && EF.Functions.ILike(x.ShortDescription, $"%{shortDescription}%"));
+
+            if (dict.TryGetValue("TestManager", out var testManager) && testManager != null)
+                query = query.Where(x => x.TestManager != null && EF.Functions.ILike(x.TestManager, $"%{testManager}%"));
+
+            if (dict.TryGetValue("JobStatus", out var jobStatus) && jobStatus != null)
+                query = query.Where(x => x.JobStatus != null && EF.Functions.ILike(x.JobStatus, $"%{jobStatus}%"));
+
+            if (dict.TryGetValue("Owner", out var owner) && owner != null)
+                query = query.Where(x => x.Owner != null && EF.Functions.ILike(x.Owner, $"%{owner}%"));
+
+            if (dict.TryGetValue("UnitPriceVla", out var unitPriceVla) && unitPriceVla != null && decimal.TryParse(unitPriceVla.ToString(), out var vlaPrice))
+                query = query.Where(x => x.UnitPriceVla == vlaPrice);
+
+            if (dict.TryGetValue("DefraUnitPrice", out var defraUnitPrice) && defraUnitPrice != null && decimal.TryParse(defraUnitPrice.ToString(), out var defraPrice))
+                query = query.Where(x => x.DefraUnitPrice == defraPrice);
+
+            return query;
+        }
+
         private static IQueryable<TestOrProduct> ApplySort(
             IQueryable<TestOrProduct> query, string? sortBy, bool descending)
         {
-            return sortBy?.ToLower() switch
+            return sortBy?.ToLowerInvariant() switch
             {
                 "itemcode"        => descending ? query.OrderByDescending(e => e.ItemCode)        : query.OrderBy(e => e.ItemCode),
                 "itemdescription" => descending ? query.OrderByDescending(e => e.ItemDescription) : query.OrderBy(e => e.ItemDescription),
+                "shortdescription" => descending ? query.OrderByDescending(e => e.ShortDescription) : query.OrderBy(e => e.ShortDescription),
                 "testmanager"     => descending ? query.OrderByDescending(e => e.TestManager)     : query.OrderBy(e => e.TestManager),
                 "jobstatus"       => descending ? query.OrderByDescending(e => e.JobStatus)       : query.OrderBy(e => e.JobStatus),
                 "owner"           => descending ? query.OrderByDescending(e => e.Owner)           : query.OrderBy(e => e.Owner),
                 "unitpricevla"    => descending ? query.OrderByDescending(e => e.UnitPriceVla)    : query.OrderBy(e => e.UnitPriceVla),
                 "defraunitprice"  => descending ? query.OrderByDescending(e => e.DefraUnitPrice)  : query.OrderBy(e => e.DefraUnitPrice),
-                _                 => query.OrderBy(e => e.ItemCode),
+                _                  => query.OrderBy(e => e.ItemCode),
             };
         }
     }

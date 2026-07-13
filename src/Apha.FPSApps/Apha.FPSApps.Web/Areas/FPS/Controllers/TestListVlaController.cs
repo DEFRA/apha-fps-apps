@@ -62,20 +62,19 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     ShowCheckboxColumn  = false,
                     ShowPagination      = true,
                     KeyProperty         = "ItemCode",
-                    AllowAdd            = true,
-                    AddFunction         = "addTestListVla",
-                    AllowEdit           = true,
-                    EditFunction        = "editTestListVla",
-                    AllowDelete         = true,
-                    DeleteFunction      = "deleteTestListVla",
+                    AllowAdd            = false,
+                    AllowEdit           = false,
+                    AllowDelete         = false,
+                    AllowRowSelection   = true,
+                    RowSelectFunction   = "selectTestListVlaRow",
                     ExtraFilterMethod   = "getTestListVlaExtraFilters",
-                    BindGridUrl         = "/FPS/TestListVla/LoadTestListVlaGrid",
+                    BindGridUrl         = $"/FPS/TestListVla/LoadTestListVlaGrid?year={fpsYear}",
                     Data                = new List<TestListVlaItem>(),
                     Columns             = GridDataProvider.GetColumnsDefination<TestListVlaItem>(),
                     Pagination          = new PaginationModel()
                 },
 
-                // AllowAdd/Edit/Delete = true — tabGridModal + tabDeleteModal exist in HTML prototype
+                // Read-only test requirements listing
                 TestRequirementsGrid = new DataGridConfig<TestRequirementItem>
                 {
                     GridId              = "testRequirementsGrid",
@@ -83,14 +82,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     ShowCheckboxColumn  = false,
                     ShowPagination      = true,
                     KeyProperty         = "Buyer",
-                    AllowAdd            = true,
-                    AddFunction         = "addTestRequirement",
-                    AllowEdit           = true,
-                    EditFunction        = "editTestRequirement",
-                    AllowDelete         = true,
-                    DeleteFunction      = "deleteTestRequirement",
+                    AllowAdd            = false,
+                    AllowEdit           = false,
+                    AllowDelete         = false,
                     ExtraFilterMethod   = "getTestRequirementExtraFilters",
-                    BindGridUrl         = "/FPS/TestListVla/LoadTestRequirementsGrid",
+                    BindGridUrl         = $"/FPS/TestListVla/LoadTestRequirementsGrid?year={fpsYear}",
                     Data                = new List<TestRequirementItem>(),
                     Columns             = GridDataProvider.GetColumnsDefination<TestRequirementItem>(),
                     Pagination          = new PaginationModel()
@@ -104,14 +100,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     ShowCheckboxColumn  = false,
                     ShowPagination      = true,
                     KeyProperty         = "ProfitCentre",
-                    AllowAdd            = true,
-                    AddFunction         = "addComponentChargeGeneral",
-                    AllowEdit           = true,
-                    EditFunction        = "editComponentChargeGeneral",
-                    AllowDelete         = true,
-                    DeleteFunction      = "deleteComponentChargeGeneral",
+                    AllowAdd            = false,
+                    AllowEdit           = false,
+                    AllowDelete         = false,
+                    AllowRowSelection   = true,
+                    RowSelectFunction   = "selectComponentChargeGeneralRow",
                     ExtraFilterMethod   = "getComponentChargesExtraFilters",
-                    BindGridUrl         = "/FPS/TestListVla/LoadComponentChargesGeneralGrid",
+                    BindGridUrl         = $"/FPS/TestListVla/LoadComponentChargesGeneralGrid?year={fpsYear}",
                     Data                = new List<TestRCCostItem>(),
                     Columns             = GridDataProvider.GetColumnsDefination<TestRCCostItem>(),
                     Pagination          = new PaginationModel()
@@ -125,14 +120,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     ShowCheckboxColumn  = false,
                     ShowPagination      = true,
                     KeyProperty         = "ProfitCentre",
-                    AllowAdd            = true,
-                    AddFunction         = "addComponentChargeProject",
-                    AllowEdit           = true,
-                    EditFunction        = "editComponentChargeProject",
-                    AllowDelete         = true,
-                    DeleteFunction      = "deleteComponentChargeProject",
+                    AllowAdd            = false,
+                    AllowEdit           = false,
+                    AllowDelete         = false,
                     ExtraFilterMethod   = "getComponentChargesProjectExtraFilters",
-                    BindGridUrl         = "/FPS/TestListVla/LoadComponentChargesProjectGrid",
+                    BindGridUrl         = $"/FPS/TestListVla/LoadComponentChargesProjectGrid?year={fpsYear}",
                     Data                = new List<TestRequirementRCCostItem>(),
                     Columns             = GridDataProvider.GetColumnsDefination<TestRequirementRCCostItem>(),
                     Pagination          = new PaginationModel()
@@ -145,11 +137,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     Title               = "WorkGroups able to Supply",
                     ShowCheckboxColumn  = false,
                     ShowPagination      = true,
-                    KeyProperty         = "TestCode",
+                    KeyProperty         = "WorkGroup",
                     AllowAdd            = false,
                     AllowEdit           = false,
                     AllowDelete         = false,
-                    BindGridUrl         = "/FPS/TestListVla/LoadSuppliersGrid",
+                    ExtraFilterMethod   = "getSuppliersExtraFilters",
+                    BindGridUrl         = $"/FPS/TestListVla/LoadSuppliersGrid?year={fpsYear}",
                     Data                = new List<TestCapabilityItem>(),
                     Columns             = GridDataProvider.GetColumnsDefination<TestCapabilityItem>(),
                     Pagination          = new PaginationModel()
@@ -189,6 +182,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ? _mapper.Map<List<TestListVlaItem>>(response.Data)
                 : new List<TestListVlaItem>();
 
+            if (!response.Success)
+            {
+                Response.Headers.Append("X-Grid-Load-Error", string.Join(" | ", (response.Errors ?? new List<ApiErrorDto>()).Select(e => e.Message)));
+            }
+
             var paginationModel = response.Pagination is null
                 ? new PaginationModel()
                 : _mapper.Map<PaginationModel>(response.Pagination);
@@ -202,119 +200,18 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowCheckboxColumn  = false,
                 ShowPagination      = true,
                 KeyProperty         = "ItemCode",
-                AllowAdd            = true,
-                AddFunction         = "addTestListVla",
-                AllowEdit           = true,
-                EditFunction        = "editTestListVla",
-                AllowDelete         = true,
-                DeleteFunction      = "deleteTestListVla",
+                AllowAdd            = false,
+                AllowEdit           = false,
+                AllowDelete         = false,
+                AllowRowSelection   = true,
+                RowSelectFunction   = "selectTestListVlaRow",
                 ExtraFilterMethod   = "getTestListVlaExtraFilters",
-                BindGridUrl         = "/FPS/TestListVla/LoadTestListVlaGrid",
+                BindGridUrl         = $"/FPS/TestListVla/LoadTestListVlaGrid?year={fpsYear}",
                 Data                = items,
                 Columns             = GridDataProvider.GetColumnsDefination<TestListVlaItem>(),
                 Pagination          = paginationModel,
                 CurrentFilters      = filterDict
             };
-        }
-
-        // ── MAIN TEST LIST CRUD ───────────────────────────────────────────────
-
-        [HttpGet]
-        public IActionResult CreateTestListVla()
-        {
-            return PartialView("_AddEditTestListVla", new TestListVlaItem { FpsYear = _fpsYearContext.Year });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateTestListVla([FromBody] TestListVlaItem model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new
-                {
-                    success = false,
-                    message = "Please correct the errors below.",
-                    errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                        {
-                            field = kvp.Key,
-                            message = e.ErrorMessage
-                        }))
-                });
-
-            var dto = _mapper.Map<TestListVlaDto>(model);
-            dto.FpsYear = _fpsYearContext.Year;
-            var result = await _testListVlaService.CreateAsync(dto);
-
-            return result.Success
-                ? Json(new { success = true, message = "Test created successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to create test.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditTestListVla(string itemCode)
-        {
-            var fpsYear = _fpsYearContext.Year;
-            var result = await _testListVlaService.GetByIdAsync(itemCode, fpsYear);
-            if (!result.Success)
-                return NotFound();
-
-            var item = _mapper.Map<TestListVlaItem>(result.Data);
-            return PartialView("_AddEditTestListVla", item);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> EditTestListVla([FromBody] TestListVlaItem model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new
-                {
-                    success = false,
-                    message = "Please correct the errors below.",
-                    errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                        {
-                            field = kvp.Key,
-                            message = e.ErrorMessage
-                        }))
-                });
-
-            var fpsYear = _fpsYearContext.Year;
-            var dto = _mapper.Map<TestListVlaDto>(model);
-            var result = await _testListVlaService.UpdateAsync(model.ItemCode, fpsYear, dto);
-
-            return result.Success
-                ? Json(new { success = true, message = "Test updated successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update test.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
-        }
-
-        [HttpDelete]
-        public async Task<IActionResult> DeleteTestListVla(string itemCode)
-        {
-            var fpsYear = _fpsYearContext.Year;
-            var result = await _testListVlaService.DeleteAsync(itemCode, fpsYear);
-            return result.Success
-                ? Json(new { success = true, message = "Test deleted successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete test.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
         }
 
         // ── TEST REQUIREMENTS TAB GRID ────────────────────────────────────────
@@ -340,6 +237,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
+            var fpsYear = _fpsYearContext.Year;
 
             var query = _mapper.Map<QueryParameters<string>>(request);
             var items = new List<TestRequirementItem>();
@@ -366,117 +264,16 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowCheckboxColumn  = false,
                 ShowPagination      = true,
                 KeyProperty         = "Buyer",
-                AllowAdd            = true,
-                AddFunction         = "addTestRequirement",
-                AllowEdit           = true,
-                EditFunction        = "editTestRequirement",
-                AllowDelete         = true,
-                DeleteFunction      = "deleteTestRequirement",
+                AllowAdd            = false,
+                AllowEdit           = false,
+                AllowDelete         = false,
                 ExtraFilterMethod   = "getTestRequirementExtraFilters",
-                BindGridUrl         = "/FPS/TestListVla/LoadTestRequirementsGrid",
+                BindGridUrl         = $"/FPS/TestListVla/LoadTestRequirementsGrid?year={fpsYear}",
                 Data                = items,
                 Columns             = GridDataProvider.GetColumnsDefination<TestRequirementItem>(),
                 Pagination          = paginationModel,
                 CurrentFilters      = filterDict
             };
-        }
-
-        // ── TEST REQUIREMENT CRUD ─────────────────────────────────────────────
-
-        [HttpGet]
-        public IActionResult CreateTestRequirement(string testCode)
-        {
-            return PartialView("_AddEditTestRequirement",
-                new TestRequirementItem { TestCode = testCode, FpsYear = _fpsYearContext.Year });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateTestRequirement([FromBody] TestRequirementItem model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new
-                {
-                    success = false,
-                    message = "Please correct the errors below.",
-                    errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                        {
-                            field = kvp.Key,
-                            message = e.ErrorMessage
-                        }))
-                });
-
-            var dto = _mapper.Map<TestRequirementDto>(model);
-            dto.FpsYear = _fpsYearContext.Year;
-            var result = await _testRequirementService.CreateTestReqmtAsync(dto);
-
-            return result.Success
-                ? Json(new { success = true, message = "Test Requirement created successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to create Test Requirement.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditTestRequirement(string testCode, string buyer)
-        {
-            var result = await _testRequirementService.GetTestReqmtByIdAsync(testCode, buyer);
-            if (!result.Success)
-                return NotFound();
-
-            var item = _mapper.Map<TestRequirementItem>(result.Data);
-            return PartialView("_AddEditTestRequirement", item);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> EditTestRequirement([FromBody] TestRequirementItem model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new
-                {
-                    success = false,
-                    message = "Please correct the errors below.",
-                    errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                        {
-                            field = kvp.Key,
-                            message = e.ErrorMessage
-                        }))
-                });
-
-            var dto = _mapper.Map<TestRequirementDto>(model);
-            var result = await _testRequirementService.UpdateTestReqmtAsync(dto);
-
-            return result.Success
-                ? Json(new { success = true, message = "Test Requirement updated successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update Test Requirement.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
-        }
-
-        [HttpDelete]
-        public async Task<IActionResult> DeleteTestRequirement(string testCode, string buyer)
-        {
-            var result = await _testRequirementService.DeleteTestReqmtAsync(testCode, buyer);
-            return result.Success
-                ? Json(new { success = true, message = "Test Requirement deleted successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete Test Requirement.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
         }
 
         // ── COMPONENT CHARGES GENERAL TAB GRID ───────────────────────────────
@@ -526,14 +323,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowCheckboxColumn  = false,
                 ShowPagination      = true,
                 KeyProperty         = "ProfitCentre",
-                AllowAdd            = true,
-                AddFunction         = "addComponentChargeGeneral",
-                AllowEdit           = true,
-                EditFunction        = "editComponentChargeGeneral",
-                AllowDelete         = true,
-                DeleteFunction      = "deleteComponentChargeGeneral",
+                AllowAdd            = false,
+                AllowEdit           = false,
+                AllowDelete         = false,
+                AllowRowSelection   = true,
+                RowSelectFunction   = "selectComponentChargeGeneralRow",
                 ExtraFilterMethod   = "getComponentChargesExtraFilters",
-                BindGridUrl         = "/FPS/TestListVla/LoadComponentChargesGeneralGrid",
+                BindGridUrl         = $"/FPS/TestListVla/LoadComponentChargesGeneralGrid?year={fpsYear}",
                 Data                = items,
                 Columns             = GridDataProvider.GetColumnsDefination<TestRCCostItem>(),
                 Pagination          = paginationModel,
@@ -541,112 +337,10 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
         }
 
-        // ── COMPONENT CHARGE (GENERAL) CRUD ──────────────────────────────────
-
-        [HttpGet]
-        public IActionResult CreateComponentChargeGeneral(string testCode)
-        {
-            return PartialView("_AddEditComponentCharge",
-                new TestRCCostItem { TestCode = testCode, FpsYear = _fpsYearContext.Year });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateComponentChargeGeneral([FromBody] TestRCCostItem model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new
-                {
-                    success = false,
-                    message = "Please correct the errors below.",
-                    errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                        {
-                            field = kvp.Key,
-                            message = e.ErrorMessage
-                        }))
-                });
-
-            var dto = _mapper.Map<TestRCCostDto>(model);
-            dto.FpsYear = _fpsYearContext.Year;
-            var result = await _fpsApiClient.FpsTestRCCost.CreateAsync(dto);
-
-            return result.Success
-                ? Json(new { success = true, message = "Component charge created successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to create component charge.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditComponentChargeGeneral(string testCode, string profitCentre)
-        {
-            var fpsYear = _fpsYearContext.Year;
-            var result = await _fpsApiClient.FpsTestRCCost.GetByKeyAsync(testCode, profitCentre, fpsYear);
-            if (!result.Success)
-                return NotFound();
-
-            var item = _mapper.Map<TestRCCostItem>(result.Data);
-            return PartialView("_AddEditComponentCharge", item);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> EditComponentChargeGeneral([FromBody] TestRCCostItem model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new
-                {
-                    success = false,
-                    message = "Please correct the errors below.",
-                    errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                        {
-                            field = kvp.Key,
-                            message = e.ErrorMessage
-                        }))
-                });
-
-            var fpsYear = _fpsYearContext.Year;
-            var dto = _mapper.Map<TestRCCostDto>(model);
-            var result = await _fpsApiClient.FpsTestRCCost.UpdateAsync(model.TestCode, model.ProfitCentre, fpsYear, dto);
-
-            return result.Success
-                ? Json(new { success = true, message = "Component charge updated successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update component charge.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
-        }
-
-        [HttpDelete]
-        public async Task<IActionResult> DeleteComponentChargeGeneral(string testCode, string profitCentre)
-        {
-            var fpsYear = _fpsYearContext.Year;
-            var result = await _fpsApiClient.FpsTestRCCost.DeleteAsync(testCode, profitCentre, fpsYear);
-            return result.Success
-                ? Json(new { success = true, message = "Component charge deleted successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete component charge.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
-        }
-
-        // ── COMPONENT CHARGES PROJECT TAB GRID ───────────────────────────────
 
         [HttpPost]
         public async Task<IActionResult> LoadComponentChargesProjectGrid(
-            PaginationFilter<string> request, string? testCode = null)
+            PaginationFilter<string> request, string? testCode = null, string? profitCentre = null)
         {
             if (!ModelState.IsValid)
                 return Json(new
@@ -656,12 +350,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
 
-            var gridConfig = await BuildComponentChargesProjectGridAsync(request, testCode);
+            var gridConfig = await BuildComponentChargesProjectGridAsync(request, testCode, profitCentre);
             return PartialView("_DataGrid", gridConfig);
         }
 
         private async Task<DataGridConfig<TestRequirementRCCostItem>> BuildComponentChargesProjectGridAsync(
-            PaginationFilter<string> request, string? testCode)
+            PaginationFilter<string> request, string? testCode, string? profitCentre)
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
@@ -677,6 +371,13 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     items = _mapper.Map<List<TestRequirementRCCostItem>>(response.Data);
             }
 
+            if (!string.IsNullOrWhiteSpace(profitCentre))
+            {
+                items = items
+                    .Where(x => string.Equals(x.ProfitCentre, profitCentre, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
             paginationModel.SortColumn = request.SortBy;
             paginationModel.SortDirection = request.Descending;
 
@@ -689,14 +390,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                 ShowCheckboxColumn  = false,
                 ShowPagination      = true,
                 KeyProperty         = "ProfitCentre",
-                AllowAdd            = true,
-                AddFunction         = "addComponentChargeProject",
-                AllowEdit           = true,
-                EditFunction        = "editComponentChargeProject",
-                AllowDelete         = true,
-                DeleteFunction      = "deleteComponentChargeProject",
+                AllowAdd            = false,
+                AllowEdit           = false,
+                AllowDelete         = false,
                 ExtraFilterMethod   = "getComponentChargesProjectExtraFilters",
-                BindGridUrl         = "/FPS/TestListVla/LoadComponentChargesProjectGrid",
+                BindGridUrl         = $"/FPS/TestListVla/LoadComponentChargesProjectGrid?year={fpsYear}",
                 Data                = items,
                 Columns             = GridDataProvider.GetColumnsDefination<TestRequirementRCCostItem>(),
                 Pagination          = paginationModel,
@@ -704,109 +402,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             };
         }
 
-        // ── COMPONENT CHARGE (PROJECT-SPECIFIC) CRUD ─────────────────────────
-
-        [HttpGet]
-        public IActionResult CreateComponentChargeProject(string testCode)
-        {
-            return PartialView("_AddEditComponentChargeProject",
-                new TestRequirementRCCostItem { TestCode = testCode, FpsYear = _fpsYearContext.Year });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateComponentChargeProject([FromBody] TestRequirementRCCostItem model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new
-                {
-                    success = false,
-                    message = "Please correct the errors below.",
-                    errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                        {
-                            field = kvp.Key,
-                            message = e.ErrorMessage
-                        }))
-                });
-
-            var dto = _mapper.Map<TestRequirementRCCostDto>(model);
-            dto.FpsYear = _fpsYearContext.Year;
-            var result = await _fpsApiClient.FpsTestRequirementRCCost.CreateAsync(dto);
-
-            return result.Success
-                ? Json(new { success = true, message = "Project component charge created successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to create project component charge.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditComponentChargeProject(
-            string testCode, string buyer, string profitCentre)
-        {
-            var fpsYear = _fpsYearContext.Year;
-            var result = await _fpsApiClient.FpsTestRequirementRCCost.GetByKeyAsync(testCode, buyer, profitCentre, fpsYear);
-            if (!result.Success)
-                return NotFound();
-
-            var item = _mapper.Map<TestRequirementRCCostItem>(result.Data);
-            return PartialView("_AddEditComponentChargeProject", item);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> EditComponentChargeProject([FromBody] TestRequirementRCCostItem model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new
-                {
-                    success = false,
-                    message = "Please correct the errors below.",
-                    errors = ModelState
-                        .Where(kvp => kvp.Value!.Errors.Any())
-                        .SelectMany(kvp => kvp.Value!.Errors.Select(e => new
-                        {
-                            field = kvp.Key,
-                            message = e.ErrorMessage
-                        }))
-                });
-
-            var fpsYear = _fpsYearContext.Year;
-            var dto = _mapper.Map<TestRequirementRCCostDto>(model);
-            var result = await _fpsApiClient.FpsTestRequirementRCCost.UpdateAsync(
-                model.TestCode, model.Buyer, model.ProfitCentre, fpsYear, dto);
-
-            return result.Success
-                ? Json(new { success = true, message = "Project component charge updated successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to update project component charge.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
-        }
-
-        [HttpDelete]
-        public async Task<IActionResult> DeleteComponentChargeProject(
-            string testCode, string buyer, string profitCentre)
-        {
-            var fpsYear = _fpsYearContext.Year;
-            var result = await _fpsApiClient.FpsTestRequirementRCCost.DeleteAsync(testCode, buyer, profitCentre, fpsYear);
-            return result.Success
-                ? Json(new { success = true, message = "Project component charge deleted successfully." })
-                : Json(new
-                {
-                    success = false,
-                    message = result.Errors?.FirstOrDefault()?.Message ?? "Failed to delete project component charge.",
-                    errors = (result.Errors ?? new List<ApiErrorDto>())
-                        .Select(e => new { field = e.Code ?? string.Empty, message = e.Message ?? "An unexpected error occurred." })
-                });
-        }
+       
 
         // ── SUPPLIERS / WORKGROUPS TAB GRID ───────────────────────────────────
 
@@ -831,6 +427,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
         {
             var filterDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(request.Filter ?? "{}")
                              ?? new Dictionary<string, string>();
+            var fpsYear = _fpsYearContext.Year;
 
             var query = _mapper.Map<QueryParameters<string>>(request);
             var items = new List<TestCapabilityItem>();
@@ -839,7 +436,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             if (!string.IsNullOrEmpty(testCode))
             {
                 // maps to testCode here (capability items keyed by TestCode)
-                var response = await _testCapabilityService.GetPagedTestCapabilityByPortfolioAsync(query, testCode);
+                var response = await _testCapabilityService.GetPagedByTestCodeAsync(query, testCode);
                 if (response.Success && response.Data != null)
                     items = _mapper.Map<List<TestCapabilityItem>>(response.Data);
                 if (response.Pagination is not null)
@@ -857,11 +454,12 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
                     : $"WorkGroups able to Supply {testCode}",
                 ShowCheckboxColumn  = false,
                 ShowPagination      = true,
-                KeyProperty         = "TestCode",
+                KeyProperty         = "WorkGroup",
                 AllowAdd            = false,
                 AllowEdit           = false,
                 AllowDelete         = false,
-                BindGridUrl         = "/FPS/TestListVla/LoadSuppliersGrid",
+                ExtraFilterMethod   = "getSuppliersExtraFilters",
+                BindGridUrl         = $"/FPS/TestListVla/LoadSuppliersGrid?year={fpsYear}",
                 Data                = items,
                 Columns             = GridDataProvider.GetColumnsDefination<TestCapabilityItem>(),
                 Pagination          = paginationModel,

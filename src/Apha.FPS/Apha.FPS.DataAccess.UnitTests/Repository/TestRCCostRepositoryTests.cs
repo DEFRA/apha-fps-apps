@@ -34,7 +34,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
                 testRCCosts ?? Enumerable.Empty<TestRCCost>());
             mockContext.Setup(x => x.TestRCCosts).Returns(testRCCostSet.Object);
 
-            return new TestRCCostRepository(mockContext.Object);
+            return new TestRCCostRepository(mockContext.Object, mockRequestContext.Object);
         }
 
         #region GetByTestCodeAsync
@@ -51,7 +51,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
             var repo = CreateRepository(entities);
 
             // Act
-            var result = await repo.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            var result = await repo.GetByTestCodeAsync(DefaultTestCode);
 
             // Assert
             Assert.Equal(2, result.Count());
@@ -65,7 +65,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
             var repo = CreateRepository(entities);
 
             // Act
-            var result = await repo.GetByTestCodeAsync("NOTEXIST", DefaultFpsYear);
+            var result = await repo.GetByTestCodeAsync("NOTEXIST");
 
             // Assert
             Assert.Empty(result);
@@ -76,10 +76,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
         {
             // Arrange
             var entities = new List<TestRCCost> { CreateEntity(DefaultTestCode, DefaultProfitCentre) };
-            var repo = CreateRepository(entities);
+            var repo = CreateRepository(entities, 9999);
 
             // Act
-            var result = await repo.GetByTestCodeAsync(DefaultTestCode, 9999);
+            var result = await repo.GetByTestCodeAsync(DefaultTestCode);
 
             // Assert
             Assert.Empty(result);
@@ -97,7 +97,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
             var repo = CreateRepository(entities);
 
             // Act
-            var result = await repo.GetByKeyAsync(DefaultTestCode, DefaultProfitCentre, DefaultFpsYear);
+            var result = await repo.GetByKeyAsync(DefaultTestCode, DefaultProfitCentre);
 
             // Assert
             Assert.NotNull(result);
@@ -111,7 +111,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
             var repo = CreateRepository(Enumerable.Empty<TestRCCost>());
 
             // Act
-            var result = await repo.GetByKeyAsync("NOTEXIST", "PC999", DefaultFpsYear);
+            var result = await repo.GetByKeyAsync("NOTEXIST", "PC999");
 
             // Assert
             Assert.Null(result);
@@ -125,7 +125,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
             var repo = CreateRepository(entities);
 
             // Act
-            var result = await repo.GetByKeyAsync(DefaultTestCode, "WRONG_PC", DefaultFpsYear);
+            var result = await repo.GetByKeyAsync(DefaultTestCode, "WRONG_PC");
 
             // Assert
             Assert.Null(result);
@@ -143,7 +143,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
             var repo = CreateRepository(entities);
 
             // Act
-            var result = await repo.ExistsAsync(DefaultTestCode, DefaultProfitCentre, DefaultFpsYear);
+            var result = await repo.ExistsAsync(DefaultTestCode, DefaultProfitCentre);
 
             // Assert
             Assert.True(result);
@@ -156,7 +156,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
             var repo = CreateRepository(Enumerable.Empty<TestRCCost>());
 
             // Act
-            var result = await repo.ExistsAsync("NOTEXIST", "PC999", DefaultFpsYear);
+            var result = await repo.ExistsAsync("NOTEXIST", "PC999");
 
             // Assert
             Assert.False(result);
@@ -179,7 +179,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestRCCostRepositoryTest
             var repo = CreateRepository(entities);
 
             // Act
-            var result = (await repo.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear)).ToList();
+            var result = (await repo.GetByTestCodeAsync(DefaultTestCode)).ToList();
 
             // Assert
             Assert.Equal(3, result.Count);

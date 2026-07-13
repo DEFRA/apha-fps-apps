@@ -15,7 +15,7 @@ namespace Apha.FPS.Api.Controllers
     /// Manages test list CRUD for the VLA (fps.testorproduct) resource.
     /// Composite PK: ItemCode + FpsYear.
     /// </summary>
-    [Authorize(Roles = "API-FPSUser,API-FPSAdmin")]
+    [Authorize(Roles = "API-FPSUser,API-FPSAdmin,API-FPSShared")]
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/testlistvla")]
@@ -31,47 +31,42 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Returns a paged list of TestOrProduct VLA entries for a given FPS year.
+        /// Returns a paged list of TestOrProduct VLA entries for the current FPS year.
         /// </summary>
         /// <param name="query">Pagination and sorting parameters.</param>
-        /// <param name="fpsYear">The FPS year to filter by (required).</param>
         [HttpGet]
-        public async Task<IActionResult> GetAllAsync(
-            [FromQuery] QueryParameters<string> query,
-            [FromQuery] int fpsYear)
+        public async Task<IActionResult> GetAllAsync([FromQuery] QueryParameters<string> query)
         {
-            var result = await _service.GetAllAsync(query, fpsYear);
+            var result = await _service.GetAllAsync(query);
             return Ok(_mapper.Map<PaginationRes<TestListVlaRes>>(result));
         }
 
         /// <summary>
-        /// Returns an unpaged list of TestOrProduct VLA entries for a given FPS year.
+        /// Returns an unpaged list of TestOrProduct VLA entries for the current FPS year.
         /// Used for frontend select-list / lookup population.
         /// </summary>
-        /// <param name="fpsYear">The FPS year to filter by (required).</param>
         [HttpGet("lookup")]
-        public async Task<IActionResult> GetAllByYearAsync([FromQuery] int fpsYear)
+        public async Task<IActionResult> GetAllByYearAsync()
         {
-            var result = await _service.GetAllByYearAsync(fpsYear);
+            var result = await _service.GetAllByYearAsync();
             return Ok(_mapper.Map<List<TestListVlaRes>>(result));
         }
 
         /// <summary>
-        /// Returns a single TestOrProduct VLA entry by composite key (ItemCode + FpsYear).
+        /// Returns a single TestOrProduct VLA entry by key (ItemCode) for the current FPS year.
         /// </summary>
         /// <param name="itemCode">The item code.</param>
-        /// <param name="fpsYear">The FPS year.</param>
-        [HttpGet("{itemCode}/{fpsYear:int}")]
-        public async Task<IActionResult> GetByIdAsync(string itemCode, int fpsYear)
+        [HttpGet("{itemCode}")]
+        public async Task<IActionResult> GetByIdAsync(string itemCode)
         {
-            var result = await _service.GetByKeyAsync(itemCode, fpsYear);
+            var result = await _service.GetByKeyAsync(itemCode);
             if (result == null)
                 throw new KeyNotFoundException("Test list entry not found.");
             return Ok(_mapper.Map<TestListVlaRes>(result));
         }
 
         /// <summary>
-        /// Creates a new TestOrProduct VLA entry.
+        /// Creates a new TestOrProduct VLA entry for the FPS year from the request context.
         /// </summary>
         /// <param name="req">The create request containing all writable fields.</param>
         [HttpPost]
@@ -83,28 +78,26 @@ namespace Apha.FPS.Api.Controllers
         }
 
         /// <summary>
-        /// Updates an existing TestOrProduct VLA entry identified by composite key.
+        /// Updates an existing TestOrProduct VLA entry identified by item code for the current FPS year.
         /// </summary>
         /// <param name="itemCode">The item code (route key).</param>
-        /// <param name="fpsYear">The FPS year (route key).</param>
         /// <param name="req">The update request body.</param>
-        [HttpPut("{itemCode}/{fpsYear:int}")]
-        public async Task<IActionResult> UpdateAsync(string itemCode, int fpsYear, [FromBody] TestListVlaReq req)
+        [HttpPut("{itemCode}")]
+        public async Task<IActionResult> UpdateAsync(string itemCode, [FromBody] TestListVlaReq req)
         {
             var dto = _mapper.Map<TestListVlaDto>(req);
-            var result = await _service.UpdateAsync(itemCode, fpsYear, dto);
+            var result = await _service.UpdateAsync(itemCode, dto);
             return Ok(_mapper.Map<TestListVlaRes>(result));
         }
 
         /// <summary>
-        /// Deletes a TestOrProduct VLA entry by composite key.
+        /// Deletes a TestOrProduct VLA entry by item code for the current FPS year.
         /// </summary>
         /// <param name="itemCode">The item code.</param>
-        /// <param name="fpsYear">The FPS year.</param>
-        [HttpDelete("{itemCode}/{fpsYear:int}")]
-        public async Task<IActionResult> DeleteAsync(string itemCode, int fpsYear)
+        [HttpDelete("{itemCode}")]
+        public async Task<IActionResult> DeleteAsync(string itemCode)
         {
-            var isDeleted = await _service.DeleteAsync(itemCode, fpsYear);
+            var isDeleted = await _service.DeleteAsync(itemCode);
             if (!isDeleted)
                 throw new KeyNotFoundException("Test list entry not found.");
             return Ok(isDeleted);

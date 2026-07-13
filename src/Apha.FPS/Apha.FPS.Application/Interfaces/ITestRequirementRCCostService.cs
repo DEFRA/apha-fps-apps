@@ -1,4 +1,5 @@
 using Apha.FPS.Application.Dtos;
+using Apha.FPS.Application.Pagination;
 
 namespace Apha.FPS.Application.Interfaces
 {
@@ -9,14 +10,16 @@ namespace Apha.FPS.Application.Interfaces
     /// </summary>
     public interface ITestRequirementRCCostService
     {
-        Task<IEnumerable<TestRequirementRCCostDto>> GetByTestCodeAsync(string testCode, int fpsYear);
+        Task<PaginatedResult<TestRequirementRCCostDto>> GetPagedByTestCodeAsync(QueryParameters<string> query, string testCode);
 
-        Task<TestRequirementRCCostDto?> GetByKeyAsync(string testCode, string buyer, string profitCentre, int fpsYear);
+        Task<IEnumerable<TestRequirementRCCostDto>> GetByTestCodeAsync(string testCode);
+
+        Task<TestRequirementRCCostDto?> GetByKeyAsync(string testCode, string buyer, string profitCentre);
 
         Task<TestRequirementRCCostDto> CreateAsync(TestRequirementRCCostDto dto);
 
-        Task<TestRequirementRCCostDto> UpdateAsync(string testCode, string buyer, string profitCentre, int fpsYear, TestRequirementRCCostDto dto);
+        Task<TestRequirementRCCostDto> UpdateAsync(string testCode, string buyer, string profitCentre, TestRequirementRCCostDto dto);
 
-        Task<bool> DeleteAsync(string testCode, string buyer, string profitCentre, int fpsYear);
+        Task<bool> DeleteAsync(string testCode, string buyer, string profitCentre);
     }
 }

@@ -62,29 +62,31 @@
 
                     @* ── Tab: Component Charges ─────────────────────────────── *@
                     <div class="govuk-tabs__panel" id="tab-component-charges">
-                        <div class="govuk-grid-row sup_flex_row">
-                            <div class="govuk-grid-column-one-half">
+                        <div class="component-charges-layout">
+                            <div class="component-charges-column">
                                 <div id="gridContainer_componentChargesGeneralGrid">
                                     @await Html.PartialAsync("_DataGrid", Model.ComponentChargesGeneralGrid)
                                 </div>
-                                <div class="govuk-grid-row govuk-!-margin-top-2">
+                                <div class="govuk-grid-row govuk-!-margin-top-1">
                                     <div class="govuk-grid-column-full">
                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-1"
                                                for="stage2-component-total">Component Total Price</label>
                                         <input class="govuk-input govuk-input--width-10"
                                                id="stage2-component-total"
-                                               type="text" disabled />
+                                               type="text" disabled
+                                               style="font-weight: bold; color: #000000;" />
                                     </div>
                                     <div class="govuk-grid-column-full govuk-!-margin-top-2">
                                         <label class="govuk-label govuk-label--s govuk-!-margin-bottom-1"
                                                for="stage2-vla-unit-price">VLA Unit Price</label>
                                         <input class="govuk-input govuk-input--width-10"
                                                id="stage2-vla-unit-price"
-                                               type="text" disabled />
+                                               type="text" disabled
+                                               style="font-weight: bold; color: #000000;" />
                                     </div>
                                 </div>
                             </div>
-                            <div class="govuk-grid-column-one-half">
+                            <div class="component-charges-column">
                                 <div id="gridContainer_componentChargesProjectGrid">
                                     @await Html.PartialAsync("_DataGrid", Model.ComponentChargesProjectGrid)
                                 </div>
@@ -111,253 +113,5 @@
 
 @section Scripts {
     <script src="~/js/common/_govuk_tabs.js"></script>
-    <script>
-        // ── State ───────────────────────────────────────────────────────────────
-        var selectedTestCode = '';
-
-        // ── Grid reload helpers ─────────────────────────────────────────────────
-
-        function reloadTestListVlaGrid() {
-            var gm = window['gridManager_testListVlaGrid'];
-            if (gm) { gm.reloadGrid({ page: 1 }); }
-        }
-
-        function reloadTestRequirementsGrid() {
-            var gm = window['gridManager_testRequirementsGrid'];
-            if (gm) { gm.reloadGrid({ page: 1 }); }
-        }
-
-        function reloadComponentChargesGeneralGrid() {
-            var gm = window['gridManager_componentChargesGeneralGrid'];
-            if (gm) { gm.reloadGrid({ page: 1 }); }
-        }
-
-        function reloadComponentChargesProjectGrid() {
-            var gm = window['gridManager_componentChargesProjectGrid'];
-            if (gm) { gm.reloadGrid({ page: 1 }); }
-        }
-
-        function reloadSuppliersGrid() {
-            var gm = window['gridManager_suppliersGrid'];
-            if (gm) { gm.reloadGrid({ page: 1 }); }
-        }
-
-        function reloadAllTabGrids() {
-            reloadTestRequirementsGrid();
-            reloadComponentChargesGeneralGrid();
-            reloadComponentChargesProjectGrid();
-            reloadSuppliersGrid();
-        }
-
-        // ── Extra-filter methods (called automatically by _DataGrid on every reload) ──
-
-        function getTestListVlaExtraFilters() {
-            return {};
-        }
-
-        function getTestRequirementExtraFilters() {
-            return { testCode: selectedTestCode };
-        }
-
-        function getComponentChargesExtraFilters() {
-            return { testCode: selectedTestCode };
-        }
-
-        function getComponentChargesProjectExtraFilters() {
-            return { testCode: selectedTestCode };
-        }
-
-        // ── Parent row selection (clicking a TestListVla row updates child grids) ──
-
-        function selectTestListVlaRow(btn) {
-            var itemCode = $(btn).data('id');
-            if (!itemCode) { return; }
-            selectedTestCode = itemCode;
-
-            // Highlight selected row
-            $('#tbl_testListVlaGrid tbody tr').removeClass('selected-row');
-            $(btn).closest('tr').addClass('selected-row');
-
-            reloadAllTabGrids();
-        }
-
-        // ── Main TestListVla CRUD ───────────────────────────────────────────────
-
-        function addTestListVla() {
-            $.get('/FPS/TestListVla/CreateTestListVla', function (html) {
-                $('#modaPopupBody').html(html);
-                $('#modalPopup').addClass('show');
-            });
-        }
-
-        function editTestListVla(btn) {
-            var itemCode = $(btn).data('id');
-            $.get('/FPS/TestListVla/EditTestListVla', { itemCode: itemCode }, function (html) {
-                $('#modaPopupBody').html(html);
-                $('#modalPopup').addClass('show');
-            });
-        }
-
-        function deleteTestListVla(btn) {
-            var itemCode = $(btn).data('id');
-            if (confirm('Are you sure you want to delete this test record?')) {
-                $.ajax({
-                    url: '/FPS/TestListVla/DeleteTestListVla?itemCode=' + encodeURIComponent(itemCode),
-                    type: 'DELETE',
-                    success: function (response) {
-                        if (response.success) {
-                            alert('Test deleted successfully.');
-                            reloadTestListVlaGrid();
-                            if (selectedTestCode === itemCode) {
-                                selectedTestCode = '';
-                                reloadAllTabGrids();
-                            }
-                        } else {
-                            alert('Error: ' + (response.message || 'Delete failed.'));
-                        }
-                    },
-                    error: function () { alert('An error occurred while deleting.'); }
-                });
-            }
-        }
-
-        // ── Test Requirement CRUD ───────────────────────────────────────────────
-
-        function addTestRequirement() {
-            if (!selectedTestCode) {
-                alert('Please select a test from the list above first.');
-                return;
-            }
-            $.get('/FPS/TestListVla/CreateTestRequirement', { testCode: selectedTestCode }, function (html) {
-                $('#modaPopupBody').html(html);
-                $('#modalPopup').addClass('show');
-            });
-        }
-
-        function editTestRequirement(btn) {
-            var buyer = $(btn).data('id');
-            $.get('/FPS/TestListVla/EditTestRequirement',
-                { testCode: selectedTestCode, buyer: buyer },
-                function (html) {
-                    $('#modaPopupBody').html(html);
-                    $('#modalPopup').addClass('show');
-                });
-        }
-
-        function deleteTestRequirement(btn) {
-            var buyer = $(btn).data('id');
-            if (confirm('Are you sure you want to delete this test requirement?')) {
-                $.ajax({
-                    url: '/FPS/TestListVla/DeleteTestRequirement?testCode=' +
-                         encodeURIComponent(selectedTestCode) + '&buyer=' + encodeURIComponent(buyer),
-                    type: 'DELETE',
-                    success: function (response) {
-                        if (response.success) {
-                            alert('Test requirement deleted successfully.');
-                            reloadTestRequirementsGrid();
-                        } else {
-                            alert('Error: ' + (response.message || 'Delete failed.'));
-                        }
-                    },
-                    error: function () { alert('An error occurred while deleting.'); }
-                });
-            }
-        }
-
-        // ── Component Charge (General / RC Cost) CRUD ──────────────────────────
-
-        function addComponentChargeGeneral() {
-            if (!selectedTestCode) {
-                alert('Please select a test from the list above first.');
-                return;
-            }
-            $.get('/FPS/TestListVla/CreateComponentChargeGeneral', { testCode: selectedTestCode }, function (html) {
-                $('#modaPopupBody').html(html);
-                $('#modalPopup').addClass('show');
-            });
-        }
-
-        function editComponentChargeGeneral(btn) {
-            var profitCentre = $(btn).data('id');
-            $.get('/FPS/TestListVla/EditComponentChargeGeneral',
-                { testCode: selectedTestCode, profitCentre: profitCentre },
-                function (html) {
-                    $('#modaPopupBody').html(html);
-                    $('#modalPopup').addClass('show');
-                });
-        }
-
-        function deleteComponentChargeGeneral(btn) {
-            var profitCentre = $(btn).data('id');
-            if (confirm('Are you sure you want to delete this component charge?')) {
-                $.ajax({
-                    url: '/FPS/TestListVla/DeleteComponentChargeGeneral?testCode=' +
-                         encodeURIComponent(selectedTestCode) + '&profitCentre=' + encodeURIComponent(profitCentre),
-                    type: 'DELETE',
-                    success: function (response) {
-                        if (response.success) {
-                            alert('Component charge deleted successfully.');
-                            reloadComponentChargesGeneralGrid();
-                        } else {
-                            alert('Error: ' + (response.message || 'Delete failed.'));
-                        }
-                    },
-                    error: function () { alert('An error occurred while deleting.'); }
-                });
-            }
-        }
-
-        // ── Component Charge (Project-specific) CRUD ───────────────────────────
-
-        function addComponentChargeProject() {
-            if (!selectedTestCode) {
-                alert('Please select a test from the list above first.');
-                return;
-            }
-            $.get('/FPS/TestListVla/CreateComponentChargeProject', { testCode: selectedTestCode }, function (html) {
-                $('#modaPopupBody').html(html);
-                $('#modalPopup').addClass('show');
-            });
-        }
-
-        function editComponentChargeProject(btn) {
-            var profitCentre = $(btn).data('id');
-            var buyer = $(btn).data('buyer') || '';
-            $.get('/FPS/TestListVla/EditComponentChargeProject',
-                { testCode: selectedTestCode, buyer: buyer, profitCentre: profitCentre },
-                function (html) {
-                    $('#modaPopupBody').html(html);
-                    $('#modalPopup').addClass('show');
-                });
-        }
-
-        function deleteComponentChargeProject(btn) {
-            var profitCentre = $(btn).data('id');
-            var buyer = $(btn).data('buyer') || '';
-            if (confirm('Are you sure you want to delete this project component charge?')) {
-                $.ajax({
-                    url: '/FPS/TestListVla/DeleteComponentChargeProject?testCode=' +
-                         encodeURIComponent(selectedTestCode) + '&buyer=' + encodeURIComponent(buyer) +
-                         '&profitCentre=' + encodeURIComponent(profitCentre),
-                    type: 'DELETE',
-                    success: function (response) {
-                        if (response.success) {
-                            alert('Project component charge deleted successfully.');
-                            reloadComponentChargesProjectGrid();
-                        } else {
-                            alert('Error: ' + (response.message || 'Delete failed.'));
-                        }
-                    },
-                    error: function () { alert('An error occurred while deleting.'); }
-                });
-            }
-        }
-
-        // ── Shared modal close ──────────────────────────────────────────────────
-
-        function closeModal() {
-            $('#modaPopupBody').html('');
-            $('#modalPopup').removeClass('show');
-        }
-    </script>
+    <script src="~/js/fps_js/TestListVla.js"></script>
 }

@@ -81,3 +81,26 @@
     content: none !important;
     display: none !important;
 }
+
+#tab-component-charges.govuk-tabs__panel {
+    clear: both;
+    padding: 8px 0 0 0;
+    margin: 0;
+}
+
+.component-charges-layout {
+    display: flex;
+    width: 100%;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin: 0;
+    padding: 0;
+}
+
+.component-charges-column {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+}

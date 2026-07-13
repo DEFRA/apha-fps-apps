@@ -19,7 +19,7 @@ namespace Apha.FPSApps.Web.Areas.FPS.Models
 
         // Maps to DTO UnitPrice (agreed/agency price per test)
         [Required(ErrorMessage = "AgPrice is required.")]
-        [Display(Name = "AgPrice")]
+        [Display(Name = "Agr Price")]
         [GridColumn(Order = 3, Width = 90, Type = GridColumnType.GbpValue, IsFilterable = false)]
         public decimal? UnitPrice { get; set; }
 

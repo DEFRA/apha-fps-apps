@@ -12,18 +12,18 @@ namespace Apha.FPS.Core.Interfaces
     public interface ITestListVlaRepository
     {
         //   string filter used as search prefix across itemcode / itemdescription
-        Task<PagedData<TestOrProduct>> GetPagedAsync(PaginationParameters<string> query, int fpsYear);
+        Task<PagedData<TestOrProduct>> GetPagedAsync(PaginationParameters<string> query);
 
-        Task<IEnumerable<TestOrProduct>> GetAllByYearAsync(int fpsYear);
+        Task<IEnumerable<TestOrProduct>> GetAllByYearAsync();
 
-        Task<TestOrProduct?> GetByKeyAsync(string itemCode, int fpsYear);
+        Task<TestOrProduct?> GetByKeyAsync(string itemCode);
 
-        Task<bool> ExistsAsync(string itemCode, int fpsYear);
+        Task<bool> ExistsAsync(string itemCode);
 
         Task<TestOrProduct> AddAsync(TestOrProduct testOrProduct);
 
         Task<TestOrProduct> UpdateAsync(TestOrProduct testOrProduct);
 
-        Task<bool> DeleteAsync(string itemCode, int fpsYear);
+        Task<bool> DeleteAsync(string itemCode);
     }
 }

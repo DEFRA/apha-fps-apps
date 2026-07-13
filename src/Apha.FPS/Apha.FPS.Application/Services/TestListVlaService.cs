@@ -26,33 +26,26 @@ namespace Apha.FPS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<PaginatedResult<TestListVlaDto>> GetAllAsync(QueryParameters<string> query, int fpsYear)
+        public async Task<PaginatedResult<TestListVlaDto>> GetAllAsync(QueryParameters<string> query)
         {
             ArgumentNullException.ThrowIfNull(query);
-            if (fpsYear <= 0)
-                throw new ArgumentException("FpsYear must be a positive integer.", nameof(fpsYear));
 
             var paginationParams = _mapper.Map<PaginationParameters<string>>(query);
-            var pagedData = await _repository.GetPagedAsync(paginationParams, fpsYear);
+            var pagedData = await _repository.GetPagedAsync(paginationParams);
             return _mapper.Map<PaginatedResult<TestListVlaDto>>(pagedData);
         }
 
-        public async Task<IEnumerable<TestListVlaDto>> GetAllByYearAsync(int fpsYear)
+        public async Task<IEnumerable<TestListVlaDto>> GetAllByYearAsync()
         {
-            if (fpsYear <= 0)
-                throw new ArgumentException("FpsYear must be a positive integer.", nameof(fpsYear));
-
-            var entities = await _repository.GetAllByYearAsync(fpsYear);
+            var entities = await _repository.GetAllByYearAsync();
             return _mapper.Map<IEnumerable<TestListVlaDto>>(entities);
         }
 
-        public async Task<TestListVlaDto?> GetByKeyAsync(string itemCode, int fpsYear)
+        public async Task<TestListVlaDto?> GetByKeyAsync(string itemCode)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(itemCode);
-            if (fpsYear <= 0)
-                throw new ArgumentException("FpsYear must be a positive integer.", nameof(fpsYear));
 
-            var entity = await _repository.GetByKeyAsync(itemCode, fpsYear);
+            var entity = await _repository.GetByKeyAsync(itemCode);
             return entity == null ? null : _mapper.Map<TestListVlaDto>(entity);
         }
 
@@ -69,10 +62,10 @@ namespace Apha.FPS.Application.Services
                     $"Owner value '{dto.Owner}' is not valid. Allowed values: {string.Join(", ", ValidOwnerValues)}.",
                     nameof(dto));
 
-            var exists = await _repository.ExistsAsync(dto.ItemCode, dto.FpsYear);
+            var exists = await _repository.ExistsAsync(dto.ItemCode);
             if (exists)
                 throw new InvalidOperationException(
-                    $"A TestOrProduct VLA entry with ItemCode '{dto.ItemCode}' and FpsYear '{dto.FpsYear}' already exists.");
+                    $"A TestOrProduct VLA entry with ItemCode '{dto.ItemCode}' already exists for the current FPS year.");
 
             var entity = _mapper.Map<TestOrProduct>(dto);
             var created = await _repository.AddAsync(entity);
@@ -80,40 +73,36 @@ namespace Apha.FPS.Application.Services
         }
 
         //   Guards: null check, route-key/body-key consistency, existence check, owner value validation
-        public async Task<TestListVlaDto> UpdateAsync(string itemCode, int fpsYear, TestListVlaDto dto)
+        public async Task<TestListVlaDto> UpdateAsync(string itemCode, TestListVlaDto dto)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(itemCode);
-            if (fpsYear <= 0)
-                throw new ArgumentException("FpsYear must be a positive integer.", nameof(fpsYear));
             ArgumentNullException.ThrowIfNull(dto);
             ArgumentException.ThrowIfNullOrWhiteSpace(dto.ItemCode);
 
-            if (!string.Equals(itemCode, dto.ItemCode, StringComparison.OrdinalIgnoreCase) || fpsYear != dto.FpsYear)
+            if (!string.Equals(itemCode, dto.ItemCode, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException(
-                    "Route keys (itemCode, fpsYear) must match the DTO body keys.");
+                    "Route key (itemCode) must match the DTO body key.");
 
             if (dto.Owner != null && !ValidOwnerValues.Contains(dto.Owner))
                 throw new ArgumentException(
                     $"Owner value '{dto.Owner}' is not valid. Allowed values: {string.Join(", ", ValidOwnerValues)}.",
                     nameof(dto));
 
-            var existing = await _repository.GetByKeyAsync(itemCode, fpsYear);
+            var existing = await _repository.GetByKeyAsync(itemCode);
             if (existing == null)
                 throw new KeyNotFoundException(
-                    $"TestOrProduct VLA entry with ItemCode '{itemCode}' and FpsYear '{fpsYear}' was not found.");
+                    $"TestOrProduct VLA entry with ItemCode '{itemCode}' was not found for the current FPS year.");
 
             var entity = _mapper.Map<TestOrProduct>(dto);
             var updated = await _repository.UpdateAsync(entity);
             return _mapper.Map<TestListVlaDto>(updated);
         }
 
-        public async Task<bool> DeleteAsync(string itemCode, int fpsYear)
+        public async Task<bool> DeleteAsync(string itemCode)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(itemCode);
-            if (fpsYear <= 0)
-                throw new ArgumentException("FpsYear must be a positive integer.", nameof(fpsYear));
 
-            return await _repository.DeleteAsync(itemCode, fpsYear);
+            return await _repository.DeleteAsync(itemCode);
         }
     }
 }

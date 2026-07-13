@@ -45,11 +45,11 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
                 PaginationData = new Pagination { TotalRecords = 1 }
             };
 
-            _service.GetAllAsync(query, DefaultFpsYear).Returns(serviceResult);
+            _service.GetAllAsync(query).Returns(serviceResult);
             _mapper.Map<PaginationRes<TestListVlaRes>>(serviceResult).Returns(mappedRes);
 
             // Act
-            var result = await _controller.GetAllAsync(query, DefaultFpsYear);
+            var result = await _controller.GetAllAsync(query);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -73,11 +73,11 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
                 PaginationData = new Pagination { TotalRecords = 0 }
             };
 
-            _service.GetAllAsync(query, DefaultFpsYear).Returns(serviceResult);
+            _service.GetAllAsync(query).Returns(serviceResult);
             _mapper.Map<PaginationRes<TestListVlaRes>>(serviceResult).Returns(mappedRes);
 
             // Act
-            var result = await _controller.GetAllAsync(query, DefaultFpsYear);
+            var result = await _controller.GetAllAsync(query);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -95,15 +95,15 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
                 Data = new List<TestListVlaDto>(),
                 PaginationData = new PaginationDto()
             };
-            _service.GetAllAsync(query, 2024).Returns(serviceResult);
+            _service.GetAllAsync(query).Returns(serviceResult);
             _mapper.Map<PaginationRes<TestListVlaRes>>(serviceResult)
                 .Returns(new PaginationRes<TestListVlaRes> { Data = new List<TestListVlaRes>(), PaginationData = new Pagination() });
 
             // Act
-            await _controller.GetAllAsync(query, 2024);
+            await _controller.GetAllAsync(query);
 
             // Assert
-            await _service.Received(1).GetAllAsync(query, 2024);
+            await _service.Received(1).GetAllAsync(query);
         }
 
         #endregion
@@ -117,11 +117,11 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
             var dtoList = new List<TestListVlaDto> { CreateTestDto(), CreateTestDto() };
             var resList = new List<TestListVlaRes> { CreateTestRes(), CreateTestRes() };
 
-            _service.GetAllByYearAsync(DefaultFpsYear).Returns(dtoList);
+            _service.GetAllByYearAsync().Returns(dtoList);
             _mapper.Map<List<TestListVlaRes>>(dtoList).Returns(resList);
 
             // Act
-            var result = await _controller.GetAllByYearAsync(DefaultFpsYear);
+            var result = await _controller.GetAllByYearAsync();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -136,11 +136,11 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
             var dtoList = new List<TestListVlaDto>();
             var resList = new List<TestListVlaRes>();
 
-            _service.GetAllByYearAsync(DefaultFpsYear).Returns(dtoList);
+            _service.GetAllByYearAsync().Returns(dtoList);
             _mapper.Map<List<TestListVlaRes>>(dtoList).Returns(resList);
 
             // Act
-            var result = await _controller.GetAllByYearAsync(DefaultFpsYear);
+            var result = await _controller.GetAllByYearAsync();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -159,11 +159,11 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
             var dto = CreateTestDto();
             var res = CreateTestRes();
 
-            _service.GetByKeyAsync(DefaultItemCode, DefaultFpsYear).Returns(dto);
+            _service.GetByKeyAsync(DefaultItemCode).Returns(dto);
             _mapper.Map<TestListVlaRes>(dto).Returns(res);
 
             // Act
-            var result = await _controller.GetByIdAsync(DefaultItemCode, DefaultFpsYear);
+            var result = await _controller.GetByIdAsync(DefaultItemCode);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -174,11 +174,11 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
         public async Task GetByIdAsync_RecordNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _service.GetByKeyAsync("NOTEXIST", DefaultFpsYear).Returns((TestListVlaDto?)null);
+            _service.GetByKeyAsync("NOTEXIST").Returns((TestListVlaDto?)null);
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _controller.GetByIdAsync("NOTEXIST", DefaultFpsYear));
+                _controller.GetByIdAsync("NOTEXIST"));
         }
 
         #endregion
@@ -235,16 +235,16 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
             var res = CreateTestRes();
 
             _mapper.Map<TestListVlaDto>(req).Returns(dto);
-            _service.UpdateAsync(DefaultItemCode, DefaultFpsYear, dto).Returns(dto);
+            _service.UpdateAsync(DefaultItemCode, dto).Returns(dto);
             _mapper.Map<TestListVlaRes>(dto).Returns(res);
 
             // Act
-            var result = await _controller.UpdateAsync(DefaultItemCode, DefaultFpsYear, req);
+            var result = await _controller.UpdateAsync(DefaultItemCode, req);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.IsType<TestListVlaRes>(okResult.Value);
-            await _service.Received(1).UpdateAsync(DefaultItemCode, DefaultFpsYear, dto);
+            await _service.Received(1).UpdateAsync(DefaultItemCode, dto);
         }
 
         [Fact]
@@ -255,12 +255,12 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
             var dto = CreateTestDto();
 
             _mapper.Map<TestListVlaDto>(req).Returns(dto);
-            _service.UpdateAsync("NOTEXIST", DefaultFpsYear, dto).Returns<TestListVlaDto>(x =>
+            _service.UpdateAsync("NOTEXIST", dto).Returns<TestListVlaDto>(x =>
                 throw new KeyNotFoundException("Not found"));
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _controller.UpdateAsync("NOTEXIST", DefaultFpsYear, req));
+                _controller.UpdateAsync("NOTEXIST", req));
         }
 
         #endregion
@@ -271,26 +271,26 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestListVlaControllerTest
         public async Task DeleteAsync_ExistingRecord_ReturnsOkWithTrue()
         {
             // Arrange
-            _service.DeleteAsync(DefaultItemCode, DefaultFpsYear).Returns(true);
+            _service.DeleteAsync(DefaultItemCode).Returns(true);
 
             // Act
-            var result = await _controller.DeleteAsync(DefaultItemCode, DefaultFpsYear);
+            var result = await _controller.DeleteAsync(DefaultItemCode);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.True((bool)okResult.Value!);
-            await _service.Received(1).DeleteAsync(DefaultItemCode, DefaultFpsYear);
+            await _service.Received(1).DeleteAsync(DefaultItemCode);
         }
 
         [Fact]
         public async Task DeleteAsync_RecordNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _service.DeleteAsync("NOTEXIST", DefaultFpsYear).Returns(false);
+            _service.DeleteAsync("NOTEXIST").Returns(false);
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _controller.DeleteAsync("NOTEXIST", DefaultFpsYear));
+                _controller.DeleteAsync("NOTEXIST"));
         }
 
         #endregion

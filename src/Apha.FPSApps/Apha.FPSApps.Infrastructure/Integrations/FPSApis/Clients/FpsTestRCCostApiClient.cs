@@ -32,7 +32,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{testCode}/{fpsYear}";
+                var url = $"{BaseUrl}/{testCode}";
                 var response = await _http.GetAsync<List<TestRCCostRes>>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<List<TestRCCostDto>>>(response);
@@ -52,7 +52,7 @@ namespace Apha.FPSApps.Infrastructure.Integrations.FPSApis.Clients
         {
             try
             {
-                var url = $"{BaseUrl}/{testCode}/{profitCentre}/{fpsYear}";
+                var url = $"{BaseUrl}/{testCode}/{profitCentre}";
                 var response = await _http.GetAsync<TestRCCostRes>(url);
                 if (response.Success)
                     return _mapper.Map<ApiResponseDto<TestRCCostDto>>(response);

@@ -1,7 +1,9 @@
+using Apha.Common.Contracts;
 using Apha.Common.Contracts.FPS;
 using Apha.FPS.Api.Controllers;
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Pagination;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -33,53 +35,84 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestRequirementRCCostControllerTest
         public async Task GetByTestCodeAsync_ServiceReturnsList_ReturnsOkWithMappedList()
         {
             // Arrange
-            var dtoList = new List<TestRequirementRCCostDto> { CreateTestDto(), CreateTestDto() };
-            var resList = new List<TestRequirementRCCostRes> { CreateTestRes(), CreateTestRes() };
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<TestRequirementRCCostDto>
+            {
+                Data = new List<TestRequirementRCCostDto> { CreateTestDto(), CreateTestDto() },
+                PaginationData = new PaginationDto { TotalRecords = 2 }
+            };
+            var mappedRes = new PaginationRes<TestRequirementRCCostRes>
+            {
+                Data = new List<TestRequirementRCCostRes> { CreateTestRes(), CreateTestRes() },
+                PaginationData = new Pagination { TotalRecords = 2 }
+            };
 
-            _service.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear).Returns(dtoList);
-            _mapper.Map<List<TestRequirementRCCostRes>>(dtoList).Returns(resList);
+            _mapper.Map<QueryParameters<string>>(query).Returns(queryParams);
+            _service.GetPagedByTestCodeAsync(queryParams, DefaultTestCode).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestRequirementRCCostRes>>(serviceResult).Returns(mappedRes);
 
             // Act
-            var result = await _controller.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            var result = await _controller.GetByTestCodeAsync(DefaultTestCode, query);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var data = Assert.IsType<List<TestRequirementRCCostRes>>(okResult.Value);
-            Assert.Equal(2, data.Count);
+            var data = Assert.IsType<PaginationRes<TestRequirementRCCostRes>>(okResult.Value);
+            Assert.Equal(2, data.Data.Count());
         }
 
         [Fact]
         public async Task GetByTestCodeAsync_ServiceReturnsEmpty_ReturnsOkWithEmptyList()
         {
             // Arrange
-            var dtoList = new List<TestRequirementRCCostDto>();
-            var resList = new List<TestRequirementRCCostRes>();
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<TestRequirementRCCostDto>
+            {
+                Data = new List<TestRequirementRCCostDto>(),
+                PaginationData = new PaginationDto { TotalRecords = 0 }
+            };
+            var mappedRes = new PaginationRes<TestRequirementRCCostRes>
+            {
+                Data = new List<TestRequirementRCCostRes>(),
+                PaginationData = new Pagination { TotalRecords = 0 }
+            };
 
-            _service.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear).Returns(dtoList);
-            _mapper.Map<List<TestRequirementRCCostRes>>(dtoList).Returns(resList);
+            _mapper.Map<QueryParameters<string>>(query).Returns(queryParams);
+            _service.GetPagedByTestCodeAsync(queryParams, DefaultTestCode).Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestRequirementRCCostRes>>(serviceResult).Returns(mappedRes);
 
             // Act
-            var result = await _controller.GetByTestCodeAsync(DefaultTestCode, DefaultFpsYear);
+            var result = await _controller.GetByTestCodeAsync(DefaultTestCode, query);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var data = Assert.IsType<List<TestRequirementRCCostRes>>(okResult.Value);
-            Assert.Empty(data);
+            var data = Assert.IsType<PaginationRes<TestRequirementRCCostRes>>(okResult.Value);
+            Assert.Empty(data.Data);
         }
 
         [Fact]
         public async Task GetByTestCodeAsync_CallsServiceWithCorrectParameters()
         {
             // Arrange
-            var dtoList = new List<TestRequirementRCCostDto>();
-            _service.GetByTestCodeAsync("ALPHA", 2024).Returns(dtoList);
-            _mapper.Map<List<TestRequirementRCCostRes>>(dtoList).Returns(new List<TestRequirementRCCostRes>());
+            var query = new PaginationReq<string> { Page = 1, PageSize = 10 };
+            var queryParams = new QueryParameters<string> { Page = 1, PageSize = 10 };
+            var serviceResult = new PaginatedResult<TestRequirementRCCostDto>
+            {
+                Data = new List<TestRequirementRCCostDto>(),
+                PaginationData = new PaginationDto()
+            };
+
+            _mapper.Map<QueryParameters<string>>(query).Returns(queryParams);
+            _service.GetPagedByTestCodeAsync(queryParams, "ALPHA").Returns(serviceResult);
+            _mapper.Map<PaginationRes<TestRequirementRCCostRes>>(serviceResult)
+                .Returns(new PaginationRes<TestRequirementRCCostRes> { Data = new List<TestRequirementRCCostRes>(), PaginationData = new Pagination() });
 
             // Act
-            await _controller.GetByTestCodeAsync("ALPHA", 2024);
+            await _controller.GetByTestCodeAsync("ALPHA", query);
 
             // Assert
-            await _service.Received(1).GetByTestCodeAsync("ALPHA", 2024);
+            await _service.Received(1).GetPagedByTestCodeAsync(queryParams, "ALPHA");
         }
 
         #endregion
@@ -93,12 +126,12 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestRequirementRCCostControllerTest
             var dto = CreateTestDto();
             var res = CreateTestRes();
 
-            _service.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear)
+            _service.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre)
                 .Returns(dto);
             _mapper.Map<TestRequirementRCCostRes>(dto).Returns(res);
 
             // Act
-            var result = await _controller.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear);
+            var result = await _controller.GetByKeyAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -109,125 +142,12 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestRequirementRCCostControllerTest
         public async Task GetByKeyAsync_RecordNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
-            _service.GetByKeyAsync("NOTEXIST", "B999", "PC999", DefaultFpsYear)
+            _service.GetByKeyAsync("NOTEXIST", "B999", "PC999")
                 .Returns((TestRequirementRCCostDto?)null);
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _controller.GetByKeyAsync("NOTEXIST", "B999", "PC999", DefaultFpsYear));
-        }
-
-        #endregion
-
-        #region CreateAsync
-
-        [Fact]
-        public async Task CreateAsync_ValidRequest_ReturnsOkWithCreatedRecord()
-        {
-            // Arrange
-            var req = CreateTestReq();
-            var dto = CreateTestDto();
-            var res = CreateTestRes();
-
-            _mapper.Map<TestRequirementRCCostDto>(req).Returns(dto);
-            _service.CreateAsync(dto).Returns(dto);
-            _mapper.Map<TestRequirementRCCostRes>(dto).Returns(res);
-
-            // Act
-            var result = await _controller.CreateAsync(req);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.IsType<TestRequirementRCCostRes>(okResult.Value);
-            await _service.Received(1).CreateAsync(dto);
-        }
-
-        [Fact]
-        public async Task CreateAsync_ServiceThrowsInvalidOperation_PropagatesException()
-        {
-            // Arrange
-            var req = CreateTestReq();
-            var dto = CreateTestDto();
-
-            _mapper.Map<TestRequirementRCCostDto>(req).Returns(dto);
-            _service.CreateAsync(dto).Returns<TestRequirementRCCostDto>(x =>
-                throw new InvalidOperationException("Duplicate key"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _controller.CreateAsync(req));
-        }
-
-        #endregion
-
-        #region UpdateAsync
-
-        [Fact]
-        public async Task UpdateAsync_ValidRequest_ReturnsOkWithUpdatedRecord()
-        {
-            // Arrange
-            var req = CreateTestReq();
-            var dto = CreateTestDto();
-            var res = CreateTestRes();
-
-            _mapper.Map<TestRequirementRCCostDto>(req).Returns(dto);
-            _service.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear, dto)
-                .Returns(dto);
-            _mapper.Map<TestRequirementRCCostRes>(dto).Returns(res);
-
-            // Act
-            var result = await _controller.UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear, req);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.IsType<TestRequirementRCCostRes>(okResult.Value);
-            await _service.Received(1).UpdateAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear, dto);
-        }
-
-        [Fact]
-        public async Task UpdateAsync_RecordNotFound_PropagatesKeyNotFoundException()
-        {
-            // Arrange
-            var req = CreateTestReq();
-            var dto = CreateTestDto();
-
-            _mapper.Map<TestRequirementRCCostDto>(req).Returns(dto);
-            _service.UpdateAsync("NOTEXIST", "B999", "PC999", DefaultFpsYear, dto)
-                .Returns<TestRequirementRCCostDto>(x => throw new KeyNotFoundException("Not found"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _controller.UpdateAsync("NOTEXIST", "B999", "PC999", DefaultFpsYear, req));
-        }
-
-        #endregion
-
-        #region DeleteAsync
-
-        [Fact]
-        public async Task DeleteAsync_ExistingRecord_ReturnsOkWithTrue()
-        {
-            // Arrange
-            _service.DeleteAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear).Returns(true);
-
-            // Act
-            var result = await _controller.DeleteAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.True((bool)okResult.Value!);
-            await _service.Received(1).DeleteAsync(DefaultTestCode, DefaultBuyer, DefaultProfitCentre, DefaultFpsYear);
-        }
-
-        [Fact]
-        public async Task DeleteAsync_RecordNotFound_ThrowsKeyNotFoundException()
-        {
-            // Arrange
-            _service.DeleteAsync("NOTEXIST", "B999", "PC999", DefaultFpsYear).Returns(false);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                _controller.DeleteAsync("NOTEXIST", "B999", "PC999", DefaultFpsYear));
+                _controller.GetByKeyAsync("NOTEXIST", "B999", "PC999"));
         }
 
         #endregion
@@ -235,16 +155,6 @@ namespace Apha.FPS.Api.UnitTests.Controllers.TestRequirementRCCostControllerTest
         #region Helper Methods
 
         private static TestRequirementRCCostDto CreateTestDto() =>
-            new()
-            {
-                TestCode = DefaultTestCode,
-                Buyer = DefaultBuyer,
-                ProfitCentre = DefaultProfitCentre,
-                FpsYear = DefaultFpsYear,
-                Price = 200m
-            };
-
-        private static TestRequirementRCCostReq CreateTestReq() =>
             new()
             {
                 TestCode = DefaultTestCode,

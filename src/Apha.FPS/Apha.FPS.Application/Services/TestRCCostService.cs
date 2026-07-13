@@ -1,7 +1,9 @@
 using Apha.FPS.Application.Dtos;
 using Apha.FPS.Application.Interfaces;
+using Apha.FPS.Application.Pagination;
 using Apha.FPS.Core.Entities;
 using Apha.FPS.Core.Interfaces;
+using Apha.FPS.Core.Pagination;
 using AutoMapper;
 
 namespace Apha.FPS.Application.Services
@@ -22,24 +24,30 @@ namespace Apha.FPS.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<IEnumerable<TestRCCostDto>> GetByTestCodeAsync(string testCode, int fpsYear)
+        public async Task<PaginatedResult<TestRCCostDto>> GetPagedByTestCodeAsync(QueryParameters<string> query, string testCode)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            ArgumentException.ThrowIfNullOrWhiteSpace(testCode);
+
+            var paginationParams = _mapper.Map<PaginationParameters<string>>(query);
+            var pagedData = await _repository.GetPagedByTestCodeAsync(paginationParams, testCode);
+            return _mapper.Map<PaginatedResult<TestRCCostDto>>(pagedData);
+        }
+
+        public async Task<IEnumerable<TestRCCostDto>> GetByTestCodeAsync(string testCode)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(testCode);
-            if (fpsYear <= 0)
-                throw new ArgumentException("FpsYear must be a positive integer.", nameof(fpsYear));
 
-            var entities = await _repository.GetByTestCodeAsync(testCode, fpsYear);
+            var entities = await _repository.GetByTestCodeAsync(testCode);
             return _mapper.Map<IEnumerable<TestRCCostDto>>(entities);
         }
 
-        public async Task<TestRCCostDto?> GetByKeyAsync(string testCode, string profitCentre, int fpsYear)
+        public async Task<TestRCCostDto?> GetByKeyAsync(string testCode, string profitCentre)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(testCode);
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentre);
-            if (fpsYear <= 0)
-                throw new ArgumentException("FpsYear must be a positive integer.", nameof(fpsYear));
 
-            var entity = await _repository.GetByKeyAsync(testCode, profitCentre, fpsYear);
+            var entity = await _repository.GetByKeyAsync(testCode, profitCentre);
             return entity == null ? null : _mapper.Map<TestRCCostDto>(entity);
         }
 
@@ -52,11 +60,10 @@ namespace Apha.FPS.Application.Services
             if (dto.FpsYear <= 0)
                 throw new ArgumentException("FpsYear must be a positive integer.", nameof(dto));
 
-            var exists = await _repository.ExistsAsync(dto.TestCode, dto.ProfitCentre, dto.FpsYear);
+            var exists = await _repository.ExistsAsync(dto.TestCode, dto.ProfitCentre);
             if (exists)
                 throw new InvalidOperationException(
-                    $"A TestRCCost entry with TestCode '{dto.TestCode}', ProfitCentre '{dto.ProfitCentre}' " +
-                    $"and FpsYear '{dto.FpsYear}' already exists.");
+                    $"A TestRCCost entry with TestCode '{dto.TestCode}', ProfitCentre '{dto.ProfitCentre}' already exists for the current FPS year.");
 
             var entity = _mapper.Map<TestRCCost>(dto);
             var created = await _repository.AddAsync(entity);
@@ -64,41 +71,35 @@ namespace Apha.FPS.Application.Services
         }
 
         //   Guards: non-empty keys, route-key/body-key consistency, existence check
-        public async Task<TestRCCostDto> UpdateAsync(string testCode, string profitCentre, int fpsYear, TestRCCostDto dto)
+        public async Task<TestRCCostDto> UpdateAsync(string testCode, string profitCentre, TestRCCostDto dto)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(testCode);
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentre);
-            if (fpsYear <= 0)
-                throw new ArgumentException("FpsYear must be a positive integer.", nameof(fpsYear));
             ArgumentNullException.ThrowIfNull(dto);
             ArgumentException.ThrowIfNullOrWhiteSpace(dto.TestCode);
             ArgumentException.ThrowIfNullOrWhiteSpace(dto.ProfitCentre);
 
             if (!string.Equals(testCode, dto.TestCode, StringComparison.OrdinalIgnoreCase) ||
-                !string.Equals(profitCentre, dto.ProfitCentre, StringComparison.OrdinalIgnoreCase) ||
-                fpsYear != dto.FpsYear)
+                !string.Equals(profitCentre, dto.ProfitCentre, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException(
-                    "Route keys (testCode, profitCentre, fpsYear) must match the DTO body keys.");
+                    "Route keys (testCode, profitCentre) must match the DTO body keys.");
 
-            var existing = await _repository.GetByKeyAsync(testCode, profitCentre, fpsYear);
+            var existing = await _repository.GetByKeyAsync(testCode, profitCentre);
             if (existing == null)
                 throw new KeyNotFoundException(
-                    $"TestRCCost entry with TestCode '{testCode}', ProfitCentre '{profitCentre}' " +
-                    $"and FpsYear '{fpsYear}' was not found.");
+                    $"TestRCCost entry with TestCode '{testCode}', ProfitCentre '{profitCentre}' was not found for the current FPS year.");
 
             var entity = _mapper.Map<TestRCCost>(dto);
             var updated = await _repository.UpdateAsync(entity);
             return _mapper.Map<TestRCCostDto>(updated);
         }
 
-        public async Task<bool> DeleteAsync(string testCode, string profitCentre, int fpsYear)
+        public async Task<bool> DeleteAsync(string testCode, string profitCentre)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(testCode);
             ArgumentException.ThrowIfNullOrWhiteSpace(profitCentre);
-            if (fpsYear <= 0)
-                throw new ArgumentException("FpsYear must be a positive integer.", nameof(fpsYear));
 
-            return await _repository.DeleteAsync(testCode, profitCentre, fpsYear);
+            return await _repository.DeleteAsync(testCode, profitCentre);
         }
     }
 }

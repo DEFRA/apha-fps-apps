@@ -34,7 +34,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
                 testOrProducts ?? Enumerable.Empty<TestOrProduct>());
             mockContext.Setup(x => x.TestOrProducts).Returns(testOrProductSet.Object);
 
-            return new TestListVlaRepository(mockContext.Object);
+            return new TestListVlaRepository(mockContext.Object, mockRequestContext.Object);
         }
 
         #region GetPagedAsync
@@ -52,7 +52,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
             // Act
-            var result = await repo.GetPagedAsync(query, DefaultFpsYear);
+            var result = await repo.GetPagedAsync(query);
 
             // Assert
             Assert.NotNull(result);
@@ -64,11 +64,11 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
         {
             // Arrange
             var entities = new List<TestOrProduct> { CreateEntity("ITEM001") };
-            var repo = CreateRepository(entities, DefaultFpsYear);
+            var repo = CreateRepository(entities, 9999);
             var query = new PaginationParameters<string> { Page = 1, PageSize = 10 };
 
-            // Act — pass a different year
-            var result = await repo.GetPagedAsync(query, 9999);
+            // Act — repo context has year 9999, entities have year 2025
+            var result = await repo.GetPagedAsync(query);
 
             // Assert
             Assert.Empty(result.Data);
@@ -91,7 +91,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
             };
 
             // Act
-            var result = await repo.GetPagedAsync(query, DefaultFpsYear);
+            var result = await repo.GetPagedAsync(query);
 
             // Assert
             Assert.Single(result.Data);
@@ -114,7 +114,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
             var query = new PaginationParameters<string> { Page = 2, PageSize = 5 };
 
             // Act
-            var result = await repo.GetPagedAsync(query, DefaultFpsYear);
+            var result = await repo.GetPagedAsync(query);
 
             // Assert
             Assert.Equal(5, result.Data.Count());
@@ -137,7 +137,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
             var repo = CreateRepository(entities);
 
             // Act
-            var result = await repo.GetAllByYearAsync(DefaultFpsYear);
+            var result = await repo.GetAllByYearAsync();
 
             // Assert
             Assert.Equal(2, result.Count());
@@ -148,10 +148,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
         {
             // Arrange
             var entities = new List<TestOrProduct> { CreateEntity("ITEM001") };
-            var repo = CreateRepository(entities);
+            var repo = CreateRepository(entities, 9999);
 
             // Act
-            var result = await repo.GetAllByYearAsync(9999);
+            var result = await repo.GetAllByYearAsync();
 
             // Assert
             Assert.Empty(result);
@@ -169,7 +169,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
             var repo = CreateRepository(entities);
 
             // Act
-            var result = await repo.GetByKeyAsync(DefaultItemCode, DefaultFpsYear);
+            var result = await repo.GetByKeyAsync(DefaultItemCode);
 
             // Assert
             Assert.NotNull(result);
@@ -183,7 +183,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
             var repo = CreateRepository(Enumerable.Empty<TestOrProduct>());
 
             // Act
-            var result = await repo.GetByKeyAsync("NOTEXIST", DefaultFpsYear);
+            var result = await repo.GetByKeyAsync("NOTEXIST");
 
             // Assert
             Assert.Null(result);
@@ -194,10 +194,10 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
         {
             // Arrange
             var entities = new List<TestOrProduct> { CreateEntity(DefaultItemCode) };
-            var repo = CreateRepository(entities);
+            var repo = CreateRepository(entities, 9999);
 
-            // Act — correct ItemCode but wrong FpsYear
-            var result = await repo.GetByKeyAsync(DefaultItemCode, 9999);
+            // Act — correct ItemCode but repo context has year 9999, entities have year 2025
+            var result = await repo.GetByKeyAsync(DefaultItemCode);
 
             // Assert
             Assert.Null(result);
@@ -215,7 +215,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
             var repo = CreateRepository(entities);
 
             // Act
-            var result = await repo.ExistsAsync(DefaultItemCode, DefaultFpsYear);
+            var result = await repo.ExistsAsync(DefaultItemCode);
 
             // Assert
             Assert.True(result);
@@ -228,7 +228,7 @@ namespace Apha.FPS.DataAccess.UnitTests.Repository.TestListVlaRepositoryTest
             var repo = CreateRepository(Enumerable.Empty<TestOrProduct>());
 
             // Act
-            var result = await repo.ExistsAsync("NOTEXIST", DefaultFpsYear);
+            var result = await repo.ExistsAsync("NOTEXIST");
 
             // Assert
             Assert.False(result);

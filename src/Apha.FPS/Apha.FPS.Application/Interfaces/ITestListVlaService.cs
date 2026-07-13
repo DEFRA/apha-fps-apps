@@ -10,16 +10,16 @@ namespace Apha.FPS.Application.Interfaces
     /// </summary>
     public interface ITestListVlaService
     {
-        Task<PaginatedResult<TestListVlaDto>> GetAllAsync(QueryParameters<string> query, int fpsYear);
+        Task<PaginatedResult<TestListVlaDto>> GetAllAsync(QueryParameters<string> query);
 
-        Task<IEnumerable<TestListVlaDto>> GetAllByYearAsync(int fpsYear);
+        Task<IEnumerable<TestListVlaDto>> GetAllByYearAsync();
 
-        Task<TestListVlaDto?> GetByKeyAsync(string itemCode, int fpsYear);
+        Task<TestListVlaDto?> GetByKeyAsync(string itemCode);
 
         Task<TestListVlaDto> CreateAsync(TestListVlaDto dto);
 
-        Task<TestListVlaDto> UpdateAsync(string itemCode, int fpsYear, TestListVlaDto dto);
+        Task<TestListVlaDto> UpdateAsync(string itemCode, TestListVlaDto dto);
 
-        Task<bool> DeleteAsync(string itemCode, int fpsYear);
+        Task<bool> DeleteAsync(string itemCode);
     }
 }

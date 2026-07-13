@@ -103,7 +103,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
         }
 
         [Fact]
-        public void Index_Always_MainGridAllowsCRUD()
+        public void Index_Always_MainGridIsReadOnly()
         {
             // Act
             var result = _controller.Index();
@@ -111,9 +111,9 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<TestListVlaViewModel>(viewResult.Model);
-            Assert.True(model.TestListGrid.AllowAdd);
-            Assert.True(model.TestListGrid.AllowEdit);
-            Assert.True(model.TestListGrid.AllowDelete);
+            Assert.False(model.TestListGrid.AllowAdd);
+            Assert.False(model.TestListGrid.AllowEdit);
+            Assert.False(model.TestListGrid.AllowDelete);
         }
 
         [Fact]
@@ -197,192 +197,6 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
 
         #endregion
 
-        #region CreateTestListVla
-
-        [Fact]
-        public void CreateTestListVla_Get_ReturnsPartialViewWithEmptyItem()
-        {
-            // Act
-            var result = _controller.CreateTestListVla();
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddEditTestListVla", partialView.ViewName);
-            var item = Assert.IsType<TestListVlaItem>(partialView.Model);
-            Assert.Equal(DefaultFpsYear, item.FpsYear);
-        }
-
-        [Fact]
-        public async Task CreateTestListVla_Post_ValidModel_ServiceReturnsSuccess_ReturnsJsonTrue()
-        {
-            // Arrange
-            var model = new TestListVlaItem { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear };
-            var dto = new TestListVlaDto { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear };
-            var response = ApiResponseDto<TestListVlaDto>.SuccessResponse(dto);
-
-            _mapper.Map<TestListVlaDto>(model).Returns(dto);
-            _testListVlaService.CreateAsync(Arg.Any<TestListVlaDto>()).Returns(response);
-
-            // Act
-            var result = await _controller.CreateTestListVla(model);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element = GetJsonResultElement(jsonResult);
-            Assert.True(element.GetProperty("success").GetBoolean());
-        }
-
-        [Fact]
-        public async Task CreateTestListVla_Post_InvalidModelState_ReturnsJsonFalse()
-        {
-            // Arrange
-            _controller.ModelState.AddModelError("ItemCode", "Required");
-
-            // Act
-            var result = await _controller.CreateTestListVla(new TestListVlaItem());
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
-        }
-
-        [Fact]
-        public async Task CreateTestListVla_Post_ServiceReturnsFailure_ReturnsJsonFalse()
-        {
-            // Arrange
-            var model = new TestListVlaItem { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear };
-            var dto = new TestListVlaDto { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear };
-            var response = ApiResponseDto<TestListVlaDto>.FailureResponse(
-                new List<ApiErrorDto> { new() { Message = "Duplicate key" } }, new ApiMetaDto());
-
-            _mapper.Map<TestListVlaDto>(model).Returns(dto);
-            _testListVlaService.CreateAsync(Arg.Any<TestListVlaDto>()).Returns(response);
-
-            // Act
-            var result = await _controller.CreateTestListVla(model);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
-        }
-
-        #endregion
-
-        #region EditTestListVla
-
-        [Fact]
-        public async Task EditTestListVla_Get_ServiceReturnsSuccess_ReturnsPartialView()
-        {
-            // Arrange
-            var dto = new TestListVlaDto { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear };
-            var response = ApiResponseDto<TestListVlaDto>.SuccessResponse(dto);
-            var item = new TestListVlaItem { ItemCode = DefaultItemCode };
-
-            _testListVlaService.GetByIdAsync(DefaultItemCode, DefaultFpsYear).Returns(response);
-            _mapper.Map<TestListVlaItem>(dto).Returns(item);
-
-            // Act
-            var result = await _controller.EditTestListVla(DefaultItemCode);
-
-            // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_AddEditTestListVla", partialView.ViewName);
-        }
-
-        [Fact]
-        public async Task EditTestListVla_Get_ServiceReturnsFailure_ReturnsNotFound()
-        {
-            // Arrange
-            var response = ApiResponseDto<TestListVlaDto>.FailureResponse(
-                new List<ApiErrorDto> { new() { Message = "Not found" } }, new ApiMetaDto());
-            _testListVlaService.GetByIdAsync("NOTEXIST", DefaultFpsYear).Returns(response);
-
-            // Act
-            var result = await _controller.EditTestListVla("NOTEXIST");
-
-            // Assert
-            // Phase 14 security fix: controller now returns generic NotFound() (NotFoundResult)
-            // rather than NotFound("message") (NotFoundObjectResult) to prevent information disclosure.
-            Assert.IsType<NotFoundResult>(result);
-        }
-
-        [Fact]
-        public async Task EditTestListVla_Post_ValidModel_ServiceReturnsSuccess_ReturnsJsonTrue()
-        {
-            // Arrange
-            var model = new TestListVlaItem { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear };
-            var dto = new TestListVlaDto { ItemCode = DefaultItemCode, FpsYear = DefaultFpsYear };
-            var response = ApiResponseDto<TestListVlaDto>.SuccessResponse(dto);
-
-            _mapper.Map<TestListVlaDto>(model).Returns(dto);
-            _testListVlaService.UpdateAsync(DefaultItemCode, DefaultFpsYear, Arg.Any<TestListVlaDto>())
-                .Returns(response);
-
-            // Act
-            var result = await _controller.EditTestListVla(model);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element = GetJsonResultElement(jsonResult);
-            Assert.True(element.GetProperty("success").GetBoolean());
-        }
-
-        [Fact]
-        public async Task EditTestListVla_Post_InvalidModelState_ReturnsJsonFalse()
-        {
-            // Arrange
-            _controller.ModelState.AddModelError("ItemCode", "Required");
-
-            // Act
-            var result = await _controller.EditTestListVla(new TestListVlaItem());
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
-        }
-
-        #endregion
-
-        #region DeleteTestListVla
-
-        [Fact]
-        public async Task DeleteTestListVla_ServiceReturnsSuccess_ReturnsJsonTrue()
-        {
-            // Arrange
-            var response = ApiResponseDto<bool>.SuccessResponse(true);
-            _testListVlaService.DeleteAsync(DefaultItemCode, DefaultFpsYear).Returns(response);
-
-            // Act
-            var result = await _controller.DeleteTestListVla(DefaultItemCode);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element = GetJsonResultElement(jsonResult);
-            Assert.True(element.GetProperty("success").GetBoolean());
-        }
-
-        [Fact]
-        public async Task DeleteTestListVla_ServiceReturnsFailure_ReturnsJsonFalse()
-        {
-            // Arrange
-            var response = ApiResponseDto<bool>.FailureResponse(
-                new List<ApiErrorDto> { new() { Message = "Not found" } }, new ApiMetaDto());
-            _testListVlaService.DeleteAsync("NOTEXIST", DefaultFpsYear).Returns(response);
-
-            // Act
-            var result = await _controller.DeleteTestListVla("NOTEXIST");
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var element = GetJsonResultElement(jsonResult);
-            Assert.False(element.GetProperty("success").GetBoolean());
-        }
-
-        #endregion
-
         #region LoadComponentChargesGeneralGrid
 
         [Fact]
@@ -456,6 +270,164 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestListVlaControllerTest
             // Assert
             var partialView = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_DataGrid", partialView.ViewName);
+        }
+
+        #endregion
+
+        #region LoadTestRequirementsGrid
+
+        [Fact]
+        public async Task LoadTestRequirementsGrid_InvalidModelState_ReturnsJsonFalse()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("test", "Error");
+
+            // Act
+            var result = await _controller.LoadTestRequirementsGrid(new PaginationFilter<string>(), DefaultTestCode);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element    = GetJsonResultElement(jsonResult);
+            Assert.False(element.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task LoadTestRequirementsGrid_NullTestCode_ReturnsPartialViewWithEmptyData()
+        {
+            // Act — no testCode provided
+            var result = await _controller.LoadTestRequirementsGrid(new PaginationFilter<string>(), null);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialView.ViewName);
+        }
+
+        [Fact]
+        public async Task LoadTestRequirementsGrid_WithTestCode_CallsTestRequirementService()
+        {
+            // Arrange
+            SetupGridMapper();
+            var response = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(
+                new List<TestRequirementDto> { new() { TestCode = DefaultTestCode } },
+                new PaginationDto { TotalRecords = 1 });
+
+            _testRequirementService
+                .GetPagedTestReqmtAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode)
+                .Returns(response);
+            _mapper.Map<List<TestRequirementItem>>(Arg.Any<List<TestRequirementDto>>())
+                .Returns(new List<TestRequirementItem> { new() { Buyer = DefaultBuyer } });
+
+            // Act
+            await _controller.LoadTestRequirementsGrid(new PaginationFilter<string>(), DefaultTestCode);
+
+            // Assert
+            await _testRequirementService.Received(1)
+                .GetPagedTestReqmtAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode);
+        }
+
+        [Fact]
+        public async Task LoadTestRequirementsGrid_WithTestCode_ReturnsPartialViewWithGridTitle()
+        {
+            // Arrange
+            SetupGridMapper();
+            var response = ApiResponseDto<List<TestRequirementDto>>.SuccessResponse(
+                new List<TestRequirementDto>(),
+                new PaginationDto());
+
+            _testRequirementService
+                .GetPagedTestReqmtAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode)
+                .Returns(response);
+            _mapper.Map<List<TestRequirementItem>>(Arg.Any<List<TestRequirementDto>>())
+                .Returns(new List<TestRequirementItem>());
+
+            // Act
+            var result = await _controller.LoadTestRequirementsGrid(
+                new PaginationFilter<string>(), DefaultTestCode);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialView.ViewName);
+            var config = Assert.IsType<DataGridConfig<TestRequirementItem>>(partialView.Model);
+            Assert.Contains(DefaultTestCode, config.Title);
+        }
+
+        #endregion
+
+        #region LoadSuppliersGrid
+
+        [Fact]
+        public async Task LoadSuppliersGrid_InvalidModelState_ReturnsJsonFalse()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("test", "Error");
+
+            // Act
+            var result = await _controller.LoadSuppliersGrid(new PaginationFilter<string>(), DefaultTestCode);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var element    = GetJsonResultElement(jsonResult);
+            Assert.False(element.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task LoadSuppliersGrid_NullTestCode_ReturnsPartialViewWithEmptyData()
+        {
+            // Act — no testCode provided
+            var result = await _controller.LoadSuppliersGrid(new PaginationFilter<string>(), null);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialView.ViewName);
+        }
+
+        [Fact]
+        public async Task LoadSuppliersGrid_WithTestCode_CallsTestCapabilityService()
+        {
+            // Arrange
+            SetupGridMapper();
+            var response = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse(
+                new List<TestCapabilityDto> { new() { TestCode = DefaultTestCode } },
+                new PaginationDto { TotalRecords = 1 });
+
+            _testCapabilityService
+                .GetPagedByTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode)
+                .Returns(response);
+            _mapper.Map<List<TestCapabilityItem>>(Arg.Any<List<TestCapabilityDto>>())
+                .Returns(new List<TestCapabilityItem>());
+
+            // Act
+            await _controller.LoadSuppliersGrid(new PaginationFilter<string>(), DefaultTestCode);
+
+            // Assert
+            await _testCapabilityService.Received(1)
+                .GetPagedByTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode);
+        }
+
+        [Fact]
+        public async Task LoadSuppliersGrid_WithTestCode_ReturnsPartialViewWithGridTitle()
+        {
+            // Arrange
+            SetupGridMapper();
+            var response = ApiResponseDto<List<TestCapabilityDto>>.SuccessResponse(
+                new List<TestCapabilityDto>(),
+                new PaginationDto());
+
+            _testCapabilityService
+                .GetPagedByTestCodeAsync(Arg.Any<QueryParameters<string>>(), DefaultTestCode)
+                .Returns(response);
+            _mapper.Map<List<TestCapabilityItem>>(Arg.Any<List<TestCapabilityDto>>())
+                .Returns(new List<TestCapabilityItem>());
+
+            // Act
+            var result = await _controller.LoadSuppliersGrid(
+                new PaginationFilter<string>(), DefaultTestCode);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+            Assert.Equal("_DataGrid", partialView.ViewName);
+            var config = Assert.IsType<DataGridConfig<TestCapabilityItem>>(partialView.Model);
+            Assert.Contains(DefaultTestCode, config.Title);
         }
 
         #endregion
