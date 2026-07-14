@@ -3132,7 +3132,7 @@ namespace Apha.PACT.DataAccess.UnitTests.Repository.TestRequirementRepositoryTes
             var query = new PaginationParameters<string>
             {
                 Page = 1, PageSize = 10,
-                Filter = "{\"Pc\":\"PC01\"}"
+                Filter = "{\"PC\":\"PC01\"}"
             };
 
             var result = await repo.GetPlannedTestsByWorkgroupAsync(query);
