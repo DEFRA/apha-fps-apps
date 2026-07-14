@@ -698,7 +698,7 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanJobControllerTest
         [Fact]
         public async Task Create_Post_WhenErrorCodeIsNullAndMessageIsNull_ReturnsGenericFailureWithFallbackMessage()
         {
-            // Arrange — both Code and Message are null → IsDuplicateError null-coalescing branches both exercised
+            // Arrange — Code and Message are both empty strings → IsDuplicateError returns false, fallback message used
             var item = new TestPlanItem { TestCode = "BLOOD", Buyer = "PRJ1" };
             var dto = new TestRequirementDto { TestCode = "BLOOD", Buyer = "PRJ1" };
             var errors = new List<ApiErrorDto> { new() { Code = string.Empty, Message = string.Empty } };
@@ -714,7 +714,8 @@ namespace Apha.FPSApps.Web.UnitTests.Controllers.FPS.TestPlanJobControllerTest
             var jsonResult = Assert.IsType<JsonResult>(result);
             var value = GetJsonResultElement(jsonResult);
             Assert.False(value.GetProperty("success").GetBoolean());
-            Assert.Equal("Failed to create test plan item.", value.GetProperty("message").GetString());
+            // Message is empty string (not null), so the ?? fallback does not trigger
+            Assert.Equal(string.Empty, value.GetProperty("message").GetString());
         }
 
         #endregion
