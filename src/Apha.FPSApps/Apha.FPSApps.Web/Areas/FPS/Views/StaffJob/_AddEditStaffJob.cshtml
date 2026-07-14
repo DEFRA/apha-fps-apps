@@ -37,13 +37,59 @@
                 }
                 else
                 {
-                    <select id="Name" name="Name" required class="govuk-select sup_width_100" onchange="onStaffSelected(this)">
+                    <div class="mcd-wrapper">
+                        <input type="text" id="StaffDisplay" placeholder="Select Staff" autocomplete="off"
+                               class="govuk-input down-arrow-img mcd-trigger" readonly
+                               onclick="toggleStaffPanel()" />
+                        <div id="StaffDropdownPanel" class="mcd-panel">
+                            <input type="text" id="StaffSearchBox" placeholder="Type to search staff..."
+                                   class="mcd-search"
+                                   oninput="filterStaffPanel(this.value)" />
+                            <table class="mcd-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Grade</th>
+                                        <th>Hrs Avail</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="StaffDropdownBody">
+                                    @if (Model.StaffList != null)
+                                    {
+                                        foreach (var staff in Model.StaffList.Where(s => !string.IsNullOrEmpty(s.Value)))
+                                        {
+                                            var parts = staff.Text.Split('|');
+                                            var sName = parts.Length > 0 ? parts[0].Trim() : string.Empty;
+                                            var sGrade = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                                            var sHrsAvail = parts.Length > 2 ? parts[2].Trim() : string.Empty;
+                                            <tr data-staffid="@staff.Value" data-name="@sName"
+                                                onclick="selectStaff('@staff.Value', '@Html.Raw(sName.Replace("'", "\\'"))', this)">
+                                                <td>@sName</td>
+                                                <td>@sGrade</td>
+                                                <td>@sHrsAvail</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    @* hidden select — keeps Name field binding + server-side validation *@
+                    <select id="Name" name="Name" required style="display:none;" onchange="onStaffSelected(this)">
                         <option value="">-- Select Staff --</option>
                         @if (Model.StaffList != null)
                         {
                             foreach (var staff in Model.StaffList)
                             {
-                                <option value="@staff.Value" data-name="@staff.Text">@staff.Text</option>
+                                var dn = staff.Text.Split('|')[0].Trim();
+                                if (staff.Selected)
+                                {
+                                    <option value="@staff.Value" data-name="@dn" selected>@dn</option>
+                                }
+                                else
+                                {
+                                    <option value="@staff.Value" data-name="@dn">@dn</option>
+                                }
                             }
                         }
                     </select>

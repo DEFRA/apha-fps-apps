@@ -291,11 +291,11 @@ namespace Apha.FPSApps.Web.Areas.FPS.Controllers
             // Manager dropdown
             var staffResponse = await _staffJobService.GetStaffWorkgroupLookupAsync();
             model.StaffList = staffResponse.Data == null ? new List<SelectListItem>() :
-                staffResponse.Data 
+                staffResponse.Data
                 .Select(m => new SelectListItem
                 {
                     Value = m.StaffID,
-                    Text = m.Name,
+                    Text  = $"{m.Name}|{m.WorkGroupGrade}|{m.HrsAvail}",
                     Selected = string.Equals(model.StaffID, m.StaffID, StringComparison.OrdinalIgnoreCase)
                 })
                 .ToList();
